@@ -69,6 +69,30 @@ A cross-reference check, such as an unknown actor, runs only once every field is
 so a document with a broken field and an unknown actor reports the field first. That is
 by design: the reference cannot be checked against a cast that did not validate.
 
+## Golden outputs
+
+`tests/test_golden.py` checks the promise in the reference that two machines produce files
+`cmp` calls equal, which compiling twice in one process cannot see. It builds the whole
+gallery through `scenet build`, in every CI job -- Linux on 3.12 and 3.14, and Windows -- and
+compares the bytes on disk with what is committed:
+
+- `tests/golden/core/` holds every Panel Core and Page Core, so a layout change is reviewed
+  coordinate by coordinate in the diff;
+- `tests/golden/digests.json` holds the SHA-256 of every SVG: panels, overlays, live text,
+  strips and pages.
+
+It also builds the gallery in two processes with different `PYTHONHASHSEED`s, and one scene
+and one script from a relative path, an absolute one and another directory; each must
+write the same bytes, and none may hold the path it was built from.
+
+After a change that is meant to move the output, regenerate the goldens and read the diff:
+
+```bash
+uv run python scripts/update_golden.py
+```
+
+`--check` exits 1 and names every stale golden without writing anything.
+
 ## Profiles
 
 A property failure has to replay identically, so **the default is derandomized

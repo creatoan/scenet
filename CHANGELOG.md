@@ -12,6 +12,11 @@ below 1.0 means.
 
 ### Added
 
+- **Golden outputs, checked on every platform.** The gallery is built through `scenet build`
+  in every CI job, Windows included, and the bytes on disk must match committed goldens: every
+  Panel and Page Core in full, and a digest of every SVG. Two processes with different hash
+  seeds, and a relative path against an absolute one, must write the same bytes, and no output
+  may hold the path it came from. `scripts/update_golden.py` regenerates them. (#94)
 - **Property-based tests for pages, scripts and broken documents.** Generated books are
   held to the documented reading order, worked out from the pages as written, to frames that
   stay inside the margins and clear of each other, and to sound SVG with ids unique across

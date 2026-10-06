@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 628.12,
+      "panel": "establishing",
+      "width": 880.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "height": 628.12,
+      "panel": "reply",
+      "width": 440.0,
+      "x": 985.0,
+      "y": 75.0
+    },
+    {
+      "height": 753.75,
+      "panel": "closer",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 748.12
+    },
+    {
+      "height": 628.12,
+      "panel": "her",
+      "width": 660.0,
+      "x": 75.0,
+      "y": 1546.88
+    },
+    {
+      "height": 628.12,
+      "panel": "him",
+      "width": 660.0,
+      "x": 765.0,
+      "y": 1546.88
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}
