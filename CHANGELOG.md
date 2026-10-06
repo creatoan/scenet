@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A control character in a panel wrote an SVG no XML parser accepts.** A `\x07` in a line
+  of dialogue broke `--live-text` output, and one in an actor id broke the default output too,
+  through its `id` attribute. XML cannot hold these characters even escaped, so a line, a
+  caption or an actor id holding one is now refused as `scenet/invalid-field`, naming the
+  character. Tab, line feed and carriage return are still accepted. (Refs #91)
 - **One mistake in a script entry was reported up to four times** by `scenet check`. A
   caption with `kind: narration` also came back as every reason it was not a `say`, all at
   the same place. The entry's verb now picks the event it is checked against, so the one
