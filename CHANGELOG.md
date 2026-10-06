@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **Lettering was drawn larger than it was measured.** Each glyph's scale, the font size over
+  the font's units per em, was written to two decimal places like a coordinate. At size 35
+  that is 0.035, written as 0.04, so every letter was drawn 14% larger than the width the
+  balloon was sized for and its neighbours were spaced for. The scale is now written to six
+  places, and a test holds every drawn glyph to its measured size. (#91)
 - **An infinite or undefined number ended the interpreter.** `.inf` and `.nan` are valid YAML
   floats, and one in a panel's or a page's size, margin, height or width passed `scenet check`
   and then reached the solver, where kiwisolver stopped the process outright: no traceback,
