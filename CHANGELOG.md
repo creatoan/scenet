@@ -72,6 +72,12 @@ below 1.0 means.
 
 ### Fixed
 
+- **An unknown speaker was located one step short of its `by:`.** The finding's path was
+  `script.0.by`, which the document does not have -- a line is written `- say: {by: ...}` --
+  so a script in block style was pointed at `- say:` rather than the `by:` line. The path is
+  now `script.0.say.by`, as every other fault in a script entry has been since the verb picks
+  the event, and the finding lands on the unknown name itself. The MCP server's `where` field
+  for it changes the same way. (Refs #92)
 - **A broken `over:` was located at the whole `panels:` block.** `scenet check` pointed a
   missing parent, a cycle or an `over:` that is not a name at the first line of `panels:`,
   wherever the fault was. It now points at the `over:` to change, and a missing parent's

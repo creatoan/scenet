@@ -277,7 +277,7 @@ found = diagnose_source(source, source=Path("duel.panel.yaml"))
 finding = found[0]
 
 assert finding.rule == "unknown-actor"
-assert finding.path == ("script", 0, "by")
+assert finding.path == ("script", 0, "say", "by")
 assert finding.region.start.line == 5
 
 document = to_sarif(found, root=Path.cwd())

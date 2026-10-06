@@ -945,7 +945,7 @@ class PanelIR(Strict):
                     f"script entry {index} is spoken by unknown actor '{event.by}'; "
                     f"cast is {sorted(known)}",
                     rule="unknown-actor",
-                    loc=("script", index, "by"),
+                    loc=("script", index, event.verb, "by"),
                 )
         return self
 

@@ -158,7 +158,7 @@ class Finding(BaseModel):
     rule: str = Field(description="Stable rule id, such as `scenet/unknown-actor`")
     message: str = Field(description="What is wrong, naming the offending construct")
     fix: str = Field(description="What to do about it")
-    where: str = Field(description="Path to the offending value, such as `script.0.by`")
+    where: str = Field(description="Path to the offending value, such as `script.0.say.by`")
     line: int = Field(description="1-based line the finding starts on")
     column: int = Field(description="1-based column the finding starts at")
     end_line: int

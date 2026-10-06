@@ -553,7 +553,7 @@ class TestTheProseAndTheSarifAgree:
         render as `at <root>`, because the model validator had nowhere to put a path."""
         with pytest.raises(PanelSyntaxError) as caught:
             parse_panel(UNKNOWN_ACTOR)
-        assert "at script.0.by:" in str(caught.value)
+        assert "at script.0.say.by:" in str(caught.value)
 
     def test_the_message_text_is_the_same_in_both(self):
         (found,) = diagnose_source(UNKNOWN_ACTOR, source=Path("duel.panel.yaml"))
