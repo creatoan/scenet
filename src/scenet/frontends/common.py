@@ -55,7 +55,8 @@ def parse_relation(text: str) -> Relation:
 
     Raises:
         PanelSyntaxError: The entry is not three whitespace-separated words, names an
-            unknown predicate, or relates an actor to itself.
+            unknown predicate, or relates an actor to itself -- the last under rule
+            `reflexive-relation`.
 
     Example:
         >>> from scenet.frontends.common import parse_relation
@@ -80,6 +81,14 @@ def parse_relation(text: str) -> Relation:
     try:
         return Relation(subject=subject, predicate=predicate, object=obj)
     except ValidationError as exc:
+        # A check that knows its rule -- an actor related to itself -- keeps it, so the
+        # finding is filed under `reflexive-relation` rather than a generic bad field.
+        for error in exc.errors():
+            broken = (error.get("ctx") or {}).get("error")
+            if isinstance(broken, RuleViolationError):
+                raise PanelSyntaxError(
+                    f"in staging entry {text!r}: {broken}", rule=broken.rule
+                ) from exc
         raise PanelSyntaxError(f"in staging entry {text!r}: {summarise(exc)}") from exc
 
 
