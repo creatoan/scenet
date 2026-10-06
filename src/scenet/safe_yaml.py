@@ -29,7 +29,7 @@ import yaml
 from yaml.constructor import ConstructorError
 from yaml.nodes import MappingNode, Node
 
-__all__ = ["DuplicateKeyError", "load"]
+__all__ = ["DuplicateKeyError", "NestingError", "load"]
 
 #: The tag PyYAML gives `<<`, the merge key.
 MERGE_TAG = "tag:yaml.org,2002:merge"
@@ -68,6 +68,21 @@ class DuplicateKeyError(ConstructorError):
         super().__init__(problem=self.summary, problem_mark=second.start_mark)
 
 
+class NestingError(yaml.YAMLError):
+    """The document is nested more deeply than the parser can follow.
+
+    PyYAML parses and builds a document recursively, so nesting a few hundred levels
+    deep reaches Python's recursion limit. `RecursionError` is not a YAML error, and it
+    escaped every handler that catches one -- `scenet check` and `build` both ended in a
+    traceback. No panel is nested more than a handful of levels, so a document this deep
+    is a mistake or an attack, and is reported as one.
+    """
+
+    def __init__(self) -> None:
+        """Say what went wrong in the words the diagnostic will show."""
+        super().__init__("the document is nested too deeply to read")
+
+
 class _NoRepeatsLoader(yaml.SafeLoader):
     """`SafeLoader`, refusing a key written twice in one mapping."""
 
@@ -101,6 +116,7 @@ def load(text: str) -> object:
 
     Raises:
         DuplicateKeyError: A mapping has the same key twice.
+        NestingError: The document is nested too deeply to parse.
         yaml.YAMLError: The text is not valid YAML for any other reason.
 
     Example:
@@ -118,5 +134,7 @@ def load(text: str) -> object:
     loader = _NoRepeatsLoader(text)
     try:
         return loader.get_single_data()
+    except RecursionError as exc:
+        raise NestingError from exc
     finally:
         loader.dispose()

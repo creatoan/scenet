@@ -72,6 +72,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A document nested a few hundred levels deep ended in a traceback.** PyYAML reads a
+  document recursively, and Python's recursion limit is not a YAML error, so `scenet check`,
+  `check --deep`, `build` and a comic script's front matter all ended in `RecursionError`.
+  It is now reported as invalid YAML: "the document is nested too deeply to read". (Refs #92)
 - **A control character in a panel wrote an SVG no XML parser accepts.** A `\x07` in a line
   of dialogue broke `--live-text` output, and one in an actor id broke the default output too,
   through its `id` attribute. XML cannot hold these characters even escaped, so a line, a
