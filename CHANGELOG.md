@@ -72,6 +72,13 @@ below 1.0 means.
 
 ### Fixed
 
+- **Some findings pointed at the wrong line, or at no line at all.** A syntax error at the
+  very end of a file -- a bracket never closed -- was put on the line after the last one,
+  which an editor or code scanning cannot show. And a key whose value is a block, such as
+  `panel:` with its fields beneath it, was located at the block's first field: a panel whose
+  margin left no room pointed at `size:`, and a cast member missing `reference` at whatever
+  key it did have. The first now sits at the end of the last line, the second at its key.
+  (Refs #92)
 - **A broken `over:` was located at the whole `panels:` block.** `scenet check` pointed a
   missing parent, a cycle or an `over:` that is not a name at the first line of `panels:`,
   wherever the fault was. It now points at the `over:` to change, and a missing parent's
