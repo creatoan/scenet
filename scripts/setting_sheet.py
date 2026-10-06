@@ -117,7 +117,7 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     for name, content in (("places", places_sheet()), ("weather", weather_sheet())):
         path = args.output.with_name(f"{args.output.stem}-{name}{args.output.suffix}")
-        path.write_text(content, encoding="utf-8")
+        path.write_text(content, encoding="utf-8", newline="\n")
         print(f"wrote {path}")
 
 

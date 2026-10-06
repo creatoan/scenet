@@ -15,8 +15,8 @@
     },
     {
       "name": "site",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "site"],
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "scripts/serve_site.py", "--port", "8125"],
       "port": 8125
     }
   ]

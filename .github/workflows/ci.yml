@@ -75,6 +75,27 @@ jobs:
       - name: Tests, doctests and documentation examples
         run: uv run pytest
 
+  windows:
+    name: Tests on Windows
+    # Output must be byte-identical on every platform, and Linux cannot show where it is
+    # not: there, writing text never translates a line ending. On Windows it does, and
+    # every file `scenet build` wrote came out with CRLF while this suite stayed green.
+    # tests/test_line_endings.py checks the bytes, and only fails where they can differ.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen --all-groups
+
+      - name: Tests, doctests and documentation examples
+        run: uv run pytest
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest

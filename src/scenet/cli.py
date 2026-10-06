@@ -253,16 +253,18 @@ def run_build(args: argparse.Namespace) -> int:
         # A single-panel document writes to the requested name; a sequence suffixes
         # each panel with its own name, so the mapping back to source is obvious.
         target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
-        target.write_text(render(result.core, live_text=args.live_text), encoding="utf-8")
+        target.write_text(
+            render(result.core, live_text=args.live_text), encoding="utf-8", newline="\n"
+        )
         written.append(target)
 
         if args.core:
             core_path = target.with_suffix(".core.json")
-            core_path.write_text(result.core.to_json(), encoding="utf-8")
+            core_path.write_text(result.core.to_json(), encoding="utf-8", newline="\n")
             written.append(core_path)
         if args.debug:
             debug_path = target.with_name(f"{target.stem}.debug.svg")
-            debug_path.write_text(render_debug(result.core), encoding="utf-8")
+            debug_path.write_text(render_debug(result.core), encoding="utf-8", newline="\n")
             written.append(debug_path)
         notes.extend(f"{name}: {note}" if not single else note for note in result.notes)
 
@@ -274,6 +276,7 @@ def run_build(args: argparse.Namespace) -> int:
                 live_text=args.live_text,
             ),
             encoding="utf-8",
+            newline="\n",
         )
         written.append(strip_path)
 
@@ -354,15 +357,19 @@ def _write_pages(book: Book, targets: list[Path], args: argparse.Namespace) -> l
     written: list[Path] = []
     cores = {name: result.core for name, result in book.panels.items()}
     for page, target in zip(book.pages, targets, strict=True):
-        target.write_text(render_page(page, cores, live_text=args.live_text), encoding="utf-8")
+        target.write_text(
+            render_page(page, cores, live_text=args.live_text), encoding="utf-8", newline="\n"
+        )
         written.append(target)
         if args.core:
             core_path = target.with_suffix(".core.json")
-            core_path.write_text(page.to_json(), encoding="utf-8")
+            core_path.write_text(page.to_json(), encoding="utf-8", newline="\n")
             written.append(core_path)
         if args.debug:
             debug_path = target.with_name(f"{target.stem}.debug.svg")
-            debug_path.write_text(render_page(page, cores, debug=True), encoding="utf-8")
+            debug_path.write_text(
+                render_page(page, cores, debug=True), encoding="utf-8", newline="\n"
+            )
             written.append(debug_path)
     return written
 
@@ -409,7 +416,7 @@ def run_check(args: argparse.Namespace) -> int:
         else:
             # stdout carries the document and nothing else, so that
             # `scenet check --format sarif x > results.sarif` produces a parseable file.
-            sys.stdout.write(report)
+            _print_document(report)
         return 1 if found else 0
 
     lines = []
@@ -433,7 +440,7 @@ def run_check(args: argparse.Namespace) -> int:
 def _write_report(output: Path, report: str, *, quiet: bool) -> None:
     """Write a report where `-o` said, and say so unless asked to be quiet."""
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(report, encoding="utf-8")
+    output.write_text(report, encoding="utf-8", newline="\n")
     if not quiet:
         print(f"wrote {output}")
 
@@ -451,12 +458,32 @@ def run_schema(args: argparse.Namespace) -> int:
     schema = scene_schema() if args.scene else panel_schema()
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if args.output is None:
-        print(document, end="")
+        _print_document(document)
     else:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(document, encoding="utf-8")
+        args.output.write_text(document, encoding="utf-8", newline="\n")
         print(f"wrote {args.output}")
     return 0
+
+
+def _print_document(document: str) -> None:
+    """Write a document to stdout as UTF-8 with LF line endings, whatever the platform.
+
+    A text-mode stdout translates each line ending to the platform's and encodes with
+    the console's code page, so on Windows `scenet schema > schema.json` came out with
+    CRLF, unlike the same command on Linux, and a SARIF report naming a character outside
+    cp1252 could not be printed at all. A document redirected to a file is held to the same
+    rule as one written with `-o`: the same bytes everywhere.
+    """
+    sys.stdout.flush()
+    buffer = getattr(sys.stdout, "buffer", None)
+    if buffer is None:
+        # Replaced by something with no bytes underneath, such as a `StringIO`; there is
+        # no translation to avoid.
+        sys.stdout.write(document)
+        return
+    buffer.write(document.encode("utf-8"))
+    buffer.flush()
 
 
 def run_mcp(args: argparse.Namespace) -> int:
