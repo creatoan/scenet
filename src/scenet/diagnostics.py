@@ -74,6 +74,7 @@ from scenet.frontends.script_front import FRONT_MATTER, parse_script
 from scenet.ir import PageLayout, PanelIR, check_placements
 from scenet.pipeline import compile_book, compile_ir
 from scenet.safe_yaml import DuplicateKeyError, load
+from scenet.solve.page import resolve_frames
 
 __all__ = [
     "RULES",
@@ -225,12 +226,16 @@ RULES: dict[str, Rule] = {
             "panel `panels:` defines, a panel can be on one page once, and the margins and "
             "gutters must leave room for every tier and every panel in it. A tier holds "
             "`panels:` or `columns:`, and two columns that are both stacks may not stand "
-            "side by side, because readers go across them rather than down. A document "
-            "with pages needs panels to lay out."
+            "side by side, because readers go across them rather than down. Two insets "
+            "in one panel must stay a gutter clear of each other. A slant leans the "
+            "gutters between a tier's panels, so it needs two panels or more, no columns "
+            "and no insets, and must leave every panel some width at its top and bottom. A "
+            "document with pages needs panels to lay out."
         ),
         help=(
             "Check the panel names in `pages:`, place each panel once, put a panel that "
-            "spans the tier between two stacks, or shrink the margin and gutters in `page:`."
+            "spans the tier between two stacks, move or shrink an inset, lean a slant "
+            "less, or shrink the margin and gutters in `page:`."
         ),
     ),
     "duplicate-panel": Rule(
@@ -839,6 +844,10 @@ def _diagnose_layout(
         return _from_validation_error(exc, text, source), None
     try:
         check_placements(layout, panels)
+        # Insets that overlap are only found once the frames are worked out, which is
+        # plain arithmetic and cheap, so the cheap pass does it too.
+        for index, page in enumerate(layout.pages):
+            resolve_frames(layout.page, page, index=index)
     except RuleViolationError as exc:
         return [
             Diagnostic(

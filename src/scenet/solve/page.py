@@ -11,14 +11,25 @@ conflicting preferences (`docs/explanation/prior_art.md`), and a strict grid has
 The order panels are written in is the order they are read in. In a tier of panels that is
 the Z-path. In a tier of columns it is down each column before across, which is what readers
 do when a panel spanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013);
-:class:`PageLayout <scenet.ir.PageLayout>` refuses columns where nothing blocks it.
+:class:`PageLayout <scenet.ir.PageLayout>` refuses columns where nothing blocks it. An
+inset is where readers agree least, splitting about evenly between it and the panel it
+sits in, so it is read after its parent unless it says otherwise.
 """
 
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from scenet.geom import rounded
-from scenet.ir import PageFormat, PageSpec
+from scenet.errors import RuleViolationError
+from scenet.geom import BBox, rounded
+from scenet.ir import (
+    Corner,
+    InsetOrder,
+    PageFormat,
+    PageSpec,
+    PanelPlacement,
+    StackedPanel,
+)
 
 __all__ = ["LETTERING_TIERS", "Frame", "lettering_height", "resolve_frames"]
 
@@ -40,6 +51,12 @@ class Frame:
         y: Top edge.
         width: Frame width.
         height: Frame height.
+        inset_of: For an inset, the panel it is set into; `None` otherwise.
+        clearance: For an inset, the area it covers with its ring of white: the frame
+            grown by a gutter on every side. It is painted white under the inset, and
+            its parent's lettering keeps clear of it. `None` for a panel that is no inset.
+        outline: For a panel in a slanted tier, its four corners, clockwise from the top
+            left, in page units; the frame is their bounding box. `None` for a rectangle.
     """
 
     panel: str
@@ -47,6 +64,9 @@ class Frame:
     y: float
     width: float
     height: float
+    inset_of: str | None = None
+    clearance: BBox | None = None
+    outline: tuple[tuple[float, float], ...] | None = None
 
 
 def _split(start: float, length: float, gap: float, weights: Sequence[float]) -> list[float]:
@@ -61,16 +81,149 @@ def _split(start: float, length: float, gap: float, weights: Sequence[float]) ->
     return spans
 
 
-def resolve_frames(page_format: PageFormat, page: PageSpec) -> tuple[Frame, ...]:
+def _frame(panel: str, area: BBox, *, inset_of: str | None = None, gutter: float = 0.0) -> Frame:
+    """A frame with every value rounded, and an inset's clearance worked out from it."""
+    x, y = rounded(area.x), rounded(area.y)
+    width, height = rounded(area.width), rounded(area.height)
+    clearance = (
+        BBox(
+            rounded(x - gutter),
+            rounded(y - gutter),
+            rounded(width + 2 * gutter),
+            rounded(height + 2 * gutter),
+        )
+        if inset_of is not None
+        else None
+    )
+    return Frame(panel, x, y, width, height, inset_of=inset_of, clearance=clearance)
+
+
+def _with_insets(
+    placement: PanelPlacement | StackedPanel,
+    area: BBox,
+    gutter: float,
+    loc: tuple[str | int, ...],
+) -> list[Frame]:
+    """A panel's frame and its insets' frames, in the order they are read.
+
+    An inset sits a gutter in from both edges of its corner, and its ring of white is a
+    gutter wide, so the ring meets its parent's edge: the parent reads as a panel with a
+    corner cut out, and the inset as a panel of its own.
+
+    Raises:
+        RuleViolationError: Rule `page-layout`, when an inset comes within a gutter of
+            another inset in the same panel.
+    """
+    parent = _frame(placement.use, area)
+    before: list[Frame] = []
+    after: list[Frame] = []
+    cleared: list[tuple[str, BBox]] = []
+    for index, inset in enumerate(placement.insets):
+        width, height = area.width * inset.size, area.height * inset.size
+        left = inset.at in (Corner.TOP_LEFT, Corner.BOTTOM_LEFT)
+        top = inset.at in (Corner.TOP_LEFT, Corner.TOP_RIGHT)
+        x = area.x + gutter if left else area.right - gutter - width
+        y = area.y + gutter if top else area.bottom - gutter - height
+        frame = _frame(inset.use, BBox(x, y, width, height), inset_of=placement.use, gutter=gutter)
+        drawn = BBox(frame.x, frame.y, frame.width, frame.height)
+        for name, clearance in cleared:
+            if clearance.overlap_area(drawn):
+                raise RuleViolationError(
+                    f"insets '{name}' and '{inset.use}' in panel '{placement.use}' overlap; "
+                    "each needs a gutter clear of the other, so put them in other corners or "
+                    "make them smaller",
+                    rule="page-layout",
+                    loc=(*loc, "insets", index),
+                )
+        cleared.append(
+            (inset.use, BBox(x - gutter, y - gutter, width + 2 * gutter, height + 2 * gutter))
+        )
+        (before if inset.read is InsetOrder.BEFORE else after).append(frame)
+    return [*before, parent, *after]
+
+
+def _slanted(
+    panels: Sequence[PanelPlacement],
+    slant: float,
+    row: BBox,
+    gutter: float,
+    loc: tuple[str | int, ...],
+) -> list[Frame]:
+    """The frames of a tier whose gutters lean by `slant` degrees.
+
+    Each gutter is the band either side of a line through its centre at mid-height,
+    tilted from upright by `slant`. Its edges are half a gutter from that line measured
+    across it, not along x, so the gap is a gutter wide whatever the angle, as paneling
+    tools keep it. Neighbours share the line; the tier's outer edges stay upright.
+
+    Raises:
+        RuleViolationError: Rule `page-layout`, when the lean would leave a panel no
+            width at its top or bottom.
+    """
+    lean = math.tan(math.radians(slant))
+    half = gutter / (2 * math.cos(math.radians(slant)))
+    mid = row.y + row.height / 2
+    spans = _split(row.x, row.width, gutter, [placement.width for placement in panels])
+    # The centre of each gutter at mid-height, and where its line is at a given height.
+    centres = [x + width + gutter / 2 for x, width in zip(spans[:-2:2], spans[1:-2:2], strict=True)]
+
+    def cut(index: int, y: float) -> float:
+        return centres[index] + (mid - y) * lean
+
+    top, bottom = row.y, row.bottom
+    frames: list[Frame] = []
+    for index, placement in enumerate(panels):
+        left = (
+            (row.x, row.x)
+            if index == 0
+            else (cut(index - 1, top) + half, cut(index - 1, bottom) + half)
+        )
+        right = (
+            (row.right, row.right)
+            if index == len(panels) - 1
+            else (cut(index, top) - half, cut(index, bottom) - half)
+        )
+        if right[0] - left[0] <= 0 or right[1] - left[1] <= 0:
+            raise RuleViolationError(
+                f"a slant of {slant:g} degrees is too steep for panel '{placement.use}': its "
+                f"gutters would cross before the top or bottom of its {row.height:g}-unit "
+                "height. Lean them less, make the panel wider, or the tier shorter",
+                rule="page-layout",
+                loc=(*loc, "slant"),
+            )
+        corners = (
+            (rounded(left[0]), rounded(top)),
+            (rounded(right[0]), rounded(top)),
+            (rounded(right[1]), rounded(bottom)),
+            (rounded(left[1]), rounded(bottom)),
+        )
+        # The frame is taken from the rounded corners, so the outline never strays past
+        # its own bounding box by a rounding.
+        x = min(corners[0][0], corners[3][0])
+        width = rounded(max(corners[1][0], corners[2][0]) - x)
+        height = rounded(corners[3][1] - corners[0][1])
+        frames.append(Frame(placement.use, x, corners[0][1], width, height, outline=corners))
+    return frames
+
+
+def resolve_frames(page_format: PageFormat, page: PageSpec, *, index: int = 0) -> tuple[Frame, ...]:
     """Lay out one page.
 
     Args:
         page_format: Size, margin and gutters.
         page: The tiers, already validated to have room for what they hold.
+        index: The page's position among the pages, from 0, to locate a mistake.
 
     Returns:
         One frame per panel, in reading order: tier by tier, and within a tier left to
         right -- or, for a tier of columns, column by column and top to bottom in each.
+        An inset comes right after the panel it is set into, or right before it when it
+        says `read: before`.
+
+    Raises:
+        RuleViolationError: Rule `page-layout`, for two insets in one panel that overlap.
+            It is found here, where the frames are worked out, and `scenet check` runs
+            this too, so the finding is still located.
 
     Example:
         >>> from scenet.ir import PageFormat, PageSpec
@@ -81,33 +234,46 @@ def resolve_frames(page_format: PageFormat, page: PageSpec) -> tuple[Frame, ...]
         [('a', 100.0, 586.67), ('b', 726.67, 1173.33)]
     """
     margin = page_format.margin
+    gutter = page_format.gutter
     usable_width = page_format.width - 2 * margin
     usable_height = page_format.height - 2 * margin
-
-    def frame(panel: str, x: float, y: float, width: float, height: float) -> Frame:
-        return Frame(
-            panel=panel, x=rounded(x), y=rounded(y), width=rounded(width), height=rounded(height)
-        )
 
     frames: list[Frame] = []
     rows = _split(
         margin, usable_height, page_format.tier_gutter, [tier.height for tier in page.tiers]
     )
-    for tier, y, height in zip(page.tiers, rows[::2], rows[1::2], strict=True):
-        if tier.panels:
-            spans = _split(margin, usable_width, page_format.gutter, [p.width for p in tier.panels])
-            frames += [
-                frame(placement.use, x, y, width, height)
-                for placement, x, width in zip(tier.panels, spans[::2], spans[1::2], strict=True)
-            ]
+    for tier_index, (tier, y, height) in enumerate(
+        zip(page.tiers, rows[::2], rows[1::2], strict=True)
+    ):
+        loc: tuple[str | int, ...] = ("pages", index, "tiers", tier_index)
+        if tier.panels and tier.slant:
+            frames += _slanted(
+                tier.panels, tier.slant, BBox(margin, y, usable_width, height), gutter, loc
+            )
             continue
-        spans = _split(margin, usable_width, page_format.gutter, [c.width for c in tier.columns])
-        for column, x, width in zip(tier.columns, spans[::2], spans[1::2], strict=True):
+        if tier.panels:
+            spans = _split(margin, usable_width, gutter, [p.width for p in tier.panels])
+            for panel_index, (placement, x, width) in enumerate(
+                zip(tier.panels, spans[::2], spans[1::2], strict=True)
+            ):
+                frames += _with_insets(
+                    placement, BBox(x, y, width, height), gutter, (*loc, "panels", panel_index)
+                )
+            continue
+        spans = _split(margin, usable_width, gutter, [c.width for c in tier.columns])
+        for column_index, (column, x, width) in enumerate(
+            zip(tier.columns, spans[::2], spans[1::2], strict=True)
+        ):
             stack = _split(y, height, page_format.tier_gutter, [p.height for p in column.panels])
-            frames += [
-                frame(stacked.use, x, top, width, size)
-                for stacked, top, size in zip(column.panels, stack[::2], stack[1::2], strict=True)
-            ]
+            for panel_index, (stacked, top, size) in enumerate(
+                zip(column.panels, stack[::2], stack[1::2], strict=True)
+            ):
+                frames += _with_insets(
+                    stacked,
+                    BBox(x, top, width, size),
+                    gutter,
+                    (*loc, "columns", column_index, "panels", panel_index),
+                )
     return tuple(frames)
 
 

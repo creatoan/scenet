@@ -128,17 +128,33 @@ def _frames(
     live_text: bool,
     debug: bool,
 ) -> list[str]:
-    """Every panel of one page, at its frame, positions counting from `first_position`."""
+    """Every panel of one page, at its frame, positions counting from `first_position`.
+
+    Positions follow reading order, but painting does not: every inset is painted after
+    every other panel, so it is on top of its parent even when it is read first. Each one
+    goes down on its clearance, painted white, so its parent's art stops a gutter short of
+    it all round.
+    """
     lines: list[str] = []
-    for offset, frame in enumerate(page.frames):
+    numbered = list(enumerate(page.frames, start=first_position))
+    painted = [entry for entry in numbered if entry[1].inset_of is None] + [
+        entry for entry in numbered if entry[1].inset_of is not None
+    ]
+    for position, frame in painted:
         core = panels.get(frame.panel)
         if core is None:
             raise ValueError(f"the page places panel '{frame.panel}', which was not given")
+        if frame.clearance is not None:
+            ring = frame.clearance
+            lines.append(
+                f'  <rect x="{fmt(ring.x)}" y="{fmt(ring.y)}" width="{fmt(ring.width)}" '
+                f'height="{fmt(ring.height)}" fill="{PAGE_FILL}"/>'
+            )
         lines.extend(
             placed_panel(
                 frame.panel,
                 core,
-                first_position + offset,
+                position,
                 frame.x,
                 frame.y,
                 live_text=live_text,
