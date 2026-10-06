@@ -10,6 +10,28 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A comic script could lose panels and dialogue without saying so.** Three cases, none of
+  which raised anything. (#63)
+  - **Panel numbers that start again on each page** overwrote each other, so
+    `PAGE ONE / PANEL 1 / PANEL 2 / PAGE TWO / PANEL 1` compiled two panels. Publishers' script
+    formats number panels per page, so this is the common case. When numbers repeat, every
+    panel is now named by its page too: `PANEL 1` under `PAGE TWO` is `2-1`, written to
+    `name.2-1.svg`. Spelled-out pages are named by their number. A script that numbers
+    straight through keeps its names.
+  - **Dialogue wrapped onto a second line** lost that line. A speech now runs to the next blank
+    line, joined with spaces. Prose written directly under dialogue with no blank line between
+    them now joins the speech; a line that looks like a cue still starts a new one.
+  - **`PANEL 1:`** named the panel `1:`, and `scenet build` wrote `name.1:.svg`, which Windows
+    cannot hold. `PANEL 1:` and `PANEL 1.` both name panel `1` now.
+
+### Added
+
+- `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
+  name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
+  the heading that repeats. (#63)
+
 ## [0.9.0] - 2026-10-03
 
 A release for maintainers: Scenet can now be listed in the MCP registry from a workflow. The
