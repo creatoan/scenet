@@ -93,6 +93,29 @@ uv run python scripts/update_golden.py
 
 `--check` exits 1 and names every stale golden without writing anything.
 
+## The reference as a contract
+
+`docs/reference/cli.md` is the specification, so `tests/test_reference_contract.py`
+holds the code to it, failing in both directions -- documented and missing, or present and
+undocumented:
+
+- each command's options, their choices and the values marked as defaults, against
+  `scenet.cli.build_parser()`;
+- each command's exit-status table, against a scenario that produces every code in it;
+- the extension table, against the frontends `build` reads with;
+- every rule except `internal`, against a document in `tests/rule_corpus/` named after it
+  that must produce exactly one finding of that rule, and the rule objects SARIF emits
+  against the catalogue;
+- the behavioural sentences -- output naming, clashes, `--quiet`, what `check` writes,
+  SARIF on stdout -- one test each.
+
+The `scenet` lines of every `bash` block in the documentation run as well, in-process in a
+copy of `examples/` (`tests/shell_examples.py`). `pip`, `uv`, `git` and the like never run.
+A block that needs a file the reader creates along the way is marked `<!--- skip: next -->`.
+
+A new rule needs a corpus document; a new option needs a definition in the reference. The
+tests say which.
+
 ## Profiles
 
 A property failure has to replay identically, so **the default is derandomized

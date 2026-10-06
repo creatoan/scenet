@@ -1,0 +1,3 @@
+# A cast member with no `reference`.
+cast:
+  alice: {pose: pointing}

@@ -38,6 +38,8 @@ cast:
 
 And compile it:
 
+<!--- skip: next -->
+
 ```bash
 scenet build hello.panel.yaml
 ```

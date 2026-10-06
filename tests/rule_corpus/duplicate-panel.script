@@ -1,0 +1,12 @@
+---
+cast: {ALICE: {reference: alice}}
+---
+PAGE 1
+
+PANEL 1
+ALICE
+Hello.
+
+PANEL 1
+ALICE
+Hello again.
