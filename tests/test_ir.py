@@ -302,3 +302,40 @@ class TestScriptIsAUnion:
             ),
         )
         assert len(panel.script) == 3
+
+
+class TestTextSvgCanCarry:
+    """XML 1.0 cannot carry most control characters at all, escaped or not, so a string
+    that reaches the SVG must not hold one. Found while planning #91: a `\\x07` in a line
+    of dialogue made `--live-text` output that no XML parser accepts."""
+
+    @pytest.mark.parametrize("bad", ["\x00", "\x07", "\x0b", "\x1b", "\x1f", "￾"])
+    def test_a_control_character_in_dialogue_is_refused(self, bad: str):
+        with pytest.raises(ValidationError) as caught:
+            PanelIR.model_validate(
+                {
+                    "cast": {"alice": {"reference": "alice"}},
+                    "script": [{"verb": "say", "by": "alice", "text": f"Hi{bad} there"}],
+                }
+            )
+        (error,) = caught.value.errors()
+        assert error["loc"] == ("script", 0, "say", "text")
+        assert f"U+{ord(bad):04X}" in error["msg"]
+
+    def test_a_control_character_in_a_caption_is_refused(self):
+        with pytest.raises(ValidationError, match=r"U\+0007"):
+            PanelIR.model_validate({"script": [{"verb": "caption", "text": "Later\x07."}]})
+
+    def test_a_control_character_in_an_off_panel_speaker_is_refused(self):
+        with pytest.raises(ValidationError, match=r"U\+001B"):
+            CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="doc\x1btor")
+
+    def test_a_control_character_in_an_actor_id_is_refused(self):
+        """An actor id becomes an SVG `id` attribute."""
+        with pytest.raises(ValidationError, match=r"U\+0007"):
+            PanelIR.model_validate({"cast": {"a\x07b": {"reference": "alice"}}})
+
+    @pytest.mark.parametrize("fine", ["\t", "\n", "\r", "é", "—", "\N{NO-BREAK SPACE}", "😀"])
+    def test_whitespace_and_ordinary_unicode_are_kept(self, fine: str):
+        event = SayEvent(by="alice", text=f"Hi{fine}there")
+        assert event.text == f"Hi{fine}there"
