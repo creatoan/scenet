@@ -92,14 +92,19 @@ frames the figure at roughly two thirds the size a full shot does.
 
 ## Angle
 
-`angle` selects where the eye-line sits vertically within the panel:
+`angle` scales the shot's **headroom**, the air above the head. That is the cue a reader takes
+from an angle, and it is one that survives being drawn flat:
 
-| `angle` | Eye-line | Effect |
+| `angle` | Headroom | Effect |
 |---|---|---|
-| `low` | Lower third | Figure looms; viewer looks up |
-| `eye_level` | Upper third | Neutral (default) |
-| `high` | Upper edge | Figure diminished; viewer looks down |
+| `low` | × 0.5 | Less air above the head: the figure looms; viewer looks up |
+| `eye_level` | × 1.0 | The shot's own headroom (default) |
+| `high` | × 1.6 | More air above: the figure is diminished; viewer looks down |
 
-**Current limitation:** angle shifts the eye-line only. It does not yet apply true perspective
-projection or foreshortening, so extreme angles will read as vertical repositioning rather than as a
-genuine change of viewpoint. This is a known gap, not an oversight.
+A tilted camera never leaves less than 0.02 of the panel height above the head, so a shot whose
+own headroom is zero, such as `extreme_close_up`, still moves under an angle.
+
+**Current limitation:** angle changes headroom only. It does not apply perspective projection or
+foreshortening, because the compiler is orthographic, so an extreme angle reads as the figure
+sitting higher or lower rather than as a change of viewpoint. This is a known gap, not an
+oversight.

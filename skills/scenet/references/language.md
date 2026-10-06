@@ -472,8 +472,8 @@ priority rather than by failing:
 
 | Strength | Examples |
 |---|---|
-| **Required** | Actors stay inside the panel; balloons never cover a face; reading order holds |
-| **Strong** | Declared `left_of` / `right_of` ordering |
+| **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
+| **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
 | **Weak** | `at:` anchors, `prefer:` balloon hints |
 
 So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the

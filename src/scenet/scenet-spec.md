@@ -549,8 +549,8 @@ priority rather than by failing:
 
 | Strength | Examples |
 |---|---|
-| **Required** | Actors stay inside the panel; balloons never cover a face; reading order holds |
-| **Strong** | Declared `left_of` / `right_of` ordering |
+| **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
+| **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
 | **Weak** | `at:` anchors, `prefer:` balloon hints |
 
 So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
@@ -680,17 +680,22 @@ frames the figure at roughly two thirds the size a full shot does.
 
 ## Angle
 
-`angle` selects where the eye-line sits vertically within the panel:
+`angle` scales the shot's **headroom**, the air above the head. That is the cue a reader takes
+from an angle, and it is one that survives being drawn flat:
 
-| `angle` | Eye-line | Effect |
+| `angle` | Headroom | Effect |
 |---|---|---|
-| `low` | Lower third | Figure looms; viewer looks up |
-| `eye_level` | Upper third | Neutral (default) |
-| `high` | Upper edge | Figure diminished; viewer looks down |
+| `low` | × 0.5 | Less air above the head: the figure looms; viewer looks up |
+| `eye_level` | × 1.0 | The shot's own headroom (default) |
+| `high` | × 1.6 | More air above: the figure is diminished; viewer looks down |
 
-**Current limitation:** angle shifts the eye-line only. It does not yet apply true perspective
-projection or foreshortening, so extreme angles will read as vertical repositioning rather than as a
-genuine change of viewpoint. This is a known gap, not an oversight.
+A tilted camera never leaves less than 0.02 of the panel height above the head, so a shot whose
+own headroom is zero, such as `extreme_close_up`, still moves under an angle.
+
+**Current limitation:** angle changes headroom only. It does not apply perspective projection or
+foreshortening, because the compiler is orthographic, so an extreme angle reads as the figure
+sitting higher or lower rather than as a change of viewpoint. This is a known gap, not an
+oversight.
 
 <!-- scenet-spec:part=comic-script -->
 # Write a panel as a comic script
@@ -774,8 +779,8 @@ natural-language-processed, and does not affect the output in any way. It is kep
 a script is a document people read, and stripping the description would make the file
 worse for its primary audience.
 
-If you want the rain, you have to say so in the panel description — and rain is
-[not yet a construct in the language](https://creatoan.github.io/scenet/explanation/status.html).
+If you want the rain, say so with a directive: `@setting: {weather: rain}` draws it. The
+description beside it is never read.
 
 ## Front matter
 
@@ -1037,7 +1042,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "BalloonKind": {
-      "description": "What kind of balloon carries a line, which is how it gets drawn.\n\nThe kind changes the outline and the tail, never the placement: a whisper is\nsubject to exactly the same face-avoidance and reading-order rules as a shout.\n\n| Kind | Outline | Tail |\n|---|---|---|\n| `speech` | plain ellipse | tapered pointer |\n| `thought` | scalloped cloud | trail of bubbles |\n| `whisper` | dashed ellipse | tapered pointer |\n| `shout` | jagged burst | tapered pointer |",
+      "description": "What kind of balloon carries a line, which is how it gets drawn.\n\nThe kind changes the outline and the tail, never the placement: a whisper is\nsubject to exactly the same face-avoidance and reading-order rules as a shout.\n\n| Kind | Outline | Tail |\n|---|---|---|\n| `speech` | rounded rectangle | tapered pointer |\n| `thought` | ellipse | trail of bubbles |\n| `whisper` | dashed rounded rectangle | tapered pointer |\n| `shout` | jagged burst | tapered pointer |",
       "enum": [
         "speech",
         "thought",

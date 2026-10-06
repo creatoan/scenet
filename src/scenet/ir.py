@@ -235,9 +235,9 @@ class BalloonKind(StrEnum):
 
     | Kind | Outline | Tail |
     |---|---|---|
-    | `speech` | plain ellipse | tapered pointer |
-    | `thought` | scalloped cloud | trail of bubbles |
-    | `whisper` | dashed ellipse | tapered pointer |
+    | `speech` | rounded rectangle | tapered pointer |
+    | `thought` | ellipse | trail of bubbles |
+    | `whisper` | dashed rounded rectangle | tapered pointer |
     | `shout` | jagged burst | tapered pointer |
     """
 

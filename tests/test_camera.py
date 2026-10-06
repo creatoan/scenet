@@ -15,6 +15,7 @@ from scenet.ir import CameraAngle, ShotType
 from scenet.pipeline import compile_source
 from scenet.solve.camera import (
     ANGLE_HEADROOM_FACTOR,
+    MINIMUM_ANGLE_HEADROOM,
     SHOT_TABLE,
     headroom_for,
     solve_camera,
@@ -435,3 +436,29 @@ class TestTheNormativeTableMatchesTheCode:
     @pytest.mark.parametrize("shot", list(ShotType))
     def test_the_headroom_matches(self, shot: ShotType):
         assert f"{SHOT_TABLE[shot].headroom:.2f}" in self._row(shot)
+
+
+class TestTheAngleTableMatchesTheCode:
+    """The angle table sits in the same normative document, and it described an eye-line
+    the code never placed: `angle` has always scaled headroom (#65). Same check, so it
+    cannot drift again."""
+
+    DOC = TestTheNormativeTableMatchesTheCode.DOC
+
+    def _row(self, angle: CameraAngle) -> str:
+        for line in self.DOC.read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"| `{angle.value}` |"):
+                return line
+        raise AssertionError(f"{angle.value} has no row in the angle table")
+
+    @pytest.mark.parametrize("angle", list(CameraAngle))
+    def test_every_angle_has_a_row(self, angle: CameraAngle):
+        assert self._row(angle)
+
+    @pytest.mark.parametrize("angle", list(CameraAngle))
+    def test_the_headroom_factor_matches(self, angle: CameraAngle):
+        sign = "\N{MULTIPLICATION SIGN}"
+        assert f"{sign} {ANGLE_HEADROOM_FACTOR[angle]:.1f}" in self._row(angle)
+
+    def test_the_floor_for_a_tilted_camera_is_stated(self):
+        assert f"{MINIMUM_ANGLE_HEADROOM:.2f}" in self.DOC.read_text(encoding="utf-8")

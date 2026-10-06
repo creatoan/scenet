@@ -79,8 +79,8 @@ natural-language-processed, and does not affect the output in any way. It is kep
 a script is a document people read, and stripping the description would make the file
 worse for its primary audience.
 
-If you want the rain, you have to say so in the panel description — and rain is
-[not yet a construct in the language](../explanation/status.md).
+If you want the rain, say so with a directive: `@setting: {weather: rain}` draws it. The
+description beside it is never read.
 
 ## Front matter
 

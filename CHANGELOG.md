@@ -41,6 +41,21 @@ below 1.0 means.
   `p2-`), never by its name, which could not be kept safe inside `url(#...)`. The strip's
   output changes; a single panel's is byte-identical. `render` and `render_debug` take an
   `id_prefix` for this, empty by default. (#64)
+- **Reference documents disagreed with the code in eight places**, now each true again and the
+  first three held there by a test. (#65)
+  - `shot_types.md`, the normative one, said `angle` moved the eye-line. It has always
+    scaled headroom (×0.5, ×1.0, ×1.6), as the code, the IR and gallery 03 say.
+  - The puppet example in `asset_contract.md` used fields the contract never had, so a
+    puppet written from it would not load. It is now a complete puppet that does.
+  - The rule table in `cli.md` lacked `unknown-place` and `conflicting-setting`.
+  - The constraint table in `language.md` had panel bounds as required and ordering as
+    strong; it is the other way round, on purpose.
+  - `BalloonKind` said speech and whisper balloons were ellipses and thought balloons
+    clouds; they are rounded rectangles and an ellipse.
+  - The editor guide claimed highlighting for `.script` files, which the extension does
+    not have (#77). The comic-script guide said rain was not a construct (it has been since
+    0.6.0), and the status page still listed tinted captions as planned and pages as
+    untracked.
 - **A key written twice in YAML lost the first without a word.** PyYAML keeps the last of
   two equal keys, so `cast: {alice: …, alice: …}` compiled one character and `scenet check`
   called it `ok`; the same went for panels, settings and a puppet's poses. Every YAML Scenet

@@ -13,7 +13,7 @@
       "type": "string"
     },
     "BalloonKind": {
-      "description": "What kind of balloon carries a line, which is how it gets drawn.\n\nThe kind changes the outline and the tail, never the placement: a whisper is\nsubject to exactly the same face-avoidance and reading-order rules as a shout.\n\n| Kind | Outline | Tail |\n|---|---|---|\n| `speech` | plain ellipse | tapered pointer |\n| `thought` | scalloped cloud | trail of bubbles |\n| `whisper` | dashed ellipse | tapered pointer |\n| `shout` | jagged burst | tapered pointer |",
+      "description": "What kind of balloon carries a line, which is how it gets drawn.\n\nThe kind changes the outline and the tail, never the placement: a whisper is\nsubject to exactly the same face-avoidance and reading-order rules as a shout.\n\n| Kind | Outline | Tail |\n|---|---|---|\n| `speech` | rounded rectangle | tapered pointer |\n| `thought` | ellipse | trail of bubbles |\n| `whisper` | dashed rounded rectangle | tapered pointer |\n| `shout` | jagged burst | tapered pointer |",
       "enum": [
         "speech",
         "thought",

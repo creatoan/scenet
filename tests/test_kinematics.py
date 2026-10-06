@@ -6,8 +6,11 @@ apart the camera crops in the wrong place while everything still *looks* fine.
 """
 
 import math
+import re
+from pathlib import Path
 
 import pytest
+import yaml
 
 from scenet.assets.contract import Landmark, PuppetLibrary, PuppetSpec, default_library
 from scenet.assets.kinematics import convex_hull, resolve, solve_pose
@@ -196,3 +199,17 @@ class TestDeterminism:
         ]
         assert runs[0].joints == runs[1].joints == runs[2].joints
         assert runs[0].hull == runs[1].hull == runs[2].hull
+
+
+class TestTheReferenceExampleIsAPuppet:
+    """`docs/reference/asset_contract.md` opens with an example puppet. It used fields the
+    contract never had -- `bone`, `shape`, `default_dir` -- and every contract model
+    rejects unknown keys, so a puppet written from it did not load (#65)."""
+
+    DOC = Path(__file__).parent.parent / "docs" / "reference" / "asset_contract.md"
+
+    def test_it_loads(self):
+        block = re.search(r"```yaml\n(.*?)```", self.DOC.read_text(encoding="utf-8"), re.DOTALL)
+        assert block is not None
+        spec = PuppetSpec.model_validate(yaml.safe_load(block.group(1)))
+        assert spec.heads_tall == 7.5
