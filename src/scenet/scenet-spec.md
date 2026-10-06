@@ -622,7 +622,8 @@ split about evenly over whether an inset comes before the panel it sits in or af
 
 The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
 words under an inset could not be read. When an inset covers a character's face, the compiler
-notes it. Two insets in one panel must stay a gutter clear of each other.
+notes it. Two insets in one panel must stay a gutter clear of each other, and an inset, a gutter
+in from its corner, must fit inside its panel.
 
 A tier of panels can **slant**, for a beat that should not sit square:
 
@@ -651,9 +652,9 @@ A page is read tier by tier, left to right, and down each column, so the order p
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, a slant
-that cannot apply or is too steep, or margins and gutters that leave no room are reported as
-`page-layout`.
+both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, an inset
+too big for its panel, a slant that cannot apply or is too steep, or margins and gutters that leave
+no room are reported as `page-layout`.
 
 Not yet: frames of any other shape, such as round panels or ones without borders; right-to-left
 reading ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages

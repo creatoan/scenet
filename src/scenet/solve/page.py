@@ -98,6 +98,11 @@ def _frame(panel: str, area: BBox, *, inset_of: str | None = None, gutter: float
     return Frame(panel, x, y, width, height, inset_of=inset_of, clearance=clearance)
 
 
+def _fmt(value: float) -> str:
+    """A length as a person would say it: no trailing zeros."""
+    return f"{value:.1f}".rstrip("0").rstrip(".")
+
+
 def _with_insets(
     placement: PanelPlacement | StackedPanel,
     area: BBox,
@@ -124,6 +129,18 @@ def _with_insets(
         top = inset.at in (Corner.TOP_LEFT, Corner.TOP_RIGHT)
         x = area.x + gutter if left else area.right - gutter - width
         y = area.y + gutter if top else area.bottom - gutter - height
+        # A gutter in from the corner, plus the inset itself, must still be inside the
+        # parent. In a panel narrower or shorter than that, the inset would be drawn over
+        # whatever is beside it, and its parent's corner cut-out would be a fiction.
+        if width + gutter > area.width or height + gutter > area.height:
+            raise RuleViolationError(
+                f"inset '{inset.use}' does not fit in panel '{placement.use}': a "
+                f"{_fmt(area.width)} by {_fmt(area.height)} frame has no room for an inset "
+                f"{_fmt(inset.size * 100)}% of its size a gutter in from its corner, so "
+                "make the panel larger, the inset smaller, or the gutter narrower",
+                rule="page-layout",
+                loc=(*loc, "insets", index),
+            )
         frame = _frame(inset.use, BBox(x, y, width, height), inset_of=placement.use, gutter=gutter)
         drawn = BBox(frame.x, frame.y, frame.width, frame.height)
         for name, clearance in cleared:

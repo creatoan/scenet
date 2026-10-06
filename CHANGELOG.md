@@ -72,6 +72,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **An inset could be drawn outside the panel it is set into.** An inset sits a gutter in
+  from its corner, so in a panel narrower or shorter than that it landed over the next panel
+  or the page margin, and `scenet check` said nothing. An inset that does not fit is now
+  refused as `scenet/page-layout`, at the inset, saying what to change. (Refs #92)
 - **A control character in a panel wrote an SVG no XML parser accepts.** A `\x07` in a line
   of dialogue broke `--live-text` output, and one in an actor id broke the default output too,
   through its `id` attribute. XML cannot hold these characters even escaped, so a line, a
