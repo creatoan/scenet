@@ -62,7 +62,7 @@ from scenet.errors import (
     UnknownPoseError,
     UnknownPuppetError,
 )
-from scenet.frontends.common import LAYOUT_KEYS, normalise, normalise_layout
+from scenet.frontends.common import LAYOUT_KEYS, errors_of, normalise, normalise_layout
 from scenet.frontends.positions import (
     DOCUMENT_START,
     Position,
@@ -223,12 +223,14 @@ RULES: dict[str, Rule] = {
         description=(
             "`pages:` lays the panels of a scene out in tiers. Each placement must name a "
             "panel `panels:` defines, a panel can be on one page once, and the margins and "
-            "gutters must leave room for every tier and every panel in it. A document "
+            "gutters must leave room for every tier and every panel in it. A tier holds "
+            "`panels:` or `columns:`, and two columns that are both stacks may not stand "
+            "side by side, because readers go across them rather than down. A document "
             "with pages needs panels to lay out."
         ),
         help=(
-            "Check the panel names in `pages:`, place each panel once, or shrink the "
-            "margin and gutters in `page:`."
+            "Check the panel names in `pages:`, place each panel once, put a panel that "
+            "spans the tier between two stacks, or shrink the margin and gutters in `page:`."
         ),
     ),
     "duplicate-panel": Rule(
@@ -423,7 +425,7 @@ def _from_validation_error(
     own name in front of that, or every finding in a scene points at the top level.
     """
     found: list[Diagnostic] = []
-    for error in exc.errors():
+    for error in errors_of(exc):
         rule, path = _rule_for_pydantic(error)
         path = prefix + path
         # pydantic prefixes messages from custom validators with "Value error, ", which

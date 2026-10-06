@@ -14,7 +14,13 @@ from pydantic import ValidationError
 
 from scenet.compose import merge, resolve_overrides
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
-from scenet.frontends.common import LAYOUT_KEYS, normalise, normalise_layout, summarise
+from scenet.frontends.common import (
+    LAYOUT_KEYS,
+    errors_of,
+    normalise,
+    normalise_layout,
+    summarise,
+)
 from scenet.ir import PageLayout, PanelIR, check_placements
 from scenet.safe_yaml import DuplicateKeyError, load
 
@@ -175,7 +181,7 @@ def _validate_layout(data: dict[str, Any], source: Path | None) -> PageLayout:
     except ValidationError as exc:
         broken = [
             original
-            for error in exc.errors()
+            for error in errors_of(exc)
             if isinstance(original := (error.get("ctx") or {}).get("error"), RuleViolationError)
         ]
         rule = broken[0].rule if broken else None

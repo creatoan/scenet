@@ -26,6 +26,7 @@ __all__ = [
     "CaptionKind",
     "CaptionTone",
     "CastMember",
+    "Column",
     "Facing",
     "Horizon",
     "Mark",
@@ -45,6 +46,7 @@ __all__ = [
     "SettingSpec",
     "ShotType",
     "Spans",
+    "StackedPanel",
     "Strict",
     "Tier",
     "TimeOfDay",
@@ -1047,24 +1049,83 @@ class PanelPlacement(Strict):
     width: float = Field(default=1.0, gt=0.0)
 
 
+class StackedPanel(Strict):
+    """One panel in a column.
+
+    Written as the panel's name alone, or as `{use: name, height: 2}` to give it a larger
+    share of the column.
+
+    Attributes:
+        use: The name of a panel under `panels:`.
+        height: Its share of the column's height, relative to the other panels in it.
+    """
+
+    use: str
+    height: float = Field(default=1.0, gt=0.0)
+
+
+class Column(Strict):
+    """Panels stacked top to bottom, beside the other columns of a tier.
+
+    Attributes:
+        width: Its share of the tier's width, relative to the other columns.
+        panels: The panels in it, top to bottom.
+    """
+
+    width: float = Field(default=1.0, gt=0.0)
+    panels: tuple[StackedPanel, ...] = Field(min_length=1)
+
+
 class Tier(Strict):
-    """A row of panels, read left to right.
+    """A row of panels read left to right, or of columns each read top to bottom.
+
+    Columns are how a tall panel beside a stack of short ones is written. The stack is
+    read down before the page is read across, which is what readers do when a panel
+    spanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).
 
     Attributes:
         height: Its share of the page's height, relative to the other tiers.
         panels: The panels in it, in reading order.
+        columns: The columns in it, left to right. A tier has `panels` or `columns`.
     """
 
     height: float = Field(default=1.0, gt=0.0)
-    panels: tuple[PanelPlacement, ...] = Field(min_length=1)
+    panels: tuple[PanelPlacement, ...] = ()
+    columns: tuple[Column, ...] = ()
+
+    @model_validator(mode="after")
+    def check_one_kind(self) -> Self:
+        """A tier is a row of panels or a row of columns: never both, never neither."""
+        if bool(self.panels) == bool(self.columns):
+            raise RuleViolationError(
+                "a tier holds either `panels:` or `columns:`, and this one has "
+                + ("both" if self.panels else "neither"),
+                rule="page-layout",
+            )
+        return self
+
+    @property
+    def placed(self) -> tuple[tuple[str, tuple[str | int, ...]], ...]:
+        """Each panel's name and its path within the tier, in reading order."""
+        if self.panels:
+            return tuple(
+                (placement.use, ("panels", index)) for index, placement in enumerate(self.panels)
+            )
+        return tuple(
+            (stacked.use, ("columns", column_index, "panels", index))
+            for column_index, column in enumerate(self.columns)
+            for index, stacked in enumerate(column.panels)
+        )
 
 
 class PageSpec(Strict):
     """One page: tiers, top to bottom.
 
-    A page is read tier by tier and left to right within a tier, so the order panels are
-    written in is the order they are read in. That is the page's version of the rule a
-    balloon obeys, and with tiers it holds by construction.
+    A page is read tier by tier, left to right within a tier and down each column of a
+    tier of columns, so the order panels are written in is the order they are read in.
+    That is the page's version of the rule a balloon obeys, and it holds by construction:
+    columns that readers would not read down are refused by
+    :class:`PageLayout <scenet.ir.PageLayout>`.
 
     Attributes:
         tiers: The tiers, top to bottom.
@@ -1094,22 +1155,57 @@ class PageLayout(Strict):
         usable_width = self.page.width - 2 * self.page.margin
         usable_height = self.page.height - 2 * self.page.margin
         for page_index, page in enumerate(self.pages):
-            if usable_height - self.page.tier_gutter * (len(page.tiers) - 1) <= 0:
+            tiers_height = usable_height - self.page.tier_gutter * (len(page.tiers) - 1)
+            if tiers_height <= 0:
                 raise RuleViolationError(
                     f"page {page_index + 1} has no room for {len(page.tiers)} tiers between "
                     "its margins and tier gutters",
                     rule="page-layout",
                     loc=("pages", page_index),
                 )
+            total_height = sum(tier.height for tier in page.tiers)
             for tier_index, tier in enumerate(page.tiers):
-                if usable_width - self.page.gutter * (len(tier.panels) - 1) <= 0:
+                loc: tuple[str | int, ...] = ("pages", page_index, "tiers", tier_index)
+                where = f"tier {tier_index + 1} of page {page_index + 1}"
+                across = len(tier.panels) or len(tier.columns)
+                what = "panels" if tier.panels else "columns"
+                if usable_width - self.page.gutter * (across - 1) <= 0:
                     raise RuleViolationError(
-                        f"tier {tier_index + 1} of page {page_index + 1} has no room for "
-                        f"{len(tier.panels)} panels between its margins and gutters",
+                        f"{where} has no room for {across} {what} between its margins and gutters",
                         rule="page-layout",
-                        loc=("pages", page_index, "tiers", tier_index),
+                        loc=loc,
                     )
+                height = tiers_height * tier.height / total_height
+                for column_index, column in enumerate(tier.columns):
+                    if height - self.page.tier_gutter * (len(column.panels) - 1) <= 0:
+                        raise RuleViolationError(
+                            f"column {column_index + 1} of {where} has no room for "
+                            f"{len(column.panels)} panels between its tier gutters",
+                            rule="page-layout",
+                            loc=(*loc, "columns", column_index),
+                        )
+                _check_stacks_are_blocked(tier, loc, where)
         return self
+
+
+def _check_stacks_are_blocked(tier: Tier, loc: tuple[str | int, ...], where: str) -> None:
+    """Refuse two stacked columns side by side.
+
+    A stack is read down before across because the panel beside it spans the tier and
+    blocks the way across: about nine readers in ten then go down (Cohn 2013, *blockage*).
+    Beside another stack nothing blocks the way. That is a grid, or a staggered one, which
+    about nine readers in ten read across instead, so reading down it would put its panels
+    in an order the reader does not follow.
+    """
+    for index in range(1, len(tier.columns)):
+        if len(tier.columns[index - 1].panels) > 1 and len(tier.columns[index].panels) > 1:
+            raise RuleViolationError(
+                f"columns {index} and {index + 1} of {where} are both stacks; with no panel "
+                "spanning the tier between them, readers go across them rather than down. "
+                "Put a panel that spans the tier between them, or write them as tiers",
+                rule="page-layout",
+                loc=(*loc, "columns", index),
+            )
 
 
 def check_placements(layout: PageLayout, panels: Sequence[str]) -> None:
@@ -1128,20 +1224,20 @@ def check_placements(layout: PageLayout, panels: Sequence[str]) -> None:
     placed: dict[str, tuple[str | int, ...]] = {}
     for page_index, page in enumerate(layout.pages):
         for tier_index, tier in enumerate(page.tiers):
-            for panel_index, placement in enumerate(tier.panels):
-                loc = ("pages", page_index, "tiers", tier_index, "panels", panel_index)
-                if placement.use not in known:
+            for use, within in tier.placed:
+                loc = ("pages", page_index, "tiers", tier_index, *within)
+                if use not in known:
                     raise RuleViolationError(
-                        f"page {page_index + 1} places panel '{placement.use}', which "
+                        f"page {page_index + 1} places panel '{use}', which "
                         f"`panels:` does not define; it has {sorted(known)}",
                         rule="page-layout",
                         loc=loc,
                     )
-                if placement.use in placed:
+                if use in placed:
                     raise RuleViolationError(
-                        f"panel '{placement.use}' is placed twice; a panel has one frame, "
+                        f"panel '{use}' is placed twice; a panel has one frame, "
                         "so it can be on one page once",
                         rule="page-layout",
                         loc=loc,
                     )
-                placed[placement.use] = loc
+                placed[use] = loc

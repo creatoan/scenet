@@ -15,6 +15,7 @@ import re
 from typing import Any
 
 from pydantic import ValidationError
+from pydantic_core import ErrorDetails
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.ir import Predicate, Relation
@@ -22,6 +23,7 @@ from scenet.places import PLACES, Place
 
 __all__ = [
     "LAYOUT_KEYS",
+    "errors_of",
     "expand_place",
     "normalise",
     "normalise_layout",
@@ -226,6 +228,34 @@ def normalise(data: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def errors_of(exc: ValidationError) -> list[ErrorDetails]:
+    """Pydantic's error list, without the echo a variable-length tuple adds.
+
+    When an item of a `tuple[X, ...]` field with a minimum length fails, pydantic also
+    reports the tuple as too short, counting only the items that passed: a tier with a bad
+    height says "Tuple should have at least 1 item after validation, not 0" beside the real
+    fault. A `list` does not do this. The echo names no fault of its own, so it is dropped
+    whenever a deeper error explains it.
+
+    Args:
+        exc: The validation error pydantic raised.
+
+    Returns:
+        Its errors, in pydantic's order, less the echoes.
+    """
+    errors = exc.errors()
+    return [
+        error
+        for error in errors
+        if error["type"] != "too_short"
+        or not any(
+            len(other["loc"]) > len(error["loc"])
+            and other["loc"][: len(error["loc"])] == error["loc"]
+            for other in errors
+        )
+    ]
+
+
 def summarise(exc: ValidationError) -> str:
     """Flatten pydantic's error list into something a human can act on.
 
@@ -239,7 +269,7 @@ def summarise(exc: ValidationError) -> str:
         A multi-line diagnostic, one line per problem, each naming where it is.
     """
     lines: list[str] = []
-    for error in exc.errors():
+    for error in errors_of(exc):
         # A model-level validator reports `loc=()` -- the whole document -- because
         # pydantic gives it no way to say which field it was unhappy about. The two
         # checks that matter most here knew the exact path all along, and a
@@ -267,9 +297,9 @@ LAYOUT_KEYS = ("page", "pages")
 def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
     """Rewrite the surface form of `page:` and `pages:` into what `PageLayout` validates.
 
-    One convenience: a panel in a tier may be written as its name alone, which stands for
-    `{use: name}`. Anything not shaped as expected is passed through untouched, so the
-    model's validation reports it with its location rather than this guessing.
+    One convenience: a panel in a tier or a column may be written as its name alone, which
+    stands for `{use: name}`. Anything not shaped as expected is passed through untouched,
+    so the model's validation reports it with its location rather than this guessing.
 
     Args:
         data: The whole scene document.
@@ -289,15 +319,26 @@ def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
             continue
         rewritten: list[Any] = []
         for tier in tiers:
-            panels = tier.get("panels") if isinstance(tier, dict) else None
-            if isinstance(panels, list):
-                tier = {  # noqa: PLW2901 -- a rewritten copy, never the caller's
-                    **tier,
-                    "panels": [
-                        {"use": entry} if isinstance(entry, str) else entry for entry in panels
-                    ],
-                }
+            if isinstance(tier, dict):
+                tier = _with_named_panels(tier)  # noqa: PLW2901 -- a copy, never the caller's
+                columns = tier.get("columns")
+                if isinstance(columns, list):
+                    tier["columns"] = [
+                        _with_named_panels(column) if isinstance(column, dict) else column
+                        for column in columns
+                    ]
             rewritten.append(tier)
         normalised.append({**page, "tiers": rewritten})
     layout["pages"] = normalised
     return layout
+
+
+def _with_named_panels(holder: dict[str, Any]) -> dict[str, Any]:
+    """A copy of a tier or column, each bare name under its `panels:` made `{use: name}`."""
+    panels = holder.get("panels")
+    if not isinstance(panels, list):
+        return {**holder}
+    return {
+        **holder,
+        "panels": [{"use": entry} if isinstance(entry, str) else entry for entry in panels],
+    }

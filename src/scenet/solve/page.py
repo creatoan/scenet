@@ -1,18 +1,20 @@
-"""Page layout: tiers of panels into frames.
+"""Page layout: tiers of panels, or of columns of panels, into frames.
 
 Plain arithmetic, with no constraint solver. Tiers are ordered top to bottom and panels
 left to right within a tier, and each takes a share of what the margins and gutters leave,
-in proportion to its weight -- the same model as CSS Grid's `fr` tracks with a `gap`. There
-is nothing to choose between, so nothing for Cassowary to do: its value in this project is
-the priority system that settles conflicting preferences (`docs/explanation/prior_art.md`),
-and a strict grid has none.
+in proportion to its weight -- the same model as CSS Grid's `fr` tracks with a `gap`. A tier
+of columns is split the same way twice: across into columns, then down each column into its
+panels, with the tier gutter between them. There is nothing to choose between, so nothing
+for Cassowary to do: its value in this project is the priority system that settles
+conflicting preferences (`docs/explanation/prior_art.md`), and a strict grid has none.
 
-The order panels are written in is the order they are read in, so the reading path is the
-Z-path by construction. Layouts that break it -- a tall panel beside stacked ones, an inset
--- are where readers stop following the Z-path (Cohn, *Navigating Comics*, 2013), and they
-are a later piece of work, with a reading-order check of their own.
+The order panels are written in is the order they are read in. In a tier of panels that is
+the Z-path. In a tier of columns it is down each column before across, which is what readers
+do when a panel spanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013);
+:class:`PageLayout <scenet.ir.PageLayout>` refuses columns where nothing blocks it.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from scenet.geom import rounded
@@ -47,6 +49,18 @@ class Frame:
     height: float
 
 
+def _split(start: float, length: float, gap: float, weights: Sequence[float]) -> list[float]:
+    """Share `length` between `weights`, `gap` apart, as alternating starts and sizes."""
+    available = length - gap * (len(weights) - 1)
+    total = sum(weights)
+    spans: list[float] = []
+    for weight in weights:
+        size = available * weight / total
+        spans += [start, size]
+        start += size + gap
+    return spans
+
+
 def resolve_frames(page_format: PageFormat, page: PageSpec) -> tuple[Frame, ...]:
     """Lay out one page.
 
@@ -55,7 +69,8 @@ def resolve_frames(page_format: PageFormat, page: PageSpec) -> tuple[Frame, ...]
         page: The tiers, already validated to have room for what they hold.
 
     Returns:
-        One frame per panel, in reading order: tier by tier, left to right.
+        One frame per panel, in reading order: tier by tier, and within a tier left to
+        right -- or, for a tier of columns, column by column and top to bottom in each.
 
     Example:
         >>> from scenet.ir import PageFormat, PageSpec
@@ -69,29 +84,30 @@ def resolve_frames(page_format: PageFormat, page: PageSpec) -> tuple[Frame, ...]
     usable_width = page_format.width - 2 * margin
     usable_height = page_format.height - 2 * margin
 
-    tiers_height = usable_height - page_format.tier_gutter * (len(page.tiers) - 1)
-    total_height = sum(tier.height for tier in page.tiers)
+    def frame(panel: str, x: float, y: float, width: float, height: float) -> Frame:
+        return Frame(
+            panel=panel, x=rounded(x), y=rounded(y), width=rounded(width), height=rounded(height)
+        )
 
     frames: list[Frame] = []
-    y = margin
-    for tier in page.tiers:
-        height = tiers_height * tier.height / total_height
-        row_width = usable_width - page_format.gutter * (len(tier.panels) - 1)
-        total_width = sum(placement.width for placement in tier.panels)
-        x = margin
-        for placement in tier.panels:
-            width = row_width * placement.width / total_width
-            frames.append(
-                Frame(
-                    panel=placement.use,
-                    x=rounded(x),
-                    y=rounded(y),
-                    width=rounded(width),
-                    height=rounded(height),
-                )
-            )
-            x += width + page_format.gutter
-        y += height + page_format.tier_gutter
+    rows = _split(
+        margin, usable_height, page_format.tier_gutter, [tier.height for tier in page.tiers]
+    )
+    for tier, y, height in zip(page.tiers, rows[::2], rows[1::2], strict=True):
+        if tier.panels:
+            spans = _split(margin, usable_width, page_format.gutter, [p.width for p in tier.panels])
+            frames += [
+                frame(placement.use, x, y, width, height)
+                for placement, x, width in zip(tier.panels, spans[::2], spans[1::2], strict=True)
+            ]
+            continue
+        spans = _split(margin, usable_width, page_format.gutter, [c.width for c in tier.columns])
+        for column, x, width in zip(tier.columns, spans[::2], spans[1::2], strict=True):
+            stack = _split(y, height, page_format.tier_gutter, [p.height for p in column.panels])
+            frames += [
+                frame(stacked.use, x, top, width, size)
+                for stacked, top, size in zip(column.panels, stack[::2], stack[1::2], strict=True)
+            ]
     return tuple(frames)
 
 
