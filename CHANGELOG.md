@@ -70,6 +70,12 @@ below 1.0 means.
   that is 0.035, written as 0.04, so every letter was drawn 14% larger than the width the
   balloon was sized for and its neighbours were spaced for. The scale is now written to six
   places, and a test holds every drawn glyph to its measured size. (#91)
+- **One mistake in a script entry was reported up to four times** by `scenet check`. A
+  caption with `kind: narration` also came back as every reason it was not a `say`, all at
+  the same place. The entry's verb now picks the event it is checked against, so the one
+  real fault is reported, at the field it is in (`script.0.caption.kind`). A face mark in a
+  hand-edited Panel Core is picked by its `mark` the same way. Entries built in Python
+  without a verb are still accepted, and the published schema is unchanged.
 - **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
   `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
   default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`

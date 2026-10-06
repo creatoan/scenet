@@ -267,8 +267,8 @@ class TestScriptIsAUnion:
         assert [type(event) for event in panel.script] == [CaptionEvent, SayEvent]
 
     def test_an_untagged_mapping_still_resolves(self):
-        """The verb is defaulted rather than a discriminator, so callers that never
-        write it -- every existing one -- keep working."""
+        """The verb is defaulted, and input without one falls back to trying each event
+        in turn, so callers that never write it -- every existing one -- keep working."""
         panel = PanelIR.model_validate(
             {
                 "cast": {"alice": {"reference": "alice"}},
@@ -276,6 +276,21 @@ class TestScriptIsAUnion:
             }
         )
         assert [type(event) for event in panel.script] == [SayEvent, CaptionEvent]
+
+    def test_a_tagged_mapping_is_only_checked_against_its_own_verb(self):
+        """The verb picks the member, so a fault in a caption is not also reported as
+        every reason the entry is not a `say`."""
+        with pytest.raises(ValidationError) as caught:
+            PanelIR.model_validate({"script": [{"verb": "caption", "text": "x", "kind": "nope"}]})
+        (error,) = caught.value.errors()
+        assert error["loc"] == ("script", 0, "caption", "kind")
+
+    def test_an_unknown_verb_is_one_error(self):
+        with pytest.raises(ValidationError) as caught:
+            PanelIR.model_validate({"script": [{"verb": "shout", "text": "x"}]})
+        (error,) = caught.value.errors()
+        assert error["loc"] == ("script", 0)
+        assert "'shout'" in error["msg"]
 
     def test_a_caption_may_be_mixed_into_a_script(self):
         panel = PanelIR(
