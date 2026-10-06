@@ -72,6 +72,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **An inset could be drawn outside the panel it is set into.** An inset sits a gutter in
+  from its corner, so in a panel narrower or shorter than that it landed over the next panel
+  or the page margin, and `scenet check` said nothing. An inset that does not fit is now
+  refused as `scenet/page-layout`, at the inset, saying what to change. (Refs #92)
 - **A document nested a few hundred levels deep ended in a traceback.** PyYAML reads a
   document recursively, and Python's recursion limit is not a YAML error, so `scenet check`,
   `check --deep`, `build` and a comic script's front matter all ended in `RecursionError`.

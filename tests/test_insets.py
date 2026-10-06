@@ -310,3 +310,56 @@ class TestTheDebugOverlay:
             if rect.get("class") == "exclusion"
         ]
         assert drawn == [["0", "0", "276", "396"], ["696", "1116", "384", "564"]]
+
+
+class TestAnInsetFitsInsideItsParent:
+    """An inset sits a gutter in from its corner, so in a parent narrower or shorter than
+    that, it was drawn partly or wholly outside the panel it is set into -- over the next
+    panel or the page margin -- and nothing said so. Found while planning #92."""
+
+    NARROW = (
+        "cast: {a: {reference: alice}}\n"
+        "page: {size: [600, 800], margin: 20, gutter: 40}\n"
+        "panels: {big: {}, thin: {}, wee: {}, more: {}}\n"
+        "pages:\n"
+        "  - tiers:\n"
+        "      - panels:\n"
+        "          - {use: big, width: 10}\n"
+        "          - use: thin\n"
+        "            width: 0.5\n"
+        "            insets: [{use: wee, at: top_left, size: 0.5}]\n"
+        "          - {use: more, width: 10}\n"
+    )
+    SHORT = (
+        "cast: {a: {reference: alice}}\n"
+        "page: {size: [800, 600], margin: 20, gutter: 40, tier_gutter: 40}\n"
+        "panels: {tall: {}, low: {}, wee: {}, rest: {}}\n"
+        "pages:\n"
+        "  - tiers:\n"
+        "      - {height: 10, panels: [tall]}\n"
+        "      - height: 0.5\n"
+        "        panels: [{use: low, insets: [{use: wee, at: bottom_right, size: 0.5}]}]\n"
+        "      - {height: 10, panels: [rest]}\n"
+    )
+
+    @pytest.mark.parametrize("source", [NARROW, SHORT], ids=["narrow", "short"])
+    def test_it_is_refused_under_the_page_layout_rule(self, source: str):
+        with pytest.raises(PanelSyntaxError, match="does not fit") as caught:
+            compile_book(source)
+        assert caught.value.rule == "page-layout"
+
+    @pytest.mark.parametrize("source", [NARROW, SHORT], ids=["narrow", "short"])
+    def test_scenet_check_reports_it_once_at_the_inset(self, source: str):
+        (found,) = diagnose_source(source)
+        assert found.rule == "page-layout"
+        assert "wee" in found.message
+        assert found.path[-2:] == ("insets", 0)
+
+    def test_an_inset_that_fits_is_inside_its_parent(self):
+        book = compile_book(self.NARROW.replace("width: 0.5", "width: 4"))
+        frames = {frame.panel: frame for frame in book.pages[0].frames}
+        parent, inset = frames["thin"], frames["wee"]
+        assert parent.x <= inset.x
+        assert inset.x + inset.width <= parent.x + parent.width
+        assert parent.y <= inset.y
+        assert inset.y + inset.height <= parent.y + parent.height
