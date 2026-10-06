@@ -47,13 +47,24 @@ CAPTION_STROKE_WIDTH = 2.5
 WEATHER_OPACITY = 0.85
 
 
-def fmt(value: float) -> str:
+#: Decimal places for a glyph's scale. The scale is size/unitsPerEm, and a font's units are
+#: a thousand or more to the em, so two places -- right for a coordinate -- wrote 0.035 as
+#: 0.04 and drew every letter 14% larger than it was measured. Six keep the drawn size
+#: within a millionth of an em of the measured one.
+GLYPH_SCALE_PLACES = 6
+
+
+def fmt(value: float, places: int = 2) -> str:
     """Format a number for SVG output.
 
     Trailing zeros are stripped so `100.00` prints as `100`, which keeps files small
     and diffs readable without making them any less exact.
+
+    Two places is a hundredth of a panel unit, which is exact for a coordinate. It is
+    not for a factor: a glyph's scale multiplies a thousand font units, so it takes
+    `places=6`.
     """
-    text = f"{value:.2f}".rstrip("0").rstrip(".")
+    text = f"{value:.{places}f}".rstrip("0").rstrip(".")
     return "0" if text in {"", "-0"} else text
 
 
@@ -544,7 +555,7 @@ def _outlined_text(
             glyphs.append(
                 f'      <path d="{path}" fill="{ink}" stroke="none" '
                 f'transform="translate({fmt(cursor)} {fmt(baseline)}) '
-                f'scale({fmt(scale)} {fmt(-scale)})"/>'
+                f'scale({fmt(scale, GLYPH_SCALE_PLACES)} {fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
             )
         cursor += advance * font_size
     return "\n".join(glyphs)

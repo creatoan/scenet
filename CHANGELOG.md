@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **Lettering was drawn larger than it was measured.** Each glyph's scale, the font size over
+  the font's units per em, was written to two decimal places like a coordinate. At size 35
+  that is 0.035, written as 0.04, so every letter was drawn 14% larger than the width the
+  balloon was sized for and its neighbours were spaced for. The scale is now written to six
+  places, and a test holds every drawn glyph to its measured size. (#91)
 - **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
   `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
   default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`
