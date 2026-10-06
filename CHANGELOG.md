@@ -34,6 +34,29 @@ below 1.0 means.
   spans the whole tier. A tier of columns is read down each column before across, as readers
   read a stack blocked by a tall panel. Two stacks side by side block nothing, readers go
   across them, and `scenet check` refuses them as `page-layout`. (Part of #67)
+- **Insets**: a small panel set into a corner of another, drawn over it inside a ring of white.
+  `insets:` on any placed panel takes a corner, a `size` (a fraction of the parent, at most a
+  half) and `read: before` or `after`. Readers split about evenly over an inset, so its place
+  in the reading order is written, never guessed: after its parent by default. (Part of #67)
+  - The parent's art does not move. Its lettering keeps clear of every inset, as firmly as of
+    a face, and its Panel Core records what it kept clear of as `exclusions`. A note says when
+    an inset covers a face.
+  - Page Core frames gain `inset_of` and `clearance`, and the page paints every inset over its
+    parent whatever its reading order. Neither new field is written where it is unused, so
+    every existing Core is byte-identical.
+  - `scenet check` reports two insets that overlap as `page-layout`, located at the second.
+  - The debug overlay draws what an inset covers. A gallery example, and a section of the
+    *Compose a page* how-to.
+- **Slanted tiers**: `slant` on a tier of panels leans every gutter in it, up to 30 degrees
+  either way, for a beat that should not sit square. Neighbours share one cut, a gutter stays a
+  gutter wide across it, and the tier's outer edges stay upright, so every frame is a convex
+  four-sided shape. (Closes #67)
+  - A slanted panel is staged in its bounding box and cropped to its `outline`, which its Panel
+    Core and its Page Core frame record; its lettering stays inside the outline, a margin in. A
+    note says when the cut runs through a face.
+  - A rectangle writes no `outline`, so every existing Core and page is byte-identical.
+  - `scenet check` refuses, as `page-layout`, a slant on a tier of columns, on a tier of one
+    panel or on panels with insets, and one too steep to leave every panel some width.
 - `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
   name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
   the heading that repeats. (#63)
@@ -47,6 +70,12 @@ below 1.0 means.
   and then reached the solver, where kiwisolver stopped the process outright: no traceback,
   no message, no output. Every number a document, a puppet or a Panel Core holds must now be
   finite, and one that is not is reported as `scenet/invalid-field` at its key. (#91)
+- **One mistake in a script entry was reported up to four times** by `scenet check`. A
+  caption with `kind: narration` also came back as every reason it was not a `say`, all at
+  the same place. The entry's verb now picks the event it is checked against, so the one
+  real fault is reported, at the field it is in (`script.0.caption.kind`). A face mark in a
+  hand-edited Panel Core is picked by its `mark` the same way. Entries built in Python
+  without a verb are still accepted, and the published schema is unchanged.
 - **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
   `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
   default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`

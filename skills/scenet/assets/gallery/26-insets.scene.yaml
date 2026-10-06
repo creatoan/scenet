@@ -1,0 +1,68 @@
+# Insets: a small panel set into the corner of another, and drawn over it.
+#
+# `insets:` on a placement sets panels into its corners, `at` one of top_left,
+# top_right, bottom_left or bottom_right, a gutter in from both edges. `size` is the
+# inset's width and height as a fraction of its parent's, at most 0.5. A ring of white
+# a gutter wide separates it from the art beneath.
+#
+# Readers split about evenly over whether an inset comes before the panel it sits in
+# or after it (Cohn, 2013), so it never guesses: it is read after its parent unless it
+# says `read: before`. Here the clock is read first, then the street, then the face.
+#
+# The street's art is drawn as if the insets were not there. Only its lettering moves:
+# the caption would have sat where the clock is.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+pages:
+  - tiers:
+      - height: 2
+        panels:
+          - use: street
+            insets:
+              - {use: clock, at: top_left, size: 0.22, read: before}
+              - {use: worry, at: bottom_right, size: 0.35}
+      - panels: [arrive, {use: shrug, width: 1.5}]
+
+panels:
+  clock:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: bored, facing: right}
+    script:
+      - caption: {text: "9:14.", kind: locale}
+
+  street:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: hands_on_hips, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - bob looking_at alice
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Outside the cinema."}
+      - say: {by: bob, text: "The film started at nine."}
+
+  worry:
+    camera: {shot: close_up}
+    cast:
+      alice: {reference: alice, expression: scared, facing: left}
+    script:
+      - say: {by: alice, text: "Oops.", kind: whisper}
+
+  arrive:
+    over: street
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: alice, text: "I brought popcorn?"}
+
+  shrug:
+    over: street
+    camera: {shot: full_shot}
+    cast:
+      bob: {expression: laughing}
+    script:
+      - say: {by: bob, text: "Then we watch the next one."}

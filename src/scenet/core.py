@@ -10,12 +10,23 @@ different path-rounding convention produces a huge diff that means nothing.
 """
 
 import json
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Tag
+from pydantic.json_schema import SkipJsonSchema
 
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
-from scenet.ir import BalloonKind, CaptionKind, Mark, MassKind, Plane, TimeOfDay, Weather
+from scenet.ir import (
+    UNTAGGED,
+    BalloonKind,
+    CaptionKind,
+    Mark,
+    MassKind,
+    Plane,
+    TimeOfDay,
+    Weather,
+    tag_by,
+)
 
 CORE_FORMAT_VERSION = 1
 
@@ -190,10 +201,15 @@ class FaceDisc(CoreModel):
 
 
 #: One mark on a drawn face, or of the emanata drawn around it -- they are made of the
-#: same two primitives. Tagged by a defaulted literal rather than a pydantic
-#: discriminator, for the same reason `ScriptEvent` is: a discriminator would require
-#: the tag in every hand-written document.
-FaceMark = FaceStroke | FaceDisc
+#: same two primitives. Chosen by its `mark`, exactly as a script entry is by its verb, so
+#: a hand-edited disc with a bad radius is not also reported as every reason it is not a
+#: stroke. A mark written without the tag is still accepted.
+FaceMark = Annotated[
+    Annotated[FaceStroke, Tag("stroke")]
+    | Annotated[FaceDisc, Tag("disc")]
+    | Annotated[SkipJsonSchema[FaceStroke | FaceDisc], Tag(UNTAGGED)],
+    tag_by("mark"),
+]
 
 
 class CoreMass(CoreModel):
@@ -497,6 +513,13 @@ class PanelCore(CoreModel):
             share one `order` sequence, since the reader takes them in one sequence.
         backdrop: Where the panel is, or None when it says nothing about that -- which
             is every panel written before the setting layer existed.
+        exclusions: Areas the lettering kept clear of because something is drawn over
+            them: on a page, the insets set into this panel, ringed by a gutter. The art
+            under them is drawn as if they were not there. Left out of the JSON when
+            empty, so a panel with no inset reads and writes exactly as it always did.
+        outline: For a panel in a slanted tier, the shape of its border: four corners,
+            clockwise from the top left, in panel units. The panel is drawn clipped to it,
+            and its lettering stays inside it. Left out of the JSON for a rectangle.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -520,6 +543,8 @@ class PanelCore(CoreModel):
     balloons: tuple[CoreBalloon, ...] = ()
     captions: tuple[CoreCaption, ...] = ()
     backdrop: CoreBackdrop | None = None
+    exclusions: tuple[Box, ...] = ()
+    outline: tuple[tuple[float, float], ...] | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -551,6 +576,7 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
+        _drop_unused(payload, exclusions=(), outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod
@@ -574,6 +600,21 @@ class PanelCore(CoreModel):
         return cls.model_validate(json.loads(text))
 
 
+def _drop_unused(payload: dict[str, Any], **unused: object) -> None:
+    """Leave out of a document each field still at the value that means "not used".
+
+    For fields added after the format was published: a document that does not use one
+    is then byte-identical to what it was before the field existed, which is what golden
+    files and anyone diffing two builds rely on. Done here, not with pydantic's
+    `exclude_if`, which needs pydantic 2.12 while this package accepts 2.9.
+    """
+    for name, value in unused.items():
+        if name in payload and payload[name] == (
+            list(value) if isinstance(value, tuple) else value
+        ):
+            del payload[name]
+
+
 class CoreFrame(CoreModel):
     """Where one panel sits on a page.
 
@@ -584,6 +625,13 @@ class CoreFrame(CoreModel):
         y: Top edge, in page units.
         width: Frame width, which is the panel's width.
         height: Frame height, which is the panel's height.
+        inset_of: For an inset, the panel it is set into. Left out of the JSON otherwise.
+        clearance: For an inset, the area it covers with its ring of white, in page
+            units: painted white under it, and kept clear by its parent's lettering. Left
+            out of the JSON otherwise.
+        outline: For a panel in a slanted tier, its four corners in page units, clockwise
+            from the top left; the frame is their bounding box. Left out of the JSON for a
+            rectangle.
     """
 
     panel: str
@@ -591,6 +639,9 @@ class CoreFrame(CoreModel):
     y: float
     width: float
     height: float
+    inset_of: str | None = None
+    clearance: Box | None = None
+    outline: tuple[tuple[float, float], ...] | None = None
 
 
 class PageCore(CoreModel):
@@ -628,6 +679,8 @@ class PageCore(CoreModel):
     def to_json(self) -> str:
         """Serialise deterministically, exactly as a Panel Core is."""
         payload: Any = self.model_dump(mode="json")
+        for frame in payload["frames"]:
+            _drop_unused(frame, inset_of=None, clearance=None, outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod

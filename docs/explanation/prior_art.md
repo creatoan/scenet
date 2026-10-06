@@ -315,8 +315,9 @@ pulls readers off the Z-path. *Blockage*, a tall panel to the right of a stack, 
 choices down the stack first; *staggering*, rows or columns offset so the gutters do not line up,
 left 90% on the Z-path. A tier of columns is therefore read down each column, and two stacks
 side by side, which have nothing blocking the way across, are refused rather than read in an
-order most readers would not take. *Overlap* split readers about evenly, which is why an inset
-will have to say where it is read rather than leave it to be guessed.
+order most readers would not take. *Overlap* split readers about evenly, so an inset says where
+it is read rather than leaving it to be guessed: after the panel it sits in, unless it says
+`read: before`.
 
 Taken as notation: **CSS Grid's `fr` tracks and `gap`.** A tier's height and a panel's width are
 shares of what the margin and gutters leave, which is the same model and one people already know.
@@ -330,6 +331,12 @@ weighted shares reach the rhetorical one, where panel size follows the story's b
 Gutters narrower within a tier than between tiers, and a lettering size near eight points on a
 printed page, follow common print practice; type on a page is set from one height for every panel,
 as a letterer sets it.
+
+Taken from paneling tools: **a slanted gutter is a gutter wide across the cut.** Clip Studio
+Paint's frame-border tools keep the gap between divided frames at the gutter setting whatever the
+angle of the cut ([its guide to frame borders](https://tips.clip-studio.com/en-us/articles/611)),
+so a slanted tier does the same rather than keeping the horizontal gap, which would narrow the
+gutter as it leaned.
 
 ## Future
 

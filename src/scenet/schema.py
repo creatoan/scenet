@@ -147,7 +147,9 @@ def _accept_verb_tagged_script(schema: dict[str, Any], definitions: dict[str, An
     """
     script: dict[str, Any] = schema["properties"]["script"]
     branches: list[dict[str, Any]] = []
-    for branch in script["items"]["anyOf"]:
+    # `oneOf`, because the IR picks the event by its verb (see `tag_by`). Here the verb
+    # is the wrapping key instead, which separates the branches just as well.
+    for branch in script["items"]["oneOf"]:
         name = branch["$ref"].rsplit("/", 1)[1]
         event: dict[str, Any] = definitions[name]
         verb = event["properties"].pop("verb")["const"]
