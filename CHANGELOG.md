@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A panel named with a number beside one named with a word crashed** `scenet check` and
+  `scenet build` with a `TypeError` traceback. YAML reads an unquoted `1:` as a number and
+  `null:` as nothing, and the names could not be sorted together. A panel's name is text, as
+  a cast member's id already was, so each one that is not is now reported as
+  `scenet/invalid-field` at the name, with the quoted spelling to use instead. (#92)
 - **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
   `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
   default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`

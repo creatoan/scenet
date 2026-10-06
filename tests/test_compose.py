@@ -14,7 +14,7 @@ from scenet.diagnostics import diagnose_source
 from scenet.frontends.script_front import ScriptSyntaxError, load_script, parse_script
 from scenet.frontends.yaml_front import PanelSyntaxError, load_scene, parse_panel, parse_scene
 from scenet.ir import BalloonKind, CaptionEvent, CaptionKind, SayEvent, ShotType
-from scenet.pipeline import compile_document
+from scenet.pipeline import compile_book, compile_document
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 
@@ -486,7 +486,7 @@ class TestPanelNamesAreText:
 
     def test_build_refuses_it_as_a_syntax_error(self):
         with pytest.raises(PanelSyntaxError, match="panel name"):
-            compile_document(self.MIXED)
+            compile_book(self.MIXED)
 
     def test_every_name_that_is_not_text_is_its_own_finding(self):
         found = diagnose_source("cast: {a: {reference: alice}}\npanels:\n  1: {}\n  2: {}\n")
