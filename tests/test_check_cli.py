@@ -217,6 +217,16 @@ Hello there.
         assert main(["check", str(path)]) == 1
         assert ":1:" in capsys.readouterr().err
 
+    def test_a_repeated_panel_is_reported_under_its_own_rule(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """It used to overwrite the earlier panel, silently. The finding points at the
+        heading that repeats, which is where the writer has to look."""
+        path = tmp_path / "pages.script"
+        path.write_text("PAGE ONE\n\nPANEL 1\n\nPANEL 1\n", encoding="utf-8")
+        assert main(["check", str(path)]) == 1
+        assert ":5:1: duplicate-panel:" in capsys.readouterr().err
+
     def test_it_produces_sarif_like_any_other_document(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):

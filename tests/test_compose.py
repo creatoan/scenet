@@ -228,7 +228,9 @@ PANEL 1
 """)
         assert panels["1"].camera.shot is ShotType.CLOSE_UP
 
-    def test_page_headings_are_accepted_but_carry_no_meaning(self):
+    def test_page_headings_leave_unrepeated_panel_names_alone(self):
+        """Pages only qualify a panel's name when its number repeats, so a script that
+        numbers panels straight through keeps the names it always had."""
         panels = parse_script("""
 ---
 cast: {A: {reference: alice}}
@@ -298,6 +300,97 @@ PANEL 2
             BalloonKind.WHISPER,
             BalloonKind.SHOUT,
         ]
+
+
+class TestNothingTypedIsLost:
+    """Three ways a script used to drop what its writer typed, without a word (#63).
+
+    Each was silent: no error, no note, no `scenet check` finding. A writer found out by
+    counting balloons.
+    """
+
+    # Five lines, so the body starts on line 6 of the file.
+    CAST = "---\ncast:\n  ALICE: {reference: alice}\n  BOB: {reference: bob}\n---\n"
+
+    def test_panel_numbers_restarting_on_each_page_keep_every_panel(self):
+        """Publishers number panels per page -- Dark Horse's script format guide heads
+        each page `PAGE ONE` and starts again at `Panel 1.`. Keyed by number alone, the
+        second page's PANEL 1 replaced the first page's."""
+        panels = parse_script(
+            self.CAST + "PAGE ONE\n\nPANEL 1\nALICE\nFirst.\n\nPANEL 2\nBOB\nSecond.\n\n"
+            "PAGE TWO\n\nPANEL 1\nALICE\nThird.\n"
+        )
+        assert list(panels) == ["1-1", "1-2", "2-1"]
+        assert [panel.script[0].text for panel in panels.values()] == [
+            "First.",
+            "Second.",
+            "Third.",
+        ]
+
+    @pytest.mark.parametrize(
+        ("heading", "label"),
+        [
+            ("PAGE TWO", "2"),
+            ("Page Two", "2"),
+            ("PAGE TWENTY-ONE", "21"),
+            ("PAGE 7", "7"),
+            ("PAGE 07", "7"),
+            ("PAGE 3A", "3A"),
+        ],
+    )
+    def test_a_page_is_named_as_written_with_number_words_as_digits(self, heading: str, label: str):
+        """So an excerpt that starts at page 7 names its panels from page 7, and a script
+        that spells its pages out still gets `2-1` rather than `TWO-1`."""
+        panels = parse_script(self.CAST + f"PAGE ONE\nPANEL 1\n{heading}\nPANEL 1\n")
+        assert list(panels) == ["1-1", f"{label}-1"]
+
+    def test_a_panel_repeated_on_one_page_is_reported_where_it_repeats(self):
+        with pytest.raises(ScriptSyntaxError, match="PANEL 1") as caught:
+            parse_script(self.CAST + "PAGE ONE\nPANEL 1\nPANEL 1\n")
+        assert caught.value.rule == "duplicate-panel"
+        assert caught.value.line == 8
+
+    def test_a_repeated_panel_with_no_page_headings_is_reported(self):
+        with pytest.raises(ScriptSyntaxError) as caught:
+            parse_script(self.CAST + "PANEL 1\nALICE\nHi.\n\nPANEL 1\nBOB\nHi.\n")
+        assert caught.value.rule == "duplicate-panel"
+        assert caught.value.line == 10
+
+    def test_a_panel_before_the_first_page_cannot_be_told_apart(self):
+        """Once numbers repeat, every panel is named by its page. One that comes before
+        any PAGE heading has no page to be named by, so it is reported rather than
+        guessed at."""
+        with pytest.raises(ScriptSyntaxError) as caught:
+            parse_script(self.CAST + "PANEL 1\nPAGE TWO\nPANEL 1\n")
+        assert caught.value.rule == "duplicate-panel"
+
+    def test_dialogue_runs_on_until_a_blank_line(self):
+        """Writers wrap long speeches by hand, and so do models writing a script. The
+        second line used to be filed as prose and thrown away."""
+        panels = parse_script(
+            self.CAST + "PANEL 1\nALICE\nFirst line of dialogue,\nand a second line.\n"
+            "\nThe rain keeps falling.\n"
+        )
+        (speech,) = panels["1"].script
+        assert speech.text == "First line of dialogue, and a second line."
+
+    def test_a_cue_caption_or_directive_still_ends_a_speech(self):
+        """Back-to-back speeches with no blank line between them already worked, and
+        must keep working: a line that looks like a cue starts a new speech."""
+        panels = parse_script(
+            self.CAST + "PANEL 1\nALICE\nHello.\nBOB (whisper)\nHi.\nCAPTION: Later.\n"
+            "@shot: close_up\n"
+        )
+        first, second, caption = panels["1"].script
+        assert (first.text, second.text) == ("Hello.", "Hi.")
+        assert isinstance(caption, CaptionEvent)
+        assert panels["1"].camera.shot is ShotType.CLOSE_UP
+
+    @pytest.mark.parametrize("heading", ["PANEL 1:", "PANEL 1.", "PANEL 1 :", "Panel 1:"])
+    def test_punctuation_after_the_number_is_not_part_of_the_name(self, heading: str):
+        """`\\S+` took the colon, so the panel was called `1:` and `scenet build` wrote
+        `name.1:.svg` -- not a legal file name on Windows."""
+        assert list(parse_script(self.CAST + f"{heading}\n")) == ["1"]
 
 
 class TestFrontendDispatch:

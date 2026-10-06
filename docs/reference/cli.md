@@ -175,6 +175,7 @@ nothing stops compiling.
 | `scenet/reflexive-relation` | A relation relating an actor to itself |
 | `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | An `over:` chain that is missing or cyclic |
+| `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
 | `scenet/unknown-puppet` | A `reference` naming a character the library lacks |
 | `scenet/unknown-pose` | A `pose` naming one its puppet does not declare |
 | `scenet/unknown-expression` | An `expression` naming one its puppet does not declare |
