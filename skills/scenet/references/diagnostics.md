@@ -22,6 +22,12 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
 
+### `scenet/duplicate-panel`
+
+Two panels in a comic script have the same name. Panels are named by their PANEL heading, and by their PAGE heading as well when panel numbers start again on each page. Two panels that still share a name -- PANEL 1 twice on one page, or twice with no PAGE heading between them -- cannot both be kept, and dropping one without a word would lose whatever it held.
+
+**Fix:** Number the panels straight through, or put a PAGE heading before each page whose numbering starts again.
+
 ### `scenet/internal`
 
 The compiler failed in a way it does not have a rule for. A Scenet error reached the checker without a more specific rule. Worth reporting: either the document found something genuinely new, or a rule is missing from the catalogue.

@@ -205,6 +205,20 @@ RULES: dict[str, Rule] = {
         ),
         help="Check the panel name in `over:` and that the chain terminates.",
     ),
+    "duplicate-panel": Rule(
+        summary="Two panels in a comic script have the same name",
+        description=(
+            "Panels are named by their PANEL heading, and by their PAGE heading as well "
+            "when panel numbers start again on each page. Two panels that still share a "
+            "name -- PANEL 1 twice on one page, or twice with no PAGE heading between "
+            "them -- cannot both be kept, and dropping one without a word would lose "
+            "whatever it held."
+        ),
+        help=(
+            "Number the panels straight through, or put a PAGE heading before each page "
+            "whose numbering starts again."
+        ),
+    ),
     "unknown-place": Rule(
         summary="Reference to a place the library does not have",
         description=(

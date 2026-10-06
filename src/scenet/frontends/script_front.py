@@ -49,8 +49,11 @@ from scenet.ir import BalloonKind, CaptionKind, PanelIR
 # templating step very often starts with one, and refusing it would be a baffling
 # failure for a file that looks identical to a working one.
 FRONT_MATTER = re.compile(r"^\s*---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
-PANEL_HEADING = re.compile(r"^PANEL\s+(\S+)\s*:?\s*$", re.IGNORECASE)
-PAGE_HEADING = re.compile(r"^PAGE\s+(\S+)\s*:?\s*$", re.IGNORECASE)
+# The label is everything up to an optional trailing colon or full stop -- `PANEL 1:` and
+# Dark Horse's `Panel 1.` both name panel `1`. A greedy `\S+` used to take the colon, so
+# the panel was called `1:` and `scenet build` wrote a file Windows cannot hold.
+PANEL_HEADING = re.compile(r"^PANEL\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
+PAGE_HEADING = re.compile(r"^PAGE\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
 DIRECTIVE = re.compile(r"^@(\w+)\s*:\s*(.+)$")
 # A cue is a character name in capitals, optionally followed by a parenthetical.
 CUE = re.compile(r"^([A-Z][A-Z0-9 _'.-]*?)\s*(?:\(([^)]*)\))?\s*:?\s*$")
@@ -83,6 +86,36 @@ CAPTION_KINDS = {kind.value: kind for kind in CaptionKind}
 # Directives that name a camera property rather than a top-level panel key.
 CAMERA_DIRECTIVES = {"shot", "angle"}
 
+# Page numbers as scripts spell them. Dark Horse's format writes `PAGE ONE`, and a page
+# that repeats its panel numbers is named after the page, so `PAGE TWO` has to give the
+# `2` a writer would say aloud. A closed table rather than a dependency: page counts are
+# small, and the runtime is eight packages on purpose.
+_UNIT_WORDS = (
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+)
+_TEN_WORDS = ("twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
+_UNITS = {word: value for value, word in enumerate(_UNIT_WORDS)}
+_TENS = {word: 10 * value for value, word in enumerate(_TEN_WORDS, start=2)}
+
 
 @dataclass
 class _PanelDraft:
@@ -96,6 +129,11 @@ class _PanelDraft:
     #: The file line of the PANEL heading, which is where a fault found only once the
     #: whole panel is assembled -- a bad `@shot:` value, say -- gets reported.
     line: int
+    #: What follows `PANEL`: `1` for `PANEL 1`.
+    label: str
+    #: The page it is on, as `_page_label` reads the PAGE heading above it, or `None`
+    #: before the first one. Only used to tell apart panels whose labels repeat.
+    page: str | None = None
     settings: dict[str, Any] = field(default_factory=dict)
     camera: dict[str, Any] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
@@ -156,6 +194,30 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
     return loaded, text[match.end() :], consumed
 
 
+def _page_label(token: str) -> str:
+    """How a page is named, when its panels have to be told apart from another page's.
+
+    Digits are read as a number, so `07` and `7` are one page. English number words --
+    `TWO`, `twenty-one` -- become the digits a writer would say aloud. Anything else, `3A`
+    say, is kept exactly as written.
+
+    Example:
+        >>> [_page_label(token) for token in ("TWO", "twenty-one", "07", "3A")]
+        ['2', '21', '7', '3A']
+    """
+    if token.isascii() and token.isdigit():
+        return str(int(token))
+    word = token.lower()
+    if word in _UNITS:
+        return str(_UNITS[word])
+    if word in _TENS:
+        return str(_TENS[word])
+    tens, hyphen, unit = word.partition("-")
+    if hyphen and tens in _TENS and 1 <= _UNITS.get(unit, 0) <= 9:
+        return str(_TENS[tens] + _UNITS[unit])
+    return token
+
+
 def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str, _PanelDraft]:
     """Walk the script body, accumulating one draft per PANEL heading.
 
@@ -164,9 +226,14 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
         source: The file, for error messages.
         offset: Lines of the file before the body, added to every reported line number.
     """
-    panels: dict[str, _PanelDraft] = {}
+    drafts: list[_PanelDraft] = []
     current: _PanelDraft | None = None
+    page: str | None = None
     pending_cue: tuple[str, BalloonKind] | None = None
+    # The speech being written. Everything after a cue up to a blank line is one balloon,
+    # so a line a writer wrapped by hand belongs to it -- it used to be filed as prose and
+    # thrown away.
+    speech: dict[str, Any] | None = None
 
     for number, raw in enumerate(body.splitlines(), start=offset + 1):
         line = raw.strip()
@@ -174,19 +241,22 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
         if not line:
             # A blank line ends a dialogue block, so a cue never reaches across one
             # and picks up the next panel's description as its speech.
-            pending_cue = None
+            pending_cue = speech = None
             continue
 
-        if PAGE_HEADING.match(line):
-            # Page structure is recognised so that a real script parses, but page
-            # composition is out of scope and it carries no meaning yet.
+        page_match = PAGE_HEADING.match(line)
+        if page_match:
+            # Pages are not laid out yet, but they do keep panels apart: scripts number
+            # panels per page, and two PANEL 1s are two panels.
+            page = _page_label(page_match.group(1))
+            pending_cue = speech = None
             continue
 
         panel_match = PANEL_HEADING.match(line)
         if panel_match:
-            current = _PanelDraft(line=number)
-            panels[panel_match.group(1)] = current
-            pending_cue = None
+            current = _PanelDraft(line=number, label=panel_match.group(1), page=page)
+            drafts.append(current)
+            pending_cue = speech = None
             continue
 
         if current is None:
@@ -197,26 +267,82 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
             )
 
         if _apply_directive(line, current, number, source):
+            speech = None
             continue
 
         caption = _read_caption(line, number, source)
         if caption is not None:
             current.events.append(caption)
-            pending_cue = None
+            pending_cue = speech = None
             continue
 
         if pending_cue is not None:
             speaker, kind = pending_cue
-            current.events.append({"say": {"by": speaker, "text": line, "kind": kind.value}})
+            speech = {"by": speaker, "text": line, "kind": kind.value}
+            current.events.append({"say": speech})
             pending_cue = None
             continue
 
+        # A line that looks like a cue still starts a new speech, so two speeches with no
+        # blank line between them stay two speeches, as they always have.
+        if speech is not None and not _looks_like_a_cue(line):
+            speech["text"] = f"{speech['text']} {line}"
+            continue
+
+        speech = None
         pending_cue = _read_cue(line)
         if pending_cue is None:
             # Prose. Kept for tooling and round-tripping, never interpreted.
             current.description.append(line)
 
-    return panels
+    return _name_panels(drafts, source)
+
+
+def _name_panels(drafts: list[_PanelDraft], source: Path | None) -> dict[str, _PanelDraft]:
+    """Name every panel, by its page as well as its number when the numbers repeat.
+
+    Some writers number panels straight through a script; publishers' formats start again
+    at `Panel 1` on every page. A script whose labels never repeat keeps them as names,
+    exactly as before pages meant anything. Otherwise every panel is named
+    `page-panel` -- `2-1` for PANEL 1 under PAGE TWO -- so the names stay uniform.
+
+    A panel that still cannot be told apart is reported, never overwritten: that used to
+    lose the earlier panel without a word.
+
+    Raises:
+        ScriptSyntaxError: Rule `duplicate-panel`, at the heading that repeats, or at a
+            panel that has no page to be named by.
+    """
+    labels = [draft.label for draft in drafts]
+    if len(set(labels)) == len(labels):
+        return {draft.label: draft for draft in drafts}
+
+    seen: dict[tuple[str | None, str], _PanelDraft] = {}
+    for draft in drafts:
+        first = seen.setdefault((draft.page, draft.label), draft)
+        if first is not draft:
+            where = f" on page {draft.page}" if draft.page is not None else ""
+            raise ScriptSyntaxError(
+                f"line {draft.line}: PANEL {draft.label} appears twice{where}; the first is "
+                f"on line {first.line}. Number panels straight through, or start each page "
+                "with a PAGE heading",
+                source=source,
+                line=draft.line,
+                rule="duplicate-panel",
+            )
+
+    named: dict[str, _PanelDraft] = {}
+    for draft in drafts:
+        if draft.page is None:
+            raise ScriptSyntaxError(
+                f"line {draft.line}: panel numbers repeat, so each panel is named by its "
+                f"page, and PANEL {draft.label} comes before any PAGE heading",
+                source=source,
+                line=draft.line,
+                rule="duplicate-panel",
+            )
+        named[f"{draft.page}-{draft.label}"] = draft
+    return named
 
 
 def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | None) -> bool:
