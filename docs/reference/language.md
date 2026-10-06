@@ -473,6 +473,9 @@ A scene can lay its panels out on pages. `pages:` is a list of pages; each page 
 **tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
 share.
 
+A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
+unquoted `1:` as a number, so a panel named by its number is written `'1':`.
+
 ```yaml
 page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
 pages:

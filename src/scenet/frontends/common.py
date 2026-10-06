@@ -294,6 +294,40 @@ def summarise(exc: ValidationError) -> str:
 LAYOUT_KEYS = ("page", "pages")
 
 
+def panel_name_problem(name: object) -> str | None:
+    """Say what is wrong with a key of `panels:`, if anything.
+
+    A panel's name is text, as a cast member's id is: it names the panel's files, and a
+    page's `use:` takes text. YAML reads an unquoted `1:` as a number and `null:` as
+    nothing, and a scene mixing one with a named panel could not even sort its names.
+
+    Args:
+        name: A key of the `panels:` mapping, as YAML read it.
+
+    Returns:
+        The message to report, or `None` for a name that is text.
+
+    Example:
+        >>> from scenet.frontends.common import panel_name_problem
+        >>> panel_name_problem("establishing") is None
+        True
+        >>> panel_name_problem(1)
+        "panel name 1 is a number, not text; quote it to use it as a name: '1'"
+    """
+    if isinstance(name, str):
+        return None
+    # Spelled as YAML spells it, which is what the author will search the file for.
+    if name is None:
+        written, kind = "null", "nothing"
+    elif isinstance(name, bool):
+        written, kind = str(name).lower(), "a yes-or-no value"
+    elif isinstance(name, int | float):
+        written, kind = str(name), "a number"
+    else:
+        written, kind = str(name), f"a {type(name).__name__}"
+    return f"panel name {written} is {kind}, not text; quote it to use it as a name: '{written}'"
+
+
 def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
     """Rewrite the surface form of `page:` and `pages:` into what `PageLayout` validates.
 

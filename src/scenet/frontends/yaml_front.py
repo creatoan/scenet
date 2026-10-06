@@ -19,6 +19,7 @@ from scenet.frontends.common import (
     errors_of,
     normalise,
     normalise_layout,
+    panel_name_problem,
     summarise,
 )
 from scenet.ir import PageLayout, PanelIR, check_placements
@@ -194,6 +195,10 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
     if not isinstance(panels, dict):
         raise PanelSyntaxError("'panels' must be a mapping of name to panel", source=source)
     for name, document in panels.items():
+        if (problem := panel_name_problem(name)) is not None:
+            raise PanelSyntaxError(
+                problem, source=source, rule="invalid-field", loc=("panels", name)
+            )
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)
 

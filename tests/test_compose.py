@@ -10,10 +10,11 @@ from pathlib import Path
 import pytest
 
 from scenet.compose import CompositionError, merge, resolve_overrides
+from scenet.diagnostics import diagnose_source
 from scenet.frontends.script_front import ScriptSyntaxError, load_script, parse_script
 from scenet.frontends.yaml_front import PanelSyntaxError, load_scene, parse_panel, parse_scene
 from scenet.ir import BalloonKind, CaptionEvent, CaptionKind, SayEvent, ShotType
-from scenet.pipeline import compile_document
+from scenet.pipeline import compile_book, compile_document
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 
@@ -465,3 +466,40 @@ class TestLineEndings:
         """PyYAML already handles this, but nothing said so."""
         source = "cast:\n  a: {reference: alice}\n"
         assert parse_panel(source) == parse_panel(source.replace("\n", "\r\n"))
+
+
+class TestPanelNamesAreText:
+    """A panel's name is text, as a cast member's id is. YAML reads `1:` as a number and
+    `null:` as nothing, and a scene mixing one with a named panel could not even sort its
+    names: `check` and `build` both ended in a `TypeError` traceback. A page could not
+    name such a panel either, since `use:` takes text."""
+
+    MIXED = "cast: {a: {reference: alice}}\npanels:\n  1: {}\n  b: {}\n"
+
+    def test_a_number_beside_a_name_is_one_finding_at_the_number(self):
+        (finding,) = diagnose_source(self.MIXED)
+        assert finding.rule == "invalid-field"
+        assert finding.path == ("panels", 1)
+        assert finding.region is not None
+        assert finding.region.start.line == 3
+        assert "'1'" in finding.message
+
+    def test_build_refuses_it_as_a_syntax_error(self):
+        with pytest.raises(PanelSyntaxError, match="panel name"):
+            compile_book(self.MIXED)
+
+    def test_every_name_that_is_not_text_is_its_own_finding(self):
+        found = diagnose_source("cast: {a: {reference: alice}}\npanels:\n  1: {}\n  2: {}\n")
+        assert [(item.rule, item.path) for item in found] == [
+            ("invalid-field", ("panels", 1)),
+            ("invalid-field", ("panels", 2)),
+        ]
+
+    def test_a_null_name_is_refused_too(self):
+        (finding,) = diagnose_source(
+            "cast: {a: {reference: alice}}\npanels:\n  null: {}\n  b: {}\n"
+        )
+        assert finding.rule == "invalid-field"
+
+    def test_a_quoted_number_is_a_name(self):
+        assert diagnose_source("cast: {a: {reference: alice}}\npanels:\n  '1': {}\n  b: {}\n") == []

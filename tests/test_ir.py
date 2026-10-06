@@ -5,9 +5,15 @@ keep by refusing ambiguous input loudly rather than rendering something plausibl
 wrong.
 """
 
+import json
+
 import pytest
 from pydantic import ValidationError
 
+from scenet.core import PanelCore
+from scenet.diagnostics import diagnose_source
+from scenet.errors import PanelSyntaxError
+from scenet.frontends.yaml_front import parse_panel, parse_scene_document
 from scenet.ir import (
     AnchorX,
     CaptionEvent,
@@ -20,6 +26,7 @@ from scenet.ir import (
     Relation,
     SayEvent,
 )
+from scenet.pipeline import compile_source
 
 
 def cast(*names: str) -> dict[str, CastMember]:
@@ -309,7 +316,7 @@ class TestTextSvgCanCarry:
     that reaches the SVG must not hold one. Found while planning #91: a `\\x07` in a line
     of dialogue made `--live-text` output that no XML parser accepts."""
 
-    @pytest.mark.parametrize("bad", ["\x00", "\x07", "\x0b", "\x1b", "\x1f", "￾"])
+    @pytest.mark.parametrize("bad", ["\x00", "\x07", "\x0b", "\x1b", "\x1f", "\ufffe"])
     def test_a_control_character_in_dialogue_is_refused(self, bad: str):
         with pytest.raises(ValidationError) as caught:
             PanelIR.model_validate(
@@ -339,3 +346,61 @@ class TestTextSvgCanCarry:
     def test_whitespace_and_ordinary_unicode_are_kept(self, fine: str):
         event = SayEvent(by="alice", text=f"Hi{fine}there")
         assert event.text == f"Hi{fine}there"
+
+
+class TestNonFiniteNumbers:
+    """`.inf` and `.nan` are valid YAML floats, and pydantic accepts them by default. One
+    in a size reached the solver, where kiwisolver ended the interpreter outright -- no
+    exception, no traceback, no finding. Every number a document holds is a length, a
+    weight or a fraction, and none of those means anything infinite or undefined."""
+
+    PANEL = "panel: {size: [600, 400], margin: 10}\ncast: {a: {reference: alice}}\n"
+    SCENE = (
+        "cast: {a: {reference: alice}}\n"
+        "page: {size: [2000, 3000]}\n"
+        "pages: [{tiers: [{height: 1, panels: [{use: one, width: 1}]}]}]\n"
+        "panels: {one: {}}\n"
+    )
+
+    @pytest.mark.parametrize("value", [".inf", "-.inf", ".nan"])
+    @pytest.mark.parametrize(
+        ("original", "path"),
+        [
+            ("size: [600, 400]", ("panel", "size", 0)),
+            ("margin: 10", ("panel", "margin")),
+        ],
+    )
+    def test_a_panel_refuses_them(self, value: str, original: str, path: tuple[str | int, ...]):
+        replaced = original.replace("600", value) if "size" in original else f"margin: {value}"
+        source = self.PANEL.replace(original, replaced)
+        with pytest.raises(PanelSyntaxError):
+            parse_panel(source)
+        (finding,) = diagnose_source(source)
+        assert finding.rule == "invalid-field"
+        assert finding.path == path
+
+    @pytest.mark.parametrize("value", [".inf", ".nan"])
+    @pytest.mark.parametrize(
+        ("original", "replacement", "path"),
+        [
+            ("size: [2000, 3000]", "size: [{v}, 3000]", ("page", "size", 0)),
+            ("height: 1", "height: {v}", ("pages", 0, "tiers", 0, "height")),
+            ("width: 1", "width: {v}", ("pages", 0, "tiers", 0, "panels", 0, "width")),
+        ],
+    )
+    def test_a_page_refuses_them(
+        self, value: str, original: str, replacement: str, path: tuple[str | int, ...]
+    ):
+        source = self.SCENE.replace(original, replacement.format(v=value))
+        with pytest.raises(PanelSyntaxError):
+            parse_scene_document(source)
+        (finding,) = diagnose_source(source)
+        assert finding.rule == "invalid-field"
+        assert finding.path == path
+
+    def test_a_panel_core_refuses_them(self):
+        """A Core is a format people hand-edit, and `json.loads` reads `NaN`."""
+        payload = json.loads(compile_source(self.PANEL).core.to_json())
+        payload["width"] = float("nan")
+        with pytest.raises(ValidationError):
+            PanelCore.from_json(json.dumps(payload))

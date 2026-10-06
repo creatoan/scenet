@@ -62,7 +62,13 @@ from scenet.errors import (
     UnknownPoseError,
     UnknownPuppetError,
 )
-from scenet.frontends.common import LAYOUT_KEYS, errors_of, normalise, normalise_layout
+from scenet.frontends.common import (
+    LAYOUT_KEYS,
+    errors_of,
+    normalise,
+    normalise_layout,
+    panel_name_problem,
+)
 from scenet.frontends.positions import (
     DOCUMENT_START,
     Position,
@@ -742,7 +748,19 @@ def _diagnose_scene(
 
     found: list[Diagnostic] = []
     for name, document in panels.items():
-        if not isinstance(document, dict):
+        if (problem := panel_name_problem(name)) is not None:
+            found.append(
+                Diagnostic(
+                    rule="invalid-field",
+                    message=problem,
+                    path=("panels", name),
+                    source=source,
+                    region=locate(text, ("panels", name))
+                    or locate(text, ("panels",))
+                    or DOCUMENT_START,
+                )
+            )
+        elif not isinstance(document, dict):
             found.append(
                 Diagnostic(
                     rule="invalid-field",
