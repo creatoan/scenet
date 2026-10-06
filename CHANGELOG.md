@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **An infinite or undefined number ended the interpreter.** `.inf` and `.nan` are valid YAML
+  floats, and one in a panel's or a page's size, margin, height or width passed `scenet check`
+  and then reached the solver, where kiwisolver stopped the process outright: no traceback,
+  no message, no output. Every number a document, a puppet or a Panel Core holds must now be
+  finite, and one that is not is reported as `scenet/invalid-field` at its key. (#91)
 - **One mistake in a script entry was reported up to four times** by `scenet check`. A
   caption with `kind: narration` also came back as every reason it was not a `say`, all at
   the same place. The entry's verb now picks the event it is checked against, so the one
