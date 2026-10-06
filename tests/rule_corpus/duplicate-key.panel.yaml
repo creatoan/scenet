@@ -1,0 +1,4 @@
+# `camera` twice: YAML would keep the second and drop the first without a word.
+camera: {shot: close_up}
+cast: {alice: {reference: alice}}
+camera: {shot: wide}

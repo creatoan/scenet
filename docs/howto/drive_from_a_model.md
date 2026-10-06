@@ -60,6 +60,8 @@ and cannot render any of it. The workflow:
 
 3. Save the reply as `scene.script` and check it locally:
 
+   <!--- skip: next -->
+
    ```bash
    scenet check scene.script
    ```
@@ -67,6 +69,8 @@ and cannot render any of it. The workflow:
 4. Paste anything it reports back into the chat. Each finding names its rule, its line and the
    fix, which is what a model needs to correct its own output. Repeat until it prints `ok`.
 5. Compile:
+
+   <!--- skip: next -->
 
    ```bash
    scenet build scene.script --strip

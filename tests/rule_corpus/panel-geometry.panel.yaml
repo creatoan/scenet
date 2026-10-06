@@ -1,0 +1,3 @@
+# Margins that meet in the middle.
+panel: {size: [400, 300], margin: 150}
+cast: {alice: {reference: alice}}

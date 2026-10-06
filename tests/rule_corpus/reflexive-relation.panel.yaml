@@ -1,0 +1,4 @@
+# An actor placed to the left of itself.
+cast: {alice: {reference: alice}}
+staging:
+  - alice left_of alice
