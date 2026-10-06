@@ -59,13 +59,6 @@ def resolve_overrides(panels: dict[str, dict[str, Any]]) -> dict[str, dict[str, 
     def resolve(name: str, seen: tuple[str, ...]) -> dict[str, Any]:
         if name in resolved:
             return resolved[name]
-        if name in seen:
-            chain = " -> ".join([*seen, name])
-            raise CompositionError(f"'over' chain is cyclic: {chain}")
-        if name not in panels:
-            raise CompositionError(
-                f"panel '{name}' does not exist; declared panels are {sorted(panels)}"
-            )
 
         document = dict(panels[name])
         parent_name = document.pop(OVER_KEY, None)
@@ -73,11 +66,24 @@ def resolve_overrides(panels: dict[str, dict[str, Any]]) -> dict[str, dict[str, 
             resolved[name] = document
             return document
 
+        # Every fault is reported at the `over:` that names the wrong thing, since that
+        # is the line to change.
+        at = ("panels", name, OVER_KEY)
         if not isinstance(parent_name, str):
             raise CompositionError(
                 f"panel '{name}': 'over' must name a single panel, "
-                f"found {type(parent_name).__name__}"
+                f"found {type(parent_name).__name__}",
+                loc=at,
             )
+        if parent_name not in panels:
+            raise CompositionError(
+                f"panel '{name}' is over '{parent_name}', which does not exist; "
+                f"declared panels are {sorted(panels)}",
+                loc=at,
+            )
+        if parent_name in seen or parent_name == name:
+            chain = " -> ".join([*seen, name, parent_name])
+            raise CompositionError(f"'over' chain is cyclic: {chain}", loc=at)
         composed = merge(resolve(parent_name, (*seen, name)), document)
         resolved[name] = composed
         return composed

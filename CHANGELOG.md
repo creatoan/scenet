@@ -72,6 +72,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A broken `over:` was located at the whole `panels:` block.** `scenet check` pointed a
+  missing parent, a cycle or an `over:` that is not a name at the first line of `panels:`,
+  wherever the fault was. It now points at the `over:` to change, and a missing parent's
+  message names the panel that refers to it. (Refs #92)
 - **A staging sentence relating an actor to itself was filed under the wrong rule.**
   `alice left_of alice` came back from `scenet check` as `scenet/invalid-field`, although
   `scenet/reflexive-relation` exists for exactly this; the frontend rewrote the error and lost

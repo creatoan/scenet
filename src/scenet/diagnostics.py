@@ -776,13 +776,14 @@ def _diagnose_scene(
     try:
         composed = resolve_overrides(panels)
     except CompositionError as exc:
+        path = exc.loc or ("panels",)
         return [
             Diagnostic(
                 rule="composition",
                 message=_message_of(exc),
-                path=("panels",),
+                path=path,
                 source=source,
-                region=locate(text, ("panels",)) or DOCUMENT_START,
+                region=locate(text, path) or DOCUMENT_START,
             )
         ]
 
