@@ -9,6 +9,7 @@ What no test can settle is whether a furrowed brow reads as anger on the page. T
 what `scripts/contact_sheet.py` is for.
 """
 
+import json
 from collections.abc import Sequence
 from typing import Any
 
@@ -361,6 +362,30 @@ class TestDeterminism:
         ).core
         assert PanelCore.from_json(whole.to_json()) == whole
         assert core.face_marks
+
+    def test_a_bad_mark_in_a_core_document_is_one_error(self):
+        """`mark` picks the shape, so a broken disc is not also reported as every
+        reason it is not a stroke."""
+        whole = compile_source(
+            "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: surprise}}}"
+        ).core
+        payload = json.loads(whole.to_json())
+        marks = payload["actors"][0]["face_marks"]
+        index = next(i for i, mark in enumerate(marks) if mark["mark"] == "disc")
+        marks[index]["radius"] = "wide"
+        with pytest.raises(ValidationError) as caught:
+            PanelCore.from_json(json.dumps(payload))
+        (error,) = caught.value.errors()
+        assert error["loc"] == ("actors", 0, "face_marks", index, "disc", "radius")
+
+    def test_a_core_mark_without_its_tag_still_resolves(self):
+        whole = compile_source(
+            "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: surprise}}}"
+        ).core
+        payload = json.loads(whole.to_json())
+        for mark in payload["actors"][0]["face_marks"]:
+            del mark["mark"]
+        assert PanelCore.from_json(json.dumps(payload)) == whole
 
 
 def _mark(actor: CoreActor, mark_id: str) -> CoreFaceMark:
