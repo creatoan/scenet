@@ -264,7 +264,7 @@ class TestOneMistakeInAScriptEntryIsOneFinding:
                 "script:\n  - say:\n      text: Hi\n",
                 "missing-field",
                 ("script", 0, "say", "by"),
-                4,  # the mapping it is missing from
+                3,  # the `say:` it is missing from
                 "Field required",
                 id="say-missing-speaker",
             ),
@@ -405,6 +405,39 @@ class TestAReflexiveRelationKeepsItsRule:
         with pytest.raises(PanelSyntaxError) as caught:
             parse_panel("cast: {a: {reference: alice}}\nstaging: [a behind a]\n")
         assert caught.value.rule == "reflexive-relation"
+
+
+class TestAFindingPointsAtALineThatNamesIt:
+    """Two regions pointed somewhere unhelpful. Found while planning #92, whose catalogue
+    expects each finding's line to hold the mistake:
+
+    - a syntax error at the very end of a file was put on the line *after* the last one,
+      which does not exist, so an editor or code scanning had nowhere to show it;
+    - a key whose value is a block (`panel:` with its fields beneath it) was located at
+      the block's first field rather than the key, so `panel-geometry` pointed at
+      `size:` and a member missing `reference` at whatever key it did have.
+    """
+
+    def test_a_syntax_error_at_the_end_stays_inside_the_file(self):
+        source = "cast: {a: {reference: alice}}\nstaging: [unclosed\n"
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "syntax"
+        assert found.region is not None
+        assert 1 <= found.region.start.line <= len(source.splitlines())
+
+    def test_a_block_value_is_located_at_its_key(self):
+        source = "panel:\n  size: [400, 400]\n  margin: 200\ncast: {a: {reference: alice}}\n"
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "panel-geometry"
+        assert found.region is not None
+        assert found.region.start.line == 1
+
+    def test_a_missing_field_points_at_the_member_it_is_missing_from(self):
+        source = "cast:\n  alice:\n    pose: pointing\n"
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "missing-field"
+        assert found.region is not None
+        assert found.region.start.line == 2
 
 
 class TestAnOverChainIsLocatedAtItsOver:
@@ -613,7 +646,8 @@ class TestPositionsInAwkwardShapes:
         validation failed before the list was fully built."""
         region = locate("staging:\n  - a left_of b\n", ("staging", 9))
         assert region is not None
-        assert region.start.line == 2
+        # The sequence is located at its key, `staging:`, as every block value is.
+        assert region.start.line == 1
 
     def test_unparseable_text_locates_nothing(self):
         assert locate("panel: [unclosed\n", ("panel",)) is None
