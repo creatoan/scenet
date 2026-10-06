@@ -244,7 +244,24 @@ class CompositionError(SourceError):
         ... except CompositionError as exc:
         ...     print(exc)
         'over' chain is cyclic: a -> b -> a
+
+    Attributes:
+        loc: Path to the `over:` at fault, such as `("panels", "b", "over")`, so a
+            finding can point at the key rather than the whole `panels:` block.
     """
+
+    def __init__(
+        self, message: str, *, source: Path | None = None, loc: tuple[str | int, ...] = ()
+    ) -> None:
+        """Build the error, keeping where it is as data as well as prose.
+
+        Args:
+            message: What went wrong.
+            source: Path the document came from, if it was read from disk.
+            loc: Path to the `over:` at fault.
+        """
+        self.loc = loc
+        super().__init__(message, source=source)
 
 
 class LayoutError(SolverError):

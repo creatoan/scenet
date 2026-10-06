@@ -79,6 +79,10 @@ below 1.0 means.
   margin left no room pointed at `size:`, and a cast member missing `reference` at whatever
   key it did have. The first now sits at the end of the last line, the second at its key.
   (Refs #92)
+- **A broken `over:` was located at the whole `panels:` block.** `scenet check` pointed a
+  missing parent, a cycle or an `over:` that is not a name at the first line of `panels:`,
+  wherever the fault was. It now points at the `over:` to change, and a missing parent's
+  message names the panel that refers to it. (Refs #92)
 - **A misspelled required key was reported twice.** `referense: alice` came back as an
   unknown key and as a missing `reference`, both at one place, for one mistake. When an
   unknown key closely matches a required key missing from the same mapping, `scenet check`
