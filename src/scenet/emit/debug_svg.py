@@ -53,6 +53,12 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
         f'fill-opacity="0.12" stroke="{INSET}" stroke-width="2" stroke-dasharray="12 6"/>'
         for area in core.exclusions
     )
+    if core.outline is not None:
+        corners = " ".join(f"{fmt(x)},{fmt(y)}" for x, y in core.outline)
+        parts.append(
+            f'  <polygon class="outline" points="{corners}" fill="none" stroke="{INSET}" '
+            'stroke-width="3" stroke-dasharray="12 6"/>'
+        )
 
     for actor in sorted(core.actors, key=lambda a: a.id):
         parts.append(f"  <g id={attr(id_prefix + 'debug-' + actor.id)}>")

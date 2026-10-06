@@ -171,7 +171,11 @@ The parent's own Core then carries `exclusions`: each inset's clearance, moved i
 coordinates, which no balloon or caption was allowed to touch. Nothing else in the parent moved
 for it, so the art under an inset is exactly the art of the panel compiled alone. A panel with no
 inset has no `exclusions` key at all, so every Core written before insets existed reads, and is
-written, byte for byte as before. Each panel's own Core was compiled at
+written, byte for byte as before.
+
+A panel in a slanted tier carries `outline`, its four corners clockwise from the top left, on its
+frame in page units and in its own Core in panel units; the frame is the outline's bounding box.
+The panel is drawn clipped to it, and bordered by it. A rectangle has no `outline` key. Each panel's own Core was compiled at
 exactly its frame's `width` and `height`, so a panel's Core reads the same on a page as it would
 alone at that size, and a page adds no layout decision to a panel.
 

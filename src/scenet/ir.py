@@ -1139,15 +1139,22 @@ class Tier(Strict):
     read down before the page is read across, which is what readers do when a panel
     spanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).
 
+    A tier of panels can lean the gutters between them by `slant` degrees, for a beat that
+    should not sit square: each gutter tilts about its centre at the tier's mid-height,
+    neighbours share the cut, and the tier's outer edges stay upright.
+
     Attributes:
         height: Its share of the page's height, relative to the other tiers.
         panels: The panels in it, in reading order.
         columns: The columns in it, left to right. A tier has `panels` or `columns`.
+        slant: How far the gutters between its panels lean from upright, in degrees,
+            from -30 to 30. Positive leans the top of each gutter to the right.
     """
 
     height: float = Field(default=1.0, gt=0.0)
     panels: tuple[PanelPlacement, ...] = ()
     columns: tuple[Column, ...] = ()
+    slant: float = Field(default=0.0, ge=-30.0, le=30.0)
 
     @model_validator(mode="after")
     def check_one_kind(self) -> Self:
@@ -1159,6 +1166,27 @@ class Tier(Strict):
                 rule="page-layout",
             )
         return self
+
+    @model_validator(mode="after")
+    def check_slant(self) -> Self:
+        """A slant leans the gutters between panels, so it needs some to lean.
+
+        Refused rather than ignored where it would do nothing, or something undefined: a
+        column's gutters run across it, and an inset is set into a rectangular corner.
+        """
+        if not self.slant:
+            return self
+        if self.columns:
+            problem = "a tier of columns has no upright gutters between panels to lean"
+        elif len(self.panels) == 1:
+            problem = "this tier has one panel, so there is no gutter to lean"
+        elif any(placement.insets for placement in self.panels):
+            problem = "an inset is set into a square corner, which a slanted panel lacks"
+        else:
+            return self
+        raise RuleViolationError(
+            f"`slant` leans the gutters between panels; {problem}", rule="page-layout"
+        )
 
     @property
     def placed(self) -> tuple[tuple[str, tuple[str | int, ...]], ...]:

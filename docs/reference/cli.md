@@ -195,7 +195,7 @@ nothing stops compiling.
 | `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | An `over:` chain that is missing or cyclic |
 | `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
-| `scenet/page-layout` | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, or no room for its tiers |
+| `scenet/page-layout` | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, a slant that cannot apply or is too steep, or no room for its tiers |
 | `scenet/unknown-puppet` | A `reference` naming a character the library lacks |
 | `scenet/unknown-place` | A setting's `place` naming one the library does not have |
 | `scenet/conflicting-setting` | A setting that names a `place` and also lists `masses` |
