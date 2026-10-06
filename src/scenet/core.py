@@ -25,10 +25,11 @@ class CoreModel(BaseModel):
 
     Strictness matters more here than in the IR. A Core document is something a user
     may hand-edit and feed back in, and a silently-ignored key would mean their edit
-    had no effect with nothing to say so.
+    had no effect with nothing to say so. `json.loads` reads `NaN` and `Infinity`, and
+    neither is a coordinate, so a Core holding one is refused rather than drawn.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
 class Transform(CoreModel):

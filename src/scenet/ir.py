@@ -64,9 +64,14 @@ class Strict(BaseModel):
     A misspelled key that is silently ignored produces a panel that is subtly wrong
     with no indication of why, which is the worst possible failure for a language
     meant to be precise.
+
+    Non-finite numbers are refused for the same reason. `.inf` and `.nan` are valid
+    YAML floats, but every number in a document is a length, a weight or a fraction,
+    and an infinite one reached the solver -- where kiwisolver ended the interpreter
+    without an exception to report.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
 class ShotType(StrEnum):

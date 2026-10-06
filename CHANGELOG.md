@@ -42,6 +42,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **An infinite or undefined number ended the interpreter.** `.inf` and `.nan` are valid YAML
+  floats, and one in a panel's or a page's size, margin, height or width passed `scenet check`
+  and then reached the solver, where kiwisolver stopped the process outright: no traceback,
+  no message, no output. Every number a document, a puppet or a Panel Core holds must now be
+  finite, and one that is not is reported as `scenet/invalid-field` at its key. (#91)
 - **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
   `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
   default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`
