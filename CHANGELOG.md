@@ -10,6 +10,12 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
+  name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
+  the heading that repeats. (#63)
+
 ### Fixed
 
 - **A comic script could lose panels and dialogue without saying so.** Three cases, none of
@@ -25,12 +31,14 @@ below 1.0 means.
     them now joins the speech; a line that looks like a cue still starts a new one.
   - **`PANEL 1:`** named the panel `1:`, and `scenet build` wrote `name.1:.svg`, which Windows
     cannot hold. `PANEL 1:` and `PANEL 1.` both name panel `1` now.
-
-### Added
-
-- `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
-  name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
-  the heading that repeats. (#63)
+- **`--strip` let figures spill out of their panels, and repeated every id.** A shot crops
+  the body at the frame, and a panel on its own hides the rest behind its `viewBox`; in a
+  strip nothing clipped, so bodies drew into the gutter. Each panel is now clipped to its
+  frame, overlay included, so a panel looks the same in a strip as alone. And every id is
+  unique: each panel's ids, and the references to them, are prefixed by its position (`p1-`,
+  `p2-`), never by its name, which could not be kept safe inside `url(#...)`. The strip's
+  output changes; a single panel's is byte-identical. `render` and `render_debug` take an
+  `id_prefix` for this, empty by default. (#64)
 
 ## [0.9.0] - 2026-10-03
 
