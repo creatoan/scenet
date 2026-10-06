@@ -87,7 +87,7 @@ class RuleViolationError(ValueError):
             :mod:`scenet.diagnostics <scenet.diagnostics>`. Stable across releases,
             because a `ruleId` that moves breaks every alert that referenced it.
         loc: Path to the offending value, in pydantic's `loc` form -- string keys and
-            integer indices, as in `("script", 0, "by")`.
+            integer indices, as in `("script", 0, "say", "by")`.
     """
 
     def __init__(self, message: str, *, rule: str, loc: tuple[str | int, ...] = ()) -> None:

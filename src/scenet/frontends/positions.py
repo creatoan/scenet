@@ -4,7 +4,7 @@
 written, which is fine for compiling and useless for reporting. `yaml.compose` parses
 the same text into a *node* tree instead, and every node carries `start_mark` and
 `end_mark`. So the document is composed a second time, purely to answer "where is
-`script.0.by`?".
+`script.0.say.by`?".
 
 **`ruamel.yaml` is the library usually reached for here**, and its `.lc` line/column
 marks would do the same job. It was not used: PyYAML is already a dependency and this
@@ -98,7 +98,7 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
 
     Args:
         text: The YAML source.
-        path: A pydantic-style location, as in `("script", 0, "by")`.
+        path: A pydantic-style location, as in `("script", 0, "say", "by")`.
 
     Returns:
         The region, or `None` if the text does not compose at all -- in which case the
