@@ -72,6 +72,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A misspelled required key was reported twice.** `referense: alice` came back as an
+  unknown key and as a missing `reference`, both at one place, for one mistake. When an
+  unknown key closely matches a required key missing from the same mapping, `scenet check`
+  and `build` now report one `scenet/unknown-key` finding, ending "did you mean
+  'reference'?". An unrelated unknown key beside a missing one is still two findings. (Refs #92)
 - **An inset could be drawn outside the panel it is set into.** An inset sits a gutter in
   from its corner, so in a panel narrower or shorter than that it landed over the next panel
   or the page margin, and `scenet check` said nothing. An inset that does not fit is now

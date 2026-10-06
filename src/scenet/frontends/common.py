@@ -11,6 +11,7 @@ frontend came first would have owned them by accident. They belong here, where n
 does.
 """
 
+import difflib
 import re
 from typing import Any
 
@@ -229,13 +230,19 @@ def normalise(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def errors_of(exc: ValidationError) -> list[ErrorDetails]:
-    """Pydantic's error list, without the echo a variable-length tuple adds.
+    """Pydantic's error list, without the echoes of a fault already reported.
 
-    When an item of a `tuple[X, ...]` field with a minimum length fails, pydantic also
-    reports the tuple as too short, counting only the items that passed: a tier with a bad
-    height says "Tuple should have at least 1 item after validation, not 0" beside the real
-    fault. A `list` does not do this. The echo names no fault of its own, so it is dropped
-    whenever a deeper error explains it.
+    Two echoes are dropped:
+
+    - When an item of a `tuple[X, ...]` field with a minimum length fails, pydantic also
+      reports the tuple as too short, counting only the items that passed: a tier with a
+      bad height says "Tuple should have at least 1 item after validation, not 0" beside
+      the real fault. A `list` does not do this. The echo names no fault of its own, so it
+      is dropped whenever a deeper error explains it.
+    - A misspelled required key is one mistake that pydantic reports twice: the unknown
+      key, and the required key it should have been. When an unknown key closely matches
+      a required one missing from the same mapping, the two become one finding about the
+      unknown key, which says what it was meant to be.
 
     Args:
         exc: The validation error pydantic raised.
@@ -244,7 +251,7 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
         Its errors, in pydantic's order, less the echoes.
     """
     errors = exc.errors()
-    return [
+    errors = [
         error
         for error in errors
         if error["type"] != "too_short"
@@ -254,6 +261,35 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
             for other in errors
         )
     ]
+    return _merge_misspellings(errors)
+
+
+def _merge_misspellings(errors: list[ErrorDetails]) -> list[ErrorDetails]:
+    """Fold each missing key into the unknown key in the same mapping that misspells it."""
+    missing = {
+        index: error
+        for index, error in enumerate(errors)
+        if error["type"] == "missing" and error["loc"] and isinstance(error["loc"][-1], str)
+    }
+    dropped: set[int] = set()
+    merged: list[ErrorDetails] = []
+    for error in errors:
+        key = error["loc"][-1] if error["loc"] else None
+        if error["type"] == "extra_forbidden" and isinstance(key, str):
+            candidates = {
+                str(other["loc"][-1]): index
+                for index, other in missing.items()
+                if index not in dropped and other["loc"][:-1] == error["loc"][:-1]
+            }
+            meant = difflib.get_close_matches(key, list(candidates), n=1, cutoff=0.75)
+            if meant:
+                dropped.add(candidates[meant[0]])
+                renamed = error.copy()
+                renamed["msg"] = f"{error['msg']}; did you mean '{meant[0]}'?"
+                merged.append(renamed)
+                continue
+        merged.append(error)
+    return [error for index, error in enumerate(merged) if index not in dropped]
 
 
 def summarise(exc: ValidationError) -> str:
