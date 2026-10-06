@@ -65,6 +65,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A control character in a panel wrote an SVG no XML parser accepts.** A `\x07` in a line
+  of dialogue broke `--live-text` output, and one in an actor id broke the default output too,
+  through its `id` attribute. XML cannot hold these characters even escaped, so a line, a
+  caption or an actor id holding one is now refused as `scenet/invalid-field`, naming the
+  character. Tab, line feed and carriage return are still accepted. (Refs #91)
 - **A panel named with a number beside one named with a word crashed** `scenet check` and
   `scenet build` with a `TypeError` traceback. YAML reads an unquoted `1:` as a number and
   `null:` as nothing, and the names could not be sorted together. A panel's name is text, as

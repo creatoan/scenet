@@ -369,6 +369,10 @@ script:
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
 compiler must decide the line breaks before it can place anything.
 
+A line of text, a caption and an actor id may not contain a control character other than tab, line
+feed and carriage return. Each one is written into the SVG, and XML has no way to write those
+characters at all, not even escaped, so a panel holding one is refused with the character named.
+
 ### `caption`
 
 A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it

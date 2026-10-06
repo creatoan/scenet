@@ -295,6 +295,28 @@ class TestOneMistakeInAScriptEntryIsOneFinding:
         assert found.region.start.line == 3
 
 
+class TestCharactersSvgCannotCarry:
+    """A control character is one finding at the string that holds it, not a broken SVG."""
+
+    def test_one_in_dialogue_is_one_located_finding(self):
+        source = 'cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: "Hi\\x07"}\n'
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "invalid-field"
+        assert found.path == ("script", 0, "say", "text")
+        assert "U+0007" in found.message
+        assert found.region is not None
+        assert found.region.start.line == 3
+
+    def test_one_in_an_actor_id_is_one_located_finding(self):
+        source = 'cast:\n  alice: {reference: alice}\n  "b\\x1bb": {reference: bob}\n'
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "invalid-field"
+        assert found.path[:2] == ("cast", "b\x1bb")
+        assert "U+001B" in found.message
+        assert found.region is not None
+        assert found.region.start.line == 3
+
+
 class TestSourcePositions:
     """`yaml.compose` keeps the marks `safe_load` throws away."""
 

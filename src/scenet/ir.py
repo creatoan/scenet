@@ -9,11 +9,13 @@ predicate or an actor id should be a clear error at parse time rather than a sil
 wrong picture.
 """
 
+import re
 from collections.abc import Sequence
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Discriminator,
@@ -84,6 +86,29 @@ class Strict(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+
+#: Characters XML 1.0 cannot hold at all, escaped or not: the C0 controls other than tab,
+#: line feed and carriage return, lone surrogates, and the two noncharacters U+FFFE and
+#: U+FFFF. A string reaching the SVG with one in it makes a document no parser accepts.
+_NOT_IN_XML = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
+
+def _holdable(value: str) -> str:
+    """Refuse a string an SVG cannot hold, naming the character so it can be found."""
+    found = _NOT_IN_XML.search(value)
+    if found is not None:
+        raise ValueError(
+            f"contains U+{ord(found.group()):04X}, a control character an SVG cannot "
+            "hold; delete it"
+        )
+    return value
+
+
+#: A string that is written into the SVG -- dialogue, a caption, an actor id. Refused at
+#: parse time rather than escaped at emission, because there is no escaping it: XML 1.0
+#: has no way to write these characters, not even as a character reference.
+SvgText = Annotated[str, AfterValidator(_holdable)]
 
 
 class ShotType(StrEnum):
@@ -749,7 +774,7 @@ class SayEvent(Strict):
 
     verb: Literal["say"] = "say"
     by: str
-    text: str = Field(min_length=1)
+    text: SvgText = Field(min_length=1)
     prefer: PlacementZone | None = None
     kind: BalloonKind = BalloonKind.SPEECH
 
@@ -787,11 +812,11 @@ class CaptionEvent(Strict):
     """
 
     verb: Literal["caption"] = "caption"
-    text: str = Field(min_length=1)
+    text: SvgText = Field(min_length=1)
     kind: CaptionKind = CaptionKind.LOCALE
     tone: CaptionTone = CaptionTone.PAPER
     prefer: PlacementZone = PlacementZone.TOP_LEFT
-    by: str | None = None
+    by: SvgText | None = None
 
     @model_validator(mode="after")
     def check_speaker_is_meaningful(self) -> Self:
@@ -888,7 +913,7 @@ class PanelIR(Strict):
     panel: PanelSpec = PanelSpec()
     camera: CameraSpec = CameraSpec()
     setting: SettingSpec = SettingSpec()
-    cast: dict[str, CastMember] = Field(default_factory=dict)
+    cast: dict[SvgText, CastMember] = Field(default_factory=dict)
     staging: tuple[Relation, ...] = ()
     script: tuple[ScriptEvent, ...] = ()
 
