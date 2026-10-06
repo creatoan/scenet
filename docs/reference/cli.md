@@ -46,8 +46,9 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   self-contained.
 
 `--strip`
-: For a multi-panel document, also lay every panel out side by side in reading order, as
-  one extra file. Ignored for a single panel.
+: For a document of more than one panel, also lay every panel out side by side in reading
+  order, as one extra file. Ignored when there is only one panel, a one-panel scene
+  included.
 
 `--quiet`
 : Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are
@@ -73,9 +74,12 @@ story.scene.yaml     →  story.page-1.svg
                         story.page-1.debug.svg      (with --debug)
 ```
 
-A panel whose file would be a page's (a panel named `page-1`) is a usage error, exit 2, and
-nothing is written: one file silently replacing the other is the kind of loss Scenet refuses
-everywhere else.
+Two outputs that would be the same file are a usage error, exit 2, and nothing is written: a
+panel named `page-1` beside a page, `strip` beside the strip, or `x.debug` beside panel `x`'s
+overlay. One file silently replacing the other is the kind of loss Scenet refuses everywhere
+else. Names are compared ignoring case, as Windows and macOS compare them, so a document
+writes the same set of files everywhere. A panel name holding `/` or `\` cannot be part of
+a file name and is refused the same way.
 
 ### Exit status
 

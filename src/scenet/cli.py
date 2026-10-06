@@ -5,7 +5,8 @@ import importlib
 import json
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from functools import partial
 from pathlib import Path
 
 from scenet import __version__
@@ -240,54 +241,124 @@ def run_build(args: argparse.Namespace) -> int:
     base = _output_base(args.output, source, f"{stem}.svg")
     base.parent.mkdir(parents=True, exist_ok=True)
 
-    results = book.panels
-    single = len(results) == 1 and "panel" in results
-    written: list[Path] = []
-    notes: list[str] = []
-
-    page_targets = _page_targets(book, base)
-    if page_targets is None:
+    single = len(book.panels) == 1 and "panel" in book.panels
+    if _refuse_unusable_names(book):
+        return 2
+    outputs = _outputs(book, base, args, single=single)
+    if _refuse_clashes(outputs):
         return 2
 
-    for name, result in results.items():
-        # A single-panel document writes to the requested name; a sequence suffixes
-        # each panel with its own name, so the mapping back to source is obvious.
-        target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
-        target.write_text(
-            render(result.core, live_text=args.live_text), encoding="utf-8", newline="\n"
-        )
-        written.append(target)
-
-        if args.core:
-            core_path = target.with_suffix(".core.json")
-            core_path.write_text(result.core.to_json(), encoding="utf-8", newline="\n")
-            written.append(core_path)
-        if args.debug:
-            debug_path = target.with_name(f"{target.stem}.debug.svg")
-            debug_path.write_text(render_debug(result.core), encoding="utf-8", newline="\n")
-            written.append(debug_path)
-        notes.extend(f"{name}: {note}" if not single else note for note in result.notes)
-
-    if args.strip and not single:
-        strip_path = base.with_name(f"{base.stem}.strip.svg")
-        strip_path.write_text(
-            render_strip(
-                [(name, result.core) for name, result in results.items()],
-                live_text=args.live_text,
-            ),
-            encoding="utf-8",
-            newline="\n",
-        )
-        written.append(strip_path)
-
-    written.extend(_write_pages(book, page_targets, args))
+    # Everything is checked before anything is written, so a refusal leaves no half-built
+    # set of files behind.
+    for path, content in outputs:
+        path.write_text(content(), encoding="utf-8", newline="\n")
 
     if not args.quiet:
-        for path in written:
+        for path, _ in outputs:
             print(f"wrote {path}")
-        for note in notes:
-            print(f"note: {note}")
+        for name, result in book.panels.items():
+            for note in result.notes:
+                print(f"note: {note}" if single else f"note: {name}: {note}")
     return 0
+
+
+#: One file `build` will write, and how to produce what goes in it -- deferred, so that
+#: the whole set can be checked for clashes before any of it is rendered.
+_Output = tuple[Path, Callable[[], str]]
+
+
+def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) -> list[_Output]:
+    """Every file a build writes, in the order it writes them.
+
+    A single-panel document writes to the requested name; a sequence suffixes each panel
+    with its own name, so the mapping back to source is obvious. A strip needs more than
+    one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels.
+    """
+    outputs: list[_Output] = []
+    for name, result in book.panels.items():
+        core = result.core
+        target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
+        outputs.append((target, partial(render, core, live_text=args.live_text)))
+        if args.core:
+            outputs.append((target.with_suffix(".core.json"), core.to_json))
+        if args.debug:
+            outputs.append(
+                (target.with_name(f"{target.stem}.debug.svg"), partial(render_debug, core))
+            )
+
+    if args.strip and len(book.panels) > 1:
+        strip = [(name, result.core) for name, result in book.panels.items()]
+        outputs.append(
+            (
+                base.with_name(f"{base.stem}.strip.svg"),
+                partial(render_strip, strip, live_text=args.live_text),
+            )
+        )
+
+    cores = {name: result.core for name, result in book.panels.items()}
+    for number, page in enumerate(book.pages, start=1):
+        target = base.with_name(f"{base.stem}.page-{number}{base.suffix}")
+        outputs.append((target, partial(render_page, page, cores, live_text=args.live_text)))
+        if args.core:
+            outputs.append((target.with_suffix(".core.json"), page.to_json))
+        if args.debug:
+            outputs.append(
+                (
+                    target.with_name(f"{target.stem}.debug.svg"),
+                    partial(render_page, page, cores, debug=True),
+                )
+            )
+    return outputs
+
+
+#: Characters a panel's name cannot hold once it is part of a file name. Both
+#: separators, on every platform, so a document builds the same everywhere.
+_UNUSABLE_IN_A_NAME = ("/", "\\")
+
+
+def _refuse_unusable_names(book: Book) -> bool:
+    """Report a panel whose name would make its file a path into another directory.
+
+    Returns:
+        Whether one was refused.
+    """
+    unusable = sorted(
+        name for name in book.panels if any(mark in name for mark in _UNUSABLE_IN_A_NAME)
+    )
+    if unusable:
+        print(
+            f"scenet: panel name {unusable[0]!r} cannot be part of a file name, because "
+            "'/' and '\\' separate directories; rename the panel",
+            file=sys.stderr,
+        )
+        return True
+    return False
+
+
+def _refuse_clashes(outputs: list[_Output]) -> bool:
+    """Report two outputs that would be written to the same file.
+
+    A panel named `page-1`, `strip` or `x.debug` would otherwise silently replace a page,
+    the strip or panel `x`'s overlay -- exactly the kind of loss Scenet refuses everywhere
+    else. Paths are compared ignoring case, because Windows and macOS do, and a document
+    should build the same set of files everywhere.
+
+    Returns:
+        Whether a clash was refused.
+    """
+    seen: dict[str, Path] = {}
+    for path, _ in outputs:
+        key = str(path).casefold()
+        if key in seen:
+            print(
+                f"scenet: two outputs would both be written to {path}"
+                + (f" (and {seen[key]})" if seen[key] != path else "")
+                + "; rename the panel that clashes",
+                file=sys.stderr,
+            )
+            return True
+        seen[key] = path
+    return False
 
 
 def _output_base(written: str | None, source: Path, default: str) -> Path:
@@ -324,54 +395,6 @@ def _refuse_directory(output: Path | None) -> bool:
         print(f"scenet: {output} is a directory; -o names the file to write", file=sys.stderr)
         return True
     return False
-
-
-def _page_targets(book: Book, base: Path) -> list[Path] | None:
-    """Where each page goes: `stem.page-<n>.svg`, beside the panels.
-
-    A panel can be named `page-1` too, and one file silently replacing the other is
-    exactly the kind of loss this tool refuses everywhere else -- so it is refused here,
-    before anything is written.
-
-    Returns:
-        One path per page, or `None` after reporting a clash with a panel's file.
-    """
-    targets = [
-        base.with_name(f"{base.stem}.page-{number}{base.suffix}")
-        for number in range(1, len(book.pages) + 1)
-    ]
-    panels = {base.with_name(f"{base.stem}.{name}{base.suffix}") for name in book.panels}
-    clashes = sorted(str(path) for path in targets if path in panels)
-    if clashes:
-        print(
-            f"scenet: a page and a panel would both be written to {', '.join(clashes)}; "
-            "rename the panel",
-            file=sys.stderr,
-        )
-        return None
-    return targets
-
-
-def _write_pages(book: Book, targets: list[Path], args: argparse.Namespace) -> list[Path]:
-    """Write each page, and its Core and overlay when asked for. Returns what was written."""
-    written: list[Path] = []
-    cores = {name: result.core for name, result in book.panels.items()}
-    for page, target in zip(book.pages, targets, strict=True):
-        target.write_text(
-            render_page(page, cores, live_text=args.live_text), encoding="utf-8", newline="\n"
-        )
-        written.append(target)
-        if args.core:
-            core_path = target.with_suffix(".core.json")
-            core_path.write_text(page.to_json(), encoding="utf-8", newline="\n")
-            written.append(core_path)
-        if args.debug:
-            debug_path = target.with_name(f"{target.stem}.debug.svg")
-            debug_path.write_text(
-                render_page(page, cores, debug=True), encoding="utf-8", newline="\n"
-            )
-            written.append(debug_path)
-    return written
 
 
 def run_check(args: argparse.Namespace) -> int:
