@@ -16,13 +16,17 @@ from collections.abc import Iterable
 from functools import cache
 from xml.etree import ElementTree
 
-from scenet.core import PanelCore
+from shapely.geometry import Polygon
+from shapely.geometry import box as rectangle
+
+from scenet.core import CoreFrame, PageCore, PanelCore
 from scenet.geom import BBox
 from scenet.solve.balloons import READING_EPSILON
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH, load_metrics
 
 __all__ = [
     "TOLERANCE",
+    "assert_frames_are_placed",
     "assert_lettering_is_placed",
     "assert_svg_is_sound",
     "lettered_boxes",
@@ -125,7 +129,7 @@ def _ids(root: ElementTree.Element) -> list[str]:
 
 
 def assert_svg_is_sound(
-    svg: str, *, size: tuple[float, float], font_sizes: Iterable[float] = ()
+    svg: str, *, size: tuple[float, float] | None = None, font_sizes: Iterable[float] = ()
 ) -> None:
     """An emitted SVG parses, holds together and draws what was measured.
 
@@ -138,7 +142,8 @@ def assert_svg_is_sound(
 
     Args:
         svg: The document.
-        size: `(width, height)` the `viewBox` must match.
+        size: `(width, height)` the `viewBox` must match, or `None` for a document --
+            a strip, several pages -- whose size is the sum of its parts.
         font_sizes: The type sizes the panel's balloons and captions were measured at.
             Every glyph's scale must come from one of them.
     """
@@ -157,8 +162,10 @@ def assert_svg_is_sound(
         for name, value in element.attrib.items():
             assert not _NON_FINITE.search(value), f"{name}={value!r} is not finite"
 
-    view_box = [float(part) for part in root.attrib["viewBox"].split()]
-    assert view_box[2:] == [round(value, 2) for value in size], f"viewBox {view_box} is not {size}"
+    if size is not None:
+        view_box = [float(part) for part in root.attrib["viewBox"].split()]
+        expected = [round(value, 2) for value in size]
+        assert view_box[2:] == expected, f"viewBox {view_box} is not {size}"
 
     scales = {round(font_size / units, 6) for font_size in font_sizes for units in _units_per_em()}
     for first, second in _GLYPH_SCALE.findall(svg):
@@ -166,3 +173,38 @@ def assert_svg_is_sound(
         assert any(abs(float(first) - scale) <= 1e-6 for scale in scales), (
             f"a glyph is drawn at scale {first}, but lettering was measured at {sorted(scales)}"
         )
+
+
+def _shape(frame: CoreFrame) -> Polygon:
+    """A frame's drawn shape: its outline in a slanted tier, its rectangle otherwise."""
+    if frame.outline is not None:
+        return Polygon(frame.outline)
+    return rectangle(frame.x, frame.y, frame.x + frame.width, frame.y + frame.height)
+
+
+def assert_frames_are_placed(page: PageCore, *, margin: float) -> None:
+    """Every frame on a page is inside its margins and clear of every other frame.
+
+    The one exception is an inset, which lies wholly inside the panel it is set into.
+    Frames are compared as the shapes they are drawn as, so the neighbours in a slanted
+    tier, whose bounding boxes overlap, are held to their shared cut.
+
+    Args:
+        page: The compiled page.
+        margin: The page's margin, as authored.
+    """
+    inner = rectangle(margin, margin, page.width - margin, page.height - margin).buffer(TOLERANCE)
+    shapes = {frame.panel: _shape(frame) for frame in page.frames}
+    parents = {frame.panel: frame.inset_of for frame in page.frames}
+    for name, shape in shapes.items():
+        assert inner.contains(shape), f"frame {name} leaves the page margins"
+        parent = parents[name]
+        if parent is not None:
+            assert shapes[parent].buffer(TOLERANCE).contains(shape), f"inset {name} leaves {parent}"
+    names = list(shapes)
+    for index, first in enumerate(names):
+        for second in names[index + 1 :]:
+            if first in (parents[second],) or second in (parents[first],):
+                continue
+            shared = shapes[first].intersection(shapes[second]).area
+            assert shared <= TOLERANCE, f"frames {first} and {second} overlap by {shared}"

@@ -34,6 +34,41 @@ checks four kinds of property, the kinds that have found real bugs in numerical 
   otherwise reports one finding whose rule names how it failed. A compile may fail only
   with `BalloonPlacementError` or `LayoutError`; anything else escaping is a bug.
 
+`tests/properties/test_page_properties.py` does the same for books:
+
+- **Reading order.** Frames come out tier by tier, left to right, down each column, each
+  inset before or after its parent as `read` says. The expected order is worked out from
+  the authored pages by `tests.strategies.scenes`, never by asking the solver.
+- **Frames.** Every frame stays inside the page margins, and no two overlap, compared as
+  the shapes they are drawn as, so a slanted tier's shared cuts count. The exception is an
+  inset, which lies wholly inside its parent. Each panel is compiled at its frame's size.
+- **Round trip and determinism.** Page Core reads back equal and writes back the same
+  bytes, and compiling twice gives the same pages.
+- **SVG.** Pages, a book of pages and a strip all pass the SVG checks, ids included:
+  unique across every page, not only within one.
+- **Comic scripts lose nothing.** As many panels as were written, each holding as many
+  balloons and captions as it had lines, whether panel numbers run on or start again on
+  each page.
+
+`tests/properties/test_broken_documents.py` holds `scenet check` to its purpose:
+
+- **One mistake, one finding.** A valid generated document with exactly one mistake from
+  the catalogue in `tests.strategies.MISTAKES` -- a misspelled key, a missing field, a
+  wrong type, `.nan`, an unknown actor, a cycle, a duplicate key and the rest -- gives
+  exactly one finding, under the right rule, at the right path, on a line that holds the
+  mistake, in a SARIF document that serialises. Every entry runs against its own examples.
+  Scenes add a page naming a missing panel, a panel placed twice, two stacks side by side
+  and a missing `over:` parent; scripts add a repeated PANEL heading.
+- **Two mistakes, two findings.** Independent mistakes in fields are reported
+  independently.
+- **Never a traceback.** Arbitrary documents, arbitrary text and arbitrary scripts get
+  findings, never an exception and never the `internal` rule, and `scenet check` exits 0
+  or 1.
+
+A cross-reference check, such as an unknown actor, runs only once every field is valid,
+so a document with a broken field and an unknown actor reports the field first. That is
+by design: the reference cannot be checked against a cast that did not validate.
+
 ## Profiles
 
 A property failure has to replay identically, so **the default is derandomized
@@ -92,3 +127,19 @@ replayed on the next run:
   caught;
 - the glyph scale written to two places again, the bug fixed in #99, which the SVG check
   caught at the first panel with lettering.
+
+## What the properties found
+
+Each was fixed in its own pull request, with a failing test first, before the property
+that trips on it landed:
+
+| Found | Fixed in |
+|---|---|
+| A control character in a panel wrote an SVG no XML parser accepts | #101 |
+| A document nested a few hundred levels deep ended in `RecursionError` | #103 |
+| An inset in a narrow panel was drawn outside it | #104 |
+| `a left_of a` was filed under `invalid-field`, not `reflexive-relation` | #105 |
+| A misspelled required key was reported twice | #106 |
+| A broken `over:` was located at the whole `panels:` block | #107 |
+| A syntax error at the end of a file pointed past its last line; a block value at its first field | #108 |
+| An unknown speaker was located one step short of its `by:` | #109 |
