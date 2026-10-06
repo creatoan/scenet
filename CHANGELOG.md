@@ -12,6 +12,11 @@ below 1.0 means.
 
 ### Added
 
+- **Golden outputs, checked on every platform.** The gallery is built through `scenet build`
+  in every CI job, Windows included, and the bytes on disk must match committed goldens: every
+  Panel and Page Core in full, and a digest of every SVG. Two processes with different hash
+  seeds, and a relative path against an absolute one, must write the same bytes, and no output
+  may hold the path it came from. `scripts/update_golden.py` regenerates them. (#94)
 - **The command-line reference is a tested contract.** Each command's options, choices,
   defaults and exit statuses, the frontends, and every behavioural sentence in
   `docs/reference/cli.md` are checked against the code in both directions, so neither can

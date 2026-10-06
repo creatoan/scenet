@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 502.5,
+      "panel": "spotted",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "height": 384.0,
+      "panel": "where",
+      "width": 792.0,
+      "x": 75.0,
+      "y": 622.5
+    },
+    {
+      "height": 576.0,
+      "panel": "behind",
+      "width": 792.0,
+      "x": 75.0,
+      "y": 1051.5
+    },
+    {
+      "height": 1005.0,
+      "panel": "turn",
+      "width": 528.0,
+      "x": 897.0,
+      "y": 622.5
+    },
+    {
+      "height": 502.5,
+      "panel": "laugh",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 1672.5
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}

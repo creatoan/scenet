@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "clearance": {
+        "height": 361.4,
+        "width": 357.0,
+        "x": 75.0,
+        "y": 75.0
+      },
+      "height": 301.4,
+      "inset_of": "street",
+      "panel": "clock",
+      "width": 297.0,
+      "x": 105.0,
+      "y": 105.0
+    },
+    {
+      "height": 1370.0,
+      "panel": "street",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "clearance": {
+        "height": 539.5,
+        "width": 532.5,
+        "x": 892.5,
+        "y": 905.5
+      },
+      "height": 479.5,
+      "inset_of": "street",
+      "panel": "worry",
+      "width": 472.5,
+      "x": 922.5,
+      "y": 935.5
+    },
+    {
+      "height": 685.0,
+      "panel": "arrive",
+      "width": 528.0,
+      "x": 75.0,
+      "y": 1490.0
+    },
+    {
+      "height": 685.0,
+      "panel": "shrug",
+      "width": 792.0,
+      "x": 633.0,
+      "y": 1490.0
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}
