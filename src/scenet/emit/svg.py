@@ -90,6 +90,15 @@ def render(
     ]
     if air is not None:
         parts.append(_atmosphere_filter(air, id_prefix))
+    # A panel that is not a rectangle -- one in a slanted tier -- is drawn whole and
+    # cropped to its outline, the way the margin crops a rectangle. A rectangle gets no
+    # wrapper at all, so it stays byte-identical to what it always was.
+    outline = _points(list(core.outline)) if core.outline is not None else None
+    if outline is not None:
+        parts.append(
+            f'  <clipPath id="{id_prefix}outline"><polygon points="{outline}"/></clipPath>'
+        )
+        parts.append(f'  <g clip-path="url(#{id_prefix}outline)">')
     parts.append(
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         f'fill="{FILL_PANEL}"/>'
@@ -140,10 +149,16 @@ def render(
     if air is not None:
         parts.append(_render_falling(air, id_prefix))
 
-    parts.append(
-        f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-        f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
-    )
+    if outline is not None:
+        parts.append("  </g>")
+        parts.append(
+            f'  <polygon points="{outline}" fill="none" stroke="{STROKE}" stroke-width="6"/>'
+        )
+    else:
+        parts.append(
+            f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
+            f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
+        )
     parts.append("</svg>")
     return "\n".join(part for part in parts if part) + "\n"
 

@@ -699,7 +699,7 @@
     },
     "Tier": {
       "additionalProperties": false,
-      "description": "A row of panels read left to right, or of columns each read top to bottom.\n\nColumns are how a tall panel beside a stack of short ones is written. The stack is\nread down before the page is read across, which is what readers do when a panel\nspanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.\n    columns: The columns in it, left to right. A tier has `panels` or `columns`.",
+      "description": "A row of panels read left to right, or of columns each read top to bottom.\n\nColumns are how a tall panel beside a stack of short ones is written. The stack is\nread down before the page is read across, which is what readers do when a panel\nspanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).\n\nA tier of panels can lean the gutters between them by `slant` degrees, for a beat that\nshould not sit square: each gutter tilts about its centre at the tier's mid-height,\nneighbours share the cut, and the tier's outer edges stay upright.\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.\n    columns: The columns in it, left to right. A tier has `panels` or `columns`.\n    slant: How far the gutters between its panels lean from upright, in degrees,\n        from -30 to 30. Positive leans the top of each gutter to the right.",
       "properties": {
         "columns": {
           "default": [],
@@ -722,6 +722,13 @@
           },
           "title": "Panels",
           "type": "array"
+        },
+        "slant": {
+          "default": 0.0,
+          "maximum": 30.0,
+          "minimum": -30.0,
+          "title": "Slant",
+          "type": "number"
         }
       },
       "title": "Tier",

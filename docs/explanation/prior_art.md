@@ -332,6 +332,12 @@ Gutters narrower within a tier than between tiers, and a lettering size near eig
 printed page, follow common print practice; type on a page is set from one height for every panel,
 as a letterer sets it.
 
+Taken from paneling tools: **a slanted gutter is a gutter wide across the cut.** Clip Studio
+Paint's frame-border tools keep the gap between divided frames at the gutter setting whatever the
+angle of the cut ([its guide to frame borders](https://tips.clip-studio.com/en-us/articles/611)),
+so a slanted tier does the same rather than keeping the horizontal gap, which would narrow the
+gutter as it leaned.
+
 ## Future
 
 ### L-systems

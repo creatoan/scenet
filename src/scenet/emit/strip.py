@@ -122,10 +122,16 @@ def placed_panel(
         else render(core, live_text=live_text, id_prefix=prefix)
     )
     body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
+    # Clipped to the panel's outline when it has one: a slanted panel's bounding box
+    # overlaps its neighbour's, and only the outline is its own.
+    shape = (
+        f'<polygon points="{" ".join(f"{fmt(px)},{fmt(py)}" for px, py in core.outline)}"/>'
+        if core.outline is not None
+        else f'<rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}"/>'
+    )
     return [
         f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})">',
-        f'  <clipPath id="{frame}"><rect x="0" y="0" width="{fmt(core.width)}" '
-        f'height="{fmt(core.height)}"/></clipPath>',
+        f'  <clipPath id="{frame}">{shape}</clipPath>',
         f'  <g clip-path="url(#{frame})">',
         body.rstrip(),
         "  </g>",

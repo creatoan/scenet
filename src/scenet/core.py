@@ -500,6 +500,9 @@ class PanelCore(CoreModel):
             them: on a page, the insets set into this panel, ringed by a gutter. The art
             under them is drawn as if they were not there. Left out of the JSON when
             empty, so a panel with no inset reads and writes exactly as it always did.
+        outline: For a panel in a slanted tier, the shape of its border: four corners,
+            clockwise from the top left, in panel units. The panel is drawn clipped to it,
+            and its lettering stays inside it. Left out of the JSON for a rectangle.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -524,6 +527,7 @@ class PanelCore(CoreModel):
     captions: tuple[CoreCaption, ...] = ()
     backdrop: CoreBackdrop | None = None
     exclusions: tuple[Box, ...] = ()
+    outline: tuple[tuple[float, float], ...] | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -555,7 +559,7 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, exclusions=())
+        _drop_unused(payload, exclusions=(), outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod
@@ -608,6 +612,9 @@ class CoreFrame(CoreModel):
         clearance: For an inset, the area it covers with its ring of white, in page
             units: painted white under it, and kept clear by its parent's lettering. Left
             out of the JSON otherwise.
+        outline: For a panel in a slanted tier, its four corners in page units, clockwise
+            from the top left; the frame is their bounding box. Left out of the JSON for a
+            rectangle.
     """
 
     panel: str
@@ -617,6 +624,7 @@ class CoreFrame(CoreModel):
     height: float
     inset_of: str | None = None
     clearance: Box | None = None
+    outline: tuple[tuple[float, float], ...] | None = None
 
 
 class PageCore(CoreModel):
@@ -655,7 +663,7 @@ class PageCore(CoreModel):
         """Serialise deterministically, exactly as a Panel Core is."""
         payload: Any = self.model_dump(mode="json")
         for frame in payload["frames"]:
-            _drop_unused(frame, inset_of=None, clearance=None)
+            _drop_unused(frame, inset_of=None, clearance=None, outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod

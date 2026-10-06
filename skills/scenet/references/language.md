@@ -493,6 +493,7 @@ panels:
 | `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
 | `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
 | `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
+| `tiers[].slant` | How far the gutters between its panels lean, in degrees, -30 to 30; positive leans the top right | `0` |
 | `columns[].width` | The column's share of its tier's width | `1` |
 | `columns[].panels[].height` | The panel's share of its column's height | `1` |
 | `insets[].use` | On any panel in a tier or column: a panel set into one of its corners | |
@@ -539,6 +540,23 @@ The parent's art is drawn exactly as if the inset were not there; only its lette
 words under an inset could not be read. When an inset covers a character's face, the compiler
 notes it. Two insets in one panel must stay a gutter clear of each other.
 
+A tier of panels can **slant**, for a beat that should not sit square:
+
+```yaml
+- {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
+```
+
+Every gutter in the tier leans by that many degrees about its centre at the tier's mid-height, so
+the weights share the width out exactly as they would upright, and neighbours share one cut. A
+gutter stays a gutter wide measured across the cut, as paneling tools keep it, and the tier's outer
+edges stay upright. Each frame is then a four-sided shape, convex by construction.
+
+A slanted panel is staged and framed in its bounding box, as a rectangle would be, and cropped to
+its outline the way a margin crops; its lettering stays inside the outline. When the cut runs
+through a character's face, the compiler notes it. A slant needs gutters to lean, so a tier of
+columns, a tier of one panel, and a slanted panel with insets are refused, as is a slant so steep
+that a panel would have no width left at its top or bottom.
+
 **A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
 it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
@@ -549,12 +567,12 @@ A page is read tier by tier, left to right, and down each column, so the order p
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, or
-margins and gutters that leave no room are reported as `page-layout`.
+both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, a slant
+that cannot apply or is too steep, or margins and gutters that leave no room are reported as
+`page-layout`.
 
-Not yet: frames that are not rectangles
-([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
-([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
+Not yet: frames of any other shape, such as round panels or ones without borders; right-to-left
+reading ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
 ([#80](https://github.com/creatoan/scenet/issues/80)).
 

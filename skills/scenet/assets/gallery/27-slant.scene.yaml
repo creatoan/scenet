@@ -1,0 +1,62 @@
+# Slanted tiers: gutters that lean, for a beat that should not sit square.
+#
+# `slant` on a tier of panels leans every gutter inside it by that many degrees, from
+# -30 to 30; positive leans the top to the right. Each gutter tilts about its centre at
+# the tier's mid-height, so neighbours share one cut and the weights still share the
+# width out as they would upright. A gutter stays a gutter wide measured across the cut,
+# and the tier's outer edges stay upright.
+#
+# A slanted panel is staged in its bounding box and cropped to its outline, like a
+# margin; its lettering stays inside the outline. When the cut runs through a face, the
+# compiler says so.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night}
+
+pages:
+  - tiers:
+      - panels: [standoff]
+      - {height: 1.2, slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
+      - {slant: -8, panels: [miss, {use: splash, width: 1.4}, look]}
+
+panels:
+  standoff:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: hands_on_hips, at: left_third, expression: angry}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left, expression: coy}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - say: {by: bob, text: "You wouldn't dare."}
+
+  wind_up:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, expression: shouting, facing: right}
+    script:
+      - say: {by: alice, text: "Watch me!", kind: shout}
+
+  swing:
+    camera: {shot: full_shot}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, expression: surprise, facing: left}
+
+  miss:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, expression: surprise, facing: right}
+
+  splash:
+    camera: {shot: full_shot}
+    cast:
+      bob: {reference: bob, pose: hands_on_hips, expression: laughing, facing: left}
+    script:
+      - say: {by: bob, text: "Missed."}
+
+  look:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, expression: angry, facing: left}

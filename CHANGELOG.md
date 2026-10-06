@@ -47,6 +47,16 @@ below 1.0 means.
   - `scenet check` reports two insets that overlap as `page-layout`, located at the second.
   - The debug overlay draws what an inset covers. A gallery example, and a section of the
     *Compose a page* how-to.
+- **Slanted tiers**: `slant` on a tier of panels leans every gutter in it, up to 30 degrees
+  either way, for a beat that should not sit square. Neighbours share one cut, a gutter stays a
+  gutter wide across it, and the tier's outer edges stay upright, so every frame is a convex
+  four-sided shape. (Closes #67)
+  - A slanted panel is staged in its bounding box and cropped to its `outline`, which its Panel
+    Core and its Page Core frame record; its lettering stays inside the outline, a margin in. A
+    note says when the cut runs through a face.
+  - A rectangle writes no `outline`, so every existing Core and page is byte-identical.
+  - `scenet check` refuses, as `page-layout`, a slant on a tier of columns, on a tier of one
+    panel or on panels with insets, and one too steep to leave every panel some width.
 - `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
   name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
   the heading that repeats. (#63)

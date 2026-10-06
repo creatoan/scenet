@@ -82,3 +82,6 @@ examples:
   - file: 26-insets.scene.yaml
     title: "Insets: a panel set into another"
     kind: scene
+  - file: 27-slant.scene.yaml
+    title: "Slanted tiers: gutters that lean"
+    kind: scene
