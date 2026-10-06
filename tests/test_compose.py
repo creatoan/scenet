@@ -386,6 +386,21 @@ class TestNothingTypedIsLost:
         assert isinstance(caption, CaptionEvent)
         assert panels["1"].camera.shot is ShotType.CLOSE_UP
 
+    def test_a_repeated_key_in_the_front_matter_is_reported_on_its_line(self):
+        """The cast lives in the front matter, and YAML kept only the last of two
+        characters with one name (#83). The line is the file's, not the block's."""
+        text = "---\ncast:\n  ALICE: {reference: alice}\n  ALICE: {reference: bob}\n---\nPANEL 1\n"
+        with pytest.raises(ScriptSyntaxError, match="ALICE") as caught:
+            parse_script(text)
+        assert caught.value.rule == "duplicate-key"
+        assert caught.value.line == 4
+
+    def test_a_repeated_key_in_a_directive_is_reported_on_its_line(self):
+        with pytest.raises(ScriptSyntaxError, match="place") as caught:
+            parse_script(self.CAST + "PANEL 1\n@setting: {place: docks, place: street}\n")
+        assert caught.value.rule == "duplicate-key"
+        assert caught.value.line == 7
+
     @pytest.mark.parametrize("heading", ["PANEL 1:", "PANEL 1.", "PANEL 1 :", "Panel 1:"])
     def test_punctuation_after_the_number_is_not_part_of_the_name(self, heading: str):
         """`\\S+` took the colon, so the panel was called `1:` and `scenet build` wrote

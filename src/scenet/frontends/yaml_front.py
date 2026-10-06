@@ -15,6 +15,7 @@ from scenet.compose import merge, resolve_overrides
 from scenet.errors import CompositionError, PanelSyntaxError
 from scenet.frontends.common import normalise, summarise
 from scenet.ir import PanelIR
+from scenet.safe_yaml import DuplicateKeyError, load
 
 
 def _load_document(text: str, source: Path | None) -> dict[str, Any]:
@@ -31,9 +32,14 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
         PanelSyntaxError: The text is not valid YAML, is empty, or is not a mapping.
     """
     try:
-        # safe_load, never load: panel sources are untrusted input and full YAML can
-        # construct arbitrary Python objects.
-        data = yaml.safe_load(text)
+        # A SafeLoader, never the full loader: panel sources are untrusted input and full
+        # YAML can construct arbitrary Python objects. And one that refuses a key written
+        # twice, which plain PyYAML would drop without a word.
+        data = load(text)
+    except DuplicateKeyError as exc:
+        raise PanelSyntaxError(
+            f"line {exc.line}: {exc.summary}", source=source, rule="duplicate-key"
+        ) from exc
     except yaml.YAMLError as exc:
         raise PanelSyntaxError(f"invalid YAML: {exc}", source=source) from exc
 

@@ -189,6 +189,30 @@ class TestDeterminism:
         assert first == second
 
 
+class TestRepeatedKeys:
+    """A key written twice used to be checked as `ok`: YAML kept the last (#83)."""
+
+    def test_it_is_a_finding_at_the_second_key(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        path = tmp_path / "twice.panel.yaml"
+        path.write_text(
+            "cast:\n  alice: {reference: alice}\n  alice: {reference: bob}\n", encoding="utf-8"
+        )
+        assert main(["check", str(path)]) == 1
+        err = capsys.readouterr().err
+        assert ":3:3: duplicate-key:" in err
+        assert "line 2" in err, "and it says where the first one is"
+
+    def test_it_is_a_finding_in_sarif_too(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+        path = tmp_path / "twice.scene.yaml"
+        path.write_text("panels:\n  one: {}\n  one: {}\n", encoding="utf-8")
+        main(["check", "--format", "sarif", str(path)])
+        (result,) = json.loads(capsys.readouterr().out)["runs"][0]["results"]
+        assert result["ruleId"] == "scenet/duplicate-key"
+        assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
+
+
 class TestComicScripts:
     """The other frontend. Line-oriented, so positions are lines and nothing finer."""
 

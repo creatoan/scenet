@@ -8,6 +8,11 @@
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
 
+It is read strictly. An unknown key is an error rather than ignored, and so is a key written twice
+in one mapping, such as two cast members called `alice`. YAML requires keys to be unique, but the
+usual Python parser keeps the last and drops the first without a word, which would quietly lose a
+character or a panel. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+
 ## The layers
 
 A panel description has five authored layers. A sixth — resolution — is computed, and a seventh —
