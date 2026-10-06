@@ -22,6 +22,7 @@ from scenet.emit.svg import fmt, render
 from scenet.geom import BBox, Circle
 from scenet.pipeline import compile_file, compile_scene, compile_source
 from scenet.solve.balloons import READING_EPSILON
+from scenet.solve.text import load_metrics
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 
@@ -197,6 +198,25 @@ class TestEmitters:
         core = compiled[1]
         assert "<text" not in render(core)
         assert "<text" in render(core, live_text=True)
+
+    def test_glyphs_are_drawn_at_the_size_they_were_measured(self, compiled: list[PanelCore]):
+        """A balloon is sized from the lettering's measured width, and each glyph is
+        advanced by its measured width. A glyph drawn at a rounded scale is a different
+        size from the one measured: at size 35 the scale is 0.035, and two decimals
+        wrote 0.04 -- every letter 14% too large, crowding the next."""
+        units_per_em = load_metrics().units_per_em
+        for core in compiled:
+            measured = {
+                round(item.font_size / units_per_em, 9) for item in (*core.balloons, *core.captions)
+            }
+            if not measured:
+                continue
+            drawn = re.findall(r"scale\(([-\d.]+) -[\d.]+\)", render(core))
+            assert drawn
+            for scale in drawn:
+                assert any(abs(float(scale) - expected) < 1e-6 for expected in measured), (
+                    f"a glyph drawn at scale {scale}, measured at {sorted(measured)}"
+                )
 
     def test_live_text_escapes_markup(self):
         core = compile_source(

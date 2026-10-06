@@ -65,10 +65,11 @@ class Strict(BaseModel):
 
     A misspelled key in a puppet file that was silently ignored would produce a
     character that is subtly wrong -- an arm the wrong length, an anchor in the wrong
-    place -- with nothing to point at.
+    place -- with nothing to point at. A length of `.inf` or `.nan` is refused as well:
+    it is a valid YAML float, and nothing downstream can draw it.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
 class JointSpec(Strict):
@@ -91,7 +92,9 @@ class BonePart(Strict):
     to_joint: str = Field(alias="to")
     width: float = Field(gt=0)
 
-    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, populate_by_name=True, allow_inf_nan=False
+    )
 
 
 class BlobPart(Strict):
