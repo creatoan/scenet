@@ -11,9 +11,18 @@ wrong picture.
 
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Discriminator,
+    Field,
+    Tag,
+    field_validator,
+    model_validator,
+)
+from pydantic.json_schema import SkipJsonSchema
 
 from scenet.errors import RuleViolationError
 
@@ -796,11 +805,44 @@ class CaptionEvent(Strict):
         return self
 
 
-#: One entry in a panel's script. Tagged by a defaulted literal rather than a pydantic
-#: discriminator: a discriminator requires the tag to be present in the input, which
-#: would break every caller that constructs `SayEvent(...)` directly. The default still
-#: produces an unambiguous `anyOf` in the generated JSON Schema.
-ScriptEvent = SayEvent | CaptionEvent
+#: The tag a union member is chosen by when its input carries none.
+UNTAGGED = "untagged"
+
+
+def tag_by(field: str) -> Discriminator:
+    """Choose a union member by the tag in `field`, as the members' literals spell it.
+
+    A plain union is validated against every member in turn, and when all of them fail
+    pydantic reports why each one did: one bad caption `kind` became four findings, three
+    of them about a `say` entry nobody wrote. The tag already says which member is meant,
+    so only that member's errors are reported, at a path that names it.
+
+    The tag is a defaulted literal rather than a required one, so input without it is
+    still accepted: it is sent to :data:`UNTAGGED`, which each union using this maps to
+    the plain union it replaced. The frontends always write the tag, so only a caller
+    building the IR by hand ever takes that route.
+
+    Args:
+        field: The literal field that names the member -- `verb`, say.
+
+    Returns:
+        A discriminator to annotate the union with.
+    """
+
+    def tag_of(value: object) -> str:
+        tag = value.get(field) if isinstance(value, dict) else getattr(value, field, None)
+        return UNTAGGED if tag is None else str(tag)
+
+    return Discriminator(tag_of)
+
+
+#: One entry in a panel's script, chosen by its `verb`.
+ScriptEvent = Annotated[
+    Annotated[SayEvent, Tag("say")]
+    | Annotated[CaptionEvent, Tag("caption")]
+    | Annotated[SkipJsonSchema[SayEvent | CaptionEvent], Tag(UNTAGGED)],
+    tag_by("verb"),
+]
 
 
 class PanelIR(Strict):

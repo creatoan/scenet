@@ -10,12 +10,23 @@ different path-rounding convention produces a huge diff that means nothing.
 """
 
 import json
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Tag
+from pydantic.json_schema import SkipJsonSchema
 
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
-from scenet.ir import BalloonKind, CaptionKind, Mark, MassKind, Plane, TimeOfDay, Weather
+from scenet.ir import (
+    UNTAGGED,
+    BalloonKind,
+    CaptionKind,
+    Mark,
+    MassKind,
+    Plane,
+    TimeOfDay,
+    Weather,
+    tag_by,
+)
 
 CORE_FORMAT_VERSION = 1
 
@@ -189,10 +200,15 @@ class FaceDisc(CoreModel):
 
 
 #: One mark on a drawn face, or of the emanata drawn around it -- they are made of the
-#: same two primitives. Tagged by a defaulted literal rather than a pydantic
-#: discriminator, for the same reason `ScriptEvent` is: a discriminator would require
-#: the tag in every hand-written document.
-FaceMark = FaceStroke | FaceDisc
+#: same two primitives. Chosen by its `mark`, exactly as a script entry is by its verb, so
+#: a hand-edited disc with a bad radius is not also reported as every reason it is not a
+#: stroke. A mark written without the tag is still accepted.
+FaceMark = Annotated[
+    Annotated[FaceStroke, Tag("stroke")]
+    | Annotated[FaceDisc, Tag("disc")]
+    | Annotated[SkipJsonSchema[FaceStroke | FaceDisc], Tag(UNTAGGED)],
+    tag_by("mark"),
+]
 
 
 class CoreMass(CoreModel):
