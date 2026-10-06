@@ -293,7 +293,7 @@
     },
     "PageSpec": {
       "additionalProperties": false,
-      "description": "One page: tiers, top to bottom.\n\nA page is read tier by tier and left to right within a tier, so the order panels are\nwritten in is the order they are read in. That is the page's version of the rule a\nballoon obeys, and with tiers it holds by construction.\n\nAttributes:\n    tiers: The tiers, top to bottom.",
+      "description": "One page: tiers, top to bottom.\n\nA page is read tier by tier, left to right within a tier and down each column of a\ntier of columns, so the order panels are written in is the order they are read in.\nThat is the page's version of the rule a balloon obeys, and it holds by construction:\ncolumns that readers would not read down are refused by\n:class:`PageLayout <scenet.ir.PageLayout>`.\n\nAttributes:\n    tiers: The tiers, top to bottom.",
       "properties": {
         "tiers": {
           "items": {
