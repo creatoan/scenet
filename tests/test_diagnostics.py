@@ -391,6 +391,29 @@ class TestAReflexiveRelationKeepsItsRule:
         assert caught.value.rule == "reflexive-relation"
 
 
+class TestAnOverChainIsLocatedAtItsOver:
+    """A broken `over:` was reported against the whole `panels:` block, so an editor
+    underlined its first line, wherever the `over:` was. Found while planning #92."""
+
+    MISSING = "cast: {a: {reference: alice}}\npanels:\n  one: {}\n  two:\n    over: ghost\n"
+    CYCLE = "cast: {a: {reference: alice}}\npanels:\n  one:\n    over: two\n  two:\n    over: one\n"
+
+    def test_a_missing_parent_points_at_the_over_naming_it(self):
+        (found,) = diagnose_source(self.MISSING, source=Path("x.scene.yaml"))
+        assert found.rule == "composition"
+        assert found.path == ("panels", "two", "over")
+        assert found.region is not None
+        assert found.region.start.line == 5
+
+    def test_a_cycle_points_at_an_over_on_it(self):
+        (found,) = diagnose_source(self.CYCLE, source=Path("x.scene.yaml"))
+        assert found.rule == "composition"
+        assert found.path[0] == "panels"
+        assert found.path[-1] == "over"
+        assert found.region is not None
+        assert found.region.start.line in (4, 6)
+
+
 class TestSourcePositions:
     """`yaml.compose` keeps the marks `safe_load` throws away."""
 
