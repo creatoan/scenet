@@ -22,6 +22,12 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
 
+### `scenet/duplicate-key`
+
+A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+
+**Fix:** Delete or rename one of the two; the message says which lines they are on.
+
 ### `scenet/duplicate-panel`
 
 Two panels in a comic script have the same name. Panels are named by their PANEL heading, and by their PAGE heading as well when panel numbers start again on each page. Two panels that still share a name -- PANEL 1 twice on one page, or twice with no PAGE heading between them -- cannot both be kept, and dropping one without a word would lose whatever it held.

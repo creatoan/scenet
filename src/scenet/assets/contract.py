@@ -18,6 +18,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from scenet.errors import AssetError, UnknownExpressionError, UnknownPoseError, UnknownPuppetError
+from scenet.safe_yaml import load
 
 __all__ = [
     "DEFAULT_LIBRARY_PATH",
@@ -587,7 +588,8 @@ def load_puppet(path: Path) -> PuppetSpec:
         The validated puppet, ready to be posed.
 
     Raises:
-        AssetError: The file is not a YAML mapping.
+        AssetError: The file is not valid YAML -- including a key written twice in one
+            mapping -- or is not a mapping.
         pydantic.ValidationError: The mapping is not a well-formed puppet -- an
             out-of-order landmark, a skeleton that is not a tree, a joint referring
             to a parent that does not exist.
@@ -605,7 +607,11 @@ def load_puppet(path: Path) -> PuppetSpec:
         :meth:`PuppetLibrary.from_directory <scenet.assets.contract.PuppetLibrary.from_directory>`,
         to read a whole directory at once.
     """
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    try:
+        # A second `pointing:` used to replace the first without a word.
+        data = load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise AssetError(f"{path}: {exc}") from exc
     if not isinstance(data, dict):
         raise AssetError(f"{path}: expected a mapping at the top level")
     return PuppetSpec.model_validate(data)

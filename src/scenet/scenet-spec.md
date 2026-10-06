@@ -87,6 +87,11 @@ so always check.
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
 
+It is read strictly. An unknown key is an error rather than ignored, and so is a key written twice
+in one mapping, such as two cast members called `alice`. YAML requires keys to be unique, but the
+usual Python parser keeps the last and drops the first without a word, which would quietly lose a
+character or a panel. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+
 ## The layers
 
 A panel description has five authored layers. A sixth — resolution — is computed, and a seventh —
@@ -906,6 +911,12 @@ An `over:` chain cannot be resolved. A panel inherits from one that does not exi
 A setting names a place and lists masses. A place *is* a mass list -- the preset expands into exactly what an author could have written -- so naming one and listing the other asks two questions at once, and the compiler will not guess which was meant.
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
+
+### `scenet/duplicate-key`
+
+A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+
+**Fix:** Delete or rename one of the two; the message says which lines they are on.
 
 ### `scenet/duplicate-panel`
 

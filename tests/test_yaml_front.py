@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from scenet.frontends.common import parse_relation
-from scenet.frontends.yaml_front import PanelSyntaxError, load_panel, parse_panel
+from scenet.frontends.yaml_front import PanelSyntaxError, load_panel, parse_panel, parse_scene
 from scenet.ir import (
     BalloonKind,
     CaptionEvent,
@@ -61,6 +61,18 @@ class TestDocumentShape:
     def test_malformed_yaml_is_reported_as_yaml(self):
         with pytest.raises(PanelSyntaxError, match="invalid YAML"):
             parse_panel("cast: {unclosed")
+
+    def test_a_repeated_cast_member_is_rejected(self):
+        """PyYAML kept the second and dropped the first: two characters written, one
+        compiled, nothing said (#83)."""
+        with pytest.raises(PanelSyntaxError, match="alice") as caught:
+            parse_panel("cast:\n  alice: {reference: alice}\n  alice: {reference: bob}\n")
+        assert caught.value.rule == "duplicate-key"
+
+    def test_a_repeated_panel_is_rejected(self):
+        with pytest.raises(PanelSyntaxError, match="one") as caught:
+            parse_scene("panels:\n  one: {}\n  two: {}\n  one: {}\n")
+        assert caught.value.rule == "duplicate-key"
 
     def test_source_path_appears_in_the_message(self, tmp_path: Path):
         bad = tmp_path / "broken.panel.yaml"

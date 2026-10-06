@@ -15,6 +15,8 @@ below 1.0 means.
 - `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
   name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
   the heading that repeats. (#63)
+- `scenet/duplicate-key`, the finding for a key written twice in one YAML mapping. It points
+  at the second and names the line of the first. (#83)
 
 ### Fixed
 
@@ -39,6 +41,14 @@ below 1.0 means.
   `p2-`), never by its name, which could not be kept safe inside `url(#...)`. The strip's
   output changes; a single panel's is byte-identical. `render` and `render_debug` take an
   `id_prefix` for this, empty by default. (#64)
+- **A key written twice in YAML lost the first without a word.** PyYAML keeps the last of
+  two equal keys, so `cast: {alice: …, alice: …}` compiled one character and `scenet check`
+  called it `ok`; the same went for panels, settings and a puppet's poses. Every YAML Scenet
+  reads (panels, scenes, a script's front matter and `@` directives, puppet files) now
+  refuses a repeated key, as the YAML specification says it should. A merge key's override
+  is still allowed. Documents that compiled with a silently dropped key now fail; that is
+  the fix. A puppet file that is not valid YAML is now an `AssetError` naming the file,
+  rather than PyYAML's bare error. (#83)
 
 ## [0.9.0] - 2026-10-03
 

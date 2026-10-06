@@ -72,6 +72,7 @@ from scenet.frontends.positions import (
 from scenet.frontends.script_front import FRONT_MATTER, parse_script
 from scenet.ir import PanelIR
 from scenet.pipeline import compile_ir
+from scenet.safe_yaml import DuplicateKeyError, load
 
 __all__ = [
     "RULES",
@@ -129,6 +130,17 @@ RULES: dict[str, Rule] = {
             "with the ones around it."
         ),
         help="Fix the reported position; YAML errors cascade, so re-check after each fix.",
+    ),
+    "duplicate-key": Rule(
+        summary="A key is written twice in one mapping",
+        description=(
+            "YAML requires every key in a mapping to be unique, but the parser Scenet "
+            "reads it with builds the document anyway and keeps only the last value -- so "
+            "a panel, a cast member or a pose written twice would lose the first without "
+            "a word, and the rest would compile. A merge key's override (`<<: *base`, "
+            "then the key again) is not a repeat."
+        ),
+        help="Delete or rename one of the two; the message says which lines they are on.",
     ),
     "not-a-mapping": Rule(
         summary="The document is not a mapping",
@@ -482,7 +494,18 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
         The mapping and an empty list, or `None` and the single finding explaining why.
     """
     try:
-        data = yaml.safe_load(text)
+        data = load(text)
+    except DuplicateKeyError as exc:
+        # Located at the second key, which is the one to delete or rename; the message
+        # names the line of the first.
+        return None, [
+            Diagnostic(
+                rule="duplicate-key",
+                message=exc.summary,
+                source=source,
+                region=syntax_error_region(exc),
+            )
+        ]
     except yaml.YAMLError as exc:
         return None, [
             Diagnostic(
@@ -929,7 +952,7 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
         return "", {}
     padded = "\n" * normalised.count("\n", 0, match.start(1)) + match.group(1) + "\n"
     # parse_script has already loaded this successfully, so it cannot fail here.
-    loaded = yaml.safe_load(padded)
+    loaded = load(padded)
     return padded, loaded if isinstance(loaded, dict) else {}
 
 
