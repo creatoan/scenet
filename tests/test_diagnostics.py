@@ -206,6 +206,95 @@ class TestSurfaceFaultsAreLocated:
         assert found.region.start.line == 2
 
 
+class TestOneMistakeInAScriptEntryIsOneFinding:
+    """A script entry is a union of event types, and only the one its verb names applies.
+
+    Validated as a plain union, pydantic tried every member and reported why each one
+    failed: a bad caption `kind` came back as four findings, three of them about a `say`
+    entry nobody wrote. The verb already says which member is meant, so that member's
+    errors are the only ones worth reporting.
+    """
+
+    CAST = "cast: {bob: {reference: bob}}\n"
+
+    @pytest.mark.parametrize(
+        ("body", "rule", "path", "line", "names"),
+        [
+            pytest.param(
+                'script:\n  - caption: {text: "9:14.", kind: narration}\n',
+                "invalid-field",
+                ("script", 0, "caption", "kind"),
+                3,
+                "'locale', 'monologue', 'spoken' or 'editorial'",
+                id="caption-kind",
+            ),
+            pytest.param(
+                "script:\n  - caption:\n      text: Later.\n      tone: grey\n",
+                "invalid-field",
+                ("script", 0, "caption", "tone"),
+                5,
+                "'paper', 'pale' or 'ink'",
+                id="caption-tone-block",
+            ),
+            pytest.param(
+                "script:\n  - say: {by: bob, text: Hi, kind: yell}\n",
+                "invalid-field",
+                ("script", 0, "say", "kind"),
+                3,
+                "'speech', 'thought', 'whisper' or 'shout'",
+                id="say-kind",
+            ),
+            pytest.param(
+                "script:\n  - say:\n      text: Hi\n",
+                "missing-field",
+                ("script", 0, "say", "by"),
+                4,  # the mapping it is missing from
+                "Field required",
+                id="say-missing-speaker",
+            ),
+            pytest.param(
+                "script:\n  - say:\n      by: bob\n      text: Hi\n      tone: ink\n",
+                "unknown-key",
+                ("script", 0, "say", "tone"),
+                6,
+                "Extra inputs are not permitted",
+                id="say-unknown-key",
+            ),
+        ],
+    )
+    def test_it_is_reported_once_against_the_verb_it_names(
+        self, body: str, rule: str, path: tuple[str | int, ...], line: int, names: str
+    ):
+        (found,) = diagnose_source(self.CAST + body, source=Path("x.panel.yaml"))
+        assert found.rule == rule
+        assert found.path == path
+        assert names in found.message
+        assert found.region is not None
+        assert found.region.start.line == line
+
+    @pytest.mark.parametrize(
+        ("body", "says"),
+        [
+            pytest.param(
+                "script:\n  - {say: {by: bob, text: Hi}, caption: {text: Later.}}\n",
+                "single-key mapping",
+                id="both-verbs",
+            ),
+            pytest.param("script:\n  - {}\n", "single-key mapping", id="no-verb"),
+            pytest.param(
+                "script:\n  - {text: Later.}\n", "unknown verb 'text'", id="payload-without-verb"
+            ),
+        ],
+    )
+    def test_both_verbs_or_neither_is_one_clear_finding(self, body: str, says: str):
+        (found,) = diagnose_source(self.CAST + body, source=Path("x.panel.yaml"))
+        assert found.rule == "invalid-field"
+        assert found.path == ("script", 0)
+        assert says in found.message
+        assert found.region is not None
+        assert found.region.start.line == 3
+
+
 class TestSourcePositions:
     """`yaml.compose` keeps the marks `safe_load` throws away."""
 
