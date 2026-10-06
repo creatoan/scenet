@@ -109,3 +109,23 @@ class TestWhatIsStillAllowed:
         """It builds on `SafeLoader`: no tag constructs an arbitrary Python object."""
         with pytest.raises(yaml.YAMLError):
             load("!!python/object/apply:os.system ['echo hi']\n")
+
+
+class TestNestingTooDeep:
+    """Python's recursion limit is not a YAML error, so a deeply nested document escaped
+    every handler that catches one: `scenet check`, `build` and the comic-script front
+    matter all ended in a `RecursionError` traceback. Found while planning #92."""
+
+    DEEP_SEQUENCE = "a: " + "[" * 5000 + "]" * 5000 + "\n"
+    DEEP_MAPPING = "".join("  " * level + f"k{level}:\n" for level in range(3000))
+
+    @pytest.mark.parametrize("text", [DEEP_SEQUENCE, DEEP_MAPPING], ids=["flow", "block"])
+    def test_it_is_a_yaml_error(self, text: str):
+        with pytest.raises(yaml.YAMLError, match="nested too deeply"):
+            load(text)
+
+    def test_ordinary_nesting_is_untouched(self):
+        expected: list[object] = []
+        for _ in range(49):
+            expected = [expected]
+        assert load("a: " + "[" * 50 + "]" * 50) == {"a": expected}
