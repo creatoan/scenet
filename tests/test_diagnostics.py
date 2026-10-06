@@ -342,6 +342,32 @@ class TestNestingTooDeep:
         assert "nested too deeply" in found.message
 
 
+class TestAMisspelledRequiredKeyIsOneFinding:
+    """`referense:` is one mistake, but it came back as two findings at one place: the
+    unknown key, and the required `reference` it should have been. Found while planning
+    #92, whose catalogue expects exactly one finding per mistake."""
+
+    def test_the_typo_is_reported_once_with_the_key_it_meant(self):
+        source = "cast:\n  alice: {referense: alice}\n"
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "unknown-key"
+        assert found.path == ("cast", "alice", "referense")
+        assert "did you mean 'reference'" in found.message
+        assert found.region is not None
+        assert found.region.start.line == 2
+
+    def test_build_says_the_same(self):
+        with pytest.raises(PanelSyntaxError, match="did you mean 'reference'") as caught:
+            parse_panel("cast:\n  alice: {referense: alice}\n")
+        assert "Field required" not in str(caught.value)
+
+    def test_an_unrelated_unknown_key_beside_a_missing_one_is_two_findings(self):
+        """Two mistakes stay two findings: `colour` is not a misspelling of `reference`."""
+        source = "cast:\n  alice: {colour: red}\n"
+        found = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert sorted(item.rule for item in found) == ["missing-field", "unknown-key"]
+
+
 class TestAReflexiveRelationKeepsItsRule:
     """`scenet/reflexive-relation` is in the catalogue, but a staging sentence relating an
     actor to itself came back as `invalid-field`: the frontend rewrote the error and lost
