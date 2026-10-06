@@ -42,6 +42,13 @@ below 1.0 means.
 
 ### Fixed
 
+- **`-o` naming a directory crashed** `scenet build`, `check` and `schema` with a traceback;
+  `scenet build x.panel.yaml -o .` was enough. `build` now writes into a directory under the
+  default name, as `cp` does. A directory is one that exists, or a path ending in `/`. `check`
+  and `schema` write one file of their own, so they refuse a directory with a usage error.
+- **`scenet check -o FILE` ignored `-o` in text format.** The findings went to the terminal
+  and no file was written, although the reference said it wrote the report to the file. It
+  now does, as it already did for SARIF. The file is empty when every document is valid.
 - A mistake inside one tier of `pages:` was reported twice by `scenet check`. The second
   report said the list of tiers was empty, which it was not: pydantic also calls a tuple too
   short when one of its items fails. That echo is now dropped wherever pydantic's errors
