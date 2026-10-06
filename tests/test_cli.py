@@ -84,6 +84,56 @@ class TestBuild:
         assert main(["build", str(panel_file), "-o", str(target)]) == 0
         assert target.exists()
 
+    @pytest.mark.parametrize("written", [".", "out", "out/", "out\\", "./out/.."])
+    def test_a_directory_takes_the_default_names(
+        self, panel_file: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, written: str
+    ):
+        """`-o` naming a directory puts the output in it, under the name it would have
+        had beside the source -- as `cp` does. `-o .` used to crash with a traceback."""
+        if "\\" in written and Path("a\\b").name == "a\\b":
+            pytest.skip("a backslash is not a separator here")
+        (tmp_path / "out").mkdir()
+        elsewhere = tmp_path / "elsewhere"
+        elsewhere.mkdir()
+        source = elsewhere / panel_file.name
+        panel_file.rename(source)
+        monkeypatch.chdir(tmp_path)
+        assert main(["build", str(source), "-o", written, "--core", "--quiet"]) == 0
+        directory = (tmp_path / written).resolve()
+        assert sorted(path.name for path in directory.glob("scene.*")) == [
+            "scene.core.json",
+            "scene.svg",
+        ]
+
+    def test_a_trailing_separator_makes_the_directory(self, panel_file: Path, tmp_path: Path):
+        """`-o new/` cannot be a file, so it is the directory to create."""
+        target = tmp_path / "new"
+        assert main(["build", str(panel_file), "-o", f"{target}/", "--quiet"]) == 0
+        assert (target / "scene.svg").exists()
+
+    def test_a_directory_takes_a_scene_and_its_pages(self, tmp_path: Path):
+        source = tmp_path / "story.scene.yaml"
+        source.write_text(
+            "cast: {a: {reference: alice}}\npages: [{tiers: [{panels: [one, two]}]}]\n"
+            "panels: {one: {}, two: {}}\n",
+            encoding="utf-8",
+        )
+        out = tmp_path / "out"
+        out.mkdir()
+        assert main(["build", str(source), "-o", str(out), "--quiet"]) == 0
+        assert sorted(path.name for path in out.iterdir()) == [
+            "story.one.svg",
+            "story.page-1.svg",
+            "story.two.svg",
+        ]
+
+    def test_a_path_with_no_directory_is_still_a_file(self, panel_file: Path, tmp_path: Path):
+        """Only an existing directory, or a trailing separator, means a directory: a
+        new name without a suffix is still the file to write, as it always was."""
+        target = tmp_path / "plain"
+        assert main(["build", str(panel_file), "-o", str(target), "--quiet"]) == 0
+        assert target.is_file()
+
     def test_core_flag_writes_the_intermediate_tier(self, panel_file: Path, tmp_path: Path, capsys):
         target = tmp_path / "out.svg"
         main(["build", str(panel_file), "-o", str(target), "--core"])
@@ -137,6 +187,41 @@ class TestErrors:
         assert err.startswith("scenet: ")
         assert "unsupported extension '.txt'" in err
         assert not (tmp_path / "duel.txt.svg").exists()
+
+    @pytest.mark.parametrize("command", ["check", "schema"])
+    def test_a_directory_is_no_place_for_a_report(
+        self, panel_file: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str], command: str
+    ):
+        """`check` and `schema` write one file of their own, which has no default name
+        to take inside a directory. They used to crash writing to it."""
+        arguments = [command, str(panel_file)] if command == "check" else [command]
+        assert main([*arguments, "-o", str(tmp_path)]) == 2
+        err = capsys.readouterr().err
+        assert err.startswith("scenet: ")
+        assert "directory" in err
+        assert "Traceback" not in err
+
+    def test_check_writes_its_text_report_to_the_output_file(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """`-o` is documented as writing the report to a file, and it was ignored unless
+        the format was SARIF: the findings went to stderr and no file was written."""
+        bad = tmp_path / "bad.panel.yaml"
+        bad.write_text("cast:\n  a: {reference: nobody}\n", encoding="utf-8")
+        target = tmp_path / "report.txt"
+        assert main(["check", str(bad), "-o", str(target)]) == 1
+        report = target.read_text(encoding="utf-8")
+        assert "unknown-puppet" in report
+        assert report.endswith("\n")
+        captured = capsys.readouterr()
+        assert "unknown-puppet" not in captured.err
+        assert f"wrote {target}" in captured.out
+
+    def test_a_clean_check_writes_an_empty_report(self, panel_file: Path, tmp_path: Path, capsys):
+        target = tmp_path / "report.txt"
+        assert main(["check", str(panel_file), "-o", str(target), "--quiet"]) == 0
+        assert target.read_text(encoding="utf-8") == ""
+        assert capsys.readouterr().out == ""
 
     def test_invalid_panel_reports_without_a_traceback(self, tmp_path: Path, capsys):
         bad = tmp_path / "bad.panel.yaml"

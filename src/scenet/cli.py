@@ -3,6 +3,7 @@
 import argparse
 import importlib
 import json
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -52,7 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="a *.panel.yaml or *.scene.yaml document, or a *.script comic script",
     )
     build.add_argument(
-        "-o", "--output", type=Path, help="output SVG path (default: alongside the source)"
+        "-o",
+        "--output",
+        help=(
+            "output SVG path, or a directory to write into under the default name "
+            "(default: alongside the source)"
+        ),
     )
     build.add_argument(
         "--core",
@@ -231,7 +237,7 @@ def run_build(args: argparse.Namespace) -> int:
         .removesuffix(".panel")
         .removesuffix(".scene")
     )
-    base: Path = args.output or source.with_name(f"{stem}.svg")
+    base = _output_base(args.output, source, f"{stem}.svg")
     base.parent.mkdir(parents=True, exist_ok=True)
 
     results = book.panels
@@ -279,6 +285,42 @@ def run_build(args: argparse.Namespace) -> int:
         for note in notes:
             print(f"note: {note}")
     return 0
+
+
+def _output_base(written: str | None, source: Path, default: str) -> Path:
+    """Where `build` writes its main output, from what `-o` said.
+
+    A path naming a directory -- one that exists, or one written with a trailing
+    separator, as `out/` -- takes the default name inside it, as `cp` does. Anything
+    else is the file to write, whether or not it has a suffix.
+
+    Args:
+        written: The `-o` argument exactly as given, or `None` when there was none.
+        source: The document being built.
+        default: The name the output takes beside its source.
+
+    Returns:
+        The path of the main SVG; every other output is named after it.
+    """
+    if written is None:
+        return source.with_name(default)
+    path = Path(written)
+    separators = tuple(separator for separator in (os.sep, os.altsep) if separator)
+    if written.endswith(separators) or path.is_dir():
+        return path / default
+    return path
+
+
+def _refuse_directory(output: Path | None) -> bool:
+    """Report an `-o` that names a directory, for a command that writes one file.
+
+    Returns:
+        Whether it was refused.
+    """
+    if output is not None and output.is_dir():
+        print(f"scenet: {output} is a directory; -o names the file to write", file=sys.stderr)
+        return True
+    return False
 
 
 def _page_targets(book: Book, base: Path) -> list[Path] | None:
@@ -348,7 +390,7 @@ def run_check(args: argparse.Namespace) -> int:
         return 2
     # Checked as `build` would read it, or not at all: calling a file `build` refuses
     # "ok" would be a confident false clean.
-    if _refuse_unsupported(sources):
+    if _refuse_unsupported(sources) or _refuse_directory(args.output):
         return 2
 
     found: list[Diagnostic] = []
@@ -363,26 +405,37 @@ def run_check(args: argparse.Namespace) -> int:
         # without one is a nuisance in a terminal and in a diff.
         report = f"{json.dumps(document, indent=2, ensure_ascii=False)}\n"
         if args.output:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(report, encoding="utf-8")
-            if not args.quiet:
-                print(f"wrote {args.output}")
+            _write_report(args.output, report, quiet=args.quiet)
         else:
             # stdout carries the document and nothing else, so that
             # `scenet check --format sarif x > results.sarif` produces a parseable file.
             sys.stdout.write(report)
         return 1 if found else 0
 
+    lines = []
     for item in found:
         where = item.source if item.source else "<string>"
         line = item.region.start.line if item.region else 1
         column = item.region.start.column if item.region else 1
-        print(f"{where}:{line}:{column}: {item.rule}: {item.message}", file=sys.stderr)
+        lines.append(f"{where}:{line}:{column}: {item.rule}: {item.message}\n")
+    if args.output:
+        # The report and nothing else, as for SARIF: empty when every document is valid.
+        _write_report(args.output, "".join(lines), quiet=args.quiet)
+        return 1 if found else 0
+    sys.stderr.write("".join(lines))
 
     if not found and not args.quiet:
         for path in sources:
             print(f"{path}: ok")
     return 1 if found else 0
+
+
+def _write_report(output: Path, report: str, *, quiet: bool) -> None:
+    """Write a report where `-o` said, and say so unless asked to be quiet."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(report, encoding="utf-8")
+    if not quiet:
+        print(f"wrote {output}")
 
 
 def run_schema(args: argparse.Namespace) -> int:
@@ -393,6 +446,8 @@ def run_schema(args: argparse.Namespace) -> int:
     disagree. It describes the syntax as written, not the IR it normalises into; see
     :mod:`scenet.schema <scenet.schema>`.
     """
+    if _refuse_directory(args.output):
+        return 2
     schema = scene_schema() if args.scene else panel_schema()
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if args.output is None:

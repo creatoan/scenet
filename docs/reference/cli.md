@@ -25,7 +25,10 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `-o`, `--output PATH`
 : Where to write. Defaults to the source's name with an `.svg` extension, alongside it.
-  Note that `duel.panel.yaml` becomes `duel.svg`, not `duel.panel.svg`.
+  Note that `duel.panel.yaml` becomes `duel.svg`, not `duel.panel.svg`. A directory, one that
+  exists or one written with a trailing `/` such as `out/`, takes that default name inside
+  it, so `-o .` writes `duel.svg` to the current directory. Any other path is the SVG file
+  itself, and every other output is named after it.
 
 `--core`
 : Also write the resolved Panel Core as JSON — every coordinate the compiler chose, in a
@@ -144,7 +147,9 @@ published schema — are what make a generate/validate/repair loop work.
   accepts.
 
 `-o`, `--output PATH`
-: Write the report to a file instead of stdout.
+: Write the report to this file instead of the terminal, in either format. In text format
+  the file holds the findings, one per line, and is empty when every document is valid.
+  It names a file, so a directory is refused.
 
 `--quiet`
 : Suppress the per-file `ok` line. Findings are always reported — this hides the
@@ -301,7 +306,7 @@ the editor suggests cannot drift from what compiles — see
 [editor support](../howto/editor_support.md).
 
 `-o`, `--output PATH`
-: Write to a file instead of stdout.
+: Write to this file instead of stdout. It names a file, so a directory is refused.
 
 `--scene`
 : Emit the multi-panel scene schema instead of the single-panel one. A scene allows the
