@@ -108,6 +108,9 @@ Hello.
 #: Passes every cheap check, and fails only once the solver runs.
 CAST_LESS = "panel: {size: [420, 560]}\n"
 
+#: The same two panels, laid out side by side on one page.
+PAGED = SCENE + "pages: [{tiers: [{panels: [first, second]}]}]\n"
+
 
 def call(tool: str, arguments: dict[str, Any] | None = None) -> CallToolResult:
     """One tool call through a real MCP client session, in process."""
@@ -291,6 +294,18 @@ class TestCompile:
             "second",
         ]
 
+    def test_a_page_comes_back_with_its_frames(self):
+        result = call("compile", {"source": PAGED})
+        assert result.structured_content is not None
+        (page,) = result.structured_content["pages"]
+        assert page["number"] == 1
+        assert [frame["panel"] for frame in page["core"]["frames"]] == ["first", "second"]
+
+    def test_a_document_without_pages_has_none(self):
+        result = call("compile", {"source": SCENE})
+        assert result.structured_content is not None
+        assert result.structured_content["pages"] == []
+
     def test_a_comic_script_is_named_by_its_panel_numbers(self):
         result = call("compile", {"source": SCRIPT, "syntax": "script"})
         assert result.structured_content is not None
@@ -349,6 +364,17 @@ class TestRender:
             "scenet://panels/first.svg",
             "scenet://panels/second.svg",
         ]
+
+    def test_each_page_follows_the_panels(self):
+        """A page is one more SVG resource, not one more tool: the budget is five."""
+        result = call("render", {"source": PAGED})
+        assert [svg.uri for svg in self.resources(result)] == [
+            "scenet://panels/first.svg",
+            "scenet://panels/second.svg",
+            "scenet://pages/1.svg",
+        ]
+        assert isinstance(result.content[0], TextContent)
+        assert "1 page" in result.content[0].text
 
     def test_a_summary_comes_first_as_text(self):
         result = call("render", {"source": SCENE})

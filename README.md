@@ -93,12 +93,12 @@ computational geometry. The same input always produces byte-identical output.
 
 ## Status
 
-**Alpha — panels and sequences compile end to end, from the command line, the
+**Alpha — panels, sequences and pages compile end to end, from the command line, the
 browser, or an editor.** Framing, actor placement, balloon
-and caption placement, reading order, tail routing, drawn faces and the marks around them, tonal backdrops
-and SVG emission all
-work, from either of two frontends. Not yet built: page composition (tiers, panels of varying size) and the
-interpretation layer that would give a panel a *style*. See
+and caption placement, reading order, tail routing, drawn faces and the marks around them, tonal backdrops,
+pages of tiers and SVG emission all
+work, from either of two frontends. Not yet built: insets and free-form page layouts, print output, and
+the interpretation layer that would give a panel a *style*. See
 [the phase plan](docs/explanation/status.md) for detail.
 
 ```bash

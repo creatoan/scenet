@@ -222,6 +222,98 @@
       "title": "MassKind",
       "type": "string"
     },
+    "PageFormat": {
+      "additionalProperties": false,
+      "description": "The page every panel on it is laid out on.\n\nIn the same abstract units a panel uses: a page is not yet a printed size. Millimetres,\ntrim and bleed belong to print, which is a separate piece of work.\n\nAttributes:\n    size: `(width, height)`. The default is 1 : 1.5, close to a US comic's\n        6.625 x 10.25 inches.\n    margin: The blank border inside the page edge, on all four sides.\n    gutter: The gap between two panels side by side in a tier.\n    tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it\n        usually is in print: a narrower gap within a tier binds its panels into one\n        row, which is the direction they are read in.\n\nExample:\n    >>> from scenet import PageFormat\n    >>> PageFormat().size\n    (2000.0, 3000.0)",
+      "properties": {
+        "gutter": {
+          "default": 40.0,
+          "minimum": 0.0,
+          "title": "Gutter",
+          "type": "number"
+        },
+        "margin": {
+          "default": 100.0,
+          "minimum": 0.0,
+          "title": "Margin",
+          "type": "number"
+        },
+        "size": {
+          "default": [
+            2000.0,
+            3000.0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Size",
+          "type": "array"
+        },
+        "tier_gutter": {
+          "default": 60.0,
+          "minimum": 0.0,
+          "title": "Tier Gutter",
+          "type": "number"
+        }
+      },
+      "title": "PageFormat",
+      "type": "object"
+    },
+    "PageSpec": {
+      "additionalProperties": false,
+      "description": "One page: tiers, top to bottom.\n\nA page is read tier by tier and left to right within a tier, so the order panels are\nwritten in is the order they are read in. That is the page's version of the rule a\nballoon obeys, and with tiers it holds by construction.\n\nAttributes:\n    tiers: The tiers, top to bottom.",
+      "properties": {
+        "tiers": {
+          "items": {
+            "$ref": "#/$defs/Tier"
+          },
+          "minItems": 1,
+          "title": "Tiers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tiers"
+      ],
+      "title": "PageSpec",
+      "type": "object"
+    },
+    "PanelPlacement": {
+      "anyOf": [
+        {
+          "description": "A panel's name, which stands for `{use: name}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "use": {
+              "title": "Use",
+              "type": "string"
+            },
+            "width": {
+              "default": 1.0,
+              "exclusiveMinimum": 0.0,
+              "title": "Width",
+              "type": "number"
+            }
+          },
+          "required": [
+            "use"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "One panel in a tier.\n\nWritten as the panel's name alone, or as `{use: name, width: 2}` to give it a larger\nshare of the tier.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    width: Its share of the tier's width, relative to the other panels in the tier.",
+      "title": "PanelPlacement"
+    },
     "PanelSpec": {
       "additionalProperties": false,
       "description": "The panel's own dimensions.\n\nAttributes:\n    size: `(width, height)` in panel units. Everything else in the language is\n        expressed relative to these, so they set what a unit means.\n    margin: Inset on all four sides. Balloons are kept inside it; actors may bleed\n        past it, which is ordinary comics practice.\n\nExample:\n    >>> from scenet import PanelSpec\n    >>> PanelSpec(size=(1200.0, 600.0)).width\n    1200.0",
@@ -485,6 +577,31 @@
       "title": "Spans",
       "type": "string"
     },
+    "Tier": {
+      "additionalProperties": false,
+      "description": "A row of panels, read left to right.\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.",
+      "properties": {
+        "height": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Height",
+          "type": "number"
+        },
+        "panels": {
+          "items": {
+            "$ref": "#/$defs/PanelPlacement"
+          },
+          "minItems": 1,
+          "title": "Panels",
+          "type": "array"
+        }
+      },
+      "required": [
+        "panels"
+      ],
+      "title": "Tier",
+      "type": "object"
+    },
     "TimeOfDay": {
       "description": "When the panel happens, which shifts the whole value ladder.\n\nEach time supplies two numbers -- the value of the foreground and the value of the\natmosphere -- and the planes are spaced evenly between them. So `night` is not a\nblue filter over a daytime panel: it is a darker, more compressed ladder, which is\nwhat night actually does to a drawn scene. The ladder stays monotonic in depth at\nevery time of day, by construction rather than by tuning.",
       "enum": [
@@ -524,6 +641,26 @@
       },
       "title": "Cast",
       "type": "object"
+    },
+    "page": {
+      "$ref": "#/$defs/PageFormat",
+      "default": {
+        "gutter": 40.0,
+        "margin": 100.0,
+        "size": [
+          2000.0,
+          3000.0
+        ],
+        "tier_gutter": 60.0
+      }
+    },
+    "pages": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PageSpec"
+      },
+      "title": "Pages",
+      "type": "array"
     },
     "panel": {
       "$ref": "#/$defs/PanelSpec",

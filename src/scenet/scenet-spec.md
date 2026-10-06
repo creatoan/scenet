@@ -81,8 +81,8 @@ so always check.
 
 > **Status:** this is the specification. It is not a report of what is implemented — see
 > [implementation status](https://creatoan.github.io/scenet/explanation/status.html#implementation-status), which is authoritative on
-> what actually runs. Panels and sequences compile end to end today, from either frontend; page
-> composition and the style layer do not exist yet.
+> what actually runs. Panels, sequences and pages of tiers compile end to end today; the style
+> layer does not exist yet.
 
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
@@ -542,6 +542,55 @@ panel whose boxes cannot be placed without breaking it is rejected rather than r
 Captions take their turn in that sequence rather than being placed first as a layer. A caption
 written between two lines of dialogue is read between them; one written last is read last.
 
+## `page` and `pages`
+
+A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
+**tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
+share.
+
+```yaml
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+pages:
+  - tiers:
+      - panels: [{use: establishing, width: 2}, reply]
+      - {height: 1.2, panels: [closer]}
+      - panels: [her, him]
+panels:
+  establishing: {...}
+  reply: {...}
+```
+
+| Key | Means | Default |
+|---|---|---|
+| `page.size` | Width and height, in the same abstract units a panel uses | `[2000, 3000]` |
+| `page.margin` | The blank border inside the page edge | `100` |
+| `page.gutter` | The gap between two panels side by side in a tier | `40` |
+| `page.tier_gutter` | The gap between two tiers; wider than `gutter`, as in print | `60` |
+| `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
+| `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
+| `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
+
+Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
+proportion to the weights. A splash page is one tier holding one panel.
+
+**A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
+size: the page decides how big the frame is and nothing about what goes in it. The one other thing
+it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
+every panel letters at the same size, as if each were one tier of a three-tier page, because no
+letterer sets a short panel and a tall one at different sizes.
+
+A page is read tier by tier and left to right, so the order panels are written in is the order
+they are read in; with tiers, that holds by construction. A panel can be on one page once. A panel
+on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
+`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, or margins and
+gutters that leave no room are reported as `page-layout`.
+
+Not yet: panels that span tiers, insets and frames that are not rectangles
+([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
+([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
+([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
+([#80](https://github.com/creatoan/scenet/issues/80)).
+
 ## When constraints conflict
 
 Placement values are preferences of differing strength, and the solver resolves conflicts by
@@ -964,6 +1013,12 @@ The document is not a mapping. A panel document is a mapping of top-level keys -
 Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into a linear order before the solver runs, because Cassowary is a linear solver and cannot express the disjunction 'A left of B or B left of A'. A cycle has no linear order and so no solution.
 
 **Fix:** Remove one of the relations in the cycle; the message names an actor on it.
+
+### `scenet/page-layout`
+
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A document with pages needs panels to lay out.
+
+**Fix:** Check the panel names in `pages:`, place each panel once, or shrink the margin and gutters in `page:`.
 
 ### `scenet/panel-geometry`
 
@@ -2493,4 +2548,71 @@ panels:
       - alice ground_shared_with bob
     script:
       - say: {by: alice, text: "Bob?"}
+```
+
+## A page: panels in tiers
+
+`24-page.scene.yaml`
+
+```yaml
+# A page: panels laid out in tiers, read left to right and top to bottom.
+#
+# `page:` sets the format; `pages:` lays panels out. A panel takes a share of its
+# tier's width, and a tier a share of the page's height, by weight -- the way CSS
+# Grid's `fr` tracks share a row. A panel named alone has a weight of 1.
+#
+# Each panel is still compiled on its own, at the size of its frame, so the page
+# changes nothing about how a panel is composed -- except that every panel on it
+# letters at one type size, as a letterer would.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: establishing, width: 2}, reply]
+      - {height: 1.2, panels: [closer]}
+      - panels: [her, him]
+
+panels:
+  establishing:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Midnight. The corner of Fifth.", kind: locale}
+      - say: {by: alice, text: "You forgot your umbrella!"}
+
+  reply:
+    camera: {shot: medium_close_up}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, facing: left}
+    script:
+      - say: {by: bob, text: "I know.", kind: whisper}
+
+  closer:
+    over: establishing
+    camera: {shot: full_shot}
+    script:
+      - say: {by: alice, text: "You know? Then why did you leave it?"}
+      - say: {by: bob, text: "So you would come after me."}
+
+  her:
+    camera: {shot: close_up}
+    cast:
+      alice: {reference: alice, expression: surprise, facing: right}
+    script:
+      - say: {by: alice, text: "Oh."}
+
+  him:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: happy, facing: left}
+    script:
+      - say: {by: bob, text: "Shall we?", kind: whisper}
 ```

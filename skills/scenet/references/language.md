@@ -4,8 +4,8 @@
 
 > **Status:** this is the specification. It is not a report of what is implemented — see
 > [implementation status](https://creatoan.github.io/scenet/explanation/status.html#implementation-status), which is authoritative on
-> what actually runs. Panels and sequences compile end to end today, from either frontend; page
-> composition and the style layer do not exist yet.
+> what actually runs. Panels, sequences and pages of tiers compile end to end today; the style
+> layer does not exist yet.
 
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
@@ -464,6 +464,55 @@ panel whose boxes cannot be placed without breaking it is rejected rather than r
 
 Captions take their turn in that sequence rather than being placed first as a layer. A caption
 written between two lines of dialogue is read between them; one written last is read last.
+
+## `page` and `pages`
+
+A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
+**tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
+share.
+
+```yaml
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+pages:
+  - tiers:
+      - panels: [{use: establishing, width: 2}, reply]
+      - {height: 1.2, panels: [closer]}
+      - panels: [her, him]
+panels:
+  establishing: {...}
+  reply: {...}
+```
+
+| Key | Means | Default |
+|---|---|---|
+| `page.size` | Width and height, in the same abstract units a panel uses | `[2000, 3000]` |
+| `page.margin` | The blank border inside the page edge | `100` |
+| `page.gutter` | The gap between two panels side by side in a tier | `40` |
+| `page.tier_gutter` | The gap between two tiers; wider than `gutter`, as in print | `60` |
+| `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
+| `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
+| `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
+
+Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
+proportion to the weights. A splash page is one tier holding one panel.
+
+**A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
+size: the page decides how big the frame is and nothing about what goes in it. The one other thing
+it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
+every panel letters at the same size, as if each were one tier of a three-tier page, because no
+letterer sets a short panel and a tall one at different sizes.
+
+A page is read tier by tier and left to right, so the order panels are written in is the order
+they are read in; with tiers, that holds by construction. A panel can be on one page once. A panel
+on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
+`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, or margins and
+gutters that leave no room are reported as `page-layout`.
+
+Not yet: panels that span tiers, insets and frames that are not rectangles
+([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
+([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
+([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
+([#80](https://github.com/creatoan/scenet/issues/80)).
 
 ## When constraints conflict
 

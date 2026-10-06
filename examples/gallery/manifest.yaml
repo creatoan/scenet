@@ -73,3 +73,6 @@ examples:
   - file: 23-emanata.scene.yaml
     title: "Emanata: sweat, dizziness, oaths and dust"
     kind: scene
+  - file: 24-page.scene.yaml
+    title: "A page: panels in tiers"
+    kind: scene

@@ -26,7 +26,7 @@ Example:
 import inspect
 from typing import Any
 
-from scenet.ir import PanelIR, Predicate
+from scenet.ir import PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
 __all__ = ["panel_schema", "scene_schema"]
@@ -80,6 +80,12 @@ def scene_schema() -> dict[str, Any]:
         },
     }
 
+    # `page:` and `pages:` lay the panels out. They are not panel defaults, so they are
+    # added whole rather than loosened like the inherited keys above.
+    layout = PageLayout.model_json_schema(ref_template="#/$defs/{model}")
+    definitions.update(layout.pop("$defs"))
+    _accept_panel_names(definitions)
+
     return {
         "$schema": DIALECT,
         "title": "Scenet scene",
@@ -87,6 +93,8 @@ def scene_schema() -> dict[str, Any]:
         "type": "object",
         "properties": {
             **properties,
+            "page": layout["properties"]["page"],
+            "pages": layout["properties"]["pages"],
             "panels": {
                 "type": "object",
                 "description": (
@@ -173,6 +181,25 @@ def _accept_named_places(definitions: dict[str, Any]) -> None:
         ),
     }
     setting["not"] = {"required": ["place", "masses"]}
+
+
+def _accept_panel_names(definitions: dict[str, Any]) -> None:
+    """Mirror `normalise_layout`: a panel in a tier may be written as its name alone."""
+    placement: dict[str, Any] = definitions["PanelPlacement"]
+    mapping = {
+        key: value for key, value in placement.items() if key not in ("title", "description")
+    }
+    definitions["PanelPlacement"] = {
+        "title": placement["title"],
+        "description": placement.get("description", ""),
+        "anyOf": [
+            {
+                "type": "string",
+                "description": "A panel's name, which stands for `{use: name}`.",
+            },
+            mapping,
+        ],
+    }
 
 
 def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str, Any]:

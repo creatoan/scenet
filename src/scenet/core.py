@@ -573,6 +573,79 @@ class PanelCore(CoreModel):
         return cls.model_validate(json.loads(text))
 
 
+class CoreFrame(CoreModel):
+    """Where one panel sits on a page.
+
+    Attributes:
+        panel: The panel's name, as `panels:` gives it. Its own Panel Core is a separate
+            document, compiled at exactly this width and height.
+        x: Left edge, in page units.
+        y: Top edge, in page units.
+        width: Frame width, which is the panel's width.
+        height: Frame height, which is the panel's height.
+    """
+
+    panel: str
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+class PageCore(CoreModel):
+    r"""A fully resolved page: where every panel's frame is.
+
+    The page tier of the same idea as :class:`PanelCore <scenet.core.PanelCore>`. It holds
+    the frames and nothing drawn: each panel's contents are its own Panel Core, compiled
+    at its frame's size, so a page adds no layout decision to a panel and a panel's Core
+    reads the same whether or not it is on a page.
+
+    Attributes:
+        format_version: Bumped when the shape of this document changes incompatibly.
+        width: Page width, in page units.
+        height: Page height.
+        lettering_height: The height every panel on the page took its type size from, in
+            place of its own -- so that a short panel and a tall one letter alike.
+        frames: One per panel, in reading order: tier by tier, left to right.
+
+    Example:
+        >>> from scenet import compile_book
+        >>> book = compile_book(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "pages: [{tiers: [{panels: [one]}]}]\npanels: {one: {}}"
+        ... )
+        >>> [(f.panel, f.width) for f in book.pages[0].frames]
+        [('one', 1800.0)]
+    """
+
+    format_version: int = CORE_FORMAT_VERSION
+    width: float
+    height: float
+    lettering_height: float
+    frames: tuple[CoreFrame, ...] = ()
+
+    def to_json(self) -> str:
+        """Serialise deterministically, exactly as a Panel Core is."""
+        payload: Any = self.model_dump(mode="json")
+        return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+    @classmethod
+    def from_json(cls, text: str) -> Self:
+        """Read a Page Core back in.
+
+        Args:
+            text: A Page Core document.
+
+        Returns:
+            The parsed page.
+
+        Raises:
+            pydantic.ValidationError: The document is not a valid Page Core.
+            json.JSONDecodeError: The text is not JSON at all.
+        """
+        return cls.model_validate(json.loads(text))
+
+
 def point_pair(point: Point) -> tuple[float, float]:
     """Convert a point to the rounded `(x, y)` pair a Core document stores."""
     return point.as_tuple()
@@ -599,6 +672,7 @@ __all__ = [
     "CoreBackdrop",
     "CoreBalloon",
     "CoreCaption",
+    "CoreFrame",
     "CoreMass",
     "CoreStreak",
     "CoreVeil",
@@ -606,6 +680,7 @@ __all__ = [
     "FaceDisc",
     "FaceMark",
     "FaceStroke",
+    "PageCore",
     "PanelCore",
     "Tail",
     "Transform",

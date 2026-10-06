@@ -12,6 +12,7 @@ nothing has drifted.
 install
 use_as_a_library
 compile_a_sequence
+compose_a_page
 write_a_comic_script
 add_your_own_character
 debug_a_layout

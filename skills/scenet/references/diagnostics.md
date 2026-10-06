@@ -70,6 +70,12 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 
 **Fix:** Remove one of the relations in the cycle; the message names an actor on it.
 
+### `scenet/page-layout`
+
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A document with pages needs panels to lay out.
+
+**Fix:** Check the panel names in `pages:`, place each panel once, or shrink the margin and gutters in `page:`.
+
 ### `scenet/panel-geometry`
 
 The panel has no usable area. Panel dimensions must be positive, and the margins must leave something between them. A panel with no interior has nothing to compose in.

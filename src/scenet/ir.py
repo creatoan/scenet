@@ -9,6 +9,7 @@ predicate or an actor id should be a clear error at parse time rather than a sil
 wrong picture.
 """
 
+from collections.abc import Sequence
 from enum import StrEnum
 from typing import Literal, Self
 
@@ -30,7 +31,11 @@ __all__ = [
     "Mark",
     "Mass",
     "MassKind",
+    "PageFormat",
+    "PageLayout",
+    "PageSpec",
     "PanelIR",
+    "PanelPlacement",
     "PanelSpec",
     "PlacementZone",
     "Plane",
@@ -41,8 +46,10 @@ __all__ = [
     "ShotType",
     "Spans",
     "Strict",
+    "Tier",
     "TimeOfDay",
     "Weather",
+    "check_placements",
 ]
 
 # Depth-first search marks, used by the ordering cycle check.
@@ -973,3 +980,168 @@ class PanelIR(Strict):
         for actor in self.cast:
             groups.setdefault(find(actor), set()).add(actor)
         return tuple(frozenset(members) for members in groups.values() if len(members) > 1)
+
+
+class PageFormat(Strict):
+    """The page every panel on it is laid out on.
+
+    In the same abstract units a panel uses: a page is not yet a printed size. Millimetres,
+    trim and bleed belong to print, which is a separate piece of work.
+
+    Attributes:
+        size: `(width, height)`. The default is 1 : 1.5, close to a US comic's
+            6.625 x 10.25 inches.
+        margin: The blank border inside the page edge, on all four sides.
+        gutter: The gap between two panels side by side in a tier.
+        tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it
+            usually is in print: a narrower gap within a tier binds its panels into one
+            row, which is the direction they are read in.
+
+    Example:
+        >>> from scenet import PageFormat
+        >>> PageFormat().size
+        (2000.0, 3000.0)
+    """
+
+    size: tuple[float, float] = (2000.0, 3000.0)
+    margin: float = Field(default=100.0, ge=0.0)
+    gutter: float = Field(default=40.0, ge=0.0)
+    tier_gutter: float = Field(default=60.0, ge=0.0)
+
+    @property
+    def width(self) -> float:
+        """Page width."""
+        return self.size[0]
+
+    @property
+    def height(self) -> float:
+        """Page height."""
+        return self.size[1]
+
+    @model_validator(mode="after")
+    def check_positive(self) -> Self:
+        """Reject a page with no area inside its margin."""
+        if self.width <= 0 or self.height <= 0:
+            raise RuleViolationError(
+                "page size must be positive", rule="page-layout", loc=("page",)
+            )
+        if self.margin * 2 >= min(self.width, self.height):
+            raise RuleViolationError(
+                "the page margin leaves no room for panels", rule="page-layout", loc=("page",)
+            )
+        return self
+
+
+class PanelPlacement(Strict):
+    """One panel in a tier.
+
+    Written as the panel's name alone, or as `{use: name, width: 2}` to give it a larger
+    share of the tier.
+
+    Attributes:
+        use: The name of a panel under `panels:`.
+        width: Its share of the tier's width, relative to the other panels in the tier.
+    """
+
+    use: str
+    width: float = Field(default=1.0, gt=0.0)
+
+
+class Tier(Strict):
+    """A row of panels, read left to right.
+
+    Attributes:
+        height: Its share of the page's height, relative to the other tiers.
+        panels: The panels in it, in reading order.
+    """
+
+    height: float = Field(default=1.0, gt=0.0)
+    panels: tuple[PanelPlacement, ...] = Field(min_length=1)
+
+
+class PageSpec(Strict):
+    """One page: tiers, top to bottom.
+
+    A page is read tier by tier and left to right within a tier, so the order panels are
+    written in is the order they are read in. That is the page's version of the rule a
+    balloon obeys, and with tiers it holds by construction.
+
+    Attributes:
+        tiers: The tiers, top to bottom.
+    """
+
+    tiers: tuple[Tier, ...] = Field(min_length=1)
+
+
+class PageLayout(Strict):
+    """Every page of a scene, and the format they share.
+
+    Attributes:
+        page: The format.
+        pages: The pages, in order.
+
+    The panels themselves are not part of it: a page names them, and
+    :func:`check_placements <scenet.ir.check_placements>` checks the names against the
+    panels the document defines.
+    """
+
+    page: PageFormat = PageFormat()
+    pages: tuple[PageSpec, ...] = ()
+
+    @model_validator(mode="after")
+    def check_room(self) -> Self:
+        """Every tier must have room for its panels and every page for its tiers."""
+        usable_width = self.page.width - 2 * self.page.margin
+        usable_height = self.page.height - 2 * self.page.margin
+        for page_index, page in enumerate(self.pages):
+            if usable_height - self.page.tier_gutter * (len(page.tiers) - 1) <= 0:
+                raise RuleViolationError(
+                    f"page {page_index + 1} has no room for {len(page.tiers)} tiers between "
+                    "its margins and tier gutters",
+                    rule="page-layout",
+                    loc=("pages", page_index),
+                )
+            for tier_index, tier in enumerate(page.tiers):
+                if usable_width - self.page.gutter * (len(tier.panels) - 1) <= 0:
+                    raise RuleViolationError(
+                        f"tier {tier_index + 1} of page {page_index + 1} has no room for "
+                        f"{len(tier.panels)} panels between its margins and gutters",
+                        rule="page-layout",
+                        loc=("pages", page_index, "tiers", tier_index),
+                    )
+        return self
+
+
+def check_placements(layout: PageLayout, panels: Sequence[str]) -> None:
+    """Check that every placement names a panel, and that none is placed twice.
+
+    A panel that is on no page is allowed: it may exist only to be inherited from.
+
+    Args:
+        layout: The validated pages.
+        panels: The names the document's `panels:` defines.
+
+    Raises:
+        RuleViolationError: Rule `page-layout`, located at the placement at fault.
+    """
+    known = set(panels)
+    placed: dict[str, tuple[str | int, ...]] = {}
+    for page_index, page in enumerate(layout.pages):
+        for tier_index, tier in enumerate(page.tiers):
+            for panel_index, placement in enumerate(tier.panels):
+                loc = ("pages", page_index, "tiers", tier_index, "panels", panel_index)
+                if placement.use not in known:
+                    raise RuleViolationError(
+                        f"page {page_index + 1} places panel '{placement.use}', which "
+                        f"`panels:` does not define; it has {sorted(known)}",
+                        rule="page-layout",
+                        loc=loc,
+                    )
+                if placement.use in placed:
+                    raise RuleViolationError(
+                        f"panel '{placement.use}' is placed twice; a panel has one frame, "
+                        "so it can be on one page once",
+                        rule="page-layout",
+                        loc=loc,
+                    )
+                placed[placement.use] = loc

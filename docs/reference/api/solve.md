@@ -28,3 +28,8 @@ because their signatures are promised to stay put.
 
 ```{automodule} scenet.solve.balloons
 ```
+
+## `scenet.solve.page`
+
+```{automodule} scenet.solve.page
+```

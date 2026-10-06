@@ -113,22 +113,41 @@ def _scenet_findings(source, kind, exc):
 
 def _scenet_compile(source, kind):
     try:
-        from scenet import compile_scene, parse_script, compile_ir
+        from scenet import compile_book, parse_script, compile_ir
         from scenet.emit.debug_svg import render_debug
+        from scenet.emit.page import render_pages
         from scenet.emit.strip import render_strip
         from scenet.emit.svg import render
 
+        pages = ()
         if kind == "script":
             results = {
                 name: compile_ir(panel) for name, panel in parse_script(source).items()
             }
         else:
-            results = compile_scene(source)
+            book = compile_book(source)
+            results = book.panels
+            pages = book.pages
 
         names = list(results)
         single = len(names) == 1
 
-        if single:
+        if pages:
+            # A document that lays its panels out is shown as its pages, side by side.
+            cores = {name: result.core for name, result in results.items()}
+            svg = render_pages(pages, cores)
+            debug = render_pages(pages, cores, debug=True)
+            core = json.dumps(
+                {
+                    "pages": [json.loads(page.to_json()) for page in pages],
+                    "panels": {
+                        name: json.loads(result.core.to_json()) for name, result in results.items()
+                    },
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        elif single:
             only = results[names[0]]
             svg = render(only.core)
             debug = render_debug(only.core)

@@ -720,6 +720,7 @@ def place_script(
     metrics: FontMetrics | None = None,
     italic_metrics: FontMetrics | None = None,
     font_size: float | None = None,
+    lettering_height: float | None = None,
     backdrop: ResolvedBackdrop | None = None,
     emanata: Mapping[str, Sequence[Sequence[Point]]] | None = None,
 ) -> ScriptLayout:
@@ -742,6 +743,9 @@ def place_script(
         italic_metrics: Font to measure italic captions against. Defaults to the
             italic face of the same family.
         font_size: Override for dialogue size, in panel units.
+        lettering_height: The height type sizes are a fraction of, in place of the
+            frame's own. A page passes one value to every panel on it, so a short panel
+            and a tall one letter alike.
         backdrop: The resolved setting, if the panel has one. Its masses are a soft
             cost, never an exclusion: a balloon over a sky is the ordinary case.
         emanata: Actor id to the zones of the marks drawn around them. Also a soft
@@ -756,8 +760,9 @@ def place_script(
     if not events:
         return ScriptLayout()
 
-    size = font_size if font_size is not None else panel.height * FONT_SIZE_FRACTION
-    caption_size = font_size if font_size is not None else panel.height * CAPTION_FONT_SIZE_FRACTION
+    reference = lettering_height if lettering_height is not None else panel.height
+    size = font_size if font_size is not None else reference * FONT_SIZE_FRACTION
+    caption_size = font_size if font_size is not None else reference * CAPTION_FONT_SIZE_FRACTION
     hulls = {actor_id: _hull_polygon(actor) for actor_id, actor in actors.items()}
     faces = [actor.face for actor in actors.values()]
     masses = _mass_polygons(backdrop)
