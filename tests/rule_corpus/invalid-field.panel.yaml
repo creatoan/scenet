@@ -1,0 +1,3 @@
+# A shot type the language does not have.
+camera: {shot: very_close}
+cast: {alice: {reference: alice}}

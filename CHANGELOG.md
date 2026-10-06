@@ -12,6 +12,12 @@ below 1.0 means.
 
 ### Added
 
+- **The command-line reference is a tested contract.** Each command's options, choices,
+  defaults and exit statuses, the frontends, and every behavioural sentence in
+  `docs/reference/cli.md` are checked against the code in both directions, so neither can
+  drift alone. Every rule has a document in `tests/rule_corpus/` that must produce exactly
+  one finding of it. And the `scenet` commands in the documentation's shell examples now run
+  in the test suite, as its Python examples already did. (#93)
 - **Property-based tests for pages, scripts and broken documents.** Generated books are
   held to the documented reading order, worked out from the pages as written, to frames that
   stay inside the margins and clear of each other, and to sound SVG with ids unique across

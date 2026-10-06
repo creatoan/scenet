@@ -1,0 +1,5 @@
+# Valid, but each actor is in front of the other: no depth order exists.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging:
+  - alice in_front_of bob
+  - bob in_front_of alice

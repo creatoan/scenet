@@ -153,6 +153,8 @@ would set them.
 
 ## Building it
 
+<!--- skip: next -->
+
 ```bash
 scenet build story.scene.yaml --core
 ```

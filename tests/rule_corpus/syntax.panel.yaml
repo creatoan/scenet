@@ -1,0 +1,3 @@
+# A flow sequence that never closes.
+cast: {alice: {reference: alice}}
+staging: [alice left_of

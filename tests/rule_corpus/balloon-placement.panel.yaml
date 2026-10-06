@@ -1,0 +1,6 @@
+# Valid, but at an extreme close-up the face fills the frame and no word fits.
+camera: {shot: extreme_close_up}
+panel: {size: [300, 300]}
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "There is no room anywhere in this panel for a line this long."}

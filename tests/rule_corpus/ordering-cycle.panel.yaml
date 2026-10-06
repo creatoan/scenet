@@ -1,0 +1,5 @@
+# Each to the left of the other.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging:
+  - alice left_of bob
+  - bob left_of alice

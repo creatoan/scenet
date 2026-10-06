@@ -1,0 +1,5 @@
+# Over a panel that is not there.
+cast: {alice: {reference: alice}}
+panels:
+  one: {}
+  two: {over: ghost}

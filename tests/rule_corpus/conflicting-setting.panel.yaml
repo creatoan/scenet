@@ -1,0 +1,4 @@
+cast: {alice: {reference: alice}}
+setting:
+  place: shore
+  masses: [{kind: sky}]

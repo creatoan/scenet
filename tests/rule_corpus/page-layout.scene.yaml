@@ -1,0 +1,6 @@
+# A page placing a panel that does not exist.
+cast: {alice: {reference: alice}}
+panels: {one: {}}
+pages:
+  - tiers:
+      - panels: [one, ghost]
