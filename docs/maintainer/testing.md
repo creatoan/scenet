@@ -190,3 +190,98 @@ that trips on it landed:
 | A broken `over:` was located at the whole `panels:` block | #107 |
 | A syntax error at the end of a file pointed past its last line; a block value at its first field | #108 |
 | An unknown speaker was located one step short of its `by:` | #109 |
+
+## Mutation testing
+
+Coverage shows which lines ran, not whether any assertion would notice them changing.
+[mutmut](https://github.com/boxed/mutmut) does notice: it makes one small edit at a time to
+the solver and the emitters -- `<` becomes `<=`, a constant is nudged, an argument dropped --
+and reports every edit the suite still passes. Each survivor is a behaviour nothing checks.
+
+It runs weekly, and on demand, in `.github/workflows/mutation.yml`, never on a pull request:
+a full run takes far longer than a review should wait. The job summary gives the score and
+lists the survivors, which are also uploaded as an artifact. It is not a required check, and
+there is no threshold until the baseline below has been worked down.
+
+**Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
+takes about 40 seconds. mutmut forks each mutant from a process that has already imported
+everything, runs only the tests that reach the mutated function, and resumes where it left
+off, re-testing only functions whose code changed. A tool that ran the whole suite once per
+mutant would take days.
+
+**Running it.** It is in its own dependency group, so a plain `uv sync` does not install it:
+
+```bash
+uv sync --group mutation
+uv run mutmut run --max-children 4
+uv run mutmut results
+uv run mutmut show <mutant>
+```
+
+`[tool.mutmut]` in `pyproject.toml` limits it to `src/scenet/solve/` and `src/scenet/emit/`,
+mutates only lines the tests cover, and runs mutants without the coverage floor, doctests or
+the documentation examples. To try one file, run the workflow by hand with its `path` input.
+
+**On Windows**, mutmut needs `fork()`, so run it under WSL with a Linux distribution:
+
+```bash
+wsl --install -d Ubuntu
+```
+
+then, inside WSL, clone the repository and run the commands above. A checkout on the Windows
+side, under `/mnt/c/`, works but is several times slower.
+
+**Known blind spot.** mutmut 3 does not mutate the bodies of `@dataclass`-decorated classes,
+so these methods are never mutated:
+
+| Class | Methods | Lines |
+|---|---|---|
+| `solve/camera.py::CameraSolution` | `was_pulled_back`, `pulled_back_to`, `head_top_y`, `root_y_framed`, `root_y_on_ground`, `feet_below_root`, `ground_y_of` | 75 |
+| `solve/backdrop.py::_Plot` | `width`, `repeats` | 18 |
+| `solve/text.py::TextBlock` | `aspect`, `raggedness` | 12 |
+| `solve/backdrop.py::ResolvedBackdrop` | `occluders` | 7 |
+| `solve/balloons.py::TailRoute` | `is_curved` | 7 |
+| `solve/balloons.py::_Limits` | `allow` | 7 |
+| `solve/staging.py::Placement` | `origin` | 3 |
+| `solve/staging.py::_Extent` | `centre_offset` | 2 |
+
+`CameraSolution` is the one that matters: it is the framing geometry, where the shot ladder
+and the camera angles are worked out. Until mutmut reaches it, the shot-type tests in
+`tests/test_camera.py` and the golden Cores are what guard it. The rest are small accessors.
+
+### Baseline
+
+The first full run, made locally before the golden outputs existed, produced 4,094 mutants:
+3,249 killed (79.4%) and 845 survivors, in about 46 minutes on four cores. By module:
+
+| Module | Survivors |
+|---|---|
+| `solve/balloons.py` | 230 |
+| `emit/svg.py` | 188 |
+| `solve/backdrop.py` | 145 |
+| `emit/debug_svg.py` | 73 |
+| `solve/page.py` | 56 |
+| `solve/text.py` | 54 |
+| `solve/staging.py` | 35 |
+| `emit/strip.py` | 30 |
+| `emit/page.py` | 27 |
+| `solve/camera.py` | 7 |
+
+The golden outputs compare every emitted byte, so the emitters' share should fall at the first
+scheduled run; its job summary is the baseline to work down from.
+
+### Triage
+
+Every survivor ends in one of two states:
+
+- **Killed**, by a new assertion in the relevant `tests/test_*.py`.
+- **Accepted**, recorded below with a reason: an equivalent mutant that cannot change any
+  output, or one whose effect is below what the format can show. `# pragma: no mutate` is
+  used only where nothing else works, with a comment saying why.
+
+### Exploring with fresh seeds
+
+The same workflow's second job runs the property tests under the `explore` profile: random
+seeds, 300 examples each. A failure prints the shrunk document and a `@reproduce_failure`
+line. Pin the document as an `@example(...)` on the property, so the fixed run covers it from
+then on, and fix the bug in its own pull request.

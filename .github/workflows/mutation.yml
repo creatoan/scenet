@@ -1,0 +1,145 @@
+name: Mutation testing
+
+# Weekly, and on demand. Deliberately NOT part of CI, and not a required check.
+#
+# Coverage shows which lines ran, not whether any assertion would notice them changing.
+# mutmut changes the solver and the emitters one small edit at a time -- `<` to `<=`, a
+# constant nudged -- and reports every edit the suite still passes. Each of those is a
+# behaviour nothing checks. A full run takes far longer than a pull request should wait,
+# so it runs on a schedule, and its survivors are triaged as described in
+# docs/maintainer/testing.md. There is no score threshold until there is a baseline.
+#
+# The second job explores: the property tests with fresh random seeds and 300 examples
+# each, where CI always runs the same 20. A failure it finds prints a reproduction; pin
+# it as an `@example` and the fixed run covers it from then on.
+
+on:
+  schedule:
+    # Mondays, 05:00 UTC, before the link check at 07:00.
+    - cron: "0 5 * * 1"
+  # A change to this workflow runs it on its own pull request, so a broken configuration
+  # is seen before the weekly run, not after. Nothing else triggers it on a pull request.
+  pull_request:
+    paths:
+      - .github/workflows/mutation.yml
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "Mutate only this file or glob, e.g. src/scenet/solve/camera.py (default: all of solve/ and emit/)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  mutmut:
+    name: mutmut (solve/ and emit/)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen --group mutation
+
+      # mutmut resumes, and only re-tests functions whose code changed, so keeping its
+      # working directory between runs makes most weeks incremental.
+      - name: Restore the previous run
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: mutants
+          key: mutants-${{ hashFiles('uv.lock') }}-${{ github.sha }}
+          restore-keys: mutants-${{ hashFiles('uv.lock') }}-
+
+      - name: Narrow to one path
+        if: inputs.path != ''
+        env:
+          ONLY: ${{ inputs.path }}
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os, pathlib, re
+          path = pathlib.Path("pyproject.toml")
+          text = path.read_text(encoding="utf-8")
+          only = os.environ["ONLY"].replace('"', "")
+          text = re.sub(r"^only_mutate = .*$", f'only_mutate = ["{only}"]', text, flags=re.M)
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Run mutmut
+        run: uv run mutmut run --max-children 4
+
+      - name: Report
+        if: always()
+        run: |
+          uv run mutmut export-cicd-stats || true
+          uv run mutmut results > mutants/survivors.txt 2>&1 || true
+          {
+            echo '### Mutation testing'
+            echo
+            if [ -f mutants/mutmut-cicd-stats.json ]; then
+              uv run --no-sync python - <<'PY'
+          import json
+          stats = json.load(open("mutants/mutmut-cicd-stats.json"))
+          tested = stats["total"] - stats["skipped"]
+          killed = stats["killed"] + stats["timeout"]
+          score = 100 * killed / tested if tested else 0.0
+          print(f"**{score:.1f}%** killed: {killed} of {tested} mutants "
+                f"({stats['survived']} survived, {stats['no_tests']} reached by no test).")
+          print()
+          print("| | |\n|---|---|")
+          for key, value in stats.items():
+              print(f"| {key} | {value} |")
+          PY
+            fi
+            echo
+            echo '<details><summary>Surviving mutants</summary>'
+            echo
+            echo '```'
+            grep -v '^$' mutants/survivors.txt | head -500 || true
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutmut-results
+          path: |
+            mutants/mutmut-cicd-stats.json
+            mutants/survivors.txt
+          if-no-files-found: warn
+
+  explore:
+    name: Hypothesis exploration
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      # Random seeds and 300 examples per property. A failure prints a
+      # `@reproduce_failure` blob and the shrunk document: pin the document as an
+      # `@example` on the property, then fix the bug in its own pull request.
+      - name: Explore the property tests
+        env:
+          HYPOTHESIS_PROFILE: explore
+        run: uv run pytest tests/properties --no-cov -p no:cacheprovider -o addopts="" --hypothesis-show-statistics

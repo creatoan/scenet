@@ -17,6 +17,12 @@ below 1.0 means.
   Panel and Page Core in full, and a digest of every SVG. Two processes with different hash
   seeds, and a relative path against an absolute one, must write the same bytes, and no output
   may hold the path it came from. `scripts/update_golden.py` regenerates them. (#94)
+- **Weekly mutation testing of the solver and the emitters.** `.github/workflows/mutation.yml`
+  runs [mutmut](https://github.com/boxed/mutmut) over `solve/` and `emit/` every Monday and
+  on demand, and reports every small edit to the code that no test notices, with the score in
+  the job summary. A second job runs the property tests with fresh random seeds and 300
+  examples each. Neither runs on pull requests or blocks a merge. mutmut is in its own
+  `mutation` dependency group, so a plain `uv sync` does not install it. (#95)
 - **The command-line reference is a tested contract.** Each command's options, choices,
   defaults and exit statuses, the frontends, and every behavioural sentence in
   `docs/reference/cli.md` are checked against the code in both directions, so neither can
