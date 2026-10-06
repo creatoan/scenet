@@ -5,6 +5,7 @@ tiers at all. The frontend never computes a coordinate, the solver never touches
 artwork, and the emitter never makes a layout decision.
 """
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -117,6 +118,15 @@ class CompileResult:
                         f"{actor.id}'s {mark.value} run off the panel at this framing; "
                         "the camera makes no room for marks, so a looser shot shows more"
                     )
+        # An inset is drawn over the art, which does not move for it, so it can cover a
+        # face as easily as a sky. The lettering keeps clear; the face cannot.
+        for actor in self.core.actors:
+            face = actor.face_exclusion.as_circle()
+            if any(area.as_bbox().intersects_circle(face) for area in self.core.exclusions):
+                notes.append(
+                    f"an inset covers {actor.id}'s face; it is drawn over the art, which does "
+                    "not move for it, so put the inset in another corner or reframe the panel"
+                )
         return tuple(notes)
 
 
@@ -242,6 +252,7 @@ def compile_ir(
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
     lettering_height: float | None = None,
+    exclusions: Sequence[BBox] = (),
 ) -> CompileResult:
     """Compile validated IR into Panel Core.
 
@@ -252,6 +263,9 @@ def compile_ir(
         lettering_height: The height type sizes are a fraction of, instead of the panel's
             own. A page passes the same value to every panel on it; a panel compiled on
             its own leaves it out.
+        exclusions: Areas no balloon or caption may touch, in panel units, because
+            something is drawn over them -- on a page, the insets set into this panel.
+            Nothing else moves for them: the art under an inset is drawn as usual.
 
     Returns:
         The compiled panel.
@@ -313,6 +327,7 @@ def compile_ir(
         lettering_height=lettering_height,
         backdrop=backdrop,
         emanata={actor: drawn.zones for actor, drawn in emanata.items() if drawn.zones},
+        exclusions=exclusions,
     )
 
     core = PanelCore(
@@ -397,6 +412,7 @@ def compile_ir(
             for caption in layout.captions
         ),
         backdrop=_core_backdrop(backdrop),
+        exclusions=tuple(Box.of(area) for area in exclusions),
     )
     return CompileResult(core=core, camera=camera, placements=placements, posed=posed)
 
@@ -541,20 +557,21 @@ def _compile_document(
 
     pages: list[PageCore] = []
     frames: dict[str, Frame] = {}
-    for page in layout.pages:
-        resolved = resolve_frames(layout.page, page)
+    for index, page in enumerate(layout.pages):
+        try:
+            resolved = resolve_frames(layout.page, page, index=index)
+        except RuleViolationError as exc:
+            raise PanelSyntaxError(str(exc), rule=exc.rule, loc=exc.loc) from exc
         frames.update((frame.panel, frame) for frame in resolved)
         pages.append(
             PageCore(
                 width=rounded(layout.page.width),
                 height=rounded(layout.page.height),
                 lettering_height=type_height,
-                frames=tuple(
-                    CoreFrame(panel=f.panel, x=f.x, y=f.y, width=f.width, height=f.height)
-                    for f in resolved
-                ),
+                frames=tuple(_core_frame(frame) for frame in resolved),
             )
         )
+    exclusions = _inset_clearances(frames)
 
     panels: dict[str, CompileResult] = {}
     for name, panel in document.panels.items():
@@ -567,8 +584,44 @@ def _compile_document(
             library=library,
             metrics=metrics,
             lettering_height=type_height,
+            exclusions=exclusions.get(name, ()),
         )
     return Book(panels=panels, pages=tuple(pages))
+
+
+def _core_frame(frame: Frame) -> CoreFrame:
+    """A resolved frame as the Page Core records it."""
+    return CoreFrame(
+        panel=frame.panel,
+        x=frame.x,
+        y=frame.y,
+        width=frame.width,
+        height=frame.height,
+        inset_of=frame.inset_of,
+        clearance=Box.of(frame.clearance) if frame.clearance is not None else None,
+    )
+
+
+def _inset_clearances(frames: Mapping[str, Frame]) -> dict[str, tuple[BBox, ...]]:
+    """For each panel with insets, what its lettering must keep clear of, in its own units.
+
+    Taken from the very clearance the page paints white, moved into the parent's
+    coordinates, so what the lettering avoids and what is drawn over it cannot disagree.
+    """
+    clearances: dict[str, list[BBox]] = {}
+    for frame in frames.values():
+        if frame.inset_of is None or frame.clearance is None:
+            continue
+        parent = frames[frame.inset_of]
+        clearances.setdefault(frame.inset_of, []).append(
+            BBox(
+                rounded(frame.clearance.x - parent.x),
+                rounded(frame.clearance.y - parent.y),
+                frame.clearance.width,
+                frame.clearance.height,
+            )
+        )
+    return {name: tuple(boxes) for name, boxes in clearances.items()}
 
 
 def _framed(name: str, panel: PanelIR, frame: Frame) -> PanelIR:

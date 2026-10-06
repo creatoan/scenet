@@ -361,16 +361,23 @@ def _reading_order_allows(placed: Sequence[BBox], candidate: BBox) -> bool:
 
 
 def _is_legal(
-    candidate: BBox, actors: dict[str, ResolvedPuppet], panel: BBox, placed: list[BBox]
+    candidate: BBox,
+    actors: dict[str, ResolvedPuppet],
+    panel: BBox,
+    placed: list[BBox],
+    blocked: Sequence[BBox] = (),
 ) -> bool:
     """The hard rules, which apply to anything carrying words.
 
     A box over a face is never acceptable whatever else it has going for it, a box
-    outside the panel is not a box, and two overlapping boxes make both unreadable.
+    outside the panel is not a box, two overlapping boxes make both unreadable, and a box
+    under something drawn over the panel -- an inset -- cannot be read at all.
     """
     if not panel.contains(candidate):
         return False
     if any(candidate.intersects_circle(actor.face) for actor in actors.values()):
+        return False
+    if any(candidate.overlap_area(area) > 0 for area in blocked):
         return False
     return all(candidate.overlap_area(existing) == 0 for existing in placed)
 
@@ -482,9 +489,10 @@ def _score(
     placed: list[BBox],
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry] = (),
+    blocked: Sequence[BBox] = (),
 ) -> float:
     """Cost of putting a balloon here. Lower is better; infinity means illegal."""
-    if not _is_legal(candidate, actors, panel, placed):
+    if not _is_legal(candidate, actors, panel, placed, blocked):
         return math.inf
 
     cost = _occlusion_cost(candidate, hulls, speaker.name) + _mass_cost(candidate, masses)
@@ -519,6 +527,7 @@ def _score_caption(
     placed: list[BBox],
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry] = (),
+    blocked: Sequence[BBox] = (),
 ) -> float:
     """Cost of putting a caption here. Lower is better; infinity means illegal.
 
@@ -527,7 +536,7 @@ def _score_caption(
     term is reversed: a balloon floating against the frame looks stranded, while a
     caption tucked into the corner is doing what a caption is for.
     """
-    if not _is_legal(candidate, actors, panel, placed):
+    if not _is_legal(candidate, actors, panel, placed, blocked):
         return math.inf
 
     cost = _occlusion_cost(candidate, hulls, None) + _mass_cost(candidate, masses)
@@ -723,6 +732,7 @@ def place_script(
     lettering_height: float | None = None,
     backdrop: ResolvedBackdrop | None = None,
     emanata: Mapping[str, Sequence[Sequence[Point]]] | None = None,
+    exclusions: Sequence[BBox] = (),
 ) -> ScriptLayout:
     """Place every balloon and caption, in script order.
 
@@ -750,6 +760,8 @@ def place_script(
             cost, never an exclusion: a balloon over a sky is the ordinary case.
         emanata: Actor id to the zones of the marks drawn around them. Also a soft
             cost, and a heavier one than a body, but never an exclusion.
+        exclusions: Areas that are drawn over, such as an inset: as hard as a face, since
+            words under them could not be read. They take no part in reading order.
 
     Returns:
         Everything that carries words, placed.
@@ -769,6 +781,7 @@ def place_script(
     marks = _emanata_shapes(emanata or {})
 
     placed: list[BBox] = []
+    blocked = tuple(exclusions)
     captions: list[PlacedCaption] = []
     balloons: list[PlacedBalloon] = []
 
@@ -789,6 +802,7 @@ def place_script(
                     italic_metrics=italic_metrics,
                     masses=masses,
                     emanata=marks,
+                    blocked=blocked,
                 )
             )
             placed.append(captions[-1].box)
@@ -808,6 +822,7 @@ def place_script(
                 metrics=metrics,
                 masses=masses,
                 emanata=marks,
+                blocked=blocked,
             )
         )
         placed.append(balloons[-1].box)
@@ -829,6 +844,7 @@ def _place_balloon(
     metrics: FontMetrics | None,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
+    blocked: Sequence[BBox] = (),
 ) -> PlacedBalloon:
     """Choose a position for one balloon and route its tail."""
     speaker = actors[event.by]
@@ -850,6 +866,7 @@ def _place_balloon(
             placed=placed,
             masses=masses,
             emanata=emanata,
+            blocked=blocked,
         )
         if cost < best_cost:
             best, best_cost = candidate, cost
@@ -858,7 +875,7 @@ def _place_balloon(
         raise BalloonPlacementError(
             f"no legal position for balloon {order} spoken by '{event.by}': every "
             "candidate either covered a face, left the panel, overlapped another "
-            "balloon, or broke reading order"
+            "balloon, lay under an inset, or broke reading order"
         )
 
     mouth = speaker.anchors.get("mouth", speaker.face.centre)
@@ -891,6 +908,7 @@ def _place_caption(
     italic_metrics: FontMetrics | None,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
+    blocked: Sequence[BBox] = (),
 ) -> PlacedCaption:
     """Choose a position for one caption.
 
@@ -921,6 +939,7 @@ def _place_caption(
             placed=placed,
             masses=masses,
             emanata=emanata,
+            blocked=blocked,
         )
         if cost < best_cost:
             best, best_cost = candidate, cost
@@ -928,7 +947,8 @@ def _place_caption(
     if best is None:
         raise BalloonPlacementError(
             f"no legal position for caption {order}: every candidate either covered a "
-            "face, left the panel, overlapped another box, or broke reading order"
+            "face, left the panel, overlapped another box, lay under an inset, or broke "
+            "reading order"
         )
 
     fill = CAPTION_TONES[event.tone]

@@ -493,6 +493,10 @@ panels:
 | `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
 | `columns[].width` | The column's share of its tier's width | `1` |
 | `columns[].panels[].height` | The panel's share of its column's height | `1` |
+| `insets[].use` | On any panel in a tier or column: a panel set into one of its corners | |
+| `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
+| `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
+| `insets[].read` | `after` its parent, or `before` it | `after` |
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
@@ -514,6 +518,25 @@ A tier of columns is read column by column and top to bottom in each: `above`, `
 between them blocking the way, and readers go across those instead, so they are refused as
 `page-layout`; write them as tiers, or put a panel that spans the tier between them.
 
+An **inset** is a small panel set into a corner of another and drawn over it:
+
+```yaml
+- panels:
+    - use: street
+      insets:
+        - {use: clock, at: top_left, size: 0.2, read: before}
+        - {use: face, at: bottom_right, size: 0.3}
+```
+
+It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
+split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
+2013), so it is never guessed: an inset is read right after its parent unless it says
+`read: before`. Here that is `clock`, `street`, `face`.
+
+The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
+words under an inset could not be read. When an inset covers a character's face, the compiler
+notes it. Two insets in one panel must stay a gutter clear of each other.
+
 **A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
 it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
@@ -524,10 +547,10 @@ A page is read tier by tier, left to right, and down each column, so the order p
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, or margins and gutters that leave
-no room are reported as `page-layout`.
+both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, or
+margins and gutters that leave no room are reported as `page-layout`.
 
-Not yet: insets and frames that are not rectangles
+Not yet: frames that are not rectangles
 ([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
 ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
