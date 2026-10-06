@@ -66,8 +66,19 @@ def render(
     *,
     metrics: FontMetrics | None = None,
     live_text: bool = False,
+    id_prefix: str = "",
 ) -> str:
-    """Render a compiled panel as a standalone SVG document."""
+    """Render a compiled panel as a standalone SVG document.
+
+    Args:
+        core: The compiled panel.
+        metrics: The font the lettering was measured in. Defaults to the shipped one.
+        live_text: Emit lettering as `<text>` rather than glyph outlines.
+        id_prefix: Put in front of every `id` the panel writes, and every reference to
+            one. Nothing a single panel needs; it is what lets a strip hold several
+            panels in one document, where ids must be unique. Empty by default, so a
+            panel on its own is byte-identical to what it always was.
+    """
     metrics = metrics or load_metrics()
     backdrop = core.backdrop
     air = backdrop.atmosphere if backdrop is not None else None
@@ -78,7 +89,7 @@ def render(
         f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}">',
     ]
     if air is not None:
-        parts.append(_atmosphere_filter(air))
+        parts.append(_atmosphere_filter(air, id_prefix))
     parts.append(
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         f'fill="{FILL_PANEL}"/>'
@@ -89,10 +100,10 @@ def render(
     # in a single sort with no layering code of their own. Ties break on id, exactly as
     # they did when actors sorted alone.
     drawn: list[tuple[int, str, str]] = [
-        (actor.depth, actor.id, _render_actor(actor)) for actor in core.actors
+        (actor.depth, actor.id, _render_actor(actor, id_prefix)) for actor in core.actors
     ]
     if backdrop is not None:
-        drawn += [(mass.depth, mass.id, _render_mass(mass)) for mass in backdrop.masses]
+        drawn += [(mass.depth, mass.id, _render_mass(mass, id_prefix)) for mass in backdrop.masses]
     drawn.sort(key=lambda item: (item[0], item[1]))
 
     parts.extend(body for depth, _, body in drawn if depth < 0)
@@ -100,7 +111,7 @@ def render(
     # The veil sits over the backdrop and under the cast. Fog between the reader and the
     # figures would be the more literal reading and would bury them; comics put it behind.
     if air is not None:
-        parts.append(_render_veil(core, air))
+        parts.append(_render_veil(core, air, id_prefix))
 
     parts.append(f'  <g stroke="{STROKE}" stroke-linecap="round" stroke-linejoin="round">')
     parts.extend(body for depth, _, body in drawn if depth >= 0)
@@ -112,17 +123,22 @@ def render(
     for item in lettering:
         if isinstance(item, CoreCaption):
             parts.append(
-                _render_caption(item, italic if item.italic else metrics, live_text=live_text)
+                _render_caption(
+                    item,
+                    italic if item.italic else metrics,
+                    live_text=live_text,
+                    id_prefix=id_prefix,
+                )
             )
         else:
-            parts.append(_render_balloon(item, metrics, live_text=live_text))
+            parts.append(_render_balloon(item, metrics, live_text=live_text, id_prefix=id_prefix))
 
     parts.append("  </g>")
 
     # Falling weather goes over everything but the frame. It is between the reader and
     # the panel rather than inside it, which is why it crosses the figures.
     if air is not None:
-        parts.append(_render_falling(air))
+        parts.append(_render_falling(air, id_prefix))
 
     parts.append(
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
@@ -132,7 +148,7 @@ def render(
     return "\n".join(part for part in parts if part) + "\n"
 
 
-def _render_mass(mass: CoreMass) -> str:
+def _render_mass(mass: CoreMass, id_prefix: str) -> str:
     """One tonal mass: a flat fill, and nothing else.
 
     No outline, deliberately. A stroked mass reads as a drawn object, and the argument
@@ -140,22 +156,22 @@ def _render_mass(mass: CoreMass) -> str:
     values rather than from drawn detail.
     """
     return (
-        f'    <polygon id={attr("mass-" + mass.id)} points="{_points(list(mass.polygon))}" '
-        f'fill="{mass.tone}" stroke="none"/>'
+        f"    <polygon id={attr(id_prefix + 'mass-' + mass.id)} "
+        f'points="{_points(list(mass.polygon))}" fill="{mass.tone}" stroke="none"/>'
     )
 
 
-def _filter_id(atmosphere: CoreAtmosphere) -> str:
-    """A document-unique id for the turbulence filter.
+def _filter_id(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
+    """An id for the turbulence filter.
 
-    It carries the seed, so a strip emitting several panels into one document cannot end
-    up with two filters answering to the same name.
+    The seed alone does not make it unique in a strip: two panels with the same setting
+    share a seed, and so used to define one filter twice. The prefix does.
     """
     veil = atmosphere.veil
-    return f"scenet-veil-{0 if veil is None else veil.seed}"
+    return f"{id_prefix}scenet-veil-{0 if veil is None else veil.seed}"
 
 
-def _atmosphere_filter(atmosphere: CoreAtmosphere) -> str:
+def _atmosphere_filter(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """The `feTurbulence` filter, written out from parameters the solver resolved.
 
     Perlin noise is built into SVG and the specification includes reference code, so a
@@ -176,8 +192,8 @@ def _atmosphere_filter(atmosphere: CoreAtmosphere) -> str:
         f"{fmt(veil.opacity)} {fmt(veil.opacity / 2)} 0 0 0"
     )
     return (
-        f'  <filter id="{_filter_id(atmosphere)}" x="0%" y="0%" width="100%" height="100%" '
-        'color-interpolation-filters="sRGB">\n'
+        f"  <filter id={attr(_filter_id(atmosphere, id_prefix))} "
+        'x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">\n'
         f'    <feTurbulence type="fractalNoise" baseFrequency="{veil.frequency}" '
         f'numOctaves="{veil.octaves}" seed="{veil.seed}" result="noise"/>\n'
         f'    <feColorMatrix in="noise" type="matrix" values="{matrix}"/>\n'
@@ -194,22 +210,23 @@ def _channels(tone: str) -> tuple[float, float, float]:
     return red, green, blue
 
 
-def _render_veil(core: PanelCore, atmosphere: CoreAtmosphere) -> str:
+def _render_veil(core: PanelCore, atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """The rectangle the turbulence filter is painted through."""
     if atmosphere.veil is None:
         return ""
     return (
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-        f'fill="{atmosphere.veil.tone}" filter="url(#{_filter_id(atmosphere)})"/>'
+        f'fill="{atmosphere.veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
     )
 
 
-def _render_falling(atmosphere: CoreAtmosphere) -> str:
+def _render_falling(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """Rain or snow, every mark of which was resolved during compilation."""
     if not atmosphere.streaks and not atmosphere.flecks:
         return ""
     marks = [
-        f'  <g id="weather" fill="{atmosphere.fall_tone}" stroke="{atmosphere.fall_tone}" '
+        f"  <g id={attr(id_prefix + 'weather')} "
+        f'fill="{atmosphere.fall_tone}" stroke="{atmosphere.fall_tone}" '
         f'fill-opacity="{fmt(WEATHER_OPACITY)}" stroke-opacity="{fmt(WEATHER_OPACITY)}">'
     ]
     for streak in atmosphere.streaks:
@@ -257,9 +274,9 @@ def attr(value: str) -> str:
     return quoteattr(value)
 
 
-def _render_actor(actor: CoreActor) -> str:
+def _render_actor(actor: CoreActor, id_prefix: str) -> str:
     lines = [
-        f'    <g id={attr("actor-" + actor.id)} fill="{FILL_FIGURE}" '
+        f'    <g id={attr(id_prefix + "actor-" + actor.id)} fill="{FILL_FIGURE}" '
         f'stroke-width="{fmt(FIGURE_STROKE_WIDTH)}">'
     ]
 
@@ -288,11 +305,11 @@ def _render_actor(actor: CoreActor) -> str:
     # The face goes on last, over the head blob it sits inside. Every coordinate here
     # was decided during compilation, curves included -- there is nothing to draw but
     # the polylines and discs as given.
-    lines.extend(_render_mark(f"face-{actor.id}", mark) for mark in actor.face_marks)
+    lines.extend(_render_mark(f"{id_prefix}face-{actor.id}", mark) for mark in actor.face_marks)
 
     # Emanata last of all, inside the actor's group so that whoever stands in front of
     # this character stands in front of their sweat too.
-    lines.extend(_render_mark(f"emanata-{actor.id}", mark) for mark in actor.emanata)
+    lines.extend(_render_mark(f"{id_prefix}emanata-{actor.id}", mark) for mark in actor.emanata)
 
     lines.append("    </g>")
     return "\n".join(lines)
@@ -323,9 +340,11 @@ def _render_mark(prefix: str, mark: FaceMark) -> str:
     )
 
 
-def _render_balloon(balloon: CoreBalloon, metrics: FontMetrics, *, live_text: bool) -> str:
+def _render_balloon(
+    balloon: CoreBalloon, metrics: FontMetrics, *, live_text: bool, id_prefix: str
+) -> str:
     box = balloon.box
-    lines = [f"    <g id={attr('balloon-' + balloon.id)}>"]
+    lines = [f"    <g id={attr(id_prefix + 'balloon-' + balloon.id)}>"]
 
     lines.append(_tail_shape(balloon))
     lines.append(_balloon_outline(balloon))
@@ -348,7 +367,9 @@ def _render_balloon(balloon: CoreBalloon, metrics: FontMetrics, *, live_text: bo
     return "\n".join(lines)
 
 
-def _render_caption(caption: CoreCaption, metrics: FontMetrics, *, live_text: bool) -> str:
+def _render_caption(
+    caption: CoreCaption, metrics: FontMetrics, *, live_text: bool, id_prefix: str
+) -> str:
     """A caption box: a plain rectangle with its text set flush left.
 
     Square corners, because a caption is a box and not a balloon -- rounding it would
@@ -360,7 +381,7 @@ def _render_caption(caption: CoreCaption, metrics: FontMetrics, *, live_text: bo
     place captions deliberately differ from balloons, which centre their text.
     """
     box = caption.box
-    lines = [f"    <g id={attr('caption-' + caption.id)}>"]
+    lines = [f"    <g id={attr(id_prefix + 'caption-' + caption.id)}>"]
     lines.append(
         f'      <rect x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
         f'height="{fmt(box.height)}" fill="{caption.fill}" stroke="{STROKE}" '

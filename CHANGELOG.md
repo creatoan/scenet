@@ -10,6 +10,17 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`--strip` let figures spill out of their panels, and repeated every id.** A shot crops
+  the body at the frame, and a panel on its own hides the rest behind its `viewBox`; in a
+  strip nothing clipped, so bodies drew into the gutter. Each panel is now clipped to its
+  frame, overlay included, so a panel looks the same in a strip as alone. And every id is
+  unique: each panel's ids, and the references to them, are prefixed by its position (`p1-`,
+  `p2-`), never by its name, which could not be kept safe inside `url(#...)`. The strip's
+  output changes; a single panel's is byte-identical. `render` and `render_debug` take an
+  `id_prefix` for this, empty by default. (#64)
+
 ## [0.9.0] - 2026-10-03
 
 A release for maintainers: Scenet can now be listed in the MCP registry from a workflow. The

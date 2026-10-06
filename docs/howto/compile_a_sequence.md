@@ -147,6 +147,8 @@ assert strip.lstrip().startswith("<?xml")
 ```
 
 Panel order in the output follows declaration order in the source, which is reading order.
+Each panel in the strip looks exactly as it does on its own: it is clipped to its frame, so a
+figure cropped by the shot stops at the panel's edge rather than running into the gutter.
 
 ## What this is not
 

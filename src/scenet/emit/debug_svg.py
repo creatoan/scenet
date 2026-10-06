@@ -25,8 +25,15 @@ MASS = "#3aa39a"
 HORIZON = "#c2451f"
 
 
-def render_debug(core: PanelCore) -> str:
-    """Render the solver's working geometry over a faint copy of the panel."""
+def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
+    """Render the solver's working geometry over a faint copy of the panel.
+
+    Args:
+        core: The compiled panel.
+        id_prefix: Put in front of every `id` the overlay writes, so a strip can hold
+            several overlays in one document. Empty by default, as in
+            :func:`render <scenet.emit.svg.render>`.
+    """
     parts: list[str] = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
@@ -38,7 +45,7 @@ def render_debug(core: PanelCore) -> str:
     ]
 
     for actor in sorted(core.actors, key=lambda a: a.id):
-        parts.append(f"  <g id={attr('debug-' + actor.id)}>")
+        parts.append(f"  <g id={attr(id_prefix + 'debug-' + actor.id)}>")
         parts.append(
             f'    <polygon points="{_hull_points(actor.hull)}" fill="{HULL}" '
             f'fill-opacity="0.10" stroke="{HULL}" stroke-width="2"/>'

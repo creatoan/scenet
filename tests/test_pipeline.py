@@ -7,6 +7,7 @@ panel, none out of reading order. Those hold for every input or the compiler is 
 """
 
 import math
+import re
 from itertools import pairwise
 from pathlib import Path
 from xml.etree import ElementTree
@@ -234,8 +235,8 @@ class TestDebugStrip:
             g.get("id"): g for g in root.iter(self.G) if (g.get("id") or "").startswith("panel-")
         }
         assert set(panels) == {"panel-one", "panel-two"}
-        assert any(g.get("id") == "debug-a" for g in panels["panel-one"].iter(self.G))
-        assert any(g.get("id") == "debug-b" for g in panels["panel-two"].iter(self.G))
+        assert any(g.get("id") == "p1-debug-a" for g in panels["panel-one"].iter(self.G))
+        assert any(g.get("id") == "p2-debug-b" for g in panels["panel-two"].iter(self.G))
 
     def test_it_has_the_geometry_of_the_plain_strip(self, pairs: list[tuple[str, PanelCore]]):
         """Toggling between the two views must not move anything."""
@@ -254,6 +255,89 @@ class TestDebugStrip:
 
     def test_the_plain_strip_is_unchanged(self, pairs: list[tuple[str, PanelCore]]):
         assert "debug-" not in render_strip(pairs)
+
+
+class TestStripIsOneDocument:
+    """A strip is one SVG document holding several panels (#64).
+
+    Each panel used to be pasted in exactly as it rendered alone, so every id repeated
+    once per panel. And nothing clipped: a shot crops the body at the frame, a panel on
+    its own hides the rest behind its `viewBox`, and in a strip the rest of the figure
+    drew straight into the gutter -- and, once panels stack, into the tier below.
+    """
+
+    SVG = "{http://www.w3.org/2000/svg}"
+
+    # Two panels with the same setting share a seed, so they used to define the same
+    # fog filter twice.
+    FOGGY = (
+        "panels:\n"
+        "  one: {setting: {place: docks, weather: fog}, cast: {a: {reference: alice}}}\n"
+        "  two: {over: one, camera: {shot: close_up}}\n"
+    )
+
+    @pytest.fixture(params=["gallery-sequence", "shared-fog"])
+    def pairs(self, request: pytest.FixtureRequest) -> list[tuple[str, PanelCore]]:
+        source = (
+            (EXAMPLES / "gallery" / "12-sequence.scene.yaml").read_text(encoding="utf-8")
+            if request.param == "gallery-sequence"
+            else self.FOGGY
+        )
+        return [(name, result.core) for name, result in compile_scene(source).items()]
+
+    @pytest.mark.parametrize("debug", [False, True], ids=["plain", "overlay"])
+    def test_no_id_repeats(self, pairs: list[tuple[str, PanelCore]], debug: bool):
+        root = ElementTree.fromstring(render_strip(pairs, debug=debug))
+        ids = [id_ for element in root.iter() if (id_ := element.get("id")) is not None]
+        assert ids
+        assert sorted({id_ for id_ in ids if ids.count(id_) > 1}) == []
+
+    @pytest.mark.parametrize("debug", [False, True], ids=["plain", "overlay"])
+    def test_every_reference_resolves(self, pairs: list[tuple[str, PanelCore]], debug: bool):
+        strip = render_strip(pairs, debug=debug)
+        ids = set(re.findall(r' id="([^"]+)"', strip))
+        referenced = re.findall(r"url\(#([^)]+)\)", strip) + re.findall(r'href="#([^"]+)"', strip)
+        assert referenced, "every panel's clip, at least"
+        assert set(referenced) <= ids
+
+    @pytest.mark.parametrize("debug", [False, True], ids=["plain", "overlay"])
+    def test_each_panel_is_clipped_to_its_own_frame(
+        self, pairs: list[tuple[str, PanelCore]], debug: bool
+    ):
+        """In the panel's own coordinates, on a group with no transform of its own:
+        `userSpaceOnUse` is the referencing element's user space, which is ambiguous on
+        an element that also carries a `transform`."""
+        root = ElementTree.fromstring(render_strip(pairs, debug=debug))
+        groups = [g for g in root.iter(f"{self.SVG}g") if (g.get("id") or "").startswith("panel-")]
+        assert len(groups) == len(pairs)
+        for group, (_, core) in zip(groups, pairs, strict=True):
+            (clip,) = group.findall(f"{self.SVG}clipPath")
+            (rect,) = clip.findall(f"{self.SVG}rect")
+            frame = (rect.get("x"), rect.get("y"), rect.get("width"), rect.get("height"))
+            assert frame == ("0", "0", fmt(core.width), fmt(core.height))
+            (clipped,) = (
+                g
+                for g in group.findall(f"{self.SVG}g")
+                if g.get("clip-path") == f"url(#{clip.get('id')})"
+            )
+            assert clipped.get("transform") is None
+            assert len(list(clipped)) > 0
+
+    def test_fog_in_each_panel_comes_from_that_panel(self):
+        pairs = [(name, r.core) for name, r in compile_scene(self.FOGGY).items()]
+        root = ElementTree.fromstring(render_strip(pairs))
+        groups = [g for g in root.iter(f"{self.SVG}g") if (g.get("id") or "").startswith("panel-")]
+        for group in groups:
+            filters = {f.get("id") for f in group.iter(f"{self.SVG}filter")}
+            veils = [veil for e in group.iter(f"{self.SVG}rect") if (veil := e.get("filter"))]
+            assert veils
+            assert {veil.removeprefix("url(#").removesuffix(")") for veil in veils} <= filters
+
+    def test_a_panel_on_its_own_keeps_its_bare_ids(self):
+        """Prefixing is the strip's business. A single panel's SVG is unchanged."""
+        core = compile_source("cast: {a: {reference: alice}}").core
+        assert 'id="actor-a"' in render(core)
+        assert 'id="debug-a"' in render_debug(core)
 
 
 class TestExample:
@@ -334,6 +418,16 @@ class TestIdentifiersCannotInjectMarkup:
         root = ElementTree.fromstring(strip)
         groups = root.iter("{http://www.w3.org/2000/svg}g")
         assert any(g.get("id") == f"panel-{self.HOSTILE}" for g in groups)
+
+    def test_panel_name_never_reaches_a_reference(self):
+        """Ids inside a strip are prefixed by position, not by name. Attribute escaping
+        keeps a name inside its quotes, but nothing would keep it inside `url(#...)`."""
+        source = f"panels:\n  '{self.HOSTILE}': {{cast: {{a: {{reference: alice}}}}}}\n"
+        panels = compile_scene(source)
+        strip = render_strip([(name, result.core) for name, result in panels.items()])
+
+        assert 'clip-path="url(#p1-frame)"' in strip
+        assert all("onload" not in ref for ref in re.findall(r"url\(#[^)]*\)", strip))
 
     def test_dialogue_stays_inside_its_element(self):
         source = 'cast: {a: {reference: alice}}\nscript: [{say: {by: a, text: "</text><script/>"}}]'
