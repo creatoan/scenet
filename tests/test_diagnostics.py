@@ -317,6 +317,31 @@ class TestCharactersSvgCannotCarry:
         assert found.region.start.line == 3
 
 
+class TestNestingTooDeep:
+    """A document nested past Python's recursion limit is a syntax finding, not a
+    `RecursionError` traceback, in `check`, `check --deep`, `build` and a comic script."""
+
+    DEEP = "a: " + "[" * 5000 + "]" * 5000 + "\n"
+
+    @pytest.mark.parametrize("deep", [False, True])
+    def test_check_reports_one_syntax_finding(self, deep: bool):
+        (found,) = diagnose_source(self.DEEP, source=Path("x.panel.yaml"), deep=deep)
+        assert found.rule == "syntax"
+        assert "nested too deeply" in found.message
+        assert found.region is not None
+
+    def test_build_raises_a_syntax_error(self):
+        with pytest.raises(PanelSyntaxError, match="nested too deeply"):
+            parse_panel(self.DEEP)
+
+    def test_a_comic_script_front_matter_is_a_finding(self):
+        script = "---\ncast: " + "[" * 5000 + "]" * 5000 + "\n---\nPANEL 1\n"
+        (found,) = diagnose_script(script)
+        # The rule every front-matter YAML error is reported under, today.
+        assert found.rule == "invalid-field"
+        assert "nested too deeply" in found.message
+
+
 class TestSourcePositions:
     """`yaml.compose` keeps the marks `safe_load` throws away."""
 
