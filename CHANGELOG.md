@@ -72,6 +72,13 @@ below 1.0 means.
 
 ### Fixed
 
+- **Some findings pointed at the wrong line, or at no line at all.** A syntax error at the
+  very end of a file -- a bracket never closed -- was put on the line after the last one,
+  which an editor or code scanning cannot show. And a key whose value is a block, such as
+  `panel:` with its fields beneath it, was located at the block's first field: a panel whose
+  margin left no room pointed at `size:`, and a cast member missing `reference` at whatever
+  key it did have. The first now sits at the end of the last line, the second at its key.
+  (Refs #92)
 - **A misspelled required key was reported twice.** `referense: alice` came back as an
   unknown key and as a missing `reference`, both at one place, for one mistake. When an
   unknown key closely matches a required key missing from the same mapping, `scenet check`

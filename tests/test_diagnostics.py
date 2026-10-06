@@ -248,7 +248,7 @@ class TestOneMistakeInAScriptEntryIsOneFinding:
                 "script:\n  - say:\n      text: Hi\n",
                 "missing-field",
                 ("script", 0, "say", "by"),
-                4,  # the mapping it is missing from
+                3,  # the `say:` it is missing from
                 "Field required",
                 id="say-missing-speaker",
             ),
@@ -607,7 +607,8 @@ class TestPositionsInAwkwardShapes:
         validation failed before the list was fully built."""
         region = locate("staging:\n  - a left_of b\n", ("staging", 9))
         assert region is not None
-        assert region.start.line == 2
+        # The sequence is located at its key, `staging:`, as every block value is.
+        assert region.start.line == 1
 
     def test_unparseable_text_locates_nothing(self):
         assert locate("panel: [unclosed\n", ("panel",)) is None
