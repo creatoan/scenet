@@ -342,6 +342,29 @@ class TestNestingTooDeep:
         assert "nested too deeply" in found.message
 
 
+class TestAReflexiveRelationKeepsItsRule:
+    """`scenet/reflexive-relation` is in the catalogue, but a staging sentence relating an
+    actor to itself came back as `invalid-field`: the frontend rewrote the error and lost
+    the rule on the way. Found while planning #92."""
+
+    def test_it_is_reported_under_its_own_rule(self):
+        source = (
+            "cast: {alice: {reference: alice}, bob: {reference: bob}}\n"
+            "staging:\n  - alice left_of bob\n  - alice left_of alice\n"
+        )
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.rule == "reflexive-relation"
+        assert found.path == ("staging", 1)
+        assert "itself" in found.message
+        assert found.region is not None
+        assert found.region.start.line == 4
+
+    def test_build_names_the_rule_too(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel("cast: {a: {reference: alice}}\nstaging: [a behind a]\n")
+        assert caught.value.rule == "reflexive-relation"
+
+
 class TestSourcePositions:
     """`yaml.compose` keeps the marks `safe_load` throws away."""
 
