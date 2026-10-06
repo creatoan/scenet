@@ -29,6 +29,11 @@ below 1.0 means.
     Page Cores. MCP `compile` returns each Page Core and `render` one SVG per page.
   - A gallery example, a how-to (*Compose a page*), and a prior-art entry on where the rules
     come from: Cohn's reading-order experiments, Peeters, Groensteen, CSS Grid.
+- **Columns on a page**: a tall panel beside a stack. A tier can hold `columns:` in place of
+  `panels:`, each column a stack of panels shared out by `height`, and a column of one panel
+  spans the whole tier. A tier of columns is read down each column before across, as readers
+  read a stack blocked by a tall panel. Two stacks side by side block nothing, readers go
+  across them, and `scenet check` refuses them as `page-layout`. (Part of #67)
 - `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
   name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
   the heading that repeats. (#63)
@@ -44,6 +49,10 @@ below 1.0 means.
 - **`scenet check -o FILE` ignored `-o` in text format.** The findings went to the terminal
   and no file was written, although the reference said it wrote the report to the file. It
   now does, as it already did for SARIF. The file is empty when every document is valid.
+- A mistake inside one tier of `pages:` was reported twice by `scenet check`. The second
+  report said the list of tiers was empty, which it was not: pydantic also calls a tuple too
+  short when one of its items fails. That echo is now dropped wherever pydantic's errors
+  become findings.
 - **A comic script could lose panels and dialogue without saying so.** Three cases, none of
   which raised anything. (#63)
   - **Panel numbers that start again on each page** overwrote each other, so

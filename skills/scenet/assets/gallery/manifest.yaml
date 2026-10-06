@@ -76,3 +76,6 @@ examples:
   - file: 24-page.scene.yaml
     title: "A page: panels in tiers"
     kind: scene
+  - file: 25-columns.scene.yaml
+    title: "A tall panel beside a stack: columns"
+    kind: scene

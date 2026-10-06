@@ -569,9 +569,29 @@ panels:
 | `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
 | `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
 | `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
+| `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
+| `columns[].width` | The column's share of its tier's width | `1` |
+| `columns[].panels[].height` | The panel's share of its column's height | `1` |
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
+
+A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
+of short ones is written: the tier is split across into columns, and each column down into its
+panels, with `tier_gutter` between them.
+
+```yaml
+- height: 2
+  columns:
+    - {width: 2, panels: [above, {use: below, height: 2}]}
+    - {width: 1, panels: [falling]}   # spans the tier's whole height
+```
+
+A tier of columns is read column by column and top to bottom in each: `above`, `below`, then
+`falling`. That is the order readers take when a panel spanning the tier blocks the way across
+(about nine in ten of them, in Cohn's 2013 experiments). Two stacks side by side have nothing
+between them blocking the way, and readers go across those instead, so they are refused as
+`page-layout`; write them as tiers, or put a panel that spans the tier between them.
 
 **A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
@@ -579,13 +599,14 @@ it decides is **type size**. Alone, a panel letters at a fixed fraction of its o
 every panel letters at the same size, as if each were one tier of a three-tier page, because no
 letterer sets a short panel and a tall one at different sizes.
 
-A page is read tier by tier and left to right, so the order panels are written in is the order
-they are read in; with tiers, that holds by construction. A panel can be on one page once. A panel
+A page is read tier by tier, left to right, and down each column, so the order panels are written
+in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
-`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, or margins and
-gutters that leave no room are reported as `page-layout`.
+`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
+both `panels` and `columns` or neither, two stacks side by side, or margins and gutters that leave
+no room are reported as `page-layout`.
 
-Not yet: panels that span tiers, insets and frames that are not rectangles
+Not yet: insets and frames that are not rectangles
 ([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
 ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
@@ -1016,9 +1037,9 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 
 ### `scenet/page-layout`
 
-A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A document with pages needs panels to lay out.
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. A document with pages needs panels to lay out.
 
-**Fix:** Check the panel names in `pages:`, place each panel once, or shrink the margin and gutters in `page:`.
+**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, or shrink the margin and gutters in `page:`.
 
 ### `scenet/panel-geometry`
 
@@ -2615,4 +2636,80 @@ panels:
       bob: {reference: bob, expression: happy, facing: left}
     script:
       - say: {by: bob, text: "Shall we?", kind: whisper}
+```
+
+## A tall panel beside a stack: columns
+
+`25-columns.scene.yaml`
+
+```yaml
+# A page with a tall panel beside a stack: columns.
+#
+# A tier can hold `columns:` in place of `panels:`. It is split across into columns
+# by `width`, and each column down into its panels by `height`. A column of one
+# panel spans the tier's whole height.
+#
+# The stack is read down before across -- `where`, then `behind`, then `turn` --
+# because the tall panel beside it blocks the way across. That is what about nine
+# readers in ten do with this layout (Cohn, 2013). Two stacks side by side block
+# nothing, readers go across them, and they are refused.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: dusk}
+
+pages:
+  - tiers:
+      - panels: [spotted]
+      - height: 2
+        columns:
+          - {width: 3, panels: [where, {use: behind, height: 1.5}]}
+          - {width: 2, panels: [turn]}
+      - panels: [laugh]
+
+panels:
+  spotted:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, expression: shouting, at: left_third}
+      bob:   {reference: bob,   at: right_third, facing: right}
+    staging:
+      - alice left_of bob
+      - alice ground_shared_with bob
+    script:
+      - say: {by: alice, text: "Bob! Don't move!"}
+
+  where:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: scared, facing: left}
+    script:
+      - say: {by: bob, text: "Why? What is it?"}
+
+  behind:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, expression: shouting, facing: right}
+    script:
+      - say: {by: alice, text: "Right behind you!", kind: shout}
+
+  turn:
+    camera: {shot: full_shot}
+    cast:
+      bob: {reference: bob, pose: hands_on_hips, expression: surprise, facing: right}
+    script:
+      - say: {by: bob, text: "...A puddle?"}
+
+  laugh:
+    over: spotted
+    camera: {shot: full_shot}
+    cast:
+      alice: {pose: standing_neutral, expression: laughing, facing: right}
+      bob:   {expression: angry, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - say: {by: alice, text: "Your new shoes, Bob!"}
+      - say: {by: bob, text: "Very funny."}
 ```

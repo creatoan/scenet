@@ -32,6 +32,30 @@ The order you write panels in is the order they are read in: tier by tier, left 
 That is the reading path readers follow on a grid, so a page built from tiers cannot be read
 in the wrong order.
 
+## A tall panel beside a stack
+
+```yaml
+pages:
+  - tiers:
+      - panels: [arrival]
+      - height: 2
+        columns:
+          - {width: 2, panels: [look_up, {use: horror, height: 2}]}
+          - {width: 1, panels: [the_fall]}
+```
+
+A tier can hold `columns:` in place of `panels:`. The tier is split across into columns by
+their `width`, and each column down into its panels by their `height`, with the tier gutter
+between them. A column of one panel spans the tier's whole height.
+
+Columns are read one after another, top to bottom in each: `look_up`, `horror`, `the_fall`.
+That is what readers do when a tall panel stands beside a stack. It blocks the way across, and
+about nine readers in ten go down the stack first. Two stacks side by side have nothing
+blocking the way, so readers go across them, and `scenet check` refuses them; write them as
+tiers instead.
+
+`examples/gallery/25-columns.scene.yaml` is a page built this way.
+
 `examples/gallery/24-page.scene.yaml` is a whole page, and the playground offers it as
 "A page: panels in tiers".
 
@@ -100,6 +124,8 @@ replacing the other, `scenet build` stops and asks you to rename the panel.
 
 - a tier that places a panel `panels:` does not define;
 - a panel placed twice, on one page or two;
+- a tier with both `panels:` and `columns:`, or with neither;
+- two stacks side by side, which readers would read across rather than down;
 - a margin and gutters that leave no room for the panels;
 - `pages:` in a document that has no `panels:` to lay out.
 
@@ -108,6 +134,6 @@ to be inherited from with `over:`.
 
 ## Not yet
 
-Panels that span tiers, insets and slanted frames; right-to-left reading for manga; a comic
+Insets and slanted frames; right-to-left reading for manga; a comic
 script's `PAGE` headings laying out pages; and print sizes with trim and bleed. See
 [the plan](../explanation/status.md).
