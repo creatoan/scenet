@@ -367,8 +367,8 @@ def write_site_files(site: Path) -> None:
         site: The assembled site directory; both files land at its root.
     """
     site.mkdir(parents=True, exist_ok=True)
-    (site / "scenet-spec.md").write_text(spec_pack(), encoding="utf-8")
-    (site / "llms.txt").write_text(llms_txt(), encoding="utf-8")
+    (site / "scenet-spec.md").write_text(spec_pack(), encoding="utf-8", newline="\n")
+    (site / "llms.txt").write_text(llms_txt(), encoding="utf-8", newline="\n")
 
 
 def _stale() -> list[Path]:

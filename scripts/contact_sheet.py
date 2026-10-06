@@ -146,7 +146,7 @@ def main() -> None:
             if len(references) == 1
             else args.output.with_name(f"{args.output.stem}-{reference}{args.output.suffix}")
         )
-        path.write_text(sheet(reference, marks=args.marks), encoding="utf-8")
+        path.write_text(sheet(reference, marks=args.marks), encoding="utf-8", newline="\n")
         print(f"wrote {path}")
 
 

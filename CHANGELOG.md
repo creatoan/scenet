@@ -53,6 +53,12 @@ below 1.0 means.
   report said the list of tiers was empty, which it was not: pydantic also calls a tuple too
   short when one of its items fails. That echo is now dropped wherever pydantic's errors
   become findings.
+- **Output was not byte-identical across platforms.** On Windows, every SVG, Core, overlay,
+  strip and page that `scenet build` wrote had CRLF line endings, as did reports and schemas
+  written with `-o` and `scenet schema` redirected from stdout. The same build on Linux
+  wrote LF. Everything is now written as UTF-8 with LF everywhere. A SARIF report printed to
+  a Windows console no longer fails on a character outside its code page. CI now runs the
+  test suite on Windows as well, where a test checks the written bytes.
 - **A comic script could lose panels and dialogue without saying so.** Three cases, none of
   which raised anything. (#63)
   - **Panel numbers that start again on each page** overwrote each other, so

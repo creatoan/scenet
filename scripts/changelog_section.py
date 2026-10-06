@@ -74,7 +74,7 @@ def main() -> None:
         # UnicodeEncodeError. CI would never have seen it; a maintainer would have.
         sys.stdout.buffer.write((found + "\n").encode("utf-8"))
     else:
-        args.output.write_text(found + "\n", encoding="utf-8")
+        args.output.write_text(found + "\n", encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":
