@@ -212,7 +212,12 @@ class ScriptSyntaxError(PanelSyntaxError):
     """
 
     def __init__(
-        self, message: str, *, source: Path | None = None, line: int | None = None
+        self,
+        message: str,
+        *,
+        source: Path | None = None,
+        line: int | None = None,
+        rule: str | None = None,
     ) -> None:
         """Build the error, keeping the line number as data as well as prose.
 
@@ -220,9 +225,10 @@ class ScriptSyntaxError(PanelSyntaxError):
             message: What went wrong, phrased for whoever wrote the script.
             source: Path the script came from, if it was read from disk.
             line: One-based line the fault is on, if known.
+            rule: Catalogue identifier, when the parser knows which rule was broken.
         """
         self.line = line
-        super().__init__(message, source=source)
+        super().__init__(message, source=source, rule=rule)
 
 
 class CompositionError(SourceError):

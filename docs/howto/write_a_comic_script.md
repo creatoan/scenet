@@ -40,17 +40,29 @@ scenet build umbrella.script --strip
 
 | Line | Means |
 |---|---|
-| `PANEL 1` | Starts a new panel. Anything before the first one is an error. |
+| `PANEL 1` | Starts a new panel. Anything before the first one is an error. `PANEL 1:` and `PANEL 1.` are the same panel. |
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. |
-| `ALICE` (all caps, alone) | The next lines are dialogue spoken by `ALICE`. |
+| `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
 | `BOB (whisper)` | Same, with a balloon kind. |
 | `CAPTION: Midnight.` | A caption box. The text is on the same line. |
 | `CAPTION (monologue): ...` | Same, with a caption kind. |
 | Anything else | Prose. Preserved, never interpreted. |
-| `PAGE ONE` | Ignored. Pages are not modelled yet. |
+| `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
 
 The one detail that trips people up: **a speaker cue is recognised by the name being all
 caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested.
+
+**A speech runs until a blank line.** Wrap a long line of dialogue wherever you like; the lines
+are joined with a space into one balloon. A line that looks like another cue ends the speech
+and starts the next, so two speeches need no blank line between them.
+
+**Panel numbers may start again on each page**, as publishers' script formats ask. When they
+do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
+`scenet build` writes it to `name.2-1.svg`. A page spelled out in English is named by its
+number (`PAGE TWO` is page `2`, `PAGE TWENTY-ONE` page `21`); anything else is kept as written
+(`PAGE 3A`). A script that numbers its panels straight through keeps the plain names. Two
+panels that would still share a name, such as `PANEL 1` twice on one page, are reported as
+`duplicate-panel` rather than one quietly replacing the other.
 
 `CAPTION` is checked before speaker cues, because as far as the cue pattern is concerned it is a
 perfectly good character name. That is also why the text has to be on the same line: a bare
