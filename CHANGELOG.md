@@ -12,6 +12,13 @@ below 1.0 means.
 
 ### Added
 
+- **Property-based tests for pages, scripts and broken documents.** Generated books are
+  held to the documented reading order, worked out from the pages as written, to frames that
+  stay inside the margins and clear of each other, and to sound SVG with ids unique across
+  pages. Generated comic scripts lose no panel and no line. And a valid document given any
+  one mistake from a catalogue of twenty-odd must get exactly one finding from `scenet
+  check`, under the right rule and on the right line; arbitrary input must never get a
+  traceback. The eight bugs they found are fixed above. (#92)
 - **Property-based tests.** The checks a compiled panel must pass, which ran on five
   hand-written panels, now also run on panels Hypothesis generates: lettering inside the
   margin, off every face and in reading order against every earlier box; an SVG that
