@@ -72,6 +72,12 @@ below 1.0 means.
 
 ### Fixed
 
+- **An unknown speaker was located one step short of its `by:`.** The finding's path was
+  `script.0.by`, which the document does not have -- a line is written `- say: {by: ...}` --
+  so a script in block style was pointed at `- say:` rather than the `by:` line. The path is
+  now `script.0.say.by`, as every other fault in a script entry has been since the verb picks
+  the event, and the finding lands on the unknown name itself. The MCP server's `where` field
+  for it changes the same way. (Refs #92)
 - **Some findings pointed at the wrong line, or at no line at all.** A syntax error at the
   very end of a file -- a bracket never closed -- was put on the line after the last one,
   which an editor or code scanning cannot show. And a key whose value is a block, such as

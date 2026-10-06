@@ -132,7 +132,23 @@ class TestDiagnosingADocument:
         knows the path; it just had nowhere to put it until `RuleViolationError` existed.
         """
         (found,) = diagnose_source(UNKNOWN_ACTOR, source=Path("duel.panel.yaml"))
-        assert found.path == ("script", 0, "by")
+        assert found.path == ("script", 0, "say", "by")
+
+    def test_an_unknown_speaker_in_a_block_is_on_the_by_line(self):
+        """The path is the one written -- `script.0.say.by` -- so a script in block style
+        points at the `by:` line, not at `- say:` above it. It said `script.0.by`, which
+        the document does not have, and stopped a step short. Found while planning #92."""
+        source = (
+            "cast: {alice: {reference: alice}}\n"
+            "script:\n"
+            "  - say:\n"
+            "      by: bpb\n"
+            "      text: Hello\n"
+        )
+        (found,) = diagnose_source(source, source=Path("duel.panel.yaml"))
+        assert found.rule == "unknown-actor"
+        assert found.region is not None
+        assert found.region.start.line == 4
 
     def test_a_cycle_is_reported_against_the_staging_entry(self):
         (found,) = diagnose_source(CYCLE, source=Path("cycle.panel.yaml"))
@@ -570,7 +586,7 @@ class TestTheProseAndTheSarifAgree:
         render as `at <root>`, because the model validator had nowhere to put a path."""
         with pytest.raises(PanelSyntaxError) as caught:
             parse_panel(UNKNOWN_ACTOR)
-        assert "at script.0.by:" in str(caught.value)
+        assert "at script.0.say.by:" in str(caught.value)
 
     def test_the_message_text_is_the_same_in_both(self):
         (found,) = diagnose_source(UNKNOWN_ACTOR, source=Path("duel.panel.yaml"))

@@ -225,8 +225,8 @@ class TestValidate:
         assert finding["rule"] == "scenet/unknown-actor"
         assert "bpb" in finding["message"]
         assert finding["fix"] == RULES["unknown-actor"].help
-        assert finding["where"] == "script.0.by"
-        assert (finding["line"], finding["column"]) == (5, 5)
+        assert finding["where"] == "script.0.say.by"
+        assert (finding["line"], finding["column"]) == (5, 15)
         assert finding["end_line"] >= finding["line"]
 
     def test_a_finding_is_also_readable_as_text(self):
@@ -315,7 +315,7 @@ class TestCompile:
         result = call("compile", {"source": UNKNOWN_ACTOR})
         assert result.is_error
         assert "scenet/unknown-actor" in text_of(result)
-        assert "5:5" in text_of(result)
+        assert "5:15" in text_of(result)
         assert RULES["unknown-actor"].help in text_of(result)
 
     def test_a_solver_failure_is_located_too(self):

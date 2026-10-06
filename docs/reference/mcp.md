@@ -58,7 +58,7 @@ the network, or answers differently on a second call. A client can run them with
 | `rule` | Stable rule id, such as `scenet/unknown-actor` — the [same catalogue](cli.md#rules) `scenet check` reports |
 | `message` | What is wrong, naming the offending construct |
 | `fix` | What to do about it |
-| `where` | Path to the offending value, such as `script.0.by`; empty for the whole document |
+| `where` | Path to the offending value, such as `script.0.say.by`; empty for the whole document |
 | `line`, `column`, `end_line`, `end_column` | 1-based |
 
 `compile` and `render` refuse a document that does not compile with a **tool error**, whose
@@ -112,8 +112,8 @@ script:
 assert not report.valid
 finding = report.findings[0]
 assert finding.rule == "scenet/unknown-actor"
-assert finding.where == "script.0.by"
-assert (finding.line, finding.column) == (5, 5)
+assert finding.where == "script.0.say.by"
+assert (finding.line, finding.column) == (5, 15)
 
 assert [puppet.name for puppet in list_puppets().puppets] == ["alice", "bob"]
 ```
