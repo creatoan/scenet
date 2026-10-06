@@ -76,7 +76,9 @@ def _validate_panel(data: dict[str, Any], source: Path | None) -> PanelIR:
     try:
         return PanelIR.model_validate(normalise(data))
     except PanelSyntaxError as exc:
-        raise PanelSyntaxError(str(exc), source=source) from exc
+        # Kept along with the message: a fault the frontend found itself knows its rule
+        # and where it is, and `build` reports both just as `check` does.
+        raise PanelSyntaxError(str(exc), source=source, rule=exc.rule, loc=exc.loc) from exc
     except ValidationError as exc:
         raise PanelSyntaxError(summarise(exc), source=source) from exc
 
