@@ -67,12 +67,12 @@ from pydantic import BaseModel, Field
 from scenet import __version__
 from scenet.assets.contract import default_library
 from scenet.diagnostics import RULE_NAMESPACE, RULES, Diagnostic, diagnose_script, diagnose_source
+from scenet.emit.page import render_page
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.frontends.positions import DOCUMENT_START
 from scenet.frontends.script_front import parse_script
-from scenet.frontends.yaml_front import parse_scene
-from scenet.pipeline import CompileResult, compile_ir
+from scenet.pipeline import Book, compile_book, compile_ir
 from scenet.spec_pack import part
 
 __all__ = [
@@ -184,10 +184,25 @@ class CompiledPanel(BaseModel):
     )
 
 
+class CompiledPage(BaseModel):
+    """One page: where each panel's frame is."""
+
+    number: int = Field(description="The page's number, from 1")
+    core: dict[str, Any] = Field(
+        description=(
+            "The Page Core: the page's size, the type height its panels share, and one frame "
+            "per panel in reading order, as `scenet build --core` writes it"
+        )
+    )
+
+
 class CompileReport(BaseModel):
-    """Every panel in a document, compiled."""
+    """Every panel in a document, compiled, and the pages they are laid out on."""
 
     panels: list[CompiledPanel] = Field(description="In reading order")
+    pages: list[CompiledPage] = Field(
+        default_factory=list, description="In order; empty when the document has no `pages:`"
+    )
 
 
 class Puppet(BaseModel):
@@ -288,19 +303,27 @@ def compile_panel(source: SourceArg, syntax: SyntaxArg = "yaml") -> CompileRepor
     tail that bent around a face. A document that does not compile is an error
     carrying the same findings `validate` reports.
 
+    A document with `pages:` also gets each page's Page Core: where every panel's frame
+    is. A panel on a page is compiled at its frame's size.
+
     Returns:
-        Every panel, in reading order, with its notes and its Panel Core.
+        Every panel, in reading order, with its notes and its Panel Core, then the pages.
 
     Raises:
         ToolError: The document does not compile. The message lists every finding.
     """
+    book = _compile(source, syntax)
     return CompileReport(
         panels=[
             CompiledPanel(
                 name=name, notes=list(result.notes), core=json.loads(result.core.to_json())
             )
-            for name, result in _compile(source, syntax).items()
-        ]
+            for name, result in book.panels.items()
+        ],
+        pages=[
+            CompiledPage(number=number, core=json.loads(page.to_json()))
+            for number, page in enumerate(book.pages, start=1)
+        ],
     )
 
 
@@ -324,15 +347,20 @@ def render_panel(
     document that does not compile is an error carrying the same findings `validate`
     reports.
 
+    A document with `pages:` gets one more resource per page, `scenet://pages/<n>.svg`,
+    after the panels: each panel at its frame, exactly as `scenet build` writes the page.
+
     Returns:
-        A summary, then one SVG resource per panel in reading order.
+        A summary, then one SVG resource per panel in reading order, then one per page.
 
     Raises:
         ToolError: The document does not compile. The message lists every finding.
     """
-    results = _compile(source, syntax)
+    book = _compile(source, syntax)
+    results = book.panels
     count = f"{len(results)} panel{'' if len(results) == 1 else 's'}"
-    lines = [f"Rendered {count}: {', '.join(results)}."]
+    pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
+    lines = [f"Rendered {count}{pages if book.pages else ''}: {', '.join(results)}."]
     lines.extend(
         f"note ({name}): {note}" for name, result in results.items() for note in result.notes
     )
@@ -350,6 +378,18 @@ def render_panel(
             ),
         )
         for name, result in results.items()
+    )
+    cores = {name: result.core for name, result in results.items()}
+    blocks.extend(
+        EmbeddedResource(
+            type="resource",
+            resource=TextResourceContents(
+                uri=f"scenet://pages/{number}.svg",
+                mime_type="image/svg+xml",
+                text=render_page(page, cores, live_text=live_text),
+            ),
+        )
+        for number, page in enumerate(book.pages, start=1)
     )
     return blocks
 
@@ -430,16 +470,22 @@ def _finding(item: Diagnostic) -> Finding:
     )
 
 
-def _compile(source: str, syntax: Syntax) -> dict[str, CompileResult]:
-    """Compile every panel, or raise a tool error that lists every finding.
+def _compile(source: str, syntax: Syntax) -> Book:
+    """Compile every panel and page, or raise a tool error that lists every finding.
 
     The success path compiles once. Only a failure pays for the deep check, which is
     what turns "the solver gave up" into a located finding with a rule and a fix.
     """
     try:
-        panels = parse_script(source) if syntax == "script" else parse_scene(source)
         library = default_library()
-        return {name: compile_ir(panel, library=library) for name, panel in panels.items()}
+        if syntax == "yaml":
+            return compile_book(source, library=library)
+        # A comic script's PAGE headings lay nothing out yet, so a script has no pages.
+        panels = parse_script(source)
+        return Book(
+            panels={name: compile_ir(panel, library=library) for name, panel in panels.items()},
+            pages=(),
+        )
     except ScenetError as exc:
         found = _diagnose(source, syntax, deep=True)
         if not found:

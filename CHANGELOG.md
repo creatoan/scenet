@@ -12,6 +12,23 @@ below 1.0 means.
 
 ### Added
 
+- **Pages.** A scene can lay its panels out with `pages:`: each page a list of tiers, each
+  tier a list of panels, and a weight for each tier's height and each panel's width, shared
+  out of what `page:`'s margin and gutters leave, the way CSS Grid shares a row. A panel on a
+  page is compiled at its frame's size and nothing else changes about it, except that every
+  panel on a page letters at one type size. (#66)
+  - `scenet build` writes each page as `stem.page-<n>.svg`, with its Page Core and overlay
+    under `--core` and `--debug`, and refuses a panel whose file would be a page's.
+  - A new tier, **Page Core**, records where every frame is and the type height the page
+    shares. `compile_book` returns the panels and the pages; `render_page` and
+    `render_pages` draw them.
+  - `scenet check` reports `scenet/page-layout` for a placement naming no panel, a panel
+    placed twice, or no room left by the margin and gutters.
+  - The published schema, the VS Code extension and the playground understand pages; the
+    playground shows a document's pages side by side, and its Panel Core view holds the
+    Page Cores. MCP `compile` returns each Page Core and `render` one SVG per page.
+  - A gallery example, a how-to (*Compose a page*), and a prior-art entry on where the rules
+    come from: Cohn's reading-order experiments, Peeters, Groensteen, CSS Grid.
 - `scenet/duplicate-panel`, the finding for two panels in a script that would still share a
   name: `PANEL 1` twice on one page, or twice with no PAGE heading between them. It points at
   the heading that repeats. (#63)

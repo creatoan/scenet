@@ -142,3 +142,32 @@ The atmosphere's `veil` is a set of `feTurbulence` parameters rather than an ima
 is reproducible by specification. What browsers paint from it agrees only approximately. See
 [the language reference](language.md#the-contract-is-on-the-svg-text-not-on-pixels), where the
 boundary is stated in full; golden-file tests target this tier and the SVG text, never a raster.
+
+## Page Core
+
+A scene with `pages:` gets one more document per page, alongside each panel's Panel Core. It holds
+where each panel's frame is, and nothing drawn:
+
+```json
+{
+  "format_version": 1,
+  "width": 1500.0,
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "frames": [
+    { "panel": "establishing", "x": 75.0, "y": 75.0, "width": 880.0, "height": 628.12 },
+    { "panel": "reply", "x": 985.0, "y": 75.0, "width": 440.0, "height": 628.12 }
+  ]
+}
+```
+
+`frames` are in reading order, tier by tier and left to right. Each panel's own Core was compiled at
+exactly its frame's `width` and `height`, so a panel's Core reads the same on a page as it would
+alone at that size, and a page adds no layout decision to a panel.
+
+`lettering_height` is the one thing every panel on the page shares: the height their type sizes are
+a fraction of, in place of each panel's own. It is recorded so that a Page Core says why two panels
+of different heights letter at the same size.
+
+`scenet build --core` writes it as `stem.page-<n>.core.json`; `compile_book` returns it as
+`Book.pages`.

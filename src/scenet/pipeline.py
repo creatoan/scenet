@@ -8,6 +8,8 @@ artwork, and the emitter never makes a layout decision.
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.assets.emanata import SINGULAR, build_emanata
 from scenet.assets.face import ResolvedDisc, ResolvedStroke, build_face
@@ -21,6 +23,7 @@ from scenet.core import (
     CoreBackdrop,
     CoreBalloon,
     CoreCaption,
+    CoreFrame,
     CoreMass,
     CoreStreak,
     CoreVeil,
@@ -28,6 +31,7 @@ from scenet.core import (
     FaceDisc,
     FaceMark,
     FaceStroke,
+    PageCore,
     PanelCore,
     Tail,
     Transform,
@@ -35,13 +39,22 @@ from scenet.core import (
     round_pairs,
     vector_pair,
 )
+from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.script_front import load_script
-from scenet.frontends.yaml_front import load_panel, load_scene, parse_panel, parse_scene
+from scenet.frontends.yaml_front import (
+    SceneDocument,
+    load_panel,
+    load_scene,
+    load_scene_document,
+    parse_panel,
+    parse_scene_document,
+)
 from scenet.geom import BBox, Vector, rounded
-from scenet.ir import Mark, PanelIR
+from scenet.ir import Mark, PageLayout, PanelIR, PanelSpec
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
+from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.staging import Placement, solve_staging
 from scenet.solve.text import FontMetrics
 
@@ -228,8 +241,21 @@ def compile_ir(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    lettering_height: float | None = None,
 ) -> CompileResult:
-    """Compile validated IR into Panel Core."""
+    """Compile validated IR into Panel Core.
+
+    Args:
+        panel: The validated panel.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against.
+        lettering_height: The height type sizes are a fraction of, instead of the panel's
+            own. A page passes the same value to every panel on it; a panel compiled on
+            its own leaves it out.
+
+    Returns:
+        The compiled panel.
+    """
     library = library or default_library()
     placements, camera = solve_staging(panel, library)
 
@@ -284,6 +310,7 @@ def compile_ir(
         posed,
         frame,
         metrics=metrics,
+        lettering_height=lettering_height,
         backdrop=backdrop,
         emanata={actor: drawn.zones for actor, drawn in emanata.items() if drawn.zones},
     )
@@ -446,6 +473,121 @@ def compile_file(
     return compile_ir(load_panel(path), library=library, metrics=metrics)
 
 
+@dataclass(frozen=True, slots=True)
+class Book:
+    """A scene compiled: every panel, and the pages they are laid out on.
+
+    Attributes:
+        panels: Panel name to compiled panel, in reading order. A panel on a page was
+            compiled at its frame's size and the page's type size; one on no page, as it
+            would have been alone.
+        pages: One Page Core per page, in order. Empty for a scene with no `pages:`.
+    """
+
+    panels: dict[str, CompileResult]
+    pages: tuple[PageCore, ...]
+
+
+def compile_book(
+    text: str,
+    *,
+    source: Path | None = None,
+    library: PuppetLibrary | None = None,
+    metrics: FontMetrics | None = None,
+) -> Book:
+    r"""Compile a scene and lay its panels out on pages.
+
+    A page decides two things about each panel on it -- the size of its frame, and the
+    height its type size is a fraction of -- and nothing else. Each panel is still compiled
+    on its own, so a panel on a page is exactly that panel compiled alone at that size, and
+    a panel's composition never depends on what sits beside it.
+
+    Args:
+        text: A scene document. One with no `pages:` compiles exactly as
+            :func:`compile_scene <scenet.pipeline.compile_scene>` always has.
+        source: Path it came from, used only to prefix error messages.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against.
+
+    Returns:
+        The compiled panels and pages.
+
+    Raises:
+        PanelSyntaxError: A panel or the layout is malformed, including rule
+            `page-layout` for a placement naming no panel, or a panel placed twice.
+        CompositionError: An `over:` chain is unresolvable or cyclic.
+
+    Example:
+        >>> from scenet import compile_book
+        >>> book = compile_book(
+        ...     "pages: [{tiers: [{panels: [a, b]}]}]\n"
+        ...     "panels: {a: {cast: {x: {reference: alice}}}, b: {over: a}}"
+        ... )
+        >>> [(frame.panel, frame.width) for frame in book.pages[0].frames]
+        [('a', 880.0), ('b', 880.0)]
+        >>> book.panels["a"].core.width
+        880.0
+    """
+    return _compile_document(parse_scene_document(text, source=source), library, metrics)
+
+
+def _compile_document(
+    document: SceneDocument, library: PuppetLibrary | None, metrics: FontMetrics | None
+) -> Book:
+    """Lay out every page, then compile every panel at the size its page gave it."""
+    library = library or default_library()
+    layout = document.layout
+    type_height = lettering_height(layout.page)
+
+    pages: list[PageCore] = []
+    frames: dict[str, Frame] = {}
+    for page in layout.pages:
+        resolved = resolve_frames(layout.page, page)
+        frames.update((frame.panel, frame) for frame in resolved)
+        pages.append(
+            PageCore(
+                width=rounded(layout.page.width),
+                height=rounded(layout.page.height),
+                lettering_height=type_height,
+                frames=tuple(
+                    CoreFrame(panel=f.panel, x=f.x, y=f.y, width=f.width, height=f.height)
+                    for f in resolved
+                ),
+            )
+        )
+
+    panels: dict[str, CompileResult] = {}
+    for name, panel in document.panels.items():
+        frame = frames.get(name)
+        if frame is None:
+            panels[name] = compile_ir(panel, library=library, metrics=metrics)
+            continue
+        panels[name] = compile_ir(
+            _framed(name, panel, frame),
+            library=library,
+            metrics=metrics,
+            lettering_height=type_height,
+        )
+    return Book(panels=panels, pages=tuple(pages))
+
+
+def _framed(name: str, panel: PanelIR, frame: Frame) -> PanelIR:
+    """The panel at its frame's size, its own margin kept.
+
+    The size is validated again, because a margin that fitted the panel's declared size
+    may not fit a smaller frame.
+    """
+    try:
+        spec = PanelSpec(size=(frame.width, frame.height), margin=panel.panel.margin)
+    except (ValidationError, RuleViolationError) as exc:
+        raise PanelSyntaxError(
+            f"panel '{name}' has a margin of {panel.panel.margin}, which leaves no room in "
+            f"its {frame.width} x {frame.height} frame on the page",
+            rule="page-layout",
+        ) from exc
+    return panel.model_copy(update={"panel": spec})
+
+
 def compile_scene(
     text: str,
     *,
@@ -457,13 +599,11 @@ def compile_scene(
 
     Each panel is compiled independently. A panel's composition must not depend on
     what sits beside it, or the same source would compile differently in isolation --
-    which would make panels non-reusable and golden tests meaningless.
+    which would make panels non-reusable and golden tests meaningless. A panel that a
+    page lays out is compiled at its frame's size; see
+    :func:`compile_book <scenet.pipeline.compile_book>`, which also returns the pages.
     """
-    library = library or default_library()
-    return {
-        name: compile_ir(panel, library=library, metrics=metrics)
-        for name, panel in parse_scene(text, source=source).items()
-    }
+    return compile_book(text, source=source, library=library, metrics=metrics).panels
 
 
 def compile_scene_file(
@@ -489,11 +629,7 @@ def compile_scene_file(
         CompositionError: An `over:` chain refers to a panel that does not exist, or
             forms a cycle.
     """
-    library = library or default_library()
-    return {
-        name: compile_ir(panel, library=library, metrics=metrics)
-        for name, panel in load_scene(path).items()
-    }
+    return _compile_document(load_scene_document(path), library, metrics).panels
 
 
 # Which frontend handles which extension. Adding a syntax means adding a line here and
@@ -505,6 +641,50 @@ FRONTENDS = {
 }
 
 
+def _load_script_document(path: Path) -> SceneDocument:
+    """A comic script, as a scene with no pages: its PAGE headings lay nothing out yet."""
+    return SceneDocument(panels=load_script(path), layout=PageLayout())
+
+
+#: The same extensions, read as whole documents -- panels and the pages they go on.
+DOCUMENT_LOADERS = {
+    ".script": _load_script_document,
+    ".yaml": load_scene_document,
+    ".yml": load_scene_document,
+}
+
+
+def compile_book_file(
+    path: Path,
+    *,
+    library: PuppetLibrary | None = None,
+    metrics: FontMetrics | None = None,
+) -> Book:
+    """Compile any supported document and its pages, choosing the frontend by extension.
+
+    Args:
+        path: A `*.panel.yaml`, `*.scene.yaml` or `*.script` file.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against.
+
+    Returns:
+        Every panel, and the pages they are laid out on -- none for a single panel or a
+        comic script.
+
+    Raises:
+        ValueError: The extension is not one any frontend reads.
+        OSError: The file cannot be read.
+        PanelSyntaxError: The document is malformed or invalid.
+    """
+    loader = DOCUMENT_LOADERS.get(path.suffix.lower())
+    if loader is None:
+        supported = ", ".join(sorted(FRONTENDS))
+        raise ValueError(
+            f"{path}: unsupported extension '{path.suffix}'; expected one of {supported}"
+        )
+    return _compile_document(loader(path), library, metrics)
+
+
 def compile_document(
     path: Path,
     *,
@@ -512,14 +692,4 @@ def compile_document(
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
     """Compile any supported document, choosing the frontend by extension."""
-    loader = FRONTENDS.get(path.suffix.lower())
-    if loader is None:
-        supported = ", ".join(sorted(FRONTENDS))
-        raise ValueError(
-            f"{path}: unsupported extension '{path.suffix}'; expected one of {supported}"
-        )
-    library = library or default_library()
-    return {
-        name: compile_ir(panel, library=library, metrics=metrics)
-        for name, panel in loader(path).items()
-    }
+    return compile_book_file(path, library=library, metrics=metrics).panels

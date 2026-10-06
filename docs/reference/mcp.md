@@ -19,8 +19,8 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 | `get_spec` | `section` (optional) | The spec pack, one part at a time, as Markdown |
 | `list_puppets` | — | Every character, with each pose and expression it declares |
 | `validate` | `source`, `syntax`, `deep` | `{valid, findings}`, every finding at once |
-| `compile` | `source`, `syntax` | Each panel's notes and [Panel Core](panel_core.md) |
-| `render` | `source`, `syntax`, `live_text` | A summary, then one SVG per panel |
+| `compile` | `source`, `syntax` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
+| `render` | `source`, `syntax`, `live_text` | A summary, then one SVG per panel, then one per page |
 
 Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
@@ -72,7 +72,8 @@ for the many hosts that show a model only a result's text.
 ### Rendering
 
 `render` returns a short text summary — how many panels, and the compiler's notes — then one
-embedded resource per panel, `scenet://panels/NAME.svg`, of type `image/svg+xml`. The SVG is
+embedded resource per panel, `scenet://panels/NAME.svg`, of type `image/svg+xml`. A document
+with `pages:` gets one more per page after them, `scenet://pages/N.svg`. The SVG is
 **byte-identical** to what `scenet build` writes for the same document.
 
 It is never sent as an image content block. Hosts forward image blocks to the model, and model

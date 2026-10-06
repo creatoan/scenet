@@ -154,5 +154,5 @@ figure cropped by the shot stops at the panel's edge rather than running into th
 
 `over:` is composition, not animation. There is no interpolation between panels and no
 notion of time — a sequence is a set of independent panels that happen to share most of
-their description. Page composition proper (tiers, panels of varying size, gutters) is
-[not yet built](../explanation/status.md).
+their description. To lay the same panels out on a page, in tiers and at varying sizes, see
+[compose a page](compose_a_page.md).

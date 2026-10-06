@@ -27,6 +27,7 @@ attribution. A notation is only worth having if it is not owned.
 | 8 | Captions, faces, and the setting layer — places, masses, planes, atmosphere | **Done** |
 | 9 | Emanata — plewds, squeans, grawlixes, briffits — as a soft placement cost | **Done** |
 | 10 | The agent-facing surface: spec pack and `llms.txt`, Agent Skill, MCP server | **Done** |
+| 11 | Pages: tiers of panels at varying sizes, one type size per page, Page Core | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
@@ -38,7 +39,6 @@ dependency between them is stated in the tickets rather than implied by this tab
 
 | Scope | Ticket |
 |---|---|
-| Page composition: tiers, gutters, panels of varying size | [#66](https://github.com/creatoan/scenet/issues/66) |
 | Insets, panels that span tiers, frames that are not rectangles | [#67](https://github.com/creatoan/scenet/issues/67) |
 | Right-to-left reading, for manga | [#68](https://github.com/creatoan/scenet/issues/68) |
 | Supplied artwork: lettering over an image, in two parts | [#69](https://github.com/creatoan/scenet/issues/69) |

@@ -38,6 +38,7 @@ every unrelated edit.
 """
 
 import hashlib
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -61,7 +62,7 @@ from scenet.errors import (
     UnknownPoseError,
     UnknownPuppetError,
 )
-from scenet.frontends.common import normalise
+from scenet.frontends.common import LAYOUT_KEYS, normalise, normalise_layout
 from scenet.frontends.positions import (
     DOCUMENT_START,
     Position,
@@ -70,8 +71,8 @@ from scenet.frontends.positions import (
     syntax_error_region,
 )
 from scenet.frontends.script_front import FRONT_MATTER, parse_script
-from scenet.ir import PanelIR
-from scenet.pipeline import compile_ir
+from scenet.ir import PageLayout, PanelIR, check_placements
+from scenet.pipeline import compile_book, compile_ir
 from scenet.safe_yaml import DuplicateKeyError, load
 
 __all__ = [
@@ -216,6 +217,19 @@ RULES: dict[str, Rule] = {
             "so has no fixed point to resolve to."
         ),
         help="Check the panel name in `over:` and that the chain terminates.",
+    ),
+    "page-layout": Rule(
+        summary="A page cannot lay out what it says",
+        description=(
+            "`pages:` lays the panels of a scene out in tiers. Each placement must name a "
+            "panel `panels:` defines, a panel can be on one page once, and the margins and "
+            "gutters must leave room for every tier and every panel in it. A document "
+            "with pages needs panels to lay out."
+        ),
+        help=(
+            "Check the panel names in `pages:`, place each panel once, or shrink the "
+            "margin and gutters in `page:`."
+        ),
     ),
     "duplicate-panel": Rule(
         summary="Two panels in a comic script have the same name",
@@ -747,12 +761,22 @@ def _diagnose_scene(
             )
         ]
 
-    defaults = {key: value for key, value in data.items() if key != "panels"}
+    layout_found, layout = _diagnose_layout(data, text, source, panels=list(composed))
+    found.extend(layout_found)
+    # A panel on a page is compiled at its frame's size, not its own, so the deep pass
+    # for a paged scene compiles the whole book once at the end instead of each panel
+    # at a size it will never be drawn at.
+    paged = layout is not None and bool(layout.pages)
+
+    # `page:` and `pages:` lay the panels out; they are not defaults every panel inherits.
+    defaults = {
+        key: value for key, value in data.items() if key != "panels" and key not in LAYOUT_KEYS
+    }
     for name, document in composed.items():
         merged = merge(defaults, document) if defaults else document
         prefix = ("panels", name)
         for item in _diagnose_panel(
-            merged, text, source, prefix=prefix, library=library, deep=deep
+            merged, text, source, prefix=prefix, library=library, deep=deep and not paged
         ):
             # A fault in a default is inherited by every panel that does not override
             # it, so checking panel by panel finds it once per panel, located at the
@@ -768,7 +792,62 @@ def _diagnose_scene(
                 )
             if item not in found:
                 found.append(item)
+
+    if deep and paged and not found:
+        try:
+            compile_book(text, source=source, library=library)
+        except ScenetError as exc:
+            found.append(
+                Diagnostic(
+                    rule=_rule_for_scenet_error(exc),
+                    message=_message_of(exc),
+                    path=("pages",),
+                    source=source,
+                    region=locate(text, ("pages",)) or DOCUMENT_START,
+                )
+            )
     return found
+
+
+def _diagnose_layout(
+    data: dict[str, Any],
+    text: str,
+    source: Path | None,
+    *,
+    panels: Sequence[str],
+) -> tuple[list[Diagnostic], PageLayout | None]:
+    """Check `page:` and `pages:`, the same way the frontend reads them.
+
+    Args:
+        data: The whole scene document.
+        text: Its source, for locating findings.
+        source: Path it came from.
+        panels: The names `panels:` defines, which every placement must be one of.
+
+    Returns:
+        The findings, and the validated layout -- `None` when there is none to speak of,
+        or when it did not validate.
+    """
+    raw = normalise_layout(data)
+    if not raw:
+        return [], None
+    try:
+        layout = PageLayout.model_validate(raw)
+    except ValidationError as exc:
+        return _from_validation_error(exc, text, source), None
+    try:
+        check_placements(layout, panels)
+    except RuleViolationError as exc:
+        return [
+            Diagnostic(
+                rule=exc.rule,
+                message=str(exc),
+                path=exc.loc,
+                source=source,
+                region=locate(text, exc.loc) or DOCUMENT_START,
+            )
+        ], layout
+    return [], layout
 
 
 def _has_path(document: object, path: tuple[str | int, ...]) -> bool:
@@ -833,6 +912,24 @@ def diagnose_source(
     # distinction; the checker has to make it too.
     if "panels" in data:
         return _in_source_order(_diagnose_scene(data, text, source, library=library, deep=deep))
+
+    # Without `panels:` there is nothing for a page to lay out. Said as a page-layout
+    # finding, as the frontend says it, rather than as an unknown key on a single panel.
+    misplaced = [key for key in LAYOUT_KEYS if key in data]
+    if misplaced:
+        path: tuple[str | int, ...] = (misplaced[0],)
+        return [
+            Diagnostic(
+                rule="page-layout",
+                message=(
+                    "`page:` and `pages:` lay out the panels of a scene, so a document with "
+                    "them needs a `panels:` mapping"
+                ),
+                path=path,
+                source=source,
+                region=locate(text, path) or DOCUMENT_START,
+            )
+        ]
 
     return _in_source_order(
         _diagnose_panel(data, text, source, prefix=(), library=library, deep=deep)

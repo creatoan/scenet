@@ -20,7 +20,14 @@ from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.ir import Predicate, Relation
 from scenet.places import PLACES, Place
 
-__all__ = ["expand_place", "normalise", "parse_relation", "summarise"]
+__all__ = [
+    "LAYOUT_KEYS",
+    "expand_place",
+    "normalise",
+    "normalise_layout",
+    "parse_relation",
+    "summarise",
+]
 
 # `alice left_of bob` -- subject, predicate, object, separated by whitespace.
 RELATION_RE = re.compile(r"^\s*(\S+)\s+(\S+)\s+(\S+)\s*$")
@@ -250,3 +257,47 @@ def summarise(exc: ValidationError) -> str:
         message = error["msg"].removeprefix("Value error, ")
         lines.append(f"  at {location}: {message}")
     return "invalid panel:\n" + "\n".join(lines)
+
+
+#: Keys a scene may carry beside `panels:` that lay its panels out rather than being a
+#: default every panel inherits.
+LAYOUT_KEYS = ("page", "pages")
+
+
+def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
+    """Rewrite the surface form of `page:` and `pages:` into what `PageLayout` validates.
+
+    One convenience: a panel in a tier may be written as its name alone, which stands for
+    `{use: name}`. Anything not shaped as expected is passed through untouched, so the
+    model's validation reports it with its location rather than this guessing.
+
+    Args:
+        data: The whole scene document.
+
+    Returns:
+        A mapping holding only the layout keys, in canonical form.
+    """
+    layout = {key: data[key] for key in LAYOUT_KEYS if key in data}
+    pages = layout.get("pages")
+    if not isinstance(pages, list):
+        return layout
+    normalised: list[Any] = []
+    for page in pages:
+        tiers = page.get("tiers") if isinstance(page, dict) else None
+        if not isinstance(tiers, list):
+            normalised.append(page)
+            continue
+        rewritten: list[Any] = []
+        for tier in tiers:
+            panels = tier.get("panels") if isinstance(tier, dict) else None
+            if isinstance(panels, list):
+                tier = {  # noqa: PLW2901 -- a rewritten copy, never the caller's
+                    **tier,
+                    "panels": [
+                        {"use": entry} if isinstance(entry, str) else entry for entry in panels
+                    ],
+                }
+            rewritten.append(tier)
+        normalised.append({**page, "tiers": rewritten})
+    layout["pages"] = normalised
+    return layout

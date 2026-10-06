@@ -75,28 +75,59 @@ def render_strip(
 
     cursor = margin
     for position, (name, core) in enumerate(panels, start=1):
-        prefix = f"p{position}-"
-        frame = f"{prefix}frame"
         # Panels of differing height sit on a common top edge, which is how a tier of
         # unequal panels is conventionally aligned.
-        inner = (
-            render_debug(core, id_prefix=prefix)
-            if debug
-            else render(core, live_text=live_text, id_prefix=prefix)
+        parts.extend(
+            placed_panel(name, core, position, cursor, margin, live_text=live_text, debug=debug)
         )
-        body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
-        parts.append(
-            f'  <g id={attr("panel-" + name)} transform="translate({fmt(cursor)} {fmt(margin)})">'
-        )
-        parts.append(
-            f'  <clipPath id="{frame}"><rect x="0" y="0" width="{fmt(core.width)}" '
-            f'height="{fmt(core.height)}"/></clipPath>'
-        )
-        parts.append(f'  <g clip-path="url(#{frame})">')
-        parts.append(body.rstrip())
-        parts.append("  </g>")
-        parts.append("  </g>")
         cursor += core.width + gutter
 
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
+
+
+def placed_panel(
+    name: str,
+    core: PanelCore,
+    position: int,
+    x: float,
+    y: float,
+    *,
+    live_text: bool = False,
+    debug: bool = False,
+) -> list[str]:
+    """One panel, rendered on its own and put at `(x, y)` in a larger document.
+
+    Shared by the strip and the page, so both place a panel the same way: clipped to its
+    frame, and with every id prefixed by the panel's position in the document -- see the
+    module docstring for why position and not name.
+
+    Args:
+        name: The panel's name, kept as the group's id.
+        core: The compiled panel.
+        position: Its one-based position in the document, unique within it.
+        x: Where its left edge goes.
+        y: Where its top edge goes.
+        live_text: Emit lettering as `<text>` rather than glyph outlines.
+        debug: Place the panel's diagnostic overlay instead of the panel.
+
+    Returns:
+        The lines of SVG, indented for the document's top level.
+    """
+    prefix = f"p{position}-"
+    frame = f"{prefix}frame"
+    inner = (
+        render_debug(core, id_prefix=prefix)
+        if debug
+        else render(core, live_text=live_text, id_prefix=prefix)
+    )
+    body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
+    return [
+        f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})">',
+        f'  <clipPath id="{frame}"><rect x="0" y="0" width="{fmt(core.width)}" '
+        f'height="{fmt(core.height)}"/></clipPath>',
+        f'  <g clip-path="url(#{frame})">',
+        body.rstrip(),
+        "  </g>",
+        "  </g>",
+    ]

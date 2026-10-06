@@ -10,10 +10,11 @@ from pathlib import Path
 from scenet import __version__
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
+from scenet.emit.page import render_page
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
-from scenet.pipeline import FRONTENDS, compile_document
+from scenet.pipeline import FRONTENDS, Book, compile_book_file
 from scenet.schema import panel_schema, scene_schema
 
 DESCRIPTION = "Compile a semantic comic-panel description into SVG."
@@ -210,7 +211,7 @@ def run_build(args: argparse.Namespace) -> int:
         return 2
 
     try:
-        results = compile_document(source)
+        book = compile_book_file(source)
     except ScenetError as exc:
         # Every ScenetError is "your panel cannot be compiled" rather than "scenet
         # broke", so they all get a plain message instead of a traceback.
@@ -233,9 +234,14 @@ def run_build(args: argparse.Namespace) -> int:
     base: Path = args.output or source.with_name(f"{stem}.svg")
     base.parent.mkdir(parents=True, exist_ok=True)
 
+    results = book.panels
     single = len(results) == 1 and "panel" in results
     written: list[Path] = []
     notes: list[str] = []
+
+    page_targets = _page_targets(book, base)
+    if page_targets is None:
+        return 2
 
     for name, result in results.items():
         # A single-panel document writes to the requested name; a sequence suffixes
@@ -265,12 +271,58 @@ def run_build(args: argparse.Namespace) -> int:
         )
         written.append(strip_path)
 
+    written.extend(_write_pages(book, page_targets, args))
+
     if not args.quiet:
         for path in written:
             print(f"wrote {path}")
         for note in notes:
             print(f"note: {note}")
     return 0
+
+
+def _page_targets(book: Book, base: Path) -> list[Path] | None:
+    """Where each page goes: `stem.page-<n>.svg`, beside the panels.
+
+    A panel can be named `page-1` too, and one file silently replacing the other is
+    exactly the kind of loss this tool refuses everywhere else -- so it is refused here,
+    before anything is written.
+
+    Returns:
+        One path per page, or `None` after reporting a clash with a panel's file.
+    """
+    targets = [
+        base.with_name(f"{base.stem}.page-{number}{base.suffix}")
+        for number in range(1, len(book.pages) + 1)
+    ]
+    panels = {base.with_name(f"{base.stem}.{name}{base.suffix}") for name in book.panels}
+    clashes = sorted(str(path) for path in targets if path in panels)
+    if clashes:
+        print(
+            f"scenet: a page and a panel would both be written to {', '.join(clashes)}; "
+            "rename the panel",
+            file=sys.stderr,
+        )
+        return None
+    return targets
+
+
+def _write_pages(book: Book, targets: list[Path], args: argparse.Namespace) -> list[Path]:
+    """Write each page, and its Core and overlay when asked for. Returns what was written."""
+    written: list[Path] = []
+    cores = {name: result.core for name, result in book.panels.items()}
+    for page, target in zip(book.pages, targets, strict=True):
+        target.write_text(render_page(page, cores, live_text=args.live_text), encoding="utf-8")
+        written.append(target)
+        if args.core:
+            core_path = target.with_suffix(".core.json")
+            core_path.write_text(page.to_json(), encoding="utf-8")
+            written.append(core_path)
+        if args.debug:
+            debug_path = target.with_name(f"{target.stem}.debug.svg")
+            debug_path.write_text(render_page(page, cores, debug=True), encoding="utf-8")
+            written.append(debug_path)
+    return written
 
 
 def run_check(args: argparse.Namespace) -> int:

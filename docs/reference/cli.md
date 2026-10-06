@@ -61,6 +61,19 @@ sequence.scene.yaml  →  sequence.establishing.svg
                         sequence.strip.svg          (with --strip)
 ```
 
+A document that lays its panels out with `pages:` also writes each page beside them, with its Page
+Core and overlay when `--core` and `--debug` ask for them:
+
+```
+story.scene.yaml     →  story.page-1.svg
+                        story.page-1.core.json      (with --core)
+                        story.page-1.debug.svg      (with --debug)
+```
+
+A panel whose file would be a page's (a panel named `page-1`) is a usage error, exit 2, and
+nothing is written: one file silently replacing the other is the kind of loss Scenet refuses
+everywhere else.
+
 ### Exit status
 
 | Code | Meaning |
@@ -177,6 +190,7 @@ nothing stops compiling.
 | `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | An `over:` chain that is missing or cyclic |
 | `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
+| `scenet/page-layout` | A page placing a panel that does not exist, or one twice, or with no room for its tiers |
 | `scenet/unknown-puppet` | A `reference` naming a character the library lacks |
 | `scenet/unknown-place` | A setting's `place` naming one the library does not have |
 | `scenet/conflicting-setting` | A setting that names a `place` and also lists `masses` |

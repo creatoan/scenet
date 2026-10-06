@@ -1,0 +1,60 @@
+# A page: panels laid out in tiers, read left to right and top to bottom.
+#
+# `page:` sets the format; `pages:` lays panels out. A panel takes a share of its
+# tier's width, and a tier a share of the page's height, by weight -- the way CSS
+# Grid's `fr` tracks share a row. A panel named alone has a weight of 1.
+#
+# Each panel is still compiled on its own, at the size of its frame, so the page
+# changes nothing about how a panel is composed -- except that every panel on it
+# letters at one type size, as a letterer would.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: establishing, width: 2}, reply]
+      - {height: 1.2, panels: [closer]}
+      - panels: [her, him]
+
+panels:
+  establishing:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Midnight. The corner of Fifth.", kind: locale}
+      - say: {by: alice, text: "You forgot your umbrella!"}
+
+  reply:
+    camera: {shot: medium_close_up}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, facing: left}
+    script:
+      - say: {by: bob, text: "I know.", kind: whisper}
+
+  closer:
+    over: establishing
+    camera: {shot: full_shot}
+    script:
+      - say: {by: alice, text: "You know? Then why did you leave it?"}
+      - say: {by: bob, text: "So you would come after me."}
+
+  her:
+    camera: {shot: close_up}
+    cast:
+      alice: {reference: alice, expression: surprise, facing: right}
+    script:
+      - say: {by: alice, text: "Oh."}
+
+  him:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: happy, facing: left}
+    script:
+      - say: {by: bob, text: "Shall we?", kind: whisper}

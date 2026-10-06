@@ -292,6 +292,38 @@ it draws is a jarn, a nittle, a bolt and a hash.
 Not taken, yet: the rest of the Lexicon — agitrons, solrads, waftaroms and the others. Most attach to
 objects rather than to a character's state, and the language has no objects.
 
+### Pages — Cohn's reading-order experiments, and CSS Grid as notation
+
+[Cohn, *Navigating Comics*](https://doi.org/10.3389/fpsyg.2013.00186) (*Frontiers in
+Psychology*, 2013) ·
+[Cohn & Campbell, *Navigating Comics II*](https://research.tilburguniversity.edu/en/publications/navigating-comics-ii-constraints-on-the-reading-order-of-comic-pa/)
+(*Applied Cognitive Psychology*, 2015) ·
+[Peeters, four conceptions of the page](https://imagetextjournal.com/four-conceptions-of-the-page/) ·
+Groensteen, *Système de la bande dessinée* (1999)
+
+Reading order is a hard rule for balloons, so a page needed a version of it. Cohn's experiments
+supply the evidence. Readers follow the left-to-right, top-to-bottom Z-path on a grid, and depart
+from it when a layout does: a tall panel beside stacked ones sends most of them *down* before
+across, and overlap, separation and staggering pull them off it too, the more so the further the
+layout strays from a grid.
+
+Taken: **tiers.** A page of tiers is read tier by tier and left to right, so the order panels are
+written in is the order they are read in, by construction rather than by checking. The layouts
+Cohn found ambiguous are exactly the ones left for later, with a check of their own.
+
+Taken as notation: **CSS Grid's `fr` tracks and `gap`.** A tier's height and a panel's width are
+shares of what the margin and gutters leave, which is the same model and one people already know.
+It is plain arithmetic, so Cassowary has nothing to do here: its value in this project is settling
+conflicting preferences, and a strict grid has none.
+
+Taken as vocabulary and as a scope line: Peeters' four uses of the page (conventional, decorative,
+rhetorical, productive) and Groensteen's *multiframe*. A tier grid is the conventional use, and
+weighted shares reach the rhetorical one, where panel size follows the story's beats.
+
+Gutters narrower within a tier than between tiers, and a lettering size near eight points on a
+printed page, follow common print practice; type on a page is set from one height for every panel,
+as a letterer sets it.
+
 ## Future
 
 ### L-systems

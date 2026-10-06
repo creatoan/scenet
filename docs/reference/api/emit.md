@@ -17,3 +17,8 @@ already decided.
 
 ```{automodule} scenet.emit.strip
 ```
+
+## `scenet.emit.page`
+
+```{automodule} scenet.emit.page
+```

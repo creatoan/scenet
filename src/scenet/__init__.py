@@ -59,8 +59,9 @@ from scenet.assets.contract import (
     default_library,
     load_puppet,
 )
-from scenet.core import PanelCore
+from scenet.core import PageCore, PanelCore
 from scenet.emit.debug_svg import render_debug
+from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import (
@@ -76,7 +77,15 @@ from scenet.errors import (
     UnknownPuppetError,
 )
 from scenet.frontends.script_front import load_script, parse_script
-from scenet.frontends.yaml_front import load_panel, load_scene, parse_panel, parse_scene
+from scenet.frontends.yaml_front import (
+    SceneDocument,
+    load_panel,
+    load_scene,
+    load_scene_document,
+    parse_panel,
+    parse_scene,
+    parse_scene_document,
+)
 from scenet.ir import (
     AnchorX,
     BalloonKind,
@@ -91,7 +100,11 @@ from scenet.ir import (
     Mark,
     Mass,
     MassKind,
+    PageFormat,
+    PageLayout,
+    PageSpec,
     PanelIR,
+    PanelPlacement,
     PanelSpec,
     PlacementZone,
     Plane,
@@ -101,11 +114,15 @@ from scenet.ir import (
     SettingSpec,
     ShotType,
     Spans,
+    Tier,
     TimeOfDay,
     Weather,
 )
 from scenet.pipeline import (
+    Book,
     CompileResult,
+    compile_book,
+    compile_book_file,
     compile_document,
     compile_file,
     compile_ir,
@@ -122,7 +139,10 @@ except PackageNotFoundError:  # pragma: no cover -- only when running from a sou
 
 __all__ = [
     # -- compiling -----------------------------------------------------------
+    "Book",
     "CompileResult",
+    "compile_book",
+    "compile_book_file",
     "compile_document",
     "compile_file",
     "compile_ir",
@@ -131,16 +151,22 @@ __all__ = [
     "compile_source",
     # -- parsing, without compiling ------------------------------------------
     "load_panel",
+    "SceneDocument",
     "load_scene",
+    "load_scene_document",
     "load_script",
     "parse_panel",
     "parse_scene",
+    "parse_scene_document",
     "parse_script",
     # -- rendering -----------------------------------------------------------
     "render",
     "render_debug",
+    "render_page",
+    "render_pages",
     "render_strip",
     # -- the intermediate tiers ----------------------------------------------
+    "PageCore",
     "PanelCore",
     "PanelIR",
     # -- describing a panel --------------------------------------------------
@@ -160,6 +186,12 @@ __all__ = [
     "Relation",
     "SayEvent",
     "ShotType",
+    # -- laying panels out on pages ------------------------------------------
+    "PageFormat",
+    "PageLayout",
+    "PageSpec",
+    "PanelPlacement",
+    "Tier",
     # -- describing where and when it happens --------------------------------
     "PLACES",
     "Horizon",
