@@ -72,9 +72,9 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 
 ### `scenet/page-layout`
 
-A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A document with pages needs panels to lay out.
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. A document with pages needs panels to lay out.
 
-**Fix:** Check the panel names in `pages:`, place each panel once, or shrink the margin and gutters in `page:`.
+**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, or shrink the margin and gutters in `page:`.
 
 ### `scenet/panel-geometry`
 

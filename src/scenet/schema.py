@@ -184,22 +184,23 @@ def _accept_named_places(definitions: dict[str, Any]) -> None:
 
 
 def _accept_panel_names(definitions: dict[str, Any]) -> None:
-    """Mirror `normalise_layout`: a panel in a tier may be written as its name alone."""
-    placement: dict[str, Any] = definitions["PanelPlacement"]
-    mapping = {
-        key: value for key, value in placement.items() if key not in ("title", "description")
-    }
-    definitions["PanelPlacement"] = {
-        "title": placement["title"],
-        "description": placement.get("description", ""),
-        "anyOf": [
-            {
-                "type": "string",
-                "description": "A panel's name, which stands for `{use: name}`.",
-            },
-            mapping,
-        ],
-    }
+    """Mirror `normalise_layout`: a panel in a tier or column may be written as its name."""
+    for name in ("PanelPlacement", "StackedPanel"):
+        placement: dict[str, Any] = definitions[name]
+        mapping = {
+            key: value for key, value in placement.items() if key not in ("title", "description")
+        }
+        definitions[name] = {
+            "title": placement["title"],
+            "description": placement.get("description", ""),
+            "anyOf": [
+                {
+                    "type": "string",
+                    "description": "A panel's name, which stands for `{use: name}`.",
+                },
+                mapping,
+            ],
+        }
 
 
 def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str, Any]:

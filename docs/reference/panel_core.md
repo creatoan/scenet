@@ -161,7 +161,8 @@ where each panel's frame is, and nothing drawn:
 }
 ```
 
-`frames` are in reading order, tier by tier and left to right. Each panel's own Core was compiled at
+`frames` are in reading order: tier by tier, left to right, and down each column of a tier of
+columns. Each panel's own Core was compiled at
 exactly its frame's `width` and `height`, so a panel's Core reads the same on a page as it would
 alone at that size, and a page adds no layout decision to a panel.
 

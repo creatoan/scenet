@@ -308,8 +308,15 @@ across, and overlap, separation and staggering pull them off it too, the more so
 layout strays from a grid.
 
 Taken: **tiers.** A page of tiers is read tier by tier and left to right, so the order panels are
-written in is the order they are read in, by construction rather than by checking. The layouts
-Cohn found ambiguous are exactly the ones left for later, with a check of their own.
+written in is the order they are read in, by construction rather than by checking.
+
+Taken: **columns, where they block.** Cohn measured how strongly each departure from the grid
+pulls readers off the Z-path. *Blockage*, a tall panel to the right of a stack, sent 91% of
+choices down the stack first; *staggering*, rows or columns offset so the gutters do not line up,
+left 90% on the Z-path. A tier of columns is therefore read down each column, and two stacks
+side by side, which have nothing blocking the way across, are refused rather than read in an
+order most readers would not take. *Overlap* split readers about evenly, which is why an inset
+will have to say where it is read rather than leave it to be guessed.
 
 Taken as notation: **CSS Grid's `fr` tracks and `gap`.** A tier's height and a panel's width are
 shares of what the margin and gutters leave, which is the same model and one people already know.

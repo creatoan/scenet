@@ -151,6 +151,31 @@
       "title": "CastMember",
       "type": "object"
     },
+    "Column": {
+      "additionalProperties": false,
+      "description": "Panels stacked top to bottom, beside the other columns of a tier.\n\nAttributes:\n    width: Its share of the tier's width, relative to the other columns.\n    panels: The panels in it, top to bottom.",
+      "properties": {
+        "panels": {
+          "items": {
+            "$ref": "#/$defs/StackedPanel"
+          },
+          "minItems": 1,
+          "title": "Panels",
+          "type": "array"
+        },
+        "width": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "panels"
+      ],
+      "title": "Column",
+      "type": "object"
+    },
     "Facing": {
       "description": "Which way an actor is turned.\n\nMirroring the whole puppet, gaze vector included. Defaults to `right`, so a cast\nwritten left to right ends up looking into the panel rather than out of it.",
       "enum": [
@@ -577,10 +602,47 @@
       "title": "Spans",
       "type": "string"
     },
+    "StackedPanel": {
+      "anyOf": [
+        {
+          "description": "A panel's name, which stands for `{use: name}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "height": {
+              "default": 1.0,
+              "exclusiveMinimum": 0.0,
+              "title": "Height",
+              "type": "number"
+            },
+            "use": {
+              "title": "Use",
+              "type": "string"
+            }
+          },
+          "required": [
+            "use"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "One panel in a column.\n\nWritten as the panel's name alone, or as `{use: name, height: 2}` to give it a larger\nshare of the column.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    height: Its share of the column's height, relative to the other panels in it.",
+      "title": "StackedPanel"
+    },
     "Tier": {
       "additionalProperties": false,
-      "description": "A row of panels, read left to right.\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.",
+      "description": "A row of panels read left to right, or of columns each read top to bottom.\n\nColumns are how a tall panel beside a stack of short ones is written. The stack is\nread down before the page is read across, which is what readers do when a panel\nspanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.\n    columns: The columns in it, left to right. A tier has `panels` or `columns`.",
       "properties": {
+        "columns": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
         "height": {
           "default": 1.0,
           "exclusiveMinimum": 0.0,
@@ -588,17 +650,14 @@
           "type": "number"
         },
         "panels": {
+          "default": [],
           "items": {
             "$ref": "#/$defs/PanelPlacement"
           },
-          "minItems": 1,
           "title": "Panels",
           "type": "array"
         }
       },
-      "required": [
-        "panels"
-      ],
       "title": "Tier",
       "type": "object"
     },
