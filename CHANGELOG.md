@@ -76,6 +76,11 @@ below 1.0 means.
   missing parent, a cycle or an `over:` that is not a name at the first line of `panels:`,
   wherever the fault was. It now points at the `over:` to change, and a missing parent's
   message names the panel that refers to it. (Refs #92)
+- **A misspelled required key was reported twice.** `referense: alice` came back as an
+  unknown key and as a missing `reference`, both at one place, for one mistake. When an
+  unknown key closely matches a required key missing from the same mapping, `scenet check`
+  and `build` now report one `scenet/unknown-key` finding, ending "did you mean
+  'reference'?". An unrelated unknown key beside a missing one is still two findings. (Refs #92)
 - **A staging sentence relating an actor to itself was filed under the wrong rule.**
   `alice left_of alice` came back from `scenet check` as `scenet/invalid-field`, although
   `scenet/reflexive-relation` exists for exactly this; the frontend rewrote the error and lost
