@@ -250,3 +250,66 @@ class TestErrors:
         bad.write_text("cast:\n  a: {reference: nobody}\n", encoding="utf-8")
         main(["build", str(bad)])
         assert capsys.readouterr().err.startswith("scenet: unknown character")
+
+
+def _scene(tmp_path: Path, panels: str, pages: str = "") -> Path:
+    source = tmp_path / "story.scene.yaml"
+    source.write_text(
+        f"cast: {{a: {{reference: alice}}}}\npanels: {panels}\n{pages}", encoding="utf-8"
+    )
+    return source
+
+
+def _written(tmp_path: Path) -> list[str]:
+    return sorted(path.name for path in tmp_path.iterdir() if path.suffix in {".svg", ".json"})
+
+
+class TestOutputsNeverReplaceEachOther:
+    """`docs/reference/cli.md` refuses one output silently replacing another, but only a
+    panel named like a page was caught. Found while writing the contract tests for #93."""
+
+    @pytest.mark.parametrize(
+        ("panels", "flags", "clash"),
+        [
+            ("{one: {}, strip: {}}", ["--strip"], "story.strip.svg"),
+            ("{x: {}, x.debug: {}}", ["--debug"], "story.x.debug.svg"),
+            ("{One: {}, one: {}}", [], "story.one.svg"),
+        ],
+        ids=["strip", "debug-overlay", "case"],
+    )
+    def test_a_clash_is_a_usage_error_and_nothing_is_written(
+        self, tmp_path: Path, capsys, panels: str, flags: list[str], clash: str
+    ):
+        source = _scene(tmp_path, panels)
+        assert main(["build", str(source), *flags]) == 2
+        assert _written(tmp_path) == []
+        assert clash.lower() in capsys.readouterr().err.lower()
+
+    def test_a_panel_named_strip_is_fine_without_a_strip(self, tmp_path: Path):
+        source = _scene(tmp_path, "{one: {}, strip: {}}")
+        assert main(["build", str(source), "--quiet"]) == 0
+        assert _written(tmp_path) == ["story.one.svg", "story.strip.svg"]
+
+    @pytest.mark.parametrize("name", ["a/b", "a\\\\b"], ids=["slash", "backslash"])
+    def test_a_name_that_cannot_be_a_file_is_a_usage_error_not_a_traceback(
+        self, tmp_path: Path, capsys, name: str
+    ):
+        source = _scene(tmp_path, f'{{one: {{}}, "{name}": {{}}}}')
+        assert main(["build", str(source)]) == 2
+        assert _written(tmp_path) == []
+        assert "cannot be part of a file name" in capsys.readouterr().err
+
+
+class TestStripNeedsMoreThanOnePanel:
+    """`--strip` is "ignored for a single panel", but only a document whose one panel was
+    called `panel` skipped it: a one-panel scene still wrote a strip of one."""
+
+    def test_a_one_panel_scene_writes_no_strip(self, tmp_path: Path):
+        source = _scene(tmp_path, "{only: {}}")
+        assert main(["build", str(source), "--strip", "--quiet"]) == 0
+        assert _written(tmp_path) == ["story.only.svg"]
+
+    def test_two_panels_still_write_one(self, tmp_path: Path):
+        source = _scene(tmp_path, "{one: {}, two: {}}")
+        assert main(["build", str(source), "--strip", "--quiet"]) == 0
+        assert "story.strip.svg" in _written(tmp_path)
