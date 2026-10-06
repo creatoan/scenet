@@ -23,6 +23,11 @@ uv run ty check
 uv run pytest
 ```
 
+`pytest` includes property-based tests, which check generated panels rather than
+hand-written ones. If one fails, it prints the document that broke and fails the same way
+on every run. [The testing guide](docs/maintainer/testing.md) explains how to replay it
+and how to add a generator.
+
 ## House rules
 
 - **Everything is typed.** `ruff`'s `ANN` rules are on and `ty` runs as a blocking gate. A bare

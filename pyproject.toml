@@ -71,6 +71,10 @@ dev = [
     # its doctests and its API reference page all need it importable. `dev` is one of
     # uv's default groups, so the documentation build gets it too.
     "scenet[mcp]",
+    # Property-based tests: generated panels checked against the invariants every
+    # compile must satisfy, not only the five written by hand. MPL-2.0, which is fine
+    # for dev tooling -- the licence gate covers what ships, not what tests it.
+    "hypothesis>=6.140",
 ]
 docs = [
     "sphinx>=9.1",
@@ -150,6 +154,11 @@ quote-annotations = false
 # without further configuration.
 convention = "google"
 
+[tool.ruff.lint.isort]
+# `tests` is imported as a package by the property tests, for the strategies and the
+# shared invariants. It is this project's code, so it sorts with `scenet`.
+known-first-party = ["scenet", "tests"]
+
 [tool.ruff.lint.per-file-ignores]
 # Tests are not a published API: they need no annotations, assert freely, and their
 # names document them better than a docstring would.
@@ -209,6 +218,9 @@ reportUnnecessaryIsInstance = false
 [[tool.basedpyright.executionEnvironments]]
 root = "tests"
 reportPrivateUsage = false
+# The property tests import the shared strategies and invariants as `tests.…`, which
+# resolves from the repository root, as it does for pytest.
+extraPaths = ["."]
 
 [[tool.basedpyright.executionEnvironments]]
 root = "src"

@@ -12,6 +12,13 @@ below 1.0 means.
 
 ### Added
 
+- **Property-based tests.** The checks a compiled panel must pass, which ran on five
+  hand-written panels, now also run on panels Hypothesis generates: lettering inside the
+  margin, off every face and in reading order against every earlier box; an SVG that
+  parses, whose ids resolve and whose glyphs are drawn at their measured size; compiles
+  that are byte-identical; Panel Core that round-trips; and `scenet check --deep` agreeing
+  with the compiler. The examples are fixed, so a failure replays on every machine.
+  `docs/maintainer/testing.md` explains the profiles and how to add a generator. (#91)
 - **Pages.** A scene can lay its panels out with `pages:`: each page a list of tiers, each
   tier a list of panels, and a weight for each tier's height and each panel's width, shared
   out of what `page:`'s margin and gutters leave, the way CSS Grid shares a row. A panel on a
