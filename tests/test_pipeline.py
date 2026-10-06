@@ -6,13 +6,13 @@ is that certain things are *never* true: no balloon over a face, none outside th
 panel, none out of reading order. Those hold for every input or the compiler is wrong.
 """
 
-import math
 import re
 from itertools import pairwise
 from pathlib import Path
 from xml.etree import ElementTree
 
 import pytest
+import yaml
 
 from scenet.assets.contract import default_library
 from scenet.core import PanelCore
@@ -21,8 +21,8 @@ from scenet.emit.strip import render_strip
 from scenet.emit.svg import fmt, render
 from scenet.geom import BBox, Circle
 from scenet.pipeline import compile_file, compile_scene, compile_source
-from scenet.solve.balloons import READING_EPSILON
 from scenet.solve.text import load_metrics
+from tests.invariants import assert_lettering_is_placed, assert_svg_is_sound
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 
@@ -85,61 +85,16 @@ def compiled() -> list[PanelCore]:
 class TestInvariants:
     """Properties that must hold for every panel the compiler accepts."""
 
-    def test_balloons_never_cover_a_face(self, compiled: list[PanelCore]):
-        """The one hard exclusion: a balloon over a face destroys the panel."""
-        for index, core in enumerate(compiled):
-            faces = [actor.face_exclusion.as_circle() for actor in core.actors]
-            for balloon in core.balloons:
-                for face in faces:
-                    assert not balloon.box.as_bbox().intersects_circle(face), (
-                        f"panel {index}: balloon {balloon.id} covers a face"
-                    )
+    def test_lettering_is_placed_as_promised(self, compiled: list[PanelCore]):
+        """No box over a face or outside the margin, none overlapping, every one in
+        reading order, every tail from its balloon to its speaker.
 
-    def test_balloons_stay_inside_the_panel(self, compiled: list[PanelCore]):
-        for index, core in enumerate(compiled):
-            for balloon in core.balloons:
-                assert core.bounds.contains(balloon.box.as_bbox()), (
-                    f"panel {index}: balloon {balloon.id} leaves the panel"
-                )
-
-    def test_balloons_never_overlap_each_other(self, compiled: list[PanelCore]):
-        for index, core in enumerate(compiled):
-            boxes = [balloon.box.as_bbox() for balloon in core.balloons]
-            for i, first in enumerate(boxes):
-                for second in boxes[i + 1 :]:
-                    assert first.overlap_area(second) == 0, f"panel {index}: balloons overlap"
-
-    def test_reading_order_is_monotone(self, compiled: list[PanelCore]):
-        """A balloon may sit below its predecessor or to its right, never both above
-        and left. Violating this makes the panel read in the wrong order, which is a
-        correctness bug rather than a cosmetic one."""
-        for index, core in enumerate(compiled):
-            ordered = sorted(core.balloons, key=lambda b: b.order)
-            for previous, current in pairwise(ordered):
-                below = current.box.y >= previous.box.y - READING_EPSILON
-                right_of = current.box.x >= previous.box.right - READING_EPSILON
-                assert below or right_of, f"panel {index}: {current.id} reads before {previous.id}"
-
-    def test_every_tail_reaches_its_speaker(self, compiled: list[PanelCore]):
-        """A balloon whose tail does not arrive at its speaker has no attributed
-        voice, which is worse than no balloon at all."""
-        for index, core in enumerate(compiled):
-            for balloon in core.balloons:
-                speaker = core.actor(balloon.speaker)
-                face = speaker.face_exclusion.as_circle()
-                end = balloon.tail.end
-                distance = math.hypot(end[0] - face.cx, end[1] - face.cy)
-                assert distance <= face.r * 1.35, (
-                    f"panel {index}: tail of {balloon.id} does not reach {balloon.speaker}"
-                )
-
-    def test_tails_start_on_their_balloon(self, compiled: list[PanelCore]):
-        for core in compiled:
-            for balloon in core.balloons:
-                box = balloon.box.as_bbox().expanded(1.5)
-                start = balloon.tail.start
-                assert box.x <= start[0] <= box.right
-                assert box.y <= start[1] <= box.bottom
+        The checks live in `tests/invariants.py`, shared with the generated panels in
+        `tests/properties/`, so the two can never disagree about what a correct panel is.
+        """
+        for source, core in zip(PANELS, compiled, strict=True):
+            panel = (yaml.safe_load(source) or {}).get("panel", {})
+            assert_lettering_is_placed(core, margin=panel.get("margin", 0.0))
 
     def test_actors_never_overlap(self, compiled: list[PanelCore]):
         for index, core in enumerate(compiled):
@@ -184,9 +139,14 @@ class TestDeterminism:
 
 
 class TestEmitters:
-    def test_svg_is_well_formed(self, compiled: list[PanelCore]):
+    def test_svg_is_sound(self, compiled: list[PanelCore]):
+        """It parses, its ids are unique and resolve, and every glyph is drawn at the
+        size it was measured at."""
         for core in compiled:
-            ElementTree.fromstring(render(core))
+            sizes = [box.font_size for box in (*core.balloons, *core.captions)]
+            for live_text in (False, True):
+                svg = render(core, live_text=live_text)
+                assert_svg_is_sound(svg, size=(core.width, core.height), font_sizes=sizes)
 
     def test_debug_svg_is_well_formed(self, compiled: list[PanelCore]):
         for core in compiled:

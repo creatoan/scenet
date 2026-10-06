@@ -7,6 +7,7 @@ how any of this works.
 |---|---|
 | [Releasing](releasing.md) | How to cut a release, and what happens when you do |
 | [Credentials](secrets.md) | Which secrets exist (almost none), and why |
+| [Testing](testing.md) | The property tests: profiles, replaying a failure, adding a strategy |
 
 ## The gates
 
@@ -110,4 +111,5 @@ will say so.
 
 releasing
 secrets
+testing
 ```
