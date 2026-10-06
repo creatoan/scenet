@@ -572,6 +572,10 @@ panels:
 | `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
 | `columns[].width` | The column's share of its tier's width | `1` |
 | `columns[].panels[].height` | The panel's share of its column's height | `1` |
+| `insets[].use` | On any panel in a tier or column: a panel set into one of its corners | |
+| `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
+| `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
+| `insets[].read` | `after` its parent, or `before` it | `after` |
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
@@ -593,6 +597,25 @@ A tier of columns is read column by column and top to bottom in each: `above`, `
 between them blocking the way, and readers go across those instead, so they are refused as
 `page-layout`; write them as tiers, or put a panel that spans the tier between them.
 
+An **inset** is a small panel set into a corner of another and drawn over it:
+
+```yaml
+- panels:
+    - use: street
+      insets:
+        - {use: clock, at: top_left, size: 0.2, read: before}
+        - {use: face, at: bottom_right, size: 0.3}
+```
+
+It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
+split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
+2013), so it is never guessed: an inset is read right after its parent unless it says
+`read: before`. Here that is `clock`, `street`, `face`.
+
+The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
+words under an inset could not be read. When an inset covers a character's face, the compiler
+notes it. Two insets in one panel must stay a gutter clear of each other.
+
 **A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
 it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
@@ -603,10 +626,10 @@ A page is read tier by tier, left to right, and down each column, so the order p
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, or margins and gutters that leave
-no room are reported as `page-layout`.
+both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, or
+margins and gutters that leave no room are reported as `page-layout`.
 
-Not yet: insets and frames that are not rectangles
+Not yet: frames that are not rectangles
 ([#67](https://github.com/creatoan/scenet/issues/67)), right-to-left reading
 ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
@@ -1037,9 +1060,9 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 
 ### `scenet/page-layout`
 
-A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. A document with pages needs panels to lay out.
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A document with pages needs panels to lay out.
 
-**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, or shrink the margin and gutters in `page:`.
+**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, or shrink the margin and gutters in `page:`.
 
 ### `scenet/panel-geometry`
 
@@ -2712,4 +2735,79 @@ panels:
     script:
       - say: {by: alice, text: "Your new shoes, Bob!"}
       - say: {by: bob, text: "Very funny."}
+```
+
+## Insets: a panel set into another
+
+`26-insets.scene.yaml`
+
+```yaml
+# Insets: a small panel set into the corner of another, and drawn over it.
+#
+# `insets:` on a placement sets panels into its corners, `at` one of top_left,
+# top_right, bottom_left or bottom_right, a gutter in from both edges. `size` is the
+# inset's width and height as a fraction of its parent's, at most 0.5. A ring of white
+# a gutter wide separates it from the art beneath.
+#
+# Readers split about evenly over whether an inset comes before the panel it sits in
+# or after it (Cohn, 2013), so it never guesses: it is read after its parent unless it
+# says `read: before`. Here the clock is read first, then the street, then the face.
+#
+# The street's art is drawn as if the insets were not there. Only its lettering moves:
+# the caption would have sat where the clock is.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+pages:
+  - tiers:
+      - height: 2
+        panels:
+          - use: street
+            insets:
+              - {use: clock, at: top_left, size: 0.22, read: before}
+              - {use: worry, at: bottom_right, size: 0.35}
+      - panels: [arrive, {use: shrug, width: 1.5}]
+
+panels:
+  clock:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: bored, facing: right}
+    script:
+      - caption: {text: "9:14.", kind: locale}
+
+  street:
+    camera: {shot: long_shot}
+    cast:
+      alice: {reference: alice, pose: hands_on_hips, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - bob looking_at alice
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Outside the cinema."}
+      - say: {by: bob, text: "The film started at nine."}
+
+  worry:
+    camera: {shot: close_up}
+    cast:
+      alice: {reference: alice, expression: scared, facing: left}
+    script:
+      - say: {by: alice, text: "Oops.", kind: whisper}
+
+  arrive:
+    over: street
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: alice, text: "I brought popcorn?"}
+
+  shrug:
+    over: street
+    camera: {shot: full_shot}
+    cast:
+      bob: {expression: laughing}
+    script:
+      - say: {by: bob, text: "Then we watch the next one."}
 ```

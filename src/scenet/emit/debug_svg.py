@@ -3,7 +3,8 @@
 Building a geometric solver without this is guesswork. When a balloon lands somewhere
 surprising, the question is always "what did the solver think was there?" -- and the
 answer is invisible in the finished panel. This draws the hidden geometry: silhouette
-hulls, face exclusion circles, anchors, gaze vectors and tail routes.
+hulls, face exclusion circles, anchors, gaze vectors, tail routes, and what an inset
+covers.
 """
 
 from xml.sax.saxutils import escape
@@ -23,6 +24,7 @@ CAPTION = "#7a52c9"
 GRID = "#c9c9c9"
 MASS = "#3aa39a"
 HORIZON = "#c2451f"
+INSET = "#5a5a5a"
 
 
 def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
@@ -43,6 +45,14 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
         _thirds(core),
         _backdrop(core),
     ]
+    # What an inset covers, dashed: as hard a limit for lettering as a face, though
+    # nothing here moved for it but the lettering.
+    parts.extend(
+        f'  <rect class="exclusion" x="{fmt(area.x)}" y="{fmt(area.y)}" '
+        f'width="{fmt(area.width)}" height="{fmt(area.height)}" fill="{INSET}" '
+        f'fill-opacity="0.12" stroke="{INSET}" stroke-width="2" stroke-dasharray="12 6"/>'
+        for area in core.exclusions
+    )
 
     for actor in sorted(core.actors, key=lambda a: a.id):
         parts.append(f"  <g id={attr(id_prefix + 'debug-' + actor.id)}>")

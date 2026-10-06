@@ -176,6 +176,17 @@
       "title": "Column",
       "type": "object"
     },
+    "Corner": {
+      "description": "Which corner of its parent an inset sits in.",
+      "enum": [
+        "top_left",
+        "top_right",
+        "bottom_left",
+        "bottom_right"
+      ],
+      "title": "Corner",
+      "type": "string"
+    },
     "Facing": {
       "description": "Which way an actor is turned.\n\nMirroring the whole puppet, gaze vector included. Defaults to `right`, so a cast\nwritten left to right ends up looking into the panel rather than out of it.",
       "enum": [
@@ -193,6 +204,45 @@
         "low"
       ],
       "title": "Horizon",
+      "type": "string"
+    },
+    "Inset": {
+      "additionalProperties": false,
+      "description": "A small panel set into a corner of another, and drawn over it.\n\nReaders do not agree on when to read an inset: in Cohn's 2013 experiments, overlap\nsplit them about evenly between the inset and the panel under it. So the order is\nstated rather than guessed -- after its parent, unless `read: before`.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    at: The corner of its parent it sits in, a gutter in from both edges.\n    size: Its width and height, as a fraction of its parent's: more than 0, at most\n        0.5.\n    read: Whether it is read before its parent or after it.",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/Corner"
+        },
+        "read": {
+          "$ref": "#/$defs/InsetOrder",
+          "default": "after"
+        },
+        "size": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 0.5,
+          "title": "Size",
+          "type": "number"
+        },
+        "use": {
+          "title": "Use",
+          "type": "string"
+        }
+      },
+      "required": [
+        "use",
+        "at",
+        "size"
+      ],
+      "title": "Inset",
+      "type": "object"
+    },
+    "InsetOrder": {
+      "description": "Whether an inset is read before the panel it sits in, or after it.",
+      "enum": [
+        "before",
+        "after"
+      ],
+      "title": "InsetOrder",
       "type": "string"
     },
     "Mark": {
@@ -319,6 +369,14 @@
         {
           "additionalProperties": false,
           "properties": {
+            "insets": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Inset"
+              },
+              "title": "Insets",
+              "type": "array"
+            },
             "use": {
               "title": "Use",
               "type": "string"
@@ -336,7 +394,7 @@
           "type": "object"
         }
       ],
-      "description": "One panel in a tier.\n\nWritten as the panel's name alone, or as `{use: name, width: 2}` to give it a larger\nshare of the tier.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    width: Its share of the tier's width, relative to the other panels in the tier.",
+      "description": "One panel in a tier.\n\nWritten as the panel's name alone, or as `{use: name, width: 2}` to give it a larger\nshare of the tier.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    width: Its share of the tier's width, relative to the other panels in the tier.\n    insets: Panels set into its corners.",
       "title": "PanelPlacement"
     },
     "PanelSpec": {
@@ -617,6 +675,14 @@
               "title": "Height",
               "type": "number"
             },
+            "insets": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Inset"
+              },
+              "title": "Insets",
+              "type": "array"
+            },
             "use": {
               "title": "Use",
               "type": "string"
@@ -628,7 +694,7 @@
           "type": "object"
         }
       ],
-      "description": "One panel in a column.\n\nWritten as the panel's name alone, or as `{use: name, height: 2}` to give it a larger\nshare of the column.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    height: Its share of the column's height, relative to the other panels in it.",
+      "description": "One panel in a column.\n\nWritten as the panel's name alone, or as `{use: name, height: 2}` to give it a larger\nshare of the column.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    height: Its share of the column's height, relative to the other panels in it.\n    insets: Panels set into its corners.",
       "title": "StackedPanel"
     },
     "Tier": {

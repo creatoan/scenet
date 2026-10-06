@@ -27,8 +27,11 @@ __all__ = [
     "CaptionTone",
     "CastMember",
     "Column",
+    "Corner",
     "Facing",
     "Horizon",
+    "Inset",
+    "InsetOrder",
     "Mark",
     "Mass",
     "MassKind",
@@ -1034,6 +1037,43 @@ class PageFormat(Strict):
         return self
 
 
+class Corner(StrEnum):
+    """Which corner of its parent an inset sits in."""
+
+    TOP_LEFT = "top_left"
+    TOP_RIGHT = "top_right"
+    BOTTOM_LEFT = "bottom_left"
+    BOTTOM_RIGHT = "bottom_right"
+
+
+class InsetOrder(StrEnum):
+    """Whether an inset is read before the panel it sits in, or after it."""
+
+    BEFORE = "before"
+    AFTER = "after"
+
+
+class Inset(Strict):
+    """A small panel set into a corner of another, and drawn over it.
+
+    Readers do not agree on when to read an inset: in Cohn's 2013 experiments, overlap
+    split them about evenly between the inset and the panel under it. So the order is
+    stated rather than guessed -- after its parent, unless `read: before`.
+
+    Attributes:
+        use: The name of a panel under `panels:`.
+        at: The corner of its parent it sits in, a gutter in from both edges.
+        size: Its width and height, as a fraction of its parent's: more than 0, at most
+            0.5.
+        read: Whether it is read before its parent or after it.
+    """
+
+    use: str
+    at: Corner
+    size: float = Field(gt=0.0, le=0.5)
+    read: InsetOrder = InsetOrder.AFTER
+
+
 class PanelPlacement(Strict):
     """One panel in a tier.
 
@@ -1043,10 +1083,12 @@ class PanelPlacement(Strict):
     Attributes:
         use: The name of a panel under `panels:`.
         width: Its share of the tier's width, relative to the other panels in the tier.
+        insets: Panels set into its corners.
     """
 
     use: str
     width: float = Field(default=1.0, gt=0.0)
+    insets: tuple[Inset, ...] = ()
 
 
 class StackedPanel(Strict):
@@ -1058,10 +1100,24 @@ class StackedPanel(Strict):
     Attributes:
         use: The name of a panel under `panels:`.
         height: Its share of the column's height, relative to the other panels in it.
+        insets: Panels set into its corners.
     """
 
     use: str
     height: float = Field(default=1.0, gt=0.0)
+    insets: tuple[Inset, ...] = ()
+
+
+def _read_with_insets(
+    placement: PanelPlacement | StackedPanel, path: tuple[str | int, ...]
+) -> list[tuple[str, tuple[str | int, ...]]]:
+    """A panel and its insets, each with its path, in the order they are read."""
+    insets = [(inset, (*path, "insets", index)) for index, inset in enumerate(placement.insets)]
+    return [
+        *((inset.use, at) for inset, at in insets if inset.read is InsetOrder.BEFORE),
+        (placement.use, path),
+        *((inset.use, at) for inset, at in insets if inset.read is InsetOrder.AFTER),
+    ]
 
 
 class Column(Strict):
@@ -1106,15 +1162,18 @@ class Tier(Strict):
 
     @property
     def placed(self) -> tuple[tuple[str, tuple[str | int, ...]], ...]:
-        """Each panel's name and its path within the tier, in reading order."""
+        """Each panel's name and path within the tier, insets included, in reading order."""
         if self.panels:
             return tuple(
-                (placement.use, ("panels", index)) for index, placement in enumerate(self.panels)
+                entry
+                for index, placement in enumerate(self.panels)
+                for entry in _read_with_insets(placement, ("panels", index))
             )
         return tuple(
-            (stacked.use, ("columns", column_index, "panels", index))
+            entry
             for column_index, column in enumerate(self.columns)
             for index, stacked in enumerate(column.panels)
+            for entry in _read_with_insets(stacked, ("columns", column_index, "panels", index))
         )
 
 
