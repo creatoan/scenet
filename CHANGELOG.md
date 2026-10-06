@@ -72,6 +72,16 @@ below 1.0 means.
 
 ### Fixed
 
+- **`scenet build` could silently overwrite one output with another.** Only a panel named
+  like a page was refused. A panel named `strip` replaced the strip, `x.debug` replaced panel
+  `x`'s overlay, and two names differing only in case wrote one file on Windows and macOS.
+  Every output is now planned before anything is written, and two that would be the same
+  file, compared ignoring case, are a usage error: exit 2, nothing written. (Refs #93)
+- **A panel name holding `/` or `\` made `scenet build` end in a traceback.** It is now a
+  usage error, exit 2, saying why the name cannot be part of a file name. (Refs #93)
+- **`--strip` wrote a strip of one panel** for a scene with a single panel, although the
+  reference says it is ignored for one; only a document whose panel was called `panel`
+  skipped it. A strip now needs more than one panel. (Refs #93)
 - **An unknown speaker was located one step short of its `by:`.** The finding's path was
   `script.0.by`, which the document does not have -- a line is written `- say: {by: ...}` --
   so a script in block style was pointed at `- say:` rather than the `by:` line. The path is
