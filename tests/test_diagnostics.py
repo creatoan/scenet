@@ -6,6 +6,7 @@ finding rendered twice -- so several of these tests assert exactly that.
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -720,3 +721,15 @@ class TestSceneDefaultFindings:
         assert found.path == ("camera", "shot")
         assert found.region is not None
         assert found.region.start.line == 2
+
+
+class TestTheReferenceListsEveryRule:
+    """`docs/reference/cli.md` is where a person looks a `ruleId` up. It was missing two
+    that `scenet check` reports (#65), and nothing noticed."""
+
+    def test_the_rule_table_is_the_catalogue(self):
+        doc = (Path(__file__).parent.parent / "docs" / "reference" / "cli.md").read_text(
+            encoding="utf-8"
+        )
+        listed = set(re.findall(r"^\| `scenet/([a-z-]+)` \|", doc, re.MULTILINE))
+        assert listed == set(RULES)

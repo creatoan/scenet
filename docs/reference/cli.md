@@ -178,6 +178,8 @@ nothing stops compiling.
 | `scenet/composition` | An `over:` chain that is missing or cyclic |
 | `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
 | `scenet/unknown-puppet` | A `reference` naming a character the library lacks |
+| `scenet/unknown-place` | A setting's `place` naming one the library does not have |
+| `scenet/conflicting-setting` | A setting that names a `place` and also lists `masses` |
 | `scenet/unknown-pose` | A `pose` naming one its puppet does not declare |
 | `scenet/unknown-expression` | An `expression` naming one its puppet does not declare |
 | `scenet/layout` | Valid, but no layout satisfies its required constraints (`--deep` only) |

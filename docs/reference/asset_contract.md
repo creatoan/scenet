@@ -17,7 +17,12 @@ A character is a skeleton plus parametric limbs, not a picture. A **pose** is a 
 angles, so `pointing` is data rather than a drawing — which avoids the combinatorial explosion of
 one image per pose per expression per facing direction.
 
+A complete puppet, cut down to one arm so it fits on a screen. It loads as it stands, and a test
+keeps it that way; the shipped characters in `src/scenet/assets/library/` are the full-size
+versions.
+
 ```yaml
+name: sketch
 units_per_head: 100
 
 landmarks:          # vertical offsets from head_top -- the crop lines
@@ -31,26 +36,43 @@ landmarks:          # vertical offsets from head_top -- the crop lines
   knees: 560
   feet: 750         # 7.5 heads, standard adult proportion
 
-joints: {root, pelvis, spine, neck, head, shoulder_l, elbow_l, wrist_l, ...}
+joints:             # a tree rooted at root; each offset is from the parent
+  root:       {parent: null, offset: [0, 0]}
+  spine:      {parent: root, offset: [0, -130]}
+  neck:       {parent: spine, offset: [0, -68]}
+  head:       {parent: neck, offset: [0, -82]}
+  shoulder_l: {parent: neck, offset: [-34, 6]}
+  elbow_l:    {parent: shoulder_l, offset: [0, 95]}
+  wrist_l:    {parent: elbow_l, offset: [0, 88]}
 
-parts:
-  - {bone: upper_arm_l, shape: capsule, length: 90, width: 24}
+parts:              # what is drawn: a capsule between two joints, or a blob at one
+  - {from: neck, to: root, width: 72}
+  - {from: shoulder_l, to: elbow_l, width: 26}
+  - {from: elbow_l, to: wrist_l, width: 22}
+  - {at: head, radius: 50}
+
+anchors:            # named points the solver addresses -- a tail ends at mouth
+  head_top: {joint: head, offset: [0, -50]}
+  eyes:     {joint: head, offset: [0, -10]}
+  mouth:    {joint: head, offset: [0, 25]}
+  feet:     {joint: root, offset: [0, 420]}
 
 face:
+  joint: head
   radius: 65                # balloons may never overlap this circle
-  features:                 # what is drawn inside it
+  features:                 # what is drawn inside it; paired features come in pairs
     brow_l: {offset: [-20, -27], size: 12}
+    brow_r: {offset: [20, -27], size: 12}
     eye_l:  {offset: [-20, -12], size: 9}
-    mouth:  {offset: [0, 25],    size: 16}
+    eye_r:  {offset: [20, -12], size: 9}
+    mouth:  {offset: [0, 25], size: 16}
 
 gaze:
-  origin: eyes
-  default_dir: facing
+  origin: eyes              # a declared anchor; the direction comes from staging
 
-poses:
-  standing_neutral: {...joint angles}
-  arms_crossed: {...}
-  pointing: {...}
+poses:                      # joint angles, in degrees
+  standing_neutral: {elbow_l: -5}
+  pointing: {elbow_l: -80, wrist_l: -10}
 
 expressions:
   neutral: {}

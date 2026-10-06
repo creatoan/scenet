@@ -44,7 +44,9 @@ It contributes:
 
 - Schema association for `*.panel.yaml` and `*.scene.yaml`, so no `$schema` comment is
   needed.
-- Syntax highlighting for `.script` comic scripts.
+- Recognition of `.script` comic scripts as their own language, with comment and bracket
+  handling. Syntax highlighting for them is not there yet; it is tracked in
+  [#77](https://github.com/creatoan/scenet/issues/77).
 - **Scenet: Preview panel**, which compiles the current document and shows the SVG beside
   it.
 
