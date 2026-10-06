@@ -118,13 +118,30 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
         return None
 
     deepest = node
+    key: yaml.Node | None = None
     for step in path:
         child = _descend(deepest, step)
         if child is None:
             break
+        key = _key_of(deepest, step)
         deepest = child
 
-    return _mark_to_region(deepest)
+    region = _mark_to_region(deepest)
+    # A block written beneath its key starts on the line after it, at whichever field
+    # happens to come first -- which names nothing about the fault. The key does.
+    is_block = isinstance(deepest, yaml.CollectionNode) and not deepest.flow_style
+    if key is not None and is_block:
+        return Region(start=_mark_to_region(key).start, end=region.end)
+    return region
+
+
+def _key_of(node: yaml.Node, step: str | int) -> yaml.Node | None:
+    """The key node `step` names in a mapping, or `None` for a sequence index."""
+    if isinstance(node, yaml.MappingNode):
+        for key, _ in node.value:
+            if isinstance(key, yaml.ScalarNode) and key.value == str(step):
+                return key
+    return None
 
 
 def syntax_error_region(exc: yaml.YAMLError) -> Region:
@@ -141,4 +158,12 @@ def syntax_error_region(exc: yaml.YAMLError) -> Region:
     if mark is None:
         return DOCUMENT_START
     start = Position(line=mark.line + 1, column=mark.column + 1)
+    # An error found at the end of the input -- a bracket never closed -- is marked just
+    # past the final newline, on a line the file does not have. It belongs at the end of
+    # the last line, where an editor can show it.
+    buffer = getattr(mark, "buffer", None)
+    if isinstance(buffer, str):
+        lines = buffer.rstrip("\0").splitlines()
+        if lines and start.line > len(lines):
+            start = Position(line=len(lines), column=len(lines[-1]) + 1)
     return Region(start=start, end=Position(line=start.line, column=start.column + 1))
