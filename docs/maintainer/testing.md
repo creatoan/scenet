@@ -198,10 +198,11 @@ Coverage shows which lines ran, not whether any assertion would notice them chan
 the solver and the emitters -- `<` becomes `<=`, a constant is nudged, an argument dropped --
 and reports every edit the suite still passes. Each survivor is a behaviour nothing checks.
 
-It runs weekly, and on demand, in `.github/workflows/mutation.yml`, never on a pull request:
-a full run takes far longer than a review should wait. The job summary gives the score and
-lists the survivors, which are also uploaded as an artifact. It is not a required check, and
-there is no threshold until the baseline below has been worked down.
+It runs weekly, and on demand, in `.github/workflows/mutation.yml`. The only pull request
+it runs on is one that changes the workflow itself: a full run takes far longer than a review
+should wait. The job summary gives the score and lists the survivors, which are also uploaded
+as an artifact. It is not a required check, and there is no threshold until the baseline
+below has been worked down.
 
 **Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
 takes about 40 seconds. mutmut forks each mutant from a process that has already imported
@@ -213,10 +214,16 @@ mutant would take days.
 
 ```bash
 uv sync --group mutation
+ulimit -v 2097152
 uv run mutmut run --max-children 4
 uv run mutmut results
 uv run mutmut show <mutant>
 ```
+
+The `ulimit` caps each process at 2 GiB. A few mutants allocate without bound -- `/` turned
+into `*` in the rain or snow density asks for millions of streaks -- and, uncapped, one of
+them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in a
+`MemoryError` and counts as killed. A test process needs under 1 GB.
 
 `[tool.mutmut]` in `pyproject.toml` limits it to `src/scenet/solve/` and `src/scenet/emit/`,
 mutates only lines the tests cover, and runs mutants without the coverage floor, doctests or
@@ -231,44 +238,48 @@ wsl --install -d Ubuntu
 then, inside WSL, clone the repository and run the commands above. A checkout on the Windows
 side, under `/mnt/c/`, works but is several times slower.
 
-**Known blind spot.** mutmut 3 does not mutate the bodies of `@dataclass`-decorated classes,
-so these methods are never mutated:
+**Known blind spot.** mutmut 3 does not mutate decorated functions. In `solve/` and `emit/`
+those are nine `@property` accessors and one cached loader, and none of them is ever mutated:
 
-| Class | Methods | Lines |
+| Function | Decorator | Lines |
 |---|---|---|
-| `solve/camera.py::CameraSolution` | `was_pulled_back`, `pulled_back_to`, `head_top_y`, `root_y_framed`, `root_y_on_ground`, `feet_below_root`, `ground_y_of` | 75 |
-| `solve/backdrop.py::_Plot` | `width`, `repeats` | 18 |
-| `solve/text.py::TextBlock` | `aspect`, `raggedness` | 12 |
-| `solve/backdrop.py::ResolvedBackdrop` | `occluders` | 7 |
-| `solve/balloons.py::TailRoute` | `is_curved` | 7 |
-| `solve/balloons.py::_Limits` | `allow` | 7 |
-| `solve/staging.py::Placement` | `origin` | 3 |
-| `solve/staging.py::_Extent` | `centre_offset` | 2 |
+| `solve/camera.py::CameraSolution.was_pulled_back` | `@property` | 8 |
+| `solve/camera.py::CameraSolution.head_top_y` | `@property` | 3 |
+| `solve/balloons.py::TailRoute.is_curved` | `@property` | 7 |
+| `solve/text.py::TextBlock.aspect` | `@property` | 7 |
+| `solve/text.py::TextBlock.raggedness` | `@property` | 5 |
+| `solve/text.py::FontMetrics.units_per_em` | `@property` | 3 |
+| `solve/text.py::load_metrics` | `@functools.lru_cache` | 3 |
+| `solve/backdrop.py::_Plot.width` | `@property` | 3 |
+| `solve/staging.py::Placement.origin` | `@property` | 3 |
+| `solve/staging.py::_Extent.centre_offset` | `@property` | 2 |
 
-`CameraSolution` is the one that matters: it is the framing geometry, where the shot ladder
-and the camera angles are worked out. Until mutmut reaches it, the shot-type tests in
-`tests/test_camera.py` and the golden Cores are what guard it. The rest are small accessors.
+The undecorated methods of the same classes are mutated as usual. `was_pulled_back` and
+`head_top_y` are the ones that matter: they are part of the framing geometry, and until
+mutmut reaches them the shot-type tests in `tests/test_camera.py` and the golden Cores are
+what guard them.
 
 ### Baseline
 
-The first full run, made locally before the golden outputs existed, produced 4,094 mutants:
-3,249 killed (79.4%) and 845 survivors, in about 46 minutes on four cores. By module:
+The first full run with the golden outputs, made locally on four cores in about 57 minutes,
+produced 4,094 mutants: **3,761 killed (91.9%)** and 333 survivors. The three that ran out of
+memory, described above, are among the killed. By module:
 
 | Module | Survivors |
 |---|---|
-| `solve/balloons.py` | 230 |
-| `emit/svg.py` | 188 |
-| `solve/backdrop.py` | 145 |
-| `emit/debug_svg.py` | 73 |
-| `solve/page.py` | 56 |
-| `solve/text.py` | 54 |
-| `solve/staging.py` | 35 |
-| `emit/strip.py` | 30 |
-| `emit/page.py` | 27 |
+| `solve/balloons.py` | 123 |
+| `solve/text.py` | 50 |
+| `solve/page.py` | 49 |
+| `solve/backdrop.py` | 32 |
+| `solve/staging.py` | 22 |
+| `emit/page.py` | 18 |
+| `emit/svg.py` | 16 |
+| `emit/debug_svg.py` | 9 |
 | `solve/camera.py` | 7 |
+| `emit/strip.py` | 7 |
 
-The golden outputs compare every emitted byte, so the emitters' share should fall at the first
-scheduled run; its job summary is the baseline to work down from.
+Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
+`emit/svg.py`: comparing every emitted byte took most of the emitters' share.
 
 ### Triage
 
