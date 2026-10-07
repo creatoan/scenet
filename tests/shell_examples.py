@@ -7,8 +7,9 @@ would misinform a reader without failing anything. So every documented `scenet b
 a traceback.
 
 - `scenet mcp` lines are parsed and not run: a server runs until its client leaves.
-- `pip`, `pipx`, `uv`, `uvx`, `git`, `gh`, `cp` and `claude` lines never run. They
-  install, publish or reach the network, and are about the reader's machine, not Scenet.
+- `pip`, `pipx`, `uv`, `uvx`, `git`, `gh`, `cp`, `claude`, `wsl` and `ulimit` lines never
+  run. They install, publish, reach the network or set limits on the reader's shell, and are
+  about the reader's machine, not Scenet.
 - A heredoc's body is skipped with its command.
 
 A block that needs a file the reader creates along the way -- the tutorial's
@@ -32,7 +33,7 @@ __all__ = ["run_bash_block"]
 ROOT = Path(__file__).resolve().parents[1]
 
 #: Programs whose lines are documentation for the reader's shell, never run here.
-NEVER_RUN = frozenset({"pip", "pipx", "uv", "uvx", "git", "gh", "cp", "claude"})
+NEVER_RUN = frozenset({"pip", "pipx", "uv", "uvx", "git", "gh", "cp", "claude", "wsl", "ulimit"})
 
 # `VAR=value command ...`: an environment assignment in front of a command.
 _ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=\S*$")

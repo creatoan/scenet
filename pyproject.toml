@@ -86,6 +86,9 @@ docs = [
     "sphinx-autobuild>=2025.8.25",
     "linkify-it-py>=2.0",
 ]
+mutation = [
+    "mutmut>=3.8",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
@@ -180,6 +183,43 @@ known-first-party = ["scenet", "tests"]
 
 [tool.ruff.format]
 docstring-code-format = true
+
+# ---------------------------------------------------------------- mutmut
+# Weekly mutation testing of the solver and the emitters, where a silent wrong answer costs
+# most: `.github/workflows/mutation.yml`, and `docs/maintainer/testing.md` for running it.
+# Install with `uv sync --group mutation`; it is not a default group.
+[tool.mutmut]
+only_mutate = ["src/scenet/solve/*", "src/scenet/emit/*"]
+# Inside a mutant: no coverage floor, no doctests, no Sybil -- only the tests that reach
+# the mutated function, which mutmut selects for itself. The real stdio session hands its
+# server process the runner's stderr, which mutmut has closed; it tests the MCP transport,
+# not the solver or the emitters.
+pytest_add_cli_args = [
+    "--no-cov",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "addopts=",
+    "--deselect",
+    "tests/test_mcp.py::TestStdoutStaysClean::test_over_a_real_stdio_session",
+]
+pytest_add_cli_args_test_selection = ["tests/"]
+# Everything the tests read from outside `src/` and `tests/`: the examples, the reference
+# documents the contract tests hold the code to, the generators and their outputs.
+also_copy = [
+    "conftest.py",
+    "examples/",
+    "docs/",
+    "scripts/",
+    "skills/",
+    "editor/",
+    "playground/",
+    ".github/",
+    "README.md",
+    "server.json",
+    "pyproject.toml",
+]
+mutate_only_covered_lines = true
 
 # ---------------------------------------------------------------- ty
 [tool.ty.src]

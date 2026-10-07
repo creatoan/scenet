@@ -190,3 +190,109 @@ that trips on it landed:
 | A broken `over:` was located at the whole `panels:` block | #107 |
 | A syntax error at the end of a file pointed past its last line; a block value at its first field | #108 |
 | An unknown speaker was located one step short of its `by:` | #109 |
+
+## Mutation testing
+
+Coverage shows which lines ran, not whether any assertion would notice them changing.
+[mutmut](https://github.com/boxed/mutmut) does notice: it makes one small edit at a time to
+the solver and the emitters -- `<` becomes `<=`, a constant is nudged, an argument dropped --
+and reports every edit the suite still passes. Each survivor is a behaviour nothing checks.
+
+It runs weekly, and on demand, in `.github/workflows/mutation.yml`. The only pull request
+it runs on is one that changes the workflow itself: a full run takes far longer than a review
+should wait. The job summary gives the score and lists the survivors, which are also uploaded
+as an artifact. It is not a required check, and there is no threshold until the baseline
+below has been worked down.
+
+**Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
+takes about 40 seconds. mutmut forks each mutant from a process that has already imported
+everything, runs only the tests that reach the mutated function, and resumes where it left
+off, re-testing only functions whose code changed. A tool that ran the whole suite once per
+mutant would take days.
+
+**Running it.** It is in its own dependency group, so a plain `uv sync` does not install it:
+
+```bash
+uv sync --group mutation
+ulimit -v 2097152
+uv run mutmut run --max-children 4
+uv run mutmut results
+uv run mutmut show <mutant>
+```
+
+The `ulimit` caps each process at 2 GiB. A few mutants allocate without bound -- `/` turned
+into `*` in the rain or snow density asks for millions of streaks -- and, uncapped, one of
+them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in a
+`MemoryError` and counts as killed. A test process needs under 1 GB.
+
+`[tool.mutmut]` in `pyproject.toml` limits it to `src/scenet/solve/` and `src/scenet/emit/`,
+mutates only lines the tests cover, and runs mutants without the coverage floor, doctests or
+the documentation examples. To try one file, run the workflow by hand with its `path` input.
+
+**On Windows**, mutmut needs `fork()`, so run it under WSL with a Linux distribution:
+
+```bash
+wsl --install -d Ubuntu
+```
+
+then, inside WSL, clone the repository and run the commands above. A checkout on the Windows
+side, under `/mnt/c/`, works but is several times slower.
+
+**Known blind spot.** mutmut 3 does not mutate decorated functions. In `solve/` and `emit/`
+those are nine `@property` accessors and one cached loader, and none of them is ever mutated:
+
+| Function | Decorator | Lines |
+|---|---|---|
+| `solve/camera.py::CameraSolution.was_pulled_back` | `@property` | 8 |
+| `solve/camera.py::CameraSolution.head_top_y` | `@property` | 3 |
+| `solve/balloons.py::TailRoute.is_curved` | `@property` | 7 |
+| `solve/text.py::TextBlock.aspect` | `@property` | 7 |
+| `solve/text.py::TextBlock.raggedness` | `@property` | 5 |
+| `solve/text.py::FontMetrics.units_per_em` | `@property` | 3 |
+| `solve/text.py::load_metrics` | `@functools.lru_cache` | 3 |
+| `solve/backdrop.py::_Plot.width` | `@property` | 3 |
+| `solve/staging.py::Placement.origin` | `@property` | 3 |
+| `solve/staging.py::_Extent.centre_offset` | `@property` | 2 |
+
+The undecorated methods of the same classes are mutated as usual. `was_pulled_back` and
+`head_top_y` are the ones that matter: they are part of the framing geometry, and until
+mutmut reaches them the shot-type tests in `tests/test_camera.py` and the golden Cores are
+what guard them.
+
+### Baseline
+
+The first full run with the golden outputs, made locally on four cores in about 57 minutes,
+produced 4,094 mutants: **3,761 killed (91.9%)** and 333 survivors. The three that ran out of
+memory, described above, are among the killed. By module:
+
+| Module | Survivors |
+|---|---|
+| `solve/balloons.py` | 123 |
+| `solve/text.py` | 50 |
+| `solve/page.py` | 49 |
+| `solve/backdrop.py` | 32 |
+| `solve/staging.py` | 22 |
+| `emit/page.py` | 18 |
+| `emit/svg.py` | 16 |
+| `emit/debug_svg.py` | 9 |
+| `solve/camera.py` | 7 |
+| `emit/strip.py` | 7 |
+
+Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
+`emit/svg.py`: comparing every emitted byte took most of the emitters' share.
+
+### Triage
+
+Every survivor ends in one of two states:
+
+- **Killed**, by a new assertion in the relevant `tests/test_*.py`.
+- **Accepted**, recorded below with a reason: an equivalent mutant that cannot change any
+  output, or one whose effect is below what the format can show. `# pragma: no mutate` is
+  used only where nothing else works, with a comment saying why.
+
+### Exploring with fresh seeds
+
+The same workflow's second job runs the property tests under the `explore` profile: random
+seeds, 300 examples each. A failure prints the shrunk document and a `@reproduce_failure`
+line. Pin the document as an `@example(...)` on the property, so the fixed run covers it from
+then on, and fix the bug in its own pull request.
