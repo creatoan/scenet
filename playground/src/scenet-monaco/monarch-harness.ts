@@ -56,7 +56,8 @@ export function tokenizeScript(text: string): MonarchToken[][] {
  * A line as `type:text` spans, so a failure reads as the script does.
  *
  * Empty spans are dropped: Monarch emits one for a group it was told to leave unstyled
- * that happened to match nothing, and it carries no meaning.
+ * that happened to match nothing, and it carries no meaning. So is unstyled whitespace,
+ * which is how a rule covers the space between the parts it does colour.
  */
 export function describeLine(line: string, tokens: readonly MonarchToken[]): string[] {
   return tokens
@@ -64,6 +65,6 @@ export function describeLine(line: string, tokens: readonly MonarchToken[]): str
       const end = tokens[index + 1]?.offset ?? line.length;
       return { type: token.type, text: line.slice(token.offset, end) };
     })
-    .filter((span) => span.text.length > 0)
+    .filter((span) => span.text.length > 0 && !(span.type === "" && span.text.trim() === ""))
     .map((span) => `${span.type}:${span.text}`);
 }

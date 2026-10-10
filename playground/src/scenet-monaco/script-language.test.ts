@@ -26,12 +26,12 @@ describe("scriptMonarchTokens", () => {
 
   test("a page heading is a keyword and its label", () => {
     // Monaco refused the rule: its groups did not cover the space between them.
-    assert.deepEqual(spans("PAGE ONE"), [["keyword.page.scenet:PAGE", ".scenet: ", "string.page.scenet:ONE"]]);
+    assert.deepEqual(spans("PAGE ONE"), [["keyword.page.scenet:PAGE", "string.page.scenet:ONE"]]);
   });
 
   test("a panel heading is a keyword and its number", () => {
     assert.deepEqual(spans("PANEL 1"), [
-      ["keyword.panel.scenet:PANEL", ".scenet: ", "number.panel.scenet:1"],
+      ["keyword.panel.scenet:PANEL", "number.panel.scenet:1"],
     ]);
   });
 

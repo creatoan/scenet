@@ -10,6 +10,14 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The playground never coloured a comic script's `PAGE` and `PANEL` headings**, and the
+  line after a cue with a parenthetical, such as `BOB (whisper)`, was not shown as dialogue.
+  Monaco refused those three highlighting rules and dropped the lines without a word. The
+  rules are fixed, and a test now runs them through Monaco's own lexer, where a refused rule
+  fails.
+
 ## [0.10.0] - 2026-10-10
 
 **Pages.** A scene can now be laid out on pages -- tiers of panels, columns beside them,
