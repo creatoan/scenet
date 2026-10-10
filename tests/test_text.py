@@ -5,7 +5,11 @@ holds its text but strands a single word on its own line reads as bad lettering,
 several tests below encode what a letterer would actually do.
 """
 
+from pathlib import Path
+
 import pytest
+from fontTools.fontBuilder import FontBuilder
+from fontTools.pens.ttGlyphPen import TTGlyphPen
 
 from scenet.solve.text import (
     FontMetrics,
@@ -166,3 +170,25 @@ class TestDeterminism:
         first = layout_text(text, font_size=37.5, metrics=metrics)
         second = layout_text(text, font_size=37.5, metrics=metrics)
         assert first == second
+
+
+def _font_without_a_character_map(path: Path) -> Path:
+    """A TrueType font with glyphs and metrics but no `cmap` table at all."""
+    builder = FontBuilder(1000, isTTF=True)
+    builder.setupGlyphOrder([".notdef"])
+    builder.setupGlyf({".notdef": TTGlyphPen(None).glyph()})
+    builder.setupHorizontalMetrics({".notdef": (500, 0)})
+    builder.setupHorizontalHeader(ascent=800, descent=-200)
+    builder.save(str(path))
+    return path
+
+
+class TestAFontThatCannotBeMeasured:
+    """`FontMetrics` promises a `ValueError` for a font with no usable Unicode character
+    map. A font with no `cmap` table at all raised `KeyError: 'cmap'` instead, from inside
+    fontTools, before the check that names the problem was reached."""
+
+    def test_a_font_with_no_character_map_is_refused_as_documented(self, tmp_path: Path):
+        font = _font_without_a_character_map(tmp_path / "bare.ttf")
+        with pytest.raises(ValueError, match="no usable Unicode character map"):
+            FontMetrics(font)
