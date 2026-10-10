@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from scenet.assets.contract import Landmark, PuppetLibrary, PuppetSpec, default_library
 from scenet.assets.kinematics import convex_hull, resolve, solve_pose
@@ -213,3 +214,55 @@ class TestTheReferenceExampleIsAPuppet:
         assert block is not None
         spec = PuppetSpec.model_validate(yaml.safe_load(block.group(1)))
         assert spec.heads_tall == 7.5
+
+
+class TestAMistakeInAPartIsReportedOnce:
+    """A part is a bone (`from`, `to`, `width`) or a blob (`at`, `radius`). Validated as
+    a plain union, a part that failed as a bone was tried as a blob as well, and pydantic
+    reported both: one bad `width` came out as six errors, five of them about a blob
+    nobody wrote, under paths naming the classes. The keys say which kind is meant."""
+
+    ALICE = Path(__file__).parents[1] / "src" / "scenet" / "assets" / "library"
+
+    def puppet_with(self, part: dict[str, object]) -> dict[str, object]:
+        data = yaml.safe_load((self.ALICE / "alice.puppet.yaml").read_text(encoding="utf-8"))
+        data["parts"] = [part, *data["parts"][1:]]
+        return data
+
+    def errors_for(self, part: dict[str, object]) -> list[tuple[tuple[str | int, ...], str]]:
+        with pytest.raises(ValidationError) as caught:
+            PuppetSpec.model_validate(self.puppet_with(part))
+        return [(tuple(error["loc"]), error["msg"]) for error in caught.value.errors()]
+
+    def test_a_bad_bone_width_is_one_error_at_the_bone(self):
+        ((loc, _),) = self.errors_for({"from": "neck", "to": "root", "width": "wide"})
+        assert loc == ("parts", 0, "bone", "width")
+
+    def test_a_blob_without_a_radius_is_one_error_at_the_blob(self):
+        ((loc, _),) = self.errors_for({"at": "head"})
+        assert loc == ("parts", 0, "blob", "radius")
+
+    def test_a_misspelled_bone_key_is_reported_against_the_bone_only(self):
+        found = self.errors_for({"from": "neck", "to": "root", "widht": 72})
+        assert sorted(loc for loc, _ in found) == [
+            ("parts", 0, "bone", "widht"),
+            ("parts", 0, "bone", "width"),
+        ]
+
+    @pytest.mark.parametrize(
+        "part",
+        [
+            {"width": 72},
+            {"from": "neck", "to": "root", "width": 72, "at": "head", "radius": 50},
+        ],
+        ids=["neither", "both"],
+    )
+    def test_a_part_that_is_neither_or_both_is_one_error_naming_the_two_kinds(self, part):
+        ((loc, message),) = self.errors_for(part)
+        assert loc == ("parts", 0)
+        assert "`from`" in message
+        assert "`at`" in message
+
+    def test_parts_built_in_python_are_still_accepted(self, alice: PuppetSpec):
+        rebuilt = PuppetSpec.model_validate(alice.model_dump(by_alias=True))
+        assert rebuilt == alice

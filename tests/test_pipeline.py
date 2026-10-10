@@ -125,6 +125,24 @@ class TestDeterminism:
             core = compile_source(source, library=library).core
             assert render(core) == render(compile_source(source, library=library).core)
 
+    def test_a_contested_layout_compiles_to_the_same_bytes_every_time(self):
+        """The weekly Hypothesis exploration's find: the solver's last-bit noise reached
+        the Core whenever a coordinate sat on a rounding boundary -- 247.95 one compile,
+        247.96 the next, in the same process."""
+        source = (
+            "panel: {size: [1399, 1196]}\n"
+            "camera: {shot: medium_shot}\n"
+            "cast:\n"
+            "  a: {reference: alice, facing: left}\n"
+            "  z: {reference: alice, facing: left}\n"
+            "script:\n"
+            "  - caption: {text: '0'}\n"
+            "  - caption: {text: '0'}\n"
+        )
+        library = default_library()
+        compiled = {compile_source(source, library=library).core.to_json() for _ in range(12)}
+        assert len(compiled) == 1
+
     def test_core_survives_a_json_round_trip(self, compiled: list[PanelCore]):
         """Panel Core is a real writable format, not a private data structure, so it
         must reload exactly."""

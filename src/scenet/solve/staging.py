@@ -49,6 +49,14 @@ MIN_GAP_FRACTION = 0.015
 # on a floating-point boundary, where it may or may not be satisfied.
 FIT_SLACK = 0.96
 
+# Decimal places a solved position is snapped to as it leaves the solver. kiwisolver
+# keys its internal maps by object address, so one system solved twice can come back a
+# few ulps apart -- 352.33318181818186, then 352.33318181818174 -- and a coordinate
+# derived from it that sits on a rounding boundary then prints as 247.95 one time and
+# 247.96 the next. A millionth of a unit is far above that noise and far below anything
+# the output can show, so both answers snap to the same number.
+SOLVED_PLACES = 6
+
 
 @dataclass(frozen=True, slots=True)
 class Placement:
@@ -326,7 +334,7 @@ def solve_staging(
             reference=panel.cast[actor].reference,
             pose=panel.cast[actor].pose,
             expression=panel.cast[actor].expression,
-            x=variables[actor].value(),
+            x=round(variables[actor].value(), SOLVED_PLACES),
             y=ys[actor],
             scale=camera.scale,
             facing_right=facings[actor],

@@ -200,8 +200,10 @@ and reports every edit the suite still passes. Each survivor is a behaviour noth
 
 It runs weekly, and on demand, in `.github/workflows/mutation.yml`. The only pull request
 it runs on is one that changes the workflow itself: a full run takes far longer than a review
-should wait. The job summary gives the score and lists the survivors, which are also uploaded
-as an artifact. It is not a required check, and there is no threshold until the baseline
+should wait. The job summary gives the score and lists the survivors. The `mutmut-results`
+artifact holds the same list, and `survivors.diff`: every survivor's change, as `mutmut show`
+prints it, which is what triage starts from. A run on one file is a `workflow_dispatch` with
+`path` set, on whichever branch holds the tests to try. It is not a required check, and there is no threshold until the baseline
 below has been worked down.
 
 **Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
