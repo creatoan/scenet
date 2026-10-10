@@ -1,6 +1,6 @@
 
 ---
-cast: {ALICE: {reference: alice}}
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
 ---
 PANEL 1
 @shot: close_up
@@ -14,3 +14,8 @@ ALICE
 Rain again.
 @angle: low
 Rain.
+BOB
+OK.
+ALICE
+@shot: medium_shot
+Still raining.
