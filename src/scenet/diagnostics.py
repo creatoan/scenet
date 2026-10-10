@@ -1033,6 +1033,10 @@ def diagnose_script(
         panels = parse_script(text, source=source)
     except ScriptSyntaxError as exc:
         line = exc.line or 1
+        lines = text.splitlines()
+        # The whole line: GitHub requires every bound, so "line N" cannot be said with
+        # `startLine` alone, and ending at column 2 would claim the first character.
+        length = len(lines[line - 1]) if line <= len(lines) else 0
         return [
             Diagnostic(
                 rule=_rule_for_scenet_error(exc),
@@ -1040,7 +1044,7 @@ def diagnose_script(
                 source=source,
                 region=Region(
                     start=Position(line=line, column=1),
-                    end=Position(line=line, column=2),
+                    end=Position(line=line, column=length + 1),
                 ),
             )
         ]

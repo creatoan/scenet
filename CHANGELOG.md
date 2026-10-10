@@ -23,6 +23,9 @@ below 1.0 means.
 - **SARIF output did not say what a column counts.** SARIF 2.1.0 requires `columnKind` on a
   run with results, and without it an editor counting UTF-16 code units, as VS Code does,
   points one column further off past each emoji. It is now `unicodeCodePoints`.
+- **A comic-script finding pointed at the first character of its line** in SARIF, which
+  claimed a precision the parser does not have. Its region is now the whole line, so an
+  editor or code scanning underlines the line.
 
 ## [0.10.0] - 2026-10-10
 
