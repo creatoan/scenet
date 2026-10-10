@@ -272,7 +272,7 @@ memory, described above, are among the killed. By module:
 | `solve/balloons.py` | 123 | done: 16 accepted, below |
 | `solve/text.py` | 50 | done: 14 accepted, below |
 | `solve/page.py` | 49 | done: 23 accepted, below |
-| `solve/backdrop.py` | 32 | |
+| `solve/backdrop.py` | 32 | done: 7 accepted, below |
 | `solve/staging.py` | 22 | |
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
@@ -344,6 +344,17 @@ half a unit -- and these 23 are accepted.
 | `_slanted` 35 | `spans[:-2:2]` to `spans[:-3:2]` | `spans` has an even length, so both slices stop at the same element. |
 | `_slanted` 87, 92 | `<= 0` to `< 0` for the width at the top or bottom | Differs only for a width of exactly 0, which needs the tangent of the slant times a height to land exactly on a gutter's edge; a width half a unit either side is tested. |
 | `_slanted` 142, 157 | `corners[0]` to `corners[1]` for the frame's top | Both are top corners, at the same `y`. |
+**`solve/backdrop.py`** -- triaged: of the 32 survivors, 25 are killed by tests in
+`tests/test_backdrop.py`, most by calling a generator directly with a `_Plot` whose
+horizon is half a unit from the top, where a clamp anywhere but the panel's edge shows.
+These 7 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `seed_for` 7, `_rng` 6, `_atmosphere` 22 | `int.from_bytes(..., "big")` with the byte order left out | Big-endian is the default since Python 3.11, and the floor is 3.12. |
+| `seed_for` 14, `_rng` 13 | `encode("utf-8")` to `encode("UTF-8")` | The same codec; Python's codec names are case-insensitive. |
+| `_luminance` 15 | `channel <= 0.04045` to `<` | No 8-bit channel is exactly 0.04045, and the sRGB curve is continuous there anyway. |
+| `_atmosphere` 63 | `> FALL_CONTRAST_THRESHOLD` to `>=` | The sky under rain cloud is 0.69, 0.83, 0.55 and 0.37 at dawn, day, dusk and night: never exactly 0.5. |
 
 ### Exploring with fresh seeds
 
