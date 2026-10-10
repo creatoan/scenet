@@ -10,6 +10,11 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- The editor guide shows how to see `scenet check` findings in VS Code today: write them
+  as SARIF and open the file with Microsoft's SARIF Viewer. (Part of #77)
+
 ## [0.10.0] - 2026-10-10
 
 **Pages.** A scene can now be laid out on pages -- tiers of panels, columns beside them,
