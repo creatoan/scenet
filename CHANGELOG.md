@@ -20,6 +20,9 @@ below 1.0 means.
   result, so an editor and CI would have raised two alerts for one fault. It now uses the
   `uri` the result reports. A path given relative to the working directory, as CI gives
   it, keeps the fingerprint it had.
+- **SARIF output did not say what a column counts.** SARIF 2.1.0 requires `columnKind` on a
+  run with results, and without it an editor counting UTF-16 code units, as VS Code does,
+  points one column further off past each emoji. It is now `unicodeCodePoints`.
 
 ## [0.10.0] - 2026-10-10
 

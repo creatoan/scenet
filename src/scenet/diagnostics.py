@@ -1224,6 +1224,10 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
                         "rules": rules,
                     }
                 },
+                # Required whenever there are results (section 3.14.27). PyYAML's marks
+                # index a Python `str`, so a column is a code point, which an editor
+                # counting UTF-16 code units has to convert past an emoji.
+                "columnKind": "unicodeCodePoints",
                 "results": results,
             }
         ],
