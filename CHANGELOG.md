@@ -46,6 +46,11 @@ below 1.0 means.
   Monaco refused those three highlighting rules and dropped the lines without a word. The
   rules are fixed, and a test now runs them through Monaco's own lexer, where a refused rule
   fails.
+- **The playground coloured a comic script by older rules than the compiler reads it by.**
+  `Panel 1.`, `ALICE:` and `CAPTION: Later.` were shown as prose; a cue did not end the
+  speech before it; and a `---` scene divider opened front matter that never closed,
+  colouring the rest of the script as YAML. It now follows the script frontend line for
+  line, and shared fixtures, checked against the frontend, hold it there.
 
 ## [0.10.0] - 2026-10-10
 
