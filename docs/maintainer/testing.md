@@ -271,7 +271,7 @@ memory, described above, are among the killed. By module:
 |---|---|---|
 | `solve/balloons.py` | 123 | done: 16 accepted, below |
 | `solve/text.py` | 50 | done: 14 accepted, below |
-| `solve/page.py` | 49 | |
+| `solve/page.py` | 49 | done: 23 accepted, below |
 | `solve/backdrop.py` | 32 | |
 | `solve/staging.py` | 22 | |
 | `emit/page.py` | 18 | |
@@ -331,6 +331,19 @@ constructor under a mutant. The tests now build one of their own.
 | `layout_text` 18 | `line_widths=()` left out | `()` is its default. |
 | `layout_text` 73 | `score < best_score` to `<=` | An exact tie between two different wrappings needs two different blocks to score the same float; equal wrappings tie, and either is the same block. |
 | `layout_text` 91 | the fallback joins words with `XX XX` | The fallback is reached only when every block is 0 wide. With two words or more, the space between them has width, so the fallback only ever sets one word. |
+**`solve/page.py`** -- triaged: of the 49 survivors, 26 are killed by tests in
+`tests/test_page_solver.py`, which call the solver's pieces directly at the edges each one
+holds -- an inset that exactly fits, two insets exactly a gutter apart, a lean that leaves
+half a unit -- and these 23 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_frame` 1 | `gutter` defaults to 1 | It is read only for an inset's clearance, and every inset passes its gutter. |
+| `_fmt` 5, 6 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
+| `_slanted` 30, 33, 41; `resolve_frames` 26, 30, 34, 75, 79, 83, 118, 122, 126, 140, 144, 148 | `zip(..., strict=True)` to `None`, `False` or left out | Each zip pairs sequences built from the same list of weights, so they are always the same length, and `strict` only matters when they are not. |
+| `_slanted` 35 | `spans[:-2:2]` to `spans[:-3:2]` | `spans` has an even length, so both slices stop at the same element. |
+| `_slanted` 87, 92 | `<= 0` to `< 0` for the width at the top or bottom | Differs only for a width of exactly 0, which needs the tangent of the slant times a height to land exactly on a gutter's edge; a width half a unit either side is tested. |
+| `_slanted` 142, 157 | `corners[0]` to `corners[1]` for the frame's top | Both are top corners, at the same `y`. |
 
 ### Exploring with fresh seeds
 
