@@ -10,6 +10,23 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
+  an absolute path, `scenet check` wrote that path into its SARIF output, and the finding's
+  fingerprint changed with the spelling. The location still names the file.
+- **A SARIF fingerprint depended on how the file was named on the command line**, for every
+  kind of document: `a.panel.yaml` and its absolute path gave two fingerprints for one
+  result, so an editor and CI would have raised two alerts for one fault. It now uses the
+  `uri` the result reports. A path given relative to the working directory, as CI gives
+  it, keeps the fingerprint it had.
+- **SARIF output did not say what a column counts.** SARIF 2.1.0 requires `columnKind` on a
+  run with results, and without it an editor counting UTF-16 code units, as VS Code does,
+  points one column further off past each emoji. It is now `unicodeCodePoints`.
+- **A comic-script finding pointed at the first character of its line** in SARIF, which
+  claimed a precision the parser does not have. Its region is now the whole line, so an
+  editor or code scanning underlines the line.
+
 ## [0.10.0] - 2026-10-10
 
 **Pages.** A scene can now be laid out on pages -- tiers of panels, columns beside them,

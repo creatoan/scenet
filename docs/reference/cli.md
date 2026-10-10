@@ -221,7 +221,12 @@ runtime — and in the licence gate — would buy nothing.
 
 Comic scripts are line-oriented, so a finding there carries a line and no column. A script
 line is prose, and pointing at a character within it would imply a precision the parser
-does not have.
+does not have. SARIF could say "line 5" with `startLine` alone, but GitHub code scanning
+requires all four bounds, so the region runs from column 1 to the end of the line, and an
+editor underlines the whole line. The text format prints column 1.
+
+Columns count Unicode code points, and the SARIF run says so with `columnKind`. An editor
+that counts UTF-16 code units, as VS Code does, converts them.
 
 ### Fingerprints
 
@@ -230,6 +235,9 @@ from the rule, the structural path, the message and the file — deliberately **
 the line number. A fingerprint keyed on position changes whenever anybody adds a comment
 at the top of the file, which turns one long-standing alert into a new alert on every
 edit, and de-duplicating alerts is the entire point of the field.
+
+The file enters as the `uri` the result reports, not as you typed it, so `a.panel.yaml`
+and its absolute path give one fingerprint.
 
 ### Examples
 

@@ -58,6 +58,7 @@ from scenet.errors import (
     RuleViolationError,
     ScenetError,
     ScriptSyntaxError,
+    SourceError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
@@ -360,7 +361,7 @@ class Diagnostic:
     source: Path | None = None
     region: Region | None = field(default=None, compare=False)
 
-    def fingerprint(self) -> str:
+    def fingerprint(self, *, root: Path | None = None) -> str:
         """A stable identity for this finding, for `partialFingerprints`.
 
         Deliberately **not** derived from the line number. A fingerprint that moves when
@@ -369,6 +370,13 @@ class Diagnostic:
         prevent. The path is structural, so it survives the finding moving down the file
         but still distinguishes the same fault in two different places.
 
+        The file enters as the uri the result reports, not as the path was typed: an
+        editor passes absolute paths and CI relative ones, and one file under one uri
+        has to be one alert.
+
+        Args:
+            root: Directory the reported uri is relative to, as given to `to_sarif`.
+
         Returns:
             A hex digest, stable across runs, platforms and releases.
         """
@@ -376,7 +384,7 @@ class Diagnostic:
             self.rule,
             ".".join(str(step) for step in self.path),
             self.message,
-            _uri_for(self.source, root=None) if self.source else "",
+            _uri_for(self.source, root=root) if self.source else "",
         ]
         return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:32]
 
@@ -500,7 +508,13 @@ def _message_of(exc: BaseException) -> str:
     `KeyError` stringifies as `repr(args[0])`, which wraps the message in whichever
     quote style avoids escaping -- so a message containing an apostrophe comes out
     double-quoted. Reading `args[0]` sidesteps that, exactly as the CLI does.
+
+    Nor with the file a :exc:`SourceError <scenet.errors.SourceError>` prefixes: a
+    finding names its file in its location, and the path as typed could be absolute,
+    which would put an absolute path in the output and in the fingerprint.
     """
+    if isinstance(exc, SourceError):
+        return exc.detail
     if isinstance(exc, KeyError) and exc.args:
         return str(exc.args[0])
     return str(exc)
@@ -1019,6 +1033,10 @@ def diagnose_script(
         panels = parse_script(text, source=source)
     except ScriptSyntaxError as exc:
         line = exc.line or 1
+        lines = text.splitlines()
+        # The whole line: GitHub requires every bound, so "line N" cannot be said with
+        # `startLine` alone, and ending at column 2 would claim the first character.
+        length = len(lines[line - 1]) if line <= len(lines) else 0
         return [
             Diagnostic(
                 rule=_rule_for_scenet_error(exc),
@@ -1026,7 +1044,7 @@ def diagnose_script(
                 source=source,
                 region=Region(
                     start=Position(line=line, column=1),
-                    end=Position(line=line, column=2),
+                    end=Position(line=line, column=length + 1),
                 ),
             )
         ]
@@ -1192,7 +1210,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
                     }
                 }
             ],
-            "partialFingerprints": {FINGERPRINT_KEY: item.fingerprint()},
+            "partialFingerprints": {FINGERPRINT_KEY: item.fingerprint(root=root)},
         }
         for item in found
     ]
@@ -1210,6 +1228,10 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
                         "rules": rules,
                     }
                 },
+                # Required whenever there are results (section 3.14.27). PyYAML's marks
+                # index a Python `str`, so a column is a code point, which an editor
+                # counting UTF-16 code units has to convert past an emoji.
+                "columnKind": "unicodeCodePoints",
                 "results": results,
             }
         ],

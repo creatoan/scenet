@@ -521,6 +521,19 @@ class TestTheSarifDocument:
                 assert isinstance(region[key], int)
                 assert region[key] >= 1
 
+    def test_it_says_what_a_column_counts(self, document: dict[str, Any]):
+        """SARIF 2.1.0 section 3.14.27: a run with results SHALL declare `columnKind`.
+        Without it a consumer counting UTF-16 code units, as every editor does, is one
+        column off past each emoji."""
+        assert document["runs"][0]["columnKind"] == "unicodeCodePoints"
+
+    def test_a_column_counts_code_points(self):
+        """Which is what PyYAML's marks count: indices into a Python `str`."""
+        source = 'cast: {alice: {reference: alice}}\nscript:\n  - say: {text: "🙂🙂", by: bpb}\n'
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.region is not None
+        assert found.region.start.column == source.splitlines()[2].index("bpb") + 1
+
     def test_every_rule_carries_what_github_requires(self, document: dict[str, Any]):
         for rule in document["runs"][0]["tool"]["driver"]["rules"]:
             assert rule["id"]
@@ -571,6 +584,36 @@ class TestFingerprintsAreStable:
         (actor,) = diagnose_source(UNKNOWN_ACTOR, source=Path("duel.panel.yaml"))
         (cycle,) = diagnose_source(CYCLE, source=Path("cycle.panel.yaml"))
         assert actor.fingerprint() != cycle.fingerprint()
+
+    @pytest.mark.parametrize(
+        ("name", "text"),
+        [
+            pytest.param("a.panel.yaml", UNKNOWN_ACTOR, id="panel"),
+            pytest.param("a.script", "PAGE ONE\n\nPANEL 1\n\nPANEL 1\n", id="script"),
+        ],
+    )
+    def test_it_does_not_depend_on_how_the_path_was_spelled(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, text: str
+    ):
+        """`scenet check a.panel.yaml` and `scenet check /abs/a.panel.yaml` report one
+        file under one uri, so they must report one fingerprint. An editor passes
+        absolute paths and CI relative ones; two fingerprints are two alerts."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / name).write_text(text, encoding="utf-8")
+
+        def reported(path: Path) -> list[tuple[str, str]]:
+            document = to_sarif(diagnose_file(path), root=tmp_path)
+            return [
+                (
+                    result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"],
+                    result["partialFingerprints"]["scenetDiagnostic/v1"],
+                )
+                for result in document["runs"][0]["results"]
+            ]
+
+        relative = reported(Path(name))
+        assert relative, "the test is meaningless if nothing was found"
+        assert reported(tmp_path / name) == relative
 
     def test_the_same_fault_in_two_files_fingerprints_differently(self):
         (here,) = diagnose_source(UNKNOWN_ACTOR, source=Path("a.panel.yaml"))
@@ -832,6 +875,36 @@ class TestCastResolvesAgainstTheLibrary:
         library = _featureless_library()
         found = diagnose_source("cast: {a: {reference: plain}}\n", library=library)
         assert found == []
+
+
+class TestAScriptFindingIsALine:
+    """A script line is prose, so a finding there points at the line, not a character.
+
+    SARIF can say "line 5" with `startLine` alone, but GitHub code scanning requires all
+    four bounds, so the region runs from column 1 to the end of the line. It used to end
+    at column 2, which claimed the first character: a precision the parser does not have.
+    """
+
+    @staticmethod
+    def line(number: int, text: str) -> Region:
+        return Region(start=Position(line=number, column=1), end=Position(number, len(text) + 1))
+
+    def test_a_repeated_panel_spans_its_heading(self):
+        (found,) = diagnose_script("PAGE ONE\n\nPANEL 1\n\nPanel 1.\n", source=Path("x.script"))
+        assert found.region == self.line(5, "Panel 1.")
+
+    def test_content_before_the_first_panel_spans_its_line(self):
+        (found,) = diagnose_script("stray prose here\n\nPANEL 1\n", source=Path("x.script"))
+        assert found.region == self.line(1, "stray prose here")
+
+    def test_the_line_is_the_file_line_after_front_matter(self):
+        script = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\nALICE\nHi.\n\nPANEL 1\n"
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.region == self.line(8, "PANEL 1")
+
+    def test_a_line_ending_is_not_part_of_the_line(self):
+        (found,) = diagnose_script("PANEL 1\r\n\r\nPANEL 1\r\n", source=Path("x.script"))
+        assert found.region == self.line(3, "PANEL 1")
 
 
 class TestCheckAndBuildAgree:
