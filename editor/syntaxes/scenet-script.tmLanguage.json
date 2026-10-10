@@ -1,0 +1,105 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Scenet comic script",
+  "scopeName": "source.scenet-script",
+  "comment": "Follows the script frontend (src/scenet/frontends/script_front.py) line for line, as the playground's Monarch tokenizer does. Both are tested against tests/script_highlighting/, which tests/test_script_highlighting.py holds to the frontend. Each pattern is the frontend's, with the leading whitespace it strips made explicit.",
+  "patterns": [
+    { "include": "#preamble" },
+    { "include": "#body" }
+  ],
+  "repository": {
+    "preamble": {
+      "comment": "Blank lines before anything else, where front matter may open. Begins only on a first line that is blank or a fence, and ends at the first other non-blank line, so a later --- is prose.",
+      "begin": "\\A(?=[ \\t]*(?:---[ \\t]*)?$)",
+      "end": "^(?=[ \\t]*\\S)(?![ \\t]*---[ \\t]*$)",
+      "patterns": [{ "include": "#front-matter" }]
+    },
+    "front-matter": {
+      "name": "meta.frontmatter.scenet-script",
+      "contentName": "meta.embedded.block.frontmatter",
+      "begin": "^[ \\t]*(---)[ \\t]*$",
+      "beginCaptures": { "1": { "name": "punctuation.separator.frontmatter.scenet-script" } },
+      "end": "^(---)[ \\t]*$",
+      "endCaptures": { "1": { "name": "punctuation.separator.frontmatter.scenet-script" } },
+      "patterns": [{ "include": "source.yaml" }]
+    },
+    "body": {
+      "patterns": [
+        { "include": "#page" },
+        { "include": "#panel" },
+        { "include": "#directive" },
+        { "include": "#caption" },
+        { "include": "#speech" },
+        { "include": "#prose" }
+      ]
+    },
+    "page": {
+      "match": "^[ \\t]*((?i:page))[ \\t]+([^\\s:]+?)[ \\t]*([.:]?)[ \\t]*$",
+      "captures": {
+        "1": { "name": "keyword.control.page.scenet-script" },
+        "2": { "name": "entity.name.section.page.scenet-script" },
+        "3": { "name": "punctuation.separator.scenet-script" }
+      }
+    },
+    "panel": {
+      "match": "^[ \\t]*((?i:panel))[ \\t]+([^\\s:]+?)[ \\t]*([.:]?)[ \\t]*$",
+      "captures": {
+        "1": { "name": "keyword.control.panel.scenet-script" },
+        "2": { "name": "entity.name.section.panel.scenet-script" },
+        "3": { "name": "punctuation.separator.scenet-script" }
+      }
+    },
+    "directive": {
+      "match": "^[ \\t]*(@)(\\w+)[ \\t]*(:)[ \\t]*(.+)$",
+      "captures": {
+        "1": { "name": "punctuation.definition.directive.scenet-script" },
+        "2": { "name": "entity.other.attribute-name.directive.scenet-script" },
+        "3": { "name": "punctuation.separator.key-value.scenet-script" },
+        "4": { "name": "string.unquoted.directive.scenet-script" }
+      }
+    },
+    "caption": {
+      "match": "^[ \\t]*((?i:caption))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
+      "captures": {
+        "1": { "name": "keyword.other.caption.scenet-script" },
+        "2": { "name": "punctuation.definition.caption-kind.begin.scenet-script" },
+        "3": { "name": "markup.italic.caption-kind.scenet-script" },
+        "4": { "name": "punctuation.definition.caption-kind.end.scenet-script" },
+        "5": { "name": "punctuation.separator.scenet-script" },
+        "6": { "name": "string.unquoted.caption.scenet-script" }
+      }
+    },
+    "speech": {
+      "comment": "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
+      "name": "meta.speech.scenet-script",
+      "begin": "^[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)([A-Z][A-Z0-9 _'.\\-]*?)[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "beginCaptures": {
+        "1": { "name": "entity.name.type.cue.scenet-script" },
+        "2": { "name": "punctuation.definition.parenthetical.begin.scenet-script" },
+        "3": { "name": "markup.italic.parenthetical.scenet-script" },
+        "4": { "name": "punctuation.definition.parenthetical.end.scenet-script" },
+        "5": { "name": "punctuation.separator.scenet-script" }
+      },
+      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)[A-Z][A-Z0-9 _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
+      "patterns": [
+        { "include": "#pending" },
+        {
+          "match": "^[ \\t]*(\\S.*)$",
+          "captures": { "1": { "name": "string.unquoted.dialogue.scenet-script" } }
+        }
+      ]
+    },
+    "pending": {
+      "comment": "From the end of the cue line to the end of the first line of speech. While it is open, the speech's end is not tested, so the first line is speech whatever it looks like: `OK.` is spoken, not a cue. A directive leaves the cue waiting.",
+      "begin": "\\G",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "endCaptures": { "1": { "name": "string.unquoted.dialogue.scenet-script" } },
+      "patterns": [{ "include": "#directive" }]
+    },
+    "prose": {
+      "comment": "Everything else. Preserved by the compiler, interpreted by nothing.",
+      "match": "^[ \\t]*(\\S.*)$",
+      "captures": { "1": { "name": "comment.line.prose.scenet-script" } }
+    }
+  }
+}

@@ -1,5 +1,4 @@
 {
-  "comments": { "lineComment": "//" },
   "brackets": [["(", ")"]],
   "autoClosingPairs": [{ "open": "(", "close": ")" }]
 }

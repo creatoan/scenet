@@ -1,0 +1,26 @@
+
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PANEL 1
+@shot: close_up
+A scene divider follows.
+---
+THIS IS A SHOUTED DESCRIPTION NOT A SPEAKER
+  ALICE
+  Hi.
+PANEL 2
+ALICE
+Rain again.
+@angle: low
+Rain.
+BOB
+OK.
+ALICE
+@shot: medium_shot
+Still raining.
+PANEL 3
+ALICE
+Hello
+BOB
+Hi.

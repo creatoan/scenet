@@ -21,6 +21,11 @@ below 1.0 means.
   (Part of #77)
 - The extension is now versioned with the compiler, starting at 0.10.0, so the `.vsix` on
   a release says which release it belongs to.
+- **The VS Code extension highlights comic scripts**, as the playground does: headings,
+  directives, captions, cues and their parentheticals, dialogue set apart from prose, and
+  the front matter as YAML. Both highlighters are tested against one set of fixture
+  scripts, which are themselves checked against the compiler's reading, so neither can
+  drift from the other or from the format. (Closes #77)
 
 ### Fixed
 
@@ -44,6 +49,19 @@ below 1.0 means.
 - **A comic-script finding pointed at the first character of its line** in SARIF, which
   claimed a precision the parser does not have. Its region is now the whole line, so an
   editor or code scanning underlines the line.
+- **The playground never coloured a comic script's `PAGE` and `PANEL` headings**, and the
+  line after a cue with a parenthetical, such as `BOB (whisper)`, was not shown as dialogue.
+  Monaco refused those three highlighting rules and dropped the lines without a word. The
+  rules are fixed, and a test now runs them through Monaco's own lexer, where a refused rule
+  fails.
+- **The playground coloured a comic script by older rules than the compiler reads it by.**
+  `Panel 1.`, `ALICE:` and `CAPTION: Later.` were shown as prose; a cue did not end the
+  speech before it; and a `---` scene divider opened front matter that never closed,
+  colouring the rest of the script as YAML. It now follows the script frontend line for
+  line, and shared fixtures, checked against the frontend, hold it there.
+- **Toggle Line Comment in a VS Code comic script wrote `//` lines**, which the format does
+  not have: the compiler kept them as prose, or read them as dialogue under a cue. The
+  extension no longer declares a comment syntax for scripts, as the playground never did.
 
 ## [0.10.0] - 2026-10-10
 

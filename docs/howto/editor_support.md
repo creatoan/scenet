@@ -44,9 +44,11 @@ It contributes:
 
 - Schema association for `*.panel.yaml` and `*.scene.yaml`, so no `$schema` comment is
   needed.
-- Recognition of `.script` comic scripts as their own language, with comment and bracket
-  handling. Syntax highlighting for them is not there yet; it is tracked in
-  [#77](https://github.com/creatoan/scenet/issues/77).
+- **Highlighting for `.script` comic scripts**, the same as the playground's: page and
+  panel headings, `@` directives, captions, cues and their parentheticals, dialogue apart
+  from prose, and the front matter coloured as the YAML it is. It follows the compiler's
+  reading line for line, so a line coloured as dialogue is a line that compiles as
+  dialogue.
 - **The findings of `scenet check`**, when a panel, scene or comic script is opened or
   saved: an actor not in the cast, an ordering cycle, a pose the puppet lacks, and every
   other rule in the [catalogue](../reference/cli.md#rules), underlined where they are and

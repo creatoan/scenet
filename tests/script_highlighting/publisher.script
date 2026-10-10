@@ -1,0 +1,28 @@
+---
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB: {reference: bob, at: right_third}
+---
+PAGE ONE
+
+Panel 1.
+Alice and Bob on a corner.
+
+ALICE:
+You forgot your umbrella!
+
+Panel 2:
+CAPTION: Later.
+CAPTION (monologue): She never forgot.
+
+BOB (whisper)
+I know.
+I left it
+on purpose.
+ALICE (shouting):
+You what?!
+CAPTION: The rain did not stop.
+
+Panel 3.
+@angle: high
+Panel 1. Alice on a corner.
