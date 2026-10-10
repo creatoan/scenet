@@ -234,6 +234,13 @@ class TestAFreshFontMetrics:
         assert drawn[0].startswith("M")
         assert missing == ("", fresh.advance("\u200b"))
 
+    def test_a_missing_glyph_does_not_end_the_outlines(self, fresh: FontMetrics):
+        """A character the font lacks is drawn as nothing and passed over; the letters
+        after it are still drawn."""
+        missing, drawn = fresh.glyph_outlines("\u200bA")
+        assert missing == ("", fresh.advance("\u200b"))
+        assert drawn[0].startswith("M")
+
 
 class TestTheEmptyBlock:
     def test_text_with_no_words_is_exactly_the_empty_block(self, metrics: FontMetrics):
