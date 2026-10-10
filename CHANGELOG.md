@@ -10,39 +10,32 @@ below 1.0 means.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-10
+
+**Pages.** A scene can now be laid out on pages -- tiers of panels, columns beside them,
+insets set into corners and gutters that lean -- and `scenet build` writes each page beside
+its panels. This release also closes more than twenty ways a document could lose something,
+point at the wrong line, or end in a traceback, and the test suite now holds the compiler to
+its promises with generated documents, golden outputs on every platform and weekly mutation
+testing.
+
+**Upgrading from 0.9.**
+
+- **Some documents that compiled now refuse**, each for a fault that was losing something
+  without a word: a key written twice in YAML, a panel named with an unquoted number, `.inf`
+  or `.nan` anywhere, a control character in a line or an actor id, an inset that does not
+  fit its panel, and two outputs that would be the same file.
+- **Every panel with lettering renders slightly differently.** Glyphs are now drawn at the
+  size they were measured, which at some sizes is 14% smaller than before; a strip's ids are
+  prefixed by each panel's position; and `--strip` no longer writes a strip of one panel.
+- **Some findings moved**: an unknown speaker is at `script.N.say.by`, a block-style key at
+  its own line, a broken `over:` at the `over:`. Code that matched on the old paths, the MCP
+  server's `where` included, needs updating.
+- **A comic script that numbers its panels per page** now names them by page and panel
+  (`2-1`), where before the later page overwrote the earlier one.
+
 ### Added
 
-- **Golden outputs, checked on every platform.** The gallery is built through `scenet build`
-  in every CI job, Windows included, and the bytes on disk must match committed goldens: every
-  Panel and Page Core in full, and a digest of every SVG. Two processes with different hash
-  seeds, and a relative path against an absolute one, must write the same bytes, and no output
-  may hold the path it came from. `scripts/update_golden.py` regenerates them. (#94)
-- **Weekly mutation testing of the solver and the emitters.** `.github/workflows/mutation.yml`
-  runs [mutmut](https://github.com/boxed/mutmut) over `solve/` and `emit/` every Monday and
-  on demand, and reports every small edit to the code that no test notices, with the score in
-  the job summary. A second job runs the property tests with fresh random seeds and 300
-  examples each. Neither runs on pull requests or blocks a merge. mutmut is in its own
-  `mutation` dependency group, so a plain `uv sync` does not install it. (#95)
-- **The command-line reference is a tested contract.** Each command's options, choices,
-  defaults and exit statuses, the frontends, and every behavioural sentence in
-  `docs/reference/cli.md` are checked against the code in both directions, so neither can
-  drift alone. Every rule has a document in `tests/rule_corpus/` that must produce exactly
-  one finding of it. And the `scenet` commands in the documentation's shell examples now run
-  in the test suite, as its Python examples already did. (#93)
-- **Property-based tests for pages, scripts and broken documents.** Generated books are
-  held to the documented reading order, worked out from the pages as written, to frames that
-  stay inside the margins and clear of each other, and to sound SVG with ids unique across
-  pages. Generated comic scripts lose no panel and no line. And a valid document given any
-  one mistake from a catalogue of twenty-odd must get exactly one finding from `scenet
-  check`, under the right rule and on the right line; arbitrary input must never get a
-  traceback. The eight bugs they found are fixed above. (#92)
-- **Property-based tests.** The checks a compiled panel must pass, which ran on five
-  hand-written panels, now also run on panels Hypothesis generates: lettering inside the
-  margin, off every face and in reading order against every earlier box; an SVG that
-  parses, whose ids resolve and whose glyphs are drawn at their measured size; compiles
-  that are byte-identical; Panel Core that round-trips; and `scenet check --deep` agreeing
-  with the compiler. The examples are fixed, so a failure replays on every machine.
-  `docs/maintainer/testing.md` explains the profiles and how to add a generator. (#91)
 - **Pages.** A scene can lay its panels out with `pages:`: each page a list of tiers, each
   tier a list of panels, and a weight for each tier's height and each panel's width, shared
   out of what `page:`'s margin and gutters leave, the way CSS Grid shares a row. A panel on a
@@ -94,6 +87,38 @@ below 1.0 means.
 - `scenet/duplicate-key`, the finding for a key written twice in one YAML mapping. It points
   at the second and names the line of the first. (#83)
 
+- **Golden outputs, checked on every platform.** The gallery is built through `scenet build`
+  in every CI job, Windows included, and the bytes on disk must match committed goldens: every
+  Panel and Page Core in full, and a digest of every SVG. Two processes with different hash
+  seeds, and a relative path against an absolute one, must write the same bytes, and no output
+  may hold the path it came from. `scripts/update_golden.py` regenerates them. (#94)
+- **Weekly mutation testing of the solver and the emitters.** `.github/workflows/mutation.yml`
+  runs [mutmut](https://github.com/boxed/mutmut) over `solve/` and `emit/` every Monday and
+  on demand, and reports every small edit to the code that no test notices, with the score in
+  the job summary. A second job runs the property tests with fresh random seeds and 300
+  examples each. Neither runs on pull requests or blocks a merge. mutmut is in its own
+  `mutation` dependency group, so a plain `uv sync` does not install it. (#95)
+- **The command-line reference is a tested contract.** Each command's options, choices,
+  defaults and exit statuses, the frontends, and every behavioural sentence in
+  `docs/reference/cli.md` are checked against the code in both directions, so neither can
+  drift alone. Every rule has a document in `tests/rule_corpus/` that must produce exactly
+  one finding of it. And the `scenet` commands in the documentation's shell examples now run
+  in the test suite, as its Python examples already did. (#93)
+- **Property-based tests for pages, scripts and broken documents.** Generated books are
+  held to the documented reading order, worked out from the pages as written, to frames that
+  stay inside the margins and clear of each other, and to sound SVG with ids unique across
+  pages. Generated comic scripts lose no panel and no line. And a valid document given any
+  one mistake from a catalogue of twenty-odd must get exactly one finding from `scenet
+  check`, under the right rule and on the right line; arbitrary input must never get a
+  traceback. The eight bugs they found are fixed above. (#92)
+- **Property-based tests.** The checks a compiled panel must pass, which ran on five
+  hand-written panels, now also run on panels Hypothesis generates: lettering inside the
+  margin, off every face and in reading order against every earlier box; an SVG that
+  parses, whose ids resolve and whose glyphs are drawn at their measured size; compiles
+  that are byte-identical; Panel Core that round-trips; and `scenet check --deep` agreeing
+  with the compiler. The examples are fixed, so a failure replays on every machine.
+  `docs/maintainer/testing.md` explains the profiles and how to add a generator. (#91)
+
 ### Fixed
 
 - **The same panel could compile to different bytes.** kiwisolver, which places the cast,
@@ -102,7 +127,7 @@ below 1.0 means.
   printed as `247.95` in one compile and `247.96` in the next, in the same process. Solved
   positions are now snapped to a millionth of a unit as they leave the solver, far above
   that noise and far below anything the output shows. One gallery golden moves by 0.01 as a
-  result. Found by the weekly Hypothesis exploration.
+  result. Found by the weekly Hypothesis exploration. (#117)
 - **One mistake in a puppet part was reported six times.** A part is a bone (`from`, `to`,
   `width`) or a blob (`at`, `radius`), and a bone with a bad `width` was also tried as a blob,
   so pydantic listed five more errors about a blob nobody wrote, under paths naming its
@@ -903,7 +928,8 @@ or has drifted out of step with the code fails the build.
 - `long_shot` and `full_shot` crop at the same landmark, so with no environment to show
   they can differ only by headroom.
 
-[Unreleased]: https://github.com/creatoan/scenet/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/creatoan/scenet/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/creatoan/scenet/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/creatoan/scenet/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/creatoan/scenet/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/creatoan/scenet/compare/v0.6.0...v0.7.0
