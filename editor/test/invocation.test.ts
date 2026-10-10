@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 
-import { checkInvocation, parseExecutable } from "../src/invocation";
+import { buildInvocation, checkInvocation, parseExecutable } from "../src/invocation";
 
 describe("parseExecutable", () => {
   test("a bare command", () => {
@@ -53,6 +53,27 @@ describe("checkInvocation", () => {
     // `uv run` finds its project from the working directory, so it has to be one near
     // the document rather than wherever the editor happened to start.
     const { cwd } = checkInvocation({ executable: "scenet", deep: false, file, workspaceFolder: undefined });
+    assert.equal(cwd, join(folder, "pages"));
+  });
+});
+
+describe("buildInvocation", () => {
+  const folder = join("work", "comic");
+  const file = join(folder, "pages", "duel.panel.yaml");
+  const output = join("scratch", "preview.svg");
+
+  test("the preview runs from the workspace folder, as the check does", () => {
+    // VS Code runs its extension host from its own install directory, where
+    // `uv run scenet` finds no project and fails with "program not found".
+    assert.deepEqual(buildInvocation({ executable: "uv run scenet", file, output, workspaceFolder: folder }), {
+      command: "uv",
+      args: ["run", "scenet", "build", file, "-o", output],
+      cwd: folder,
+    });
+  });
+
+  test("a file outside any workspace folder builds from its own directory", () => {
+    const { cwd } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: undefined });
     assert.equal(cwd, join(folder, "pages"));
   });
 });
