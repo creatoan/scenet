@@ -15,6 +15,11 @@ below 1.0 means.
 - **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
   an absolute path, `scenet check` wrote that path into its SARIF output, and the finding's
   fingerprint changed with the spelling. The location still names the file.
+- **A SARIF fingerprint depended on how the file was named on the command line**, for every
+  kind of document: `a.panel.yaml` and its absolute path gave two fingerprints for one
+  result, so an editor and CI would have raised two alerts for one fault. It now uses the
+  `uri` the result reports. A path given relative to the working directory, as CI gives
+  it, keeps the fingerprint it had.
 
 ## [0.10.0] - 2026-10-10
 

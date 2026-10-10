@@ -231,6 +231,9 @@ the line number. A fingerprint keyed on position changes whenever anybody adds a
 at the top of the file, which turns one long-standing alert into a new alert on every
 edit, and de-duplicating alerts is the entire point of the field.
 
+The file enters as the `uri` the result reports, not as you typed it, so `a.panel.yaml`
+and its absolute path give one fingerprint.
+
 ### Examples
 
 ```bash

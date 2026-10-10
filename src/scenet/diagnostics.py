@@ -361,7 +361,7 @@ class Diagnostic:
     source: Path | None = None
     region: Region | None = field(default=None, compare=False)
 
-    def fingerprint(self) -> str:
+    def fingerprint(self, *, root: Path | None = None) -> str:
         """A stable identity for this finding, for `partialFingerprints`.
 
         Deliberately **not** derived from the line number. A fingerprint that moves when
@@ -370,6 +370,13 @@ class Diagnostic:
         prevent. The path is structural, so it survives the finding moving down the file
         but still distinguishes the same fault in two different places.
 
+        The file enters as the uri the result reports, not as the path was typed: an
+        editor passes absolute paths and CI relative ones, and one file under one uri
+        has to be one alert.
+
+        Args:
+            root: Directory the reported uri is relative to, as given to `to_sarif`.
+
         Returns:
             A hex digest, stable across runs, platforms and releases.
         """
@@ -377,7 +384,7 @@ class Diagnostic:
             self.rule,
             ".".join(str(step) for step in self.path),
             self.message,
-            _uri_for(self.source, root=None) if self.source else "",
+            _uri_for(self.source, root=root) if self.source else "",
         ]
         return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:32]
 
@@ -1199,7 +1206,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
                     }
                 }
             ],
-            "partialFingerprints": {FINGERPRINT_KEY: item.fingerprint()},
+            "partialFingerprints": {FINGERPRINT_KEY: item.fingerprint(root=root)},
         }
         for item in found
     ]
