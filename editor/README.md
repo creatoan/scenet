@@ -77,7 +77,13 @@ npm test          # the parts that need no editor, under node --test
 
 What the extension decides — how to invoke `scenet`, what a run means, where a SARIF
 finding goes — lives in modules with no `vscode` import, so it is tested without
-launching an editor. The SARIF the tests read is captured from `scenet check`, and
+launching an editor.
+
+The glue is tested in one. `npm run e2e` downloads the oldest VS Code `engines.vscode`
+admits, opens the repository with the extension under development, and runs
+`e2e/suite.ts` inside it: findings on open, in place, cleared on a saved fix, `--deep`,
+and a missing executable. It needs `uv`, since the suite runs `uv run scenet`. CI runs it
+headless under `xvfb-run`; elsewhere it opens a window for a minute. The SARIF the tests read is captured from `scenet check`, and
 `tests/test_editor_fixtures.py` fails if a capture falls behind it.
 
 Press F5 in VS Code to launch an Extension Development Host.

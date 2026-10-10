@@ -5,6 +5,9 @@
 
 src/**
 test/**
+e2e/**
+out-e2e/**
+.vscode-test/**
 out/**/*.map
 tsconfig.json
 .gitignore
