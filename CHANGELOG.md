@@ -21,6 +21,11 @@ below 1.0 means.
   (Part of #77)
 - The extension is now versioned with the compiler, starting at 0.10.0, so the `.vsix` on
   a release says which release it belongs to.
+- **The VS Code extension highlights comic scripts**, as the playground does: headings,
+  directives, captions, cues and their parentheticals, dialogue set apart from prose, and
+  the front matter as YAML. Both highlighters are tested against one set of fixture
+  scripts, which are themselves checked against the compiler's reading, so neither can
+  drift from the other or from the format. (Closes #77)
 
 ### Fixed
 

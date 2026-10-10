@@ -101,9 +101,14 @@ before(async () => {
       createOnigScanner: (patterns) => new oniguruma.OnigScanner(patterns),
       createOnigString: (text) => new oniguruma.OnigString(text),
     }),
-    // Only the script grammar. VS Code supplies `source.yaml` for the front matter;
-    // here it resolves to nothing, and the front matter is one embedded block.
     loadGrammar: async (scopeName) => {
+      // VS Code's built-in YAML grammar colours the front matter. A stand-in without
+      // patterns is enough here, since anything in the block is front matter -- but
+      // it has to exist: vscode-textmate drops, silently, a rule whose include it
+      // cannot resolve, and the front matter with it.
+      if (scopeName === "source.yaml") {
+        return textmate.parseRawGrammar(JSON.stringify({ scopeName, patterns: [] }), "yaml.json");
+      }
       if (scopeName !== SCOPE || contribution === undefined) {
         return null;
       }

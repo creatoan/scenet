@@ -12,7 +12,7 @@ Treat it accordingly: an experiment first, a usable tool second.
 ---
 
 Authoring support for Scenet documents: completion, inline validation, the findings of
-`scenet check` as you save, and a preview.
+`scenet check` as you save, highlighting for comic scripts, and a preview.
 
 Changes are recorded in the project's
 [CHANGELOG](https://github.com/creatoan/scenet/blob/main/CHANGELOG.md). The extension is
@@ -37,6 +37,21 @@ cycle, or a pose the puppet lacks; `scenet check` can, and reports them as SARIF
 extension runs it when a panel, scene or comic script is opened or saved, and shows each
 finding where the report puts it, with its rule as the code. Nothing is reimplemented, so
 the editor reports exactly what the command line does.
+
+## Highlighting comic scripts
+
+`.script` files are coloured by a TextMate grammar, `syntaxes/scenet-script.tmLanguage.json`,
+which follows the compiler's script frontend line for line. The playground colours the
+same files with a Monaco Monarch tokenizer, and the two are separate formats that cannot
+be generated from one another without a converter longer than either.
+
+So they are held together by tests instead. `tests/script_highlighting/` holds scripts,
+each with the spans a highlighter should colour, line by line, and what each span is.
+`test/grammar.test.ts` runs this grammar against them with `vscode-textmate` and the
+Oniguruma build VS Code uses; the playground runs its tokenizer against the same files
+through Monaco's own lexer; and `tests/test_script_highlighting.py` checks every fixture
+against the compiler's own reading. A change to the script format fails all three until
+both tokenizers follow it.
 
 ## Settings
 

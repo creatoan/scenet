@@ -19,3 +19,8 @@
 [["cue-name", "ALICE"]]
 [["directive-marker", "@"], ["directive-name", "shot"], ["directive-value", "medium_shot"]]
 [["dialogue", "Still raining."]]
+[["panel-keyword", "PANEL"], ["panel-label", "3"]]
+[["cue-name", "ALICE"]]
+[["dialogue", "Hello"]]
+[["cue-name", "BOB"]]
+[["dialogue", "Hi."]]

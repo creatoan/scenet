@@ -1,7 +1,7 @@
 {
   "name": "scenet",
   "displayName": "Scenet",
-  "description": "Authoring support for Scenet comic-panel documents: schema-driven completion, validation, the findings of scenet check as you save, and a live preview. Deliberately AI-generated -- an experiment first, a usable tool second.",
+  "description": "Authoring support for Scenet comic-panel documents: schema-driven completion, validation, the findings of scenet check as you save, comic-script highlighting, and a live preview. Deliberately AI-generated -- an experiment first, a usable tool second.",
   "version": "0.10.0",
   "publisher": "scenet",
   "license": "0BSD",
@@ -32,6 +32,16 @@
           ".script"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "scenet-script",
+        "scopeName": "source.scenet-script",
+        "path": "./syntaxes/scenet-script.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.frontmatter": "yaml"
+        }
       }
     ],
     "yamlValidation": [

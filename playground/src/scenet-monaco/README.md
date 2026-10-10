@@ -61,8 +61,18 @@ actor missing from the cast, a cycle in `left_of`.
 Comic script carries its structure in line shape, so a Monarch tokenizer — a state
 machine over regular expressions, line by line — is the whole implementation. No parser.
 
-Three states: the body, the YAML front matter (delegated to the YAML tokenizer), and
-dialogue following a speaker cue.
+Its states mirror the compiler's own loop over the script (`_read_panels` in
+`scenet/frontends/script_front.py`): blank lines before anything else, where front matter
+may open; the front matter, delegated to the YAML tokenizer; the body; the line after a
+cue, which is speech whatever it looks like; and the rest of a speech.
+
+The VS Code extension colours scripts with a TextMate grammar instead
+(`editor/syntaxes/scenet-script.tmLanguage.json`), and two tokenizers for one format drift
+apart unless something stops them. Both are tested against the same fixtures in
+`tests/script_highlighting/` — a script, and line by line the spans a highlighter colours
+and what each one is — and `tests/test_script_highlighting.py` holds the fixtures to the
+compiler's reading. `script-language.test.ts` runs this tokenizer through Monaco's own
+lexer (`monarch-harness.ts`), because Monaco silently drops a rule it refuses.
 
 One rule is worth stating twice, because it is the one that trips people up: **a speaker
 cue is recognised by the name being in capitals, not the whole line.** `BOB (whisper)` is
@@ -75,4 +85,5 @@ frontend makes the same distinction, and got it wrong the first time.
 |---|---|
 | `index.ts` | Public API: `registerScenetLanguages`, `toMarkers`, plus helpers for picking a model URI and language by document kind |
 | `script-language.ts` | The comic-script language: Monarch tokenizer, bracket configuration, theme rules |
+| `monarch-harness.ts` | Runs the comic-script tokenizer in Node with Monaco's own lexer, for the tests |
 | `semantic.ts` | Actors, relations and verbs as semantic tokens, and their encoding |
