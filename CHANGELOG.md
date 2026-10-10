@@ -10,6 +10,18 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- **The VS Code extension shows what `scenet check` finds**, as you open and save a panel,
+  scene or comic script: an actor not in the cast, an ordering cycle, a pose the puppet
+  lacks, which the schema cannot see. Each finding is underlined where it is and listed
+  under Problems with its rule, linked to its explanation, and goes away when it is fixed.
+  `scenet.checkDeep` adds `--deep`; `scenet.checkOnSave` turns it off. If `scenet` cannot
+  be run, or crashes, a notification says so once rather than leaving the list empty.
+  (Part of #77)
+- The extension is now versioned with the compiler, starting at 0.10.0, so the `.vsix` on
+  a release says which release it belongs to.
+
 ### Fixed
 
 - **A comic-script finding repeated its file in the message**, spelled as it was typed. Given

@@ -1,8 +1,8 @@
 {
   "name": "scenet",
   "displayName": "Scenet",
-  "description": "Authoring support for Scenet comic-panel documents: schema-driven completion, validation, and a live preview. Deliberately AI-generated -- an experiment first, a usable tool second.",
-  "version": "0.1.0",
+  "description": "Authoring support for Scenet comic-panel documents: schema-driven completion, validation, the findings of scenet check as you save, and a live preview. Deliberately AI-generated -- an experiment first, a usable tool second.",
+  "version": "0.10.0",
   "publisher": "scenet",
   "license": "0BSD",
   "private": true,
@@ -13,7 +13,10 @@
     "Programming Languages",
     "Visualization"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:yaml",
+    "onLanguage:scenet-script"
+  ],
   "main": "./out/extension.js",
   "extensionDependencies": [
     "redhat.vscode-yaml"
@@ -70,6 +73,16 @@
           "type": "boolean",
           "default": true,
           "description": "Refresh an open preview whenever the document is saved."
+        },
+        "scenet.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Run `scenet check` on a panel, scene or comic script when it is opened or saved, and show what it finds in the Problems list. It catches what the schema cannot, such as an actor not in the cast."
+        },
+        "scenet.checkDeep": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Check with `--deep`: also run the full compiler, to catch a panel no layout satisfies or a balloon with nowhere to go. Off by default, as in the CLI, because it costs a real compile on every save."
         }
       }
     }

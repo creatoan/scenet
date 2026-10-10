@@ -11,7 +11,12 @@ Treat it accordingly: an experiment first, a usable tool second.
 
 ---
 
-Authoring support for Scenet documents: completion, inline validation, and a preview.
+Authoring support for Scenet documents: completion, inline validation, the findings of
+`scenet check` as you save, and a preview.
+
+Changes are recorded in the project's
+[CHANGELOG](https://github.com/creatoan/scenet/blob/main/CHANGELOG.md). The extension is
+versioned with the compiler it ships beside.
 
 ## Why there is no language server
 
@@ -27,13 +32,38 @@ so a stale schema cannot ship.
 Preview shells out to `scenet build` rather than reimplementing the pipeline — the same
 refusal to fork the compiler.
 
+So do diagnostics. A schema cannot see an actor that is not in the cast, an ordering
+cycle, or a pose the puppet lacks; `scenet check` can, and reports them as SARIF. The
+extension runs it when a panel, scene or comic script is opened or saved, and shows each
+finding where the report puts it, with its rule as the code. Nothing is reimplemented, so
+the editor reports exactly what the command line does.
+
+## Settings
+
+| Setting | Default | |
+|---|---|---|
+| `scenet.executable` | `scenet` | How to invoke the compiler: an absolute path, or `uv run scenet` |
+| `scenet.previewOnSave` | on | Refresh an open preview on save |
+| `scenet.checkOnSave` | on | Run `scenet check` on open and save, and show its findings |
+| `scenet.checkDeep` | off | Check with `--deep`, which costs a real compile on every save |
+
+If `scenet` cannot be run, or fails, the extension says so once in a notification rather
+than leaving the Problems list empty, and logs what `scenet` printed to the **Scenet**
+output channel. A traceback is a bug in `scenet`; the notification offers to report it.
+
 ## Building
 
 ```bash
 npm ci
 npm run schemas   # regenerate from the models
 npm run build
+npm test          # the parts that need no editor, under node --test
 ```
+
+What the extension decides — how to invoke `scenet`, what a run means, where a SARIF
+finding goes — lives in modules with no `vscode` import, so it is tested without
+launching an editor. The SARIF the tests read is captured from `scenet check`, and
+`tests/test_editor_fixtures.py` fails if a capture falls behind it.
 
 Press F5 in VS Code to launch an Extension Development Host.
 
@@ -41,4 +71,5 @@ Press F5 in VS Code to launch an Extension Development Host.
 
 `redhat.vscode-yaml` provides the YAML language service the schema contributions hook
 into, and is declared as an extension dependency. The `scenet` command must be on PATH,
-or set `scenet.executable` (for example to `uv run scenet`).
+or set `scenet.executable` (for example to `uv run scenet`). Diagnostics
+run it from the document's workspace folder, so `uv run` finds the project.

@@ -47,12 +47,19 @@ It contributes:
 - Recognition of `.script` comic scripts as their own language, with comment and bracket
   handling. Syntax highlighting for them is not there yet; it is tracked in
   [#77](https://github.com/creatoan/scenet/issues/77).
+- **The findings of `scenet check`**, when a panel, scene or comic script is opened or
+  saved: an actor not in the cast, an ordering cycle, a pose the puppet lacks, and every
+  other rule in the [catalogue](../reference/cli.md#rules), underlined where they are and
+  listed under **Problems** with their rule. A comic-script finding underlines its line.
+  Set `scenet.checkDeep` to check with `--deep` as well, which costs a real compile on
+  every save, and `scenet.checkOnSave` to turn checking off.
 - **Scenet: Preview panel**, which compiles the current document and shows the SVG beside
   it.
 
-The preview shells out to the `scenet` command, so it needs the compiler installed. If it
-is not on your PATH, set `scenet.executable` — `uv run scenet` works, as does an absolute
-path.
+Both shell out to the `scenet` command, so they need the compiler installed. If it is not
+on your PATH, set `scenet.executable` — `uv run scenet` works, as does an absolute path.
+If it cannot be run, or fails, a notification says so once, rather than the Problems list
+staying quietly empty.
 
 It depends on the Red Hat YAML extension, which VS Code will offer to install for you.
 

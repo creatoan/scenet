@@ -1,7 +1,7 @@
 /**
  * VS Code support for Scenet documents.
  *
- * Two capabilities, and neither of them is a language server.
+ * Three capabilities, and none of them is a language server.
  *
  * Completion and validation come from the JSON Schema in `schemas/`, which is
  * *generated from the compiler's own pydantic models* by `scenet schema`. Writing a
@@ -9,9 +9,11 @@
  * slowly drifts from the first; deriving it means what the editor suggests is exactly
  * what compiles, by construction.
  *
- * Preview shells out to the same `scenet build` a user would run. Reimplementing the
- * pipeline in TypeScript would fork the compiler, which is the thing this project
- * consistently refuses to do.
+ * Diagnostics the schema cannot express -- an actor not in the cast, an ordering cycle,
+ * a pose the puppet lacks -- come from `scenet check`, run on open and on save
+ * (`diagnostics.ts`). Preview shells out to the same `scenet build` a user would run.
+ * Reimplementing either in TypeScript would fork the compiler, which is the thing this
+ * project consistently refuses to do.
  */
 
 import { execFile } from "node:child_process";
@@ -20,6 +22,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
+
+import { Checker } from "./diagnostics";
+import { parseExecutable } from "./invocation";
 
 const run = promisify(execFile);
 
@@ -34,6 +39,9 @@ interface PreviewState {
 let preview: PreviewState | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
+  const output = vscode.window.createOutputChannel("Scenet", { log: true });
+  context.subscriptions.push(output, new Checker(output));
+
   context.subscriptions.push(
     vscode.commands.registerCommand("scenet.preview", () => void showPreview()),
   );
@@ -115,9 +123,7 @@ interface Compiled {
  */
 async function compile(sourcePath: string): Promise<Compiled> {
   const config = vscode.workspace.getConfiguration("scenet");
-  const invocation = config.get<string>("executable", "scenet").trim().split(/\s+/);
-  const command = invocation[0] ?? "scenet";
-  const leadingArgs = invocation.slice(1);
+  const { command, leadingArgs } = parseExecutable(config.get<string>("executable", "scenet"));
 
   const scratch = await fs.mkdtemp(join(tmpdir(), "scenet-preview-"));
   try {
