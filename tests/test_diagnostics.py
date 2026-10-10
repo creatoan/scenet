@@ -572,6 +572,36 @@ class TestFingerprintsAreStable:
         (cycle,) = diagnose_source(CYCLE, source=Path("cycle.panel.yaml"))
         assert actor.fingerprint() != cycle.fingerprint()
 
+    @pytest.mark.parametrize(
+        ("name", "text"),
+        [
+            pytest.param("a.panel.yaml", UNKNOWN_ACTOR, id="panel"),
+            pytest.param("a.script", "PAGE ONE\n\nPANEL 1\n\nPANEL 1\n", id="script"),
+        ],
+    )
+    def test_it_does_not_depend_on_how_the_path_was_spelled(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, text: str
+    ):
+        """`scenet check a.panel.yaml` and `scenet check /abs/a.panel.yaml` report one
+        file under one uri, so they must report one fingerprint. An editor passes
+        absolute paths and CI relative ones; two fingerprints are two alerts."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / name).write_text(text, encoding="utf-8")
+
+        def reported(path: Path) -> list[tuple[str, str]]:
+            document = to_sarif(diagnose_file(path), root=tmp_path)
+            return [
+                (
+                    result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"],
+                    result["partialFingerprints"]["scenetDiagnostic/v1"],
+                )
+                for result in document["runs"][0]["results"]
+            ]
+
+        relative = reported(Path(name))
+        assert relative, "the test is meaningless if nothing was found"
+        assert reported(tmp_path / name) == relative
+
     def test_the_same_fault_in_two_files_fingerprints_differently(self):
         (here,) = diagnose_source(UNKNOWN_ACTOR, source=Path("a.panel.yaml"))
         (there,) = diagnose_source(UNKNOWN_ACTOR, source=Path("b.panel.yaml"))
