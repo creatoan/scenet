@@ -236,6 +236,17 @@ class TestBentTails:
         assert route.control is None
         assert route.end == self.MOUTH
 
+    def test_a_vertical_tail_bends_sideways(self):
+        # The same gentlest bend on a chord running down the page, from (150, 50) to
+        # (150, 250): the normal now points left, so the control moves across, not down.
+        balloon = BBox(130.0, 10.0, 40.0, 40.0)
+        mouth = Point(150.0, 250.0)
+        route = route_tail(balloon, mouth, obstacles=[Circle(150.0, 150.0, 10.0)])
+        assert route.start == Point(150.0, 50.0)
+        assert route.control is not None
+        assert route.control.x == pytest.approx(150.0 - 70.0)
+        assert route.control.y == pytest.approx(150.0)
+
 
 class TestCurveSampling:
     """`_curve_hits` follows the quadratic curve the tail will be drawn as."""

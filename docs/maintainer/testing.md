@@ -265,18 +265,18 @@ The first full run with the golden outputs, made locally on four cores in about 
 produced 4,094 mutants: **3,761 killed (91.9%)** and 333 survivors. The three that ran out of
 memory, described above, are among the killed. By module:
 
-| Module | Survivors |
-|---|---|
-| `solve/balloons.py` | 123 |
-| `solve/text.py` | 50 |
-| `solve/page.py` | 49 |
-| `solve/backdrop.py` | 32 |
-| `solve/staging.py` | 22 |
-| `emit/page.py` | 18 |
-| `emit/svg.py` | 16 |
-| `emit/debug_svg.py` | 9 |
-| `solve/camera.py` | 7 |
-| `emit/strip.py` | 7 |
+| Module | Survivors | Triage |
+|---|---|---|
+| `solve/balloons.py` | 123 | done: 16 accepted, below |
+| `solve/text.py` | 50 | |
+| `solve/page.py` | 49 | |
+| `solve/backdrop.py` | 32 | |
+| `solve/staging.py` | 22 | |
+| `emit/page.py` | 18 | |
+| `emit/svg.py` | 16 | |
+| `emit/debug_svg.py` | 9 | |
+| `solve/camera.py` | 7 | |
+| `emit/strip.py` | 7 | |
 
 Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
 `emit/svg.py`: comparing every emitted byte took most of the emitters' share.
@@ -289,6 +289,29 @@ Every survivor ends in one of two states:
 - **Accepted**, recorded below with a reason: an equivalent mutant that cannot change any
   output, or one whose effect is below what the format can show. `# pragma: no mutate` is
   used only where nothing else works, with a comment saying why.
+
+A triaged module's survivors in the weekly summary should be exactly its accepted list
+below. Anything else is new, and is triaged the same way.
+
+### Accepted survivors
+
+**`solve/balloons.py`** -- triaged: of the 123 survivors, 107 are killed by tests in
+`tests/test_balloons.py`, and these 16 are accepted. Mutant numbers are mutmut's, from
+`uv run mutmut show <name>`, and shift when the function they are in changes.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_stop_at_face` 35 | `discriminant < 0` to `<= 0` | The mouth is strictly inside the face, so the line through it always crosses the outline twice: the discriminant is never zero. |
+| `_stop_at_face` 46, 47 | the second root mutated | The tail starts outside the face -- a balloon may not overlap one -- so the first crossing is always the smaller root, in (0, 1). The second is never chosen. |
+| `_stop_at_face` 52 | `t <= 1.0` to `t < 1.0` | `t == 1` would put the mouth on the outline, and the function has already returned unless the mouth is strictly inside. |
+| `_stop_at_face` 53 | `t <= 1.0` to `t <= 2.0` | Only a tail that starts inside the face has its first crossing past 1, and none does, for the reason above. |
+| `route_tail` 41, 44, 45 | `length` miscomputed, but not zero | `length` divides the normal and multiplies the offset, so it cancels: the control point is `(-dy, dx)` times the bend, whatever `length` is. |
+| `route_tail` 46 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
+| `route_tail` 59 | `magnitude * sign` to `magnitude / sign` | `sign` is 1 or -1, and dividing by either is multiplying by it. |
+| `_score_caption` 55 | `default=0.0` to `default=1.0` | The default applies only when the panel has no actors, and then the loop the reach is for runs zero times. |
+| `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
+| `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
+| `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
 
 ### Exploring with fresh seeds
 
