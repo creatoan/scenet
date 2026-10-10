@@ -271,6 +271,34 @@ class TestDeterminism:
         second, _ = solve_staging(panel, library)
         assert first == second
 
+    # Found by the weekly Hypothesis exploration: two actors at the same anchor, whose
+    # weak targets conflict. kiwisolver keys its internal maps by object address, so the
+    # same system solved twice can come back a few ulps apart -- 352.33318181818186 one
+    # time, 352.33318181818174 the next -- and a coordinate derived from it that lands on
+    # a rounding boundary then prints differently.
+    CONTESTED = """
+panel: {size: [1399, 1196]}
+camera: {shot: medium_shot}
+cast:
+  a: {reference: alice, facing: left}
+  z: {reference: alice, facing: left}
+"""
+
+    def test_a_solved_position_carries_no_float_noise(self, library: PuppetLibrary):
+        """Snapped to a millionth of a unit, far below anything the output shows and far
+        above the noise, so the same system always yields the same number."""
+        placements, _ = solve_staging(parse_panel(self.CONTESTED), library)
+        for placement in placements:
+            assert placement.x == round(placement.x, 6), placement.x
+
+    def test_many_solves_give_bit_identical_positions(self, library: PuppetLibrary):
+        panel = parse_panel(self.CONTESTED)
+        solved = {
+            tuple(repr(placement.x) for placement in solve_staging(panel, library)[0])
+            for _ in range(40)
+        }
+        assert len(solved) == 1, solved
+
     def test_cast_declaration_order_does_not_change_geometry(self, library: PuppetLibrary):
         """Actors are keyed by name, so writing them in a different order must not
         move anybody. Only the framing reference depends on declaration order."""
