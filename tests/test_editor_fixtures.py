@@ -21,7 +21,9 @@ import pytest
 from scenet.cli import main
 
 FIXTURES = Path(__file__).parent.parent / "editor" / "test" / "fixtures"
-CAPTURED: dict[str, list[str]] = json.loads((FIXTURES / "captured.json").read_text(encoding="utf-8"))
+CAPTURED: dict[str, list[str]] = json.loads(
+    (FIXTURES / "captured.json").read_text(encoding="utf-8")
+)
 
 
 def _without_version(document: dict[str, Any]) -> dict[str, Any]:
@@ -42,7 +44,9 @@ def test_the_capture_is_what_scenet_check_writes(
     main(["check", "--format", "sarif", "-o", str(written), *CAPTURED[name]])
 
     expected = _without_version(json.loads(written.read_text(encoding="utf-8")))
-    captured = _without_version(json.loads((FIXTURES / f"{name}.sarif").read_text(encoding="utf-8")))
+    captured = _without_version(
+        json.loads((FIXTURES / f"{name}.sarif").read_text(encoding="utf-8"))
+    )
     assert captured == expected, f"{name}.sarif is stale; see this module's docstring"
 
 
