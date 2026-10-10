@@ -109,6 +109,9 @@ below 1.0 means.
   classes. A part is now checked only as the kind its keys say it is, at `parts.N.bone` or
   `parts.N.blob`, and a part with the keys of both kinds or of neither is one error that
   says what a part must be. The same fix #98 made for script entries. (#92)
+- **A font with no character map raised `KeyError: 'cmap'`** from inside fontTools when
+  passed as `metrics=`, instead of the `ValueError` that `FontMetrics` documents for a font
+  it cannot measure text against. Found while triaging mutation testing. (#95)
 - **`scenet build` could silently overwrite one output with another.** Only a panel named
   like a page was refused. A panel named `strip` replaced the strip, `x.debug` replaced panel
   `x`'s overlay, and two names differing only in case wrote one file on Windows and macOS.

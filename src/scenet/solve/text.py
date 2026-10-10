@@ -117,7 +117,9 @@ class FontMetrics:
         self._units_per_em: float = head.unitsPerEm  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
         # A font with no usable Unicode cmap cannot be measured against text at all,
         # so this is worth failing on loudly rather than limping along with no glyphs.
-        cmap = self._font.getBestCmap()
+        # fontTools raises KeyError for a font with no `cmap` table at all, rather than
+        # returning None, so that case is asked about first.
+        cmap = self._font.getBestCmap() if "cmap" in self._font else None
         if cmap is None:
             raise ValueError(f"{path}: font has no usable Unicode character map")
         self._cmap: dict[int, str] = cmap
