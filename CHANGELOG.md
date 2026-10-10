@@ -41,6 +41,11 @@ below 1.0 means.
 - **A comic-script finding pointed at the first character of its line** in SARIF, which
   claimed a precision the parser does not have. Its region is now the whole line, so an
   editor or code scanning underlines the line.
+- **The playground never coloured a comic script's `PAGE` and `PANEL` headings**, and the
+  line after a cue with a parenthetical, such as `BOB (whisper)`, was not shown as dialogue.
+  Monaco refused those three highlighting rules and dropped the lines without a word. The
+  rules are fixed, and a test now runs them through Monaco's own lexer, where a refused rule
+  fails.
 
 ## [0.10.0] - 2026-10-10
 
