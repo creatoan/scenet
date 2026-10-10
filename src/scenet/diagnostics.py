@@ -58,6 +58,7 @@ from scenet.errors import (
     RuleViolationError,
     ScenetError,
     ScriptSyntaxError,
+    SourceError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
@@ -500,7 +501,13 @@ def _message_of(exc: BaseException) -> str:
     `KeyError` stringifies as `repr(args[0])`, which wraps the message in whichever
     quote style avoids escaping -- so a message containing an apostrophe comes out
     double-quoted. Reading `args[0]` sidesteps that, exactly as the CLI does.
+
+    Nor with the file a :exc:`SourceError <scenet.errors.SourceError>` prefixes: a
+    finding names its file in its location, and the path as typed could be absolute,
+    which would put an absolute path in the output and in the fingerprint.
     """
+    if isinstance(exc, SourceError):
+        return exc.detail
     if isinstance(exc, KeyError) and exc.args:
         return str(exc.args[0])
     return str(exc)

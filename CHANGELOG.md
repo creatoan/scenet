@@ -10,6 +10,12 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
+  an absolute path, `scenet check` wrote that path into its SARIF output, and the finding's
+  fingerprint changed with the spelling. The location still names the file.
+
 ## [0.10.0] - 2026-10-10
 
 **Pages.** A scene can now be laid out on pages -- tiers of panels, columns beside them,

@@ -117,6 +117,9 @@ class SourceError(ScenetError, ValueError):
         source: Path the document was read from, or `None` for a string compiled in
             memory. Prefixed to the message when present, so a diagnostic never loses
             the file it came from.
+        detail: The message without that prefix, for a report that names the file
+            separately -- a finding's location does, and the path as typed could be
+            absolute.
     """
 
     def __init__(self, message: str, *, source: Path | None = None) -> None:
@@ -127,6 +130,7 @@ class SourceError(ScenetError, ValueError):
             source: Path the document came from, if it was read from disk.
         """
         self.source = source
+        self.detail = message
         super().__init__(f"{source}: {message}" if source else message)
 
 
