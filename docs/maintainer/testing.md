@@ -277,7 +277,7 @@ memory, described above, are among the killed. By module:
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
 | `emit/debug_svg.py` | 9 | |
-| `solve/camera.py` | 7 | |
+| `solve/camera.py` | 7 | done: 1 accepted, below |
 | `emit/strip.py` | 7 | |
 
 Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
@@ -355,6 +355,14 @@ These 7 are accepted.
 | `seed_for` 14, `_rng` 13 | `encode("utf-8")` to `encode("UTF-8")` | The same codec; Python's codec names are case-insensitive. |
 | `_luminance` 15 | `channel <= 0.04045` to `<` | No 8-bit channel is exactly 0.04045, and the sRGB curve is continuous there anyway. |
 | `_atmosphere` 63 | `> FALL_CONTRAST_THRESHOLD` to `>=` | The sky under rain cloud is 0.69, 0.83, 0.55 and 0.37 at dawn, day, dusk and night: never exactly 0.5. |
+**`solve/camera.py`** -- triaged: of the 7 survivors, 6 are killed by tests in
+`tests/test_camera.py`. Both shipped puppets measure from the top of the head at 0, where a
+sum and a difference from it agree, so the tests also frame a puppet measured from lower
+down, and one drawn a thousand times smaller. This one is accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `CameraSolution.pulled_back_to` 1 | `scale >= self.scale` to `>` | At an equal scale it builds a new solution equal in every field -- pullback 1.0 -- and `CameraSolution` is a dataclass, so the two compare equal. |
 
 ### Exploring with fresh seeds
 
