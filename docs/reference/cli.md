@@ -148,7 +148,8 @@ published schema — are what make a generate/validate/repair loop work.
 : [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html), the
   OASIS standard GCC, Clang and MSVC emit and GitHub code scanning ingests directly.
   Nothing but the document reaches stdout, so redirecting it produces a file a parser
-  accepts.
+  accepts. To see the findings in VS Code, see
+  [Findings the schema cannot see](../howto/editor_support.md#findings-the-schema-cannot-see).
 
 `-o`, `--output PATH`
 : Write the report to this file instead of the terminal, in either format. In text format
