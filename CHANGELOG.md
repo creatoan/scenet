@@ -56,6 +56,9 @@ below 1.0 means.
   speech before it; and a `---` scene divider opened front matter that never closed,
   colouring the rest of the script as YAML. It now follows the script frontend line for
   line, and shared fixtures, checked against the frontend, hold it there.
+- **Toggle Line Comment in a VS Code comic script wrote `//` lines**, which the format does
+  not have: the compiler kept them as prose, or read them as dialogue under a cue. The
+  extension no longer declares a comment syntax for scripts, as the playground never did.
 
 ## [0.10.0] - 2026-10-10
 
