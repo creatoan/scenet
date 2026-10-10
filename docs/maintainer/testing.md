@@ -272,11 +272,11 @@ memory, described above, are among the killed. By module:
 | `solve/page.py` | 49 | |
 | `solve/backdrop.py` | 32 | |
 | `solve/staging.py` | 22 | |
-| `emit/page.py` | 18 | |
-| `emit/svg.py` | 16 | |
-| `emit/debug_svg.py` | 9 | |
+| `emit/page.py` | 18 | done: none accepted |
+| `emit/svg.py` | 16 | done: 8 accepted, below |
+| `emit/debug_svg.py` | 9 | done: none accepted |
 | `solve/camera.py` | 7 | |
-| `emit/strip.py` | 7 | |
+| `emit/strip.py` | 7 | done: 6 accepted, below |
 
 Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
 `emit/svg.py`: comparing every emitted byte took most of the emitters' share.
@@ -312,6 +312,23 @@ below. Anything else is new, and is triaged the same way.
 | `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
+
+**The emitters** -- triaged together: of their 50 survivors, 36 are killed by
+`tests/test_emit_edges.py`. The goldens pin every byte the gallery produces, so what
+survived is what the gallery never produces: several pages side by side, a curved tail, a
+gaze that is not level, a limb thinner than its outline. A Core is a format people
+hand-edit, so the tests edit a compiled one to hold them. These 14 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `emit/svg.py` `fmt` 7, 8 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
+| `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
+| `emit/svg.py` `render` 48 | the painter's sort keyed on the whole tuple | `(depth, id)` is already unique: ids are unique among actors and among masses, and no mass shares a depth with an actor -- the backdrop is behind every actor, the foreground in front of all of them -- so the body is never compared. |
+| `emit/svg.py` `render` 69 | the italic face always loaded | Loading it draws nothing; it is used only by captions. |
+| `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
+| `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
+| `emit/strip.py` `placed_panel` 1, 2 | `live_text` or `debug` defaults to `True` | Both callers, the strip and the page, always pass both. |
+| `emit/strip.py` `placed_panel` 19, 22, 23, 34 | the panel's body cut at its `</svg>` some other way | A rendered panel holds exactly one `</svg>`, at its end, and the body is right-stripped after the cut, so every way of cutting gives the same lines. |
 
 ### Exploring with fresh seeds
 
