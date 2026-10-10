@@ -24,6 +24,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **The VS Code preview could not run `uv run scenet`**, the setting its README suggests:
+  it ran the compiler from wherever VS Code runs extensions, its own install directory,
+  where `uv` finds no project. It now runs from the document's workspace folder.
 - **The VS Code extension could not run `scenet` from a path with a space in it**, such as
   one under `C:\Program Files`, though `scenet.executable` asks for an absolute path: the
   setting was split on every space. A part in double quotes now keeps its spaces.

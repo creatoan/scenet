@@ -24,7 +24,7 @@ import { promisify } from "node:util";
 import * as vscode from "vscode";
 
 import { Checker } from "./diagnostics";
-import { parseExecutable } from "./invocation";
+import { buildInvocation } from "./invocation";
 
 const run = promisify(execFile);
 
@@ -123,18 +123,16 @@ interface Compiled {
  */
 async function compile(sourcePath: string): Promise<Compiled> {
   const config = vscode.workspace.getConfiguration("scenet");
-  const { command, leadingArgs } = parseExecutable(config.get<string>("executable", "scenet"));
 
   const scratch = await fs.mkdtemp(join(tmpdir(), "scenet-preview-"));
   try {
-    const target = join(scratch, "preview.svg");
-    const { stdout } = await run(command, [
-      ...leadingArgs,
-      "build",
-      sourcePath,
-      "-o",
-      target,
-    ]);
+    const { command, args, cwd } = buildInvocation({
+      executable: config.get<string>("executable", "scenet"),
+      file: sourcePath,
+      output: join(scratch, "preview.svg"),
+      workspaceFolder: vscode.workspace.getWorkspaceFolder(vscode.Uri.file(sourcePath))?.uri.fsPath,
+    });
+    const { stdout } = await run(command, [...args], { cwd });
 
     const written = (await fs.readdir(scratch)).filter((name) => name.endsWith(".svg")).sort();
     const panels = await Promise.all(

@@ -71,5 +71,5 @@ Press F5 in VS Code to launch an Extension Development Host.
 
 `redhat.vscode-yaml` provides the YAML language service the schema contributions hook
 into, and is declared as an extension dependency. The `scenet` command must be on PATH,
-or set `scenet.executable` (for example to `uv run scenet`). Diagnostics
+or set `scenet.executable` (for example to `uv run scenet`). Diagnostics and the preview
 run it from the document's workspace folder, so `uv run` finds the project.
