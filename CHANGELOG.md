@@ -96,6 +96,13 @@ below 1.0 means.
 
 ### Fixed
 
+- **The same panel could compile to different bytes.** kiwisolver, which places the cast,
+  keys its internal maps by object address, so the same layout solved twice could come back
+  a few ulps apart. A coordinate derived from it that sat on a rounding boundary then
+  printed as `247.95` in one compile and `247.96` in the next, in the same process. Solved
+  positions are now snapped to a millionth of a unit as they leave the solver, far above
+  that noise and far below anything the output shows. One gallery golden moves by 0.01 as a
+  result. Found by the weekly Hypothesis exploration.
 - **One mistake in a puppet part was reported six times.** A part is a bone (`from`, `to`,
   `width`) or a blob (`at`, `radius`), and a bone with a bad `width` was also tried as a blob,
   so pydantic listed five more errors about a blob nobody wrote, under paths naming its
