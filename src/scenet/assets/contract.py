@@ -12,10 +12,10 @@ one image per pose per expression per facing direction.
 from enum import StrEnum
 from itertools import pairwise
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
 
 from scenet.errors import AssetError, UnknownExpressionError, UnknownPoseError, UnknownPuppetError
 from scenet.safe_yaml import load
@@ -103,6 +103,46 @@ class BlobPart(Strict):
     at: str
     radius: float = Field(gt=0)
     offset: tuple[float, float] = (0.0, 0.0)
+
+
+def _kind_of_part(value: object) -> str | None:
+    """Say which kind of part `value` is written as, from the keys it uses.
+
+    A part carries no tag, but the two kinds share no key: a bone joins two joints with
+    `from` and `to`, a blob sits `at` one. Validated as a plain union, a part that failed
+    as a bone was tried as a blob too, and pydantic reported both -- one bad `width` was
+    six errors, five of them about a blob nobody wrote. Picking the kind first reports
+    only the one that was meant.
+
+    Returns:
+        `"bone"` or `"blob"`, or `None` for a part that uses the keys of neither kind or
+        of both, which is then one error saying what a part must be.
+    """
+    if isinstance(value, BonePart):
+        return "bone"
+    if isinstance(value, BlobPart):
+        return "blob"
+    if not isinstance(value, dict):
+        return None
+    bone = any(key in value for key in ("from", "to", "from_joint", "to_joint"))
+    blob = "at" in value
+    if bone == blob:
+        return None
+    return "bone" if bone else "blob"
+
+
+#: One drawn part of a puppet, a bone or a blob, chosen by the keys it is written with.
+Part = Annotated[
+    Annotated[BonePart, Tag("bone")] | Annotated[BlobPart, Tag("blob")],
+    Discriminator(
+        _kind_of_part,
+        custom_error_type="part_kind",
+        custom_error_message=(
+            "a part is a bone, with `from`, `to` and `width`, or a blob, with `at` and "
+            "`radius`; this one is not exactly one of the two"
+        ),
+    ),
+]
 
 
 class AnchorSpec(Strict):
@@ -287,7 +327,7 @@ class PuppetSpec(Strict):
     # this is what bridges the two frames. Declared rather than assumed, because a
     # puppet is free to root itself somewhere other than the waist.
     root_landmark: Landmark = Landmark.WAIST
-    parts: tuple[BonePart | BlobPart, ...] = ()
+    parts: tuple[Part, ...] = ()
     anchors: dict[str, AnchorSpec] = Field(default_factory=dict)
     face: FaceSpec
     gaze: GazeSpec = GazeSpec()
