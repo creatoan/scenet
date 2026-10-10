@@ -274,11 +274,11 @@ memory, described above, are among the killed. By module:
 | `solve/page.py` | 49 | done: 23 accepted, below |
 | `solve/backdrop.py` | 32 | done: 7 accepted, below |
 | `solve/staging.py` | 22 | done: 9 accepted, below |
-| `emit/page.py` | 18 | |
-| `emit/svg.py` | 16 | |
-| `emit/debug_svg.py` | 9 | |
+| `emit/page.py` | 18 | done: none accepted |
+| `emit/svg.py` | 16 | done: 8 accepted, below |
+| `emit/debug_svg.py` | 9 | done: none accepted |
 | `solve/camera.py` | 7 | done: 1 accepted, below |
-| `emit/strip.py` | 7 | |
+| `emit/strip.py` | 7 | done: 6 accepted, below |
 
 Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
 `emit/svg.py`: comparing every emitted byte took most of the emitters' share.
@@ -377,6 +377,22 @@ even with the whole cast less than one unit wide. These 9 are accepted.
 | `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
 | `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
 | `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
+**The emitters** -- triaged together: of their 50 survivors, 36 are killed by
+`tests/test_emit_edges.py`. The goldens pin every byte the gallery produces, so what
+survived is what the gallery never produces: several pages side by side, a curved tail, a
+gaze that is not level, a limb thinner than its outline. A Core is a format people
+hand-edit, so the tests edit a compiled one to hold them. These 14 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `emit/svg.py` `fmt` 7, 8 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
+| `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
+| `emit/svg.py` `render` 48 | the painter's sort keyed on the whole tuple | `(depth, id)` is already unique: ids are unique among actors and among masses, and no mass shares a depth with an actor -- the backdrop is behind every actor, the foreground in front of all of them -- so the body is never compared. |
+| `emit/svg.py` `render` 69 | the italic face always loaded | Loading it draws nothing; it is used only by captions. |
+| `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
+| `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
+| `emit/strip.py` `placed_panel` 1, 2 | `live_text` or `debug` defaults to `True` | Both callers, the strip and the page, always pass both. |
+| `emit/strip.py` `placed_panel` 19, 22, 23, 34 | the panel's body cut at its `</svg>` some other way | A rendered panel holds exactly one `</svg>`, at its end, and the body is right-stripped after the cut, so every way of cutting gives the same lines. |
 
 ### Exploring with fresh seeds
 
