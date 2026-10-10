@@ -60,3 +60,28 @@ export function checkInvocation(request: CheckRequest): Invocation {
     cwd: request.workspaceFolder ?? dirname(request.file),
   };
 }
+
+export interface BuildRequest {
+  /** The `scenet.executable` setting. */
+  readonly executable: string;
+  /** Absolute path of the document to preview. */
+  readonly file: string;
+  /** Where to write the SVG. */
+  readonly output: string;
+  /** The workspace folder holding the document, if any. */
+  readonly workspaceFolder: string | undefined;
+}
+
+/**
+ * The `scenet build` run for the preview, from the same directory as the check and for
+ * the same reason. VS Code starts its extension host in its own install directory, and
+ * `uv run scenet` there fails with "program not found".
+ */
+export function buildInvocation(request: BuildRequest): Invocation {
+  const { command, leadingArgs } = parseExecutable(request.executable);
+  return {
+    command,
+    args: [...leadingArgs, "build", request.file, "-o", request.output],
+    cwd: request.workspaceFolder ?? dirname(request.file),
+  };
+}
