@@ -18,6 +18,15 @@ describe("parseExecutable", () => {
     assert.deepEqual(parseExecutable("  uv   run scenet "), { command: "uv", leadingArgs: ["run", "scenet"] });
   });
 
+  test("a quoted path keeps its spaces", () => {
+    // The setting asks for an absolute path when scenet is not on PATH, and on Windows
+    // those are often under `Program Files` or a user name with a space in it.
+    assert.deepEqual(parseExecutable('"C:\\Program Files\\Scenet\\scenet.exe" --verbose'), {
+      command: "C:\\Program Files\\Scenet\\scenet.exe",
+      leadingArgs: ["--verbose"],
+    });
+  });
+
   test("an empty setting falls back to scenet", () => {
     assert.deepEqual(parseExecutable("   "), { command: "scenet", leadingArgs: [] });
   });
