@@ -117,6 +117,18 @@ jobs:
             echo '</details>'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # The names alone say where a survivor is, not what it changed, and triage needs
+      # the change. `mutmut show` prints it as a diff; one file holds them all, so the
+      # artifact answers "what does this test have to notice" without a rerun.
+      - name: Diff every survivor
+        if: always()
+        run: |
+          grep -E ': survived$' mutants/survivors.txt | sed -E 's/^ *//; s/: survived$//'             | while read -r name; do
+                echo "=== $name"
+                uv run --no-sync mutmut show "$name" 2>&1 || true
+                echo
+              done > mutants/survivors.diff || true
+
       - name: Upload the results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -125,6 +137,7 @@ jobs:
           path: |
             mutants/mutmut-cicd-stats.json
             mutants/survivors.txt
+            mutants/survivors.diff
           if-no-files-found: warn
 
   explore:
