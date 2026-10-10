@@ -270,7 +270,7 @@ memory, described above, are among the killed. By module:
 | `solve/balloons.py` | 123 | done: 16 accepted, below |
 | `solve/text.py` | 50 | |
 | `solve/page.py` | 49 | |
-| `solve/backdrop.py` | 32 | |
+| `solve/backdrop.py` | 32 | done: 7 accepted, below |
 | `solve/staging.py` | 22 | |
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
@@ -312,6 +312,18 @@ below. Anything else is new, and is triaged the same way.
 | `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
+
+**`solve/backdrop.py`** -- triaged: of the 32 survivors, 25 are killed by tests in
+`tests/test_backdrop.py`, most by calling a generator directly with a `_Plot` whose
+horizon is half a unit from the top, where a clamp anywhere but the panel's edge shows.
+These 7 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `seed_for` 7, `_rng` 6, `_atmosphere` 22 | `int.from_bytes(..., "big")` with the byte order left out | Big-endian is the default since Python 3.11, and the floor is 3.12. |
+| `seed_for` 14, `_rng` 13 | `encode("utf-8")` to `encode("UTF-8")` | The same codec; Python's codec names are case-insensitive. |
+| `_luminance` 15 | `channel <= 0.04045` to `<` | No 8-bit channel is exactly 0.04045, and the sRGB curve is continuous there anyway. |
+| `_atmosphere` 63 | `> FALL_CONTRAST_THRESHOLD` to `>=` | The sky under rain cloud is 0.69, 0.83, 0.55 and 0.37 at dawn, day, dusk and night: never exactly 0.5. |
 
 ### Exploring with fresh seeds
 
