@@ -12,12 +12,15 @@ import math
 import subprocess
 import sys
 import textwrap
+from collections.abc import Callable
+from dataclasses import replace
 from itertools import pairwise
+from random import Random
 
 import pytest
 
 from scenet import compile_source
-from scenet.geom import BBox
+from scenet.geom import BBox, Point
 from scenet.ir import (
     Horizon,
     Mass,
@@ -34,6 +37,18 @@ from scenet.solve.backdrop import (
     FOREGROUND_SPAN_KEEP,
     LADDER,
     PLANE_SCALE,
+    _blocks,
+    _extent,
+    _panes,
+    _peaks,
+    _Plot,
+    _railing,
+    _rain,
+    _skyline,
+    _snow,
+    _treeline,
+    _water,
+    contrast_ratio,
     depth_for,
     lightness,
     seed_for,
@@ -454,3 +469,120 @@ class TestDeterminism:
         ]
         assert json.loads(runs[0]) == json.loads(runs[1])
         assert runs[0] == runs[1]
+
+
+# ---------------------------------------------------------------- mutation triage (#95)
+#
+# The generators below are called directly with a `_Plot`, because the edge each test
+# holds -- a horizon half a unit from the top, a span exactly twice its depth -- is one a
+# whole document reaches only by coincidence.
+
+
+def _stream(seed: int) -> Random:
+    """A fixed stream for a generator that takes one: the same seed replays the same draw."""
+    return Random(seed)  # noqa: S311 -- reproducibility is the point, as in `_rng`
+
+
+#: A panel a unit and a half tall, so its horizon is half a unit from the top.
+LOW_HORIZON = _Plot(
+    left=0.0, right=4.0, horizon=0.5, rise=0.5 * 1.45, ground=0.5, bottom=1.5, panel_width=4.0
+)
+
+#: A span a hundredth of the panel wide: narrower than any one repeat of any motif.
+NARROW = _Plot(
+    left=0.0, right=10.0, horizon=300.0, rise=300.0, ground=300.0, bottom=700.0, panel_width=1000.0
+)
+
+
+class TestAStandingMassStaysAboveItsHorizon:
+    """Every generator clamps to the top of the panel, at 0. Clamped anywhere else, a
+    mass under a horizon half a unit from the top would reach down past it."""
+
+    @pytest.mark.parametrize(
+        "draw", [_skyline, _peaks, _treeline, _railing], ids=lambda draw: draw.__name__
+    )
+    def test_its_outline_never_dips_below_the_horizon(self, draw: Callable[..., tuple[Point, ...]]):
+        points = draw(LOW_HORIZON, _stream(7))
+        assert max(point.y for point in points) <= LOW_HORIZON.horizon
+
+    def test_furniture_tops_stay_above_the_horizon(self):
+        tops = [block[0].y for block in _blocks(LOW_HORIZON, _stream(7))]
+        assert max(tops) <= LOW_HORIZON.horizon
+
+    def test_a_ripple_stays_above_where_the_water_begins(self):
+        ripple = _water(LOW_HORIZON, _stream(7))[:-2]
+        assert max(point.y for point in ripple) <= LOW_HORIZON.ground
+
+
+class TestTheFewestRepeats:
+    def test_a_narrow_treeline_still_has_three_canopies(self):
+        """Nine points per canopy, plus the two that close it on the horizon."""
+        assert len(_treeline(NARROW, _stream(1))) == 2 + 3 * 9
+
+    def test_a_narrow_railing_still_stands_on_two_posts(self):
+        """Three points along the rail, four per post, one to close."""
+        assert len(_railing(NARROW, _stream(1))) == 4 + 4 * 2
+
+    def test_a_small_panel_still_has_twelve_streaks_and_ten_flecks(self):
+        small = BBox(0.0, 0.0, 50.0, 50.0)
+        assert len(_rain(small, _stream(1))) == 12
+        assert len(_snow(small, _stream(1))) == 10
+
+
+class TestHowManyPieces:
+    def test_furniture_is_two_blocks_until_it_is_more_than_twice_as_wide_as_deep(self):
+        exactly = replace(NARROW, right=200.0, horizon=300.0, bottom=400.0)
+        assert len(_blocks(exactly, _stream(1))) == 2
+        assert len(_blocks(replace(exactly, right=201.0), _stream(1))) == 3
+
+    def test_a_wall_has_two_windows_until_it_is_wider_than_its_horizon_and_a_half(self):
+        exactly = replace(NARROW, right=160.0, horizon=100.0)
+        assert len(_panes(exactly, _stream(1))) == 2
+        assert len(_panes(replace(exactly, right=161.0), _stream(1))) == 3
+
+
+class TestAForegroundMass:
+    def test_one_in_the_centre_is_narrowed_about_its_middle(self):
+        start, end = _extent(Mass(kind=MassKind.PLANT, plane=Plane.FOREGROUND, spans=Spans.CENTRE))
+        assert (start + end) / 2 == pytest.approx(0.5)
+        assert end - start == pytest.approx(0.48 * FOREGROUND_SPAN_KEEP)
+
+    def test_it_draws_just_in_front_of_a_panel_whose_cast_has_no_depth(self):
+        backdrop = solve_backdrop(
+            _setting(Mass(kind=MassKind.PLANT, plane=Plane.FOREGROUND)), PANEL
+        )
+        assert backdrop is not None
+        assert {mass.depth for mass in backdrop.masses} == {1}
+
+
+class TestTheMeasuresOfAGrey:
+    def test_mid_grey_has_the_oklab_lightness_css_gives_it(self):
+        """`#808080` is `oklch(59.99% 0 0)` in CSS Color 4."""
+        assert lightness("#808080") == pytest.approx(0.5999, abs=1e-4)
+
+    def test_a_near_black_has_its_wcag_contrast_against_white(self):
+        """`#0a0a0a` sits on the linear segment of the sRGB curve, below 0.04045."""
+        assert contrast_ratio("#0a0a0a", "#ffffff") == pytest.approx(19.80, abs=0.01)
+
+
+class TestWhatRainIsDrawnIn:
+    """Ink while the sky under the cloud is lighter than half, paper once it is darker.
+    At dusk the cloud leaves it at 0.55 -- just light enough for ink."""
+
+    @pytest.mark.parametrize(
+        ("time", "ink"),
+        [
+            (TimeOfDay.DAWN, True),
+            (TimeOfDay.DAY, True),
+            (TimeOfDay.DUSK, True),
+            (TimeOfDay.NIGHT, False),
+        ],
+    )
+    def test_the_darkest_rung_over_a_light_sky_and_the_lightest_over_a_dark_one(
+        self, time: TimeOfDay, ink: bool
+    ):
+        backdrop = solve_backdrop(SettingSpec(weather=Weather.RAIN, time=time), PANEL)
+        assert backdrop is not None
+        assert backdrop.atmosphere is not None
+        expected = LADDER[time][0] if ink else LADDER[time][ATMOSPHERE]
+        assert backdrop.atmosphere.fall_tone == expected
