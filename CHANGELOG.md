@@ -10,6 +10,11 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- The editor guide shows how to see `scenet check` findings in VS Code today: write them
+  as SARIF and open the file with Microsoft's SARIF Viewer. (Part of #77)
+
 ### Fixed
 
 - **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
