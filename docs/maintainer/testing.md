@@ -271,7 +271,7 @@ memory, described above, are among the killed. By module:
 | `solve/text.py` | 50 | |
 | `solve/page.py` | 49 | |
 | `solve/backdrop.py` | 32 | |
-| `solve/staging.py` | 22 | |
+| `solve/staging.py` | 22 | done: 9 accepted, below |
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
 | `emit/debug_svg.py` | 9 | |
@@ -312,6 +312,21 @@ below. Anything else is new, and is triaged the same way.
 | `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
+
+**`solve/staging.py`** -- triaged: of the 22 survivors, 13 are killed by tests in
+`tests/test_staging.py`. The one that does the most work frames a cast drawn five hundred
+times smaller: a puppet's units are its own, so the composition must come out the same,
+even with the whole cast less than one unit wide. These 9 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_fit_cast_across_frame` 8, 16 | widths measured with `facing_right` `None` or `False` | A mirrored silhouette is exactly as wide. |
+| `_fit_cast_across_frame` 22, 23 | widths measured from an origin of `(1, 0)` or `(0, 1)` | Moving a silhouette does not change its width. |
+| `_fit_cast_across_frame` 40 | `native_total <= 0` to `< 0` | Every part has a positive width or radius, so a cast's total width is never 0. |
+| `_facing_for` 5 | `target in order and actor in order` to `or` | The order holds the whole cast, and a gaze target is a cast member -- the IR checks it -- so both are always in it. |
+| `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
+| `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
+| `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
 
 ### Exploring with fresh seeds
 
