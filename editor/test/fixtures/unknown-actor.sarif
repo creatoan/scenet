@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "scenet",
+          "version": "0.10.0",
+          "informationUri": "https://github.com/creatoan/scenet",
+          "rules": [
+            {
+              "id": "scenet/unknown-actor",
+              "name": "unknown-actor",
+              "shortDescription": {
+                "text": "Reference to an actor that is not in the cast"
+              },
+              "fullDescription": {
+                "text": "Every actor id named in `staging` or `script` must exist in `cast`. This is the check no JSON Schema can perform -- the value is a perfectly good string, it just does not resolve -- and it is among the most common faults in generated documents."
+              },
+              "help": {
+                "text": "Correct the id, or add the actor to `cast`. The message lists the cast."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "unicodeCodePoints",
+      "results": [
+        {
+          "ruleId": "scenet/unknown-actor",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "script entry 0 is spoken by unknown actor 'bpb'; cast is ['alice', 'bob']"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "sources/unknown-actor.panel.yaml"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 15,
+                  "endLine": 4,
+                  "endColumn": 18
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "scenetDiagnostic/v1": "a9575d474eb3b0369c2a7bbe5ff035fb"
+          }
+        }
+      ]
+    }
+  ]
+}

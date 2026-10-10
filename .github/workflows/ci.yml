@@ -265,10 +265,13 @@ jobs:
       # Packaged exactly as `release.yml` packages it. Typechecking alone passed while
       # `vsce package` refused the manifest -- `@types/vscode` had been bumped past
       # `engines.vscode` -- and the first place that would have shown up was a release.
+      # The unit tests need no editor: what the extension decides lives in modules
+      # without a `vscode` import.
       - name: Editor extension
         working-directory: editor
         run: |
           npm ci
           npm run typecheck
           npm run build
+          npm test
           npx --yes @vscode/vsce package --no-dependencies --out "$RUNNER_TEMP/scenet.vsix"

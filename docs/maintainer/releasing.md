@@ -21,6 +21,11 @@ Set the same version in [`server.json`](https://github.com/creatoan/scenet/blob/
 in both places it appears — the MCP registry manifest has to name the release it points at, and
 a test fails until it does.
 
+Set it too as `version` in [`editor/package.json`](https://github.com/creatoan/scenet/blob/main/editor/package.json),
+and run `npm install --package-lock-only` in `editor/` to carry it into the lockfile. The
+extension shipped with a release is versioned as that release, and a test fails until both
+files agree with `pyproject.toml`.
+
 Then write the changelog section. `CHANGELOG.md` follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); rename the `## [Unreleased]`
 heading to `## [0.2.0] - 2026-08-23` and start a fresh `Unreleased` above it.

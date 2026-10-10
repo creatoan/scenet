@@ -1,0 +1,4 @@
+# `bpb` for `bob`.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+script:
+  - say: {by: bpb, text: Hello}

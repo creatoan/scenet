@@ -1,0 +1,12 @@
+{
+  "astral": ["sources/astral.panel.yaml"],
+  "clean": ["sources/clean.panel.yaml"],
+  "duplicate-panel": ["sources/duplicate-panel.script"],
+  "not-a-mapping": ["sources/not-a-mapping.panel.yaml"],
+  "several-files": [
+    "sources/unknown-actor.panel.yaml",
+    "sources/duplicate-panel.script",
+    "sources/syntax.panel.yaml"
+  ],
+  "unknown-actor": ["sources/unknown-actor.panel.yaml"]
+}

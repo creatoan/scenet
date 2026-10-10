@@ -10,8 +10,26 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- **The VS Code extension shows what `scenet check` finds**, as you open and save a panel,
+  scene or comic script: an actor not in the cast, an ordering cycle, a pose the puppet
+  lacks, which the schema cannot see. Each finding is underlined where it is and listed
+  under Problems with its rule, linked to its explanation, and goes away when it is fixed.
+  `scenet.checkDeep` adds `--deep`; `scenet.checkOnSave` turns it off. If `scenet` cannot
+  be run, or crashes, a notification says so once rather than leaving the list empty.
+  (Part of #77)
+- The extension is now versioned with the compiler, starting at 0.10.0, so the `.vsix` on
+  a release says which release it belongs to.
+
 ### Fixed
 
+- **The VS Code preview could not run `uv run scenet`**, the setting its README suggests:
+  it ran the compiler from wherever VS Code runs extensions, its own install directory,
+  where `uv` finds no project. It now runs from the document's workspace folder.
+- **The VS Code extension could not run `scenet` from a path with a space in it**, such as
+  one under `C:\Program Files`, though `scenet.executable` asks for an absolute path: the
+  setting was split on every space. A part in double quotes now keeps its spaces.
 - **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
   an absolute path, `scenet check` wrote that path into its SARIF output, and the finding's
   fingerprint changed with the spelling. The location still names the file.
