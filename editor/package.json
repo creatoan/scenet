@@ -77,11 +77,13 @@
         "scenet.checkOnSave": {
           "type": "boolean",
           "default": true,
+          "scope": "resource",
           "markdownDescription": "Run `scenet check` on a panel, scene or comic script when it is opened or saved, and show what it finds in the Problems list. It catches what the schema cannot, such as an actor not in the cast."
         },
         "scenet.checkDeep": {
           "type": "boolean",
           "default": false,
+          "scope": "resource",
           "markdownDescription": "Check with `--deep`: also run the full compiler, to catch a panel no layout satisfies or a balloon with nowhere to go. Off by default, as in the CLI, because it costs a real compile on every save."
         }
       }
