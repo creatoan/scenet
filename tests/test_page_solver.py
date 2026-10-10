@@ -92,8 +92,10 @@ class TestASteepSlant:
         assert caught.value.loc == ("tier", "slant")
 
     def test_a_narrow_first_panel_closing_at_its_bottom_is_refused(self):
+        """In from the page's edge, as every real tier is: at x = 0 the first panel's
+        upright left edge is 0, and a width measured from it cannot tell `-` from `+`."""
         with pytest.raises(RuleViolationError, match="panel 'a'"):
-            _slanted(_tier(1, 3), SLANT, BBox(0, 0, WIDTH, 1000), GUTTER, ())
+            _slanted(_tier(1, 3), SLANT, BBox(100, 0, WIDTH, 1000), GUTTER, ())
 
     def test_a_narrow_panel_between_two_wide_ones_takes_the_lean(self):
         """Its two gutters lean together, so it is as wide at the top as at the bottom,
