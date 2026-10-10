@@ -12,6 +12,8 @@ below 1.0 means.
 
 ### Added
 
+- The editor guide shows how to see `scenet check` findings in VS Code today: write them
+  as SARIF and open the file with Microsoft's SARIF Viewer. (Part of #77)
 - **The VS Code extension shows what `scenet check` finds**, as you open and save a panel,
   scene or comic script: an actor not in the cast, an ordering cycle, a pose the puppet
   lacks, which the schema cannot see. Each finding is underlined where it is and listed
