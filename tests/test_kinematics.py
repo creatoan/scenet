@@ -245,8 +245,8 @@ class TestAMistakeInAPartIsReportedOnce:
     def test_a_misspelled_bone_key_is_reported_against_the_bone_only(self):
         found = self.errors_for({"from": "neck", "to": "root", "widht": 72})
         assert sorted(loc for loc, _ in found) == [
-            ("parts", 0, "bone", "width"),
             ("parts", 0, "bone", "widht"),
+            ("parts", 0, "bone", "width"),
         ]
 
     @pytest.mark.parametrize(

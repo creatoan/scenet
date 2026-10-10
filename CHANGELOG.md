@@ -96,6 +96,12 @@ below 1.0 means.
 
 ### Fixed
 
+- **One mistake in a puppet part was reported six times.** A part is a bone (`from`, `to`,
+  `width`) or a blob (`at`, `radius`), and a bone with a bad `width` was also tried as a blob,
+  so pydantic listed five more errors about a blob nobody wrote, under paths naming its
+  classes. A part is now checked only as the kind its keys say it is, at `parts.N.bone` or
+  `parts.N.blob`, and a part with the keys of both kinds or of neither is one error that
+  says what a part must be. The same fix #98 made for script entries. (#92)
 - **`scenet build` could silently overwrite one output with another.** Only a panel named
   like a page was refused. A panel named `strip` replaced the strip, `x.debug` replaced panel
   `x`'s overlay, and two names differing only in case wrote one file on Windows and macOS.
