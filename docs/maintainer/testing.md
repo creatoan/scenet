@@ -269,7 +269,7 @@ memory, described above, are among the killed. By module:
 |---|---|---|
 | `solve/balloons.py` | 123 | done: 16 accepted, below |
 | `solve/text.py` | 50 | |
-| `solve/page.py` | 49 | |
+| `solve/page.py` | 49 | done: 23 accepted, below |
 | `solve/backdrop.py` | 32 | |
 | `solve/staging.py` | 22 | |
 | `emit/page.py` | 18 | |
@@ -312,6 +312,20 @@ below. Anything else is new, and is triaged the same way.
 | `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
+
+**`solve/page.py`** -- triaged: of the 49 survivors, 26 are killed by tests in
+`tests/test_page_solver.py`, which call the solver's pieces directly at the edges each one
+holds -- an inset that exactly fits, two insets exactly a gutter apart, a lean that leaves
+half a unit -- and these 23 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_frame` 1 | `gutter` defaults to 1 | It is read only for an inset's clearance, and every inset passes its gutter. |
+| `_fmt` 5, 6 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
+| `_slanted` 30, 33, 41; `resolve_frames` 26, 30, 34, 75, 79, 83, 118, 122, 126, 140, 144, 148 | `zip(..., strict=True)` to `None`, `False` or left out | Each zip pairs sequences built from the same list of weights, so they are always the same length, and `strict` only matters when they are not. |
+| `_slanted` 35 | `spans[:-2:2]` to `spans[:-3:2]` | `spans` has an even length, so both slices stop at the same element. |
+| `_slanted` 87, 92 | `<= 0` to `< 0` for the width at the top or bottom | Differs only for a width of exactly 0, which needs the tangent of the slant times a height to land exactly on a gutter's edge; a width half a unit either side is tested. |
+| `_slanted` 142, 157 | `corners[0]` to `corners[1]` for the frame's top | Both are top corners, at the same `y`. |
 
 ### Exploring with fresh seeds
 
