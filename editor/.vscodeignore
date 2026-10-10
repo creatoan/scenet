@@ -4,6 +4,7 @@
 # installing -- nothing else. Sources belong in the repository, which the README links to.
 
 src/**
+test/**
 out/**/*.map
 tsconfig.json
 .gitignore

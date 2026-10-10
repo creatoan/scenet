@@ -1,0 +1,9 @@
+# Nothing wrong: the report has a run and no results.
+panel: {size: [420, 560]}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third}
+staging:
+  - alice left_of bob
+script:
+  - say: {by: alice, text: "Hello there."}

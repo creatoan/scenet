@@ -1,0 +1,4 @@
+# Two emoji before the bad id: each is one code point and two UTF-16 code units.
+cast: {alice: {reference: alice}}
+script:
+  - say: {text: "🙂 Hello 🙂", by: bpb}

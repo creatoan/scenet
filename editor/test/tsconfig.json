@@ -1,0 +1,10 @@
+{
+  // The tests, typechecked against the sources they test but never emitted: they run
+  // under `tsx`, and nothing in `test/` belongs in the packaged extension.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".."
+  },
+  "include": ["**/*.ts", "../src/**/*.ts"]
+}

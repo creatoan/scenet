@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "scenet",
+          "version": "0.10.0",
+          "informationUri": "https://github.com/creatoan/scenet",
+          "rules": [
+            {
+              "id": "scenet/not-a-mapping",
+              "name": "not-a-mapping",
+              "shortDescription": {
+                "text": "The document is not a mapping"
+              },
+              "fullDescription": {
+                "text": "A panel document is a mapping of top-level keys -- panel, camera, cast, staging, script. A list or a bare scalar cannot be one."
+              },
+              "help": {
+                "text": "Wrap the content in top-level keys, or check you meant to compile this file."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "unicodeCodePoints",
+      "results": [
+        {
+          "ruleId": "scenet/not-a-mapping",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "expected a mapping at the top level, found list"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "sources/not-a-mapping.panel.yaml"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 1,
+                  "endLine": 4,
+                  "endColumn": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "scenetDiagnostic/v1": "a2a5882492e2d84544b39a3dbce50417"
+          }
+        }
+      ]
+    }
+  ]
+}
