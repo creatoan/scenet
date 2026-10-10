@@ -275,3 +275,32 @@ jobs:
           npm run build
           npm test
           npx --yes @vscode/vsce package --no-dependencies --out "$RUNNER_TEMP/scenet.vsix"
+
+  editor-e2e:
+    name: Editor end to end
+    runs-on: ubuntu-latest
+    # The extension in a real VS Code, the oldest `engines.vscode` admits: activation, a
+    # check on open and on save, each finding where it belongs, gone once fixed. The unit
+    # tests cover what the extension decides; only an editor covers the glue, and the
+    # first run in one found the preview running `scenet` from VS Code's own install
+    # directory. Headless, under a virtual display.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      # The suite sets the extension to `uv run scenet`, run from the repository.
+      - run: uv sync --frozen
+
+      - name: Run the extension in VS Code
+        working-directory: editor
+        run: |
+          npm ci
+          npm run build
+          xvfb-run -a npm run e2e

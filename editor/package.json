@@ -102,12 +102,14 @@
   "scripts": {
     "schemas": "cd .. && uv run scenet schema -o editor/schemas/panel.schema.json && uv run scenet schema --scene -o editor/schemas/scene.schema.json",
     "build": "tsc",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p test",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test && tsc --noEmit -p e2e",
+    "e2e": "tsc -p e2e && node out-e2e/run.js",
     "test": "node --import tsx --test \"test/**/*.test.ts\""
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
     "@types/vscode": "~1.100.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

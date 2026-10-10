@@ -1,0 +1,10 @@
+{
+  // The end-to-end run: compiled, because VS Code loads the suite as plain JavaScript,
+  // into its own directory, which the packaged extension leaves out.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../out-e2e"
+  },
+  "include": ["*.ts"]
+}
