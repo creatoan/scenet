@@ -7,18 +7,23 @@ at all, so they are what needs guarding.
 """
 
 from itertools import pairwise
+from pathlib import Path
 
 import pytest
+import yaml
 
-from scenet.assets.contract import PuppetLibrary, default_library
+from scenet.assets.contract import PuppetLibrary, PuppetSpec, default_library
 from scenet.assets.kinematics import resolve
 from scenet.frontends.yaml_front import parse_panel
-from scenet.geom import BBox
+from scenet.geom import BBox, Point
 from scenet.ir import AnchorX
+from scenet.solve.camera import CameraSolution, solve_camera
 from scenet.solve.staging import (
     ANCHOR_FRACTIONS,
     LayoutError,
     Placement,
+    _extent_of,
+    _fit_cast_across_frame,
     depth_order,
     horizontal_order,
     solve_staging,
@@ -322,3 +327,176 @@ cast:
         )
         assert forward["alice"].x == pytest.approx(backward["alice"].x)
         assert forward["bob"].x == pytest.approx(backward["bob"].x)
+
+
+# ---------------------------------------------------------------- mutation triage (#95)
+
+LIBRARY_PATH = Path(__file__).parents[1] / "src" / "scenet" / "assets" / "library"
+
+
+def _drawn_smaller(name: str, factor: float) -> PuppetSpec:
+    """A shipped puppet with every length divided by `factor`: the same body, drawn in
+    smaller units. Angles -- the poses -- do not scale."""
+    data = yaml.safe_load((LIBRARY_PATH / f"{name}.puppet.yaml").read_text(encoding="utf-8"))
+
+    def shrink(value: float) -> float:
+        return value / factor
+
+    def shrink_pair(pair: list[float]) -> list[float]:
+        return [shrink(value) for value in pair]
+
+    data["units_per_head"] = shrink(data["units_per_head"])
+    data["landmarks"] = {key: shrink(value) for key, value in data["landmarks"].items()}
+    for joint in data["joints"].values():
+        joint["offset"] = shrink_pair(joint["offset"])
+    for part in data["parts"]:
+        for key in ("width", "radius"):
+            if key in part:
+                part[key] = shrink(part[key])
+        if "offset" in part:
+            part["offset"] = shrink_pair(part["offset"])
+    for anchor in data["anchors"].values():
+        anchor["offset"] = shrink_pair(anchor["offset"])
+    data["face"]["radius"] = shrink(data["face"]["radius"])
+    for feature in data["face"]["features"].values():
+        feature["offset"] = shrink_pair(feature["offset"])
+        feature["size"] = shrink(feature["size"])
+    return PuppetSpec.model_validate(data)
+
+
+CROWDED = """
+panel: {size: [300, 400]}
+camera: {shot: close_up}
+cast:
+  a: {reference: alice}
+  b: {reference: alice}
+"""
+
+
+class TestAPuppetsUnitsAreItsOwn:
+    def test_a_cast_drawn_five_hundred_times_smaller_is_composed_the_same(
+        self, library: PuppetLibrary
+    ):
+        """The camera scales by the puppet's own height and the retreat by its own
+        width, so the units it is drawn in cancel -- even when the whole cast is less
+        than one unit wide."""
+        tiny = PuppetLibrary({"alice": _drawn_smaller("alice", 500.0)})
+        panel = parse_panel(CROWDED)
+        normal_placements, normal_camera = solve_staging(panel, library)
+        tiny_placements, tiny_camera = solve_staging(panel, tiny)
+        assert normal_camera.was_pulled_back
+        assert tiny_camera.pullback == pytest.approx(normal_camera.pullback)
+        assert [p.x for p in tiny_placements] == pytest.approx([p.x for p in normal_placements])
+
+
+class TestAnExtentIsMeasuredFromTheRoot:
+    def test_it_does_not_depend_on_where_the_root_stands(self, library: PuppetLibrary):
+        alice = library.get("alice")
+        at_zero, elsewhere = Point(0.0, 500.0), Point(300.0, 500.0)
+        here = _extent_of(
+            resolve(alice, pose="pointing", facing_right=True, scale=1.0, origin=at_zero), at_zero
+        )
+        there = _extent_of(
+            resolve(alice, pose="pointing", facing_right=True, scale=1.0, origin=elsewhere),
+            elsewhere,
+        )
+        assert (there.left, there.right) == pytest.approx((here.left, here.right))
+        assert here.left < 0 < here.right
+
+
+class TestTheLeftToRightOrder:
+    def test_an_actor_with_two_on_its_left_waits_for_both(self):
+        order = horizontal_order(
+            parse_panel(
+                "cast:\n"
+                "  a: {reference: alice, at: left_third}\n"
+                "  b: {reference: bob, at: right_edge}\n"
+                "  c: {reference: alice, at: left_edge}\n"
+                "staging:\n"
+                "  - a left_of c\n"
+                "  - b left_of c\n"
+            )
+        )
+        assert order.index("c") > order.index("a")
+        assert order.index("c") > order.index("b")
+
+    def test_an_actor_released_by_a_relation_is_placed_by_its_anchor_not_its_name(self):
+        """`r` becomes free once `p` is placed, and stands left of `q` by anchor though
+        `q` comes first by name."""
+        order = horizontal_order(
+            parse_panel(
+                "cast:\n"
+                "  p: {reference: alice, at: left_edge}\n"
+                "  q: {reference: bob, at: right_edge}\n"
+                "  r: {reference: alice, at: center}\n"
+                "staging:\n"
+                "  - p left_of r\n"
+            )
+        )
+        assert order == ("p", "r", "q")
+
+
+class TestDrawOrder:
+    def test_placements_come_out_left_to_right_not_by_name(self, library: PuppetLibrary):
+        placements, _ = solve_staging(
+            parse_panel(
+                "cast:\n  z: {reference: alice}\n  a: {reference: bob}\nstaging:\n  - z left_of a\n"
+            ),
+            library,
+        )
+        assert [placement.actor_id for placement in placements] == ["z", "a"]
+
+
+class TestStagingErrorsSayWhatIsWrong:
+    def test_an_empty_cast_is_named_as_such(self, library: PuppetLibrary):
+        with pytest.raises(LayoutError, match=r"^panel has no cast; there is nothing to place$"):
+            solve_staging(parse_panel("panel: {size: [600, 400]}\n"), library)
+
+    def test_a_depth_cycle_names_an_actor_on_it(self):
+        panel = parse_panel(
+            "cast:\n  a: {reference: alice}\n  b: {reference: bob}\n"
+            "staging:\n  - a in_front_of b\n  - b in_front_of a\n"
+        )
+        with pytest.raises(LayoutError, match="cyclic around 'a'"):
+            depth_order(panel)
+
+
+def _two_across(width: float, margin: float) -> str:
+    return (
+        f"panel: {{size: [{width}, {width}], margin: {margin}}}\n"
+        "camera: {shot: close_up}\n"
+        "cast:\n  a: {reference: alice}\n  b: {reference: alice}\n"
+    )
+
+
+def _fitted(source: str, library: PuppetLibrary) -> tuple[CameraSolution, CameraSolution]:
+    panel = parse_panel(source)
+    puppets = {actor: library.get(member.reference) for actor, member in panel.cast.items()}
+    camera = solve_camera(
+        puppets["a"],
+        shot=panel.camera.shot,
+        angle=panel.camera.angle,
+        panel_height=panel.panel.height,
+    )
+    return camera, _fit_cast_across_frame(panel, puppets, camera)
+
+
+class TestTheRoomTheCastIsFittedTo:
+    """Two actors in a 200-unit panel: their one gap is 1.5% of the width, 3 units."""
+
+    def test_the_margin_comes_out_of_the_room(self, library: PuppetLibrary):
+        _, bare = _fitted(_two_across(600, 0), library)
+        _, margined = _fitted(_two_across(600, 60), library)
+        assert margined.scale / bare.scale == pytest.approx((600 - 120 - 9) / (600 - 9))
+
+    @pytest.mark.parametrize("margin", [98.5, 99.0], ids=["no room", "less than none"])
+    def test_with_no_room_left_the_camera_is_left_alone(
+        self, library: PuppetLibrary, margin: float
+    ):
+        """A margin of 98.5 leaves 3 units, which the one gap takes exactly."""
+        camera, fitted = _fitted(_two_across(200, margin), library)
+        assert fitted is camera
+
+    def test_half_a_unit_of_room_is_still_fitted_to(self, library: PuppetLibrary):
+        camera, fitted = _fitted(_two_across(200, 98.25), library)
+        assert fitted.scale < camera.scale

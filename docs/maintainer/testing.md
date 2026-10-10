@@ -273,7 +273,7 @@ memory, described above, are among the killed. By module:
 | `solve/text.py` | 50 | done: 14 accepted, below |
 | `solve/page.py` | 49 | done: 23 accepted, below |
 | `solve/backdrop.py` | 32 | done: 7 accepted, below |
-| `solve/staging.py` | 22 | |
+| `solve/staging.py` | 22 | done: 9 accepted, below |
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
 | `emit/debug_svg.py` | 9 | |
@@ -363,6 +363,20 @@ down, and one drawn a thousand times smaller. This one is accepted.
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
 | `CameraSolution.pulled_back_to` 1 | `scale >= self.scale` to `>` | At an equal scale it builds a new solution equal in every field -- pullback 1.0 -- and `CameraSolution` is a dataclass, so the two compare equal. |
+**`solve/staging.py`** -- triaged: of the 22 survivors, 13 are killed by tests in
+`tests/test_staging.py`. The one that does the most work frames a cast drawn five hundred
+times smaller: a puppet's units are its own, so the composition must come out the same,
+even with the whole cast less than one unit wide. These 9 are accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_fit_cast_across_frame` 8, 16 | widths measured with `facing_right` `None` or `False` | A mirrored silhouette is exactly as wide. |
+| `_fit_cast_across_frame` 22, 23 | widths measured from an origin of `(1, 0)` or `(0, 1)` | Moving a silhouette does not change its width. |
+| `_fit_cast_across_frame` 40 | `native_total <= 0` to `< 0` | Every part has a positive width or radius, so a cast's total width is never 0. |
+| `_facing_for` 5 | `target in order and actor in order` to `or` | The order holds the whole cast, and a gaze target is a cast member -- the IR checks it -- so both are always in it. |
+| `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
+| `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
+| `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
 
 ### Exploring with fresh seeds
 
