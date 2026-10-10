@@ -251,6 +251,20 @@ Hello there.
         assert main(["check", str(path)]) == 1
         assert ":5:1: duplicate-panel:" in capsys.readouterr().err
 
+    def test_the_message_does_not_repeat_the_path(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """The location names the file already. The message used to name it again,
+        spelled as it was typed, so an absolute path reached the SARIF output -- and the
+        fingerprint, which hashes the message, changed with the spelling."""
+        path = tmp_path / "pages.script"
+        path.write_text("PAGE ONE\n\nPANEL 1\n\nPANEL 1\n", encoding="utf-8")
+        main(["check", "--format", "sarif", str(path)])
+        document = json.loads(capsys.readouterr().out)
+        (result,) = document["runs"][0]["results"]
+        assert str(tmp_path) not in result["message"]["text"]
+        assert "pages.script" not in result["message"]["text"]
+
     def test_it_produces_sarif_like_any_other_document(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
