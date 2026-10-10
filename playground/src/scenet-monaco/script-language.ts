@@ -63,17 +63,21 @@ export const scriptMonarchTokens: Monaco.languages.IMonarchLanguage = {
       // prose -- writers use it as a scene divider.
       [/^---\s*$/, { token: "meta.separator", next: "@frontMatter", nextEmbedded: "yaml" }],
 
-      [/^\s*(PAGE)\s+(.+)$/, ["keyword.page", "string.page"]],
-      [/^\s*(PANEL)\s+(\S+)\s*$/, ["keyword.panel", "number.panel"]],
+      // With groups, Monaco requires every character of the match to be in one, and
+      // refuses the rule otherwise -- silently, leaving the line uncoloured. So the
+      // whitespace is grouped too, and left unstyled.
+      [/^(\s*)(PAGE)(\s+)(.+)$/, ["", "keyword.page", "", "string.page"]],
+      [/^(\s*)(PANEL)(\s+)(\S+)(\s*)$/, ["", "keyword.panel", "", "number.panel", ""]],
 
       // A directive: @shot, @angle, or any top-level panel key.
       [/^\s*(@)([A-Za-z_][\w-]*)(\s*:\s*)(.*)$/, ["operator", "attribute.name", "", "attribute.value"]],
 
       // Speaker cue with a parenthetical: BOB (whisper). Tested before the bare cue so
       // the parenthetical is coloured separately rather than swallowed by the name.
+      // One action per group, and the state change rides on the last of them.
       [
-        /^\s*([A-Z][A-Z0-9 _.'-]*[A-Z0-9])(\s*\()([^)]*)(\)\s*)$/,
-        ["type.identifier", "delimiter", "annotation", "delimiter", { token: "", next: "@dialogue" }],
+        /^(\s*)([A-Z][A-Z0-9 _.'-]*[A-Z0-9])(\s*\()([^)]*)(\)\s*)$/,
+        ["", "type.identifier", "delimiter", "annotation", { token: "delimiter", next: "@dialogue" }],
       ],
       // Bare speaker cue: ALICE. Requires at least two characters so a stray initial
       // does not turn the following paragraph into dialogue.
