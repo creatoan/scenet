@@ -5,6 +5,7 @@ fraction of panel height. That definition is the tempting wrong answer, so sever
 tests below exist specifically to fail against it.
 """
 
+from collections.abc import Callable
 from itertools import pairwise
 from pathlib import Path
 
@@ -462,3 +463,75 @@ class TestTheAngleTableMatchesTheCode:
 
     def test_the_floor_for_a_tilted_camera_is_stated(self):
         assert f"{MINIMUM_ANGLE_HEADROOM:.2f}" in self.DOC.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- mutation triage (#95)
+
+
+def _with_landmarks(puppet: PuppetSpec, change: Callable[[float], float]) -> PuppetSpec:
+    """The same puppet with every landmark moved by `change` -- a body measured from
+    somewhere other than the top of its head, or drawn at another size."""
+    landmarks = {landmark: change(value) for landmark, value in puppet.landmarks.items()}
+    return puppet.model_copy(update={"landmarks": landmarks})
+
+
+class TestLandmarksAreMeasuredFromTheHead:
+    """Both shipped puppets put the top of the head at 0, so a sum and a difference from
+    it agree for them. A puppet measured from anywhere else must frame the same."""
+
+    def test_the_visible_height_is_a_distance_from_the_head(self, alice: PuppetSpec):
+        lowered = _with_landmarks(alice, lambda value: value + 100.0)
+        assert visible_height(lowered, ShotType.MEDIUM_SHOT) == visible_height(
+            alice, ShotType.MEDIUM_SHOT
+        )
+
+    def test_a_figure_framed_alone_stands_where_its_head_says(self, alice: PuppetSpec):
+        lowered = _with_landmarks(alice, lambda value: value + 100.0)
+        camera = solve_camera(
+            alice, shot=ShotType.MEDIUM_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+        )
+        assert camera.root_y_framed(lowered) == camera.root_y_framed(alice)
+
+
+class TestTheCameraRefusesAFrameItCannotFill:
+    def test_headroom_and_footroom_that_are_the_whole_panel_leave_no_figure(
+        self, alice: PuppetSpec
+    ):
+        """Medium shot at eye level has a tenth of headroom; nine tenths of footroom
+        make exactly one, and a figure zero units tall is not a framing."""
+        with pytest.raises(ValueError, match="leaves no room for the figure"):
+            solve_camera(
+                alice,
+                shot=ShotType.MEDIUM_SHOT,
+                angle=CameraAngle.EYE_LEVEL,
+                panel_height=1000.0,
+                footroom=0.9,
+            )
+
+    def test_a_crop_level_with_the_head_shows_nothing(self, alice: PuppetSpec):
+        flat = alice.model_copy(update={"landmarks": {**alice.landmarks, Landmark.WAIST: 0.0}})
+        with pytest.raises(ValueError, match="no visible height"):
+            solve_camera(
+                flat, shot=ShotType.MEDIUM_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+            )
+
+    def test_a_puppet_drawn_in_tiny_units_is_still_framed(self, alice: PuppetSpec):
+        """Units are the puppet's own; a body a thousandth the size scales up to fit."""
+        tiny = _with_landmarks(alice, lambda value: value / 1000.0)
+        camera = solve_camera(
+            tiny, shot=ShotType.MEDIUM_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+        )
+        normal = solve_camera(
+            alice, shot=ShotType.MEDIUM_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+        )
+        assert camera.scale == pytest.approx(normal.scale * 1000.0)
+
+
+class TestARetreatKeepsTheFraming:
+    def test_pulling_back_keeps_the_headroom_and_footroom(self, alice: PuppetSpec):
+        camera = solve_camera(
+            alice, shot=ShotType.MEDIUM_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+        )
+        retreated = camera.pulled_back_to(camera.scale / 2)
+        assert (retreated.headroom, retreated.footroom) == (camera.headroom, camera.footroom)
+        assert retreated.pullback == 0.5
