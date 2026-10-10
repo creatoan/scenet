@@ -17,10 +17,13 @@ export interface Executable {
  * Split the `scenet.executable` setting into a command and the arguments it brings.
  *
  * `uv run scenet` is a command, `uv`, with two arguments of its own, which go before
- * whatever the extension adds.
+ * whatever the extension adds. A part in double quotes keeps its spaces, which an
+ * absolute path on Windows often needs. Backslashes are literal, being path separators
+ * there, so there is no escaping: a quote cannot be part of a path anyway.
  */
 export function parseExecutable(setting: string): Executable {
-  const [command, ...leadingArgs] = setting.trim().split(/\s+/).filter((part) => part !== "");
+  const parts = [...setting.matchAll(/"([^"]*)"|(\S+)/g)].map((match) => match[1] ?? match[2] ?? "");
+  const [command, ...leadingArgs] = parts.filter((part) => part !== "");
   return { command: command ?? "scenet", leadingArgs };
 }
 

@@ -42,7 +42,7 @@ the editor reports exactly what the command line does.
 
 | Setting | Default | |
 |---|---|---|
-| `scenet.executable` | `scenet` | How to invoke the compiler: an absolute path, or `uv run scenet` |
+| `scenet.executable` | `scenet` | How to invoke the compiler: an absolute path, in double quotes if it has a space, or `uv run scenet` |
 | `scenet.previewOnSave` | on | Refresh an open preview on save |
 | `scenet.checkOnSave` | on | Run `scenet check` on open and save, and show its findings |
 | `scenet.checkDeep` | off | Check with `--deep`, which costs a real compile on every save |

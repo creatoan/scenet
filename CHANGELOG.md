@@ -24,6 +24,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **The VS Code extension could not run `scenet` from a path with a space in it**, such as
+  one under `C:\Program Files`, though `scenet.executable` asks for an absolute path: the
+  setting was split on every space. A part in double quotes now keeps its spaces.
 - **A comic-script finding repeated its file in the message**, spelled as it was typed. Given
   an absolute path, `scenet check` wrote that path into its SARIF output, and the finding's
   fingerprint changed with the spelling. The location still names the file.

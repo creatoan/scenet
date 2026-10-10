@@ -66,7 +66,7 @@
         "scenet.executable": {
           "type": "string",
           "default": "scenet",
-          "description": "How to invoke the compiler. Use an absolute path, or e.g. 'uv run scenet', if it is not on PATH.",
+          "description": "How to invoke the compiler. If it is not on PATH, use an absolute path, in double quotes if it contains a space, or e.g. 'uv run scenet'.",
           "scope": "machine-overridable"
         },
         "scenet.previewOnSave": {
