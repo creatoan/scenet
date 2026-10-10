@@ -79,6 +79,10 @@ expressions:
   angry: {brow: angled_in, eyes: narrowed, mouth: frown}
 ```
 
+A part's keys say which kind it is: `from` and `to` make a bone, `at` makes a blob. A part is
+checked only as the kind it is written as, and one that uses the keys of both kinds, or of
+neither, is a single error saying so.
+
 ## Faces
 
 An **expression** is to features what a pose is to joints: a named record the panel selects by name.

@@ -200,8 +200,10 @@ and reports every edit the suite still passes. Each survivor is a behaviour noth
 
 It runs weekly, and on demand, in `.github/workflows/mutation.yml`. The only pull request
 it runs on is one that changes the workflow itself: a full run takes far longer than a review
-should wait. The job summary gives the score and lists the survivors, which are also uploaded
-as an artifact. It is not a required check, and there is no threshold until the baseline
+should wait. The job summary gives the score and lists the survivors. The `mutmut-results`
+artifact holds the same list, and `survivors.diff`: every survivor's change, as `mutmut show`
+prints it, which is what triage starts from. A run on one file is a `workflow_dispatch` with
+`path` set, on whichever branch holds the tests to try. It is not a required check, and there is no threshold until the baseline
 below has been worked down.
 
 **Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
@@ -268,7 +270,7 @@ memory, described above, are among the killed. By module:
 | Module | Survivors | Triage |
 |---|---|---|
 | `solve/balloons.py` | 123 | done: 16 accepted, below |
-| `solve/text.py` | 50 | |
+| `solve/text.py` | 50 | done: 14 accepted, below |
 | `solve/page.py` | 49 | done: 23 accepted, below |
 | `solve/backdrop.py` | 32 | |
 | `solve/staging.py` | 22 | |
@@ -313,6 +315,22 @@ below. Anything else is new, and is triaged the same way.
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
 
+**`solve/text.py`** -- triaged: of the 50 survivors, 36 are killed by tests in
+`tests/test_text.py`, and these 14 are accepted. Most of the 36 were in `FontMetrics`'s
+constructor, and survived for a reason worth knowing: `load_metrics` is cached, so a test
+that measures only through it uses the instance built at import and never runs the
+constructor under a mutant. The tests now build one of their own.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `FontMetrics.__init__` 4, 6, 8 | `lazy=True` to `None`, `False`, or left out | Laziness decides when fontTools parses a table, not what it reads from it. |
+| `FontMetrics.__init__` 27, 29, 32 | the default for a missing `.notdef` changed | Every TrueType font has a `.notdef`, glyph 0, with an advance in `hmtx`, so the default is never used. |
+| `FontMetrics.advance` 6, 8, 10 | the default for a glyph with no advance changed, or always looked up | Every glyph the character map names has an advance in `hmtx`; a character with no glyph looks up `None`, which is not a glyph name, and gets `.notdef` either way. |
+| `FontMetrics.glyph_outlines` 6 | `name is None or name not in glyph_set` to `and` | Every glyph the character map names is in the glyph set, so the second test only ever agrees with the first. |
+| `candidate_measures` 16 | runs end one word further | The extra run repeats `words[start:]`, a width already in the set. |
+| `layout_text` 18 | `line_widths=()` left out | `()` is its default. |
+| `layout_text` 73 | `score < best_score` to `<=` | An exact tie between two different wrappings needs two different blocks to score the same float; equal wrappings tie, and either is the same block. |
+| `layout_text` 91 | the fallback joins words with `XX XX` | The fallback is reached only when every block is 0 wide. With two words or more, the space between them has width, so the fallback only ever sets one word. |
 **`solve/page.py`** -- triaged: of the 49 survivors, 26 are killed by tests in
 `tests/test_page_solver.py`, which call the solver's pieces directly at the edges each one
 holds -- an inset that exactly fits, two insets exactly a gutter apart, a lean that leaves

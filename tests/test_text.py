@@ -5,10 +5,21 @@ holds its text but strands a single word on its own line reads as bad lettering,
 several tests below encode what a letterer would actually do.
 """
 
+import math
+from pathlib import Path
+
 import pytest
+from fontTools.fontBuilder import FontBuilder
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib import TTFont
 
 from scenet.solve.text import (
+    DEFAULT_FONT_PATH,
+    LINE_PENALTY,
+    TARGET_ASPECT,
     FontMetrics,
+    TextBlock,
+    _shape_score,
     balloon_size,
     candidate_measures,
     layout_text,
@@ -166,3 +177,104 @@ class TestDeterminism:
         first = layout_text(text, font_size=37.5, metrics=metrics)
         second = layout_text(text, font_size=37.5, metrics=metrics)
         assert first == second
+
+
+def _font_without_a_character_map(path: Path) -> Path:
+    """A TrueType font with glyphs and metrics but no `cmap` table at all."""
+    builder = FontBuilder(1000, isTTF=True)
+    builder.setupGlyphOrder([".notdef"])
+    builder.setupGlyf({".notdef": TTGlyphPen(None).glyph()})
+    builder.setupHorizontalMetrics({".notdef": (500, 0)})
+    builder.setupHorizontalHeader(ascent=800, descent=-200)
+    builder.save(str(path))
+    return path
+
+
+class TestAFontThatCannotBeMeasured:
+    """`FontMetrics` promises a `ValueError` for a font with no usable Unicode character
+    map. A font with no `cmap` table at all raised `KeyError: 'cmap'` instead, from inside
+    fontTools, before the check that names the problem was reached."""
+
+    def test_a_font_with_no_character_map_is_refused_as_documented(self, tmp_path: Path):
+        font = _font_without_a_character_map(tmp_path / "bare.ttf")
+        with pytest.raises(ValueError, match="no usable Unicode character map"):
+            FontMetrics(font)
+
+
+class TestAFreshFontMetrics:
+    """`load_metrics` is cached, so a test that only ever measures through it uses the
+    instance built at import, and never runs the constructor it means to test. These
+    build their own."""
+
+    @pytest.fixture
+    def fresh(self) -> FontMetrics:
+        return FontMetrics(DEFAULT_FONT_PATH)
+
+    def test_it_remembers_which_font_it_read(self, fresh: FontMetrics):
+        assert fresh.path == DEFAULT_FONT_PATH
+
+    def test_it_reads_the_em_from_the_head_table(self, fresh: FontMetrics):
+        font = TTFont(str(DEFAULT_FONT_PATH))
+        assert fresh.units_per_em == font["head"].unitsPerEm == 1000  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+
+    def test_it_measures_exactly_as_the_cached_instance_does(self, fresh: FontMetrics):
+        text = "You forgot your umbrella!"
+        assert fresh.measure(text, 37) == load_metrics().measure(text, 37) > 0
+
+    def test_an_unmapped_character_measures_as_the_missing_glyph(self, fresh: FontMetrics):
+        """U+200B has no glyph in the font, so it advances by `.notdef`, read here from
+        the font's own `hmtx` -- not by nothing, and not by one unit."""
+        font = TTFont(str(DEFAULT_FONT_PATH))
+        notdef = font["hmtx"][".notdef"][0]
+        assert notdef > 1
+        assert fresh.advance("\u200b") == notdef / 1000
+
+    def test_outlines_come_from_its_own_glyphs(self, fresh: FontMetrics):
+        drawn, missing = fresh.glyph_outlines("A\u200b")
+        assert drawn[0].startswith("M")
+        assert missing == ("", fresh.advance("\u200b"))
+
+    def test_a_missing_glyph_does_not_end_the_outlines(self, fresh: FontMetrics):
+        """A character the font lacks is drawn as nothing and passed over; the letters
+        after it are still drawn."""
+        missing, drawn = fresh.glyph_outlines("\u200bA")
+        assert missing == ("", fresh.advance("\u200b"))
+        assert drawn[0].startswith("M")
+
+
+class TestTheEmptyBlock:
+    def test_text_with_no_words_is_exactly_the_empty_block(self, metrics: FontMetrics):
+        """Every field, not just the lines: a caller sizes a balloon from all of them."""
+        block = layout_text("   ", font_size=40, metrics=metrics)
+        assert block == TextBlock((), 0.0, 0.0, 40, 50.0, ())
+
+
+class TestAWordWithNoWidth:
+    """Combining marks advance by nothing, so a word made only of them is 0 wide. Every
+    block the search builds then scores infinity, none is chosen, and the fallback sets
+    the word on a line of its own rather than lettering nothing."""
+
+    def test_it_is_set_on_one_line_of_its_own(self, metrics: FontMetrics):
+        block = layout_text("\u0301\u0301", font_size=30, metrics=metrics)
+        assert block == TextBlock(("\u0301\u0301",), 0.0, 37.5, 30, 37.5, (0.0,))
+
+
+def _block(width: float, height: float) -> TextBlock:
+    return TextBlock(("a",), width, height, 16, height, (width,))
+
+
+class TestShapeScore:
+    def test_a_block_with_no_width_or_no_height_is_never_chosen(self):
+        assert _shape_score(_block(0.0, 37.5), TARGET_ASPECT) == math.inf
+        assert _shape_score(_block(80.0, 0.0), TARGET_ASPECT) == math.inf
+
+    def test_a_block_smaller_than_one_unit_is_still_scored(self):
+        assert math.isfinite(_shape_score(_block(1.0, 0.5), TARGET_ASPECT))
+        assert math.isfinite(_shape_score(_block(0.5, 0.25), TARGET_ASPECT))
+
+    def test_one_line_at_the_target_aspect_scores_nothing(self):
+        assert _shape_score(_block(80.0, 40.0), 2.0) == 0.0
+
+    def test_each_line_after_the_first_costs_the_line_penalty(self):
+        two = TextBlock(("a", "b"), 80.0, 40.0, 16, 20.0, (80.0, 80.0))
+        assert _shape_score(two, 2.0) == pytest.approx(LINE_PENALTY)
