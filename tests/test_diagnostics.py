@@ -521,6 +521,19 @@ class TestTheSarifDocument:
                 assert isinstance(region[key], int)
                 assert region[key] >= 1
 
+    def test_it_says_what_a_column_counts(self, document: dict[str, Any]):
+        """SARIF 2.1.0 section 3.14.27: a run with results SHALL declare `columnKind`.
+        Without it a consumer counting UTF-16 code units, as every editor does, is one
+        column off past each emoji."""
+        assert document["runs"][0]["columnKind"] == "unicodeCodePoints"
+
+    def test_a_column_counts_code_points(self):
+        """Which is what PyYAML's marks count: indices into a Python `str`."""
+        source = 'cast: {alice: {reference: alice}}\nscript:\n  - say: {text: "🙂🙂", by: bpb}\n'
+        (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
+        assert found.region is not None
+        assert found.region.start.column == source.splitlines()[2].index("bpb") + 1
+
     def test_every_rule_carries_what_github_requires(self, document: dict[str, Any]):
         for rule in document["runs"][0]["tool"]["driver"]["rules"]:
             assert rule["id"]
