@@ -15,11 +15,10 @@ name: MCP Registry
 #
 # Two ways in:
 #
-#   - by hand, for a release that already exists (Actions -> MCP Registry -> Run
-#     workflow, giving the tag). The first listing, and any retry, goes this way.
-#   - from release.yml, after the release is out, once the repository variable
-#     MCP_REGISTRY_PUBLISH is "true". Opt-in, like PYPI_TRUSTED_PUBLISHER, because the
-#     login route is unproven for this namespace until it has worked once.
+#   - from release.yml, after the release is out, when the repository variable
+#     MCP_REGISTRY_PUBLISH is "true" -- which it is. This is how every release is listed.
+#   - by hand (Actions -> MCP Registry -> Run workflow, giving the tag), only to retry a
+#     listing that failed, or for a release cut while the variable was unset.
 on:
   workflow_dispatch:
     inputs:

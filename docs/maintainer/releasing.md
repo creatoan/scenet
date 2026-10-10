@@ -68,9 +68,16 @@ push tag v0.2.0
       ├─ publish   ⏸ waits for you to approve the `pypi` environment
       │            → pypi.org, via Trusted Publishing, with attestations
       │
-      └─ release   → GitHub Release, notes from CHANGELOG,
-                     sdist + wheel + vsix attached
+      ├─ release   → GitHub Release, notes from CHANGELOG,
+      │              sdist + wheel + vsix attached
+      │
+      └─ registry  → listed in the MCP registry, from the PyPI package
 ```
+
+**For this repository, all of it is switched on**: PyPI publishing, the approval before it,
+and the registry listing. So a release is the pull request, the tag, and one click to
+approve -- nothing else is done by hand. The sections below say how each switch works and
+how to turn it off.
 
 **Everything that can fail runs before anything is published.** PyPI never allows
 re-uploading a version — not after a delete, not ever — so a half-finished release burns
@@ -104,7 +111,7 @@ undone. Decide once, deliberately, rather than discovering it mid-release.
 
 ## Listing in the MCP registry
 
-Optional, and after PyPI has the release. The
+Automatic, as the release workflow's last job, once PyPI has the release. The
 [official MCP registry](https://github.com/modelcontextprotocol/registry) stores metadata only:
 `server.json` describes how to launch `scenet mcp` from the PyPI package, and the registry checks
 that the package's description — the README — carries the `mcp-name` marker for the
@@ -121,17 +128,21 @@ upstream bug reported by several people
 `.github/workflows/registry.yml`, logs in the other way the registry supports — GitHub's OIDC token,
 which proves the namespace through the repository it runs in — and needs no secret.
 
-To list a release that already exists, once: **Actions → MCP Registry → Run workflow**, giving the
-tag (`v0.8.0`). To list every future release automatically, set the opt-in variable, which makes
-`release.yml` call the same workflow after the release is out:
+`release.yml` calls that workflow after the GitHub Release, because the repository variable
+`MCP_REGISTRY_PUBLISH` is `true`. It was switched on once a hand run had listed 0.9.0, which
+proved the login works for this namespace, and 0.10.0 was the first release listed by the
+release itself. There is nothing to do for the registry when you release.
+
+Nothing waits on it: a failed listing leaves a complete release behind. **Run it by hand only
+to retry one that failed**, or to list a release cut while the variable was unset: **Actions →
+MCP Registry → Run workflow**, giving the tag (`v0.10.0`). Check the release run first: when
+its *List in the MCP registry* job passed, the version is listed and there is nothing to retry.
+
+To stop listing releases, delete the variable; `release.yml` then skips the job:
 
 ```bash
-gh variable set MCP_REGISTRY_PUBLISH --body true
+gh variable delete MCP_REGISTRY_PUBLISH
 ```
-
-Nothing waits on it: a failed listing leaves a complete release and can be re-run from the Actions
-tab. Leave the variable unset until a hand-run has succeeded once — that login route is unproven
-for this namespace until it has.
 
 The workflow checks that `server.json` names the tag's version and that the version is on PyPI,
 then runs `mcp-publisher validate`, `login github-oidc` and `publish`. **`publish` has no dry-run
@@ -148,7 +159,8 @@ A listing can be withdrawn. `mcp-publisher status --status deprecated|deleted <n
 ## PyPI is opt-in
 
 The `publish` job is skipped unless the repository variable `PYPI_TRUSTED_PUBLISHER`
-is `true`:
+is `true`. It is, for this repository; this section is how it was set up, and what happens
+without it:
 
 ```bash
 gh variable set PYPI_TRUSTED_PUBLISHER --body true
