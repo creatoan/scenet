@@ -274,3 +274,10 @@ Hello there.
         document = json.loads(capsys.readouterr().out)
         region = document["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]
         assert region["startLine"] == 1
+        # The whole line, which is all a script finding can claim.
+        assert region == {
+            "startLine": 1,
+            "startColumn": 1,
+            "endLine": 1,
+            "endColumn": len("stray prose") + 1,
+        }

@@ -877,6 +877,36 @@ class TestCastResolvesAgainstTheLibrary:
         assert found == []
 
 
+class TestAScriptFindingIsALine:
+    """A script line is prose, so a finding there points at the line, not a character.
+
+    SARIF can say "line 5" with `startLine` alone, but GitHub code scanning requires all
+    four bounds, so the region runs from column 1 to the end of the line. It used to end
+    at column 2, which claimed the first character: a precision the parser does not have.
+    """
+
+    @staticmethod
+    def line(number: int, text: str) -> Region:
+        return Region(start=Position(line=number, column=1), end=Position(number, len(text) + 1))
+
+    def test_a_repeated_panel_spans_its_heading(self):
+        (found,) = diagnose_script("PAGE ONE\n\nPANEL 1\n\nPanel 1.\n", source=Path("x.script"))
+        assert found.region == self.line(5, "Panel 1.")
+
+    def test_content_before_the_first_panel_spans_its_line(self):
+        (found,) = diagnose_script("stray prose here\n\nPANEL 1\n", source=Path("x.script"))
+        assert found.region == self.line(1, "stray prose here")
+
+    def test_the_line_is_the_file_line_after_front_matter(self):
+        script = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\nALICE\nHi.\n\nPANEL 1\n"
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.region == self.line(8, "PANEL 1")
+
+    def test_a_line_ending_is_not_part_of_the_line(self):
+        (found,) = diagnose_script("PANEL 1\r\n\r\nPANEL 1\r\n", source=Path("x.script"))
+        assert found.region == self.line(3, "PANEL 1")
+
+
 class TestCheckAndBuildAgree:
     """`check` and `build` must never disagree about which documents are valid.
 
