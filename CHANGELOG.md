@@ -96,6 +96,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **A font with no character map raised `KeyError: 'cmap'`** from inside fontTools when
+  passed as `metrics=`, instead of the `ValueError` that `FontMetrics` documents for a font
+  it cannot measure text against. Found while triaging mutation testing. (#95)
 - **`scenet build` could silently overwrite one output with another.** Only a panel named
   like a page was refused. A panel named `strip` replaced the strip, `x.debug` replaced panel
   `x`'s overlay, and two names differing only in case wrote one file on Windows and macOS.
