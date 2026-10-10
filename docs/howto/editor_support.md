@@ -65,6 +65,25 @@ staying quietly empty.
 
 It depends on the Red Hat YAML extension, which VS Code will offer to install for you.
 
+## Findings the schema cannot see
+
+The schema catches typos and wrong types. It cannot catch an actor id in `staging` that is
+not in `cast`, an ordering cycle, or a pose the puppet does not have: those are what
+[`scenet check`](../reference/cli.md#scenet-check) is for. Its SARIF output can be read by
+Microsoft's [SARIF Viewer](https://marketplace.visualstudio.com/items?itemName=MS-SarifVSCode.sarif-viewer)
+extension, so you can see them in VS Code without the Scenet extension, or open a report
+CI wrote:
+
+```bash
+scenet check --format sarif -o scenet.sarif examples/duel.panel.yaml
+```
+
+Then open `scenet.sarif` in VS Code. The viewer opens its results panel, underlines each
+finding in its document, and lists it under **Problems** with its rule.
+
+The viewer reads a file, so it shows the findings as they were when you ran the command.
+Run it again after a fix to see them go.
+
 ## Generating the schema yourself
 
 ```bash
