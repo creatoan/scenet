@@ -275,7 +275,7 @@ memory, described above, are among the killed. By module:
 | `emit/page.py` | 18 | |
 | `emit/svg.py` | 16 | |
 | `emit/debug_svg.py` | 9 | |
-| `solve/camera.py` | 7 | |
+| `solve/camera.py` | 7 | done: 1 accepted, below |
 | `emit/strip.py` | 7 | |
 
 Before the golden outputs, the same run left 845 survivors (79.4% killed), 188 of them in
@@ -312,6 +312,15 @@ below. Anything else is new, and is triaged the same way.
 | `letter_tone` 5 | `>=` to `>` | Differs only when ink and paper contrast exactly equally with the fill. Contrast is measured on neutral greys, so there are 256 fills to try, and none ties. |
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
+
+**`solve/camera.py`** -- triaged: of the 7 survivors, 6 are killed by tests in
+`tests/test_camera.py`. Both shipped puppets measure from the top of the head at 0, where a
+sum and a difference from it agree, so the tests also frame a puppet measured from lower
+down, and one drawn a thousand times smaller. This one is accepted.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `CameraSolution.pulled_back_to` 1 | `scale >= self.scale` to `>` | At an equal scale it builds a new solution equal in every field -- pullback 1.0 -- and `CameraSolution` is a dataclass, so the two compare equal. |
 
 ### Exploring with fresh seeds
 
