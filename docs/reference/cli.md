@@ -42,7 +42,8 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 `--live-text`
 : Emit selectable `<text>` elements instead of glyph outlines. Smaller files and
   selectable text, but the result depends on the reader having a metrically compatible
-  font installed. The default emits outlines, which makes the file genuinely
+  font installed, and on the renderer kerning it as the compiler measured it — browsers
+  do by default. The default emits outlines, which makes the file genuinely
   self-contained.
 
 `--strip`

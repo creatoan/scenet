@@ -1747,6 +1747,7 @@ dev = [
     { name = "sybil" },
     { name = "ty" },
     { name = "types-pyyaml" },
+    { name = "uharfbuzz" },
 ]
 docs = [
     { name = "linkify-it-py" },
@@ -1789,6 +1790,7 @@ dev = [
     { name = "sybil", specifier = ">=10.1" },
     { name = "ty", specifier = ">=0.0.73" },
     { name = "types-pyyaml", specifier = ">=6.0" },
+    { name = "uharfbuzz", specifier = ">=0.56" },
 ]
 docs = [
     { name = "linkify-it-py", specifier = ">=2.0" },
@@ -2209,6 +2211,28 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a3/26/b09b8010994eccc3c09092e6b34058f36a460eea2d4c3e8b910c695975a0/typing_inspection-0.4.4.tar.gz", hash = "sha256:547274fa6b0a561ccf549cc9524b999a578e737d015d8709d021f9d0d13bea47", size = 76928, upload-time = "2026-08-12T12:37:25.997Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl", hash = "sha256:65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147", size = 14750, upload-time = "2026-08-12T12:37:24.648Z" },
+]
+
+[[package]]
+name = "uharfbuzz"
+version = "0.56.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/55/0b4e05cfb5134e8902c56e9a0d2d629c5de4b89806a0b698f422ec06bd55/uharfbuzz-0.56.3.tar.gz", hash = "sha256:dbb6cc2c36b42929e4059290a980640f2391d858f6eab36e369ed4f373f96caa", size = 39725360, upload-time = "2026-10-06T14:26:03.329Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/33/fa6d2ad31c71fe23cf1e8f505b758ebee9c2d615338faf9d1719e42f1ea7/uharfbuzz-0.56.3-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:888648b3ca86f3ee2f585e2c951741f06365ec3ae3d2eeaddb2562fd68738057", size = 3563492, upload-time = "2026-10-06T14:25:24.832Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/95/5f00b249e62a14ab525082fa10cf125e9ce4003221f6744c4818cf0347a5/uharfbuzz-0.56.3-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5ab78fbe38777292899cdef9ab189b2253587f55510132483737613f252905f5", size = 2022708, upload-time = "2026-10-06T14:25:27.059Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/dd/61fab070fd58a1b3b4acda488b18f03c66969c2e87a48e76925388b8a96a/uharfbuzz-0.56.3-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:450c32c04dfdfe9dc69b68250605538b493c3444823383a2ede100f0e6686d8e", size = 2107989, upload-time = "2026-10-06T14:25:29.408Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/3b/d5f5cbf7323981bc50ae2ed40d546c0fba8f378658853629799531569df5/uharfbuzz-0.56.3-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:2d4bf1ef699e119ac49f48a50949ee0dbca971ecf24f2dcb2e229cae8b2518d7", size = 3049522, upload-time = "2026-10-06T14:25:30.894Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/12/4618c0e4b7ecc2fd297f30a559211a51b04a277ae64af6dce5fb307a627e/uharfbuzz-0.56.3-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:8b46ad84bc662ecd4c52ce3e2d66d562bd464789d4f5e37de6987875f2bc37bb", size = 3169507, upload-time = "2026-10-06T14:25:32.643Z" },
+    { url = "https://files.pythonhosted.org/packages/44/d9/b2192884f1dce014259ace5cc387957f11738c7b365766bc80df6a2a6138/uharfbuzz-0.56.3-cp310-abi3-pyemscripten_2025_0_wasm32.whl", hash = "sha256:8831e5443b6270484c39d76b0c42f7e17d855a264b03fab81a6d78601f79d44c", size = 984489, upload-time = "2026-10-06T14:25:34.728Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/38/ab433adf99a79086c40cae85d2563411a6dcd6dca5832e9ede83b0a72078/uharfbuzz-0.56.3-cp310-abi3-pyemscripten_2026_0_wasm32.whl", hash = "sha256:f602ccd6359da0b349396e24a03e7bba93b46f3df29e3ebbcf7d26f89f1e5e9b", size = 981875, upload-time = "2026-10-06T14:25:36.579Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/10/6a91232278cd6d1248bf3ac7fd18dd26e95bbe469cfe0e4701928156c1d4/uharfbuzz-0.56.3-cp310-abi3-win32.whl", hash = "sha256:9ac536658fa4619c997569b2dbd11d58059d63d4b14f143567f0fb1a7d7e19f8", size = 1188179, upload-time = "2026-10-06T14:25:38.179Z" },
+    { url = "https://files.pythonhosted.org/packages/65/02/9e5155d9a1b7d4891064674e8db2cab754517d39f293c827e60e794bbd8a/uharfbuzz-0.56.3-cp310-abi3-win_amd64.whl", hash = "sha256:6d1a4e9de1fa893e4a2ca7e8140b55073342f965bebb00f047196678d672c799", size = 1553706, upload-time = "2026-10-06T14:25:39.774Z" },
+    { url = "https://files.pythonhosted.org/packages/95/36/a5bb05a334f4945e234765bd5ab0d8a576c7ea415067deb4599b881aa08f/uharfbuzz-0.56.3-pp312-pypy312_pp80-macosx_10_15_x86_64.whl", hash = "sha256:2fa83562e6b5367617394e0b98bbc9a2908e22414049e017975a610e2f60c6ab", size = 1734573, upload-time = "2026-10-06T14:25:50.294Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/3d/003a8a60ffc48e6cd85a6b785c637f69a7f724cd63cef1135b602797eaf3/uharfbuzz-0.56.3-pp312-pypy312_pp80-macosx_11_0_arm64.whl", hash = "sha256:faad27ac589a0c1913fc4b09ec588d382e32c0473c43dd75ab3cd22d37f1f312", size = 1606900, upload-time = "2026-10-06T14:25:51.944Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/eb/ea7a4e35bedc0b16e2ae4b13b87352a48d87531c7984a9fbd626b6cfe96d/uharfbuzz-0.56.3-pp312-pypy312_pp80-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:09f3042e6d454af7601831fb1384b057fe90e310e32473b4de73b84820b428c4", size = 1860783, upload-time = "2026-10-06T14:25:53.633Z" },
+    { url = "https://files.pythonhosted.org/packages/27/8c/fa72647db4bc35856e434226f0dd1ef5e8897216df47525d0d9a4565a162/uharfbuzz-0.56.3-pp312-pypy312_pp80-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e59cd23e1bf85f612718c2a8bf4313344d534246a904c8c8960fff7abada6352", size = 1951140, upload-time = "2026-10-06T14:25:59.392Z" },
+    { url = "https://files.pythonhosted.org/packages/66/0e/2134caa7d68f2943b4c2847a7b8790dc7d00183f2edb44578e77f52abe6e/uharfbuzz-0.56.3-pp312-pypy312_pp80-win_amd64.whl", hash = "sha256:8a672625acaa84d3d642acd7baa23a86896ebebe04d6ed69a7822293e92aae08", size = 1642868, upload-time = "2026-10-06T14:26:01.042Z" },
 ]
 
 [[package]]

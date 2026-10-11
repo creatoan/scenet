@@ -16,6 +16,7 @@ import math
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
+from typing import Any, Protocol
 
 # The `fonts` packages publish each face through entry_points at install time, so
 # the attribute exists at runtime but cannot be seen statically.
@@ -77,6 +78,11 @@ SHIPPED_FACES: dict[Face, Path] = {
 
 #: A run of text in one face: what a line of lettering is made of.
 Run = tuple[str, Face]
+
+#: GPOS lookup types, from the OpenType specification: pair adjustment, and the
+#: extension that wraps a lookup of another type when a table outgrows 16-bit offsets.
+PAIR_LOOKUP = 2
+EXTENSION_LOOKUP = 9
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,13 +190,171 @@ class TextBlock:
         return 1.0 - min(self.line_widths) / max(self.line_widths)
 
 
-class FontMetrics:
-    """Advance widths read straight from the font's own tables.
+class _PairTable(Protocol):
+    """One subtable of kerning pairs."""
 
-    Kerning is deliberately ignored. Reading `kern`/`GPOS` would tighten measurement
-    slightly, but SVG renderers do not agree on whether to apply it, and a measurement
-    the renderer will not reproduce is worse than a slightly generous one. Erring wide
-    means balloons are never too small for their text.
+    def adjust(self, left: str, right: str) -> int | None:
+        """The adjustment for a pair of glyphs, in font units.
+
+        `None` means the subtable does not cover the pair, and the next one in its lookup
+        is asked. Zero is an answer: a covered pair with no adjustment stops the search.
+        """
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class _GlyphPairs:
+    """Pairs listed one by one: GPOS PairPos format 1, or a legacy `kern` table.
+
+    Attributes:
+        pairs: First glyph to second glyph to adjustment.
+    """
+
+    pairs: dict[str, dict[str, int]]
+
+    def adjust(self, left: str, right: str) -> int | None:
+        """The listed adjustment, or `None` for a pair not listed."""
+        return self.pairs.get(left, {}).get(right)
+
+
+@dataclass(frozen=True, slots=True)
+class _ClassPairs:
+    """Pairs by class: GPOS PairPos format 2.
+
+    A glyph a class definition does not list is in class 0, and that is a real class: a
+    first glyph the subtable covers always gets an answer from it, zero or not, and no
+    later subtable is asked. Getting that wrong is invisible on a famous pair and wrong on
+    thousands of others, which is why `tests/test_kerning.py` checks every pair against
+    HarfBuzz.
+
+    Attributes:
+        coverage: The first glyphs this subtable answers for.
+        first: First glyph to its class.
+        second: Second glyph to its class.
+        values: Adjustment by first class, then second class.
+    """
+
+    coverage: frozenset[str]
+    first: dict[str, int]
+    second: dict[str, int]
+    values: tuple[tuple[int, ...], ...]
+
+    def adjust(self, left: str, right: str) -> int | None:
+        """The adjustment for the pair's classes, or `None` for an uncovered first glyph."""
+        if left not in self.coverage:
+            return None
+        row = self.values[self.first.get(left, 0)]
+        column = self.second.get(right, 0)
+        return row[column] if column < len(row) else None
+
+
+def _x_advance(value: object) -> int:
+    """What a value record does to the advance: all a kern pair changes in a line of text."""
+    return int(getattr(value, "XAdvance", 0) or 0)
+
+
+def _pair_table(subtable: Any) -> _PairTable | None:  # noqa: ANN401 -- fontTools builds these dynamically
+    """One PairPos subtable, indexed for lookup by glyph name."""
+    if subtable.Format == 1:
+        pairs: dict[str, dict[str, int]] = {}
+        for first, pair_set in zip(subtable.Coverage.glyphs, subtable.PairSet, strict=True):
+            seconds = pairs.setdefault(first, {})
+            for record in pair_set.PairValueRecord:
+                seconds.setdefault(record.SecondGlyph, _x_advance(record.Value1))
+        return _GlyphPairs(pairs)
+    if subtable.Format == 2:
+        return _ClassPairs(
+            coverage=frozenset(subtable.Coverage.glyphs),
+            first=dict(subtable.ClassDef1.classDefs) if subtable.ClassDef1 else {},
+            second=dict(subtable.ClassDef2.classDefs) if subtable.ClassDef2 else {},
+            values=tuple(
+                tuple(_x_advance(cell.Value1) for cell in row.Class2Record)
+                for row in subtable.Class1Record
+            ),
+        )
+    return None  # pragma: no cover -- OpenType defines PairPos formats 1 and 2 only
+
+
+def _gpos_kerning(font: TTFont) -> list[tuple[_PairTable, ...]]:
+    """The `kern` feature's lookups, each as its subtables in order.
+
+    Read from the `latn` script's default language system, or `DFLT` when there is none:
+    the lookups a shaper applies to Latin text, which is what lettering is.
+    """
+    if "GPOS" not in font:
+        return []
+    table: Any = font["GPOS"].table
+    if table.ScriptList is None or table.FeatureList is None or table.LookupList is None:
+        return []
+    scripts = {record.ScriptTag: record.Script for record in table.ScriptList.ScriptRecord}
+    script = scripts.get("latn", scripts.get("DFLT"))
+    if script is None or script.DefaultLangSys is None:
+        return []
+    features = table.FeatureList.FeatureRecord
+    indices = sorted(
+        {
+            index
+            for feature in script.DefaultLangSys.FeatureIndex
+            if features[feature].FeatureTag == "kern"
+            for index in features[feature].Feature.LookupListIndex
+        }
+    )
+    lookups: list[tuple[_PairTable, ...]] = []
+    for index in indices:
+        lookup = table.LookupList.Lookup[index]
+        subtables: list[_PairTable] = []
+        for subtable in lookup.SubTable:
+            kind, body = lookup.LookupType, subtable
+            if kind == EXTENSION_LOOKUP:
+                kind, body = subtable.ExtensionLookupType, subtable.ExtSubTable
+            if kind == PAIR_LOOKUP and (pairs := _pair_table(body)) is not None:
+                subtables.append(pairs)
+        if subtables:
+            lookups.append(tuple(subtables))
+    return lookups
+
+
+def _legacy_kerning(font: TTFont) -> list[tuple[_PairTable, ...]]:
+    """A legacy `kern` table's horizontal pair lists, each its own lookup.
+
+    Only for a font with no GPOS kerning, which is what a shaper does too. Format 0 is the
+    only format OpenType defines for it; a subtable for minimum values or cross-stream
+    adjustment is not a pair adjustment, and is skipped.
+    """
+    if "kern" not in font:
+        return []
+    lookups: list[tuple[_PairTable, ...]] = []
+    for subtable in getattr(font["kern"], "kernTables", []):
+        if getattr(subtable, "format", None) != 0:
+            continue
+        coverage = int(getattr(subtable, "coverage", 1))
+        # Apple's format flags vertical and cross-stream in the high bits; OpenType's wants
+        # horizontal set, and neither minimum values nor cross-stream.
+        apple = bool(getattr(subtable, "apple", False))
+        horizontal = not (coverage & 0xC0) if apple else (coverage & 0b0111) == 1
+        if not horizontal:
+            continue
+        pairs: dict[str, dict[str, int]] = {}
+        for (left, right), value in sorted(subtable.kernTable.items()):
+            pairs.setdefault(left, {})[right] = int(value)
+        lookups.append((_GlyphPairs(pairs),))
+    return lookups
+
+
+class FontMetrics:
+    """Advance widths and pair kerning, read straight from the font's own tables.
+
+    Kerning is applied, in measurement and in the outlines alike. It used to be ignored,
+    because SVG renderers do not agree on whether to kern `<text>`, and a measurement the
+    renderer will not reproduce is worse than a slightly generous one. That holds for
+    `--live-text` and not for the default: outlines are positioned here, glyph by glyph,
+    so no renderer has a say and every pair adjustment is reproduced exactly.
+
+    Pairs come from the GPOS `kern` feature, or from a legacy `kern` table in a font that
+    has no GPOS kerning -- read with fontTools rather than shaped with HarfBuzz, which
+    Pyodide does not ship. HarfBuzz is the test oracle instead. Only pair adjustments are
+    applied: no ligatures, no contextual alternates, no mark positioning, which is all a
+    Latin line of lettering needs and all that measurement can promise to reproduce.
     """
 
     def __init__(self, path: Path = DEFAULT_FONT_PATH) -> None:
@@ -223,28 +387,88 @@ class FontMetrics:
             name: advance for name, (advance, _lsb) in self._font["hmtx"].metrics.items()
         }
         self._missing = self._widths.get(".notdef", 0)
+        # Read on first use, then answered pair by pair: expanding every class pair up
+        # front would be millions of entries for a font with a full Latin set.
+        self._kerning: list[tuple[_PairTable, ...]] | None = None
+        self._kerned: dict[tuple[str, str], int] = {}
 
     @property
     def units_per_em(self) -> float:
         """The font's design grid size, from its `head` table."""
         return self._units_per_em
 
-    def advance(self, character: str) -> float:
-        """Advance width of one character, in em units."""
+    def _raw_advance(self, character: str) -> int:
         glyph = self._cmap.get(ord(character))
-        raw = self._widths.get(glyph, self._missing) if glyph else self._missing
+        return self._widths.get(glyph, self._missing) if glyph else self._missing
+
+    def _pair(self, left: str, right: str) -> int:
+        """The kerning between two glyphs, in font units: each lookup's first answer, summed."""
+        known = self._kerned.get((left, right))
+        if known is not None:
+            return known
+        if self._kerning is None:
+            self._kerning = _gpos_kerning(self._font) or _legacy_kerning(self._font)
+        total = 0
+        for lookup in self._kerning:
+            for subtable in lookup:
+                value = subtable.adjust(left, right)
+                if value is not None:
+                    total += value
+                    break
+        self._kerned[(left, right)] = total
+        return total
+
+    def advance(self, character: str) -> float:
+        """Advance width of one character, in em units, before any kerning."""
+        return self._raw_advance(character) / self._units_per_em
+
+    def kerning(self, left: str, right: str) -> float:
+        """The adjustment between two neighbouring characters, in em units.
+
+        Negative tightens. Zero for a pair the font does not kern, and for a character the
+        font has no glyph for.
+
+        Example:
+            >>> from scenet.solve.text import load_metrics
+            >>> load_metrics().kerning("A", "V") < 0
+            True
+        """
+        first, second = self._cmap.get(ord(left)), self._cmap.get(ord(right))
+        if first is None or second is None:
+            return 0.0
+        return self._pair(first, second) / self._units_per_em
+
+    def step(self, character: str, following: str | None = None) -> float:
+        """How far one character moves the pen, in em units.
+
+        Its advance, plus the kerning between it and the character after it, summed in
+        font units before dividing -- so a pair the font does not kern steps exactly as
+        far as its advance.
+
+        Args:
+            character: The character being set.
+            following: The one after it in the same face, or `None` at the end of a run.
+
+        Returns:
+            The distance to the next character's origin.
+        """
+        raw = self._raw_advance(character)
+        if following is not None:
+            first, second = self._cmap.get(ord(character)), self._cmap.get(ord(following))
+            if first is not None and second is not None:
+                raw += self._pair(first, second)
         return raw / self._units_per_em
 
     def measure(self, text: str, font_size: float) -> float:
-        """Width of a string set at a given size.
+        """Width of a string set at a given size, kerned.
 
         Args:
             text: The string to measure. Not wrapped; measured as one run.
             font_size: Type size in panel units.
 
         Returns:
-            Width in panel units. Slightly generous, since kerning is ignored -- which
-            errs toward balloons a shade too large rather than text that overflows.
+            Width in panel units: the sum of every character's `step`, which is exactly
+            how far the outlines advance when they are drawn.
 
         Example:
             >>> from scenet.solve.text import load_metrics
@@ -252,7 +476,14 @@ class FontMetrics:
             >>> metrics.measure("mm", 100) > metrics.measure("ii", 100)
             True
         """
-        return sum(self.advance(character) for character in text) * font_size
+        last = len(text) - 1
+        return (
+            sum(
+                self.step(character, text[index + 1] if index < last else None)
+                for index, character in enumerate(text)
+            )
+            * font_size
+        )
 
     def line_height(self, font_size: float) -> float:
         """Baseline-to-baseline distance for a given type size.
@@ -268,7 +499,10 @@ class FontMetrics:
         return font_size * LINE_HEIGHT_FACTOR
 
     def glyph_outlines(self, text: str) -> list[tuple[str, float]]:
-        """Each character's outline as SVG path data, with its advance in em units.
+        """Each character's outline as SVG path data, with its `step` in em units.
+
+        The step is the advance plus the kerning to the next character, so the outlines
+        advance by exactly what `measure` summed.
 
         Converting lettering to outlines rather than emitting `<text>` is what makes
         the output genuinely self-contained: no font to embed, no font to be missing,
@@ -278,14 +512,16 @@ class FontMetrics:
         """
         glyph_set = self._font.getGlyphSet()
         outlines: list[tuple[str, float]] = []
-        for character in text:
+        last = len(text) - 1
+        for index, character in enumerate(text):
+            step = self.step(character, text[index + 1] if index < last else None)
             name = self._cmap.get(ord(character))
             if name is None or name not in glyph_set:
-                outlines.append(("", self.advance(character)))
+                outlines.append(("", step))
                 continue
             pen = SVGPathPen(glyph_set)
             glyph_set[name].draw(pen)
-            outlines.append((pen.getCommands(), self.advance(character)))
+            outlines.append((pen.getCommands(), step))
         return outlines
 
 
@@ -333,16 +569,21 @@ class Typeface:
     def measure(self, text: Styled, font_size: float) -> float:
         """Width of styled text, each character measured in its own face.
 
-        The same sum, in the same order, as
-        :meth:`FontMetrics.measure <scenet.solve.text.FontMetrics.measure>`: text in one
-        face measures to the last bit exactly as the plain string does, which is what
-        keeps every panel without emphasis laid out as it was before emphasis existed.
+        Kerned within a face and never across a change of face: two faces are two fonts,
+        and a pair adjustment belongs to one font's pairs. Otherwise the same sum, in the
+        same order, as :meth:`FontMetrics.measure <scenet.solve.text.FontMetrics.measure>`,
+        so text in one face measures to the last bit exactly as the plain string does.
         """
-        faces = {face: self.face(face) for face in set(text.faces)}
+        characters, faces = text.text, text.faces
+        metrics = {face: self.face(face) for face in set(faces)}
+        last = len(characters) - 1
         return (
             sum(
-                faces[face].advance(character)
-                for character, face in zip(text.text, text.faces, strict=True)
+                metrics[face].step(
+                    character,
+                    characters[index + 1] if index < last and faces[index + 1] is face else None,
+                )
+                for index, (character, face) in enumerate(zip(characters, faces, strict=True))
             )
             * font_size
         )

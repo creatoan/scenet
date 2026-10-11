@@ -75,6 +75,11 @@ dev = [
     # compile must satisfy, not only the five written by hand. MPL-2.0, which is fine
     # for dev tooling -- the licence gate covers what ships, not what tests it.
     "hypothesis>=6.140",
+    # HarfBuzz, as an oracle for kerning: the compiler reads pair adjustments from GPOS
+    # itself, and the tests check every advance against what a real shaper produces. Never
+    # a runtime dependency -- Pyodide does not ship it, and the playground installs the
+    # same wheel the CLI does.
+    "uharfbuzz>=0.56",
 ]
 docs = [
     "sphinx>=9.1",

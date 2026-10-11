@@ -59,6 +59,31 @@ downstream — placement, occlusion, reading order — can be computed until tha
 font is therefore bundled rather than referenced, and measurement uses `fontTools` against that
 exact file. If renderer and measurer disagree even slightly, output stops being deterministic.
 
+## Kerning is applied, because the outlines are positioned here
+
+Pair kerning was ignored at first, on a sound argument: SVG renderers do not agree on whether to
+kern `<text>`, and a measurement the renderer will not reproduce is worse than a slightly generous
+one. That argument is about `--live-text`. The default emits glyph outlines, and Scenet positions
+every one of them itself, so no renderer has a say: a pair adjustment that is measured is drawn,
+exactly. So kerning is applied, to measurement and outlines through one function, and live text is
+the best-effort mode it always was.
+
+The pairs are read with `fontTools` from the GPOS `kern` feature, or from a legacy `kern` table in a
+font with no GPOS kerning. HarfBuzz would shape the text for us, but Pyodide does not ship it and the
+playground installs the same wheel as the CLI, so it is a dev dependency instead — the **oracle**.
+`tests/test_kerning.py` checks every ordered pair of the characters the tests letter, in all three
+faces, against HarfBuzz's advances. A hand-picked pair would not have caught the rules that matter:
+the first subtable that covers a pair answers for it, and a class pair applies even when its value is
+zero.
+
+Only pair adjustments are applied: no ligatures, no contextual alternates, no mark positioning. That
+is all a Latin line of lettering needs, and all that measurement can promise to reproduce. Two faces
+are two fonts, so a stressed word in bold italic is not kerned against its roman neighbours.
+
+Adopting it moved every example once: boxes came out up to about 1.5% narrower, one two-line balloon
+fit on one line, and a few balloons whose candidate positions had scored nearly equal chose
+differently.
+
 ## `ty` gates the build; `basedpyright` advises
 
 [`ty`](https://docs.astral.sh/ty/) is Astral's type checker: fast, and consistent with `uv` and

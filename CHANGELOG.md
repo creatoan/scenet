@@ -39,6 +39,16 @@ below 1.0 means.
   scripts, which are themselves checked against the compiler's reading, so neither can
   drift from the other or from the format. (Closes #77)
 
+### Changed
+
+- **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
+  or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
+  what is measured is still exactly what is drawn. Every example's output changes once:
+  balloons and captions come out up to about 1.5% narrower, and where two positions had
+  scored nearly equal a balloon may sit somewhere else. `--live-text` relies on the
+  renderer kerning as the compiler measured it, which browsers do by default. Checked pair
+  by pair against HarfBuzz, which is a test dependency only. (Part of #74)
+
 ### Fixed
 
 - **The VS Code preview could not run `uv run scenet`**, the setting its README suggests:
