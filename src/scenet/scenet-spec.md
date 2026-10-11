@@ -1027,6 +1027,12 @@ A balloon or caption has no legal position. Every candidate position covered a f
 
 **Fix:** Widen the panel, shorten the line, or split it across two panels.
 
+### `scenet/caption-speaker`
+
+A caption that is not `spoken` names a speaker. `by` names who says an off-panel line, so only a `spoken` caption has one. A `locale` box states a place and a time, a `monologue` is a voice nobody hears and an `editorial` one is the writer's: none of them is said by anybody, so a speaker named on one is a mistake rather than a field to ignore.
+
+**Fix:** Remove `by`, or make the caption `kind: spoken` if somebody off panel says it.
+
 ### `scenet/composition`
 
 An `over:` chain cannot be resolved. A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
