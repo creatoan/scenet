@@ -1,0 +1,22 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 685.0,
+      "panel": "door",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "height": 1370.0,
+      "panel": "inside",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 805.0
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}

@@ -287,7 +287,8 @@ def compile_ir(
         metrics: Font to measure lettering against.
         lettering_height: The height type sizes are a fraction of, instead of the panel's
             own. A page passes the same value to every panel on it; a panel compiled on
-            its own leaves it out.
+            its own leaves it out. A panel that sets `lettering.size` letters at that size
+            instead, and this is not consulted.
         exclusions: Areas no balloon or caption may touch, in panel units, because
             something is drawn over them -- on a page, the insets set into this panel.
             Nothing else moves for them: the art under an inset is drawn as usual.
@@ -352,6 +353,7 @@ def compile_ir(
         posed,
         frame,
         metrics=metrics,
+        type_size=panel.lettering.size,
         lettering_height=lettering_height,
         backdrop=backdrop,
         emanata={actor: drawn.zones for actor, drawn in emanata.items() if drawn.zones},

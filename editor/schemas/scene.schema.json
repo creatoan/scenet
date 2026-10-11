@@ -245,6 +245,27 @@
       "title": "InsetOrder",
       "type": "string"
     },
+    "LetteringSpec": {
+      "additionalProperties": false,
+      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n\nA size set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
+      "properties": {
+        "size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "title": "LetteringSpec",
+      "type": "object"
+    },
     "Mark": {
       "description": "Something drawn around a character, rather than on them, to say how they are.\n\nThe vocabulary is Mort Walker's, from *The Lexicon of Comicana* (1980), which grew\nout of his 1964 National Cartoonists Society piece \"Let's Get Down to Grawlixes\".\nThe book is tongue-in-cheek, but the terms entered real use, and they are comics'\nown names for comics' own conventions. So the set is closed and citable, and nothing\nin it is invented here.\n\n| Mark | What it is | What it says |\n|---|---|---|\n| `plewds` | Droplets flying off the head | sweating: effort, heat, nerves |\n| `squeans` | Little starbursts and circles over the head | dizzy, drunk, or sick |\n| `grawlixes` | Symbols over the head standing in for words | swearing |\n| `briffits` | A dust cloud left at the feet | gone, fast |\n\n\"Emanata\" is Walker's general term for these, which is why it names the module that\ndraws them and the Core field that holds them.\n\nA mark is not an expression. A character can be angry *and* sweating, so marks are\na list that composes with `expression:` rather than a second one. Grawlixes are\ndrawn as symbols -- a jarn (spiral), a nittle (bursting star), a bolt and a hash --\nrather than typed: an oath written as `@#$%!` already works, as dialogue.\n\nAll four are drawn **outside** the head circle, in the space balloons are placed\nin. They never move a character. A balloon prefers not to cover them, and covers\nthem anyway rather than fail when a panel is too crowded to oblige.",
       "enum": [
@@ -774,6 +795,12 @@
       "title": "Cast",
       "type": "object"
     },
+    "lettering": {
+      "$ref": "#/$defs/LetteringSpec",
+      "default": {
+        "size": null
+      }
+    },
     "page": {
       "$ref": "#/$defs/PageFormat",
       "default": {
@@ -807,7 +834,7 @@
     "panels": {
       "additionalProperties": {
         "additionalProperties": false,
-        "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
+        "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
         "properties": {
           "camera": {
             "$ref": "#/$defs/CameraSpec",
@@ -822,6 +849,12 @@
             },
             "title": "Cast",
             "type": "object"
+          },
+          "lettering": {
+            "$ref": "#/$defs/LetteringSpec",
+            "default": {
+              "size": null
+            }
           },
           "over": {
             "description": "Name of a panel to inherit from. Only the differences need stating: mappings merge recursively and lists replace.",

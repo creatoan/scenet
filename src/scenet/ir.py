@@ -46,6 +46,7 @@ __all__ = [
     "Horizon",
     "Inset",
     "InsetOrder",
+    "LetteringSpec",
     "Mark",
     "Mass",
     "MassKind",
@@ -667,6 +668,33 @@ class Mass(Strict):
     spans: Spans = Spans.FULL
 
 
+class LetteringSpec(Strict):
+    """How a panel is lettered.
+
+    Attributes:
+        size: The dialogue type size, in panel units -- the units `panel.size` is given
+            in, which on a page are the page's, since a panel there is compiled at its
+            frame's size. Captions keep their proportion to it: 30 parts in 35, as they
+            are by default. Left out, a panel letters at 3.5% of the height it letters
+            against: its own alone, one tier of a three-tier page on a page.
+
+    A size set beside `panels:` is a default every panel inherits, which is how a page
+    letters at one size of the author's choosing. Set on one panel, it letters that panel
+    alone -- the author's call to make, and not one the compiler second-guesses.
+
+    The type is measured at exactly this size, so it decides how big every balloon is. A
+    size too large for the panel leaves a balloon nowhere to go, which `scenet check
+    --deep` reports as `balloon-placement`.
+
+    Example:
+        >>> from scenet import parse_panel
+        >>> parse_panel("lettering: {size: 30}").lettering.size
+        30.0
+    """
+
+    size: float | None = Field(default=None, gt=0.0)
+
+
 class SettingSpec(Strict):
     """Where and when the panel happens, as tonal masses rather than drawn geometry.
 
@@ -942,6 +970,7 @@ class PanelIR(Strict):
             decides left-to-right order.
         staging: Spatial and attentional relations between actors.
         script: Dialogue and captions, in reading order.
+        lettering: How the lettering is set: its type size, when the author chooses one.
 
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
@@ -962,6 +991,7 @@ class PanelIR(Strict):
     panel: PanelSpec = PanelSpec()
     camera: CameraSpec = CameraSpec()
     setting: SettingSpec = SettingSpec()
+    lettering: LetteringSpec = LetteringSpec()
     cast: dict[SvgText, CastMember] = Field(default_factory=dict)
     staging: tuple[Relation, ...] = ()
     script: tuple[ScriptEvent, ...] = ()

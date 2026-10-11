@@ -67,7 +67,15 @@ def problems(schema: dict[str, Any], source: str) -> list[str]:
 class TestPanelSchema:
     def test_top_level_keys_match_the_language(self):
         properties = panel_schema()["properties"]
-        assert set(properties) == {"panel", "camera", "setting", "cast", "staging", "script"}
+        assert set(properties) == {
+            "panel",
+            "camera",
+            "setting",
+            "cast",
+            "staging",
+            "script",
+            "lettering",
+        }
 
     def test_it_is_a_valid_schema(self):
         Draft202012Validator.check_schema(panel_schema())

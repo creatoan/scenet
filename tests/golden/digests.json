@@ -178,6 +178,13 @@
   "27-slant.wind_up.svg": "0c5d5b449123f12c912da0c5a8486568d387a791f7dad0538420308a96ecf05f",
   "28-emphasis.debug.svg": "e1d519a50ef45344e88f71463c170c77087d26483200e7dc8bb1c901a0b9a7bc",
   "28-emphasis.svg": "1eb147b96ac4eba165358148b5035ce3c1eb5d087ede95de7a682d9bf6b5711d",
+  "29-type-size.door.debug.svg": "1e5f8c515f06d00b22a7d0673c949534fe919c72d0f90e229e659dd541aa2773",
+  "29-type-size.door.svg": "b3abbe880929fa2040b0571d726a862687bb0609f003f4599ec2bb7964fff66a",
+  "29-type-size.inside.debug.svg": "e4faf52a5b610e9b65c076218107eda7d638ee0ef2d278b3e66fae758bb79dcf",
+  "29-type-size.inside.svg": "8504805461544babbdc4c1bc15b1ef47d68db4d7afc4060c5eea8f0a8e30db76",
+  "29-type-size.page-1.debug.svg": "e06253db30b928e2e01e87874d62a96868b6319d59094bcc98b938a0fe59d55b",
+  "29-type-size.page-1.svg": "0661d4f1a0997a03e986134ec3d3a10ab1e9770b0d0e67fbe88b3fa3c7d58147",
+  "29-type-size.strip.svg": "39cddf266bbe9f285481b3bc163a641dbdc7f5ba158d3d74b5b574e3c6db9730",
   "live-text/01-two-characters.svg": "6f733a4f4c58105446db08530a16447d7aaa45a7bb7c456bb0c27bda0e4dbb65",
   "live-text/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "live-text/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -273,5 +280,9 @@
   "live-text/27-slant.strip.svg": "2ef7e2ef24b06f4168ae6d501e82e80059d7ec51d5b62ff2afa8c2189af8f086",
   "live-text/27-slant.swing.svg": "3e8fd0765646a3e4e126d0e8f51e19d8e145716e167a79a673ff56de562224cb",
   "live-text/27-slant.wind_up.svg": "5a947f02e9ec8bd582e4b49043735403da40e5de56bdf5167a4d2f33ed243875",
-  "live-text/28-emphasis.svg": "cf8ccb51a98a2a3050621959f06e404a4ff547dc2ccd2033ae08f24e943bb8fd"
+  "live-text/28-emphasis.svg": "cf8ccb51a98a2a3050621959f06e404a4ff547dc2ccd2033ae08f24e943bb8fd",
+  "live-text/29-type-size.door.svg": "4da403c4e559eb5eaa9657b087fa8be5544851c301481d9c0f698234087d208a",
+  "live-text/29-type-size.inside.svg": "bae7240c8ae141aa1a8347290b102291d58fcbf4618790a1e602030f1fbfe476",
+  "live-text/29-type-size.page-1.svg": "80b95dfc4f450cf73cd47f42dc5dc6d02ba9af1b7b6d303b5b094f81bdfd9996",
+  "live-text/29-type-size.strip.svg": "6616d9e9cd4272c13fdc8ce1071392919516e3b83e6abd3c881711c50961e5f4"
 }

@@ -1,0 +1,39 @@
+# Type size: the one lettering measurement you set.
+#
+# Left alone, dialogue is lettered at 3.5% of the height a panel letters against -- on a
+# page, one tier of a three-tier page. `lettering: {size: N}` chooses instead: the
+# dialogue size, in the same units as the page and its panels. Captions keep their
+# proportion to it.
+#
+# Set beside `panels:`, as here, every panel inherits it, so the whole page letters at
+# one size: a short tier and a tall one alike. Set on one panel, it letters that panel
+# alone.
+
+lettering: {size: 26}
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+pages:
+  - tiers:
+      - panels: [door]
+      - {height: 2, panels: [inside]}
+
+panels:
+  door:
+    camera: {shot: wide}
+    script:
+      - caption: {text: "The same evening.", kind: locale}
+      - say: {by: alice, text: "Can I come in?"}
+
+  inside:
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: bob, text: "You're letting the rain in."}
+      - say: {by: alice, text: "Then let me in faster."}

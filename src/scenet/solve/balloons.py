@@ -756,6 +756,7 @@ def place_script(
     italic_metrics: FontMetrics | None = None,
     typeface: Typeface | None = None,
     font_size: float | None = None,
+    type_size: float | None = None,
     lettering_height: float | None = None,
     backdrop: ResolvedBackdrop | None = None,
     emanata: Mapping[str, Sequence[Sequence[Point]]] | None = None,
@@ -782,7 +783,11 @@ def place_script(
             family's.
         typeface: The lettering family, emphasis face included. Defaults to the shipped
             one; `metrics` and `italic_metrics` replace single faces of it.
-        font_size: Override for dialogue size, in panel units.
+        font_size: Override for every type size, dialogue and captions alike, in panel
+            units. For tests that want one size throughout.
+        type_size: The dialogue size the author set with `lettering.size`, in panel
+            units. Captions keep their proportion to it. Takes the place of
+            `lettering_height`, which only matters when no size was set.
         lettering_height: The height type sizes are a fraction of, in place of the
             frame's own. A page passes one value to every panel on it, so a short panel
             and a tall one letter alike.
@@ -806,8 +811,14 @@ def place_script(
         return ScriptLayout()
 
     reference = lettering_height if lettering_height is not None else panel.height
-    size = font_size if font_size is not None else reference * FONT_SIZE_FRACTION
-    caption_size = font_size if font_size is not None else reference * CAPTION_FONT_SIZE_FRACTION
+    if font_size is not None:
+        size = caption_size = font_size
+    elif type_size is not None:
+        size = type_size
+        caption_size = type_size * CAPTION_FONT_SIZE_FRACTION / FONT_SIZE_FRACTION
+    else:
+        size = reference * FONT_SIZE_FRACTION
+        caption_size = reference * CAPTION_FONT_SIZE_FRACTION
     family = typeface or Typeface()
     if metrics is not None:
         family = replace(family, regular=metrics)

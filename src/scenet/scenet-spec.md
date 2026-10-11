@@ -586,6 +586,32 @@ panel whose boxes cannot be placed without breaking it is rejected rather than r
 Captions take their turn in that sequence rather than being placed first as a layer. A caption
 written between two lines of dialogue is read between them; one written last is read last.
 
+## `lettering`
+
+How the lettering is set. One key so far:
+
+```yaml
+lettering: {size: 30}
+```
+
+| Key | Type | Meaning |
+|---|---|---|
+| `size` | number above 0 | The dialogue type size, in panel units. Captions keep their proportion to it, 30 parts in 35 |
+
+Left out, dialogue is lettered at 3.5% of the height the panel letters against and captions at
+3% — the panel's own height alone, one tier of a three-tier page on a page. That is a good default
+and a bad only choice: a page of tight panels wants smaller type, a children's comic larger, and
+neither is something the compiler should guess.
+
+`size` is in the same units as `panel.size`, which on a page are the page's, since a panel there is
+compiled at its frame's size. Set beside `panels:`, it is a default every panel inherits, which is
+how a whole page letters at one size you chose. Set on one panel, it letters that panel alone. In a
+comic script, put it in the front matter for every panel, or in an `@lettering:` directive for one.
+
+The type is measured at exactly this size, so it decides how big every balloon is. A size too large
+for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
+`balloon-placement`.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
@@ -686,7 +712,8 @@ that a panel would have no width left at its top or bottom.
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
 it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
 every panel letters at the same size, as if each were one tier of a three-tier page, because no
-letterer sets a short panel and a tall one at different sizes.
+letterer sets a short panel and a tall one at different sizes. A size you set with
+[`lettering`](#lettering) takes its place.
 
 A page is read tier by tier, left to right, and down each column, so the order panels are written
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
@@ -1384,6 +1411,27 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "title": "Horizon",
       "type": "string"
     },
+    "LetteringSpec": {
+      "additionalProperties": false,
+      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n\nA size set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
+      "properties": {
+        "size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "title": "LetteringSpec",
+      "type": "object"
+    },
     "Mark": {
       "description": "Something drawn around a character, rather than on them, to say how they are.\n\nThe vocabulary is Mort Walker's, from *The Lexicon of Comicana* (1980), which grew\nout of his 1964 National Cartoonists Society piece \"Let's Get Down to Grawlixes\".\nThe book is tongue-in-cheek, but the terms entered real use, and they are comics'\nown names for comics' own conventions. So the set is closed and citable, and nothing\nin it is invented here.\n\n| Mark | What it is | What it says |\n|---|---|---|\n| `plewds` | Droplets flying off the head | sweating: effort, heat, nerves |\n| `squeans` | Little starbursts and circles over the head | dizzy, drunk, or sick |\n| `grawlixes` | Symbols over the head standing in for words | swearing |\n| `briffits` | A dust cloud left at the feet | gone, fast |\n\n\"Emanata\" is Walker's general term for these, which is why it names the module that\ndraws them and the Core field that holds them.\n\nA mark is not an expression. A character can be angry *and* sweating, so marks are\na list that composes with `expression:` rather than a second one. Grawlixes are\ndrawn as symbols -- a jarn (spiral), a nittle (bursting star), a bolt and a hash --\nrather than typed: an oath written as `@#$%!` already works, as dialogue.\n\nAll four are drawn **outside** the head circle, in the space balloons are placed\nin. They never move a character. A balloon prefers not to cover them, and covers\nthem anyway rather than fail when a panel is too crowded to oblige.",
       "enum": [
@@ -1686,7 +1734,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
+  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
   "properties": {
     "camera": {
       "$ref": "#/$defs/CameraSpec",
@@ -1701,6 +1749,12 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       },
       "title": "Cast",
       "type": "object"
+    },
+    "lettering": {
+      "$ref": "#/$defs/LetteringSpec",
+      "default": {
+        "size": null
+      }
     },
     "panel": {
       "$ref": "#/$defs/PanelSpec",
@@ -2997,4 +3051,50 @@ script:
   - caption: {text: "_Later._ The same corner.", kind: locale}
   - say: {by: alice, text: "I _told_ you it would rain."}
   - say: {by: bob,   text: "You said it _might_."}
+```
+
+## Type size: one size, set for the whole page
+
+`29-type-size.scene.yaml`
+
+```yaml
+# Type size: the one lettering measurement you set.
+#
+# Left alone, dialogue is lettered at 3.5% of the height a panel letters against -- on a
+# page, one tier of a three-tier page. `lettering: {size: N}` chooses instead: the
+# dialogue size, in the same units as the page and its panels. Captions keep their
+# proportion to it.
+#
+# Set beside `panels:`, as here, every panel inherits it, so the whole page letters at
+# one size: a short tier and a tall one alike. Set on one panel, it letters that panel
+# alone.
+
+lettering: {size: 26}
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+pages:
+  - tiers:
+      - panels: [door]
+      - {height: 2, panels: [inside]}
+
+panels:
+  door:
+    camera: {shot: wide}
+    script:
+      - caption: {text: "The same evening.", kind: locale}
+      - say: {by: alice, text: "Can I come in?"}
+
+  inside:
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: bob, text: "You're letting the rain in."}
+      - say: {by: alice, text: "Then let me in faster."}
 ```

@@ -507,6 +507,32 @@ panel whose boxes cannot be placed without breaking it is rejected rather than r
 Captions take their turn in that sequence rather than being placed first as a layer. A caption
 written between two lines of dialogue is read between them; one written last is read last.
 
+## `lettering`
+
+How the lettering is set. One key so far:
+
+```yaml
+lettering: {size: 30}
+```
+
+| Key | Type | Meaning |
+|---|---|---|
+| `size` | number above 0 | The dialogue type size, in panel units. Captions keep their proportion to it, 30 parts in 35 |
+
+Left out, dialogue is lettered at 3.5% of the height the panel letters against and captions at
+3% — the panel's own height alone, one tier of a three-tier page on a page. That is a good default
+and a bad only choice: a page of tight panels wants smaller type, a children's comic larger, and
+neither is something the compiler should guess.
+
+`size` is in the same units as `panel.size`, which on a page are the page's, since a panel there is
+compiled at its frame's size. Set beside `panels:`, it is a default every panel inherits, which is
+how a whole page letters at one size you chose. Set on one panel, it letters that panel alone. In a
+comic script, put it in the front matter for every panel, or in an `@lettering:` directive for one.
+
+The type is measured at exactly this size, so it decides how big every balloon is. A size too large
+for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
+`balloon-placement`.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
@@ -607,7 +633,8 @@ that a panel would have no width left at its top or bottom.
 size: the page decides how big the frame is and nothing about what goes in it. The one other thing
 it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
 every panel letters at the same size, as if each were one tier of a three-tier page, because no
-letterer sets a short panel and a tall one at different sizes.
+letterer sets a short panel and a tall one at different sizes. A size you set with
+[`lettering`](#lettering) takes its place.
 
 A page is read tier by tier, left to right, and down each column, so the order panels are written
 in is the order they are read in; that holds by construction. A panel can be on one page once. A panel

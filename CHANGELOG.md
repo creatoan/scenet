@@ -39,6 +39,12 @@ below 1.0 means.
   scripts, which are themselves checked against the compiler's reading, so neither can
   drift from the other or from the format. (Closes #77)
 
+- **Type size can be set**: `lettering: {size: N}` is the dialogue size in panel units,
+  and captions keep their proportion to it. Set beside `panels:` it applies to every
+  panel, so a whole page letters at one size you chose; on one panel, to that panel
+  alone; in a comic script, in the front matter or an `@lettering:` directive. Left out,
+  nothing changes. (Part of #74)
+
 ### Changed
 
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,

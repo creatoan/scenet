@@ -88,3 +88,6 @@ examples:
   - file: 28-emphasis.panel.yaml
     title: "Emphasis: a stressed word in bold italic"
     kind: panel
+  - file: 29-type-size.scene.yaml
+    title: "Type size: one size, set for the whole page"
+    kind: scene
