@@ -9,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import BalloonPlacementError
 from scenet.geom import BBox, Circle, Point, Vector
-from scenet.ir import CaptionEvent, CaptionKind, PlacementZone, SayEvent
+from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent
 from scenet.solve.balloons import (
     READING_EPSILON,
     W_CAPTION_EDGE,
@@ -36,7 +36,7 @@ from scenet.solve.balloons import (
     place_script,
     route_tail,
 )
-from scenet.solve.text import ITALIC_FONT_PATH, layout_text, load_metrics
+from scenet.solve.text import ITALIC_FONT_PATH, Styled, Typeface, layout_text, load_metrics
 
 
 def _actor(
@@ -523,7 +523,10 @@ class TestPlaceScript:
             italic_metrics=roman,
             font_size=12.0,
         )
-        assert layout.captions[0].block == layout_text("Meanwhile.", font_size=12.0, metrics=roman)
+        assert layout.captions[0].block == layout_text(
+            Styled.of("Meanwhile.", Face.ITALIC), font_size=12.0, typeface=Typeface(italic=roman)
+        )
+        assert layout.captions[0].block.line_widths == (roman.measure("Meanwhile.", 12.0),)
 
     def test_a_caption_stays_inside_a_shaped_panel(self):
         # The top-left corner is cut away, which is where the caption would otherwise go.

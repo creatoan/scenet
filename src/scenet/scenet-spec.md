@@ -440,7 +440,7 @@ script:
 | Key | Type | Meaning |
 |---|---|---|
 | `by` | actor id | Who speaks; the tail points at this actor's mouth |
-| `text` | string | The dialogue. Line breaking is computed, not authored |
+| `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
 
@@ -535,6 +535,46 @@ Captions are placed by the same machinery as balloons — the same face avoidanc
 occlusion cost, the same hard reading-order rule — because the placement principles for floating
 text are the ones the balloon solver already implements. What differs is the pull toward the frame:
 a balloon mildly dislikes hugging the panel edge, and a caption is looking for exactly that corner.
+
+### Emphasis
+
+A word written between underscores is stressed, and lettered in **bold italic**:
+
+```yaml
+script:
+  - caption: {text: "_Later._ The same corner.", kind: locale}
+  - say: {by: alice, text: "I _told_ you it would rain."}
+```
+
+Bold italic is the letterers' convention for a stressed word: Blambot's *Comic Book Grammar &
+Tradition* notes there is almost no plain bold in comics dialogue. The underscore stands in for
+the underline a script uses, as Dark Horse's script format asks. It works the same in `say` and
+`caption`, in YAML and in a comic script; in an italic caption the stressed word is bold italic
+too.
+
+The stressed word is **measured** in bold italic, not just drawn in it. Bold italic is wider than
+roman, so a stressed word widens its balloon, or pushes the next word onto another line, by
+exactly as much as it is drawn wider. Bold italic is a real font file of the same family, never a
+slant applied to the roman, for the reason the italic caption face is one.
+
+The rules are Markdown's for an underscore:
+
+- An underscore **opens** emphasis when nothing alphanumeric is before it and something other
+  than a space is after it. Inside emphasis, one **closes** it when something other than a space
+  is before it and nothing alphanumeric is after it. A span may run across words: `_told you_`.
+- Any other underscore is just an underscore, so `file_name` and `__init__` are lettered as
+  written, and `\_` writes one anywhere. In a double-quoted YAML string `\_` is YAML's own escape
+  for a no-break space, so write `\\_` there, or use single quotes.
+- Emphasis opened and never closed is refused as `unbalanced-emphasis`, located at the line,
+  rather than guessed at.
+
+Panel Core keeps each line as the plain text it reads as, and records where the face changes
+beside it; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html).
+
+**Why not `*told*`.** Markdown's other marker starts an alias when it opens a YAML value:
+`text: *told* you` does not parse at all. A document that trips on it is told to quote the value
+and use underscores, but `*` is never read as emphasis, because it is also what a typed grawlix
+such as `@#*%!` is made of.
 
 ### Reading order is enforced, not suggested
 
@@ -878,6 +918,11 @@ caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tes
 are joined with a space into one balloon. A line that looks like another cue ends the speech
 and starts the next, so two speeches need no blank line between them.
 
+**Underline a word by writing it between underscores**: `I _told_ you.` Scripts underline the
+words to stress, and a letterer sets them in bold italic, which is what the compiler does — in
+dialogue and in captions alike. The rules are in
+[the language reference](https://creatoan.github.io/scenet/reference/language.html#emphasis).
+
 **Panel numbers may start again on each page**, as publishers' script formats ask. When they
 do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
 `scenet build` writes it to `name.2-1.svg`. A page spelled out in English is named by its
@@ -1111,6 +1156,12 @@ The document is not valid YAML. The file could not be parsed at all, so nothing 
 
 **Fix:** Fix the reported position; YAML errors cascade, so re-check after each fix.
 
+### `scenet/unbalanced-emphasis`
+
+Emphasis opened with an underscore is never closed. A word written between underscores in dialogue or a caption is stressed, and lettered in bold italic. An underscore that opens a span -- nothing alphanumeric before it, something other than a space after it -- needs one that closes it. Without one the compiler would have to guess where the stress ends, and setting the rest of the line in bold italic is a confident wrong answer.
+
+**Fix:** Add the closing `_` after the last stressed word, or write `\_` for an underscore that is not emphasis.
+
 ### `scenet/unknown-actor`
 
 Reference to an actor that is not in the cast. Every actor id named in `staging` or `script` must exist in `cast`. This is the check no JSON Schema can perform -- the value is a perfectly good string, it just does not resolve -- and it is among the most common faults in generated documents.
@@ -1208,7 +1259,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CaptionEvent": {
       "additionalProperties": false,
-      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit. Defaults to `top_left`, which is where a\n        `locale` caption conventionally goes.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet.ir import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
+      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit. Defaults to `top_left`, which is where a\n        `locale` caption conventionally goes.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet.ir import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
       "properties": {
         "by": {
           "anyOf": [
@@ -1504,7 +1555,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
       "properties": {
         "by": {
           "title": "By",
@@ -2908,4 +2959,36 @@ panels:
     camera: {shot: medium_shot}
     cast:
       alice: {reference: alice, expression: angry, facing: left}
+```
+
+## Emphasis: a stressed word in bold italic
+
+`28-emphasis.panel.yaml`
+
+```yaml
+# A word between underscores is stressed, the way a script underlines it, and lettered
+# in bold italic -- the letterers' convention for emphasis, in balloons and captions
+# alike.
+#
+# The stressed word is measured in bold italic as well as drawn in it. Bold italic is
+# wider than roman, so a stressed word widens its balloon by exactly as much as it is
+# drawn wider. An underscore inside a word, as in file_name, is just an underscore.
+
+panel:
+  size: [1100, 850]
+
+camera:
+  shot: cowboy
+
+cast:
+  alice: {reference: alice, at: left_third, expression: angry}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+script:
+  - caption: {text: "_Later._ The same corner.", kind: locale}
+  - say: {by: alice, text: "I _told_ you it would rain."}
+  - say: {by: bob,   text: "You said it _might_."}
 ```

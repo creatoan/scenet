@@ -16,3 +16,12 @@ the expansion happens in the frontend, so nothing downstream ever sees a `place`
 
 ```{automodule} scenet.places
 ```
+
+## `scenet.emphasis`
+
+How a stressed word is written: between underscores, by Markdown's rules for them. Used by
+the IR to refuse emphasis that is never closed, and by the solver to decide which face each
+character is measured and drawn in -- one function, so the two cannot disagree.
+
+```{automodule} scenet.emphasis
+```

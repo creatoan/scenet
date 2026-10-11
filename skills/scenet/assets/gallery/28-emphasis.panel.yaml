@@ -1,0 +1,25 @@
+# A word between underscores is stressed, the way a script underlines it, and lettered
+# in bold italic -- the letterers' convention for emphasis, in balloons and captions
+# alike.
+#
+# The stressed word is measured in bold italic as well as drawn in it. Bold italic is
+# wider than roman, so a stressed word widens its balloon by exactly as much as it is
+# drawn wider. An underscore inside a word, as in file_name, is just an underscore.
+
+panel:
+  size: [1100, 850]
+
+camera:
+  shot: cowboy
+
+cast:
+  alice: {reference: alice, at: left_third, expression: angry}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+script:
+  - caption: {text: "_Later._ The same corner.", kind: locale}
+  - say: {by: alice, text: "I _told_ you it would rain."}
+  - say: {by: bob,   text: "You said it _might_."}

@@ -25,7 +25,7 @@ it.
 
 import math
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from shapely.geometry import Polygon, box
 from shapely.geometry.base import BaseGeometry
@@ -39,6 +39,7 @@ from scenet.ir import (
     CaptionEvent,
     CaptionKind,
     CaptionTone,
+    Face,
     PlacementZone,
     Plane,
     SayEvent,
@@ -47,12 +48,12 @@ from scenet.ir import (
 )
 from scenet.solve.backdrop import LADDER, ResolvedBackdrop, contrast_ratio
 from scenet.solve.text import (
-    ITALIC_FONT_PATH,
     FontMetrics,
     TextBlock,
+    Typeface,
     balloon_size,
     layout_text,
-    load_metrics,
+    styled,
 )
 
 # Candidate ring around the speaker's head.
@@ -753,6 +754,7 @@ def place_script(
     *,
     metrics: FontMetrics | None = None,
     italic_metrics: FontMetrics | None = None,
+    typeface: Typeface | None = None,
     font_size: float | None = None,
     lettering_height: float | None = None,
     backdrop: ResolvedBackdrop | None = None,
@@ -775,9 +777,11 @@ def place_script(
         events: The panel's script, in reading order.
         actors: Resolved puppets, keyed by actor id.
         panel: The rectangle to compose within, margins already applied.
-        metrics: Font to measure roman lettering against.
-        italic_metrics: Font to measure italic captions against. Defaults to the
-            italic face of the same family.
+        metrics: Font to measure roman lettering against, in place of the family's.
+        italic_metrics: Font to measure italic captions against, in place of the
+            family's.
+        typeface: The lettering family, emphasis face included. Defaults to the shipped
+            one; `metrics` and `italic_metrics` replace single faces of it.
         font_size: Override for dialogue size, in panel units.
         lettering_height: The height type sizes are a fraction of, in place of the
             frame's own. A page passes one value to every panel on it, so a short panel
@@ -804,6 +808,11 @@ def place_script(
     reference = lettering_height if lettering_height is not None else panel.height
     size = font_size if font_size is not None else reference * FONT_SIZE_FRACTION
     caption_size = font_size if font_size is not None else reference * CAPTION_FONT_SIZE_FRACTION
+    family = typeface or Typeface()
+    if metrics is not None:
+        family = replace(family, regular=metrics)
+    if italic_metrics is not None:
+        family = replace(family, italic=italic_metrics)
     hulls = {actor_id: _hull_polygon(actor) for actor_id, actor in actors.items()}
     faces = [actor.face for actor in actors.values()]
     masses = _mass_polygons(backdrop)
@@ -830,8 +839,7 @@ def place_script(
                     panel=panel,
                     placed=placed,
                     font_size=caption_size,
-                    metrics=metrics,
-                    italic_metrics=italic_metrics,
+                    typeface=family,
                     masses=masses,
                     emanata=marks,
                     limits=limits,
@@ -851,7 +859,7 @@ def place_script(
                 panel=panel,
                 placed=placed,
                 font_size=size,
-                metrics=metrics,
+                typeface=family,
                 masses=masses,
                 emanata=marks,
                 limits=limits,
@@ -873,14 +881,14 @@ def _place_balloon(
     panel: BBox,
     placed: list[BBox],
     font_size: float,
-    metrics: FontMetrics | None,
+    typeface: Typeface,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
     limits: _Limits = _NO_LIMITS,
 ) -> PlacedBalloon:
     """Choose a position for one balloon and route its tail."""
     speaker = actors[event.by]
-    block = layout_text(event.text, font_size=font_size, metrics=metrics)
+    block = layout_text(styled(event.text), font_size=font_size, typeface=typeface)
     balloon_box = balloon_size(block)
 
     best: BBox | None = None
@@ -936,8 +944,7 @@ def _place_caption(
     panel: BBox,
     placed: list[BBox],
     font_size: float,
-    metrics: FontMetrics | None,
-    italic_metrics: FontMetrics | None,
+    typeface: Typeface,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
     limits: _Limits = _NO_LIMITS,
@@ -949,12 +956,8 @@ def _place_caption(
     are resolved on the same principle: the emitter is handed a fill and an ink, never
     a tone to interpret.
     """
-    if event.kind.is_italic:
-        face = italic_metrics or load_metrics(str(ITALIC_FONT_PATH))
-    else:
-        face = metrics or load_metrics()
-
-    block = layout_text(text, font_size=font_size, metrics=face)
+    base = Face.ITALIC if event.kind.is_italic else Face.REGULAR
+    block = layout_text(styled(text, base), font_size=font_size, typeface=typeface)
     caption_box = balloon_size(block, CAPTION_PADDING_FACTOR)
 
     best: BBox | None = None

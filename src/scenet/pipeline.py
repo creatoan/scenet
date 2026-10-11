@@ -27,6 +27,7 @@ from scenet.core import (
     CoreCaption,
     CoreFrame,
     CoreMass,
+    CoreRun,
     CoreStreak,
     CoreVeil,
     Disc,
@@ -52,13 +53,13 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
-from scenet.ir import Mark, PageLayout, PanelIR, PanelSpec
+from scenet.ir import Face, Mark, PageLayout, PanelIR, PanelSpec
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.staging import Placement, solve_staging
-from scenet.solve.text import FontMetrics
+from scenet.solve.text import FontMetrics, TextBlock
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,6 +206,17 @@ def _core_mark(mark: ResolvedStroke | ResolvedDisc) -> FaceMark:
         width=rounded(mark.width),
         closed=mark.closed,
     )
+
+
+def _core_runs(block: TextBlock, base: Face) -> tuple[tuple[CoreRun, ...], ...]:
+    """A block's runs as Panel Core records them: only when some line leaves its face.
+
+    A balloon or caption with no emphasis records none, so its Core is byte-identical to
+    what it was before emphasis existed, and the emitter draws each line whole.
+    """
+    if all(face is base for line in block.runs for _, face in line):
+        return ()
+    return tuple(tuple(CoreRun(text=text, face=face) for text, face in line) for line in block.runs)
 
 
 def _core_backdrop(backdrop: ResolvedBackdrop | None) -> CoreBackdrop | None:
@@ -409,6 +421,7 @@ def compile_ir(
                     end=point_pair(balloon.tail.end),
                     control=(point_pair(balloon.tail.control) if balloon.tail.control else None),
                 ),
+                runs=_core_runs(balloon.block, Face.REGULAR),
             )
             for balloon in layout.balloons
         ),
@@ -425,6 +438,9 @@ def compile_ir(
                 fill=caption.fill,
                 ink=caption.ink,
                 speaker=caption.speaker,
+                runs=_core_runs(
+                    caption.block, Face.ITALIC if caption.kind.is_italic else Face.REGULAR
+                ),
             )
             for caption in layout.captions
         ),

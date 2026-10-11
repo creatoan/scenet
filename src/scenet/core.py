@@ -12,7 +12,7 @@ different path-rounding convention produces a huge diff that means nothing.
 import json
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Tag
+from pydantic import BaseModel, ConfigDict, Tag, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
@@ -20,6 +20,7 @@ from scenet.ir import (
     UNTAGGED,
     BalloonKind,
     CaptionKind,
+    Face,
     Mark,
     MassKind,
     Plane,
@@ -410,6 +411,30 @@ class Tail(CoreModel):
         return self.control is not None
 
 
+class CoreRun(CoreModel):
+    """A stretch of one line set in one face.
+
+    Attributes:
+        text: The characters.
+        face: The face they are measured and drawn in.
+    """
+
+    text: str
+    face: Face
+
+
+def _check_runs(lines: tuple[str, ...], runs: tuple[tuple[CoreRun, ...], ...]) -> None:
+    """Refuse runs that do not spell their lines, which would draw text never measured."""
+    if not runs:
+        return
+    if len(runs) != len(lines):
+        raise ValueError(f"runs must be given for every line: {len(lines)} lines, {len(runs)} runs")
+    for index, (line, cut) in enumerate(zip(lines, runs, strict=True)):
+        spelled = "".join(run.text for run in cut)
+        if spelled != line:
+            raise ValueError(f"the runs of line {index} spell {spelled!r}, not {line!r}")
+
+
 class CoreBalloon(CoreModel):
     """One balloon, placed and with its lettering already broken into lines.
 
@@ -423,6 +448,10 @@ class CoreBalloon(CoreModel):
         font_size: Type size in panel units.
         line_height: Baseline-to-baseline distance in panel units.
         tail: The pointer to the speaker's mouth.
+        runs: For a line with emphasis, the line cut wherever its face changes, so each
+            run is drawn in the face it was measured in. Empty when no line has any --
+            and then left out of the JSON, so a balloon without emphasis reads and writes
+            exactly as it did before emphasis existed. `lines` stays the plain text.
 
     Storing broken lines rather than the original string is deliberate. Wrapping is
     decided during compilation against real font metrics; if the emitter re-measured,
@@ -442,6 +471,20 @@ class CoreBalloon(CoreModel):
     font_size: float
     line_height: float
     tail: Tail
+    runs: tuple[tuple[CoreRun, ...], ...] = ()
+
+    @model_validator(mode="after")
+    def check_runs(self) -> "CoreBalloon":
+        """Runs, when given, must spell each line exactly.
+
+        Returns:
+            The validated balloon.
+
+        Raises:
+            ValueError: A line has no runs, or its runs spell something else.
+        """
+        _check_runs(self.lines, self.runs)
+        return self
 
 
 class CoreCaption(CoreModel):
@@ -470,6 +513,9 @@ class CoreCaption(CoreModel):
             mark reads is a fact about the panel.
         speaker: Who is talking, for a `spoken` caption. **Not an actor id**: the
             speaker is off panel, so this resolves to nobody in `actors`.
+        runs: For a line with emphasis, the line cut wherever its face changes, exactly
+            as on :class:`CoreBalloon <scenet.core.CoreBalloon>`. Left out of the JSON
+            when empty.
 
     There is no tail. That is the difference that makes this its own type rather than
     a fifth :class:`BalloonKind <scenet.ir.BalloonKind>`.
@@ -490,6 +536,20 @@ class CoreCaption(CoreModel):
     fill: str = "#ffffff"
     ink: str = "#111111"
     speaker: str | None = None
+    runs: tuple[tuple[CoreRun, ...], ...] = ()
+
+    @model_validator(mode="after")
+    def check_runs(self) -> "CoreCaption":
+        """Runs, when given, must spell each line exactly.
+
+        Returns:
+            The validated caption.
+
+        Raises:
+            ValueError: A line has no runs, or its runs spell something else.
+        """
+        _check_runs(self.lines, self.runs)
+        return self
 
 
 class PanelCore(CoreModel):
@@ -577,6 +637,8 @@ class PanelCore(CoreModel):
         """
         payload: Any = self.model_dump(mode="json")
         _drop_unused(payload, exclusions=(), outline=None)
+        for lettered in (*payload["balloons"], *payload["captions"]):
+            _drop_unused(lettered, runs=())
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod
@@ -728,6 +790,7 @@ __all__ = [
     "CoreCaption",
     "CoreFrame",
     "CoreMass",
+    "CoreRun",
     "CoreStreak",
     "CoreVeil",
     "Disc",

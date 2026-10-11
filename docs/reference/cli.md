@@ -196,6 +196,7 @@ nothing stops compiling.
 | `scenet/invalid-field` | A known key holding the wrong type or an out-of-range value |
 | `scenet/panel-geometry` | Non-positive size, or margins leaving no usable area |
 | `scenet/unknown-actor` | An id in `staging` or `script` that is not in `cast` |
+| `scenet/unbalanced-emphasis` | An underscore that opens emphasis in a line of `text`, with none to close it |
 | `scenet/reflexive-relation` | A relation relating an actor to itself |
 | `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | An `over:` chain that is missing or cyclic |

@@ -102,6 +102,23 @@ compilation using real font metrics, so the emitter never re-measures and never 
 solver about how wide a balloon needs to be. For a `spoken` caption the quotation marks are part of
 those lines for the same reason: marks added afterwards would not fit the box drawn for them.
 
+A line with [emphasis](language.md#emphasis) in it is still plain text in `lines`, the text as it
+reads. Beside `lines`, the balloon or caption then carries `runs`: every line cut wherever its face
+changes, so the emitter draws each run in the face it was measured in. The runs of a line must
+spell it exactly, and a Core whose runs do not is refused.
+
+```json
+"lines": ["I told you it", "would rain."],
+"runs": [
+  [{ "text": "I ", "face": "regular" }, { "text": "told", "face": "bold_italic" }, { "text": " you it", "face": "regular" }],
+  [{ "text": "would rain.", "face": "regular" }]
+]
+```
+
+`face` is `regular`, `italic` or `bold_italic`. A balloon or caption with no emphasis has no
+`runs` key at all, so every Core written before emphasis existed reads, and is written, byte for
+byte as before — which is why it needed no `format_version` bump.
+
 `italic` is recorded rather than re-derived from `kind`, so the emitter cannot draw a box in a face
 the solver did not measure it in. `fill` and `ink` are there for the same reason: a caption's tone
 resolves to a value here, and the ink is chosen against it by contrast — so a dark box arrives at the

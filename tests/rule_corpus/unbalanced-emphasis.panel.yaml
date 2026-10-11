@@ -1,0 +1,4 @@
+# The underscore before `told` opens emphasis and nothing closes it: `_told_` was meant.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "I _told you so."}

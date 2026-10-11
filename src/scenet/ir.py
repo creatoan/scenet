@@ -26,6 +26,7 @@ from pydantic import (
 )
 from pydantic.json_schema import SkipJsonSchema
 
+from scenet.emphasis import EmphasisError, parse
 from scenet.errors import RuleViolationError
 
 __all__ = [
@@ -39,6 +40,7 @@ __all__ = [
     "CastMember",
     "Column",
     "Corner",
+    "Face",
     "Facing",
     "Horizon",
     "Inset",
@@ -109,6 +111,20 @@ def _holdable(value: str) -> str:
 #: parse time rather than escaped at emission, because there is no escaping it: XML 1.0
 #: has no way to write these characters, not even as a character reference.
 SvgText = Annotated[str, AfterValidator(_holdable)]
+
+
+def _balanced(value: str) -> str:
+    """Refuse lettering whose emphasis is opened and never closed, saying where it opened."""
+    try:
+        parse(value)
+    except EmphasisError as exc:
+        raise RuleViolationError(str(exc), rule="unbalanced-emphasis") from exc
+    return value
+
+
+#: A line that is lettered -- dialogue or a caption -- and so may stress a word by writing
+#: it between underscores: `I _told_ you`. See :mod:`scenet.emphasis`.
+LetteredText = Annotated[SvgText, AfterValidator(_balanced)]
 
 
 class ShotType(StrEnum):
@@ -336,6 +352,29 @@ class CaptionKind(StrEnum):
         `spoken` only, because it is the one kind where somebody is talking.
         """
         return self is CaptionKind.SPOKEN
+
+
+class Face(StrEnum):
+    """Which face of the lettering family a run of text is set in.
+
+    Not something an author writes: a caption's kind decides between roman and italic,
+    and a word written between underscores is set in bold italic. It is recorded in
+    Panel Core, run by run, so the emitter draws each run in the face it was measured in.
+
+    | Face | Used for |
+    |---|---|
+    | `regular` | Dialogue, and `spoken` captions |
+    | `italic` | Every other caption kind |
+    | `bold_italic` | Emphasis, in either -- Blambot's rule for a stressed word |
+
+    Each is a real font file of the same family. A synthetic slant or a stroked-out bold
+    would measure as the roman face and draw as neither, which is the disagreement between
+    measurement and rendering that lettering as outlines exists to prevent.
+    """
+
+    REGULAR = "regular"
+    ITALIC = "italic"
+    BOLD_ITALIC = "bold_italic"
 
 
 class CaptionTone(StrEnum):
@@ -763,7 +802,8 @@ class SayEvent(Strict):
             is without the frontend having to remember.
         by: Actor id of the speaker; must be in the cast.
         text: What is said. Line breaking is the compiler's job, so write it as one
-            string and do not insert newlines yourself.
+            string and do not insert newlines yourself. A word between underscores is
+            stressed, and lettered in bold italic: `I _told_ you`.
         prefer: Optional hint about where the balloon should sit. The weakest of all
             the placement terms -- face avoidance and reading order override it.
         kind: Which sort of balloon carries it.
@@ -774,7 +814,7 @@ class SayEvent(Strict):
 
     verb: Literal["say"] = "say"
     by: str
-    text: SvgText = Field(min_length=1)
+    text: LetteredText = Field(min_length=1)
     prefer: PlacementZone | None = None
     kind: BalloonKind = BalloonKind.SPEECH
 
@@ -789,7 +829,8 @@ class CaptionEvent(Strict):
 
     Attributes:
         verb: Always `caption`, written as `- caption: {...}`.
-        text: What the box says. As with dialogue, line breaking is computed.
+        text: What the box says. As with dialogue, line breaking is computed, and a
+            word between underscores is stressed.
         kind: What the box is doing, which decides how it is set.
         tone: What the box is filled with. Defaults to `paper`, the white every caption
             has been since captions shipped, so no existing panel moves.
@@ -812,7 +853,7 @@ class CaptionEvent(Strict):
     """
 
     verb: Literal["caption"] = "caption"
-    text: SvgText = Field(min_length=1)
+    text: LetteredText = Field(min_length=1)
     kind: CaptionKind = CaptionKind.LOCALE
     tone: CaptionTone = CaptionTone.PAPER
     prefer: PlacementZone = PlacementZone.TOP_LEFT

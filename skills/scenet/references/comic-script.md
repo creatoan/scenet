@@ -58,6 +58,11 @@ caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tes
 are joined with a space into one balloon. A line that looks like another cue ends the speech
 and starts the next, so two speeches need no blank line between them.
 
+**Underline a word by writing it between underscores**: `I _told_ you.` Scripts underline the
+words to stress, and a letterer sets them in bold italic, which is what the compiler does — in
+dialogue and in captions alike. The rules are in
+[the language reference](https://creatoan.github.io/scenet/reference/language.html#emphasis).
+
 **Panel numbers may start again on each page**, as publishers' script formats ask. When they
 do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
 `scenet build` writes it to `name.2-1.svg`. A page spelled out in English is named by its

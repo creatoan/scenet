@@ -361,7 +361,7 @@ script:
 | Key | Type | Meaning |
 |---|---|---|
 | `by` | actor id | Who speaks; the tail points at this actor's mouth |
-| `text` | string | The dialogue. Line breaking is computed, not authored |
+| `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
 
@@ -456,6 +456,46 @@ Captions are placed by the same machinery as balloons — the same face avoidanc
 occlusion cost, the same hard reading-order rule — because the placement principles for floating
 text are the ones the balloon solver already implements. What differs is the pull toward the frame:
 a balloon mildly dislikes hugging the panel edge, and a caption is looking for exactly that corner.
+
+### Emphasis
+
+A word written between underscores is stressed, and lettered in **bold italic**:
+
+```yaml
+script:
+  - caption: {text: "_Later._ The same corner.", kind: locale}
+  - say: {by: alice, text: "I _told_ you it would rain."}
+```
+
+Bold italic is the letterers' convention for a stressed word: Blambot's *Comic Book Grammar &
+Tradition* notes there is almost no plain bold in comics dialogue. The underscore stands in for
+the underline a script uses, as Dark Horse's script format asks. It works the same in `say` and
+`caption`, in YAML and in a comic script; in an italic caption the stressed word is bold italic
+too.
+
+The stressed word is **measured** in bold italic, not just drawn in it. Bold italic is wider than
+roman, so a stressed word widens its balloon, or pushes the next word onto another line, by
+exactly as much as it is drawn wider. Bold italic is a real font file of the same family, never a
+slant applied to the roman, for the reason the italic caption face is one.
+
+The rules are Markdown's for an underscore:
+
+- An underscore **opens** emphasis when nothing alphanumeric is before it and something other
+  than a space is after it. Inside emphasis, one **closes** it when something other than a space
+  is before it and nothing alphanumeric is after it. A span may run across words: `_told you_`.
+- Any other underscore is just an underscore, so `file_name` and `__init__` are lettered as
+  written, and `\_` writes one anywhere. In a double-quoted YAML string `\_` is YAML's own escape
+  for a no-break space, so write `\\_` there, or use single quotes.
+- Emphasis opened and never closed is refused as `unbalanced-emphasis`, located at the line,
+  rather than guessed at.
+
+Panel Core keeps each line as the plain text it reads as, and records where the face changes
+beside it; see [Panel Core](panel_core.md).
+
+**Why not `*told*`.** Markdown's other marker starts an alias when it opens a YAML value:
+`text: *told* you` does not parse at all. A document that trips on it is told to quote the value
+and use underscores, but `*` is never read as emphasis, because it is also what a typed grawlix
+such as `@#*%!` is made of.
 
 ### Reading order is enforced, not suggested
 

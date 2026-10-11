@@ -23,7 +23,7 @@ from scenet.frontends.common import (
     summarise,
 )
 from scenet.ir import PageLayout, PanelIR, check_placements
-from scenet.safe_yaml import DuplicateKeyError, load
+from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 
 def _load_document(text: str, source: Path | None) -> dict[str, Any]:
@@ -49,7 +49,7 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
             f"line {exc.line}: {exc.summary}", source=source, rule="duplicate-key"
         ) from exc
     except yaml.YAMLError as exc:
-        raise PanelSyntaxError(f"invalid YAML: {exc}", source=source) from exc
+        raise PanelSyntaxError(f"invalid YAML: {describe(exc)}", source=source) from exc
 
     if data is None:
         raise PanelSyntaxError("panel source is empty", source=source)

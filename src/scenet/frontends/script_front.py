@@ -44,7 +44,7 @@ from scenet.compose import merge
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import normalise, summarise
 from scenet.ir import BalloonKind, CaptionKind, PanelIR
-from scenet.safe_yaml import DuplicateKeyError, load
+from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
 # templating step very often starts with one, and refusing it would be a baffling
@@ -196,7 +196,7 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
             rule="duplicate-key",
         ) from exc
     except yaml.YAMLError as exc:
-        raise ScriptSyntaxError(f"invalid front matter: {exc}", source=source) from exc
+        raise ScriptSyntaxError(f"invalid front matter: {describe(exc)}", source=source) from exc
     if loaded is None:
         return {}, text[match.end() :], consumed
     if not isinstance(loaded, dict):
@@ -375,7 +375,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
         ) from exc
     except yaml.YAMLError as exc:
         raise ScriptSyntaxError(
-            f"line {number}: cannot read directive '@{key}': {exc}",
+            f"line {number}: cannot read directive '@{key}': {describe(exc)}",
             source=source,
             line=number,
         ) from exc

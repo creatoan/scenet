@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **A stressed word is lettered in bold italic.** Write it between underscores, the way a
+  script underlines it: `I _told_ you`. It works in dialogue and captions, in YAML and in
+  comic scripts, and the word is measured in bold italic as well as drawn in it, so it
+  widens its balloon by exactly as much as it is drawn wider. An underscore inside a word
+  stays an underscore, and `\_` writes one anywhere. Emphasis that is opened and never
+  closed is reported as `unbalanced-emphasis`, and a value starting with `*`, which YAML
+  reads as an alias, now says to quote it. Panel Core gains `runs` beside `lines`, written
+  only for a line with emphasis, so every existing panel compiles byte for byte as before.
+  (Part of #74)
+
 - The editor guide shows how to see `scenet check` findings in VS Code today: write them
   as SARIF and open the file with Microsoft's SARIF Viewer. (Part of #77)
 - **The VS Code extension shows what `scenet check` finds**, as you open and save a panel,

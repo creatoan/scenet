@@ -13,6 +13,7 @@ from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont
 
+from scenet.ir import Face
 from scenet.solve.text import (
     DEFAULT_FONT_PATH,
     LINE_PENALTY,
@@ -256,7 +257,9 @@ class TestAWordWithNoWidth:
 
     def test_it_is_set_on_one_line_of_its_own(self, metrics: FontMetrics):
         block = layout_text("\u0301\u0301", font_size=30, metrics=metrics)
-        assert block == TextBlock(("\u0301\u0301",), 0.0, 37.5, 30, 37.5, (0.0,))
+        assert block == TextBlock(
+            ("\u0301\u0301",), 0.0, 37.5, 30, 37.5, (0.0,), ((("\u0301\u0301", Face.REGULAR),),)
+        )
 
 
 def _block(width: float, height: float) -> TextBlock:

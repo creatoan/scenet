@@ -22,7 +22,7 @@ from shapely.geometry import box as rectangle
 from scenet.core import CoreFrame, PageCore, PanelCore
 from scenet.geom import BBox
 from scenet.solve.balloons import READING_EPSILON
-from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH, load_metrics
+from scenet.solve.text import SHIPPED_FACES, load_metrics
 
 __all__ = [
     "TOLERANCE",
@@ -119,9 +119,7 @@ _NON_FINITE = re.compile(r"\b(nan|inf|infinity)\b", re.IGNORECASE)
 
 @cache
 def _units_per_em() -> frozenset[float]:
-    return frozenset(
-        load_metrics(str(path)).units_per_em for path in (DEFAULT_FONT_PATH, ITALIC_FONT_PATH)
-    )
+    return frozenset(load_metrics(str(path)).units_per_em for path in SHIPPED_FACES.values())
 
 
 def _ids(root: ElementTree.Element) -> list[str]:

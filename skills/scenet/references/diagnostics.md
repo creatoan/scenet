@@ -94,6 +94,12 @@ The document is not valid YAML. The file could not be parsed at all, so nothing 
 
 **Fix:** Fix the reported position; YAML errors cascade, so re-check after each fix.
 
+### `scenet/unbalanced-emphasis`
+
+Emphasis opened with an underscore is never closed. A word written between underscores in dialogue or a caption is stressed, and lettered in bold italic. An underscore that opens a span -- nothing alphanumeric before it, something other than a space after it -- needs one that closes it. Without one the compiler would have to guess where the stress ends, and setting the rest of the line in bold italic is a confident wrong answer.
+
+**Fix:** Add the closing `_` after the last stressed word, or write `\_` for an underscore that is not emphasis.
+
 ### `scenet/unknown-actor`
 
 Reference to an actor that is not in the cast. Every actor id named in `staging` or `script` must exist in `cast`. This is the check no JSON Schema can perform -- the value is a perfectly good string, it just does not resolve -- and it is among the most common faults in generated documents.

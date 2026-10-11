@@ -80,7 +80,7 @@ from scenet.frontends.positions import (
 from scenet.frontends.script_front import FRONT_MATTER, parse_script
 from scenet.ir import PageLayout, PanelIR, check_placements
 from scenet.pipeline import compile_book, compile_ir
-from scenet.safe_yaml import DuplicateKeyError, load
+from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
 
 __all__ = [
@@ -199,6 +199,21 @@ RULES: dict[str, Rule] = {
             "in generated documents."
         ),
         help="Correct the id, or add the actor to `cast`. The message lists the cast.",
+    ),
+    "unbalanced-emphasis": Rule(
+        summary="Emphasis opened with an underscore is never closed",
+        description=(
+            "A word written between underscores in dialogue or a caption is stressed, and "
+            "lettered in bold italic. An underscore that opens a span -- nothing "
+            "alphanumeric before it, something other than a space after it -- needs one "
+            "that closes it. Without one the compiler would have to guess where the "
+            "stress ends, and setting the rest of the line in bold italic is a confident "
+            "wrong answer."
+        ),
+        help=(
+            "Add the closing `_` after the last stressed word, or write `\\_` for an "
+            "underscore that is not emphasis."
+        ),
     ),
     "reflexive-relation": Rule(
         summary="A relation relates an actor to itself",
@@ -551,7 +566,7 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
         return None, [
             Diagnostic(
                 rule="syntax",
-                message=f"invalid YAML: {exc}",
+                message=f"invalid YAML: {describe(exc)}",
                 source=source,
                 region=syntax_error_region(exc),
             )

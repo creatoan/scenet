@@ -85,3 +85,6 @@ examples:
   - file: 27-slant.scene.yaml
     title: "Slanted tiers: gutters that lean"
     kind: scene
+  - file: 28-emphasis.panel.yaml
+    title: "Emphasis: a stressed word in bold italic"
+    kind: panel

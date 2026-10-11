@@ -176,6 +176,8 @@
   "27-slant.swing.svg": "3e8fd0765646a3e4e126d0e8f51e19d8e145716e167a79a673ff56de562224cb",
   "27-slant.wind_up.debug.svg": "20399c1175df975a7dbdeaa0b5081aa734f96004a2f945b6398db708964ca686",
   "27-slant.wind_up.svg": "acb50cf8b551e058d998c2f830bb5702f4cd60bcc432af7eaa131bf8aab48e94",
+  "28-emphasis.debug.svg": "61ffd0f25fd9f434da4300d8b62dd4663d1f2252cba64a612c375eb8e797a4f5",
+  "28-emphasis.svg": "41f7dc9eb3122093278768a760814ce163f7e18b76fa107ddb9411600acfd18b",
   "live-text/01-two-characters.svg": "553f0bffe74a19d4eb4fa2825ebad78bcc449490366f489fe32f1dc55baa3985",
   "live-text/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "live-text/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -270,5 +272,6 @@
   "live-text/27-slant.standoff.svg": "52b5d7c6f2e5eb9a4312e2fbffa9b77c508e4237bfb42b358f0e8ff6cd31b6f7",
   "live-text/27-slant.strip.svg": "212391863b77e222bda3d6066ad162031ae5945b3d7ee5168226a857c2e3f4c3",
   "live-text/27-slant.swing.svg": "3e8fd0765646a3e4e126d0e8f51e19d8e145716e167a79a673ff56de562224cb",
-  "live-text/27-slant.wind_up.svg": "e580f6522a1e9438de68dbaf8a3c4deabfc0fb8fec12771fe248178834717b55"
+  "live-text/27-slant.wind_up.svg": "e580f6522a1e9438de68dbaf8a3c4deabfc0fb8fec12771fe248178834717b55",
+  "live-text/28-emphasis.svg": "0131212ab5f14bc08d73bb2e94217088b58275981dd8e379fea402c0bc028081"
 }

@@ -29,7 +29,7 @@ import yaml
 from yaml.constructor import ConstructorError
 from yaml.nodes import MappingNode, Node
 
-__all__ = ["DuplicateKeyError", "NestingError", "load"]
+__all__ = ["ALIAS_HINT", "DuplicateKeyError", "NestingError", "describe", "load"]
 
 #: The tag PyYAML gives `<<`, the merge key.
 MERGE_TAG = "tag:yaml.org,2002:merge"
@@ -138,3 +138,39 @@ def load(text: str) -> object:
         raise NestingError from exc
     finally:
         loader.dispose()
+
+
+#: What an author who wrote `*told*` meant, said in their terms rather than YAML's.
+ALIAS_HINT = (
+    "a value that starts with '*' is read by YAML as an alias to an anchor, so quote the "
+    "whole value. To stress a word, write it between underscores instead: _told_"
+)
+
+
+def describe(error: yaml.YAMLError) -> str:
+    """The parser's message, with a hint when the fault is a `*` that opened an alias.
+
+    PyYAML's own wording is about anchors and aliases, which nobody writing a line of
+    dialogue would recognise. `text: *told* you` is the likeliest way to meet it: Markdown
+    stresses a word that way, and in YAML an unquoted value starting with `*` is an alias.
+
+    Args:
+        error: What the parser raised.
+
+    Returns:
+        A message for the author.
+
+    Example:
+        >>> import yaml
+        >>> from scenet.safe_yaml import describe, load
+        >>> try:
+        ...     load("text: *told* you")
+        ... except yaml.YAMLError as exc:
+        ...     "quote the whole value" in describe(exc)
+        True
+    """
+    context = str(getattr(error, "context", "") or "")
+    problem = str(getattr(error, "problem", "") or "")
+    if "scanning an alias" in context or problem.startswith("found undefined alias"):
+        return f"{error}\n{ALIAS_HINT}"
+    return str(error)

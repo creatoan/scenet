@@ -9,6 +9,7 @@ byte-identical across platforms, whose float repr differs in the last digit.
 """
 
 import math
+from collections.abc import Sequence
 from xml.sax.saxutils import escape, quoteattr
 
 from scenet.core import (
@@ -17,13 +18,14 @@ from scenet.core import (
     CoreBalloon,
     CoreCaption,
     CoreMass,
+    CoreRun,
     FaceDisc,
     FaceMark,
     PanelCore,
     Tail,
 )
-from scenet.ir import BalloonKind
-from scenet.solve.text import ITALIC_FONT_PATH, FontMetrics, load_metrics
+from scenet.ir import BalloonKind, Face
+from scenet.solve.text import FontMetrics, Styled, Typeface
 
 STROKE = "#111111"
 FILL_FIGURE = "#e8e6e1"
@@ -52,6 +54,14 @@ WEATHER_OPACITY = 0.85
 #: 0.04 and drew every letter 14% larger than it was measured. Six keep the drawn size
 #: within a millionth of an em of the measured one.
 GLYPH_SCALE_PLACES = 6
+
+#: How a run in another face than its line's is marked in live text. A `<tspan>` only
+#: where the face changes, so a line without emphasis is exactly the `<text>` it was.
+FACE_ATTRIBUTES: dict[Face, str] = {
+    Face.REGULAR: ' font-style="normal"',
+    Face.ITALIC: ' font-style="italic"',
+    Face.BOLD_ITALIC: ' font-weight="bold" font-style="italic"',
+}
 
 
 def fmt(value: float, places: int = 2) -> str:
@@ -83,14 +93,15 @@ def render(
 
     Args:
         core: The compiled panel.
-        metrics: The font the lettering was measured in. Defaults to the shipped one.
+        metrics: The regular face the lettering was measured in, in place of the
+            shipped one. The italic and bold italic faces are the shipped family's.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         id_prefix: Put in front of every `id` the panel writes, and every reference to
             one. Nothing a single panel needs; it is what lets a strip hold several
             panels in one document, where ids must be unique. Empty by default, so a
             panel on its own is byte-identical to what it always was.
     """
-    metrics = metrics or load_metrics()
+    family = Typeface(regular=metrics)
     backdrop = core.backdrop
     air = backdrop.atmosphere if backdrop is not None else None
 
@@ -138,20 +149,12 @@ def render(
 
     # Balloons and captions sit above the figures and share one reading order, so they
     # are emitted as one sequence rather than one layer stacked on the other.
-    italic = load_metrics(str(ITALIC_FONT_PATH)) if core.captions else metrics
     lettering = sorted([*core.balloons, *core.captions], key=lambda item: item.order)
     for item in lettering:
         if isinstance(item, CoreCaption):
-            parts.append(
-                _render_caption(
-                    item,
-                    italic if item.italic else metrics,
-                    live_text=live_text,
-                    id_prefix=id_prefix,
-                )
-            )
+            parts.append(_render_caption(item, family, live_text=live_text, id_prefix=id_prefix))
         else:
-            parts.append(_render_balloon(item, metrics, live_text=live_text, id_prefix=id_prefix))
+            parts.append(_render_balloon(item, family, live_text=live_text, id_prefix=id_prefix))
 
     parts.append("  </g>")
 
@@ -366,8 +369,23 @@ def _render_mark(prefix: str, mark: FaceMark) -> str:
     )
 
 
+def _runs_of(
+    lines: tuple[str, ...], runs: tuple[tuple[CoreRun, ...], ...], index: int, base: Face
+) -> tuple[CoreRun, ...]:
+    """One line's runs: as recorded when it has emphasis, the whole line in `base` if not."""
+    return runs[index] if runs else (CoreRun(text=lines[index], face=base),)
+
+
+def _width(runs: Sequence[CoreRun], font_size: float, family: Typeface) -> float:
+    """A line's width, measured exactly as the solver measured it."""
+    line = Styled("", ())
+    for run in runs:
+        line += Styled.of(run.text, run.face)
+    return family.measure(line, font_size)
+
+
 def _render_balloon(
-    balloon: CoreBalloon, metrics: FontMetrics, *, live_text: bool, id_prefix: str
+    balloon: CoreBalloon, family: Typeface, *, live_text: bool, id_prefix: str
 ) -> str:
     box = balloon.box
     lines = [f"    <g id={attr(id_prefix + 'balloon-' + balloon.id)}>"]
@@ -379,14 +397,15 @@ def _render_balloon(
     # line, landing each baseline where the solver's measurement assumed it.
     padding = (box.height - len(balloon.lines) * balloon.line_height) / 2
     ascent = balloon.font_size * 0.74
-    for index, text in enumerate(balloon.lines):
+    for index in range(len(balloon.lines)):
+        runs = _runs_of(balloon.lines, balloon.runs, index, Face.REGULAR)
         baseline = box.y + padding + index * balloon.line_height + ascent
-        width = metrics.measure(text, balloon.font_size)
+        width = _width(runs, balloon.font_size, family)
         start_x = box.x + (box.width - width) / 2
         lines.append(
-            _live_text(text, start_x, baseline, balloon.font_size)
+            _live_text(runs, start_x, baseline, balloon.font_size, base=Face.REGULAR)
             if live_text
-            else _outlined_text(text, start_x, baseline, balloon.font_size, metrics)
+            else _outlined_text(runs, start_x, baseline, balloon.font_size, family)
         )
 
     lines.append("    </g>")
@@ -394,7 +413,7 @@ def _render_balloon(
 
 
 def _render_caption(
-    caption: CoreCaption, metrics: FontMetrics, *, live_text: bool, id_prefix: str
+    caption: CoreCaption, family: Typeface, *, live_text: bool, id_prefix: str
 ) -> str:
     """A caption box: a plain rectangle with its text set flush left.
 
@@ -419,20 +438,17 @@ def _render_caption(
     # padded equally on both axes, so the vertical inset gives the horizontal one too.
     padding = (box.height - len(caption.lines) * caption.line_height) / 2
     ascent = caption.font_size * 0.74
-    for index, text in enumerate(caption.lines):
+    base = Face.ITALIC if caption.italic else Face.REGULAR
+    for index in range(len(caption.lines)):
+        runs = _runs_of(caption.lines, caption.runs, index, base)
         baseline = box.y + padding + index * caption.line_height + ascent
         lines.append(
             _live_text(
-                text,
-                box.x + padding,
-                baseline,
-                caption.font_size,
-                italic=caption.italic,
-                ink=caption.ink,
+                runs, box.x + padding, baseline, caption.font_size, base=base, ink=caption.ink
             )
             if live_text
             else _outlined_text(
-                text, box.x + padding, baseline, caption.font_size, metrics, ink=caption.ink
+                runs, box.x + padding, baseline, caption.font_size, family, ink=caption.ink
             )
         )
 
@@ -530,15 +546,15 @@ def _tail_shape(balloon: CoreBalloon) -> str:
 
 
 def _outlined_text(
-    text: str,
+    runs: Sequence[CoreRun],
     x: float,
     baseline: float,
     font_size: float,
-    metrics: FontMetrics,
+    family: Typeface,
     *,
     ink: str = STROKE,
 ) -> str:
-    """Lettering as glyph outlines.
+    """One line of lettering as glyph outlines, each run drawn from its own face.
 
     Glyph coordinates are y-up in font units, so each is scaled by size/unitsPerEm and
     flipped. The result depends on no font being installed anywhere.
@@ -547,37 +563,47 @@ def _outlined_text(
     passes the value its tone resolved to, so a dark box gets reversed type -- and the
     choice was still the solver's, not this function's.
     """
-    scale = font_size / metrics.units_per_em
     cursor = x
     glyphs: list[str] = []
-    for path, advance in metrics.glyph_outlines(text):
-        if path:
-            glyphs.append(
-                f'      <path d="{path}" fill="{ink}" stroke="none" '
-                f'transform="translate({fmt(cursor)} {fmt(baseline)}) '
-                f'scale({fmt(scale, GLYPH_SCALE_PLACES)} {fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
-            )
-        cursor += advance * font_size
+    for run in runs:
+        metrics: FontMetrics = family.face(run.face)
+        scale = font_size / metrics.units_per_em
+        for path, advance in metrics.glyph_outlines(run.text):
+            if path:
+                glyphs.append(
+                    f'      <path d="{path}" fill="{ink}" stroke="none" '
+                    f'transform="translate({fmt(cursor)} {fmt(baseline)}) '
+                    f"scale({fmt(scale, GLYPH_SCALE_PLACES)} "
+                    f'{fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
+                )
+            cursor += advance * font_size
     return "\n".join(glyphs)
 
 
 def _live_text(
-    text: str,
+    runs: Sequence[CoreRun],
     x: float,
     baseline: float,
     font_size: float,
     *,
-    italic: bool = False,
+    base: Face,
     ink: str = STROKE,
 ) -> str:
-    """Lettering as a real `<text>` element.
+    """One line of lettering as a real `<text>` element.
 
     Selectable and editable, at the cost of depending on the reader having a
-    metrically compatible font. Offered as an option, never the default.
+    metrically compatible font. Offered as an option, never the default. A run in
+    another face than the line's -- emphasis -- is a `<tspan>` saying which.
     """
-    style = ' font-style="italic"' if italic else ""
+    style = ' font-style="italic"' if base is Face.ITALIC else ""
+    content = "".join(
+        escape(run.text)
+        if run.face is base
+        else f"<tspan{FACE_ATTRIBUTES[run.face]}>{escape(run.text)}</tspan>"
+        for run in runs
+    )
     return (
         f'      <text x="{fmt(x)}" y="{fmt(baseline)}" font-size="{fmt(font_size)}" '
         f'font-family="Source Sans Pro, sans-serif"{style} fill="{ink}" '
-        f'stroke="none">{escape(text)}</text>'
+        f'stroke="none">{content}</text>'
     )

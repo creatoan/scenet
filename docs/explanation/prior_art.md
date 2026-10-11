@@ -253,7 +253,8 @@ distinction for free.
 [Floating text and captions](https://balloontales.com/floating-text-captions/)
 
 Blambot is a letterer's reference rather than an academic one, which is exactly why it is
-load-bearing here: it records what the craft actually does. Two things were taken from it directly.
+load-bearing here: it records what the craft actually does. Three things were taken from it
+directly.
 
 The **caption vocabulary** is theirs — `locale`, `monologue`, `spoken`, `editorial` — including the
 finding that "narration", the obvious guess and this project's first proposal, is not one of them.
@@ -263,6 +264,12 @@ beats one invented here.
 The **quotation rule for a run of spoken captions** — an opening mark on each, a closing mark only
 on the last — is theirs too. It is objective, which makes it testable, which is why it is enforced
 by the compiler rather than left to the author.
+
+So is **bold italic for a stressed word**, rather than plain bold, which Blambot observes is almost
+absent from comics dialogue. How a writer *marks* the stress comes from the other side of the
+table: Dark Horse's [script format guide](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
+asks for the words to be underlined. Plain text has no underline, so a Scenet author writes the
+word between underscores, by Markdown's rules for them — which also keep `snake_case` literal.
 
 Balloon Tales supplies the placement principles for floating text: keep off the important figures,
 preserve the space the art establishes, keep the reading order flowing. All three were already
