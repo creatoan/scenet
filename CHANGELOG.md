@@ -64,6 +64,12 @@ below 1.0 means.
 - **Toggle Line Comment in a VS Code comic script wrote `//` lines**, which the format does
   not have: the compiler kept them as prose, or read them as dialogue under a cue. The
   extension no longer declares a comment syntax for scripts, as the playground never did.
+- **`scenet check --format sarif` crashed on a caption that named a speaker it cannot
+  have**, such as `by:` on a `locale` caption. Its rule, `caption-speaker`, had never been
+  added to the catalogue, so writing the finding as SARIF, or returning it from the MCP
+  server's `validate` tool, ended in a `KeyError`. The rule is now catalogued and
+  documented, the finding points at `by:` rather than the whole caption, and a test holds
+  every rule the compiler raises to the catalogue.
 
 ## [0.10.0] - 2026-10-10
 

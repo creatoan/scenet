@@ -213,6 +213,24 @@ class TestRepeatedKeys:
         assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
 
 
+class TestCaptionSpeaker:
+    """`by:` on a caption that is not `spoken` ended SARIF output in a `KeyError`: its rule
+    was raised by the compiler but missing from the catalogue."""
+
+    def test_it_is_a_finding_in_sarif(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+        path = tmp_path / "caption.panel.yaml"
+        path.write_text(
+            "cast: {alice: {reference: alice}}\n"
+            "script:\n"
+            "  - caption: {text: hi, kind: locale, by: doc}\n",
+            encoding="utf-8",
+        )
+        assert main(["check", "--format", "sarif", str(path)]) == 1
+        (result,) = json.loads(capsys.readouterr().out)["runs"][0]["results"]
+        assert result["ruleId"] == "scenet/caption-speaker"
+        assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
+
+
 class TestComicScripts:
     """The other frontend. Line-oriented, so positions are lines and nothing finer."""
 
