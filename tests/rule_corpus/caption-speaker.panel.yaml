@@ -1,0 +1,4 @@
+# A locale caption naming a speaker: only a spoken caption has one.
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Midnight. The docks.", kind: locale, by: harbourmaster}

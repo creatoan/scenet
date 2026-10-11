@@ -21,6 +21,7 @@ from pydantic import (
     Discriminator,
     Field,
     Tag,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -818,24 +819,31 @@ class CaptionEvent(Strict):
     prefer: PlacementZone = PlacementZone.TOP_LEFT
     by: SvgText | None = None
 
-    @model_validator(mode="after")
-    def check_speaker_is_meaningful(self) -> Self:
+    @field_validator("by")
+    @classmethod
+    def check_speaker_is_meaningful(cls, by: str | None, info: ValidationInfo) -> str | None:
         """Only an off-panel line has a speaker to name.
 
+        A check on `by` rather than on the whole caption, so the finding points at the
+        `by:` to delete. Fields are validated in the order they are declared, so `kind`
+        has been by now; if it failed, there is no kind to hold `by` to, and the finding
+        about `kind` is the one to report.
+
         Returns:
-            The validated event.
+            The speaker, unchanged.
 
         Raises:
             ValueError: `by` was given for a kind that has no speaker. A locale box
                 states a place; nobody says it, so naming who did is a mistake worth
                 reporting rather than a field to ignore.
         """
-        if self.by is not None and not self.kind.is_quoted:
+        kind = info.data.get("kind")
+        if by is not None and isinstance(kind, CaptionKind) and not kind.is_quoted:
             raise RuleViolationError(
-                f"only a 'spoken' caption may name a speaker, but this one is '{self.kind.value}'",
+                f"only a 'spoken' caption may name a speaker, but this one is '{kind.value}'",
                 rule="caption-speaker",
             )
-        return self
+        return by
 
 
 #: The tag a union member is chosen by when its input carries none.
