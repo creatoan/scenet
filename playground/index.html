@@ -72,6 +72,15 @@
           <select id="examples" aria-label="Load an example"></select>
           <span class="spacer"></span>
           <span class="hint" id="kind" aria-live="polite"></span>
+          <button
+            type="button"
+            class="tool"
+            id="add-font"
+            title="Add a .ttf or .otf file to letter in, then name it with lettering: {font: fonts/Name.ttf}"
+          >
+            Font…
+          </button>
+          <input type="file" id="font-file" accept=".ttf,.otf" multiple hidden />
           <button type="button" class="tool" id="share" title="Copy a link that opens this document">
             Share
           </button>

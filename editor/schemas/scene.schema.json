@@ -196,6 +196,53 @@
       "title": "Facing",
       "type": "string"
     },
+    "FontSpec": {
+      "anyOf": [
+        {
+          "description": "One font file, relative to the document, lettering every face: `fonts/Comic.ttf` stands for `{regular: fonts/Comic.ttf}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bold_italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Bold Italic"
+            },
+            "italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Italic"
+            },
+            "regular": {
+              "title": "Regular",
+              "type": "string"
+            }
+          },
+          "required": [
+            "regular"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {font: fonts/Comic.ttf}\").lettering.font.regular\n    'fonts/Comic.ttf'",
+      "title": "FontSpec"
+    },
     "Horizon": {
       "description": "Where the ground meets whatever is behind it.\n\nOne line for the whole panel, which every mass is composed against: masses of the\nground sort start at it and run down, masses that stand in the world rise from it.\nNamed rather than given as a number for the same reason `at:` is -- the author is\nsaying how the panel is composed, not typing a coordinate.",
       "enum": [
@@ -247,8 +294,19 @@
     },
     "LetteringSpec": {
       "additionalProperties": false,
-      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n\nA size set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
+      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n    font: The font files to letter in, in place of the shipped Source Sans Pro.\n\nA size or a font set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
       "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "size": {
           "anyOf": [
             {
@@ -486,6 +544,82 @@
         }
       },
       "title": "CastMember",
+      "type": "object"
+    },
+    "PartialFontSpec": {
+      "anyOf": [
+        {
+          "description": "One font file, relative to the document, lettering every face: `fonts/Comic.ttf` stands for `{regular: fonts/Comic.ttf}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bold_italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Bold Italic"
+            },
+            "italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Italic"
+            },
+            "regular": {
+              "title": "Regular",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {font: fonts/Comic.ttf}\").lettering.font.regular\n    'fonts/Comic.ttf'\n\nIn a scene any of these may be inherited, so none is required here.",
+      "title": "FontSpec"
+    },
+    "PartialLetteringSpec": {
+      "additionalProperties": false,
+      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n    font: The font files to letter in, in place of the shipped Source Sans Pro.\n\nA size or a font set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0\n\nIn a scene any of these may be inherited, so none is required here.",
+      "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialFontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "title": "LetteringSpec",
       "type": "object"
     },
     "Place": {
@@ -796,8 +930,9 @@
       "type": "object"
     },
     "lettering": {
-      "$ref": "#/$defs/LetteringSpec",
+      "$ref": "#/$defs/PartialLetteringSpec",
       "default": {
+        "font": null,
         "size": null
       }
     },
@@ -851,8 +986,9 @@
             "type": "object"
           },
           "lettering": {
-            "$ref": "#/$defs/LetteringSpec",
+            "$ref": "#/$defs/PartialLetteringSpec",
             "default": {
+              "font": null,
               "size": null
             }
           },

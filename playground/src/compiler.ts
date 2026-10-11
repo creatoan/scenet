@@ -15,6 +15,15 @@
 
 import { loadPyodide, type PyodideInterface } from "pyodide";
 
+import { FONT_FOLDER } from "./fonts";
+
+/**
+ * The folder the playground's document is in, in Pyodide's in-memory file system. A
+ * document compiled here has no file behind it; this is the folder its declared fonts
+ * are read from, and the one added fonts are written into.
+ */
+const DOCUMENT_FOLDER = "/scenet/document";
+
 /**
  * One problem with the source, located. The same shape `scenet check` reports, so a
  * squiggle in the editor and a line of `scenet check` output always agree.
@@ -71,6 +80,15 @@ interface WheelManifest {
  */
 const BRIDGE = `
 import json
+import os
+from pathlib import Path
+
+# The document's folder, in Pyodide's in-memory file system. A document compiled here has
+# no file behind it, so it is given this folder, and a font the author adds is written
+# into its fonts/ -- where lettering: {font: fonts/Name.ttf} finds it, as it would
+# beside a file on disk.
+_SCENET_FOLDER = Path("${DOCUMENT_FOLDER}")
+os.makedirs(_SCENET_FOLDER / "${FONT_FOLDER}", exist_ok=True)
 
 
 def _scenet_findings(source, kind, exc):
@@ -84,7 +102,9 @@ def _scenet_findings(source, kind, exc):
         from scenet.diagnostics import diagnose_script, diagnose_source
 
         diagnose = diagnose_script if kind == "script" else diagnose_source
-        found = diagnose(source) or diagnose(source, deep=True)
+        found = diagnose(source, base=_SCENET_FOLDER) or diagnose(
+            source, base=_SCENET_FOLDER, deep=True
+        )
     except Exception:
         found = []
 
@@ -122,20 +142,25 @@ def _scenet_compile(source, kind):
         pages = ()
         if kind == "script":
             results = {
-                name: compile_ir(panel) for name, panel in parse_script(source).items()
+                name: compile_ir(panel, base=_SCENET_FOLDER)
+                for name, panel in parse_script(source).items()
             }
         else:
-            book = compile_book(source)
+            book = compile_book(source, base=_SCENET_FOLDER)
             results = book.panels
             pages = book.pages
 
         names = list(results)
         single = len(names) == 1
+        # Every declared font the panels were measured in, which is what they are drawn in.
+        fonts = {
+            digest: font for result in results.values() for digest, font in result.fonts.items()
+        }
 
         if pages:
             # A document that lays its panels out is shown as its pages, side by side.
             cores = {name: result.core for name, result in results.items()}
-            svg = render_pages(pages, cores)
+            svg = render_pages(pages, cores, fonts=fonts)
             debug = render_pages(pages, cores, debug=True)
             core = json.dumps(
                 {
@@ -149,12 +174,12 @@ def _scenet_compile(source, kind):
             )
         elif single:
             only = results[names[0]]
-            svg = render(only.core)
+            svg = render(only.core, fonts=fonts)
             debug = render_debug(only.core)
             core = only.core.to_json()
         else:
             pairs = [(name, result.core) for name, result in results.items()]
-            svg = render_strip(pairs)
+            svg = render_strip(pairs, fonts=fonts)
             debug = render_strip(pairs, debug=True)
             core = json.dumps(
                 {name: json.loads(result.core.to_json()) for name, result in results.items()},
@@ -186,6 +211,13 @@ def _scenet_compile(source, kind):
 /** A booted compiler, ready to be handed source. */
 export interface Compiler {
   compile(source: string, kind: string): Promise<CompileResult>;
+  /**
+   * Put a font file in the document's `fonts/` folder, replacing one of the same name.
+   *
+   * @param name - A safe file name, from `fontFileName`.
+   * @param bytes - The file's contents.
+   */
+  addFont(name: string, bytes: Uint8Array): void;
   readonly version: string;
 }
 
@@ -252,6 +284,11 @@ await micropip.install(_scenet_wheel)
       pyodide.globals.set("_scenet_kind", kind);
       const raw = await pyodide.runPythonAsync("_scenet_compile(_scenet_source, _scenet_kind)");
       return JSON.parse(String(raw)) as CompileResult;
+    },
+    addFont(name: string, bytes: Uint8Array): void {
+      // The compiler caches fonts by what is in them, so a file replaced here under the
+      // same name is read again on the next compile.
+      pyodide.FS.writeFile(`${DOCUMENT_FOLDER}/${FONT_FOLDER}/${name}`, bytes);
     },
   };
 }

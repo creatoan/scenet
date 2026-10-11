@@ -6,7 +6,7 @@ artwork, and the emitter never makes a layout decision.
 """
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -25,6 +25,7 @@ from scenet.core import (
     CoreBackdrop,
     CoreBalloon,
     CoreCaption,
+    CoreFont,
     CoreFrame,
     CoreMass,
     CoreRun,
@@ -54,12 +55,13 @@ from scenet.frontends.yaml_front import (
 )
 from scenet.geom import BBox, Vector, rounded
 from scenet.ir import Face, Mark, PageLayout, PanelIR, PanelSpec
+from scenet.lettering import Lettering, typeface_for
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.staging import Placement, solve_staging
-from scenet.solve.text import FontMetrics, TextBlock
+from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +76,12 @@ class CompileResult:
     camera: CameraSolution
     placements: tuple[Placement, ...]
     posed: dict[str, ResolvedPuppet]
+    #: The fonts the lettering was measured in, other than the shipped family's, by the
+    #: digest `PanelCore.fonts` names them by. Hand them to the renderer.
+    fonts: dict[str, FontMetrics] = field(default_factory=dict)
+    #: Faces the document named no file for, and what was used instead -- reported in
+    #: `notes` only when something was actually set in one.
+    lettering_notes: tuple[str, ...] = ()
 
     @property
     def notes(self) -> tuple[str, ...]:
@@ -140,6 +148,7 @@ class CompileResult:
                         f"the slanted edge of this panel cuts across {actor.id}'s face; "
                         "lean the tier less, or frame the shot so the face is clear of it"
                     )
+        notes.extend(self.lettering_notes)
         return tuple(notes)
 
 
@@ -219,6 +228,47 @@ def _core_runs(block: TextBlock, base: Face) -> tuple[tuple[CoreRun, ...], ...]:
     return tuple(tuple(CoreRun(text=text, face=face) for text, face in line) for line in block.runs)
 
 
+def _declared_faces(family: Typeface) -> dict[Face, FontMetrics]:
+    """The faces of a family that are not the shipped ones, which is what Core records."""
+    declared: dict[Face, FontMetrics] = {}
+    for face in Face:
+        chosen = getattr(family, face.value)
+        if chosen is not None and chosen.path != SHIPPED_FACES[face]:
+            declared[face] = chosen
+    return declared
+
+
+def _stand_in_notes(core: PanelCore, lettering: Lettering, family: Typeface) -> tuple[str, ...]:
+    """Say so when lettering was set in a face standing in for one the document did not name."""
+    notes: list[str] = []
+    if lettering.stands_in(Face.ITALIC) and any(caption.italic for caption in core.captions):
+        regular = family.face(Face.REGULAR)
+        notes.append(
+            "no italic face is named in lettering.font, so italic captions are set in "
+            f"{regular.family} {regular.style}; name one as `italic:`"
+        )
+    stressed = any(
+        run.face is Face.BOLD_ITALIC
+        for item in (*core.balloons, *core.captions)
+        for line in item.runs
+        for run in line
+    )
+    if lettering.stands_in(Face.BOLD_ITALIC) and stressed:
+        used = family.face(Face.BOLD_ITALIC)
+        notes.append(
+            "no bold italic face is named in lettering.font, so emphasis is set in "
+            f"{used.family} {used.style}; name one as `bold_italic:`"
+        )
+    return tuple(notes)
+
+
+def _folder(source: Path | None, base: Path | None) -> Path | None:
+    """The folder files a document names are read from: given, or the document's own."""
+    if base is not None:
+        return base
+    return source.parent if source is not None else None
+
+
 def _core_backdrop(backdrop: ResolvedBackdrop | None) -> CoreBackdrop | None:
     """Reduce a resolved backdrop to its serialisable Core twin.
 
@@ -275,6 +325,7 @@ def compile_ir(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    base: Path | None = None,
     lettering_height: float | None = None,
     exclusions: Sequence[BBox] = (),
     outline: Sequence[tuple[float, float]] | None = None,
@@ -284,7 +335,10 @@ def compile_ir(
     Args:
         panel: The validated panel.
         library: Characters to draw from. Defaults to the two shipped puppets.
-        metrics: Font to measure lettering against.
+        metrics: A regular face to measure lettering against, in place of the one the
+            panel declares or the shipped one.
+        base: The folder the panel's document is in, which the font files it declares
+            are read from. Without one, a panel that declares a font is refused.
         lettering_height: The height type sizes are a fraction of, instead of the panel's
             own. A page passes the same value to every panel on it; a panel compiled on
             its own leaves it out. A panel that sets `lettering.size` letters at that size
@@ -297,9 +351,18 @@ def compile_ir(
             box as usual, and cropped to this; lettering stays inside it, a margin in.
 
     Returns:
-        The compiled panel.
+        The compiled panel, with the fonts it was lettered in.
+
+    Raises:
+        PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read.
     """
     library = library or default_library()
+    # Read first: a font that cannot be read is the author's to fix, and is better said
+    # before the solver spends anything on a panel it could not letter.
+    lettering = typeface_for(panel.lettering, base)
+    family = lettering.typeface
+    if metrics is not None:
+        family = replace(family, regular=metrics)
     placements, camera = solve_staging(panel, library)
 
     posed = {
@@ -352,7 +415,7 @@ def compile_ir(
         panel.script,
         posed,
         frame,
-        metrics=metrics,
+        typeface=family,
         type_size=panel.lettering.size,
         lettering_height=lettering_height,
         backdrop=backdrop,
@@ -361,6 +424,7 @@ def compile_ir(
         inside=_margined(outline, panel.panel.margin) if outline is not None else None,
     )
 
+    declared = _declared_faces(family)
     core = PanelCore(
         width=rounded(panel.panel.width),
         height=rounded(panel.panel.height),
@@ -449,14 +513,26 @@ def compile_ir(
         backdrop=_core_backdrop(backdrop),
         exclusions=tuple(Box.of(area) for area in exclusions),
         outline=tuple(outline) if outline is not None else None,
+        fonts={
+            face: CoreFont(family=font.family, style=font.style, sha256=font.sha256)
+            for face, font in declared.items()
+        },
     )
-    return CompileResult(core=core, camera=camera, placements=placements, posed=posed)
+    return CompileResult(
+        core=core,
+        camera=camera,
+        placements=placements,
+        posed=posed,
+        fonts={font.sha256: font for font in declared.values()},
+        lettering_notes=_stand_in_notes(core, lettering, family),
+    )
 
 
 def compile_source(
     text: str,
     *,
     source: Path | None = None,
+    base: Path | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> CompileResult:
@@ -466,8 +542,11 @@ def compile_source(
 
     Args:
         text: A single-panel document in the YAML surface syntax.
-        source: Path the text came from, used only to prefix error messages. Pass it
-            when you have one; the diagnostics are much more useful with it.
+        source: Path the text came from, used to prefix error messages and to find the
+            files it names beside it. Pass it when you have one; the diagnostics are much
+            more useful with it.
+        base: The folder files the document names are read from, when it is not the one
+            `source` is in -- or when there is no `source` at all.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against. Defaults to the font that ships as
             a dependency of this package.
@@ -498,7 +577,12 @@ def compile_source(
         :func:`compile_document <scenet.pipeline.compile_document>`, to dispatch on
         extension and accept any supported syntax.
     """
-    return compile_ir(parse_panel(text, source=source), library=library, metrics=metrics)
+    return compile_ir(
+        parse_panel(text, source=source),
+        library=library,
+        metrics=metrics,
+        base=_folder(source, base),
+    )
 
 
 def compile_file(
@@ -522,7 +606,7 @@ def compile_file(
         PanelSyntaxError: The document is malformed or invalid. The path is included
             in the message.
     """
-    return compile_ir(load_panel(path), library=library, metrics=metrics)
+    return compile_ir(load_panel(path), library=library, metrics=metrics, base=path.parent)
 
 
 @dataclass(frozen=True, slots=True)
@@ -539,11 +623,19 @@ class Book:
     panels: dict[str, CompileResult]
     pages: tuple[PageCore, ...]
 
+    @property
+    def fonts(self) -> dict[str, FontMetrics]:
+        """Every declared font any panel was lettered in, by digest: what to render with."""
+        return {
+            digest: font for result in self.panels.values() for digest, font in result.fonts.items()
+        }
+
 
 def compile_book(
     text: str,
     *,
     source: Path | None = None,
+    base: Path | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> Book:
@@ -557,7 +649,10 @@ def compile_book(
     Args:
         text: A scene document. One with no `pages:` compiles exactly as
             :func:`compile_scene <scenet.pipeline.compile_scene>` always has.
-        source: Path it came from, used only to prefix error messages.
+        source: Path it came from, used to prefix error messages and to find the files
+            it names beside it.
+        base: The folder files the document names are read from, in place of the one
+            `source` is in.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
 
@@ -580,11 +675,16 @@ def compile_book(
         >>> book.panels["a"].core.width
         880.0
     """
-    return _compile_document(parse_scene_document(text, source=source), library, metrics)
+    return _compile_document(
+        parse_scene_document(text, source=source), library, metrics, _folder(source, base)
+    )
 
 
 def _compile_document(
-    document: SceneDocument, library: PuppetLibrary | None, metrics: FontMetrics | None
+    document: SceneDocument,
+    library: PuppetLibrary | None,
+    metrics: FontMetrics | None,
+    base: Path | None,
 ) -> Book:
     """Lay out every page, then compile every panel at the size its page gave it."""
     library = library or default_library()
@@ -613,12 +713,13 @@ def _compile_document(
     for name, panel in document.panels.items():
         frame = frames.get(name)
         if frame is None:
-            panels[name] = compile_ir(panel, library=library, metrics=metrics)
+            panels[name] = compile_ir(panel, library=library, metrics=metrics, base=base)
             continue
         panels[name] = compile_ir(
             _framed(name, panel, frame),
             library=library,
             metrics=metrics,
+            base=base,
             lettering_height=type_height,
             exclusions=exclusions.get(name, ()),
             outline=_local_outline(frame),
@@ -700,6 +801,7 @@ def compile_scene(
     text: str,
     *,
     source: Path | None = None,
+    base: Path | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
@@ -711,7 +813,7 @@ def compile_scene(
     page lays out is compiled at its frame's size; see
     :func:`compile_book <scenet.pipeline.compile_book>`, which also returns the pages.
     """
-    return compile_book(text, source=source, library=library, metrics=metrics).panels
+    return compile_book(text, source=source, base=base, library=library, metrics=metrics).panels
 
 
 def compile_scene_file(
@@ -737,7 +839,7 @@ def compile_scene_file(
         CompositionError: An `over:` chain refers to a panel that does not exist, or
             forms a cycle.
     """
-    return _compile_document(load_scene_document(path), library, metrics).panels
+    return _compile_document(load_scene_document(path), library, metrics, path.parent).panels
 
 
 # Which frontend handles which extension. Adding a syntax means adding a line here and
@@ -790,7 +892,7 @@ def compile_book_file(
         raise ValueError(
             f"{path}: unsupported extension '{path.suffix}'; expected one of {supported}"
         )
-    return _compile_document(loader(path), library, metrics)
+    return _compile_document(loader(path), library, metrics, path.parent)
 
 
 def compile_document(

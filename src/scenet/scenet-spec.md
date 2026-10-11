@@ -588,15 +588,18 @@ written between two lines of dialogue is read between them; one written last is 
 
 ## `lettering`
 
-How the lettering is set. One key so far:
+How the lettering is set: its size, and the face it is set in.
 
 ```yaml
-lettering: {size: 30}
+lettering:
+  size: 30
+  font: {regular: fonts/Comic-Regular.ttf, italic: fonts/Comic-Italic.ttf}
 ```
 
 | Key | Type | Meaning |
 |---|---|---|
 | `size` | number above 0 | The dialogue type size, in panel units. Captions keep their proportion to it, 30 parts in 35 |
+| `font` | path, or `regular`, `italic`, `bold_italic` | The font files to letter in, relative to the document |
 
 Left out, dialogue is lettered at 3.5% of the height the panel letters against and captions at
 3% — the panel's own height alone, one tier of a three-tier page on a page. That is a good default
@@ -611,6 +614,53 @@ comic script, put it in the front matter for every panel, or in an `@lettering:`
 The type is measured at exactly this size, so it decides how big every balloon is. A size too large
 for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
 `balloon-placement`.
+
+### `font`
+
+Scenet letters in Source Sans Pro unless you name a face of your own. A font is always a **file you
+name**, never a font installed on the machine: what is measured has to be the same everywhere, or the
+same document would letter differently on two computers.
+
+```yaml
+lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
+lettering:
+  font:
+    regular: fonts/Comic-Regular.ttf                 # dialogue, and spoken captions
+    italic: fonts/Comic-Italic.ttf                   # every other caption kind
+    bold_italic: fonts/Comic-BoldItalic.ttf          # emphasis
+```
+
+- **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
+  `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out of
+  it. An absolute path is refused, so a document and its fonts move together, and a server compiling
+  documents it is sent cannot be pointed at its own files. Text compiled with no file behind it — by
+  the MCP server, say — has no folder, and so can name no font.
+- **A face you do not name stands in from one you do.** Italic captions are set in `regular`;
+  emphasis in `italic`, or in `regular` when there is no italic. A family from one file stays one
+  family, rather than mixing your face with the shipped one. When a stand-in is actually used, the
+  compiler says so.
+- **TrueType or OpenType**, with a Unicode character map, since every line is measured against it
+  — kerning included. A path that is absolute, missing, or not such a font is reported as
+  `font-file`, at the face that names it.
+
+Panel Core records each face by its family, style and a digest of its bytes, never by where the file
+was; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html). Rendering needs the same files, and refuses a panel whose
+fonts it was not given rather than draw its lettering in a face it was not measured in. `scenet
+build` and the playground hand them over for you. `--live-text` names your font's family.
+
+The faces letterers use are mostly commercial, or free only on their own terms. You can name one;
+Scenet can only ship a face whose licence allows it, which is why Source Sans Pro, under the SIL
+Open Font License, is the default. In the [playground](https://creatoan.github.io/scenet/playground/),
+**Font…** adds a file to the document's `fonts/` folder for as long as the tab is open.
+
+### Capitals are yours to set
+
+Comics are conventionally lettered in capitals, and Scenet sets exactly what you type. It does not
+uppercase for you, because doing it well is not a case conversion: the personal pronoun "I" takes a
+crossbar that every other capital I does not, and choosing between the two needs a font with both
+forms and the contextual substitution that picks one, which only a full text shaper performs.
+Scenet applies no glyph substitution at all, so a face that picks its crossbar "I" contextually will
+not pick it here either. Write in capitals if you want them.
 
 ## `page` and `pages`
 
@@ -1129,6 +1179,12 @@ Two panels in a comic script have the same name. Panels are named by their PANEL
 
 **Fix:** Number the panels straight through, or put a PAGE heading before each page whose numbering starts again.
 
+### `scenet/font-file`
+
+A declared font file cannot be read. `lettering.font` names font files, read relative to the folder the document is in. Each must be a relative path, the file must be there, and it must be a TrueType or OpenType font with a Unicode character map, since lettering is measured against it. A document compiled from text with no file behind it has no folder, and so can name no font.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or point it at a .ttf or .otf file.
+
 ### `scenet/internal`
 
 The compiler failed in a way it does not have a rule for. A Scenet error reached the checker without a more specific rule. Worth reporting: either the document found something genuinely new, or a rule is missing from the catalogue.
@@ -1401,6 +1457,53 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "title": "Facing",
       "type": "string"
     },
+    "FontSpec": {
+      "anyOf": [
+        {
+          "description": "One font file, relative to the document, lettering every face: `fonts/Comic.ttf` stands for `{regular: fonts/Comic.ttf}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bold_italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Bold Italic"
+            },
+            "italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Italic"
+            },
+            "regular": {
+              "title": "Regular",
+              "type": "string"
+            }
+          },
+          "required": [
+            "regular"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {font: fonts/Comic.ttf}\").lettering.font.regular\n    'fonts/Comic.ttf'",
+      "title": "FontSpec"
+    },
     "Horizon": {
       "description": "Where the ground meets whatever is behind it.\n\nOne line for the whole panel, which every mass is composed against: masses of the\nground sort start at it and run down, masses that stand in the world rise from it.\nNamed rather than given as a number for the same reason `at:` is -- the author is\nsaying how the panel is composed, not typing a coordinate.",
       "enum": [
@@ -1413,8 +1516,19 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "LetteringSpec": {
       "additionalProperties": false,
-      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n\nA size set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
+      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n    font: The font files to letter in, in place of the shipped Source Sans Pro.\n\nA size or a font set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {size: 30}\").lettering.size\n    30.0",
       "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "size": {
           "anyOf": [
             {
@@ -1753,6 +1867,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     "lettering": {
       "$ref": "#/$defs/LetteringSpec",
       "default": {
+        "font": null,
         "size": null
       }
     },

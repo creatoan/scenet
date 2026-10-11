@@ -12,6 +12,7 @@ from collections.abc import Mapping, Sequence
 from scenet.core import PageCore, PanelCore
 from scenet.emit.strip import placed_panel
 from scenet.emit.svg import fmt
+from scenet.solve.text import FontMetrics
 
 __all__ = ["render_page", "render_pages"]
 
@@ -29,6 +30,7 @@ def render_page(
     *,
     live_text: bool = False,
     debug: bool = False,
+    fonts: Mapping[str, FontMetrics] | None = None,
 ) -> str:
     r"""Render one page as a standalone SVG document.
 
@@ -38,6 +40,8 @@ def render_page(
             here, compiled at that frame's size.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         debug: Place each panel's diagnostic overlay instead of the panel.
+        fonts: The declared fonts the panels were lettered in, by digest -- what
+            :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
 
     Returns:
         The page, as SVG.
@@ -61,7 +65,7 @@ def render_page(
         f'height="{fmt(page.height)}" viewBox="0 0 {fmt(page.width)} {fmt(page.height)}">',
         f'  <rect x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
         f'fill="{PAGE_FILL}"/>',
-        *_frames(page, panels, 1, live_text=live_text, debug=debug),
+        *_frames(page, panels, 1, live_text=live_text, debug=debug, fonts=fonts),
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
@@ -73,6 +77,7 @@ def render_pages(
     *,
     live_text: bool = False,
     debug: bool = False,
+    fonts: Mapping[str, FontMetrics] | None = None,
 ) -> str:
     """Render every page side by side, as one SVG document.
 
@@ -85,6 +90,8 @@ def render_pages(
         panels: Every panel's compiled Core, by name.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         debug: Place each panel's diagnostic overlay instead of the panel.
+        fonts: The declared fonts the panels were lettered in, by digest -- what
+            :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
 
     Returns:
         Every page, left to right, as SVG.
@@ -112,7 +119,7 @@ def render_pages(
             f'  <rect x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
             f'fill="{PAGE_FILL}" stroke="{PAGE_EDGE}" stroke-width="2"/>'
         )
-        parts.extend(_frames(page, panels, position, live_text=live_text, debug=debug))
+        parts.extend(_frames(page, panels, position, live_text=live_text, debug=debug, fonts=fonts))
         parts.append("  </g>")
         position += len(page.frames)
         cursor += page.width + spacing
@@ -127,6 +134,7 @@ def _frames(
     *,
     live_text: bool,
     debug: bool,
+    fonts: Mapping[str, FontMetrics] | None,
 ) -> list[str]:
     """Every panel of one page, at its frame, positions counting from `first_position`.
 
@@ -159,6 +167,7 @@ def _frames(
                 frame.y,
                 live_text=live_text,
                 debug=debug,
+                fonts=fonts,
             )
         )
     return lines

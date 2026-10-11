@@ -25,3 +25,18 @@ character is measured and drawn in -- one function, so the two cannot disagree.
 
 ```{automodule} scenet.emphasis
 ```
+
+## `scenet.lettering`
+
+An author's lettering face: reading the font files a document declares, and what stands in
+for a face it does not name.
+
+```{automodule} scenet.lettering
+```
+
+## `scenet.paths`
+
+Files a document names, found beside the document -- never by an absolute path.
+
+```{automodule} scenet.paths
+```

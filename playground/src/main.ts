@@ -23,6 +23,7 @@ import {
   type Compiler,
 } from "./compiler";
 import { download, sourceFilename, stemFor, svgBlob, svgToPng, textBlob } from "./export";
+import { declaredPath, fontFileName } from "./fonts";
 import {
   browserStore,
   clearDraft,
@@ -105,6 +106,8 @@ const exampleSelect = element<HTMLSelectElement>("examples");
 const blurb = element<HTMLSpanElement>("blurb");
 const resetButton = element<HTMLButtonElement>("reset");
 const shareButton = element<HTMLButtonElement>("share");
+const addFontButton = element<HTMLButtonElement>("add-font");
+const fontInput = element<HTMLInputElement>("font-file");
 const kindLabel = element<HTMLSpanElement>("kind");
 const splitter = element<HTMLDivElement>("splitter");
 const outputPane = element<HTMLElement>("output-pane");
@@ -556,6 +559,32 @@ async function main(): Promise<void> {
   });
 
   shareButton.addEventListener("click", () => void share());
+
+  // A font the author adds goes into the document's fonts/ folder, where
+  // `lettering: {font: fonts/Name.ttf}` finds it. It is not kept across reloads, and a
+  // share link does not carry it: say both, since neither is visible otherwise.
+  const addFonts = async (): Promise<void> => {
+    if (compiler === undefined) return;
+    const added: string[] = [];
+    for (const file of Array.from(fontInput.files ?? [])) {
+      const name = fontFileName(file.name);
+      if (name === null) continue;
+      compiler.addFont(name, new Uint8Array(await file.arrayBuffer()));
+      added.push(declaredPath(name));
+    }
+    fontInput.value = "";
+    if (added.length === 0) {
+      setStatus("A font must be a .ttf or .otf file.");
+      return;
+    }
+    await compileNow();
+    setStatus(
+      `Added ${added.join(", ")}. Letter in it with lettering: {font: ${added[0]}}. ` +
+        "Fonts stay in this tab only: a reload or a share link does not keep them.",
+    );
+  };
+  addFontButton.addEventListener("click", () => fontInput.click());
+  fontInput.addEventListener("change", () => void addFonts());
 
   for (const [name, button] of Object.entries(tabs)) {
     button.addEventListener("click", () => {

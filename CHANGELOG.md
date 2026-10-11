@@ -44,6 +44,16 @@ below 1.0 means.
   panel, so a whole page letters at one size you chose; on one panel, to that panel
   alone; in a comic script, in the front matter or an `@lettering:` directive. Left out,
   nothing changes. (Part of #74)
+- **Letter in your own face.** `lettering: {font: fonts/Comic.ttf}`, or a file per face
+  under `regular`, `italic` and `bold_italic`, sets the lettering in fonts the document
+  names, read relative to the folder it is in -- never a system font, and never an
+  absolute path. A face left out stands in from one given, and the compiler says so when
+  that matters. Panel Core records each face by family, style and a digest of its bytes,
+  never a path; the renderer is handed the fonts and refuses a panel whose fonts it was not
+  given; `--live-text` names the family measured. A font that is missing, absolute or not
+  a font is the new rule `font-file`, located at the face. The playground gains **Font…**
+  to add a file for the session. Capitals stay as you type them, and Source Sans Pro stays
+  the default; both are recorded. (Part of #74)
 
 ### Changed
 

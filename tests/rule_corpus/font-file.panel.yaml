@@ -1,0 +1,3 @@
+# The font is read relative to this document, and there is no such file beside it.
+cast: {alice: {reference: alice}}
+lettering: {font: fonts/Missing-Regular.ttf}

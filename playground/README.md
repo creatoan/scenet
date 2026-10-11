@@ -27,6 +27,9 @@ The Scenet compiler running in a browser, published to GitHub Pages.
   `foo.core.json`.
 - **Share** copies a link with the whole document compressed into the URL fragment. The
   fragment never reaches a server, so there is no backend.
+- **Font…** adds `.ttf` and `.otf` files to the document's `fonts/` folder, in Pyodide's
+  in-memory file system, so `lettering: {font: fonts/Name.ttf}` letters in them. They last
+  as long as the tab: neither a reload nor a share link keeps them.
 - **Your edits survive a reload**, saved in the browser. *Reset to example* discards them.
 - The divider between editor and output can be dragged, or moved with the arrow keys;
   the output can go full screen.

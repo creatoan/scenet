@@ -12,6 +12,8 @@ is the opposite of reproducible.
 """
 
 import functools
+import hashlib
+import io
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -341,6 +343,25 @@ def _legacy_kerning(font: TTFont) -> list[tuple[_PairTable, ...]]:
     return lookups
 
 
+#: `name` table entries: the family and the style within it, as a font's own four-face
+#: (regular, italic, bold, bold italic) naming gives them. The legacy pair rather than
+#: the typographic one, because it is what a renderer matches `font-family` against
+#: across the most systems.
+FAMILY_NAME = 1
+STYLE_NAME = 2
+
+
+def _name(font: TTFont, name_id: int) -> str:
+    """A `name` table entry, cut to what may be written into an SVG, or empty."""
+    if "name" not in font:
+        return ""
+    table: Any = font["name"]
+    found = table.getDebugName(name_id) or ""
+    # A font is untrusted input like a document: a name holding a control character
+    # would make an SVG no parser accepts, so only printable characters are kept.
+    return "".join(character for character in found if character.isprintable()).strip()
+
+
 class FontMetrics:
     """Advance widths and pair kerning, read straight from the font's own tables.
 
@@ -349,6 +370,13 @@ class FontMetrics:
     renderer will not reproduce is worse than a slightly generous one. That holds for
     `--live-text` and not for the default: outlines are positioned here, glyph by glyph,
     so no renderer has a say and every pair adjustment is reproduced exactly.
+
+    Attributes:
+        path: The file it was read from. Used to open it and nothing else: no path
+            reaches any output.
+        sha256: The digest of the file's bytes, which is what Panel Core names a face by.
+        family: The family name from the font's `name` table.
+        style: The style within the family: `Regular`, `Italic`, `Bold Italic`.
 
     Pairs come from the GPOS `kern` feature, or from a legacy `kern` table in a font that
     has no GPOS kerning -- read with fontTools rather than shaped with HarfBuzz, which
@@ -366,11 +394,17 @@ class FontMetrics:
                 because determinism requires the same metrics everywhere.
 
         Raises:
+            OSError: The file cannot be read.
             ValueError: The font has no usable Unicode character map, so no text could
                 be measured against it at all.
         """
         self.path = path
-        self._font = TTFont(str(path), lazy=True)
+        # Read whole, once. What a font *is* is its bytes: Panel Core names a face by
+        # their digest, so a drawing can be refused a file that merely shares a name.
+        # It also means no file stays open behind a lazily read font.
+        data = Path(path).read_bytes()
+        self.sha256 = self.digest(data)
+        self._font = TTFont(io.BytesIO(data), lazy=True)
         # fontTools builds table objects dynamically, so `unitsPerEm` exists at runtime
         # but not in any stub. Both checkers are told, each in its own dialect.
         head = self._font["head"]
@@ -391,6 +425,13 @@ class FontMetrics:
         # front would be millions of entries for a font with a full Latin set.
         self._kerning: list[tuple[_PairTable, ...]] | None = None
         self._kerned: dict[tuple[str, str], int] = {}
+        self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
+        self.style = _name(self._font, STYLE_NAME) or "Regular"
+
+    @staticmethod
+    def digest(data: bytes) -> str:
+        """What a font file is known by: the SHA-256 of its bytes, in hex."""
+        return hashlib.sha256(data).hexdigest()
 
     @property
     def units_per_em(self) -> float:

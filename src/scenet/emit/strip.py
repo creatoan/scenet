@@ -26,9 +26,12 @@ both used to be missing:
   panel's group keeps its name, as `panel-<name>`.
 """
 
+from collections.abc import Mapping
+
 from scenet.core import PanelCore
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.svg import attr, fmt, render
+from scenet.solve.text import FontMetrics
 
 # Space between panels, as a fraction of the tallest panel.
 GUTTER_FRACTION = 0.04
@@ -37,7 +40,11 @@ MARGIN_FRACTION = 0.03
 
 
 def render_strip(
-    panels: list[tuple[str, PanelCore]], *, live_text: bool = False, debug: bool = False
+    panels: list[tuple[str, PanelCore]],
+    *,
+    live_text: bool = False,
+    debug: bool = False,
+    fonts: Mapping[str, FontMetrics] | None = None,
 ) -> str:
     """Lay panels left to right in reading order.
 
@@ -51,6 +58,8 @@ def render_strip(
         debug: Place each panel's diagnostic overlay instead of the panel itself, in
             exactly the same positions, so a sequence can be debugged as a sequence.
             `live_text` does not apply: the overlay labels in plain text already.
+        fonts: The declared fonts the panels were lettered in, by digest -- what
+            :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
 
     Returns:
         One SVG document holding every panel.
@@ -78,7 +87,16 @@ def render_strip(
         # Panels of differing height sit on a common top edge, which is how a tier of
         # unequal panels is conventionally aligned.
         parts.extend(
-            placed_panel(name, core, position, cursor, margin, live_text=live_text, debug=debug)
+            placed_panel(
+                name,
+                core,
+                position,
+                cursor,
+                margin,
+                live_text=live_text,
+                debug=debug,
+                fonts=fonts,
+            )
         )
         cursor += core.width + gutter
 
@@ -95,6 +113,7 @@ def placed_panel(
     *,
     live_text: bool = False,
     debug: bool = False,
+    fonts: Mapping[str, FontMetrics] | None = None,
 ) -> list[str]:
     """One panel, rendered on its own and put at `(x, y)` in a larger document.
 
@@ -110,6 +129,7 @@ def placed_panel(
         y: Where its top edge goes.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         debug: Place the panel's diagnostic overlay instead of the panel.
+        fonts: The declared fonts the panel was lettered in, by digest.
 
     Returns:
         The lines of SVG, indented for the document's top level.
@@ -119,7 +139,7 @@ def placed_panel(
     inner = (
         render_debug(core, id_prefix=prefix)
         if debug
-        else render(core, live_text=live_text, id_prefix=prefix)
+        else render(core, fonts=fonts, live_text=live_text, id_prefix=prefix)
     )
     body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
     # Clipped to the panel's outline when it has one: a slanted panel's bounding box

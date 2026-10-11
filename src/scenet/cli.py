@@ -278,7 +278,7 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
     for name, result in book.panels.items():
         core = result.core
         target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
-        outputs.append((target, partial(render, core, live_text=args.live_text)))
+        outputs.append((target, partial(render, core, fonts=book.fonts, live_text=args.live_text)))
         if args.core:
             outputs.append((target.with_suffix(".core.json"), core.to_json))
         if args.debug:
@@ -291,14 +291,19 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
         outputs.append(
             (
                 base.with_name(f"{base.stem}.strip.svg"),
-                partial(render_strip, strip, live_text=args.live_text),
+                partial(render_strip, strip, live_text=args.live_text, fonts=book.fonts),
             )
         )
 
     cores = {name: result.core for name, result in book.panels.items()}
     for number, page in enumerate(book.pages, start=1):
         target = base.with_name(f"{base.stem}.page-{number}{base.suffix}")
-        outputs.append((target, partial(render_page, page, cores, live_text=args.live_text)))
+        outputs.append(
+            (
+                target,
+                partial(render_page, page, cores, live_text=args.live_text, fonts=book.fonts),
+            )
+        )
         if args.core:
             outputs.append((target.with_suffix(".core.json"), page.to_json))
         if args.debug:

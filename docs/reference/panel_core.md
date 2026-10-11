@@ -119,6 +119,21 @@ spell it exactly, and a Core whose runs do not is refused.
 `runs` key at all, so every Core written before emphasis existed reads, and is written, byte for
 byte as before — which is why it needed no `format_version` bump.
 
+A panel lettered in an [author's face](language.md#font) carries `fonts`: each face set in a
+font other than the shipped one, by its family and style as the font names them, and the SHA-256 of
+the file. Never a path — where the file was is a fact about one machine.
+
+```json
+"fonts": {
+  "regular": { "family": "Comic Neue", "style": "Regular", "sha256": "4c1f…" },
+  "italic": { "family": "Comic Neue", "style": "Regular", "sha256": "4c1f…" }
+}
+```
+
+The renderer is handed fonts by digest and refuses a Core naming one it was not given, so a Core is
+never drawn in a face it was not measured in. A face not listed is the shipped one; a panel in the
+shipped family has no `fonts` key at all, so no `format_version` bump either.
+
 `italic` is recorded rather than re-derived from `kind`, so the emitter cannot draw a box in a face
 the solver did not measure it in. `fill` and `ink` are there for the same reason: a caption's tone
 resolves to a value here, and the ink is chosen against it by contrast — so a dark box arrives at the

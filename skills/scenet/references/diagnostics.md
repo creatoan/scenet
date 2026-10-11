@@ -40,6 +40,12 @@ Two panels in a comic script have the same name. Panels are named by their PANEL
 
 **Fix:** Number the panels straight through, or put a PAGE heading before each page whose numbering starts again.
 
+### `scenet/font-file`
+
+A declared font file cannot be read. `lettering.font` names font files, read relative to the folder the document is in. Each must be a relative path, the file must be there, and it must be a TrueType or OpenType font with a Unicode character map, since lettering is measured against it. A document compiled from text with no file behind it has no folder, and so can name no font.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or point it at a .ttf or .otf file.
+
 ### `scenet/internal`
 
 The compiler failed in a way it does not have a rule for. A Scenet error reached the checker without a more specific rule. Worth reporting: either the document found something genuinely new, or a rule is missing from the catalogue.

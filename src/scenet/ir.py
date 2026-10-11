@@ -43,6 +43,7 @@ __all__ = [
     "Corner",
     "Face",
     "Facing",
+    "FontSpec",
     "Horizon",
     "Inset",
     "InsetOrder",
@@ -668,6 +669,31 @@ class Mass(Strict):
     spans: Spans = Spans.FULL
 
 
+class FontSpec(Strict):
+    """The font files a panel is lettered in, each a path relative to the document.
+
+    Attributes:
+        regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is
+            the only face, and stands in for the others.
+        italic: Every other caption kind. Left out, captions are set in `regular`.
+        bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,
+            in `regular` when there is not -- and a note says so when it happens.
+
+    Paths, never names: a font is a declared file and never a system lookup, so a
+    document letters the same on every machine. They are read relative to the folder the
+    document is in, and an absolute one is refused; see :mod:`scenet.paths`.
+
+    Example:
+        >>> from scenet import parse_panel
+        >>> parse_panel("lettering: {font: fonts/Comic.ttf}").lettering.font.regular
+        'fonts/Comic.ttf'
+    """
+
+    regular: str
+    italic: str | None = None
+    bold_italic: str | None = None
+
+
 class LetteringSpec(Strict):
     """How a panel is lettered.
 
@@ -677,8 +703,9 @@ class LetteringSpec(Strict):
             frame's size. Captions keep their proportion to it: 30 parts in 35, as they
             are by default. Left out, a panel letters at 3.5% of the height it letters
             against: its own alone, one tier of a three-tier page on a page.
+        font: The font files to letter in, in place of the shipped Source Sans Pro.
 
-    A size set beside `panels:` is a default every panel inherits, which is how a page
+    A size or a font set beside `panels:` is a default every panel inherits, which is how a page
     letters at one size of the author's choosing. Set on one panel, it letters that panel
     alone -- the author's call to make, and not one the compiler second-guesses.
 
@@ -693,6 +720,7 @@ class LetteringSpec(Strict):
     """
 
     size: float | None = Field(default=None, gt=0.0)
+    font: FontSpec | None = None
 
 
 class SettingSpec(Strict):

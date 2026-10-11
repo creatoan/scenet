@@ -12,7 +12,7 @@ different path-rounding convention produces a huge diff that means nothing.
 import json
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Tag, model_validator
+from pydantic import BaseModel, ConfigDict, Field, Tag, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
@@ -435,6 +435,25 @@ def _check_runs(lines: tuple[str, ...], runs: tuple[tuple[CoreRun, ...], ...]) -
             raise ValueError(f"the runs of line {index} spell {spelled!r}, not {line!r}")
 
 
+class CoreFont(CoreModel):
+    """A font file the lettering was measured in, named by what is in it.
+
+    Attributes:
+        family: Its family name, from the font's own `name` table.
+        style: Its style within the family.
+        sha256: The digest of the file's bytes. A renderer is handed fonts by this, and
+            refuses to draw a panel whose fonts it was not handed: lettering drawn in a
+            face it was not measured in would not fit the balloons drawn for it.
+
+    Never a path. Where the file was is a fact about one machine, and a Core is the same
+    wherever it was compiled.
+    """
+
+    family: str
+    style: str
+    sha256: str
+
+
 class CoreBalloon(CoreModel):
     """One balloon, placed and with its lettering already broken into lines.
 
@@ -580,6 +599,9 @@ class PanelCore(CoreModel):
         outline: For a panel in a slanted tier, the shape of its border: four corners,
             clockwise from the top left, in panel units. The panel is drawn clipped to it,
             and its lettering stays inside it. Left out of the JSON for a rectangle.
+        fonts: The faces lettered in a font other than the shipped one, by face. A face
+            not listed is the shipped family's. Left out of the JSON when every face is
+            the shipped one.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -605,6 +627,7 @@ class PanelCore(CoreModel):
     backdrop: CoreBackdrop | None = None
     exclusions: tuple[Box, ...] = ()
     outline: tuple[tuple[float, float], ...] | None = None
+    fonts: dict[Face, CoreFont] = Field(default_factory=dict)
 
     @property
     def bounds(self) -> BBox:
@@ -636,7 +659,7 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, exclusions=(), outline=None)
+        _drop_unused(payload, exclusions=(), outline=None, fonts={})
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=())
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
@@ -788,6 +811,7 @@ __all__ = [
     "CoreBackdrop",
     "CoreBalloon",
     "CoreCaption",
+    "CoreFont",
     "CoreFrame",
     "CoreMass",
     "CoreRun",

@@ -59,6 +59,32 @@ downstream — placement, occlusion, reading order — can be computed until tha
 font is therefore bundled rather than referenced, and measurement uses `fontTools` against that
 exact file. If renderer and measurer disagree even slightly, output stops being deterministic.
 
+## A font is a file beside the document, and Core names it by its bytes
+
+An author's lettering face is declared as a path, read relative to the folder the document is in,
+and an absolute path is refused. Three things follow from that one rule. A document and its fonts
+move together and compile the same anywhere. A server that compiles documents it is sent cannot be
+pointed at files of its own. And no path reaches any output: Panel Core records a face by its
+family, style and the SHA-256 of its bytes, which is the same on every machine — `tests/test_golden.py`
+already holds the output to not depending on where a document is.
+
+The digest is also what keeps measurement and drawing together once they are separate steps. A
+renderer is handed fonts by digest and refuses a Core that names one it was not given, rather than
+drawing lettering in a face it was not measured in. Fonts are cached by digest too, so a file
+replaced in place is read again.
+
+The path rule lives in `scenet/paths.py`, written to be shared: an image to letter over (#70) is the
+next file a document will name.
+
+## The default face stays Source Sans Pro
+
+Comic Neue (Craig Rozynski, SIL OFL 1.1) was the candidate to replace it, as a face with a lettering
+feel that can be shipped. It was not adopted here. The choice is to be made on legibility at balloon
+sizes rather than taste, which is a comparison of pictures, and the change that makes it cheap to
+run is this one: declare the face beside a document and compile the gallery in both. Switching the
+default would also move every example's output a second time and needs the face packaged, since no
+PyPI package carries it. Until a comparison says otherwise, an author who wants it names it.
+
 ## Kerning is applied, because the outlines are positioned here
 
 Pair kerning was ignored at first, on a sound argument: SVG renderers do not agree on whether to

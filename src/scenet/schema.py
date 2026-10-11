@@ -46,6 +46,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_staging_sentences(definitions)
     _accept_verb_tagged_script(schema, definitions)
     _accept_named_places(definitions)
+    _accept_one_font_file(definitions)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
     return schema
@@ -104,6 +105,26 @@ def scene_schema() -> dict[str, Any]:
             },
         },
         "additionalProperties": False,
+    }
+
+
+def _accept_one_font_file(definitions: dict[str, Any]) -> None:
+    """Mirror `normalise`: `font: path` stands for `font: {regular: path}`."""
+    spec: dict[str, Any] = definitions["FontSpec"]
+    mapping = {key: value for key, value in spec.items() if key not in ("title", "description")}
+    definitions["FontSpec"] = {
+        "title": spec["title"],
+        "description": spec.get("description", ""),
+        "anyOf": [
+            {
+                "type": "string",
+                "description": (
+                    "One font file, relative to the document, lettering every face: "
+                    "`fonts/Comic.ttf` stands for `{regular: fonts/Comic.ttf}`."
+                ),
+            },
+            mapping,
+        ],
     }
 
 

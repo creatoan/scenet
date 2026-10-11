@@ -182,8 +182,7 @@ def normalise(data: dict[str, Any]) -> dict[str, Any]:
     """
     result = dict(data)
 
-    if "setting" in result:
-        result["setting"] = expand_place(result["setting"])
+    _rewrite_blocks(result)
 
     # Every fault below carries `loc`, the entry it is about. Pydantic has not seen the
     # document yet, so there is no other path to report -- and without one an editor
@@ -236,6 +235,26 @@ def normalise(data: dict[str, Any]) -> dict[str, Any]:
         result["script"] = events
 
     return result
+
+
+def _rewrite_blocks(document: dict[str, Any]) -> None:
+    """Expand the conveniences inside whole blocks, in place on a copy of the document.
+
+    A place stands for its masses, and one font file for a whole family.
+    """
+    for key, rewrite in (("setting", expand_place), ("lettering", _one_font_file)):
+        if key in document:
+            document[key] = rewrite(document[key])
+
+
+def _one_font_file(lettering: object) -> object:
+    """Rewrite `font: path` as `font: {regular: path}`, the whole family from one face.
+
+    Anything not shaped as expected is passed through, for validation to judge.
+    """
+    if isinstance(lettering, dict) and isinstance(lettering.get("font"), str):
+        return {**lettering, "font": {"regular": lettering["font"]}}
+    return lettering
 
 
 def errors_of(exc: ValidationError) -> list[ErrorDetails]:

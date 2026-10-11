@@ -9,7 +9,8 @@ byte-identical across platforms, whose float repr differs in the last digit.
 """
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from xml.sax.saxutils import escape, quoteattr
 
 from scenet.core import (
@@ -86,6 +87,7 @@ def render(
     core: PanelCore,
     *,
     metrics: FontMetrics | None = None,
+    fonts: Mapping[str, FontMetrics] | None = None,
     live_text: bool = False,
     id_prefix: str = "",
 ) -> str:
@@ -94,14 +96,21 @@ def render(
     Args:
         core: The compiled panel.
         metrics: The regular face the lettering was measured in, in place of the
-            shipped one. The italic and bold italic faces are the shipped family's.
+            shipped one, for a Core compiled with the same `metrics`.
+        fonts: The declared fonts the lettering was measured in, by digest -- what
+            :attr:`CompileResult.fonts <scenet.pipeline.CompileResult.fonts>` holds. Each
+            face :attr:`PanelCore.fonts <scenet.core.PanelCore.fonts>` names must be here.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         id_prefix: Put in front of every `id` the panel writes, and every reference to
             one. Nothing a single panel needs; it is what lets a strip hold several
             panels in one document, where ids must be unique. Empty by default, so a
             panel on its own is byte-identical to what it always was.
+
+    Raises:
+        ValueError: The Core names a font that was not handed over. Drawing its lettering
+            in another face would draw text that does not fit the balloons around it.
     """
-    family = Typeface(regular=metrics)
+    family = typeface_of(core, metrics=metrics, fonts=fonts)
     backdrop = core.backdrop
     air = backdrop.atmosphere if backdrop is not None else None
 
@@ -369,6 +378,41 @@ def _render_mark(prefix: str, mark: FaceMark) -> str:
     )
 
 
+def typeface_of(
+    core: PanelCore,
+    *,
+    metrics: FontMetrics | None = None,
+    fonts: Mapping[str, FontMetrics] | None = None,
+) -> Typeface:
+    """The family a Core's lettering was measured in, from the fonts handed over.
+
+    Args:
+        core: The compiled panel.
+        metrics: A regular face given by hand, as it was given to the compile.
+        fonts: Declared fonts by digest.
+
+    Returns:
+        The shipped family, with each face the Core names in its declared font.
+
+    Raises:
+        ValueError: A face the Core names is in none of the fonts given.
+    """
+    family = Typeface(regular=metrics)
+    available = dict(fonts or {})
+    if metrics is not None:
+        available.setdefault(metrics.sha256, metrics)
+    for face, font in core.fonts.items():
+        found = available.get(font.sha256)
+        if found is None:
+            raise ValueError(
+                f"this panel was lettered in {font.family} {font.style} (sha256 "
+                f"{font.sha256[:12]}), and that font was not given to the renderer; pass "
+                "the fonts its compile returned as `fonts=`"
+            )
+        family = replace(family, **{face.value: found})
+    return family
+
+
 def _runs_of(
     lines: tuple[str, ...], runs: tuple[tuple[CoreRun, ...], ...], index: int, base: Face
 ) -> tuple[CoreRun, ...]:
@@ -403,7 +447,7 @@ def _render_balloon(
         width = _width(runs, balloon.font_size, family)
         start_x = box.x + (box.width - width) / 2
         lines.append(
-            _live_text(runs, start_x, baseline, balloon.font_size, base=Face.REGULAR)
+            _live_text(runs, start_x, baseline, balloon.font_size, family, base=Face.REGULAR)
             if live_text
             else _outlined_text(runs, start_x, baseline, balloon.font_size, family)
         )
@@ -444,7 +488,13 @@ def _render_caption(
         baseline = box.y + padding + index * caption.line_height + ascent
         lines.append(
             _live_text(
-                runs, box.x + padding, baseline, caption.font_size, base=base, ink=caption.ink
+                runs,
+                box.x + padding,
+                baseline,
+                caption.font_size,
+                family,
+                base=base,
+                ink=caption.ink,
             )
             if live_text
             else _outlined_text(
@@ -585,6 +635,7 @@ def _live_text(
     x: float,
     baseline: float,
     font_size: float,
+    family: Typeface,
     *,
     base: Face,
     ink: str = STROKE,
@@ -594,16 +645,30 @@ def _live_text(
     Selectable and editable, at the cost of depending on the reader having a
     metrically compatible font. Offered as an option, never the default. A run in
     another face than the line's -- emphasis -- is a `<tspan>` saying which.
+
+    The family named is the one measured, from the font's own `name` table: the shipped
+    Source Sans Pro, or the author's. Quoted as any attribute is, since a font is as
+    untrusted as the document that named it.
     """
     style = ' font-style="italic"' if base is Face.ITALIC else ""
+    named = family.face(base).family
     content = "".join(
         escape(run.text)
         if run.face is base
-        else f"<tspan{FACE_ATTRIBUTES[run.face]}>{escape(run.text)}</tspan>"
+        else f"<tspan{_run_attributes(run.face, named, family)}>{escape(run.text)}</tspan>"
         for run in runs
     )
     return (
         f'      <text x="{fmt(x)}" y="{fmt(baseline)}" font-size="{fmt(font_size)}" '
-        f'font-family="Source Sans Pro, sans-serif"{style} fill="{ink}" '
+        f'font-family={attr(named + ", sans-serif")}{style} fill="{ink}" '
         f'stroke="none">{content}</text>'
     )
+
+
+def _run_attributes(face: Face, named: str, family: Typeface) -> str:
+    """What a `<tspan>` says about its face: style and weight, and a family when it differs."""
+    attributes = FACE_ATTRIBUTES[face]
+    own = family.face(face).family
+    if own != named:
+        attributes += f" font-family={attr(own + ', sans-serif')}"
+    return attributes

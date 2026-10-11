@@ -374,7 +374,7 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://panels/{name}.svg",
                 mime_type="image/svg+xml",
-                text=render(result.core, live_text=live_text),
+                text=render(result.core, fonts=result.fonts, live_text=live_text),
             ),
         )
         for name, result in results.items()
@@ -386,7 +386,7 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://pages/{number}.svg",
                 mime_type="image/svg+xml",
-                text=render_page(page, cores, live_text=live_text),
+                text=render_page(page, cores, live_text=live_text, fonts=book.fonts),
             ),
         )
         for number, page in enumerate(book.pages, start=1)
