@@ -44,7 +44,8 @@ below 1.0 means.
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
   or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
   what is measured is still exactly what is drawn. Every example's output changes once:
-  balloons and captions come out up to about 1.5% narrower, and where two positions had
+  most balloons and captions come out slightly narrower, by up to about 1.5% (a kern pair
+  can loosen as well as tighten, so a few grow a little), and where two positions had
   scored nearly equal a balloon may sit somewhere else. `--live-text` relies on the
   renderer kerning as the compiler measured it, which browsers do by default. Checked pair
   by pair against HarfBuzz, which is a test dependency only. (Part of #74)

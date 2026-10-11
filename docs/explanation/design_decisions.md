@@ -80,7 +80,8 @@ Only pair adjustments are applied: no ligatures, no contextual alternates, no ma
 is all a Latin line of lettering needs, and all that measurement can promise to reproduce. Two faces
 are two fonts, so a stressed word in bold italic is not kerned against its roman neighbours.
 
-Adopting it moved every example once: boxes came out up to about 1.5% narrower, one two-line balloon
+Adopting it moved every example once: box widths changed by between −1.4% and +0.4%, since a pair can
+loosen as well as tighten, one two-line balloon
 fit on one line, and a few balloons whose candidate positions had scored nearly equal chose
 differently.
 
