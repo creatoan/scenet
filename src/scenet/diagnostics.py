@@ -223,6 +223,16 @@ RULES: dict[str, Rule] = {
         ),
         help="Name a different actor as the object of the relation.",
     ),
+    "caption-speaker": Rule(
+        summary="A caption that is not `spoken` names a speaker",
+        description=(
+            "`by` names who says an off-panel line, so only a `spoken` caption has one. A "
+            "`locale` box states a place and a time, a `monologue` is a voice nobody hears "
+            "and an `editorial` one is the writer's: none of them is said by anybody, so a "
+            "speaker named on one is a mistake rather than a field to ignore."
+        ),
+        help="Remove `by`, or make the caption `kind: spoken` if somebody off panel says it.",
+    ),
     "ordering-cycle": Rule(
         summary="Horizontal ordering contains a cycle",
         description=(
@@ -436,10 +446,15 @@ def _rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]
     A `RuleViolationError` raised inside a validator survives in `ctx["error"]`, carrying the
     rule it broke and the path it knew about -- which is the only way a model-level
     validator can report anything more precise than "the document".
+
+    A rule the catalogue does not have is reported as `internal`, as
+    `_rule_for_scenet_error` reports one: passed through, it ended `to_sarif` in a
+    `KeyError` when it looked the rule up.
     """
     original = (error.get("ctx") or {}).get("error")
     if isinstance(original, RuleViolationError):
-        return original.rule, original.loc or tuple(error["loc"])
+        rule = original.rule if original.rule in RULES else "internal"
+        return rule, original.loc or tuple(error["loc"])
 
     kind = str(error["type"])
     return _PYDANTIC_RULES.get(kind, "invalid-field"), tuple(error["loc"])

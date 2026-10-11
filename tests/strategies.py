@@ -568,6 +568,12 @@ def _reflexive_relation(document: dict[str, Any], actor: str, _: st.DrawFn) -> M
     return Mistake("reflexive-relation", _dump(document), "reflexive-relation", path, "left_of")
 
 
+def _caption_speaker(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document["script"] = [{"caption": {"text": "Midnight.", "kind": "locale", "by": actor}}]
+    path = ("script", 0, "caption", "by")
+    return Mistake("caption-speaker", _dump(document), "caption-speaker", path, "by")
+
+
 def _ordering_cycle(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
     document, first, second = _with_two_actors(document)
     document["staging"] = [f"{first} left_of {second}", f"{second} left_of {first}"]
@@ -644,6 +650,7 @@ MISTAKES: dict[str, _Breaker] = {
     "unknown-actor-in-script": _unknown_actor_in_script,
     "unknown-actor-in-staging": _unknown_actor_in_staging,
     "reflexive-relation": _reflexive_relation,
+    "caption-speaker": _caption_speaker,
     "ordering-cycle": _ordering_cycle,
     "unknown-puppet": _unknown_puppet,
     "unknown-pose": _unknown_pose,
