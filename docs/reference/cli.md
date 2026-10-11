@@ -197,6 +197,7 @@ nothing stops compiling.
 | `scenet/panel-geometry` | Non-positive size, or margins leaving no usable area |
 | `scenet/unknown-actor` | An id in `staging` or `script` that is not in `cast` |
 | `scenet/reflexive-relation` | A relation relating an actor to itself |
+| `scenet/caption-speaker` | `by` on a caption whose `kind` is not `spoken` |
 | `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | An `over:` chain that is missing or cyclic |
 | `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
