@@ -61,6 +61,18 @@ jobs:
           key: mutants-${{ hashFiles('uv.lock') }}-${{ github.sha }}
           restore-keys: mutants-${{ hashFiles('uv.lock') }}-
 
+      # mutmut copies a file into `mutants/` only when it is not already there, and checks
+      # `.py` files by modification time. So a restored cache keeps the first copy of
+      # every other file under `src/`, however much the source has moved on. One of them
+      # is `scenet-spec.md`, which is generated from the rules and the language reference:
+      # `tests/test_spec_pack.py` compares it with a fresh build, and a copy from before
+      # the last change fails that test in mutmut's clean run, so no mutant is tried at
+      # all. Copy them again; there are four.
+      - name: Refresh the files mutmut keeps from the cache
+        run: |
+          mkdir -p mutants
+          git ls-files -z src | grep -zv '\.py$' | xargs -0 -I{} cp --parents -f {} mutants/
+
       - name: Narrow to one path
         if: inputs.path != ''
         env:
@@ -131,7 +143,7 @@ jobs:
 
       - name: Upload the results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: mutmut-results
           path: |

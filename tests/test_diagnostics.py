@@ -5,20 +5,26 @@ agent repairing its own output. The two must never disagree, because they are th
 finding rendered twice -- so several of these tests assert exactly that.
 """
 
+import ast
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
+from pydantic import BaseModel, ValidationError, model_validator
 
 from scenet.assets.contract import PuppetLibrary, PuppetSpec
 from scenet.diagnostics import (
+    _PYDANTIC_RULES,
+    _RULE_FOR_ERROR_TYPE,
     RULES,
     Diagnostic,
     Position,
     Region,
+    _from_validation_error,
     _message_of,
     _region_json,
     _rule_for_scenet_error,
@@ -34,6 +40,7 @@ from scenet.errors import (
     CompositionError,
     LayoutError,
     PanelSyntaxError,
+    RuleViolationError,
     ScenetError,
     UnknownExpressionError,
     UnknownPoseError,
@@ -405,6 +412,46 @@ class TestAReflexiveRelationKeepsItsRule:
         with pytest.raises(PanelSyntaxError) as caught:
             parse_panel("cast: {a: {reference: alice}}\nstaging: [a behind a]\n")
         assert caught.value.rule == "reflexive-relation"
+
+
+class TestACaptionSpeakerHasItsOwnRule:
+    """`by:` on a caption that is not `spoken` was found under `caption-speaker`, a rule the
+    catalogue did not have -- so `to_sarif`, and `scenet check --format sarif` with it,
+    ended in a `KeyError` instead of reporting it. It also pointed at the whole caption
+    rather than at the `by:` to delete."""
+
+    FLOW = (
+        "cast: {alice: {reference: alice}}\n"
+        "script:\n"
+        "  - caption: {text: hi, kind: locale, by: doc}\n"
+    )
+    BLOCK = (
+        "cast: {alice: {reference: alice}}\n"
+        "script:\n"
+        "  - caption:\n"
+        "      text: hi\n"
+        "      kind: locale\n"
+        "      by: doc\n"
+    )
+
+    def test_it_is_a_sarif_result_at_the_speaker(self):
+        found = diagnose_source(self.FLOW, source=Path("x.panel.yaml"))
+        run = to_sarif(found, root=Path.cwd())["runs"][0]
+        (result,) = run["results"]
+        assert result["ruleId"] == "scenet/caption-speaker"
+        assert run["tool"]["driver"]["rules"][result["ruleIndex"]]["id"] == result["ruleId"]
+        line = self.FLOW.splitlines()[2]
+        region = result["locations"][0]["physicalLocation"]["region"]
+        assert (region["startLine"], region["endLine"]) == (3, 3)
+        assert region["startColumn"] == line.index("doc") + 1
+        assert region["endColumn"] == line.index("doc") + len("doc") + 1
+
+    def test_in_a_block_it_is_on_the_by_line(self):
+        (found,) = diagnose_source(self.BLOCK, source=Path("x.panel.yaml"))
+        assert found.rule == "caption-speaker"
+        assert found.path == ("script", 0, "caption", "by")
+        assert found.region is not None
+        assert found.region.start.line == 6
 
 
 class TestAFindingPointsAtALineThatNamesIt:
@@ -1064,3 +1111,54 @@ class TestTheReferenceListsEveryRule:
         )
         listed = set(re.findall(r"^\| `scenet/([a-z-]+)` \|", doc, re.MULTILINE))
         assert listed == set(RULES)
+
+
+def _rules_named_in_the_source() -> set[str]:
+    """Every `rule="..."` written in the package, wherever it is raised or built."""
+    package = Path(__file__).parent.parent / "src" / "scenet"
+    return {
+        node.value.value
+        for path in sorted(package.rglob("*.py"))
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.keyword)
+        and node.arg == "rule"
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, str)
+    }
+
+
+class TestEveryRaisedRuleIsCatalogued:
+    """`caption-speaker` was raised by a validator and never added to `RULES`, so the
+    finding reached `to_sarif` and ended in a `KeyError`. A rule cannot be named in the
+    source now without being described in the catalogue."""
+
+    @pytest.mark.skipif(
+        "MUTANT_UNDER_TEST" in os.environ,
+        reason="mutmut rewrites the literals in solve/ and emit/ on purpose, so what is "
+        "scanned is no longer the source",
+    )
+    def test_every_rule_named_in_the_source_is_in_the_catalogue(self):
+        named = _rules_named_in_the_source()
+        # The scan reaches validators in `ir.py`, not just this package's own findings.
+        assert "caption-speaker" in named
+        assert named - set(RULES) == set()
+
+    def test_every_rule_the_checker_maps_to_is_in_the_catalogue(self):
+        mapped = {*_PYDANTIC_RULES.values(), *(rule for _, rule in _RULE_FOR_ERROR_TYPE)}
+        assert mapped - set(RULES) == set()
+
+    def test_an_uncatalogued_rule_is_internal_rather_than_a_crash(self):
+        """If one slips through anyway, it is reported, under the rule that says a rule
+        is missing from the catalogue, rather than ending SARIF output in a traceback."""
+
+        class Broken(BaseModel):
+            @model_validator(mode="after")
+            def refuse(self) -> "Broken":
+                raise RuleViolationError("refused", rule="not-in-the-catalogue")
+
+        with pytest.raises(ValidationError) as caught:
+            Broken.model_validate({})
+        (found,) = _from_validation_error(caught.value, "{}\n", None)
+        assert found.rule == "internal"
+        (result,) = to_sarif([found])["runs"][0]["results"]
+        assert result["ruleId"] == "scenet/internal"
