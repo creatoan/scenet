@@ -17,6 +17,7 @@ import io
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
+from importlib.resources import files
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -71,11 +72,19 @@ ITALIC_FONT_PATH = Path(SourceSansProIt)
 #: on a word." A real file for the same reason the italic is one.
 BOLD_ITALIC_FONT_PATH = Path(SourceSansProBoldIt)
 
+#: The display face sound effects are lettered in: Bangers, by Vernon Adams, drawn in the
+#: manner of mid-century comic cover lettering. Not of the same family, and not meant to
+#: be -- a sound effect is letters treated as picture, not as text. No package carries it,
+#: so it is vendored under `scenet/fonts/` with its licence, the SIL OFL 1.1, beside it.
+#: A file of the package rather than a system font, for the same reason as every face.
+DISPLAY_FONT_PATH = Path(str(files("scenet").joinpath("fonts", "Bangers-Regular.ttf")))
+
 #: The shipped family, face by face.
 SHIPPED_FACES: dict[Face, Path] = {
     Face.REGULAR: DEFAULT_FONT_PATH,
     Face.ITALIC: ITALIC_FONT_PATH,
     Face.BOLD_ITALIC: BOLD_ITALIC_FONT_PATH,
+    Face.DISPLAY: DISPLAY_FONT_PATH,
 }
 
 #: A run of text in one face: what a line of lettering is made of.
@@ -583,6 +592,7 @@ class Typeface:
         regular: Dialogue, and `spoken` captions.
         italic: Every other caption kind.
         bold_italic: Emphasis, in either.
+        display: Sound effects. Bangers when not given, whatever the other faces are.
 
     Example:
         >>> from scenet.ir import Face
@@ -594,6 +604,7 @@ class Typeface:
     regular: FontMetrics | None = None
     italic: FontMetrics | None = None
     bold_italic: FontMetrics | None = None
+    display: FontMetrics | None = None
 
     def face(self, face: Face) -> FontMetrics:
         """The metrics for one face of the family."""
@@ -601,6 +612,7 @@ class Typeface:
             Face.REGULAR: self.regular,
             Face.ITALIC: self.italic,
             Face.BOLD_ITALIC: self.bold_italic,
+            Face.DISPLAY: self.display,
         }[face]
         if chosen is not None:
             return chosen

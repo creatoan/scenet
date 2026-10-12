@@ -22,6 +22,19 @@ what a reproducible compiler cannot allow.
 Source Sans Pro is a legible humanist sans rather than a comic lettering face. That is a placeholder
 choice: style belongs to the deferred interpretation layer, and the font is configurable.
 
+### Bangers
+
+Licensed under the [SIL Open Font License 1.1][ofl]. Copyright 2010 The Bangers Project Authors
+(<https://github.com/googlefonts/bangers>). Drawn by Vernon Adams.
+
+The display face sound effects are lettered in. Unlike Source Sans Pro it **is** vendored: no Python
+package carries it, so `src/scenet/fonts/Bangers-Regular.ttf` ships inside the `scenet` wheel, with
+the licence beside it as `src/scenet/fonts/OFL.txt`, as the OFL requires. It is the file from
+[google/fonts](https://github.com/google/fonts/tree/cf67eacb4b4c70430d1c02e55ba0d02232e85fa1/ofl/bangers)
+at commit `cf67eac` (version 2.100); `tests/test_display_face.py` pins its SHA-256 and checks the
+licence, in the font's own `name` table and beside it. The dependency licence gate checks installed
+distributions and cannot see a file inside one, which is why that test exists.
+
 [ofl]: https://openfontlicense.org/
 
 ## Runtime dependencies

@@ -54,6 +54,10 @@ below 1.0 means.
   a font is the new rule `font-file`, located at the face. The playground gains **Font…**
   to add a file for the session. Capitals stay as you type them, and Source Sans Pro stays
   the default; both are recorded. (Part of #74)
+- **Scenet ships a display face for sound effects**: Bangers, by Vernon Adams, under the
+  SIL Open Font License 1.1. No package carries it, so it is vendored inside the wheel with
+  its licence beside it, recorded in `THIRD_PARTY_NOTICES.md`, and pinned by a test to the
+  file in google/fonts. Nothing letters in it yet; sound effects will. (Part of #73)
 
 ### Changed
 

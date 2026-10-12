@@ -369,6 +369,7 @@ class Face(StrEnum):
     | `regular` | Dialogue, and `spoken` captions |
     | `italic` | Every other caption kind |
     | `bold_italic` | Emphasis, in either -- Blambot's rule for a stressed word |
+    | `display` | Sound effects: letters that are part of the picture |
 
     Each is a real font file of the same family. A synthetic slant or a stroked-out bold
     would measure as the roman face and draw as neither, which is the disagreement between
@@ -378,6 +379,7 @@ class Face(StrEnum):
     REGULAR = "regular"
     ITALIC = "italic"
     BOLD_ITALIC = "bold_italic"
+    DISPLAY = "display"
 
 
 class CaptionTone(StrEnum):
