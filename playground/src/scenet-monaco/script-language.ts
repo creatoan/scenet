@@ -54,6 +54,12 @@ const PANEL = /^(\s*)([Pp][Aa][Nn][Ee][Ll])(\s+)([^\s:]+?)(\s*[.:]?\s*)$/;
 const DIRECTIVE = /^(\s*)(@)(\w+)(\s*:\s*)(.+)$/;
 const CAPTION_WITH_KIND = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*\()([^)]*)(\)\s*:\s*)(.+)$/;
 const CAPTION = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*:\s*)(.+)$/;
+// A sound effect, with its sound on the line -- `SFX: BLAM`, `SFX (BOB, large): KRAK` --
+// or Dark Horse's bare `SFX:` cue, the sound on the next line.
+const SFX_WITH_PARENTHETICAL = /^(\s*)([Ss][Ff][Xx])(\s*\()([^)]*)(\)\s*:\s*)(.+)$/;
+const SFX = /^(\s*)([Ss][Ff][Xx])(\s*:\s*)(.+)$/;
+const SFX_CUE_WITH_PARENTHETICAL = /^(\s*)([Ss][Ff][Xx])(\s*\()([^)]*)(\)\s*:?\s*)$/;
+const SFX_CUE = /^(\s*)([Ss][Ff][Xx])(\s*:?\s*)$/;
 // A cue is a name in capitals, then an optional parenthetical and colon, on a line of at
 // most forty characters once trimmed -- longer, and it is a shouted description.
 const CUE_WITH_PARENTHETICAL =
@@ -66,7 +72,7 @@ type Rule = Monaco.languages.IMonarchLanguageRule;
 // action of a group that matched nothing, state change and all, so `ALICE` with no
 // colon would never start a speech if the change were on the colon's group.
 
-/** Headings and captions, which end whatever came before them. */
+/** Headings, captions and sound effects, which end whatever came before them. */
 const STRUCTURE: Rule[] = [
   [PAGE, ["", { token: "keyword.page", switchTo: "@root" }, "", "string.page", "delimiter"]],
   [PANEL, ["", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter"]],
@@ -75,6 +81,16 @@ const STRUCTURE: Rule[] = [
     ["", { token: "keyword.caption", switchTo: "@root" }, "delimiter", "annotation.caption", "delimiter", "string.caption"],
   ],
   [CAPTION, ["", { token: "keyword.caption", switchTo: "@root" }, "delimiter", "string.caption"]],
+  [
+    SFX_WITH_PARENTHETICAL,
+    ["", { token: "keyword.sfx", switchTo: "@root" }, "delimiter", "annotation.sfx", "delimiter", "string.sfx"],
+  ],
+  [SFX, ["", { token: "keyword.sfx", switchTo: "@root" }, "delimiter", "string.sfx"]],
+  [
+    SFX_CUE_WITH_PARENTHETICAL,
+    ["", { token: "keyword.sfx", switchTo: "@sound" }, "delimiter", "annotation.sfx", "delimiter"],
+  ],
+  [SFX_CUE, ["", { token: "keyword.sfx", switchTo: "@sound" }, "delimiter"]],
 ];
 
 /** A directive, and the state it leaves the tokenizer in. */
@@ -102,7 +118,9 @@ const CUES: Rule[] = [
  * - `speech` — the line after a cue, which is speech whatever it looks like, so `OK.`
  *   is spoken, not a character called OK. A directive leaves the cue waiting.
  * - `dialogue` — the lines of a speech after its first, until a blank line, a heading, a
- *   caption, a directive or the next cue.
+ *   caption, a sound effect, a directive or the next cue.
+ * - `sound` — the line after a bare `SFX:` cue, which is the sound whatever it looks like:
+ *   `BLAM` is in capitals too.
  *
  * Every transition is a `switchTo`, never a push, so the stack does not grow with the
  * length of the script.
@@ -137,6 +155,11 @@ export const scriptMonarchTokens: Monaco.languages.IMonarchLanguage = {
       [/.+$/, { token: "string.dialogue", switchTo: "@dialogue" }],
     ],
 
+    sound: [
+      [/^\s*$/, { token: "", switchTo: "@root" }],
+      [/^(\s*)(.+)$/, ["", { token: "string.sfx", switchTo: "@root" }]],
+    ],
+
     dialogue: [
       [/^\s*$/, { token: "", switchTo: "@root" }],
       ...STRUCTURE,
@@ -162,5 +185,7 @@ export const scriptThemeRules: Monaco.editor.ITokenThemeRule[] = [
   { token: "annotation.scenet", fontStyle: "italic" },
   { token: "keyword.caption", fontStyle: "bold" },
   { token: "annotation.caption.scenet", fontStyle: "italic" },
+  { token: "keyword.sfx", fontStyle: "bold" },
+  { token: "annotation.sfx.scenet", fontStyle: "italic" },
   { token: "comment.prose.scenet", fontStyle: "italic" },
 ];

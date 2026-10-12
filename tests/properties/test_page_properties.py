@@ -11,7 +11,7 @@ from hypothesis import event, given
 from scenet.core import PageCore, PanelCore
 from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
-from scenet.errors import BalloonPlacementError
+from scenet.errors import BalloonPlacementError, SfxPlacementError
 from scenet.frontends.script_front import parse_script
 from scenet.pipeline import Book, compile_book
 from tests.invariants import assert_frames_are_placed, assert_svg_is_sound
@@ -22,8 +22,8 @@ def _compile(drawn: DrawnScene) -> Book | None:
     """The compiled book, or `None` when a panel has no room for its lettering."""
     try:
         book = compile_book(drawn.text, library=LIBRARY)
-    except BalloonPlacementError:
-        event("failed: BalloonPlacementError")
+    except (BalloonPlacementError, SfxPlacementError) as exc:
+        event(f"failed: {type(exc).__name__}")
         return None
     event(f"pages: {len(book.pages)}, panels: {len(book.panels)}")
     return book
@@ -34,7 +34,11 @@ def _cores(book: Book) -> dict[str, PanelCore]:
 
 
 def _font_sizes(cores: dict[str, PanelCore]) -> list[float]:
-    return [box.font_size for core in cores.values() for box in (*core.balloons, *core.captions)]
+    return [
+        box.font_size
+        for core in cores.values()
+        for box in (*core.balloons, *core.captions, *core.sfx)
+    ]
 
 
 @given(scenes())

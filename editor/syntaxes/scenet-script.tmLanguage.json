@@ -29,6 +29,7 @@
         { "include": "#panel" },
         { "include": "#directive" },
         { "include": "#caption" },
+        { "include": "#sfx" },
         { "include": "#speech" },
         { "include": "#prose" }
       ]
@@ -69,6 +70,37 @@
         "6": { "name": "string.unquoted.caption.scenet-script" }
       }
     },
+    "sfx": {
+      "comment": "A sound effect: `SFX: BLAM`, `SFX (BOB, large): KRAK`, or Dark Horse's bare `SFX:` cue with the sound on the next line. Checked before cues, as the compiler checks it: `SFX` is a perfectly good name in capitals.",
+      "patterns": [{ "include": "#sfx-line" }, { "include": "#sfx-cue" }]
+    },
+    "sfx-line": {
+      "match": "^[ \\t]*((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
+      "captures": {
+        "1": { "name": "keyword.other.sfx.scenet-script" },
+        "2": { "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script" },
+        "3": { "name": "markup.italic.sfx-parenthetical.scenet-script" },
+        "4": { "name": "punctuation.definition.sfx-parenthetical.end.scenet-script" },
+        "5": { "name": "punctuation.separator.scenet-script" },
+        "6": { "name": "string.unquoted.sfx.scenet-script" }
+      }
+    },
+    "sfx-cue": {
+      "comment": "The next line is the sound, whatever it looks like: `BLAM` is in capitals too.",
+      "name": "meta.sfx.scenet-script",
+      "begin": "^[ \\t]*((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.sfx.scenet-script" },
+        "2": { "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script" },
+        "3": { "name": "markup.italic.sfx-parenthetical.scenet-script" },
+        "4": { "name": "punctuation.definition.sfx-parenthetical.end.scenet-script" },
+        "5": { "name": "punctuation.separator.scenet-script" }
+      },
+      "end": "^(?=[ \\t]*$)|^[ \\t]*(\\S.*)$",
+      "endCaptures": {
+        "1": { "name": "string.unquoted.sfx.scenet-script" }
+      }
+    },
     "speech": {
       "comment": "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
       "name": "meta.speech.scenet-script",
@@ -80,7 +112,7 @@
         "4": { "name": "punctuation.definition.parenthetical.end.scenet-script" },
         "5": { "name": "punctuation.separator.scenet-script" }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)[A-Z][A-Z0-9 _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)[A-Z][A-Z0-9 _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
       "patterns": [
         { "include": "#pending" },
         {
@@ -92,7 +124,7 @@
     "pending": {
       "comment": "From the end of the cue line to the end of the first line of speech. While it is open, the speech's end is not tested, so the first line is speech whatever it looks like: `OK.` is spoken, not a cue. A directive leaves the cue waiting.",
       "begin": "\\G",
-      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
       "endCaptures": { "1": { "name": "string.unquoted.dialogue.scenet-script" } },
       "patterns": [{ "include": "#directive" }]
     },

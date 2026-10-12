@@ -28,6 +28,7 @@ attribution. A notation is only worth having if it is not owned.
 | 9 | Emanata — plewds, squeans, grawlixes, briffits — as a soft placement cost | **Done** |
 | 10 | The agent-facing surface: spec pack and `llms.txt`, Agent Skill, MCP server | **Done** |
 | 11 | Pages: tiers of panels at varying sizes, columns, insets, slanted tiers, one type size per page, Page Core | **Done** |
+| 12 | Lettering: emphasis, kerning, type size, an author's own face; sound effects in the display face | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
@@ -42,8 +43,6 @@ dependency between them is stated in the tickets rather than implied by this tab
 | Right-to-left reading, for manga | [#68](https://github.com/creatoan/scenet/issues/68) |
 | Supplied artwork: lettering over an image, in two parts | [#69](https://github.com/creatoan/scenet/issues/69) |
 | Export a panel's staging for image models: pose, boxes, depth, masks | [#72](https://github.com/creatoan/scenet/issues/72) |
-| Sound effects | [#73](https://github.com/creatoan/scenet/issues/73) |
-| Lettering: emphasis, an author's lettering face, kerning, type size | [#74](https://github.com/creatoan/scenet/issues/74) |
 | Comic scripts in publishers' formats, and in French | [#75](https://github.com/creatoan/scenet/issues/75) |
 | Accessible output | [#76](https://github.com/creatoan/scenet/issues/76) |
 | VS Code: `scenet check` findings, and highlighting for comic scripts | [#77](https://github.com/creatoan/scenet/issues/77) |

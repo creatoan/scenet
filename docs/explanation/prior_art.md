@@ -276,6 +276,30 @@ preserve the space the art establishes, keep the reading order flowing. All thre
 implemented for balloons, which is the argument for captions going through the same solver rather
 than a parallel one.
 
+### Sound effects — Comicraft, Blambot, COO and AccessComics2
+
+[The Comicraft Glossary of Lettering Terms](https://balloontales.com/?p=418) ·
+[COO: Comic Onomatopoeia Dataset](https://arxiv.org/abs/2207.04675) ·
+[AccessComics2](https://doi.org/10.1145/3555720)
+
+Four sources shaped `sfx`, and none of them supplied a vocabulary of styles, so none was invented:
+the language takes typographic parameters — size, rotation, arc, hollow — rather than named presets.
+
+- **Comicraft's glossary** gave two rules: sound effects are not exclamations, so the compiler never
+  adds an exclamation mark; and an *open* or *hollow* effect is all outline, which lets the art show
+  through — the `hollow` option.
+- **Blambot's *Comic Book Grammar & Tradition*** says sound is set in a type style that conveys the
+  sound, which is the case for a display face rather than the balloon face.
+- **COO** (Baek, Matsui & Aizawa, ECCV 2022), annotated on Manga109, shows the range real effects
+  take: curved, partly shrunk, freely placed. The arc and the rotation are the first two steps
+  into that range; split and per-letter effects are left until something needs them.
+- **AccessComics2** (Lee, Joh, Yoo & Oh, ACM TACCESS 2022) found blind readers wanted textual sound
+  effects, which is why an effect keeps its text and its place in the reading order in Panel Core,
+  ready for accessible output (#76), though it is drawn as outlines.
+
+The display face is Bangers, by Vernon Adams, under the SIL Open Font License, chosen because it is
+drawn in the manner of comic cover lettering and can be shipped.
+
 ### Mort Walker, *The Lexicon of Comicana* (1980)
 
 [Wikipedia](https://en.wikipedia.org/wiki/The_Lexicon_of_Comicana) ·

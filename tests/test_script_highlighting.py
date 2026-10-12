@@ -37,6 +37,9 @@ CLASSES = {
     "caption-keyword",
     "caption-kind",
     "caption-text",
+    "sfx-keyword",
+    "sfx-parenthetical",
+    "sfx-text",
     "dialogue",
     "prose",
 }
@@ -63,8 +66,7 @@ def _as_fixture_says(lines: list[Line]) -> list[dict[str, Any]]:
         if "page-keyword" in spans:
             page = _page_label(spans["page-label"])
             speaker = None
-            continue
-        if "panel-keyword" in spans:
+        elif "panel-keyword" in spans:
             panels.append(
                 {
                     "label": spans["panel-label"],
@@ -75,29 +77,38 @@ def _as_fixture_says(lines: list[Line]) -> list[dict[str, Any]]:
                 }
             )
             speaker = None
-            continue
-        if not panels:
-            continue
-        panel = panels[-1]
-        if "directive-name" in spans:
-            panel["directives"].append(spans["directive-name"])
-        elif "caption-keyword" in spans:
-            kind = spans.get("caption-kind", "locale")
-            panel["events"].append(("caption", spans["caption-text"], kind))
-            speaker = None
-        elif "cue-name" in spans:
-            speaker = spans["cue-name"]
-        elif "dialogue" in spans:
-            if speaker is not None:
-                panel["events"].append(("say", speaker, spans["dialogue"]))
-                speaker = None
-            else:
-                # A wrapped line of the same speech.
-                kind, by, text = panel["events"][-1]
-                panel["events"][-1] = (kind, by, f"{text} {spans['dialogue']}")
-        elif "prose" in spans:
-            panel["description"].append(spans["prose"])
+        elif panels:
+            speaker = _in_panel(panels[-1], spans, speaker)
     return panels
+
+
+def _in_panel(panel: dict[str, Any], spans: dict[str, str], speaker: str | None) -> str | None:
+    """Add one line of a panel's body to it, and say who is speaking after it."""
+    if "directive-name" in spans:
+        panel["directives"].append(spans["directive-name"])
+        return speaker
+    if "caption-keyword" in spans:
+        kind = spans.get("caption-kind", "locale")
+        panel["events"].append(("caption", spans["caption-text"], kind))
+        return None
+    if "sfx-text" in spans or "sfx-keyword" in spans:
+        # The sound is on the SFX line, or on the line after a bare `SFX:` cue.
+        if "sfx-text" in spans:
+            panel["events"].append(("sfx", spans["sfx-text"]))
+        return None
+    if "cue-name" in spans:
+        return spans["cue-name"]
+    if "dialogue" in spans:
+        if speaker is not None:
+            panel["events"].append(("say", speaker, spans["dialogue"]))
+        else:
+            # A wrapped line of the same speech.
+            kind, by, text = panel["events"][-1]
+            panel["events"][-1] = (kind, by, f"{text} {spans['dialogue']}")
+        return None
+    if "prose" in spans:
+        panel["description"].append(spans["prose"])
+    return speaker
 
 
 def _as_compiler_reads(text: str) -> list[dict[str, Any]]:
@@ -109,6 +120,8 @@ def _as_compiler_reads(text: str) -> list[dict[str, Any]]:
         for event in draft.events:
             if "say" in event:
                 events.append(("say", event["say"]["by"], event["say"]["text"]))
+            elif "sfx" in event:
+                events.append(("sfx", event["sfx"]["text"]))
             else:
                 events.append(("caption", event["caption"]["text"], event["caption"]["kind"]))
         panels.append(

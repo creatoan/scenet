@@ -165,6 +165,24 @@ nothing else changes — which is why they needed no `format_version` bump eithe
 "emanata_zones": [[[150.3, 61.0], [205.8, 70.4], "..."]]
 ```
 
+A panel with [sound effects](language.md#sfx) carries `sfx`, one entry per effect in script
+order: its `id` (`s0`, `s1`, ...), its `order` in the one sequence it shares with balloons and
+captions, its `text`, its `source`, its `font_size`, and every letter as a `glyph` — the character,
+the `origin` its baseline starts at, and the `angle` it is turned by. The arc and the rotation are
+already in those numbers, so the emitter draws each letter's outline where it is told. `zone` is the
+footprint balloons and captions paid to avoid and no face was allowed inside; `fill`, `stroke` and
+`stroke_width` are resolved, with `fill` `none` for a hollow effect.
+
+```json
+"sfx": [{
+  "id": "s0", "order": 0, "text": "KRAK", "source": "bob", "font_size": 106.4,
+  "glyphs": [{ "char": "K", "origin": [716.07, 486.47], "angle": -14.0 }, "..."],
+  "zone": [[688.18, 392.21], "..."], "fill": "#111111", "stroke": "#ffffff", "stroke_width": 8.51, "hollow": false
+}]
+```
+
+A panel with no effects has no `sfx` key, so no `format_version` bump.
+
 `seed` is kept so that a Core document explains itself: two panels with the same masses and
 different skylines differ here, and here is where to look.
 

@@ -33,6 +33,7 @@ describe("scenetTokens", () => {
       "script:",
       '  - say: {by: alice, text: "You forgot your umbrella!"}',
       "  - caption: {text: Later., kind: locale}",
+      "  - sfx: {text: BLAM, from: bob}",
     ].join("\n");
 
     assert.deepEqual(describeTokens(source), [
@@ -47,6 +48,8 @@ describe("scenetTokens", () => {
       "7:say:verb",
       "7:alice:actor",
       "8:caption:verb",
+      "9:sfx:verb",
+      "9:bob:actor",
     ]);
   });
 

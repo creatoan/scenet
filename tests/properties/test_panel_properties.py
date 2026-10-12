@@ -16,14 +16,18 @@ from scenet.core import PanelCore
 from scenet.diagnostics import diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.svg import render
-from scenet.errors import BalloonPlacementError, LayoutError
+from scenet.errors import BalloonPlacementError, LayoutError, SfxPlacementError
 from scenet.pipeline import compile_source
-from tests.invariants import assert_lettering_is_placed, assert_svg_is_sound
+from tests.invariants import (
+    assert_effects_are_placed,
+    assert_lettering_is_placed,
+    assert_svg_is_sound,
+)
 from tests.strategies import LIBRARY, Drawn, panels
 
 #: The only ways a valid panel may fail to compile: it has no layout, or no room for its
 #: lettering. Anything else escaping the compiler is a bug.
-EXPECTED_FAILURES = (BalloonPlacementError, LayoutError)
+EXPECTED_FAILURES = (BalloonPlacementError, LayoutError, SfxPlacementError)
 
 
 def _compile(drawn: Drawn) -> PanelCore | None:
@@ -39,7 +43,7 @@ def _compile(drawn: Drawn) -> PanelCore | None:
 
 
 def _font_sizes(core: PanelCore) -> list[float]:
-    return [box.font_size for box in (*core.balloons, *core.captions)]
+    return [box.font_size for box in (*core.balloons, *core.captions, *core.sfx)]
 
 
 @given(panels())
@@ -62,6 +66,7 @@ def test_a_compiled_panel_keeps_every_promise(drawn: Drawn):
     if core is None:
         return
     assert_lettering_is_placed(core, margin=drawn.margin)
+    assert_effects_are_placed(core, margin=drawn.margin)
     sizes = _font_sizes(core)
     assert_svg_is_sound(render(core), size=drawn.size, font_sizes=sizes)
     assert_svg_is_sound(render(core, live_text=True), size=drawn.size, font_sizes=sizes)

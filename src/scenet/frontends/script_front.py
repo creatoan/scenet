@@ -43,7 +43,7 @@ from pydantic import ValidationError
 from scenet.compose import merge
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import normalise, summarise
-from scenet.ir import BalloonKind, CaptionKind, PanelIR
+from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
@@ -65,6 +65,12 @@ CAPTION_LINE = re.compile(r"^CAPTION\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNOREC
 # this it would be read as a character called CAPTION and quietly swallow the next
 # line as their dialogue.
 BARE_CAPTION = re.compile(r"^CAPTION\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
+# `SFX: BLAM`, optionally `SFX (BOB, large): BLAM` -- who it comes from, how loud. The
+# sound on the same line.
+SFX_LINE = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
+# Dark Horse's form: `SFX:` as a cue, the sound on the next line. Without this it is a
+# character called SFX, and the sound would be lettered in a balloon.
+BARE_SFX = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
 
 # Parentheticals a letterer would act on. Anything else is a performance note for the
 # artist and is not something the compiler can represent.
@@ -83,6 +89,9 @@ KIND_MODIFIERS = {
 # same as the IR's own vocabulary, since a writer typing `(monologue)` means the thing
 # the letterers call a monologue.
 CAPTION_KINDS = {kind.value: kind for kind in CaptionKind}
+
+# How loud an SFX is, as its parenthetical may say.
+SFX_SIZES = {size.value: size for size in SfxSize}
 
 # Directives that name a camera property rather than a top-level panel key.
 CAMERA_DIRECTIVES = {"shot", "angle"}
@@ -244,6 +253,9 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
     # so a line a writer wrapped by hand belongs to it -- it used to be filed as prose and
     # thrown away.
     speech: dict[str, Any] | None = None
+    # A bare `SFX:` cue, waiting for its sound on the next line: where it was, and what
+    # its parenthetical said.
+    sound: tuple[int, dict[str, Any]] | None = None
 
     for number, raw in enumerate(body.splitlines(), start=offset + 1):
         line = raw.strip()
@@ -251,21 +263,17 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
         if not line:
             # A blank line ends a dialogue block, so a cue never reaches across one
             # and picks up the next panel's description as its speech.
+            _no_sound(sound, source)
             pending_cue = speech = None
             continue
 
-        page_match = PAGE_HEADING.match(line)
-        if page_match:
-            # Pages are not laid out yet, but they do keep panels apart: scripts number
-            # panels per page, and two PANEL 1s are two panels.
-            page = _page_label(page_match.group(1))
-            pending_cue = speech = None
-            continue
-
-        panel_match = PANEL_HEADING.match(line)
-        if panel_match:
-            current = _PanelDraft(line=number, label=panel_match.group(1), page=page)
-            drafts.append(current)
+        heading = _read_heading(line, number, page)
+        if heading is not None:
+            _no_sound(sound, source)
+            page, opened = heading
+            if opened is not None:
+                current = opened
+                drafts.append(current)
             pending_cue = speech = None
             continue
 
@@ -283,6 +291,13 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
         caption = _read_caption(line, number, source)
         if caption is not None:
             current.events.append(caption)
+            pending_cue = speech = None
+            continue
+
+        # Checked before cues, as a caption is: `SFX` is a perfectly good character name
+        # as far as the cue pattern is concerned.
+        taken, sound = _take_sound(line, number, source, current, sound)
+        if taken:
             pending_cue = speech = None
             continue
 
@@ -305,6 +320,7 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
             # Prose. Kept for tooling and round-tripping, never interpreted.
             current.description.append(line)
 
+    _no_sound(sound, source)
     return _name_panels(drafts, source)
 
 
@@ -391,6 +407,105 @@ def _read_cue(line: str) -> tuple[str, BalloonKind] | None:
         return None
     modifier = (cue.group(2) or "").strip().lower()
     return cue.group(1).strip(), KIND_MODIFIERS.get(modifier, BalloonKind.SPEECH)
+
+
+def _read_heading(
+    line: str, number: int, page: str | None
+) -> tuple[str | None, _PanelDraft | None] | None:
+    """Read a PAGE or PANEL heading, or return None if the line is not one.
+
+    Pages are not laid out yet, but they do keep panels apart: scripts number panels per
+    page, and two PANEL 1s are two panels.
+
+    Returns:
+        The page from here on, and the panel the heading opens -- `None` for a PAGE.
+    """
+    page_match = PAGE_HEADING.match(line)
+    if page_match:
+        return _page_label(page_match.group(1)), None
+    panel_match = PANEL_HEADING.match(line)
+    if panel_match:
+        return page, _PanelDraft(line=number, label=panel_match.group(1), page=page)
+    return None
+
+
+def _no_sound(waiting: tuple[int, dict[str, Any]] | None, source: Path | None) -> None:
+    """Refuse an `SFX:` cue that nothing follows, rather than lose the sound it announced.
+
+    Called wherever a waiting cue would be abandoned: a blank line, a heading, the end.
+    """
+    if waiting is None:
+        return
+    line = waiting[0]
+    raise ScriptSyntaxError(
+        f"line {line}: an SFX cue with no sound after it; write the sound on the next line, "
+        "or after the colon, as 'SFX: BLAM'",
+        source=source,
+        line=line,
+    )
+
+
+def _take_sound(
+    line: str,
+    number: int,
+    source: Path | None,
+    draft: _PanelDraft,
+    waiting: tuple[int, dict[str, Any]] | None,
+) -> tuple[bool, tuple[int, dict[str, Any]] | None]:
+    """Read a line as part of a sound effect, if it is one.
+
+    A waiting `SFX:` cue takes the next line whatever it looks like -- `BLAM` is in
+    capitals, and would otherwise be read as a character's cue.
+
+    Returns:
+        Whether the line was taken, and the cue still waiting for its sound, if any.
+    """
+    if waiting is not None:
+        draft.events.append({"sfx": {**waiting[1], "text": line}})
+        return True, None
+    effect = _read_sfx(line, number, source)
+    if effect is None:
+        return False, None
+    payload, text = effect
+    if text is None:
+        return True, (number, payload)
+    draft.events.append({"sfx": {**payload, "text": text}})
+    return True, None
+
+
+def _read_sfx(
+    line: str, number: int, source: Path | None
+) -> tuple[dict[str, Any], str | None] | None:
+    """Parse an `SFX` line, or return None if the line is not one.
+
+    Returns:
+        What the parenthetical said -- `from` and `size` -- and the sound, or `None` for
+        the sound when it is on the next line, as Dark Horse's format writes it.
+
+    Raises:
+        ScriptSyntaxError: The parenthetical names two sources. A name that is not in the
+            cast is reported by validation, as `unknown-actor`, like any other.
+    """
+    found = SFX_LINE.match(line) or BARE_SFX.match(line)
+    if found is None:
+        return None
+    payload: dict[str, Any] = {}
+    for item in (part.strip() for part in (found.group(1) or "").split(",")):
+        if not item:
+            continue
+        if item.lower() in SFX_SIZES:
+            payload["size"] = item.lower()
+        elif "from" in payload:
+            raise ScriptSyntaxError(
+                f"line {number}: an SFX comes from one actor, not {payload['from']!r} and "
+                f"{item!r}; the parenthetical takes a cast name and a size, as "
+                "'SFX (BOB, large): BLAM'",
+                source=source,
+                line=number,
+            )
+        else:
+            payload["from"] = item
+    return payload, (found.group(2).strip() if found.re is SFX_LINE else None)
 
 
 def _read_caption(line: str, number: int, source: Path | None) -> dict[str, Any] | None:

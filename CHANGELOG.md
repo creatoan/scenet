@@ -68,6 +68,13 @@ below 1.0 means.
   debug overlay shows each one's footprint; `scenet check --deep` reports one with
   nowhere to go as `sfx-placement`; `lettering.font` can name a `display` face. Panels
   without one compile exactly as before. (Part of #73)
+- **Sound effects in comic scripts**: `SFX: BLAM`, `SFX (BOB, large): KRAK` for its source
+  and size, and Dark Horse's bare `SFX:` cue with the sound on the next line -- which used
+  to be dropped as prose, or read as a character called SFX. An `SFX:` cue with nothing
+  under it is reported rather than lost. The playground and the VS Code extension
+  highlight them, and the playground colours an effect's `from:` as an actor. Sound
+  effects are recorded in `docs/explanation/design_decisions.md` and `prior_art.md`.
+  (Closes #73)
 
 ### Changed
 

@@ -35,6 +35,9 @@ const CLASS_OF: Readonly<Record<string, string>> = {
   "keyword.caption": "caption-keyword",
   "annotation.caption": "caption-kind",
   "string.caption": "caption-text",
+  "keyword.sfx": "sfx-keyword",
+  "annotation.sfx": "sfx-parenthetical",
+  "string.sfx": "sfx-text",
   "string.dialogue": "dialogue",
   "comment.prose": "prose",
 };

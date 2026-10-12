@@ -52,6 +52,30 @@ The cost of not moving anybody is that the camera makes no room either, so marks
 head can be cropped at a tight shot. That is reported as a note rather than silently drawn off the
 page.
 
+## Sound effects are picture: placed first, exempt from reading order, paid for by balloons
+
+A sound effect is lettering treated as art, so three decisions follow from treating it as art.
+
+- **Reading order.** Balloons and captions share one hard sequence. Dark Horse's format wants sound
+  effects listed in it too, but a sound sits where the sound is, and holding it to above-and-left
+  would make many panels impossible to letter. Of the three options in #73 — in the sequence under
+  the rule, in it but exempt from the geometry, or outside it — the second shipped: an effect takes
+  its `order`, which a reader of the text and #76's accessible output follow, and is placed with no
+  geometric constraint against any box.
+- **When it is placed.** Before every balloon and caption, as the art is: lettering is placed over
+  the picture, knowing where it is. An effect is placed after staging and the camera, from the
+  figures they produced, and reaches neither, so nobody moves for one — the same proof as emanata.
+- **What it costs.** Its footprint joins the emanata as ground a balloon or caption pays to cover,
+  at the same weight, and is never forbidden to. A balloon over a sound effect deletes what the panel
+  was saying, which is the argument emanata already made; forbidding it would turn a crowded panel
+  into a placement error over a sound. It is drawn under the lettering for the same reason: when a
+  balloon does cover one, the words stay readable.
+
+Its own hard rules are a box's — never a face, never out of the frame, never under an inset — plus
+never over another effect. It is set in a display face, bent and turned as transforms of the glyph
+outlines Scenet already draws, so an arc comes out the same in every renderer; SVG's `<textPath>`
+would have handed the layout back to the renderer and to installed fonts.
+
 ## Text metrics are a hard dependency, not a detail
 
 A balloon's size is a function of its text, wrapped at some measure, in a specific font. Nothing

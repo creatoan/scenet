@@ -49,8 +49,11 @@ const KEY = /^(\s*)(-\s+)?([A-Za-z_][\w-]*)\s*:(?=\s|$)/;
 const ITEM = /^(\s*)-\s+(?![\w-]+\s*:(?:\s|$))(.*)$/;
 /** A staging sentence, three words. */
 const SENTENCE = /^(\S+)(\s+)(\S+)(\s+)(\S+)\s*$/;
-/** `by: name` inside a script entry, in either block or flow style. */
-const BY = /\bby\s*:\s*([A-Za-z_][\w-]*)/g;
+/**
+ * `by: name` or `from: name` inside a script entry, in either block or flow style: the
+ * actor who speaks, or the one a sound effect comes from.
+ */
+const BY = /\b(?:by|from)\s*:\s*([A-Za-z_][\w-]*)/g;
 
 export function scenetTokens(text: string): SemanticToken[] {
   const tokens: SemanticToken[] = [];

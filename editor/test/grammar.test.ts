@@ -53,6 +53,9 @@ const CLASS_OF: readonly (readonly [string, string])[] = [
   ["keyword.other.caption.scenet-script", "caption-keyword"],
   ["markup.italic.caption-kind.scenet-script", "caption-kind"],
   ["string.unquoted.caption.scenet-script", "caption-text"],
+  ["keyword.other.sfx.scenet-script", "sfx-keyword"],
+  ["markup.italic.sfx-parenthetical.scenet-script", "sfx-parenthetical"],
+  ["string.unquoted.sfx.scenet-script", "sfx-text"],
   ["string.unquoted.dialogue.scenet-script", "dialogue"],
   ["comment.line.prose.scenet-script", "prose"],
   // Anything in the front matter that is not a delimiter, whichever YAML scope it has.

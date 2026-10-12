@@ -31,10 +31,11 @@ from scenet.core import PanelCore
 from scenet.diagnostics import diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.svg import render
-from scenet.errors import PanelSyntaxError, SfxPlacementError
+from scenet.errors import PanelSyntaxError, ScriptSyntaxError, SfxPlacementError
+from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
-from scenet.ir import Face, SfxEvent, SfxSize
-from scenet.pipeline import compile_file, compile_source
+from scenet.ir import Face, ScriptEvent, SfxEvent, SfxSize
+from scenet.pipeline import compile_file, compile_ir, compile_source
 from scenet.schema import panel_schema
 from scenet.solve.sfx import SIZE_FACTORS, layout_effect
 from scenet.solve.text import DISPLAY_FONT_PATH, Typeface
@@ -317,3 +318,54 @@ class TestCoreAndDrawing:
         result = compile_file(document)
         assert result.core.fonts[Face.DISPLAY].family == "Source Sans Pro Semibold"
         assert render(result.core, fonts=result.fonts)
+
+
+class TestInAComicScript:
+    """Writers already put sound effects in their scripts: `SFX: BLAM` used to be dropped
+    as prose, and Dark Horse's `SFX:` cue -- the sound on the next line -- failed as an
+    unknown character called SFX."""
+
+    FRONT = "---\ncast: {ALICE: {reference: alice}, BOB: {reference: bob}}\n---\nPANEL 1\n"
+
+    def _events(self, body: str) -> list[ScriptEvent]:
+        (panel,) = parse_script(self.FRONT + body).values()
+        return list(panel.script)
+
+    def test_the_sound_on_the_same_line(self):
+        (event,) = self._events("SFX: BLAM\n")
+        assert isinstance(event, SfxEvent)
+        assert event.text == "BLAM"
+
+    def test_the_parenthetical_names_the_source_and_the_size(self):
+        (event,) = self._events("SFX (BOB, large): KRAK\n")
+        assert isinstance(event, SfxEvent)
+        assert (event.source, event.size) == ("BOB", SfxSize.LARGE)
+
+    def test_dark_horses_cue_takes_the_next_line(self):
+        """The sound is in capitals, which would otherwise read as a character's cue."""
+        (event,) = self._events("SFX:\nBLAM\n")
+        assert isinstance(event, SfxEvent)
+        assert event.text == "BLAM"
+
+    def test_it_takes_its_place_among_the_dialogue(self):
+        events = self._events("ALICE\nGet down!\nSFX (BOB): BLAM\nBOB\nOw.\n")
+        assert [event.verb for event in events] == ["say", "sfx", "say"]
+
+    def test_a_cue_with_no_sound_is_refused_rather_than_lost(self):
+        with pytest.raises(ScriptSyntaxError, match="line 5: an SFX cue with no sound"):
+            self._events("SFX:\n\nALICE\nHello.\n")
+        with pytest.raises(ScriptSyntaxError, match="no sound"):
+            self._events("SFX (BOB):\n")
+
+    def test_a_source_not_in_the_cast_is_an_unknown_actor(self):
+        with pytest.raises(ScriptSyntaxError, match="CAROL"):
+            self._events("SFX (CAROL): BLAM\n")
+
+    def test_two_sources_are_refused(self):
+        with pytest.raises(ScriptSyntaxError, match="one actor"):
+            self._events("SFX (ALICE, BOB): BLAM\n")
+
+    def test_it_compiles(self):
+        script = self.FRONT + "SFX (BOB, large): KRAK\n\nALICE\nWhat was that?\n"
+        panels = parse_script(script)
+        assert compile_ir(panels["1"]).core.sfx[0].text == "KRAK"

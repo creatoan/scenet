@@ -48,6 +48,9 @@ scenet build umbrella.script --strip
 | `BOB (whisper)` | Same, with a balloon kind. |
 | `CAPTION: Midnight.` | A caption box. The text is on the same line. |
 | `CAPTION (monologue): ...` | Same, with a caption kind. |
+| `SFX: BLAM` | A sound effect. The sound is on the same line. |
+| `SFX (BOB, large): KRAK` | Same, coming from `BOB`, at a size. |
+| `SFX:` (alone) | Dark Horse's form: the sound is on the next line. |
 | Anything else | Prose. Preserved, never interpreted. |
 | `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
 
@@ -71,9 +74,18 @@ number (`PAGE TWO` is page `2`, `PAGE TWENTY-ONE` page `21`); anything else is k
 panels that would still share a name, such as `PANEL 1` twice on one page, are reported as
 `duplicate-panel` rather than one quietly replacing the other.
 
+**A sound effect is an `SFX` line**, written where it happens in the script, as publishers ask
+for everything to be listed in reading order. The parenthetical says who or what it comes from — a
+name from the cast — and how loud, `small`, `medium` or `large`, in either order. Dark Horse writes
+`SFX:` as a cue with the sound under it; that works too, and the line under it is the sound however
+it looks — `BLAM` is in capitals, which would otherwise make it a character's cue. An `SFX:` cue with
+nothing under it is reported rather than dropped. Turns, arcs and hollow letters are written in YAML;
+see [`sfx`](https://creatoan.github.io/scenet/reference/language.html#sfx).
+
 `CAPTION` is checked before speaker cues, because as far as the cue pattern is concerned it is a
 perfectly good character name. That is also why the text has to be on the same line: a bare
-`CAPTION` line is rejected rather than read as a character about to speak.
+`CAPTION` line is rejected rather than read as a character about to speak. `SFX` is checked
+before cues for the same reason.
 
 One thing the YAML syntax can express and this cannot: a `spoken` caption's `by`, naming the
 off-panel speaker. Write that panel in YAML, or leave the speaker unnamed — nothing in the drawn

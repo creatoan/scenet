@@ -35,6 +35,7 @@ from scenet import (
     Facing,
     Mark,
     PlacementZone,
+    SfxSize,
     ShotType,
     TimeOfDay,
     Weather,
@@ -134,7 +135,30 @@ def _cast_member(draw: st.DrawFn) -> dict[str, Any]:
 
 
 @st.composite
+def _sfx(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
+    """A sound effect: a word or three, sometimes from a cast member, turned or bent."""
+    sfx: dict[str, Any] = {"text": draw(words(max_words=3))}
+    if cast and draw(st.booleans()):
+        sfx["from"] = draw(st.sampled_from(cast))
+    if draw(st.booleans()):
+        sfx["size"] = draw(st.sampled_from(list(SfxSize))).value
+    if draw(st.booleans()):
+        sfx["rotate"] = draw(st.integers(-45, 45))
+    if draw(st.booleans()):
+        sfx["arc"] = draw(st.integers(-120, 120))
+    if draw(st.booleans()):
+        sfx["hollow"] = True
+    if draw(st.booleans()):
+        sfx["prefer"] = draw(st.sampled_from(list(PlacementZone))).value
+    return {"sfx": sfx}
+
+
+@st.composite
 def _event(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
+    # One entry in five a sound effect: often enough to meet every combination of its
+    # fields, rarely enough that most panels are still about their dialogue.
+    if draw(st.integers(0, 4)) == 0:
+        return draw(_sfx(cast))
     if cast and draw(st.booleans()):
         say: dict[str, Any] = {"by": draw(st.sampled_from(cast)), "text": draw(words(max_words=8))}
         if draw(st.booleans()):
