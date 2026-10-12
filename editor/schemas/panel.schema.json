@@ -181,6 +181,18 @@
               "default": null,
               "title": "Bold Italic"
             },
+            "display": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Display"
+            },
             "italic": {
               "anyOf": [
                 {
@@ -204,7 +216,7 @@
           "type": "object"
         }
       ],
-      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {font: fonts/Comic.ttf}\").lettering.font.regular\n    'fonts/Comic.ttf'",
+      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    display: Sound effects. Left out, they are lettered in the shipped display face,\n        Bangers, whatever the other faces are: a sound effect is not text.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> parse_panel(\"lettering: {font: fonts/Comic.ttf}\").lettering.font.regular\n    'fonts/Comic.ttf'",
       "title": "FontSpec"
     },
     "Horizon": {
@@ -498,6 +510,78 @@
       "title": "SettingSpec",
       "type": "object"
     },
+    "SfxEvent": {
+      "additionalProperties": false,
+      "description": "A sound effect: letters that are part of the picture.\n\n`BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near\nwhere the sound is -- in a display face, not in the balloon face, and with no balloon.\n\nAttributes:\n    verb: Always `sfx`, written as `- sfx: {...}`.\n    text: The sound, lettered exactly as written. No exclamation mark is added --\n        Comicraft's glossary: sound effects are not exclamations -- and an underscore\n        is not emphasis here, just an underscore.\n    source: Written `from:`. The actor the sound comes from; the effect is placed near\n        them. Must be in the cast.\n    prefer: Where it would like to sit, for an effect with no source -- or as a pull\n        on one that has.\n    size: How loud: `small`, `medium` or `large`.\n    rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the\n        default is level, and the angle is the author's to choose.\n    arc: Degrees the line of letters bends through, -120 to 120. Positive bows the\n        middle up, negative bows it down.\n    hollow: Outline only, no fill, so the art shows through the letters -- what\n        letterers call an open effect.\n\n**Placed by candidates and cost, never at a coordinate.** It never covers a face,\nand balloons pay to cover it, as they pay to cover emanata. It takes its number in\nthe script's one reading order, which is what a reader of the text follows, but it\nis exempt from the geometric reading-order rule: a sound sits where the sound is.\n\nExample:\n    >>> from scenet.ir import SfxEvent\n    >>> SfxEvent.model_validate({\"text\": \"BLAM\", \"from\": \"bob\"}).source\n    'bob'",
+      "properties": {
+        "arc": {
+          "default": 0.0,
+          "maximum": 120.0,
+          "minimum": -120.0,
+          "title": "Arc",
+          "type": "number"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "hollow": {
+          "default": false,
+          "title": "Hollow",
+          "type": "boolean"
+        },
+        "prefer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlacementZone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rotate": {
+          "default": 0.0,
+          "maximum": 45.0,
+          "minimum": -45.0,
+          "title": "Rotate",
+          "type": "number"
+        },
+        "size": {
+          "$ref": "#/$defs/SfxSize",
+          "default": "medium"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "SfxEvent",
+      "type": "object"
+    },
+    "SfxSize": {
+      "description": "How big a sound effect is lettered, as a multiple of the dialogue type size.\n\n| Size | Times the dialogue size |\n|---|---|\n| `small` | 1.6 |\n| `medium` | 2.6 |\n| `large` | 4 |\n\nA multiple of the type size rather than of the figure, so an effect reads at\n`long_shot` as well as at `close_up`: a sound does not get quieter because the\ncamera stepped back. Three steps, not a number, for the reason every other size in\nthe language is named -- the author says how loud, the compiler says how big.",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "SfxSize",
+      "type": "string"
+    },
     "ShotType": {
       "description": "How tightly the camera frames the cast.\n\nOrdered from widest to tightest, and the order is enforced by a test: reading down\nthe ladder, the figure never gets smaller.\n\nA shot type is defined by two things in two different units. The **crop landmark**\nis anatomical -- the waist, the chest, the shoulders -- which is what stops a shot\ntype baking in one body and one pose; naming a fraction of panel height instead\nwould do exactly that. The **headroom** is a plain fraction of panel height, because\nit is about composition within the frame rather than anatomy.\n`docs/reference/shot_types.md` is normative.\n\nThe requested shot is an *upper bound on tightness*, not a promise. If the cast\ncannot fit across the panel at that framing the camera retreats, and says so in\n:attr:`CompileResult.notes <scenet.pipeline.CompileResult.notes>`.\n\nExample:\n    >>> from scenet import ShotType\n    >>> ShotType(\"close_up\")\n    <ShotType.CLOSE_UP: 'close_up'>",
       "enum": [
@@ -609,6 +693,18 @@
             },
             "required": [
               "caption"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "sfx": {
+                "$ref": "#/$defs/SfxEvent"
+              }
+            },
+            "required": [
+              "sfx"
             ],
             "type": "object"
           }

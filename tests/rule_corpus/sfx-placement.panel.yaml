@@ -1,0 +1,5 @@
+# A large sound effect this long is wider than the whole panel, so no position holds it.
+panel: {size: [300, 200]}
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: KRAKA-THOOOOOOOOOOOOOOOOOOOOOOOOOM, size: large}

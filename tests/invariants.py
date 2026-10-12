@@ -16,6 +16,7 @@ from collections.abc import Iterable
 from functools import cache
 from xml.etree import ElementTree
 
+from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon
 from shapely.geometry import box as rectangle
 
@@ -26,6 +27,7 @@ from scenet.solve.text import SHIPPED_FACES, load_metrics
 
 __all__ = [
     "TOLERANCE",
+    "assert_effects_are_placed",
     "assert_frames_are_placed",
     "assert_lettering_is_placed",
     "assert_svg_is_sound",
@@ -106,6 +108,38 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         end = balloon.tail.end
         distance = math.hypot(end[0] - face.cx, end[1] - face.cy)
         assert distance <= face.r * TAIL_REACH, f"tail of {balloon.id} misses its speaker"
+
+
+def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:
+    """Every sound effect is where the language promises it will be.
+
+    - inside the panel's margin, and inside its outline when it has one;
+    - over no face, and under no exclusion such as an inset;
+    - overlapping no other sound effect;
+    - and with one letter for every character of its text, once runs of spaces are one.
+
+    Args:
+        core: The compiled panel.
+        margin: The panel's margin, as authored.
+    """
+    inner = rectangle(margin, margin, core.width - margin, core.height - margin).buffer(TOLERANCE)
+    outline = Polygon(core.outline).buffer(TOLERANCE) if core.outline is not None else None
+    zones = [(effect.id, Polygon(effect.zone)) for effect in core.sfx]
+    for effect, (identifier, zone) in zip(core.sfx, zones, strict=True):
+        assert inner.contains(zone), f"{identifier} leaves the margin"
+        assert outline is None or outline.contains(zone), f"{identifier} leaves the outline"
+        for actor in core.actors:
+            face = actor.face_exclusion
+            reach = zone.distance(ShapelyPoint(face.cx, face.cy))
+            assert reach >= face.r - TOLERANCE, f"{identifier} covers {actor.id}'s face"
+        for area in core.exclusions:
+            covered = zone.intersection(rectangle(area.x, area.y, area.right, area.bottom)).area
+            assert covered <= TOLERANCE, f"{identifier} is under an exclusion"
+        assert "".join(glyph.char for glyph in effect.glyphs) == " ".join(effect.text.split())
+    for index, (identifier, zone) in enumerate(zones):
+        for other_id, other in zones[:index]:
+            shared = zone.intersection(other).area
+            assert shared <= TOLERANCE * 100, f"{identifier} overlaps {other_id} by {shared}"
 
 
 # `url(#id)` in a style or presentation attribute, and `href="#id"` on a <use>.

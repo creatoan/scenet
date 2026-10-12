@@ -32,6 +32,7 @@ __all__ = [
     "RuleViolationError",
     "ScenetError",
     "ScriptSyntaxError",
+    "SfxPlacementError",
     "SolverError",
     "SourceError",
     "UnknownExpressionError",
@@ -290,6 +291,15 @@ class BalloonPlacementError(SolverError):
     Captions raise this too. They obey the same hard rules and are placed in the same
     pass, so the failure is the same failure; the name is kept because the rule id
     `balloon-placement` is stable across releases.
+    """
+
+
+class SfxPlacementError(SolverError):
+    """No legal position exists for a sound effect.
+
+    Every candidate covered a face, left the panel, lay under an inset or over another
+    sound effect. Usually the effect is too big for the panel: make it `small`, shorten
+    it, or give the panel more room. Rule `sfx-placement`.
     """
 
 

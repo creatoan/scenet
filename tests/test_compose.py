@@ -144,8 +144,10 @@ PANEL 1
 ALICE
 Hello there.
 """)
-        assert panels["1"].script[0].by == "ALICE"
-        assert panels["1"].script[0].text == "Hello there."
+        event = panels["1"].script[0]
+        assert isinstance(event, SayEvent)
+        assert event.by == "ALICE"
+        assert event.text == "Hello there."
 
     def test_parentheticals_select_the_balloon_kind(self):
         """A regression guard: testing the whole line for capitals rejects
@@ -160,7 +162,7 @@ Quietly now.
 BOB (shouting)
 NOT LIKE THAT!
 """)
-        kinds = [event.kind for event in panels["1"].script]
+        kinds = [event.kind for event in panels["1"].script if isinstance(event, SayEvent)]
         assert kinds == [BalloonKind.WHISPER, BalloonKind.SHOUT]
 
     def test_caption_lines_become_captions(self):
@@ -189,7 +191,9 @@ cast: {ALICE: {reference: alice}}
 PANEL 1
 CAPTION (monologue): I should have brought an umbrella.
 """)
-        assert panels["1"].script[0].kind is CaptionKind.MONOLOGUE
+        event = panels["1"].script[0]
+        assert isinstance(event, CaptionEvent)
+        assert event.kind is CaptionKind.MONOLOGUE
 
     def test_a_bare_caption_line_is_not_read_as_a_cue(self):
         """`CAPTION` on its own matches the character-cue pattern, so it has to be
@@ -297,7 +301,7 @@ PANEL 2
     def test_shipped_script_example_parses(self):
         panels = load_script(EXAMPLES / "umbrella.script")
         assert list(panels) == ["1", "2"]
-        assert [event.kind for event in panels["2"].script] == [
+        assert [event.kind for event in panels["2"].script if isinstance(event, SayEvent)] == [
             BalloonKind.WHISPER,
             BalloonKind.SHOUT,
         ]

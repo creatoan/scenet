@@ -27,6 +27,7 @@ from scenet import (
     PlacementZone,
     Plane,
     Predicate,
+    SfxSize,
     ShotType,
     Spans,
     TimeOfDay,
@@ -136,6 +137,12 @@ class TestTheGalleryCoversTheLanguage:
         text = self._all_text()
         names = sorted(default_library().get("alice").expressions)
         missing = [name for name in names if name not in text]
+        assert missing == []
+
+    def test_every_sound_effect_size_appears(self):
+        """A size nobody has looked at is a size nobody has checked reads at a long shot."""
+        text = self._all_text()
+        missing = [size.value for size in SfxSize if f"size: {size.value}" not in text]
         assert missing == []
 
     def test_every_mark_appears(self):

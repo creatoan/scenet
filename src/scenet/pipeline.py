@@ -27,8 +27,10 @@ from scenet.core import (
     CoreCaption,
     CoreFont,
     CoreFrame,
+    CoreGlyph,
     CoreMass,
     CoreRun,
+    CoreSfx,
     CoreStreak,
     CoreVeil,
     Disc,
@@ -60,6 +62,7 @@ from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.page import Frame, lettering_height, resolve_frames
+from scenet.solve.sfx import PlacedEffect
 from scenet.solve.staging import Placement, solve_staging
 from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
@@ -214,6 +217,29 @@ def _core_mark(mark: ResolvedStroke | ResolvedDisc) -> FaceMark:
         points=round_pairs(mark.points),
         width=rounded(mark.width),
         closed=mark.closed,
+    )
+
+
+def _core_sfx(effect: PlacedEffect) -> CoreSfx:
+    """Reduce one placed sound effect to its Core twin, rounding as every tier boundary does."""
+    zone = effect.zone.exterior.coords[:-1]
+    return CoreSfx(
+        id=effect.id,
+        order=effect.order,
+        text=effect.text,
+        source=effect.source,
+        font_size=rounded(effect.font_size),
+        glyphs=tuple(
+            CoreGlyph(
+                char=glyph.character, origin=point_pair(glyph.origin), angle=rounded(glyph.angle)
+            )
+            for glyph in effect.glyphs
+        ),
+        zone=tuple((rounded(x), rounded(y)) for x, y in zone),
+        fill=effect.fill,
+        stroke=effect.stroke,
+        stroke_width=rounded(effect.stroke_width),
+        hollow=effect.hollow,
     )
 
 
@@ -513,6 +539,7 @@ def compile_ir(
         backdrop=_core_backdrop(backdrop),
         exclusions=tuple(Box.of(area) for area in exclusions),
         outline=tuple(outline) if outline is not None else None,
+        sfx=tuple(_core_sfx(effect) for effect in layout.effects),
         fonts={
             face: CoreFont(family=font.family, style=font.style, sha256=font.sha256)
             for face, font in declared.items()

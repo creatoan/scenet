@@ -29,6 +29,7 @@ from scenet.ir import (
     PlacementZone,
     Plane,
     Predicate,
+    SfxSize,
     ShotType,
     Spans,
     TimeOfDay,
@@ -97,6 +98,7 @@ class TestPanelSchema:
             Horizon,
             TimeOfDay,
             Weather,
+            SfxSize,
         ],
     )
     def test_every_enum_member_reaches_the_schema(self, enum: type[StrEnum]):

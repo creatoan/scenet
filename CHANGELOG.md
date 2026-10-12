@@ -58,6 +58,16 @@ below 1.0 means.
   SIL Open Font License 1.1. No package carries it, so it is vendored inside the wheel with
   its licence beside it, recorded in `THIRD_PARTY_NOTICES.md`, and pinned by a test to the
   file in google/fonts. Nothing letters in it yet; sound effects will. (Part of #73)
+- **Sound effects.** `- sfx: {text: BLAM, from: bob}` letters a sound into the picture in
+  the display face, with no balloon: `small`, `medium` or `large`, turned by `rotate`, bent
+  along an `arc`, and `hollow` for an open effect the art shows through. It is placed by
+  candidates and cost near its source or in its `prefer:` zone, never covers a face, and
+  is never given a coordinate. Balloons pay to cover it, as they pay for emanata, and no
+  figure moves for it. It takes its number in the script's reading order without the
+  geometric rule. Panel Core gains `sfx`, every letter already turned and placed; the
+  debug overlay shows each one's footprint; `scenet check --deep` reports one with
+  nowhere to go as `sfx-placement`; `lettering.font` can name a `display` face. Panels
+  without one compile exactly as before. (Part of #73)
 
 ### Changed
 

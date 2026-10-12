@@ -91,3 +91,6 @@ examples:
   - file: 29-type-size.scene.yaml
     title: "Type size: one size, set for the whole page"
     kind: scene
+  - file: 30-sound-effects.panel.yaml
+    title: "Sound effects: letters that are part of the picture"
+    kind: panel

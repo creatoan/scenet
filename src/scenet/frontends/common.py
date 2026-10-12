@@ -38,7 +38,7 @@ RELATION_RE = re.compile(r"^\s*(\S+)\s+(\S+)\s+(\S+)\s*$")
 # Verbs a script entry may be tagged with. Single-key mappings rather than a
 # discriminator field, so a new verb costs the author nothing to adopt and costs this
 # table one line.
-KNOWN_VERBS = frozenset({"say", "caption"})
+KNOWN_VERBS = frozenset({"say", "caption", "sfx"})
 
 
 def parse_relation(text: str) -> Relation:

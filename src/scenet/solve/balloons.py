@@ -44,9 +44,11 @@ from scenet.ir import (
     Plane,
     SayEvent,
     ScriptEvent,
+    SfxEvent,
     TimeOfDay,
 )
 from scenet.solve.backdrop import LADDER, ResolvedBackdrop, contrast_ratio
+from scenet.solve.sfx import PlacedEffect, place_effects
 from scenet.solve.text import (
     FontMetrics,
     TextBlock,
@@ -236,12 +238,13 @@ class PlacedCaption:
 class ScriptLayout:
     """Everything in a panel that carries words, placed.
 
-    Two tuples rather than one merged sequence: they reduce to two different Core
-    types, and the thing that orders them -- `order` -- is on both.
+    Separate tuples rather than one merged sequence: they reduce to different Core
+    types, and the thing that orders them -- `order` -- is on each.
     """
 
     captions: tuple[PlacedCaption, ...] = ()
     balloons: tuple[PlacedBalloon, ...] = ()
+    effects: tuple[PlacedEffect, ...] = ()
 
 
 def _hull_polygon(actor: ResolvedPuppet) -> Polygon:
@@ -763,7 +766,7 @@ def place_script(
     exclusions: Sequence[BBox] = (),
     inside: Sequence[tuple[float, float]] | None = None,
 ) -> ScriptLayout:
-    """Place every balloon and caption, in script order.
+    """Place every sound effect, then every balloon and caption in script order.
 
     Greedy rather than jointly optimised: each box is placed against those already
     down, which is exactly how reading order works -- a box constrains its successor,
@@ -806,6 +809,7 @@ def place_script(
 
     Raises:
         BalloonPlacementError: Some box had no legal position anywhere in the panel.
+        SfxPlacementError: Some sound effect had no legal position anywhere in the panel.
     """
     if not events:
         return ScriptLayout()
@@ -837,7 +841,27 @@ def place_script(
     captions: list[PlacedCaption] = []
     balloons: list[PlacedBalloon] = []
 
+    # Sound effects first: they are part of the picture, which lettering is placed over.
+    # They are exempt from the geometric reading-order rule -- a sound sits where the
+    # sound is -- but keep their number in the one sequence. Once down, each one's
+    # footprint is ground a balloon or caption pays to cover, as it pays for emanata, and
+    # is never forbidden to; with no effects the list is exactly the emanata it was.
+    effects = place_effects(
+        [(order, event) for order, event in enumerate(events) if isinstance(event, SfxEvent)],
+        actors=actors,
+        hulls=hulls,
+        panel=panel,
+        dialogue_size=size,
+        typeface=family,
+        marks=marks,
+        blocked=exclusions,
+        inside=limits.inside,
+    )
+    marks = [*marks, *(effect.zone for effect in effects)]
+
     for order, event in enumerate(events):
+        if isinstance(event, SfxEvent):
+            continue
         if isinstance(event, CaptionEvent):
             captions.append(
                 _place_caption(
@@ -878,7 +902,7 @@ def place_script(
         )
         placed.append(balloons[-1].box)
 
-    return ScriptLayout(captions=tuple(captions), balloons=tuple(balloons))
+    return ScriptLayout(captions=tuple(captions), balloons=tuple(balloons), effects=effects)
 
 
 def _place_balloon(

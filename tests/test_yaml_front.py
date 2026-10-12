@@ -99,6 +99,7 @@ script:
   - say: {by: alice, text: "Hello", prefer: top_left, kind: shout}
 """)
         event = panel.script[0]
+        assert isinstance(event, SayEvent)
         assert event.text == "Hello"
         assert event.prefer is PlacementZone.TOP_LEFT
         assert event.kind is BalloonKind.SHOUT

@@ -25,6 +25,7 @@ GRID = "#c9c9c9"
 MASS = "#3aa39a"
 HORIZON = "#c2451f"
 INSET = "#5a5a5a"
+SFX = "#d0451b"
 
 
 def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
@@ -157,6 +158,23 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
             f'  <text x="{fmt(box.x + 4)}" y="{fmt(box.y - 8)}" font-size="18" '
             f'font-family="monospace" fill="{CAPTION}">'
             f"{escape(caption.id)} #{caption.order} {caption.kind.value}</text>"
+        )
+
+    # Sound effects by their footprint, dashed: what balloons and captions paid to keep
+    # off, and what no face was allowed inside.
+    for effect in sorted(core.sfx, key=lambda e: e.order):
+        corners = " ".join(f"{fmt(x)},{fmt(y)}" for x, y in effect.zone)
+        left = min(x for x, _ in effect.zone)
+        top = min(y for _, y in effect.zone)
+        source = f" -&gt; {escape(effect.source)}" if effect.source else ""
+        parts.append(
+            f'  <polygon class="sfx-zone" points="{corners}" fill="{SFX}" fill-opacity="0.12" '
+            f'stroke="{SFX}" stroke-width="2" stroke-dasharray="10 5"/>'
+        )
+        parts.append(
+            f'  <text x="{fmt(left + 4)}" y="{fmt(top - 8)}" font-size="18" '
+            f'font-family="monospace" fill="{SFX}">'
+            f"{escape(effect.id)} #{effect.order} sfx{source}</text>"
         )
 
     parts.append(

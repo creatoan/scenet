@@ -20,6 +20,7 @@ from scenet.core import (
     CoreCaption,
     CoreMass,
     CoreRun,
+    CoreSfx,
     FaceDisc,
     FaceMark,
     PanelCore,
@@ -158,6 +159,12 @@ def render(
 
     # Balloons and captions sit above the figures and share one reading order, so they
     # are emitted as one sequence rather than one layer stacked on the other.
+    # Sound effects are part of the picture: over the figures, under every balloon and
+    # caption, which were placed knowing where they are and paid to cover them.
+    if core.sfx:
+        display = family.face(Face.DISPLAY)
+        parts.extend(_render_sfx(effect, display, id_prefix) for effect in core.sfx)
+
     lettering = sorted([*core.balloons, *core.captions], key=lambda item: item.order)
     for item in lettering:
         if isinstance(item, CoreCaption):
@@ -411,6 +418,36 @@ def typeface_of(
             )
         family = replace(family, **{face.value: found})
     return family
+
+
+def _render_sfx(effect: CoreSfx, metrics: FontMetrics, id_prefix: str) -> str:
+    """A sound effect: each letter's outline, where the solver put it and turned it.
+
+    One path per letter, its outline stroked behind its fill with `paint-order`, so a
+    solid effect is ink with a paper halo and a hollow one is the outline alone. The
+    stroke is in the glyph's own font units, since the path is scaled down to the type
+    size. Nothing is decided here: the origin, the angle and both colours are the Core's.
+    """
+    scale = effect.font_size / metrics.units_per_em
+    stroke = fmt(effect.stroke_width / scale)
+    outlines: dict[str, str] = {}
+    lines = [f"    <g id={attr(id_prefix + 'sfx-' + effect.id)}>"]
+    for glyph in effect.glyphs:
+        if glyph.char not in outlines:
+            outlines[glyph.char] = metrics.glyph_outlines(glyph.char)[0][0]
+        path = outlines[glyph.char]
+        if not path:
+            continue
+        x, y = glyph.origin
+        turn = f" rotate({fmt(glyph.angle)})" if glyph.angle else ""
+        lines.append(
+            f'      <path d="{path}" fill="{effect.fill}" stroke="{effect.stroke}" '
+            f'stroke-width="{stroke}" stroke-linejoin="round" paint-order="stroke" '
+            f'transform="translate({fmt(x)} {fmt(y)}){turn} '
+            f'scale({fmt(scale, GLYPH_SCALE_PLACES)} {fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
+        )
+    lines.append("    </g>")
+    return "\n".join(lines)
 
 
 def _runs_of(

@@ -185,6 +185,8 @@
   "29-type-size.page-1.debug.svg": "e06253db30b928e2e01e87874d62a96868b6319d59094bcc98b938a0fe59d55b",
   "29-type-size.page-1.svg": "0661d4f1a0997a03e986134ec3d3a10ab1e9770b0d0e67fbe88b3fa3c7d58147",
   "29-type-size.strip.svg": "39cddf266bbe9f285481b3bc163a641dbdc7f5ba158d3d74b5b574e3c6db9730",
+  "30-sound-effects.debug.svg": "3a0c04e90047ad44942dec8656ef32889a7429f1b0b444c8a6f7b6c342fe9f1e",
+  "30-sound-effects.svg": "0491082a141f7adf829818b91ab1d3545d9c3be18e4e9d5adb78546866e07b2c",
   "live-text/01-two-characters.svg": "6f733a4f4c58105446db08530a16447d7aaa45a7bb7c456bb0c27bda0e4dbb65",
   "live-text/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "live-text/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -284,5 +286,6 @@
   "live-text/29-type-size.door.svg": "4da403c4e559eb5eaa9657b087fa8be5544851c301481d9c0f698234087d208a",
   "live-text/29-type-size.inside.svg": "bae7240c8ae141aa1a8347290b102291d58fcbf4618790a1e602030f1fbfe476",
   "live-text/29-type-size.page-1.svg": "80b95dfc4f450cf73cd47f42dc5dc6d02ba9af1b7b6d303b5b094f81bdfd9996",
-  "live-text/29-type-size.strip.svg": "6616d9e9cd4272c13fdc8ce1071392919516e3b83e6abd3c881711c50961e5f4"
+  "live-text/29-type-size.strip.svg": "6616d9e9cd4272c13fdc8ce1071392919516e3b83e6abd3c881711c50961e5f4",
+  "live-text/30-sound-effects.svg": "ade779a9768bc3d7b77606a2d2329b57ab498417183ab4e46d87399d4935b035"
 }

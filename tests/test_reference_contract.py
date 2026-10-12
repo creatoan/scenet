@@ -257,7 +257,7 @@ class TestRules:
     @pytest.mark.parametrize("path", sorted(CORPUS.iterdir()), ids=lambda path: path.name)
     def test_a_corpus_document_gets_exactly_its_rule(self, path: Path):
         rule = path.name.split(".")[0]
-        found = diagnose_file(path, deep=rule in {"layout", "balloon-placement"})
+        found = diagnose_file(path, deep=rule in {"layout", "balloon-placement", "sfx-placement"})
         assert [item.rule for item in found] == [rule], [item.message for item in found]
 
     def test_sarif_describes_each_rule_as_the_catalogue_does(self):

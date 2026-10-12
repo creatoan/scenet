@@ -437,6 +437,16 @@ class FontMetrics:
         self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
         self.style = _name(self._font, STYLE_NAME) or "Regular"
 
+    @property
+    def extent(self) -> tuple[float, float]:
+        """How far the face reaches above and below the baseline, in em units.
+
+        The `hhea` ascender and descender, both as positive distances: what a line of
+        this face can occupy, which is what a sound effect's footprint is built from.
+        """
+        table: Any = self._font["hhea"]
+        return table.ascent / self._units_per_em, -table.descent / self._units_per_em
+
     @staticmethod
     def digest(data: bytes) -> str:
         """What a font file is known by: the SHA-256 of its bytes, in hex."""

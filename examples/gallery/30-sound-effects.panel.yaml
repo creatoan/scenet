@@ -1,0 +1,31 @@
+# Sound effects: letters that are part of the picture.
+#
+# `- sfx:` letters a sound in the display face, Bangers, with no balloon. It goes near
+# the actor it comes `from:`, or in the zone it prefers, chosen by candidate scoring like
+# everything else -- never at a coordinate -- and it never covers a face. It can turn,
+# bend along an arc, and be `hollow`: all outline, so the art shows through.
+#
+# It takes its turn in the script's reading order, but sits where the sound is. Balloons
+# pay to cover it, so they settle around it; nobody moves for it. No exclamation mark is
+# added: sound effects are not exclamations.
+
+panel:
+  size: [1200, 800]
+  margin: 20
+
+camera:
+  shot: full_shot
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left, pose: arms_crossed}
+
+staging:
+  - alice left_of bob
+
+script:
+  - sfx: {text: KRAK, from: bob, size: large, rotate: -14}
+  - say: {by: alice, text: "What was that?"}
+  - sfx: {text: tok tok tok, prefer: top_right, size: small, arc: 30}
+  - sfx: {text: WHOOSH, from: alice, size: medium, arc: -40, hollow: true}
+  - say: {by: bob, text: "Nothing. Go back to sleep."}

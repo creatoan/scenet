@@ -571,6 +571,54 @@ class CoreCaption(CoreModel):
         return self
 
 
+class CoreGlyph(CoreModel):
+    """One letter of a sound effect, where it is drawn.
+
+    Attributes:
+        char: The letter. Its outline comes from the display face the Core names.
+        origin: Where its baseline starts, in panel units.
+        angle: Its rotation about `origin`, in degrees clockwise.
+    """
+
+    char: str
+    origin: tuple[float, float]
+    angle: float
+
+
+class CoreSfx(CoreModel):
+    """One sound effect, placed, with every letter resolved.
+
+    Attributes:
+        id: `s0`, `s1`, ... in script order.
+        order: Its number in the panel's one reading order, which it shares with
+            balloons and captions. It is exempt from the geometric reading-order rule: a
+            sound sits where the sound is.
+        text: The sound, as written -- what a reader of the text is given.
+        source: The actor it comes from, if it names one.
+        font_size: Its type size in panel units, in the display face.
+        glyphs: Every letter: where it starts, and how far it is turned. The arc and the
+            rotation are already in these numbers, so the emitter decides nothing.
+        zone: What the letters cover, outline included: the polygon balloons and captions
+            paid to avoid, and which no face was allowed inside.
+        fill: What the letters are filled with -- ink, or `none` for a hollow effect.
+        stroke: What they are outlined in -- a paper halo, or ink for a hollow effect.
+        stroke_width: The outline's width, in panel units.
+        hollow: Whether it is an open effect: all outline, so the art shows through.
+    """
+
+    id: str
+    order: int
+    text: str
+    font_size: float
+    glyphs: tuple[CoreGlyph, ...]
+    zone: tuple[tuple[float, float], ...]
+    fill: str
+    stroke: str
+    stroke_width: float
+    source: str | None = None
+    hollow: bool = False
+
+
 class PanelCore(CoreModel):
     """A fully resolved panel: numeric, named, and ready to emit.
 
@@ -599,6 +647,7 @@ class PanelCore(CoreModel):
         outline: For a panel in a slanted tier, the shape of its border: four corners,
             clockwise from the top left, in panel units. The panel is drawn clipped to it,
             and its lettering stays inside it. Left out of the JSON for a rectangle.
+        sfx: Sound effects, in script order. Left out of the JSON when there are none.
         fonts: The faces lettered in a font other than the shipped one, by face. A face
             not listed is the shipped family's. Left out of the JSON when every face is
             the shipped one.
@@ -628,6 +677,7 @@ class PanelCore(CoreModel):
     exclusions: tuple[Box, ...] = ()
     outline: tuple[tuple[float, float], ...] | None = None
     fonts: dict[Face, CoreFont] = Field(default_factory=dict)
+    sfx: tuple[CoreSfx, ...] = ()
 
     @property
     def bounds(self) -> BBox:
@@ -659,7 +709,7 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, exclusions=(), outline=None, fonts={})
+        _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=())
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=())
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
@@ -813,8 +863,10 @@ __all__ = [
     "CoreCaption",
     "CoreFont",
     "CoreFrame",
+    "CoreGlyph",
     "CoreMass",
     "CoreRun",
+    "CoreSfx",
     "CoreStreak",
     "CoreVeil",
     "Disc",

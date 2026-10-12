@@ -248,7 +248,9 @@ class TestCaptionSpeaker:
             cast=cast("alice"),
             script=(CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="doctor"),),
         )
-        assert panel.script[0].by == "doctor"
+        (event,) = panel.script
+        assert isinstance(event, CaptionEvent)
+        assert event.by == "doctor"
 
     def test_a_say_by_the_same_unknown_actor_is_still_rejected(self):
         """The exemption is for captions only; it must not have widened the hole."""

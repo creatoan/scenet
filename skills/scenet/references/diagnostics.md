@@ -100,6 +100,12 @@ A relation relates an actor to itself. No predicate in the language means anythi
 
 **Fix:** Name a different actor as the object of the relation.
 
+### `scenet/sfx-placement`
+
+A sound effect has no legal position. A sound effect may cover a figure, and balloons may cover it, but it may never cover a face, leave the panel, lie under an inset or overlap another sound effect. Every candidate position -- around its source, around the zone it prefers, and the middle of every zone -- did one of those.
+
+**Fix:** Make it smaller or shorter, drop its rotation or arc, or give the panel more room.
+
 ### `scenet/syntax`
 
 The document is not valid YAML. The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it.

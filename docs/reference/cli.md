@@ -212,6 +212,7 @@ nothing stops compiling.
 | `scenet/font-file` | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
 | `scenet/layout` | Valid, but no layout satisfies its required constraints (`--deep` only) |
 | `scenet/balloon-placement` | No legal position exists for a balloon (`--deep` only) |
+| `scenet/sfx-placement` | No legal position exists for a sound effect (`--deep` only) |
 | `scenet/internal` | A failure with no more specific rule — worth reporting |
 
 ### Source positions

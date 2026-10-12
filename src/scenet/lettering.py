@@ -14,7 +14,9 @@ Two choices are made here and nowhere else:
 - **A face the document does not name stands in from one it does.** Italic captions fall
   back to the regular face, emphasis to the italic and then the regular: a family drawn
   from one file is a whole family, which a mix of the author's face and the shipped one
-  would not be. The compiler says so when a stand-in is actually used.
+  would not be. The compiler says so when a stand-in is actually used. The display face
+  is the exception: sound effects are not text, so an author's text faces never stand in
+  for it, and it stays Bangers unless the document names one of its own.
 
 Every failure -- a path that is absolute or has no folder to be read from, a file that is
 missing, a file that is not a font -- is rule `font-file`, located at the face it names.
@@ -134,7 +136,10 @@ def typeface_for(spec: LetteringSpec, base: Path | None) -> Lettering:
     bold_italic = (
         load_font(font.bold_italic, base, loc=(*where, "bold_italic")) if font.bold_italic else None
     )
+    display = load_font(font.display, base, loc=(*where, "display")) if font.display else None
     declared = {Face.REGULAR}
+    if display is not None:
+        declared.add(Face.DISPLAY)
     if italic is not None:
         declared.add(Face.ITALIC)
     if bold_italic is not None:
@@ -144,6 +149,7 @@ def typeface_for(spec: LetteringSpec, base: Path | None) -> Lettering:
             regular=regular,
             italic=italic or regular,
             bold_italic=bold_italic or italic or regular,
+            display=display,
         ),
         frozenset(declared),
     )

@@ -63,6 +63,8 @@ __all__ = [
     "Relation",
     "SayEvent",
     "SettingSpec",
+    "SfxEvent",
+    "SfxSize",
     "ShotType",
     "Spans",
     "StackedPanel",
@@ -678,6 +680,8 @@ class FontSpec(Strict):
         regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is
             the only face, and stands in for the others.
         italic: Every other caption kind. Left out, captions are set in `regular`.
+        display: Sound effects. Left out, they are lettered in the shipped display face,
+            Bangers, whatever the other faces are: a sound effect is not text.
         bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,
             in `regular` when there is not -- and a note says so when it happens.
 
@@ -694,6 +698,7 @@ class FontSpec(Strict):
     regular: str
     italic: str | None = None
     bold_italic: str | None = None
+    display: str | None = None
 
 
 class LetteringSpec(Strict):
@@ -945,6 +950,72 @@ class CaptionEvent(Strict):
         return by
 
 
+class SfxSize(StrEnum):
+    """How big a sound effect is lettered, as a multiple of the dialogue type size.
+
+    | Size | Times the dialogue size |
+    |---|---|
+    | `small` | 1.6 |
+    | `medium` | 2.6 |
+    | `large` | 4 |
+
+    A multiple of the type size rather than of the figure, so an effect reads at
+    `long_shot` as well as at `close_up`: a sound does not get quieter because the
+    camera stepped back. Three steps, not a number, for the reason every other size in
+    the language is named -- the author says how loud, the compiler says how big.
+    """
+
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+
+
+class SfxEvent(Strict):
+    """A sound effect: letters that are part of the picture.
+
+    `BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near
+    where the sound is -- in a display face, not in the balloon face, and with no balloon.
+
+    Attributes:
+        verb: Always `sfx`, written as `- sfx: {...}`.
+        text: The sound, lettered exactly as written. No exclamation mark is added --
+            Comicraft's glossary: sound effects are not exclamations -- and an underscore
+            is not emphasis here, just an underscore.
+        source: Written `from:`. The actor the sound comes from; the effect is placed near
+            them. Must be in the cast.
+        prefer: Where it would like to sit, for an effect with no source -- or as a pull
+            on one that has.
+        size: How loud: `small`, `medium` or `large`.
+        rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the
+            default is level, and the angle is the author's to choose.
+        arc: Degrees the line of letters bends through, -120 to 120. Positive bows the
+            middle up, negative bows it down.
+        hollow: Outline only, no fill, so the art shows through the letters -- what
+            letterers call an open effect.
+
+    **Placed by candidates and cost, never at a coordinate.** It never covers a face,
+    and balloons pay to cover it, as they pay to cover emanata. It takes its number in
+    the script's one reading order, which is what a reader of the text follows, but it
+    is exempt from the geometric reading-order rule: a sound sits where the sound is.
+
+    Example:
+        >>> from scenet.ir import SfxEvent
+        >>> SfxEvent.model_validate({"text": "BLAM", "from": "bob"}).source
+        'bob'
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    verb: Literal["sfx"] = "sfx"
+    text: SvgText = Field(min_length=1)
+    source: str | None = Field(default=None, alias="from")
+    prefer: PlacementZone | None = None
+    size: SfxSize = SfxSize.MEDIUM
+    rotate: float = Field(default=0.0, ge=-45.0, le=45.0)
+    arc: float = Field(default=0.0, ge=-120.0, le=120.0)
+    hollow: bool = False
+
+
 #: The tag a union member is chosen by when its input carries none.
 UNTAGGED = "untagged"
 
@@ -980,7 +1051,8 @@ def tag_by(field: str) -> Discriminator:
 ScriptEvent = Annotated[
     Annotated[SayEvent, Tag("say")]
     | Annotated[CaptionEvent, Tag("caption")]
-    | Annotated[SkipJsonSchema[SayEvent | CaptionEvent], Tag(UNTAGGED)],
+    | Annotated[SfxEvent, Tag("sfx")]
+    | Annotated[SkipJsonSchema[SayEvent | CaptionEvent | SfxEvent], Tag(UNTAGGED)],
     tag_by("verb"),
 ]
 
@@ -1047,6 +1119,15 @@ class PanelIR(Strict):
         # `by` names somebody *off panel*, so it is not in the cast by definition and
         # checking it here would make the field impossible to use for what it is for.
         for index, event in enumerate(self.script):
+            if isinstance(event, SfxEvent):
+                if event.source is not None and event.source not in known:
+                    raise RuleViolationError(
+                        f"sound effect {index} comes from unknown actor '{event.source}'; "
+                        f"cast is {sorted(known)}",
+                        rule="unknown-actor",
+                        loc=("script", index, event.verb, "from"),
+                    )
+                continue
             if not isinstance(event, SayEvent):
                 continue
             if event.by not in known:

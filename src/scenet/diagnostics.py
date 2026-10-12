@@ -58,6 +58,7 @@ from scenet.errors import (
     RuleViolationError,
     ScenetError,
     ScriptSyntaxError,
+    SfxPlacementError,
     SourceError,
     UnknownExpressionError,
     UnknownPoseError,
@@ -361,6 +362,16 @@ RULES: dict[str, Rule] = {
         ),
         help="Widen the panel, shorten the line, or split it across two panels.",
     ),
+    "sfx-placement": Rule(
+        summary="A sound effect has no legal position",
+        description=(
+            "A sound effect may cover a figure, and balloons may cover it, but it may never "
+            "cover a face, leave the panel, lie under an inset or overlap another sound "
+            "effect. Every candidate position -- around its source, around the zone it "
+            "prefers, and the middle of every zone -- did one of those."
+        ),
+        help="Make it smaller or shorter, drop its rotation or arc, or give the panel more room.",
+    ),
     "internal": Rule(
         summary="The compiler failed in a way it does not have a rule for",
         description=(
@@ -517,6 +528,7 @@ _RULE_FOR_ERROR_TYPE: tuple[tuple[type[ScenetError], str], ...] = (
     (UnknownPoseError, "unknown-pose"),
     (UnknownExpressionError, "unknown-expression"),
     (BalloonPlacementError, "balloon-placement"),
+    (SfxPlacementError, "sfx-placement"),
     (LayoutError, "layout"),
     (PanelSyntaxError, "invalid-field"),
 )
