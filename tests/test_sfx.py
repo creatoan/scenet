@@ -22,6 +22,7 @@ from pathlib import Path
 
 import fonts.ttf
 import pytest
+import yaml
 from jsonschema import Draft202012Validator
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon, box
@@ -34,7 +35,6 @@ from scenet.errors import PanelSyntaxError, SfxPlacementError
 from scenet.frontends.yaml_front import parse_panel
 from scenet.ir import Face, SfxEvent, SfxSize
 from scenet.pipeline import compile_file, compile_source
-from scenet.safe_yaml import load
 from scenet.schema import panel_schema
 from scenet.solve.sfx import SIZE_FACTORS, layout_effect
 from scenet.solve.text import DISPLAY_FONT_PATH, Typeface
@@ -60,7 +60,7 @@ def _zone(core: PanelCore, index: int = 0) -> Polygon:
     return Polygon(core.sfx[index].zone)
 
 
-def _faces(core: PanelCore) -> list:
+def _faces(core: PanelCore) -> list[Polygon]:
     return [
         ShapelyPoint(a.face_exclusion.cx, a.face_exclusion.cy).buffer(a.face_exclusion.r)
         for a in core.actors
@@ -103,7 +103,7 @@ class TestTheLanguage:
         assert "".join(glyph.char for glyph in core.sfx[0].glyphs) == "k_thunk"
 
     def test_the_published_schema_accepts_it(self):
-        document = load(
+        document = yaml.safe_load(
             f"{PANEL}script:\n  - sfx: {{text: BLAM, from: bob, size: large, hollow: true}}\n"
         )
         assert list(Draft202012Validator(panel_schema()).iter_errors(document)) == []
