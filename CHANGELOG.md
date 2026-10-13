@@ -92,6 +92,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **Spoken captions by two speakers were quoted as one run.** Consecutive `spoken`
+  captions open a quote each and close only the last, but the run did not end when the
+  speaker changed, so the first speaker's words were never closed. A change of `by` now
+  ends the run. No shipped example moves. (Part of #75)
 - **A comic-script directive written twice in one panel silently kept the second.**
   `@setting: {weather: rain}` and then `@setting: {place: docks}` lost the rain. The second
   is now `duplicate-key`, at its line, naming the first. An `@script:` directive, which the

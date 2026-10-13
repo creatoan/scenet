@@ -713,9 +713,9 @@ def letter_tone(fill: str) -> str:
 def caption_text(events: Sequence[ScriptEvent], index: int) -> str:
     """The text of a caption, with quotation marks where the kind calls for them.
 
-    Blambot's rule for a run of spoken captions: an opening quote on each, a closing
-    quote **only on the last**. Consecutive boxes are one continuous line of off-panel
-    speech, and closing each of them would read as four separate interruptions.
+    Blambot's rule for a run of one speaker's spoken captions: an opening quote on each, a
+    closing quote **only on the last**. Consecutive boxes are one continuous line of
+    off-panel speech, and closing each of them would read as four separate interruptions.
 
     Applied here, before measurement, and carried through Panel Core as part of the
     resolved lines. Adding the marks in the emitter would make the text wider than the
@@ -745,8 +745,15 @@ def caption_text(events: Sequence[ScriptEvent], index: int) -> str:
     if not isinstance(event, CaptionEvent) or not event.kind.is_quoted:
         return events[index].text
 
+    # A run is one speaker's speech. Blambot again: "end quotes should appear as each
+    # speaker finishes/before the next one begins" -- so a change of speaker closes it,
+    # and a box naming nobody is not the same voice as one naming somebody.
     following = events[index + 1] if index + 1 < len(events) else None
-    continues = isinstance(following, CaptionEvent) and following.kind.is_quoted
+    continues = (
+        isinstance(following, CaptionEvent)
+        and following.kind.is_quoted
+        and following.by == event.by
+    )
     return OPENING_QUOTE + event.text + ("" if continues else CLOSING_QUOTE)
 
 

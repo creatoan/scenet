@@ -483,9 +483,10 @@ render an inner voice: a `monologue` caption and a `thought` balloon. Both are c
 different eras of the same convention, not a duplication.
 
 **Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
-captions, each opens with a quote and only the last one closes — the run is one continuous line of
-off-panel speech, and closing every box would read as a series of interruptions. Write the words;
-the marks are lettering.
+captions by one speaker, each opens with a quote and only the last one closes — the run is one
+continuous line of off-panel speech, and closing every box would read as a series of interruptions.
+A change of speaker (`by`) ends the run, so each speaker's last box closes, as Blambot asks: end
+quotes "should appear as each speaker finishes". Write the words; the marks are lettering.
 
 **`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
 who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
