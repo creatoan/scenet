@@ -198,9 +198,9 @@ CAPTION (monologue): I should have brought an umbrella.
 
     def test_a_bare_caption_line_is_not_read_as_a_cue(self):
         """`CAPTION` on its own matches the character-cue pattern, so it has to be
-        ruled out before cue detection or the next line becomes its dialogue."""
-        with pytest.raises(ScriptSyntaxError, match="CAPTION"):
-            parse_script("""
+        ruled out before cue detection or the next line becomes its dialogue. It used to
+        be refused; as Dark Horse's `CAP:` asks, its text is now the line under it."""
+        panels = parse_script("""
 ---
 cast: {ALICE: {reference: alice}}
 ---
@@ -208,6 +208,9 @@ PANEL 1
 CAPTION
 Midnight. The docks.
 """)
+        (event,) = panels["1"].script
+        assert isinstance(event, CaptionEvent)
+        assert event.text == "Midnight. The docks."
 
     def test_prose_descriptions_are_not_interpreted(self):
         """Turning prose into staging needs language understanding, and guessing

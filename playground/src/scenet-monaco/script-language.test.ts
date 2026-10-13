@@ -25,6 +25,8 @@ const CLASS_OF: Readonly<Record<string, string>> = {
   "meta.separator": "front-matter-delimiter",
   "keyword.markdown": "markdown",
   "annotation.page-count": "page-count",
+  "number.balloon": "balloon-number",
+  "type.caption-speaker": "caption-speaker",
   "keyword.page": "page-keyword",
   "string.page": "page-label",
   "keyword.panel": "panel-keyword",

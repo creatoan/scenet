@@ -248,3 +248,210 @@ def test_every_note_has_a_rule_the_catalogue_knows():
     ):
         assert isinstance(item, Diagnostic)
         assert item.level == "note"
+
+
+# Typographic quotes, spelled as code points so no editor mistakes one for another.
+LEFT, RIGHT = chr(0x201C), chr(0x201D)
+GUILLEMET_OPEN, GUILLEMET_CLOSE, NBSP = chr(0x00AB), chr(0x00BB), chr(0x00A0)
+
+
+def events(panel: PanelIR) -> list[tuple[str, str | None, str, str]]:
+    """What a panel says, as `(verb, speaker, kind, text)`."""
+    said: list[tuple[str, str | None, str, str]] = []
+    for event in panel.script:
+        if isinstance(event, SayEvent):
+            said.append(("say", event.by, event.kind.value, event.text))
+        elif isinstance(event, CaptionEvent):
+            said.append(("caption", event.by, event.kind.value, event.text))
+    return said
+
+
+def only(body: str) -> list[tuple[str, str | None, str, str]]:
+    """What the one panel of a script says."""
+    (panel,) = panels(body).values()
+    return events(panel)
+
+
+class TestCaptions:
+    """Dark Horse: `CAP:` is "indicated the same way" as dialogue -- the text under it."""
+
+    @pytest.mark.parametrize(
+        "body",
+        ["CAP: Later.", "CAP:\nLater.", "CAPTION\nLater.", "CAPTION:\nLater.", "**CAP:** Later."],
+    )
+    def test_a_caption_on_its_line_or_under_it(self, body: str):
+        assert only(f"PANEL 1\n{body}\n") == [("caption", None, "locale", "Later.")]
+
+    def test_its_text_runs_to_a_blank_line_when_under_it(self):
+        said = only("PANEL 1\nCAP:\nLater that night,\nby the docks.\n\nRain.\n")
+        assert said == [("caption", None, "locale", "Later that night, by the docks.")]
+
+    def test_its_first_line_is_its_text_whatever_it_looks_like(self):
+        assert only("PANEL 1\nCAPTION\nMIDNIGHT.\n") == [("caption", None, "locale", "MIDNIGHT.")]
+
+    def test_a_kind_works_either_way(self):
+        said = only("PANEL 1\nCAPTION (monologue)\nShe never forgot.\nCAP (editorial): See #4.\n")
+        assert [kind for _, _, kind, _ in said] == ["monologue", "editorial"]
+
+    def test_with_no_text_it_is_an_error_at_its_line(self):
+        assert found("PANEL 1\nCAP:\n\nRain.\n") == [("error", "invalid-field", 5)]
+
+    def test_a_name_that_starts_with_cap_is_a_cue(self):
+        said = only("PANEL 1\n@cast: {CAPTAIN: {reference: bob}}\nCAPTAIN: Hi.\n")
+        assert said == [("say", "CAPTAIN", "speech", "Hi.")]
+
+
+class TestCaptionsThatCarrySpeech:
+    """Dark Horse's `CAP/CHARACTER`, "placing the speech in quotation marks" -- marks the
+    compiler adds itself, so the writer's are taken off rather than doubled."""
+
+    def test_cap_slash_name_is_a_spoken_caption_by_them(self):
+        said = only(f"PANEL 1\nCAP/ALICE\n{LEFT}-- a caption can carry the speech.{RIGHT}\n")
+        assert said == [("caption", "ALICE", "spoken", "-- a caption can carry the speech.")]
+
+    def test_inline_and_with_straight_quotes(self):
+        said = only('PANEL 1\nCAPTION/BOB: "Get down!"\n')
+        assert said == [("caption", "BOB", "spoken", "Get down!")]
+
+    def test_a_run_opens_each_box_with_a_quote_and_closes_only_the_last(self):
+        """Blambot's run: the writer's opening quote on each box is the writer's, too."""
+        body = f"PANEL 1\nCAP/ALICE: {LEFT}Get down,\n\nCAP/ALICE: {LEFT}all of you!{RIGHT}\n"
+        assert [text for *_, text in only(body)] == ["Get down,", "all of you!"]
+
+    def test_a_kind_that_cannot_have_a_speaker_is_the_existing_rule(self):
+        assert found("PANEL 1\nCAP/ALICE (monologue): Hm.\n") == [("error", "caption-speaker", 5)]
+
+    @pytest.mark.parametrize("words", ["voice over", "V.O.", "VO", "voice-over"])
+    def test_a_voice_over_caption_is_spoken(self, words: str):
+        assert only(f"PANEL 1\nCAPTION ({words}): Hello.\n") == [
+            ("caption", None, "spoken", "Hello.")
+        ]
+
+
+class TestVoiceOver:
+    """Blambot: a voice over is "the character is speaking, but is not in the location
+    shown" -- a spoken caption by them, not a balloon tailed to somebody drawn."""
+
+    def test_a_cue_marked_voice_over_is_a_spoken_caption(self):
+        said = only("PANEL 1\nALICE (V.O.)\nI never came back.\n")
+        assert said == [("caption", "ALICE", "spoken", "I never came back.")]
+
+    def test_inline_too(self):
+        assert only("PANEL 1\nALICE (VO): Never.\n") == [("caption", "ALICE", "spoken", "Never.")]
+
+    def test_a_voice_over_has_no_balloon_to_whisper_in(self):
+        with pytest.raises(ScriptSyntaxError, match="voice over") as raised:
+            panels("PANEL 1\nALICE (V.O., whisper)\nHm.\n")
+        assert (raised.value.rule, raised.value.line) == ("invalid-field", 5)
+
+
+class TestInlineCues:
+    def test_a_name_and_its_line_on_one_line(self):
+        assert only("PANEL 1\nALICE: Hello.\n") == [("say", "ALICE", "speech", "Hello.")]
+
+    @pytest.mark.parametrize("line", ["ALICE (whisper): Psst.", "**ALICE (whisper):** Psst."])
+    def test_with_a_parenthetical_or_in_bold(self, line: str):
+        assert only(f"PANEL 1\n{line}\n") == [("say", "ALICE", "whisper", "Psst.")]
+
+    def test_a_wrapped_line_belongs_to_it(self):
+        assert only("PANEL 1\nALICE: Hello\nthere.\n") == [
+            ("say", "ALICE", "speech", "Hello there.")
+        ]
+
+    def test_the_panels_whole_cast_decides(self):
+        """A cast member the panel adds after the line still makes it dialogue."""
+        said = only("PANEL 1\nCARL: Who?\n@cast: {CARL: {reference: bob}}\n")
+        assert said == [("say", "CARL", "speech", "Who?")]
+
+    def test_a_name_not_in_the_cast_is_prose_and_a_note(self):
+        document = parse_script_document(FRONT + "PANEL 1\nNOTE: redraw the rain.\n")
+        assert events(document.panels["1"]) == []
+        assert document.descriptions["1"] == ("NOTE: redraw the rain.",)
+        assert found("PANEL 1\nNOTE: redraw the rain.\n") == [("note", "looks-like-dialogue", 5)]
+
+    def test_a_name_in_lower_case_is_dialogue_only_when_it_is_a_cast_member(self):
+        junior = "PANEL 1\n@cast: {Junior: {reference: bob}}\nJunior: Die, you dirty rat!\n"
+        assert only(junior) == [("say", "Junior", "speech", "Die, you dirty rat!")]
+        assert only("PANEL 1\nLater: they meet.\n") == []
+        assert found("PANEL 1\nLater: they meet.\n") == []
+
+    def test_one_ends_the_speech_before_it(self):
+        """It used to be joined onto the balloon above: "Hi. BOB: Hello."."""
+        said = only("PANEL 1\nALICE\nHi.\nBOB: Hello.\n")
+        assert said == [("say", "ALICE", "speech", "Hi."), ("say", "BOB", "speech", "Hello.")]
+
+    def test_one_not_in_the_cast_continues_the_speech(self):
+        said = only("PANEL 1\nALICE\nListen.\nRULE ONE: never lie.\n")
+        assert said == [("say", "ALICE", "speech", "Listen. RULE ONE: never lie.")]
+
+    def test_the_line_under_a_cue_is_its_line_unless_a_cast_member_speaks(self):
+        assert only("PANEL 1\nBOB\nNOTE: this is what he says.\n") == [
+            ("say", "BOB", "speech", "NOTE: this is what he says.")
+        ]
+
+
+class TestModifiers:
+    def test_burst_is_a_shout(self):
+        """Blambot: "(BURST), meaning the dialogue is shouted"."""
+        assert only("PANEL 1\nALICE (burst)\nNo!\n") == [("say", "ALICE", "shout", "No!")]
+
+    @pytest.mark.parametrize("cue", ["ALICE (whisper, burst)", "ALICE (whisper) (thinking)"])
+    def test_two_kinds_of_balloon_is_an_error(self, cue: str):
+        with pytest.raises(ScriptSyntaxError) as raised:
+            panels(f"PANEL 1\n{cue}\nNo!\n")
+        assert (raised.value.rule, raised.value.line) == ("invalid-field", 5)
+
+    def test_a_performance_note_beside_a_kind_is_still_ignored(self):
+        assert only("PANEL 1\nALICE (quietly) (whisper)\nNo.\n") == [
+            ("say", "ALICE", "whisper", "No.")
+        ]
+
+
+class TestBalloonNumbers:
+    """Blambot: "Each item in the lettering area should be numbered"."""
+
+    @pytest.mark.parametrize("body", ["1. ALICE:\nHi.", "1) ALICE: Hi.", "12 ALICE\nHi."])
+    def test_a_numbered_cue(self, body: str):
+        assert only(f"PANEL 1\n{body}\n") == [("say", "ALICE", "speech", "Hi.")]
+
+    def test_a_numbered_caption(self):
+        assert only("PANEL 1\n2. CAP: Later.\n") == [("caption", None, "locale", "Later.")]
+
+    def test_a_wrapped_line_that_starts_with_a_number_stays_wrapped(self):
+        said = only("PANEL 1\nALICE\nJust\n1 MORE TIME\n")
+        assert said == [("say", "ALICE", "speech", "Just 1 MORE TIME")]
+
+
+class TestQuotationMarks:
+    @pytest.mark.parametrize(
+        "line",
+        [
+            '"Hello."',
+            f"{LEFT}Hello.{RIGHT}",
+            f"{GUILLEMET_OPEN}{NBSP}Hello.{NBSP}{GUILLEMET_CLOSE}",
+            f"{GUILLEMET_OPEN} Hello. {GUILLEMET_CLOSE}",
+        ],
+    )
+    def test_a_balloons_enclosing_marks_are_taken_off(self, line: str):
+        assert only(f"PANEL 1\nALICE\n{line}\n") == [("say", "ALICE", "speech", "Hello.")]
+
+    def test_a_quotation_inside_is_kept(self):
+        line = '"He said "no", twice."'
+        assert only(f"PANEL 1\nALICE\n{line}\n") == [("say", "ALICE", "speech", line)]
+
+    def test_a_double_dash_is_kept_at_either_end(self):
+        said = only("PANEL 1\nALICE:\nWait --\n\nBOB:\n-- no.\n")
+        assert [text for *_, text in said] == ["Wait --", "-- no."]
+
+
+class TestReservedNames:
+    @pytest.mark.parametrize("name", ["CAP", "CAPTION", "SFX", "Sfx"])
+    def test_a_label_cannot_be_a_cast_member(self, name: str):
+        with pytest.raises(ScriptSyntaxError, match="reserved") as raised:
+            parse_script(f"---\ncast: {{{name}: {{reference: alice}}}}\n---\nPANEL 1\n")
+        assert raised.value.rule == "invalid-field"
+
+    def test_nor_in_a_panels_own_cast(self):
+        with pytest.raises(ScriptSyntaxError, match="reserved") as raised:
+            panels("PANEL 1\n@cast: {CAP: {reference: bob}}\n")
+        assert raised.value.line == 5

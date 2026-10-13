@@ -444,7 +444,9 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
 
     Headings come as publishers write them: a title before the first page, `PAGE TWO
     (three panels)` with the count it really has, `Panel 2. A description.`, numbers in
-    words, and Markdown's `##` and `**`.
+    words, and Markdown's `##` and `**`. So do captions -- `CAP:` with its text under it,
+    Dark Horse's `CAP/ALICE` -- and cues with their line on theirs, `ALICE: Hello.`, and a
+    voice over, which is a spoken caption.
     """
     second = draw(st.sampled_from(["BOB", "JOSÉ", "ZOË"]))
     spellings = {
@@ -478,9 +480,18 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
             lines: list[tuple[str, str | None]] = []
             for _ in range(draw(st.integers(0, 3))):
                 if draw(st.integers(0, 3)) == 0:
-                    kind = draw(st.sampled_from(["", " (locale)", " (monologue)"]))
-                    out += [f"CAPTION{kind}: {draw(_spoken())}", ""]
+                    out += [*draw(_caption(cast)), ""]
                     lines.append(("caption", None))
+                elif draw(st.integers(0, 5)) == 0:
+                    # A voice over: the speaker is heard, in a spoken caption.
+                    name = draw(st.sampled_from(cast))
+                    out += [f"{name} (V.O.)", draw(_spoken()), ""]
+                    lines.append(("caption", None))
+                elif draw(st.integers(0, 3)) == 0:
+                    # A cue with its line on the same line.
+                    speaker = draw(st.sampled_from(cast))
+                    out += [f"{speaker}: {draw(_spoken())}", ""]
+                    lines.append(("say", speaker))
                 else:
                     modifier = draw(
                         st.sampled_from(["", " (whisper)", " (shouting)", " (thinking)"])
@@ -495,6 +506,21 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
             counts.append(len(lines))
             said.append(tuple(lines))
     return DrawnScript("\n".join(out) + "\n", tuple(counts), tuple(said))
+
+
+@st.composite
+def _caption(draw: st.DrawFn, cast: list[str]) -> list[str]:
+    """A caption, as any of the labels a script may give one: `CAPTION:`, `CAP:` with its
+    text on the line or under it, a kind, or Dark Horse's `CAP/NAME` carrying speech."""
+    label = draw(st.sampled_from(["CAPTION", "CAP"]))
+    speaker = draw(st.sampled_from(["", *(f"/{name}" for name in cast)]))
+    kind = "" if speaker else draw(st.sampled_from(["", " (locale)", " (monologue)"]))
+    text = draw(_spoken())
+    if speaker:
+        text = f'"{text}"'
+    if draw(st.booleans()):
+        return [f"{label}{speaker}{kind}: {text}"]
+    return [f"{label}{speaker}{kind}", text]
 
 
 #: Numbers as a script may spell them, for headings.

@@ -17,7 +17,14 @@ from typing import Any
 
 import pytest
 
-from scenet.frontends.script_front import _page_label, _read_script, _split_front_matter
+from scenet.frontends.script_front import (
+    VOICE_OVER,
+    _page_label,
+    _read_script,
+    _split_front_matter,
+    _unquoted,
+    _unquoted_spoken,
+)
 
 FIXTURES = Path(__file__).parent / "script_highlighting"
 NAMES = sorted(path.stem for path in FIXTURES.glob("*.script"))
@@ -37,6 +44,7 @@ CLASSES = {
     "cue-parenthetical",
     "caption-keyword",
     "caption-kind",
+    "caption-speaker",
     "caption-text",
     "sfx-keyword",
     "sfx-parenthetical",
@@ -44,6 +52,7 @@ CLASSES = {
     "dialogue",
     "prose",
     "markdown",
+    "balloon-number",
 }
 
 Line = list[tuple[str, str]]
@@ -87,43 +96,112 @@ def _as_fixture_says(lines: list[Line]) -> list[dict[str, Any]]:
             inside = True
         elif inside:
             speaker = _in_panel(panels[-1], spans, speaker)
+    for panel in panels:
+        panel["events"] = [_as_lettered(event) for event in panel["events"]]
     return panels
 
 
-def _in_panel(panel: dict[str, Any], spans: dict[str, str], speaker: str | None) -> str | None:
-    """Add one line of a panel's body to it, and say who is speaking after it."""
+def _as_lettered(event: tuple[str, ...]) -> tuple[str, ...]:
+    """An event with the writer's quotation marks off, as the compiler takes them off."""
+    if event[0] == "say":
+        return (event[0], event[1], _unquoted(event[2]))
+    if event[0] == "caption" and event[2] == "spoken":
+        return (event[0], _unquoted_spoken(event[1]), event[2])
+    return event
+
+
+def _is_voice_over(parenthetical: str) -> bool:
+    return any(word.strip().lower() in VOICE_OVER for word in parenthetical.split(","))
+
+
+def _join(panel: dict[str, Any], more: str) -> None:
+    """A wrapped line, joined onto the speech or caption above it."""
+    event = panel["events"][-1]
+    at = 2 if event[0] == "say" else 1
+    panel["events"][-1] = (*event[:at], f"{event[at]} {more}", *event[at + 1 :])
+
+
+def _in_panel(panel: dict[str, Any], spans: dict[str, str], waiting: Any) -> Any:
+    """Add one line of a panel's body to it, and say what the next line belongs to.
+
+    `waiting` is what the line after this one is the text of: a cue, as `("say", NAME)`
+    or a voice over's `("spoken", NAME)`; a caption label, as `("caption", KIND)`; or
+    anything else, when a line of text continues whatever came last.
+    """
     if "directive-name" in spans:
         panel["directives"].append(spans["directive-name"])
-        return speaker
-    if "caption-keyword" in spans:
-        kind = spans.get("caption-kind", "locale")
-        panel["events"].append(("caption", spans["caption-text"], kind))
-        return None
-    if "sfx-text" in spans or "sfx-keyword" in spans:
-        # The sound is on the SFX line, or on the line after a bare `SFX:` cue.
-        if "sfx-text" in spans:
-            panel["events"].append(("sfx", spans["sfx-text"]))
-        return None
-    if "cue-name" in spans:
-        return spans["cue-name"]
-    if "dialogue" in spans:
-        if speaker is not None:
-            panel["events"].append(("say", speaker, spans["dialogue"]))
-        else:
-            # A wrapped line of the same speech.
-            kind, by, text = panel["events"][-1]
-            panel["events"][-1] = (kind, by, f"{text} {spans['dialogue']}")
-        return None
+        return waiting
+    for kind, read in _READERS:
+        if kind in spans:
+            return read(panel, spans, waiting)
     if "prose" in spans:
         panel["description"].append(spans["prose"])
-    return speaker
+    return waiting
+
+
+def _caption_label(panel: dict[str, Any], spans: dict[str, str], _waiting: Any) -> Any:
+    kind = spans.get("caption-kind")
+    if kind is not None and _is_voice_over(kind):
+        kind = "spoken"
+    kind = kind or ("spoken" if "caption-speaker" in spans else "locale")
+    if "caption-text" not in spans:
+        return ("caption", kind)
+    panel["events"].append(("caption", spans["caption-text"], kind))
+    return "complete"
+
+
+def _caption_text(panel: dict[str, Any], spans: dict[str, str], waiting: Any) -> Any:
+    if isinstance(waiting, tuple) and waiting[0] == "caption":
+        panel["events"].append(("caption", spans["caption-text"], waiting[1]))
+    else:
+        _join(panel, spans["caption-text"])
+    return None
+
+
+def _sound(panel: dict[str, Any], spans: dict[str, str], _waiting: Any) -> Any:
+    # The sound is on the SFX line, or on the line after a bare `SFX:` cue.
+    if "sfx-text" in spans:
+        panel["events"].append(("sfx", spans["sfx-text"]))
+    return "complete"
+
+
+def _cue(panel: dict[str, Any], spans: dict[str, str], _waiting: Any) -> Any:
+    voice_over = _is_voice_over(spans.get("cue-parenthetical", ""))
+    cue = ("spoken" if voice_over else "say", spans["cue-name"])
+    if "dialogue" not in spans:
+        return cue
+    # `ALICE: Hello.`: the line is on the cue's own line.
+    return _dialogue(panel, {"dialogue": spans["dialogue"]}, cue)
+
+
+def _dialogue(panel: dict[str, Any], spans: dict[str, str], waiting: Any) -> Any:
+    if isinstance(waiting, tuple) and waiting[0] == "say":
+        panel["events"].append(("say", waiting[1], spans["dialogue"]))
+    elif isinstance(waiting, tuple) and waiting[0] == "spoken":
+        panel["events"].append(("caption", spans["dialogue"], "spoken"))
+    else:
+        # A wrapped line of the same speech.
+        _join(panel, spans["dialogue"])
+    return None
+
+
+#: Which reader takes a line, by the first of these classes on it.
+_READERS = (
+    ("caption-keyword", _caption_label),
+    ("caption-text", _caption_text),
+    ("sfx-keyword", _sound),
+    ("sfx-text", _sound),
+    ("cue-name", _cue),
+    ("dialogue", _dialogue),
+)
 
 
 def _as_compiler_reads(text: str) -> list[dict[str, Any]]:
     """The same, from the script frontend's own drafts."""
-    _, body, offset = _split_front_matter(text, None)
+    front, body, offset = _split_front_matter(text, None)
+    cast = frozenset(front.get("cast", {}))
     panels = []
-    for draft in _read_script(body, None, offset=offset).drafts.values():
+    for draft in _read_script(body, None, offset=offset, cast=cast).drafts.values():
         events = []
         for event in draft.events:
             if "say" in event:

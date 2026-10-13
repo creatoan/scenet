@@ -43,6 +43,8 @@ const CLASS_OF: readonly (readonly [string, string])[] = [
   ["punctuation.separator.frontmatter.scenet-script", "front-matter-delimiter"],
   ["punctuation.definition.markdown.scenet-script", "markdown"],
   ["markup.italic.page-count.scenet-script", "page-count"],
+  ["constant.numeric.balloon-number.scenet-script", "balloon-number"],
+  ["entity.name.type.caption-speaker.scenet-script", "caption-speaker"],
   ["keyword.control.page.scenet-script", "page-keyword"],
   ["entity.name.section.page.scenet-script", "page-label"],
   ["keyword.control.panel.scenet-script", "panel-keyword"],
