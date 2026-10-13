@@ -18,7 +18,7 @@ promised to survive a minor version.
 
 | | Names |
 |---|---|
-| **Compiling** | `compile_source` · `compile_file` · `compile_scene` · `compile_scene_file` · `compile_document` · `compile_ir` · `CompileResult` |
+| **Compiling** | `compile_source` · `compile_file` · `compile_scene` · `compile_scene_file` · `compile_script` · `compile_document` · `compile_ir` · `CompileResult` |
 | **Parsing only** | `parse_panel` · `parse_scene` · `parse_script` · `load_panel` · `load_scene` · `load_script` |
 | **Rendering** | `render` · `render_debug` · `render_strip` |
 | **Tiers** | `PanelIR` · `PanelCore` |

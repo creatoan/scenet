@@ -138,6 +138,7 @@ from scenet.pipeline import (
     compile_ir,
     compile_scene,
     compile_scene_file,
+    compile_script,
     compile_source,
 )
 from scenet.places import PLACES, Place
@@ -158,6 +159,7 @@ __all__ = [
     "compile_ir",
     "compile_scene",
     "compile_scene_file",
+    "compile_script",
     "compile_source",
     # -- parsing, without compiling ------------------------------------------
     "load_panel",

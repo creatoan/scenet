@@ -41,7 +41,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import ValidationError
@@ -50,6 +50,7 @@ from pydantic_core import ErrorDetails
 from scenet import __version__
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.compose import merge, resolve_overrides
+from scenet.emphasis import plain
 from scenet.errors import (
     BalloonPlacementError,
     CompositionError,
@@ -80,10 +81,10 @@ from scenet.frontends.positions import (
     locate,
     syntax_error_region,
 )
-from scenet.frontends.script_front import FRONT_MATTER, normalise_text, parse_script
-from scenet.ir import PageLayout, PanelIR, check_placements
+from scenet.frontends.script_front import FRONT_MATTER, normalise_text, parse_script_document
+from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
-from scenet.pipeline import compile_book, compile_ir
+from scenet.pipeline import compile_book, compile_ir, compile_script
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
 
@@ -122,11 +123,15 @@ class Rule:
         summary: One line, shown as the alert title.
         description: What the rule checks and why it exists.
         help: What to do about it.
+        level: `error` for a contradiction, which the compiler cannot build past; `note`
+            for a house limit, which a letterer works to and a document can exceed and
+            still compile. Only an error makes `scenet check` fail.
     """
 
     summary: str
     description: str
     help: str
+    level: Literal["error", "note"] = "error"
 
 
 #: Every rule Scenet can report, keyed by its bare identifier.
@@ -376,6 +381,19 @@ RULES: dict[str, Rule] = {
         ),
         help="Make it smaller or shorter, drop its rotation or arc, or give the panel more room.",
     ),
+    "word-limit": Rule(
+        summary="A balloon, caption or panel holds more words than a letterer fits well",
+        description=(
+            "Dark Horse's script format asks for 'approximately 25 words per balloon, and "
+            "about 50 words per panel, max'. It is a house limit, not a contradiction: the "
+            "panel still compiles, so this is a note, and `scenet check` passes. Words are "
+            "counted as they are lettered: anything between spaces that holds a letter or a "
+            "digit, so `--` and an ellipsis are not words, and emphasis markers add none. A "
+            "panel counts its balloons and captions; a sound effect is not counted."
+        ),
+        help="Split the balloon in two, or carry the rest of the words to the next panel.",
+        level="note",
+    ),
     "internal": Rule(
         summary="The compiler failed in a way it does not have a rule for",
         description=(
@@ -411,6 +429,11 @@ class Diagnostic:
     path: tuple[str | int, ...] = ()
     source: Path | None = None
     region: Region | None = field(default=None, compare=False)
+
+    @property
+    def level(self) -> Literal["error", "note"]:
+        """Its rule's level: a property, so a finding cannot disagree with its rule."""
+        return RULES[self.rule].level
 
     def fingerprint(self, *, root: Path | None = None) -> str:
         """A stable identity for this finding, for `partialFingerprints`.
@@ -751,6 +774,67 @@ def _diagnose_lettering(
     return []
 
 
+#: Dark Horse's house limits: "Captions and dialogue should be limited to approximately
+#: 25 words per balloon, and about 50 words per panel, max."
+WORDS_PER_BALLOON = 25
+WORDS_PER_PANEL = 50
+
+
+def word_count(text: str) -> int:
+    """How many words a line letters.
+
+    A word is anything between spaces that holds a letter or a digit, counted on the text
+    as it is lettered: `--` and an ellipsis are punctuation, and the underscores marking
+    emphasis are not lettered at all.
+
+    Example:
+        >>> word_count("I _told_ you -- twice ...")
+        4
+    """
+    return sum(1 for token in plain(text).split() if any(char.isalnum() for char in token))
+
+
+def _over_the_word_limits(panel: PanelIR) -> list[tuple[tuple[str | int, ...], str]]:
+    """Where a panel's lettering runs past Dark Horse's limits, and by how much.
+
+    Returns:
+        Each place, as a path within the panel, with what to say about it: the panel as a
+        whole first, then each balloon or caption over its own limit, in script order.
+    """
+    found: list[tuple[tuple[str | int, ...], str]] = []
+    total = 0
+    for index, event in enumerate(panel.script):
+        if not isinstance(event, SayEvent | CaptionEvent):
+            # A sound effect is part of the picture, not lettering to be read.
+            continue
+        count = word_count(event.text)
+        total += count
+        if count > WORDS_PER_BALLOON:
+            what = "balloon" if isinstance(event, SayEvent) else "caption"
+            found.append(
+                (
+                    ("script", index, event.verb, "text"),
+                    f"this {what} holds {count} words; Dark Horse asks for about "
+                    f"{WORDS_PER_BALLOON} a balloon or caption at most",
+                )
+            )
+    if total > WORDS_PER_PANEL:
+        found.insert(
+            0,
+            (
+                ("script",),
+                f"this panel's balloons and captions hold {total} words; Dark Horse asks "
+                f"for about {WORDS_PER_PANEL} a panel at most",
+            ),
+        )
+    return found
+
+
+def _errors(found: list[Diagnostic]) -> list[Diagnostic]:
+    """The findings that are errors: what stops a document compiling, or a check passing."""
+    return [item for item in found if item.level == "error"]
+
+
 def _diagnose_panel(
     data: dict[str, Any],
     text: str,
@@ -810,16 +894,27 @@ def _diagnose_panel(
 
     found = _diagnose_cast(panel, text, source, prefix=prefix, library=library)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
-    if found:
+    if _errors(found):
         # A cast that does not resolve is not a document `--deep` can usefully
         # compile -- it would fail on the same reference with a worse location.
         return found
+
+    found += [
+        Diagnostic(
+            rule="word-limit",
+            message=message,
+            path=prefix + path,
+            source=source,
+            region=locate(text, prefix + path) or locate(text, prefix) or DOCUMENT_START,
+        )
+        for path, message in _over_the_word_limits(panel)
+    ]
 
     if deep:
         try:
             compile_ir(panel, library=library, base=base)
         except ScenetError as exc:
-            return [
+            found.append(
                 Diagnostic(
                     rule=_rule_for_scenet_error(exc),
                     message=_message_of(exc),
@@ -827,9 +922,9 @@ def _diagnose_panel(
                     source=source,
                     region=locate(text, prefix) or DOCUMENT_START,
                 )
-            ]
+            )
 
-    return []
+    return found
 
 
 def _diagnose_scene(
@@ -939,7 +1034,7 @@ def _diagnose_scene(
             if item not in found:
                 found.append(item)
 
-    if deep and paged and not found:
+    if deep and paged and not _errors(found):
         try:
             compile_book(text, source=source, base=base, library=library)
         except ScenetError as exc:
@@ -1144,23 +1239,16 @@ def diagnose_script(
     Returns:
         Findings in source order, empty if the script is valid.
     """
+    lines = normalise_text(text).split("\n")
     try:
-        panels = parse_script(text, source=source)
+        document = parse_script_document(text, source=source)
     except ScriptSyntaxError as exc:
-        line = exc.line or 1
-        lines = normalise_text(text).split("\n")
-        # The whole line: GitHub requires every bound, so "line N" cannot be said with
-        # `startLine` alone, and ending at column 2 would claim the first character.
-        length = len(lines[line - 1]) if line <= len(lines) else 0
         return [
             Diagnostic(
                 rule=_rule_for_scenet_error(exc),
                 message=_message_of(exc),
                 source=source,
-                region=Region(
-                    start=Position(line=line, column=1),
-                    end=Position(line=line, column=length + 1),
-                ),
+                region=_script_line(lines, exc.line or 1),
             )
         ]
     except ScenetError as exc:
@@ -1173,29 +1261,56 @@ def diagnose_script(
             )
         ]
 
+    panels = document.panels
     base = _folder(source, base)
     found = _diagnose_script_cast(text, panels, source, library=library)
     found += _diagnose_script_lettering(text, panels, source, base=base)
-    if found:
+    if _errors(found):
         return _in_source_order(found)
 
-    if deep:
-        for name, panel in panels.items():
-            prefix = (name,)
-            try:
-                compile_ir(panel, library=library, base=base)
-            except ScenetError as exc:
-                return [
-                    Diagnostic(
-                        rule=_rule_for_scenet_error(exc),
-                        message=_message_of(exc),
-                        path=prefix,
-                        source=source,
-                        region=DOCUMENT_START,
-                    )
-                ]
+    for name, panel in panels.items():
+        written = document.lines[name]
+        for path, message in _over_the_word_limits(panel):
+            event = path[1] if len(path) > 1 else None
+            line = written.events[event] if isinstance(event, int) else written.heading
+            found.append(
+                Diagnostic(
+                    rule="word-limit",
+                    message=message,
+                    path=(name, *path),
+                    source=source,
+                    region=_script_line(lines, line),
+                )
+            )
 
-    return []
+    if deep:
+        # Compiled exactly as `scenet build` compiles it, so the two cannot disagree.
+        try:
+            compile_script(text, source=source, base=base, library=library)
+        except ScenetError as exc:
+            found.append(
+                Diagnostic(
+                    rule=_rule_for_scenet_error(exc),
+                    message=_message_of(exc),
+                    path=(exc.panel,) if exc.panel is not None else (),
+                    source=source,
+                    region=_script_line(lines, document.lines[exc.panel].heading)
+                    if exc.panel in document.lines
+                    else DOCUMENT_START,
+                )
+            )
+
+    return _in_source_order(found)
+
+
+def _script_line(lines: list[str], line: int) -> Region:
+    """A whole line of a script, as a script finding's region.
+
+    The whole line: GitHub requires every bound, so "line N" cannot be said with
+    `startLine` alone, and ending at column 2 would claim the first character.
+    """
+    length = len(lines[line - 1]) if line <= len(lines) else 0
+    return Region(start=Position(line=line, column=1), end=Position(line=line, column=length + 1))
 
 
 def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
@@ -1341,7 +1456,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
             "shortDescription": {"text": RULES[name].summary},
             "fullDescription": {"text": RULES[name].description},
             "help": {"text": RULES[name].help},
-            "defaultConfiguration": {"level": "error"},
+            "defaultConfiguration": {"level": RULES[name].level},
         }
         for name in used
     ]
@@ -1350,7 +1465,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
         {
             "ruleId": f"{RULE_NAMESPACE}/{item.rule}",
             "ruleIndex": index_of[item.rule],
-            "level": "error",
+            "level": item.level,
             "message": {"text": item.message},
             "locations": [
                 {

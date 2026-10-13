@@ -11,6 +11,21 @@ adult, or a seated versus a standing pose. Encoding the fraction bakes in one bo
 
 See [shot_types.md](../reference/shot_types.md), which is normative.
 
+## Notes report a house limit; errors a contradiction
+
+Every finding was an error, and any finding failed `scenet check`. That was right while every
+rule was a contradiction — an actor not in the cast, staging that loops — which no compile
+can get past. Dark Horse's "approximately 25 words per balloon, and about 50 words per panel,
+max" is a different kind of thing: a limit a letterer works to, which a panel can exceed and
+still be drawn. Failing a check over it would make the check lie about whether the document
+builds, and CI would key off the lie.
+
+So a rule has a level. An **error** fails the check, and is exactly what stops `build`; the
+seam between the two is tested as "no errors if and only if the build succeeds". A **note** is
+reported with its rule and its place, as SARIF `note`, so an editor shows it as information,
+and never fails anything. `--deep` runs on a document with notes, since notes do not stop the
+compile it would run.
+
 ## Cassowary is linear, so the language must resolve disjunctions
 
 Non-overlap between two actors is a disjunction — A left of B, **or** B left of A — and no linear

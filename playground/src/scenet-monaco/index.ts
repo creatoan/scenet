@@ -41,6 +41,7 @@ import {
 } from "./script-language";
 import { SEMANTIC_TOKEN_TYPES, encodeTokens, scenetTokens } from "./semantic";
 
+export { SCENET_MARKER_OWNER, toMarkers, type ScenetFinding } from "./markers";
 export { SCRIPT_LANGUAGE_ID } from "./script-language";
 
 /** Names of the editor themes this module defines. */
@@ -166,45 +167,6 @@ function documentThemeRules(dark: boolean): Monaco.editor.ITokenThemeRule[] {
 
 function isScenetDocument(path: string): boolean {
   return path.endsWith(".panel.yaml") || path.endsWith(".scene.yaml");
-}
-
-/**
- * One finding from the compiler's checker, as `scenet.diagnostics` reports it.
- *
- * Lines and columns are one-based and the end column is exclusive -- SARIF's convention,
- * which is also Monaco's, so they need no adjustment.
- */
-export interface ScenetFinding {
-  readonly rule: string;
-  readonly message: string;
-  readonly line: number;
-  readonly column: number;
-  readonly endLine: number;
-  readonly endColumn: number;
-}
-
-/** Owner name for markers set from compiler findings, distinct from the schema's. */
-export const SCENET_MARKER_OWNER = "scenet";
-
-/** Turn compiler findings into editor markers. */
-export function toMarkers(
-  monaco: typeof Monaco,
-  findings: readonly ScenetFinding[],
-): Monaco.editor.IMarkerData[] {
-  return findings.map((finding) => {
-    const sameLine = finding.endLine <= finding.line;
-    return {
-      severity: monaco.MarkerSeverity.Error,
-      message: finding.message,
-      code: finding.rule,
-      source: "scenet",
-      startLineNumber: finding.line,
-      startColumn: finding.column,
-      endLineNumber: Math.max(finding.line, finding.endLine),
-      // A zero-width marker is invisible; one character at least.
-      endColumn: sameLine ? Math.max(finding.endColumn, finding.column + 1) : finding.endColumn,
-    };
-  });
 }
 
 /** Which of the three document kinds a source string is. */

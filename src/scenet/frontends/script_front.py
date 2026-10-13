@@ -625,8 +625,46 @@ def normalise_text(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
-def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
-    """Parse comic script into one validated panel per PANEL heading."""
+@dataclass(frozen=True, slots=True)
+class PanelLines:
+    """Where a script panel was written, for a finding about it to point at.
+
+    Attributes:
+        heading: The line of its PANEL heading.
+        events: The line each entry of its `script` was written on, in order: a speech's
+            cue, a caption's or a sound effect's own line.
+    """
+
+    heading: int
+    events: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ScriptDocument:
+    """A comic script, read and validated, and where each of its panels was written.
+
+    Attributes:
+        panels: Panel name to scene graph, in the order the panels appear.
+        lines: Panel name to the lines it was written on.
+    """
+
+    panels: dict[str, PanelIR]
+    lines: dict[str, PanelLines]
+
+
+def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDocument:
+    r"""Parse comic script, keeping the line each panel and each of its events is on.
+
+    `parse_script` is this, less the lines. A checker reporting a fault in a panel that
+    did validate -- a balloon over the word limit, say -- needs to know where it is.
+
+    Example:
+        >>> document = parse_script_document(
+        ...     "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n"
+        ... )
+        >>> document.lines["1"]
+        PanelLines(heading=4, events=(5,))
+    """
     # Anything that reaches here as a string gets the treatment a file would have had,
     # and the same whatever editor saved it.
     text = normalise_text(text)
@@ -636,6 +674,24 @@ def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]
     if not panels:
         raise ScriptSyntaxError("no PANEL headings found", source=source)
 
+    return ScriptDocument(
+        panels=_validate(panels, front_matter, source),
+        lines={
+            name: PanelLines(heading=draft.line, events=tuple(draft.event_lines))
+            for name, draft in panels.items()
+        },
+    )
+
+
+def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
+    """Parse comic script into one validated panel per PANEL heading."""
+    return parse_script_document(text, source=source).panels
+
+
+def _validate(
+    panels: dict[str, _PanelDraft], front_matter: dict[str, Any], source: Path | None
+) -> dict[str, PanelIR]:
+    """Validate each drafted panel over the front matter, reporting the first fault."""
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
         combined = merge(front_matter, draft.as_document())

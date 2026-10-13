@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "scenet",
+          "version": "0.10.0",
+          "informationUri": "https://github.com/creatoan/scenet",
+          "rules": [
+            {
+              "id": "scenet/word-limit",
+              "name": "word-limit",
+              "shortDescription": {
+                "text": "A balloon, caption or panel holds more words than a letterer fits well"
+              },
+              "fullDescription": {
+                "text": "Dark Horse's script format asks for 'approximately 25 words per balloon, and about 50 words per panel, max'. It is a house limit, not a contradiction: the panel still compiles, so this is a note, and `scenet check` passes. Words are counted as they are lettered: anything between spaces that holds a letter or a digit, so `--` and an ellipsis are not words, and emphasis markers add none. A panel counts its balloons and captions; a sound effect is not counted."
+              },
+              "help": {
+                "text": "Split the balloon in two, or carry the rest of the words to the next panel."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "unicodeCodePoints",
+      "results": [
+        {
+          "ruleId": "scenet/word-limit",
+          "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "this balloon holds 26 words; Dark Horse asks for about 25 a balloon or caption at most"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "sources/word-limit.panel.yaml"
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 13,
+                  "endLine": 9,
+                  "endColumn": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "scenetDiagnostic/v1": "3bb3a3a182b1198f2121a2d27c5fd9e4"
+          }
+        }
+      ]
+    }
+  ]
+}

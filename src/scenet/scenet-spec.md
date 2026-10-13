@@ -1356,6 +1356,12 @@ Reference to a character the library does not contain. A cast member's `referenc
 
 **Fix:** Check the name against the shipped library, or supply your own.
 
+### `scenet/word-limit`
+
+A balloon, caption or panel holds more words than a letterer fits well. Dark Horse's script format asks for 'approximately 25 words per balloon, and about 50 words per panel, max'. It is a house limit, not a contradiction: the panel still compiles, so this is a note, and `scenet check` passes. Words are counted as they are lettered: anything between spaces that holds a letter or a digit, so `--` and an ellipsis are not words, and emphasis markers add none. A panel counts its balloons and captions; a sound effect is not counted.
+
+**Fix:** Split the balloon in two, or carry the rest of the words to the next panel.
+
 <!-- scenet-spec:part=schema -->
 # JSON Schema
 

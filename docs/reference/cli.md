@@ -118,7 +118,10 @@ scenet build examples/umbrella.script --strip -o out/umbrella.svg
 scenet check SOURCE... [--format {text,sarif}] [-o OUTPUT] [--quiet] [--deep]
 ```
 
-Reports everything wrong with one or more documents and exits non-zero if anything is.
+Reports everything wrong with one or more documents and exits non-zero if anything is an
+error. A **note** reports a house limit rather than a contradiction — a balloon over the
+words a publisher asks for, say — so the document still builds, and a note alone never
+fails the check.
 Nothing is written unless you ask for it — no SVG, no Panel Core.
 
 Unlike `build`, this does not stop at the first fault. pydantic reports every field error
@@ -143,7 +146,10 @@ published schema — are what make a generate/validate/repair loop work.
 ### Options
 
 `--format text` (default)
-: One line per finding on stderr, `file:line:column: rule: message`. What a person reads.
+: One line per finding on stderr, `file:line:column: rule: message`, or
+  `file:line:column: note: rule: message` for a note, where GCC and Clang put a
+  severity. What a person reads. `file: ok` follows on stdout for each document when
+  none has an error, notes or not.
 
 `--format sarif`
 : [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html), the
@@ -173,8 +179,8 @@ published schema — are what make a generate/validate/repair loop work.
 
 | Code | Meaning |
 |---|---|
-| 0 | Every document is valid |
-| 1 | At least one finding |
+| 0 | No document has an error; notes may have been printed |
+| 1 | At least one error |
 | 2 | Usage error, or a source file does not exist or has an extension no frontend reads |
 
 The status means the same thing in both formats, so CI can key off it without parsing
@@ -187,33 +193,39 @@ releases**: a `ruleId` that moves silently closes every alert that referenced th
 and opens a duplicate under the new one, so renaming one is a breaking change even though
 nothing stops compiling.
 
-| Rule | Raised when |
-|---|---|
-| `scenet/syntax` | The file is not valid YAML, or is empty |
-| `scenet/duplicate-key` | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
-| `scenet/not-a-mapping` | The top level is a list or a scalar |
-| `scenet/unknown-key` | A key the language does not define — usually a typo |
-| `scenet/missing-field` | A required value was not supplied |
-| `scenet/invalid-field` | A known key holding the wrong type or an out-of-range value |
-| `scenet/panel-geometry` | Non-positive size, or margins leaving no usable area |
-| `scenet/unknown-actor` | An id in `staging` or `script` that is not in `cast` |
-| `scenet/unbalanced-emphasis` | An underscore that opens emphasis in a line of `text`, with none to close it |
-| `scenet/reflexive-relation` | A relation relating an actor to itself |
-| `scenet/caption-speaker` | `by` on a caption whose `kind` is not `spoken` |
-| `scenet/ordering-cycle` | `left_of`/`right_of` relations that form a cycle |
-| `scenet/composition` | An `over:` chain that is missing or cyclic |
-| `scenet/duplicate-panel` | Two panels in a comic script with the same name, even counting pages |
-| `scenet/page-layout` | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, or no room for its tiers |
-| `scenet/unknown-puppet` | A `reference` naming a character the library lacks |
-| `scenet/unknown-place` | A setting's `place` naming one the library does not have |
-| `scenet/conflicting-setting` | A setting that names a `place` and also lists `masses` |
-| `scenet/unknown-pose` | A `pose` naming one its puppet does not declare |
-| `scenet/unknown-expression` | An `expression` naming one its puppet does not declare |
-| `scenet/font-file` | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
-| `scenet/layout` | Valid, but no layout satisfies its required constraints (`--deep` only) |
-| `scenet/balloon-placement` | No legal position exists for a balloon (`--deep` only) |
-| `scenet/sfx-placement` | No legal position exists for a sound effect (`--deep` only) |
-| `scenet/internal` | A failure with no more specific rule — worth reporting |
+A rule's level is part of it too. An **error** is a contradiction the compiler cannot
+build past; a **note** is a house limit a document can exceed and still compile. SARIF
+carries the level in both `defaultConfiguration` and each result, so an editor shows a
+note as information rather than a red squiggle.
+
+| Rule | Level | Raised when |
+|---|---|---|
+| `scenet/syntax` | error | The file is not valid YAML, or is empty |
+| `scenet/duplicate-key` | error | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
+| `scenet/not-a-mapping` | error | The top level is a list or a scalar |
+| `scenet/unknown-key` | error | A key the language does not define — usually a typo |
+| `scenet/missing-field` | error | A required value was not supplied |
+| `scenet/invalid-field` | error | A known key holding the wrong type or an out-of-range value |
+| `scenet/panel-geometry` | error | Non-positive size, or margins leaving no usable area |
+| `scenet/unknown-actor` | error | An id in `staging` or `script` that is not in `cast` |
+| `scenet/unbalanced-emphasis` | error | An underscore that opens emphasis in a line of `text`, with none to close it |
+| `scenet/reflexive-relation` | error | A relation relating an actor to itself |
+| `scenet/caption-speaker` | error | `by` on a caption whose `kind` is not `spoken` |
+| `scenet/ordering-cycle` | error | `left_of`/`right_of` relations that form a cycle |
+| `scenet/composition` | error | An `over:` chain that is missing or cyclic |
+| `scenet/duplicate-panel` | error | Two panels in a comic script with the same name, even counting pages |
+| `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, or no room for its tiers |
+| `scenet/unknown-puppet` | error | A `reference` naming a character the library lacks |
+| `scenet/unknown-place` | error | A setting's `place` naming one the library does not have |
+| `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses` |
+| `scenet/unknown-pose` | error | A `pose` naming one its puppet does not declare |
+| `scenet/unknown-expression` | error | An `expression` naming one its puppet does not declare |
+| `scenet/font-file` | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
+| `scenet/layout` | error | Valid, but no layout satisfies its required constraints (`--deep` only) |
+| `scenet/balloon-placement` | error | No legal position exists for a balloon (`--deep` only) |
+| `scenet/sfx-placement` | error | No legal position exists for a sound effect (`--deep` only) |
+| `scenet/word-limit` | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |
+| `scenet/internal` | error | A failure with no more specific rule — worth reporting |
 
 ### Source positions
 

@@ -45,8 +45,8 @@ from scenet.core import (
     round_pairs,
     vector_pair,
 )
-from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.frontends.script_front import load_script
+from scenet.errors import PanelSyntaxError, RuleViolationError, ScenetError
+from scenet.frontends.script_front import load_script, parse_script
 from scenet.frontends.yaml_front import (
     SceneDocument,
     load_panel,
@@ -739,18 +739,24 @@ def _compile_document(
     panels: dict[str, CompileResult] = {}
     for name, panel in document.panels.items():
         frame = frames.get(name)
-        if frame is None:
-            panels[name] = compile_ir(panel, library=library, metrics=metrics, base=base)
-            continue
-        panels[name] = compile_ir(
-            _framed(name, panel, frame),
-            library=library,
-            metrics=metrics,
-            base=base,
-            lettering_height=type_height,
-            exclusions=exclusions.get(name, ()),
-            outline=_local_outline(frame),
-        )
+        try:
+            if frame is None:
+                panels[name] = compile_ir(panel, library=library, metrics=metrics, base=base)
+                continue
+            panels[name] = compile_ir(
+                _framed(name, panel, frame),
+                library=library,
+                metrics=metrics,
+                base=base,
+                lettering_height=type_height,
+                exclusions=exclusions.get(name, ()),
+                outline=_local_outline(frame),
+            )
+        except ScenetError as exc:
+            # Which panel, so `check --deep` can say: it compiles a document the one way
+            # `build` does, and that way names no panel in its errors.
+            exc.panel = name
+            raise
     return Book(panels=panels, pages=tuple(pages))
 
 
@@ -878,9 +884,54 @@ FRONTENDS = {
 }
 
 
-def _load_script_document(path: Path) -> SceneDocument:
+def _script_document(text: str, *, source: Path | None) -> SceneDocument:
     """A comic script, as a scene with no pages: its PAGE headings lay nothing out yet."""
-    return SceneDocument(panels=load_script(path), layout=PageLayout())
+    return SceneDocument(panels=parse_script(text, source=source), layout=PageLayout())
+
+
+def _load_script_document(path: Path) -> SceneDocument:
+    """A comic script read from disk, as `compile_script` reads one handed over as text."""
+    return _script_document(path.read_text(encoding="utf-8"), source=path)
+
+
+def compile_script(
+    text: str,
+    *,
+    source: Path | None = None,
+    base: Path | None = None,
+    library: PuppetLibrary | None = None,
+    metrics: FontMetrics | None = None,
+) -> Book:
+    r"""Compile a comic script, every panel and page of it.
+
+    The one way a script is compiled, whoever asks: `scenet build`, `scenet check --deep`,
+    the MCP server and the playground used to each assemble one by hand, and would have
+    drifted apart the day a script laid out pages.
+
+    Args:
+        text: The script.
+        source: Path it came from, used to prefix error messages and to find the files it
+            names beside it.
+        base: The folder files the script names are read from, in place of the one
+            `source` is in.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against.
+
+    Returns:
+        Every panel, and the pages they are laid out on -- none yet, for a script.
+
+    Raises:
+        ScriptSyntaxError: The script cannot be read, or a panel does not validate.
+
+    Example:
+        >>> from scenet import compile_script
+        >>> book = compile_script("---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n")
+        >>> list(book.panels)
+        ['1']
+    """
+    return _compile_document(
+        _script_document(text, source=source), library, metrics, _folder(source, base)
+    )
 
 
 #: The same extensions, read as whole documents -- panels and the pages they go on.

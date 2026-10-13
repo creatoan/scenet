@@ -73,7 +73,7 @@ describe("captured from scenet check", () => {
 
   test("a note, such as a balloon over the word limit, is information, not an error", () => {
     assert.deepEqual(problems(map(captured("word-limit"), source("word-limit.panel.yaml"))), {
-      "word-limit.panel.yaml": ["5:12-7:70 information scenet/word-limit"],
+      "word-limit.panel.yaml": ["5:12-8:0 information scenet/word-limit"],
     });
   });
 

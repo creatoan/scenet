@@ -14,7 +14,14 @@ import pytest
 
 from scenet import compile_script
 from scenet.cli import main
-from scenet.diagnostics import RULES, Diagnostic, diagnose_script, diagnose_source, to_sarif
+from scenet.diagnostics import (
+    RULES,
+    Diagnostic,
+    diagnose_file,
+    diagnose_script,
+    diagnose_source,
+    to_sarif,
+)
 from scenet.pipeline import compile_book_file
 
 CAST = "cast: {bob: {reference: bob}}\n"
@@ -95,7 +102,8 @@ class TestTheWordLimits:
         assert len(fingerprints) == 3
 
     def test_a_scene_reports_each_panel(self):
-        source = CAST + f"panels:\n  a:\n    script:\n{say(26)}  b:\n    script:\n{say(26)}"
+        line = "    " + say(26)
+        source = CAST + f"panels:\n  a:\n    script:\n{line}  b:\n    script:\n{line}"
         found = diagnose_source(source, source=Path("x.scene.yaml"))
         assert [item.path for item in found] == [
             ("panels", "a", "script", 0, "say", "text"),
@@ -175,6 +183,19 @@ class TestCheck:
         (run,) = document["runs"]
         assert run["results"][0]["level"] == "error"
         assert run["tool"]["driver"]["rules"][0]["defaultConfiguration"] == {"level": "error"}
+
+
+GALLERY = Path(__file__).resolve().parents[1] / "examples" / "gallery"
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted(path for path in GALLERY.iterdir() if path.name != "manifest.yaml"),
+    ids=lambda path: path.name,
+)
+def test_the_gallery_has_nothing_to_note(path: Path):
+    """The examples are what people copy: not even a note, let alone an error."""
+    assert diagnose_file(path) == []
 
 
 class TestOneWayToCompileAScript:

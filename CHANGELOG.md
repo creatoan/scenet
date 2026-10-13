@@ -12,6 +12,23 @@ below 1.0 means.
 
 ### Added
 
+- **`scenet check` reports notes as well as errors.** A note is a house limit rather than a
+  contradiction: the document still builds, so a note never fails the check. The first is
+  Dark Horse's word limit, `word-limit`: a balloon or caption over about 25 words, or a
+  panel over about 50, in YAML and in comic scripts alike. Words are counted as lettered,
+  so `--` and emphasis underscores add none, and sound effects are not counted.
+  - In text, a note reads `file:line:column: note: rule: message`; an error's line is
+    unchanged.
+  - In SARIF, the level comes from the rule, in `defaultConfiguration` and in each result,
+    so VS Code and the playground show a note as information.
+  - `check` exits 1 only on an error, and prints `ok` for a document with only notes.
+  - The MCP server's findings gain `level`, and `validate` calls a document valid when
+    none is an error. (Part of #75)
+- **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
+  build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
+  playground now all go through it, rather than assembling a script each their own way.
+  (Part of #75)
+
 - **A stressed word is lettered in bold italic.** Write it between underscores, the way a
   script underlines it: `I _told_ you`. It works in dialogue and captions, in YAML and in
   comic scripts, and the word is measured in bold italic as well as drawn in it, so it
