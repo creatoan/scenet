@@ -147,6 +147,23 @@ def test_a_repeated_panel_heading_is_one_finding(drawn: DrawnScript):
     assert _line(text, found[0]).startswith("PANEL ")
 
 
+@given(scripts(), st.data())
+def test_a_speaker_outside_the_cast_is_one_finding_at_the_cue(
+    drawn: DrawnScript, data: st.DataObject
+):
+    """A cue naming nobody in the cast is found where it is written, as `unknown-actor`,
+    wherever in whichever panel it is -- not at the panel's heading, as any other
+    `invalid-field`."""
+    lines = drawn.text.split("\n")
+    headings = [index for index, line in enumerate(lines) if line.startswith("PANEL ")]
+    after = data.draw(st.sampled_from(headings), label="panel")
+    lines[after + 1 : after + 1] = ["CARL", "who is this", ""]
+    text = "\n".join(lines)
+    _assert_one(
+        diagnose_script(text, library=LIBRARY), text, rule="unknown-actor", path=(), needle="CARL"
+    )
+
+
 # ---------------------------------------------------------------- robustness
 
 #: Keys the language uses, mixed with ones it does not, so arbitrary documents reach

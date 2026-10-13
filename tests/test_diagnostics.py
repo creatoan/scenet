@@ -41,12 +41,14 @@ from scenet.errors import (
     LayoutError,
     PanelSyntaxError,
     RuleViolationError,
+    ScriptSyntaxError,
     ScenetError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
 )
 from scenet.frontends.positions import DOCUMENT_START, locate, syntax_error_region
+from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
 from scenet.pipeline import compile_source
 
@@ -952,6 +954,70 @@ class TestAScriptFindingIsALine:
     def test_a_line_ending_is_not_part_of_the_line(self):
         (found,) = diagnose_script("PANEL 1\r\n\r\nPANEL 1\r\n", source=Path("x.script"))
         assert found.region == self.line(3, "PANEL 1")
+
+
+class TestAScriptFaultIsWhereItIs:
+    """A fault the IR finds in a script keeps its rule, and points at the line it is on.
+
+    A script panel is assembled from its lines and then validated as a whole, and every
+    fault validation found used to be reported as `invalid-field` at the PANEL heading: an
+    unknown speaker, an unknown place and a bad shot alike, wherever in the panel they were
+    written. The rule and the line are both known, so a finding carries both.
+    """
+
+    FRONT = "---\ncast: {ALICE: {reference: alice}}\n---\n"
+
+    def find(self, body: str) -> tuple[str, int, str]:
+        script = self.FRONT + body
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.region is not None
+        line = found.region.start.line
+        return found.rule, line, script.split("\n")[line - 1]
+
+    @pytest.mark.parametrize(
+        ("body", "rule", "line"),
+        [
+            pytest.param(
+                "PANEL 1\nALICE\nHi.\n\nCARL\nWho?\n", "unknown-actor", "CARL", id="speaker"
+            ),
+            pytest.param(
+                "PANEL 1\nALICE\nHi.\nSFX (CARL): BLAM\n", "unknown-actor", "SFX (CARL)", id="sfx"
+            ),
+            pytest.param(
+                "PANEL 1\nRain.\n@setting: {place: nowhere}\n",
+                "unknown-place",
+                "@setting",
+                id="place",
+            ),
+            pytest.param("PANEL 1\nRain.\n@shot: nope\n", "invalid-field", "@shot", id="shot"),
+            pytest.param(
+                "PANEL 1\nRain.\n@shot: close_up\n@panel: {size: [0, 10]}\n",
+                "panel-geometry",
+                "@panel",
+                id="panel-size",
+            ),
+        ],
+    )
+    def test_it_keeps_its_rule_and_its_line(self, body: str, rule: str, line: str):
+        found_rule, _, text = self.find(body)
+        assert found_rule == rule
+        assert text.startswith(line)
+
+    def test_the_first_fault_in_the_panel_is_the_one_reported(self):
+        assert self.find("PANEL 1\n@shot: nope\nCARL\nWho?\n")[:2] == ("invalid-field", 5)
+        assert self.find("PANEL 1\nCARL\nWho?\n@shot: nope\n")[:2] == ("unknown-actor", 5)
+
+    def test_a_fault_in_the_front_matter_is_still_at_the_panel(self):
+        """Nothing in the panel holds it, and the front matter is located separately."""
+        script = "---\ncast: {ALICE: {reference: alice, at: nowhere}}\n---\nPANEL 1\n"
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.rule == "invalid-field"
+
+    def test_the_error_the_compiler_raises_carries_them_too(self):
+        with pytest.raises(ScriptSyntaxError) as raised:
+            parse_script(self.FRONT + "PANEL 1\nALICE\nHi.\n\nCARL\nWho?\n")
+        assert (raised.value.rule, raised.value.line) == ("unknown-actor", 8)
+        assert "CARL" in str(raised.value)
 
 
 class TestCheckAndBuildAgree:
