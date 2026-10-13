@@ -34,6 +34,7 @@ front-matter block, per-panel settings as `@` directives.
 
 import re
 import unicodedata
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -41,8 +42,8 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import merge
-from scenet.errors import PanelSyntaxError, ScriptSyntaxError
+from scenet.compose import OVER_KEY, merge, resolve_overrides
+from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import errors_of, normalise, rule_for_pydantic, summarise
 from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize
 from scenet.safe_yaml import DuplicateKeyError, describe, load
@@ -968,30 +969,68 @@ def _unquoted_spoken(text: str) -> str:
     return inner or text
 
 
-def _panel_casts(body: str) -> list[frozenset[str]]:
-    """Each panel's own cast, from its `@cast:` directives, in the order of the headings.
+@dataclass
+class _ScannedPanel:
+    """What the cast pre-pass needs of a panel: where it is, whom it casts, what it is over."""
 
-    Read before the panels are, because a cue on one line may name a cast member a
-    directive further down the same panel adds.
+    page: str | None
+    label: str
+    cast: set[str] = field(default_factory=set)
+    over: str | None = None
+
+
+def _panel_casts(body: str) -> list[frozenset[str]]:
+    """Each panel's cast from its `@cast:` directives, and what it inherits by `@over:`.
+
+    In the order of the headings. Read before the panels are, because a cue on one line may
+    name a cast member a directive further down the same panel adds, or the panel it is over.
     """
-    casts: list[set[str]] = []
+    scanned: list[_ScannedPanel] = []
+    page: str | None = None
     for raw in body.split("\n"):
         line = _recognisable(raw.strip())
-        if _read_page_heading(line) is not None:
+        heading = _read_page_heading(line)
+        if heading is not None:
+            page = heading.label
             continue
-        if _read_panel_heading(line, 0, None) is not None:
-            casts.append(set())
+        draft = _read_panel_heading(line, 0, page)
+        if draft is not None:
+            scanned.append(_ScannedPanel(page=page, label=draft.label))
             continue
         directive = DIRECTIVE.match(line)
-        if directive is None or directive.group(1) != "cast" or not casts:
+        if directive is None or not scanned:
             continue
-        try:
-            members = load(directive.group(2).strip())
-        except yaml.YAMLError:
-            continue  # reported, at its line, when the panel itself is read
-        if isinstance(members, dict):
-            casts[-1].update(str(name) for name in members)
-    return [frozenset(cast) for cast in casts]
+        if directive.group(1) == OVER_KEY:
+            scanned[-1].over = directive.group(2).strip()
+        elif directive.group(1) == "cast":
+            try:
+                members = load(directive.group(2).strip())
+            except yaml.YAMLError:
+                continue  # reported, at its line, when the panel itself is read
+            if isinstance(members, dict):
+                scanned[-1].cast.update(str(name) for name in members)
+    return _inherited_casts(scanned)
+
+
+def _inherited_casts(scanned: list[_ScannedPanel]) -> list[frozenset[str]]:
+    """Each scanned panel's cast, with that of every panel up its `@over:` chain."""
+    labels = [panel.label for panel in scanned]
+    paged = len(set(labels)) != len(labels)
+    names = [f"{panel.page}-{panel.label}" if paged else panel.label for panel in scanned]
+    by_name = dict(zip(names, scanned, strict=True))
+
+    def cast_of(panel: _ScannedPanel, seen: frozenset[str]) -> frozenset[str]:
+        if panel.over is None:
+            return frozenset(panel.cast)
+        label = _number_label(panel.over)
+        here = f"{panel.page}-{label}" if panel.page is not None else None
+        parent = by_name.get(here or "") or by_name.get(label)
+        if parent is None or parent.label in seen:
+            # A missing parent or a cycle is reported when the panels are composed.
+            return frozenset(panel.cast)
+        return frozenset(panel.cast) | cast_of(parent, seen | {panel.label})
+
+    return [cast_of(panel, frozenset()) for panel in scanned]
 
 
 def _reserved_name(cast: object) -> str | None:
@@ -1101,6 +1140,10 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
     draft.directive_lines[path] = number
     if key in CAMERA_DIRECTIVES:
         draft.camera[key] = value
+        return True
+    if key == OVER_KEY:
+        # A panel's name, kept as written: YAML would read `07` as the number 7.
+        draft.settings[key] = value
         return True
     try:
         draft.settings[key] = load(value)
@@ -1293,13 +1336,67 @@ def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]
     return parse_script_document(text, source=source).panels
 
 
+def _over_target(target: str, name: str, draft: _PanelDraft, names: Collection[str]) -> str:
+    """The panel an `@over:` names, by the name the script gave it.
+
+    A label is looked up on the same page first -- `@over: 1` on page two is panel `2-1`
+    -- so it does not change meaning when another page's numbers start again; then as a
+    whole name, `1-1`. A label is read as a heading's is, so `@over: 07` is panel `7`.
+    """
+    label = _number_label(target.strip())
+    on_this_page = f"{draft.page}-{label}"
+    found = on_this_page if draft.page is not None and on_this_page in names else label
+    if found == name:
+        raise CompositionError(
+            f"panel '{name}' is over '{target}', which names its own panel; name the panel "
+            "it changes",
+            loc=("panels", name, OVER_KEY),
+        )
+    return found
+
+
+def _composed(panels: dict[str, _PanelDraft], source: Path | None) -> dict[str, dict[str, Any]]:
+    """Every panel as a whole document, its `@over:` chain resolved.
+
+    The same merge YAML's `over:` gets (`compose.resolve_overrides`): a panel's own
+    directives win, and lists are replaced, never joined. A script panel always has its
+    own `script`, possibly empty, so dialogue is never inherited -- only what the panel
+    over it set up.
+
+    Raises:
+        ScriptSyntaxError: Rule `composition`, at the `@over:` line, for a panel that does
+            not exist, a cycle, or a panel over itself.
+    """
+    documents = {name: draft.as_document() for name, draft in panels.items()}
+    try:
+        for name, draft in panels.items():
+            target = documents[name].get(OVER_KEY)
+            if isinstance(target, str):
+                documents[name][OVER_KEY] = _over_target(target, name, draft, documents)
+        return resolve_overrides(documents)
+    except CompositionError as exc:
+        name = str(exc.loc[1]) if len(exc.loc) > 1 else ""
+        line = panels[name].directive_lines.get((OVER_KEY,)) if name in panels else None
+        raise ScriptSyntaxError(
+            f"line {line}: {exc}" if line else str(exc),
+            source=source,
+            line=line,
+            rule="composition",
+        ) from exc
+
+
 def _validate(
     panels: dict[str, _PanelDraft], front_matter: dict[str, Any], source: Path | None
 ) -> dict[str, PanelIR]:
-    """Validate each drafted panel over the front matter, reporting the first fault."""
+    """Validate each drafted panel over the front matter, reporting the first fault.
+
+    `@over:` is resolved first, then the front matter merged under each panel, as a YAML
+    scene's defaults are merged under each of its panels.
+    """
+    composed = _composed(panels, source)
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
-        combined = merge(front_matter, draft.as_document())
+        combined = merge(front_matter, composed[name])
         try:
             result[name] = PanelIR.model_validate(normalise(combined))
         except PanelSyntaxError as exc:

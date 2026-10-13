@@ -24,7 +24,9 @@ panels:
 ```
 
 The keyword is borrowed from [OpenUSD's composition arcs](../explanation/prior_art.md),
-where `over` means exactly this: name a parent, then state the difference.
+where `over` means exactly this: name a parent, then state the difference. A comic script
+writes the same thing as an `@over:` directive; see
+[Write a panel as a comic script](write_a_comic_script.md#one-panel-over-another).
 
 ```python
 from scenet import compile_scene

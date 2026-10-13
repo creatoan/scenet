@@ -40,6 +40,11 @@ below 1.0 means.
   dialogue when Alice is in the panel's cast, and a `looks-like-dialogue` note otherwise.
   `(burst)` is a shout, several parentheticals are read together, and Blambot's numbered
   items, `1. ALICE:`, are read with their number set aside. (Part of #75)
+- **`@over:` in comic scripts** writes a panel as a change to another, with the merge
+  rules `over:` has in YAML: the panel inherits the other's directives, never its
+  dialogue. `@over: 1` names panel 1 on the same page first, then the panel named `1`. A
+  missing panel, a cycle or a panel over itself is one `composition` finding at the
+  `@over:` line. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

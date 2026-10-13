@@ -157,6 +157,28 @@ Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `
 it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
 It is not a second format: the text of a line is never rewritten.
 
+## One panel over another
+
+Consecutive panels share nearly everything — the place, the weather, who stands where — and
+restating it is where continuity errors get in. `@over:` writes a panel as a change to another,
+exactly as [`over:`](https://creatoan.github.io/scenet/howto/compile_a_sequence.html) does in a YAML scene:
+
+```
+PANEL 1
+@shot: full_shot
+@setting: {place: docks, weather: rain}
+
+PANEL 2
+@over: 1
+@shot: close_up
+```
+
+Panel 2 inherits panel 1's directives and replaces its shot. It never inherits dialogue: each
+panel's lines are its own. A label is looked up on the same page first, so `@over: 1` on page two
+is panel `2-1`, and then as a panel's whole name, `1-3`. It may name a panel further down. A panel
+that does not exist, a cycle, or a panel over itself is one `composition` finding, at the `@over:`
+line.
+
 ## Prose is never interpreted
 
 "Alice and Bob face each other on a rainy street corner" is not parsed, not
