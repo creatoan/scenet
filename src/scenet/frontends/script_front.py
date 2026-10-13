@@ -421,9 +421,29 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
     if not directive:
         return False
     key, value = directive.group(1), directive.group(2).strip()
+    if key == "script":
+        raise ScriptSyntaxError(
+            f"line {number}: a panel's script is written by its cues, captions and sound "
+            "effects; '@script:' would replace them. Write each line as a cue instead",
+            source=source,
+            line=number,
+            rule="duplicate-key",
+        )
+    path = ("camera", key) if key in CAMERA_DIRECTIVES else (key,)
+    first = draft.directive_lines.get(path)
+    if first is not None:
+        # The second used to replace the first without a word -- `@setting:` twice lost
+        # the first one's weather -- which is the loss `duplicate-key` reports in YAML.
+        raise ScriptSyntaxError(
+            f"line {number}: '@{key}' is written twice in this panel; the first is on line "
+            f"{first}. Write it once, with everything it sets",
+            source=source,
+            line=number,
+            rule="duplicate-key",
+        )
+    draft.directive_lines[path] = number
     if key in CAMERA_DIRECTIVES:
         draft.camera[key] = value
-        draft.directive_lines[("camera", key)] = number
         return True
     try:
         draft.settings[key] = load(value)
@@ -440,7 +460,6 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
-    draft.directive_lines[(key,)] = number
     return True
 
 

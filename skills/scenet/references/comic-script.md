@@ -43,7 +43,7 @@ scenet build umbrella.script --strip
 | Line | Means |
 |---|---|
 | `PANEL 1` | Starts a new panel. Anything before the first one is an error. `PANEL 1:` and `PANEL 1.` are the same panel. |
-| `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. |
+| `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
 | `BOB (whisper)` | Same, with a balloon kind. |
 | `CAPTION: Midnight.` | A caption box. The text is on the same line. |

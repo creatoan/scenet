@@ -151,7 +151,9 @@ RULES: dict[str, Rule] = {
             "reads it with builds the document anyway and keeps only the last value -- so "
             "a panel, a cast member or a pose written twice would lose the first without "
             "a word, and the rest would compile. A merge key's override (`<<: *base`, "
-            "then the key again) is not a repeat."
+            "then the key again) is not a repeat. In a comic script, the same goes for a "
+            "directive written twice in one panel, and for an `@script:` directive, which "
+            "would replace the panel's cues."
         ),
         help="Delete or rename one of the two; the message says which lines they are on.",
     ),

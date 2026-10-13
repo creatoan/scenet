@@ -190,7 +190,7 @@ nothing stops compiling.
 | Rule | Raised when |
 |---|---|
 | `scenet/syntax` | The file is not valid YAML, or is empty |
-| `scenet/duplicate-key` | A key written twice in one mapping, which YAML would drop silently |
+| `scenet/duplicate-key` | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
 | `scenet/not-a-mapping` | The top level is a list or a scalar |
 | `scenet/unknown-key` | A key the language does not define — usually a typo |
 | `scenet/missing-field` | A required value was not supplied |

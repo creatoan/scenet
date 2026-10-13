@@ -30,7 +30,7 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 ### `scenet/duplicate-key`
 
-A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
 
 **Fix:** Delete or rename one of the two; the message says which lines they are on.
 

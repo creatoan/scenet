@@ -92,6 +92,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A comic-script directive written twice in one panel silently kept the second.**
+  `@setting: {weather: rain}` and then `@setting: {place: docks}` lost the rain. The second
+  is now `duplicate-key`, at its line, naming the first. An `@script:` directive, which the
+  panel's cues used to overwrite without a word, is `duplicate-key` too. (Part of #75)
 - **A fault in a comic-script panel kept neither its rule nor its line.** Everything
   validation found was reported as `invalid-field` at the PANEL heading: a speaker not in
   the cast, an unknown place, a bad `@shot:`. It now keeps its own rule (`unknown-actor`,
