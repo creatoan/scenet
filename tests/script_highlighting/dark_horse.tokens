@@ -45,6 +45,7 @@
 [["dialogue", "-- I'm here."]]
 []
 [["panel-keyword", "Panel"], ["panel-label", "2"], ["prose", "A boat on the rocks, far below."]]
+[["directive-marker", "@"], ["directive-name", "over"], ["directive-value", "1"]]
 []
 [["caption-keyword", "CAP"], ["caption-speaker", "MAYA"]]
 [["caption-text", "“-- and that was how we found it.”"]]

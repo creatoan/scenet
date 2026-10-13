@@ -500,18 +500,19 @@ class TestOver:
         assert events(panels(script)["2"]) == [("say", "CARL", "speech", "Who?")]
 
     @pytest.mark.parametrize(
-        ("body", "says"),
+        ("body", "line", "says"),
         [
-            ("PANEL 1\n@over: 9\n", "does not exist"),
-            ("PANEL 1\n@over: 2\n\nPANEL 2\n@over: 1\n", "cyclic"),
-            ("PANEL 1\n@over: 1\n", "names its own panel"),
+            ("PANEL 1\n@over: 9\n", 5, "does not exist"),
+            # At the `@over:` that closes the cycle, as YAML reports one.
+            ("PANEL 1\n@over: 2\n\nPANEL 2\n@over: 1\n", 8, "cyclic"),
+            ("PANEL 1\n@over: 1\n", 5, "names its own panel"),
         ],
     )
-    def test_a_fault_is_one_composition_finding_at_its_line(self, body: str, says: str):
+    def test_a_fault_is_one_composition_finding_at_its_line(self, body: str, line: int, says: str):
         (finding,) = diagnose_script(FRONT + body, source=Path("x.script"))
         assert (finding.rule, finding.level) == ("composition", "error")
         assert finding.region is not None
-        assert finding.region.start.line == 5
+        assert finding.region.start.line == line
         assert says in finding.message
 
     def test_written_twice_it_is_a_repeated_directive(self):
