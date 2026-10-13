@@ -383,6 +383,27 @@ class TestCaptionText:
         assert caption_text(run, 0) == "“Get down!"
         assert caption_text(run, 1) == "“All of you!”"
 
+    def test_a_run_closes_when_its_speaker_changes(self):
+        """Blambot: "end quotes should appear as each speaker finishes/before the next
+        one begins". A run is one speaker's speech; it used to stay open across two."""
+        run = (
+            CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="All of you!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="Why?", kind=CaptionKind.SPOKEN, by="BOB"),
+        )
+        assert [caption_text(run, index) for index in range(3)] == [
+            "“Get down!",
+            "“All of you!”",
+            "“Why?”",
+        ]
+
+    def test_a_named_speaker_and_an_unnamed_one_are_two(self):
+        run = (
+            CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="Now!", kind=CaptionKind.SPOKEN),
+        )
+        assert caption_text(run, 0) == "“Get down!”"
+
 
 class TestBalloonScore:
     PANEL = BBox(0.0, 0.0, 400.0, 400.0)
