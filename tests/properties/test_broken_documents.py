@@ -148,6 +148,18 @@ def test_a_repeated_panel_heading_is_one_finding(drawn: DrawnScript):
 
 
 @given(scripts(), st.data())
+def test_a_repeated_directive_is_one_finding_at_the_repeat(drawn: DrawnScript, data: st.DataObject):
+    """A directive written twice in one panel: the second is reported, never kept."""
+    lines = drawn.text.split("\n")
+    shots = [index for index, line in enumerate(lines) if line.startswith("@shot:")]
+    at = data.draw(st.sampled_from(shots), label="directive")
+    lines.insert(at + 1, "@shot: close_up")
+    text = "\n".join(lines)
+    found = diagnose_script(text, library=LIBRARY)
+    _assert_one(found, text, rule="duplicate-key", path=(), needle="@shot: close_up")
+
+
+@given(scripts(), st.data())
 def test_a_speaker_outside_the_cast_is_one_finding_at_the_cue(
     drawn: DrawnScript, data: st.DataObject
 ):

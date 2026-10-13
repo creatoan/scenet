@@ -474,6 +474,51 @@ class TestLineEndings:
         assert parse_panel(source) == parse_panel(source.replace("\n", "\r\n"))
 
 
+class TestADirectiveIsWrittenOnce:
+    """A directive written twice in one panel used to keep the second, silently.
+
+    `@setting: {weather: rain}` and then `@setting: {place: docks}` lost the rain without
+    a word -- exactly the loss `duplicate-key` exists to report in YAML, where a key
+    written twice in one mapping is the same mistake.
+    """
+
+    FRONT = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\n"
+
+    @pytest.mark.parametrize(
+        ("first", "second"),
+        [
+            ("@setting: {weather: rain}", "@setting: {place: docks}"),
+            ("@shot: close_up", "@shot: full_shot"),
+            ("@angle: low", "@angle: high"),
+            ("@lettering: {size: 30}", "@lettering: {size: 40}"),
+        ],
+    )
+    def test_the_second_is_one_finding_that_names_the_first(self, first: str, second: str):
+        script = f"{self.FRONT}{first}\nRain.\n{second}\n"
+        with pytest.raises(ScriptSyntaxError, match="line 5") as raised:
+            parse_script(script)
+        assert (raised.value.rule, raised.value.line) == ("duplicate-key", 7)
+        (finding,) = diagnose_script(script)
+        assert finding.rule == "duplicate-key"
+        assert finding.region is not None
+        assert finding.region.start.line == 7
+
+    def test_the_same_directive_on_two_panels_is_two_settings(self):
+        script = f"{self.FRONT}@shot: close_up\nPANEL 2\n@shot: full_shot\n"
+        panels = parse_script(script)
+        assert [panel.camera.shot for panel in panels.values()] == [
+            ShotType.CLOSE_UP,
+            ShotType.FULL_SHOT,
+        ]
+
+    def test_a_script_directive_would_replace_the_cues(self):
+        """The cues write the panel's script; a `@script:` beside them was dropped."""
+        script = f"{self.FRONT}@script: [{{say: {{by: ALICE, text: Hi}}}}]\nALICE\nBye.\n"
+        with pytest.raises(ScriptSyntaxError, match="cues") as raised:
+            parse_script(script)
+        assert (raised.value.rule, raised.value.line) == ("duplicate-key", 5)
+
+
 class TestTheTextIsReadOneWay:
     """Whatever the editor saved, a script reads the same.
 
