@@ -92,6 +92,16 @@ below 1.0 means.
 
 ### Fixed
 
+- **A cue with an accented name lost its dialogue.** `HÉLÈNE` or `ZOË (whisper)` failed the
+  cue pattern's A-to-Z capitals, so the cue and the line under it were filed as prose
+  without a word. Any capital letter now starts a cue, in the compiler and in both
+  highlighters. A script is also read composed (Unicode NFC), so a name a macOS editor
+  stored as `E` and a separate accent matches the front matter's `É`. (Part of #75)
+- **A comic script saved with a byte-order mark** was rejected for having content before
+  the first PANEL heading: the mark hid the front matter. It is now ignored. (Part of #75)
+- **Line numbers in a comic script's findings could be wrong** after a line holding a
+  line separator, form feed or similar character, which Python splits a line at and an
+  editor does not. Lines are now split at line feeds alone. (Part of #75)
 - **The VS Code preview could not run `uv run scenet`**, the setting its README suggests:
   it ran the compiler from wherever VS Code runs extensions, its own install directory,
   where `uv` finds no project. It now runs from the document's workspace folder.

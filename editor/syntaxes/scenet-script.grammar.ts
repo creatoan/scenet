@@ -74,8 +74,12 @@ function labelAlone(keyword: string): Shape {
 
 /** The frontend's forty-character limit on a cue, once trimmed. */
 const SHORT_LINE = raw`(?=\S(?:.{0,38}\S)?[ \t]*$)`;
-/** A name in capitals: only the name is tested, not the parenthetical. */
-const CUE_NAME = raw`[A-Z][A-Z0-9 _'.\-]*?`;
+/**
+ * A name in capitals: only the name is tested, not the parenthetical. Any capital letter
+ * counts, `HÉLÈNE`'s as well as `ALICE`'s, and so does a combining accent, since the
+ * compiler composes `E` and `◌́` into `É` before it reads a line.
+ */
+const CUE_NAME = raw`\p{Lu}[\p{Lu}\p{M}\p{Nd} _'.\-]*?`;
 
 const SHAPES = {
   page: heading("page"),

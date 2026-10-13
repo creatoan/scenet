@@ -78,7 +78,7 @@ from scenet.frontends.positions import (
     locate,
     syntax_error_region,
 )
-from scenet.frontends.script_front import FRONT_MATTER, parse_script
+from scenet.frontends.script_front import FRONT_MATTER, normalise_text, parse_script
 from scenet.ir import PageLayout, PanelIR, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
 from scenet.pipeline import compile_book, compile_ir
@@ -1153,7 +1153,7 @@ def diagnose_script(
         panels = parse_script(text, source=source)
     except ScriptSyntaxError as exc:
         line = exc.line or 1
-        lines = text.splitlines()
+        lines = normalise_text(text).split("\n")
         # The whole line: GitHub requires every bound, so "line N" cannot be said with
         # `startLine` alone, and ending at column 2 would claim the first character.
         length = len(lines[line - 1]) if line <= len(lines) else 0
@@ -1213,7 +1213,7 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     Returns:
         The padded YAML, and what it holds -- both empty when there is no front matter.
     """
-    normalised = text.replace("\r\n", "\n").replace("\r", "\n")
+    normalised = normalise_text(text)
     match = FRONT_MATTER.match(normalised)
     if not match:
         return "", {}

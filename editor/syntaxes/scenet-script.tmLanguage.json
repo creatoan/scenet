@@ -201,7 +201,7 @@
     "speech": {
       "comment": "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
       "name": "meta.speech.scenet-script",
-      "begin": "^[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)([A-Z][A-Z0-9 _'.\\-]*?)[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "begin": "^[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
       "beginCaptures": {
         "1": {
           "name": "entity.name.type.cue.scenet-script"
@@ -219,7 +219,7 @@
           "name": "punctuation.separator.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)[A-Z][A-Z0-9 _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?i:page|panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*$|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
       "patterns": [
         {
           "include": "#pending"

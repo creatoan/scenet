@@ -500,7 +500,7 @@ class TestTheTextIsReadOneWay:
         ],
     )
     def test_a_name_with_an_accent_is_a_cue(self, cue: str, kind: BalloonKind):
-        name = cue.split(" ")[0].rstrip(":")
+        name = cue.split(" ", maxsplit=1)[0].rstrip(":")
         (line,) = parse_script(f"{self._cast(name)}PANEL 1\n{cue}\nBonjour.\n")["1"].script
         assert isinstance(line, SayEvent)
         assert (line.by, line.text, line.kind) == (name, "Bonjour.", kind)
@@ -521,10 +521,10 @@ class TestTheTextIsReadOneWay:
 
     def test_a_byte_order_mark_does_not_hide_the_front_matter(self):
         script = f"{self._cast('ALICE')}PANEL 1\nALICE\nHello.\n"
-        assert parse_script("﻿" + script) == parse_script(script)
-        assert diagnose_script("﻿" + script) == []
+        assert parse_script("\ufeff" + script) == parse_script(script)
+        assert diagnose_script("\ufeff" + script) == []
 
-    @pytest.mark.parametrize("separator", [" ", " ", "\x85", "\x0c", "\x1c"])
+    @pytest.mark.parametrize("separator", ["\u2028", "\u2029", "\x85", "\x0c", "\x1c"])
     def test_a_separator_inside_a_line_moves_no_line_number(self, separator: str):
         script = f"{self._cast('ALICE')}PANEL 1\nRain{separator}falls.\nPANEL 1\n"
         with pytest.raises(ScriptSyntaxError) as raised:

@@ -61,10 +61,17 @@ const SFX = /^(\s*)([Ss][Ff][Xx])(\s*:\s*)(.+)$/;
 const SFX_CUE_WITH_PARENTHETICAL = /^(\s*)([Ss][Ff][Xx])(\s*\()([^)]*)(\)\s*:?\s*)$/;
 const SFX_CUE = /^(\s*)([Ss][Ff][Xx])(\s*:?\s*)$/;
 // A cue is a name in capitals, then an optional parenthetical and colon, on a line of at
-// most forty characters once trimmed -- longer, and it is a shouted description.
-const CUE_WITH_PARENTHETICAL =
-  /^(\s*)(?=\S(?:.{0,38}\S)?\s*$)([A-Z][A-Z0-9 _'.-]*?)(\s*\()([^)]*)(\)\s*:?\s*)$/;
-const CUE = /^(\s*)(?=\S(?:.{0,38}\S)?\s*$)([A-Z][A-Z0-9 _'.-]*?)(\s*:?\s*)$/;
+// most forty characters once trimmed -- longer, and it is a shouted description. Any
+// capital letter counts, `HÉLÈNE`'s as well as `ALICE`'s, and so does a combining accent:
+// the compiler composes `E` and `◌́` into `É` before it reads a line, and an editor on
+// macOS may well have stored them apart. With the `u` flag (`unicode` below), `.` is a
+// code point, so forty characters are counted as Python counts them.
+const CUE_NAME = String.raw`\p{Lu}[\p{Lu}\p{M}\p{Nd} _'.\-]*?`;
+const CUE_WITH_PARENTHETICAL = new RegExp(
+  String.raw`^(\s*)(?=\S(?:.{0,38}\S)?\s*$)(${CUE_NAME})(\s*\()([^)]*)(\)\s*:?\s*)$`,
+  "u",
+);
+const CUE = new RegExp(String.raw`^(\s*)(?=\S(?:.{0,38}\S)?\s*$)(${CUE_NAME})(\s*:?\s*)$`, "u");
 
 type Rule = Monaco.languages.IMonarchLanguageRule;
 
@@ -129,6 +136,8 @@ export const scriptMonarchTokens: Monaco.languages.IMonarchLanguage = {
   defaultToken: "",
   tokenPostfix: ".scenet",
   start: "preamble",
+  // Every rule is compiled with the `u` flag, which `\p{Lu}` in a cue needs.
+  unicode: true,
 
   tokenizer: {
     preamble: [

@@ -33,6 +33,7 @@ front-matter block, per-panel settings as `@` directives.
 """
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -56,8 +57,10 @@ FRONT_MATTER = re.compile(r"^\s*---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
 PANEL_HEADING = re.compile(r"^PANEL\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
 PAGE_HEADING = re.compile(r"^PAGE\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
 DIRECTIVE = re.compile(r"^@(\w+)\s*:\s*(.+)$")
-# A cue is a character name in capitals, optionally followed by a parenthetical.
-CUE = re.compile(r"^([A-Z][A-Z0-9 _'.-]*?)\s*(?:\(([^)]*)\))?\s*:?\s*$")
+# A cue is a character name in capitals, optionally followed by a parenthetical. Any
+# letter may start it, not only A to Z: `HÉLÈNE` is a name in capitals, and her lines used
+# to be filed as prose. Whether the letters are capitals is `_looks_like_a_cue`'s test.
+CUE = re.compile(r"^([^\W\d_][\w '.-]*?)\s*(?:\(([^)]*)\))?\s*:?\s*$")
 # `CAPTION: Midnight. The docks.`, optionally `CAPTION (monologue): ...`. The text is
 # on the same line, which is what distinguishes a caption from a character cue.
 CAPTION_LINE = re.compile(r"^CAPTION\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
@@ -257,7 +260,10 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
     # its parenthetical said.
     sound: tuple[int, dict[str, Any]] | None = None
 
-    for number, raw in enumerate(body.splitlines(), start=offset + 1):
+    # Split on line feeds alone: `splitlines` also breaks at a line or paragraph separator,
+    # a form feed and more, which an editor shows inside one line, so every line number
+    # after one was wrong.
+    for number, raw in enumerate(body.split("\n"), start=offset + 1):
         line = raw.strip()
 
         if not line:
@@ -537,16 +543,34 @@ def _read_caption(line: str, number: int, source: Path | None) -> dict[str, Any]
     return {"caption": {"text": match.group(2).strip(), "kind": kind.value}}
 
 
+def normalise_text(text: str) -> str:
+    r"""A script as it is read, whatever the editor that saved it did.
+
+    - **Line endings become line feeds.** Python's text mode does this silently when
+      reading a file, which is why it took a browser to notice: the playground hands over
+      the bytes it was given, and a script saved by a Windows editor -- or pasted from one
+      -- arrives with CRLF. The front-matter pattern then does not match, the `---` fence
+      is read as prose, and the whole document is rejected for having content before the
+      first PANEL heading.
+    - **A byte-order mark is dropped.** Some Windows editors still write one, and it hid
+      the front matter in exactly the same way.
+    - **Text is composed (NFC).** A macOS editor may store `É` as `E` and a combining
+      accent, and a name typed that way in a cue is the same name the front matter
+      composed; compared as stored, the cue named nobody.
+
+    Example:
+        >>> normalise_text("\ufeffZOE\u0308\r\n") == "ZO\u00cb\n"
+        True
+    """
+    text = text.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    return unicodedata.normalize("NFC", text)
+
+
 def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
     """Parse comic script into one validated panel per PANEL heading."""
-    # Normalise line endings first. Python's text mode does this silently when reading
-    # a file, which is why it took a browser to notice: the playground hands over the
-    # bytes it was given, and a script saved by a Windows editor -- or pasted from one --
-    # arrives with CRLF. The front-matter pattern then does not match, the `---` fence is
-    # read as prose, and the whole document is rejected for having content before the
-    # first PANEL heading. Anything that reaches here as a string gets the same treatment
-    # a file would have had.
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    # Anything that reaches here as a string gets the treatment a file would have had,
+    # and the same whatever editor saved it.
+    text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
     panels = _read_panels(body, source, offset=offset)
 

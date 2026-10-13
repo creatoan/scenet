@@ -1039,7 +1039,10 @@ scenet build umbrella.script --strip
 | `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
 
 The one detail that trips people up: **a speaker cue is recognised by the name being all
-caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested.
+caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested. Capitals
+with accents are capitals: `HÉLÈNE` and `ZOË` are cues. The script is read composed (Unicode
+NFC), so a name your editor stored as a letter and a separate accent is the same name the
+front matter spells, and a byte-order mark at the start of the file is ignored.
 
 **A speech runs until a blank line.** Wrap a long line of dialogue wherever you like; the lines
 are joined with a space into one balloon. A line that looks like another cue ends the speech
