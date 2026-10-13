@@ -41,8 +41,8 @@ from scenet.errors import (
     LayoutError,
     PanelSyntaxError,
     RuleViolationError,
-    ScriptSyntaxError,
     ScenetError,
+    ScriptSyntaxError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
@@ -1004,8 +1004,14 @@ class TestAScriptFaultIsWhereItIs:
         assert text.startswith(line)
 
     def test_the_first_fault_in_the_panel_is_the_one_reported(self):
-        assert self.find("PANEL 1\n@shot: nope\nCARL\nWho?\n")[:2] == ("invalid-field", 5)
-        assert self.find("PANEL 1\nCARL\nWho?\n@shot: nope\n")[:2] == ("unknown-actor", 5)
+        """Pydantic lists faults in field order, which is not reading order."""
+        assert self.find("PANEL 1\n@angle: sideways\n@shot: nope\n")[1:] == (5, "@angle: sideways")
+        assert self.find("PANEL 1\n@shot: nope\n@angle: sideways\n")[1:] == (5, "@shot: nope")
+
+    def test_a_field_fault_comes_before_a_speaker_the_panel_cannot_resolve(self):
+        """A panel's references are resolved only once its fields are valid, so an unknown
+        speaker after a bad `@shot:` is found on the next check, not this one."""
+        assert self.find("PANEL 1\nCARL\nWho?\n@shot: nope\n")[:2] == ("invalid-field", 7)
 
     def test_a_fault_in_the_front_matter_is_still_at_the_panel(self):
         """Nothing in the panel holds it, and the front matter is located separately."""

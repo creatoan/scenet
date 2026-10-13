@@ -92,6 +92,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A fault in a comic-script panel kept neither its rule nor its line.** Everything
+  validation found was reported as `invalid-field` at the PANEL heading: a speaker not in
+  the cast, an unknown place, a bad `@shot:`. It now keeps its own rule (`unknown-actor`,
+  `unknown-place`, ...) and points at the cue or directive that holds it. When a panel
+  has several, the first in reading order is reported. (Part of #75)
 - **A cue with an accented name lost its dialogue.** `HÉLÈNE` or `ZOË (whisper)` failed the
   cue pattern's A-to-Z capitals, so the cue and the line under it were filed as prose
   without a word. Any capital letter now starts a cue, in the compiler and in both

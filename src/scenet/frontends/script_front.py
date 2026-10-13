@@ -43,7 +43,7 @@ from pydantic import ValidationError
 
 from scenet.compose import merge
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
-from scenet.frontends.common import normalise, summarise
+from scenet.frontends.common import errors_of, normalise, rule_for_pydantic, summarise
 from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
@@ -151,6 +151,42 @@ class _PanelDraft:
     camera: dict[str, Any] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
     description: list[str] = field(default_factory=list)
+    #: The file line each event was written on, in step with `events`: a cue's line for
+    #: a speech, not the line of its text, since the cue is what names the speaker.
+    event_lines: list[int] = field(default_factory=list)
+    #: Where each directive was written, by the path in the panel it sets: `("camera",
+    #: "shot")` for `@shot:`, `("setting",)` for `@setting:`.
+    directive_lines: dict[tuple[str, ...], int] = field(default_factory=dict)
+
+    def add(self, event: dict[str, Any], line: int) -> None:
+        """Append an event, remembering the line it was written on."""
+        self.events.append(event)
+        self.event_lines.append(line)
+
+    def line_of(self, loc: tuple[str | int, ...]) -> int:
+        """The file line that holds whatever `loc`, a path within the panel, points at.
+
+        An event is on its own line, and a value a directive set is on the directive's.
+        Anything else -- the front matter's cast, say -- was not written in this panel,
+        and is reported at its heading.
+
+        Example:
+            >>> draft = _PanelDraft(line=4, label="1")
+            >>> draft.add({"say": {}}, 6)
+            >>> draft.directive_lines[("camera", "shot")] = 5
+            >>> [
+            ...     draft.line_of(loc)
+            ...     for loc in [("script", 0, "say", "by"), ("camera", "shot"), ("cast", "A", "at")]
+            ... ]
+            [6, 5, 4]
+        """
+        event = loc[1] if len(loc) > 1 and loc[0] == "script" else None
+        if isinstance(event, int) and 0 <= event < len(self.event_lines):
+            return self.event_lines[event]
+        written = [key for key in self.directive_lines if loc[: len(key)] == key]
+        if written:
+            return self.directive_lines[max(written, key=len)]
+        return self.line
 
     def as_document(self) -> dict[str, Any]:
         """The parts a panel can actually be compiled from.
@@ -252,6 +288,8 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
     current: _PanelDraft | None = None
     page: str | None = None
     pending_cue: tuple[str, BalloonKind] | None = None
+    # Where the pending cue is, which is where its speech is reported from.
+    cue_line = 0
     # The speech being written. Everything after a cue up to a blank line is one balloon,
     # so a line a writer wrapped by hand belongs to it -- it used to be filed as prose and
     # thrown away.
@@ -296,7 +334,7 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
 
         caption = _read_caption(line, number, source)
         if caption is not None:
-            current.events.append(caption)
+            current.add(caption, number)
             pending_cue = speech = None
             continue
 
@@ -310,7 +348,7 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
         if pending_cue is not None:
             speaker, kind = pending_cue
             speech = {"by": speaker, "text": line, "kind": kind.value}
-            current.events.append({"say": speech})
+            current.add({"say": speech}, cue_line)
             pending_cue = None
             continue
 
@@ -321,7 +359,7 @@ def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str
             continue
 
         speech = None
-        pending_cue = _read_cue(line)
+        pending_cue, cue_line = _read_cue(line), number
         if pending_cue is None:
             # Prose. Kept for tooling and round-tripping, never interpreted.
             current.description.append(line)
@@ -385,6 +423,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
     key, value = directive.group(1), directive.group(2).strip()
     if key in CAMERA_DIRECTIVES:
         draft.camera[key] = value
+        draft.directive_lines[("camera", key)] = number
         return True
     try:
         draft.settings[key] = load(value)
@@ -401,6 +440,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
+    draft.directive_lines[(key,)] = number
     return True
 
 
@@ -467,7 +507,7 @@ def _take_sound(
         Whether the line was taken, and the cue still waiting for its sound, if any.
     """
     if waiting is not None:
-        draft.events.append({"sfx": {**waiting[1], "text": line}})
+        draft.add({"sfx": {**waiting[1], "text": line}}, waiting[0])
         return True, None
     effect = _read_sfx(line, number, source)
     if effect is None:
@@ -475,7 +515,7 @@ def _take_sound(
     payload, text = effect
     if text is None:
         return True, (number, payload)
-    draft.events.append({"sfx": {**payload, "text": text}})
+    draft.add({"sfx": {**payload, "text": text}}, number)
     return True, None
 
 
@@ -583,14 +623,43 @@ def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]
         try:
             result[name] = PanelIR.model_validate(normalise(combined))
         except PanelSyntaxError as exc:
+            line = draft.line_of(exc.loc)
             raise ScriptSyntaxError(
-                f"in PANEL {name}: {exc}", source=source, line=draft.line
+                f"line {line}: in PANEL {name}: {exc}", source=source, line=line, rule=exc.rule
             ) from exc
         except ValidationError as exc:
-            raise ScriptSyntaxError(
-                f"in PANEL {name}: {summarise(exc)}", source=source, line=draft.line
-            ) from exc
+            raise _first_fault(exc, name, draft, source) from exc
     return result
+
+
+def _first_fault(
+    exc: ValidationError, name: str, draft: _PanelDraft, source: Path | None
+) -> ScriptSyntaxError:
+    """The fault validation found that comes first in the script, with its rule and line.
+
+    A panel is validated once it is assembled, so pydantic sees the whole panel and knows
+    nothing of lines. Every fault it found used to be reported together, as
+    `invalid-field`, at the PANEL heading -- an unknown speaker and a bad `@shot:` alike,
+    wherever they were written. The rule is known (the frontend reads it exactly as
+    `scenet check` reads a YAML document's), and so is the line each event and directive
+    is on. One finding, the first in reading order, as the script frontend always gives:
+    fixing it shows the next.
+    """
+    faults: list[tuple[int, str, tuple[str | int, ...], str]] = []
+    for error in errors_of(exc):
+        rule, loc = rule_for_pydantic(error)
+        message = str(error["msg"]).removeprefix("Value error, ")
+        faults.append((draft.line_of(loc), rule, loc, message))
+    if not faults:  # pragma: no cover -- pydantic raises with at least one error
+        return ScriptSyntaxError(f"in PANEL {name}: {summarise(exc)}", source=source)
+    line, rule, loc, message = min(faults, key=lambda fault: fault[0])
+    where = ".".join(str(part) for part in loc) or "<root>"
+    return ScriptSyntaxError(
+        f"line {line}: in PANEL {name}, at {where}: {message}",
+        source=source,
+        line=line,
+        rule=rule,
+    )
 
 
 def load_script(path: Path) -> dict[str, PanelIR]:

@@ -287,9 +287,10 @@ PANEL 2
             parse_script(text)
         assert caught.value.line == 5
 
-    def test_a_panel_that_does_not_validate_is_located_at_its_heading(self):
+    def test_a_panel_that_does_not_validate_is_located_where_it_is_wrong(self):
         """It used to carry no line at all, so `scenet check` pointed at line 1 -- the
-        front-matter fence -- whichever panel was wrong."""
+        front-matter fence -- whichever panel was wrong. Then it pointed at the panel's
+        heading; now at the directive that set the bad value."""
         text = (
             "---\ncast: {A: {reference: alice}}\n---\n"
             "PANEL 1\nA\nHello.\n\n"
@@ -297,7 +298,7 @@ PANEL 2
         )
         with pytest.raises(ScriptSyntaxError, match="in PANEL 2") as caught:
             parse_script(text)
-        assert caught.value.line == 8
+        assert (caught.value.line, caught.value.rule) == (9, "invalid-field")
 
     def test_shipped_script_example_parses(self):
         panels = load_script(EXAMPLES / "umbrella.script")

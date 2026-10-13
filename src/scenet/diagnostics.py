@@ -66,10 +66,12 @@ from scenet.errors import (
 )
 from scenet.frontends.common import (
     LAYOUT_KEYS,
+    PYDANTIC_RULES,
     errors_of,
     normalise,
     normalise_layout,
     panel_name_problem,
+    rule_for_pydantic,
 )
 from scenet.frontends.positions import (
     DOCUMENT_START,
@@ -383,13 +385,9 @@ RULES: dict[str, Rule] = {
     ),
 }
 
-#: pydantic error types that deserve their own rule. Everything else that pydantic
-#: raises at field level is reported as `invalid-field`, which is honest: the catalogue
-#: should not grow a rule per validator in a library this project does not own.
-_PYDANTIC_RULES = {
-    "missing": "missing-field",
-    "extra_forbidden": "unknown-key",
-}
+#: pydantic error types that deserve their own rule, kept beside the frontends' shared
+#: reading of an error (`frontends.common.rule_for_pydantic`).
+_PYDANTIC_RULES = PYDANTIC_RULES
 
 
 @dataclass(frozen=True, slots=True)
@@ -477,13 +475,8 @@ def _rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]
     `_rule_for_scenet_error` reports one: passed through, it ended `to_sarif` in a
     `KeyError` when it looked the rule up.
     """
-    original = (error.get("ctx") or {}).get("error")
-    if isinstance(original, RuleViolationError):
-        rule = original.rule if original.rule in RULES else "internal"
-        return rule, original.loc or tuple(error["loc"])
-
-    kind = str(error["type"])
-    return _PYDANTIC_RULES.get(kind, "invalid-field"), tuple(error["loc"])
+    rule, loc = rule_for_pydantic(error)
+    return (rule if rule in RULES else "internal"), loc
 
 
 def _from_validation_error(
