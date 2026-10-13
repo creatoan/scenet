@@ -29,6 +29,7 @@ from scenet import (
     Predicate,
     SfxSize,
     ShotType,
+    Side,
     Spans,
     TimeOfDay,
     Weather,
@@ -138,6 +139,14 @@ class TestTheGalleryCoversTheLanguage:
         names = sorted(default_library().get("alice").expressions)
         missing = [name for name in names if name not in text]
         assert missing == []
+
+    def test_every_off_panel_side_appears(self):
+        """A tail ending on each edge of the frame has been looked at, and one whose side
+        the compiler chose."""
+        text = self._all_text()
+        missing = [side.value for side in Side if f"off_panel: {side.value}" not in text]
+        assert missing == []
+        assert "off_panel: true" in text
 
     def test_every_sound_effect_size_appears(self):
         """A size nobody has looked at is a size nobody has checked reads at a long shot."""

@@ -160,6 +160,15 @@ def _event(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
     # fields, rarely enough that most panels are still about their dialogue.
     if draw(st.integers(0, 4)) == 0:
         return draw(_sfx(cast))
+    if draw(st.integers(0, 5)) == 0:
+        # Somebody nobody draws, speaking from off panel: a tail to the frame.
+        return {
+            "say": {
+                "by": draw(_actor_ids().filter(lambda name: name not in cast)),
+                "text": draw(words(max_words=8)),
+                "off_panel": draw(st.sampled_from([True, "left", "right", "top", "bottom"])),
+            }
+        }
     if cast and draw(st.booleans()):
         say: dict[str, Any] = {"by": draw(st.sampled_from(cast)), "text": draw(words(max_words=8))}
         if draw(st.booleans()):
