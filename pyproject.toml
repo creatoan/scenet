@@ -221,6 +221,7 @@ also_copy = [
     "playground/",
     ".github/",
     "README.md",
+    "THIRD_PARTY_NOTICES.md",
     "server.json",
     "pyproject.toml",
 ]
