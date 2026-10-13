@@ -250,6 +250,12 @@ class TestRules:
     # The table of rules is held to the catalogue, both ways, by
     # `tests/test_diagnostics.py::TestTheReferenceListsEveryRule`.
 
+    def test_the_table_gives_each_rule_its_level(self):
+        """A note reports a house limit and never fails `check`, so the reader must be
+        able to tell one from an error before running anything."""
+        rows = re.findall(r"^\| `scenet/([a-z-]+)` \| (\w+) \|", _section("check"), re.MULTILINE)
+        assert dict(rows) == {name: rule.level for name, rule in RULES.items()}
+
     def test_every_rule_but_internal_has_a_corpus_document(self):
         covered = {path.name.split(".")[0] for path in CORPUS.iterdir()}
         assert covered == set(RULES) - {"internal"}

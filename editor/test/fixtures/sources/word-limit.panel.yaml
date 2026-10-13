@@ -1,0 +1,8 @@
+cast:
+  bob: {reference: bob}
+script:
+  - say:
+      by: bob
+      text: >-
+        I have been waiting on this corner since before the rain started, and I am not
+        going anywhere until somebody tells me where she really went.

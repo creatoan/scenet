@@ -71,6 +71,12 @@ describe("captured from scenet check", () => {
     assert.equal(diagnostic?.help, RULE_REFERENCE);
   });
 
+  test("a note, such as a balloon over the word limit, is information, not an error", () => {
+    assert.deepEqual(problems(map(captured("word-limit"), source("word-limit.panel.yaml"))), {
+      "word-limit.panel.yaml": ["5:12-7:70 information scenet/word-limit"],
+    });
+  });
+
   test("a comic-script finding is its whole line", () => {
     // Line 10 is `PANEL 1`, seven characters.
     assert.deepEqual(problems(map(captured("duplicate-panel"), source("duplicate-panel.script"))), {

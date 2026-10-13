@@ -50,7 +50,7 @@ from scenet.errors import (
 from scenet.frontends.positions import DOCUMENT_START, locate, syntax_error_region
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
-from scenet.pipeline import compile_source
+from scenet.pipeline import compile_script, compile_source
 
 # A panel whose only fault is the speaker's name. The interesting case, because no JSON
 # Schema can catch it: the actor exists as a string, it just is not in the cast.
@@ -120,6 +120,22 @@ _SEAM_CASES: dict[str, str] = {
     "unknown_expression": "cast: {a: {reference: alice, expression: smirking}}\n",
     "unknown_puppet_reference": "cast: {a: {reference: nobody}}\n",
     "cast_less": "panel: {size: [420, 560]}\n",
+    "a_long_balloon": (
+        'cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: "'
+        + " ".join(["word"] * 30)
+        + '"}\n'
+    ),
+}
+
+# The same seam, for comic scripts, which `check` and `build` used to assemble each their
+# own way.
+_SCRIPT_SEAM_CASES: dict[str, str] = {
+    "clean": "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHello.\n",
+    "unknown_speaker": "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nB\nHello.\n",
+    "cast_less": "PANEL 1\nRain.\n",
+    "a_long_speech": (
+        "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\n" + " ".join(["word"] * 30) + "\n"
+    ),
 }
 
 
@@ -1044,10 +1060,26 @@ class TestCheckAndBuildAgree:
 
     @pytest.mark.parametrize("name", sorted(_SEAM_CASES))
     def test_a_clean_deep_check_means_a_successful_build(self, name: str):
+        """Clean meaning no errors: a note reports a house limit, and the build goes on."""
         source = _SEAM_CASES[name]
-        checked_clean = diagnose_source(source, deep=True) == []
+        found = diagnose_source(source, deep=True)
+        checked_clean = not [item for item in found if item.level == "error"]
         try:
             compile_source(source)
+            compiled = True
+        except ScenetError:
+            compiled = False
+        assert checked_clean == compiled, (
+            f"{name}: deep check said clean={checked_clean}, build succeeded={compiled}"
+        )
+
+    @pytest.mark.parametrize("name", sorted(_SCRIPT_SEAM_CASES))
+    def test_so_does_a_clean_deep_check_of_a_script(self, name: str):
+        source = _SCRIPT_SEAM_CASES[name]
+        found = diagnose_script(source, deep=True)
+        checked_clean = not [item for item in found if item.level == "error"]
+        try:
+            compile_script(source)
             compiled = True
         except ScenetError:
             compiled = False
