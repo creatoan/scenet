@@ -455,3 +455,64 @@ class TestReservedNames:
         with pytest.raises(ScriptSyntaxError, match="reserved") as raised:
             panels("PANEL 1\n@cast: {CAP: {reference: bob}}\n")
         assert raised.value.line == 5
+
+
+class TestOver:
+    """`@over:` writes a panel as a sparse change to another, as `over:` does in YAML."""
+
+    BASE = "PANEL 1\n@shot: close_up\n@setting: {weather: rain}\nALICE\nHello.\n\n"
+
+    def test_a_panel_inherits_the_directives_of_the_one_it_is_over(self):
+        result = panels(self.BASE + "PANEL 2\n@over: 1\n@angle: low\n")
+        assert result["2"].camera.shot == result["1"].camera.shot
+        assert result["2"].setting == result["1"].setting
+        assert result["2"].camera.angle.value == "low"
+
+    def test_never_the_dialogue(self):
+        assert events(panels(self.BASE + "PANEL 2\n@over: 1\n")["2"]) == []
+
+    def test_it_may_change_what_it_inherits(self):
+        result = panels(self.BASE + "PANEL 2\n@over: 1\n@shot: full_shot\n")
+        assert result["2"].camera.shot.value == "full_shot"
+
+    def test_it_may_name_a_panel_further_down(self):
+        result = panels("PANEL 1\n@over: 2\n\n" + self.BASE.replace("PANEL 1", "PANEL 2"))
+        assert result["1"].camera.shot == result["2"].camera.shot
+
+    def test_a_label_is_looked_up_on_the_same_page_first(self):
+        script = (
+            "PAGE ONE\n" + self.BASE + "PAGE TWO\nPANEL 1\n@shot: full_shot\n\nPANEL 2\n@over: 1\n"
+        )
+        result = panels(script)
+        assert result["2-2"].camera.shot.value == "full_shot"
+
+    def test_then_as_a_panels_whole_name(self):
+        script = "PAGE ONE\n" + self.BASE + "PAGE TWO\nPANEL 1\n@over: 1-1\n"
+        assert panels(script)["2-1"].setting == panels(script)["1-1"].setting
+
+    def test_a_label_is_a_label_not_a_number(self):
+        """YAML would read `07` as the number 7; a script names the panel `07` is."""
+        result = panels("PANEL 07\n@shot: close_up\n\nPANEL 8\n@over: 07\n")
+        assert result["8"].camera.shot.value == "close_up"
+
+    def test_a_cast_member_it_inherits_may_speak(self):
+        script = "PANEL 1\n@cast: {CARL: {reference: bob}}\n\nPANEL 2\n@over: 1\nCARL: Who?\n"
+        assert events(panels(script)["2"]) == [("say", "CARL", "speech", "Who?")]
+
+    @pytest.mark.parametrize(
+        ("body", "says"),
+        [
+            ("PANEL 1\n@over: 9\n", "does not exist"),
+            ("PANEL 1\n@over: 2\n\nPANEL 2\n@over: 1\n", "cyclic"),
+            ("PANEL 1\n@over: 1\n", "names its own panel"),
+        ],
+    )
+    def test_a_fault_is_one_composition_finding_at_its_line(self, body: str, says: str):
+        (finding,) = diagnose_script(FRONT + body, source=Path("x.script"))
+        assert (finding.rule, finding.level) == ("composition", "error")
+        assert finding.region is not None
+        assert finding.region.start.line == 5
+        assert says in finding.message
+
+    def test_written_twice_it_is_a_repeated_directive(self):
+        assert found("PANEL 1\n\nPANEL 2\n@over: 1\n@over: 1\n") == [("error", "duplicate-key", 8)]

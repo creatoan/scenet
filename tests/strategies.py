@@ -474,9 +474,13 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
         out += [_page_heading(draw, page, panels_on_page), ""]
         if restart:
             number = 0
-        for _ in range(panels_on_page):
+        for index in range(panels_on_page):
             number += 1
-            out += [_panel_heading(draw, number), "@shot: full_shot", "They stand on a corner.", ""]
+            # A panel after the first on its page may be written over the one before it,
+            # which it inherits the directives of and never the dialogue.
+            over = index > 0 and draw(st.integers(0, 3)) == 0
+            directive = f"@over: {number - 1}" if over else "@shot: full_shot"
+            out += [_panel_heading(draw, number), directive, "They stand on a corner.", ""]
             lines: list[tuple[str, str | None]] = []
             for _ in range(draw(st.integers(0, 3))):
                 if draw(st.integers(0, 3)) == 0:
