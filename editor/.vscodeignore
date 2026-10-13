@@ -4,6 +4,7 @@
 # installing -- nothing else. Sources belong in the repository, which the README links to.
 
 src/**
+syntaxes/*.ts
 test/**
 e2e/**
 out-e2e/**

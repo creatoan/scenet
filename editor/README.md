@@ -45,6 +45,13 @@ which follows the compiler's script frontend line for line. The playground colou
 same files with a Monaco Monarch tokenizer, and the two are separate formats that cannot
 be generated from one another without a converter longer than either.
 
+The grammar itself is generated. A speech ends at a heading, a caption, a sound effect, a
+directive or the next cue, so each of those lines has to be spelled out again inside the
+lookaheads that end it, and hand-written copies drift. `syntaxes/scenet-script.grammar.ts`
+writes each line shape once and composes the rules and the lookaheads from it; edit that,
+then run `npm run grammar`. `test/grammar-source.test.ts` fails when the committed JSON is
+not what the source builds.
+
 So they are held together by tests instead. `tests/script_highlighting/` holds scripts,
 each with the spans a highlighter should colour, line by line, and what each span is.
 `test/grammar.test.ts` runs this grammar against them with `vscode-textmate` and the

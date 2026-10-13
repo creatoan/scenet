@@ -102,6 +102,7 @@
   "scripts": {
     "schemas": "cd .. && uv run scenet schema -o editor/schemas/panel.schema.json && uv run scenet schema --scene -o editor/schemas/scene.schema.json",
     "build": "tsc",
+    "grammar": "tsx syntaxes/write-grammar.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test && tsc --noEmit -p e2e",
     "e2e": "tsc -p e2e && node out-e2e/run.js",
     "test": "node --import tsx --test \"test/**/*.test.ts\""

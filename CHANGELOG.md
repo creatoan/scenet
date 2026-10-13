@@ -86,6 +86,9 @@ below 1.0 means.
   scored nearly equal a balloon may sit somewhere else. `--live-text` relies on the
   renderer kerning as the compiler measured it, which browsers do by default. Checked pair
   by pair against HarfBuzz, which is a test dependency only. (Part of #74)
+- The VS Code extension's comic-script grammar is generated from one definition of each
+  kind of line, rather than hand-written with every heading spelled out in up to four
+  places. Highlighting is unchanged. (Part of #75)
 
 ### Fixed
 
