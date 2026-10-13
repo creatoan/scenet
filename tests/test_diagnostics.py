@@ -959,8 +959,8 @@ class TestAScriptFindingIsALine:
         assert found.region == self.line(5, "Panel 1.")
 
     def test_content_before_the_first_panel_spans_its_line(self):
-        (found,) = diagnose_script("stray prose here\n\nPANEL 1\n", source=Path("x.script"))
-        assert found.region == self.line(1, "stray prose here")
+        (found,) = diagnose_script("@shot: close_up\n\nPANEL 1\n", source=Path("x.script"))
+        assert found.region == self.line(1, "@shot: close_up")
 
     def test_the_line_is_the_file_line_after_front_matter(self):
         script = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\nALICE\nHi.\n\nPANEL 1\n"

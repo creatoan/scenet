@@ -250,7 +250,7 @@ PANEL 2
 
     def test_content_before_the_first_panel_is_rejected(self):
         with pytest.raises(ScriptSyntaxError, match="before the first PANEL"):
-            parse_script("---\ncast: {A: {reference: alice}}\n---\nstray text\nPANEL 1\n")
+            parse_script("---\ncast: {A: {reference: alice}}\n---\n@shot: close_up\nPANEL 1\n")
 
     def test_a_script_with_no_panels_is_rejected(self):
         with pytest.raises(ScriptSyntaxError, match="no PANEL headings"):
@@ -266,11 +266,11 @@ PANEL 2
         ("text", "line"),
         [
             # No front matter: the body is the file.
-            ("\n\nstray prose\nPANEL 1\n", 3),
-            # Front matter occupies lines 1-4, so the stray line is the file's line 6.
-            ("---\ncast: {A: {reference: alice}}\nscene: x\n---\n\nstray prose\nPANEL 1\n", 6),
+            ("\n\n@shot: close_up\nPANEL 1\n", 3),
+            # Front matter occupies lines 1-4, so the stray directive is the file's line 6.
+            ("---\ncast: {A: {reference: alice}}\nscene: x\n---\n\n@shot: close_up\nPANEL 1\n", 6),
             # Blank lines before the opening fence count too.
-            ("\n\n---\ncast: {A: {reference: alice}}\n---\nstray prose\nPANEL 1\n", 6),
+            ("\n\n---\ncast: {A: {reference: alice}}\n---\n@shot: close_up\nPANEL 1\n", 6),
         ],
         ids=["no-front-matter", "after-front-matter", "after-leading-blank-lines"],
     )

@@ -98,7 +98,7 @@ Goodbye.
 BAD_SCRIPT = """\
 
 
-Somewhere, it is raining.
+@shot: close_up
 
 PANEL 1
 ALICE

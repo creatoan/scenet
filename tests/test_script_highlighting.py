@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-from scenet.frontends.script_front import _page_label, _read_panels, _split_front_matter
+from scenet.frontends.script_front import _page_label, _read_script, _split_front_matter
 
 FIXTURES = Path(__file__).parent / "script_highlighting"
 NAMES = sorted(path.stem for path in FIXTURES.glob("*.script"))
@@ -27,6 +27,7 @@ CLASSES = {
     "front-matter",
     "page-keyword",
     "page-label",
+    "page-count",
     "panel-keyword",
     "panel-label",
     "directive-marker",
@@ -42,6 +43,7 @@ CLASSES = {
     "sfx-text",
     "dialogue",
     "prose",
+    "markdown",
 }
 
 Line = list[tuple[str, str]]
@@ -61,23 +63,29 @@ def _as_fixture_says(lines: list[Line]) -> list[dict[str, Any]]:
     panels: list[dict[str, Any]] = []
     page: str | None = None
     speaker: str | None = None
+    # Lines under a PAGE heading belong to the page, not to the panel before it.
+    inside = False
     for line in lines:
         spans = dict(line)
         if "page-keyword" in spans:
             page = _page_label(spans["page-label"])
             speaker = None
+            inside = False
         elif "panel-keyword" in spans:
             panels.append(
                 {
-                    "label": spans["panel-label"],
+                    # `Panel One` is panel `1`, as `PAGE TWO` is page `2`.
+                    "label": _page_label(spans["panel-label"]),
                     "page": page,
-                    "description": [],
+                    # Dark Horse's `Panel 1. A corner.`: the description on its line.
+                    "description": [spans["prose"]] if "prose" in spans else [],
                     "events": [],
                     "directives": [],
                 }
             )
             speaker = None
-        elif panels:
+            inside = True
+        elif inside:
             speaker = _in_panel(panels[-1], spans, speaker)
     return panels
 
@@ -115,7 +123,7 @@ def _as_compiler_reads(text: str) -> list[dict[str, Any]]:
     """The same, from the script frontend's own drafts."""
     _, body, offset = _split_front_matter(text, None)
     panels = []
-    for draft in _read_panels(body, None, offset=offset).values():
+    for draft in _read_script(body, None, offset=offset).drafts.values():
         events = []
         for event in draft.events:
             if "say" in event:

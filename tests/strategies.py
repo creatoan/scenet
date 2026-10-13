@@ -410,10 +410,14 @@ class DrawnScript:
         text: The script.
         lines: For each panel, in order, how many balloons and captions it was written
             with. The compiled book must hold exactly that many -- nothing lost silently.
+        said: For each panel, what each of those lines is: `("say", speaker)`, or
+            `("caption", None)`. Counting them would not notice a line read as the wrong
+            thing, or as said by somebody else.
     """
 
     text: str
     lines: tuple[int, ...]
+    said: tuple[tuple[tuple[str, str | None], ...], ...] = ()
 
 
 def _spoken() -> st.SearchStrategy[str]:
@@ -437,6 +441,10 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
 
     The second speaker's name may carry an accent, and a cue may spell it decomposed, as
     a macOS editor stores it, while the front matter has it composed: one name either way.
+
+    Headings come as publishers write them: a title before the first page, `PAGE TWO
+    (three panels)` with the count it really has, `Panel 2. A description.`, numbers in
+    words, and Markdown's `##` and `**`.
     """
     second = draw(st.sampled_from(["BOB", "JOSÉ", "ZOË"]))
     spellings = {
@@ -454,32 +462,68 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
         "---",
         "",
     ]
+    if draw(st.booleans()):
+        out += ["The Lighthouse, Issue 1", "by a writer", ""]  # a title page
     counts: list[int] = []
+    said: list[tuple[tuple[str, str | None], ...]] = []
     number = 0
     for page in range(1, draw(st.integers(1, 3)) + 1):
-        out += [f"PAGE {page}", ""]
+        panels_on_page = draw(st.integers(1, 3))
+        out += [_page_heading(draw, page, panels_on_page), ""]
         if restart:
             number = 0
-        for _ in range(draw(st.integers(1, 3))):
+        for _ in range(panels_on_page):
             number += 1
-            out += [f"PANEL {number}", "@shot: full_shot", "They stand on a corner.", ""]
-            lines = 0
+            out += [_panel_heading(draw, number), "@shot: full_shot", "They stand on a corner.", ""]
+            lines: list[tuple[str, str | None]] = []
             for _ in range(draw(st.integers(0, 3))):
                 if draw(st.integers(0, 3)) == 0:
                     kind = draw(st.sampled_from(["", " (locale)", " (monologue)"]))
                     out += [f"CAPTION{kind}: {draw(_spoken())}", ""]
+                    lines.append(("caption", None))
                 else:
                     modifier = draw(
                         st.sampled_from(["", " (whisper)", " (shouting)", " (thinking)"])
                     )
-                    name = draw(st.sampled_from(spellings[draw(st.sampled_from(cast))]))
+                    speaker = draw(st.sampled_from(cast))
+                    name = draw(st.sampled_from(spellings[speaker]))
                     out += [f"{name}{modifier}", draw(_spoken())]
                     if draw(st.integers(0, 3)) == 0:
                         out.append(draw(_spoken()))  # a continuation line
                     out.append("")
-                lines += 1
-            counts.append(lines)
-    return DrawnScript("\n".join(out) + "\n", tuple(counts))
+                    lines.append(("say", speaker))
+            counts.append(len(lines))
+            said.append(tuple(lines))
+    return DrawnScript("\n".join(out) + "\n", tuple(counts), tuple(said))
+
+
+#: Numbers as a script may spell them, for headings.
+_IN_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def _page_heading(draw: st.DrawFn, page: int, panels: int) -> str:
+    """`PAGE 2`, `PAGE TWO`, or Dark Horse's `PAGE TWO (three panels)`, its count true."""
+    label = _IN_WORDS[page].upper() if draw(st.booleans()) else str(page)
+    plural = "panel" if panels == 1 else "panels"
+    count = draw(st.sampled_from(["", f" ({_IN_WORDS[panels]} {plural})", f" ({panels} {plural})"]))
+    marker = draw(st.sampled_from(["", "# "]))
+    return f"{marker}PAGE {label}{count}"
+
+
+def _panel_heading(draw: st.DrawFn, number: int) -> str:
+    """A panel heading as publishers and Markdown write one."""
+    label = _IN_WORDS[number].capitalize() if number < 10 and draw(st.booleans()) else str(number)
+    return draw(
+        st.sampled_from(
+            [
+                f"PANEL {number}",
+                f"Panel {label}.",
+                f"Panel {number}. Close on the corner.",
+                f"## PANEL {number}",
+                f"**PANEL {number}**",
+            ]
+        )
+    )
 
 
 # ---------------------------------------------------------------- broken documents

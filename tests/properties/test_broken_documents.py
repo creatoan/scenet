@@ -21,6 +21,7 @@ from hypothesis import strategies as st
 
 from scenet.cli import main
 from scenet.diagnostics import RULES, Diagnostic, diagnose_script, diagnose_source, to_sarif
+from scenet.frontends.script_front import _read_panel_heading, _recognisable
 from tests.strategies import (
     LIBRARY,
     MISTAKES,
@@ -32,6 +33,11 @@ from tests.strategies import (
     scenes,
     scripts,
 )
+
+
+def _is_a_panel_heading(line: str) -> bool:
+    """Whether the script frontend reads a line as a panel heading, in any of its forms."""
+    return _read_panel_heading(_recognisable(line.strip()), 0, None) is not None
 
 
 def _line(text: str, found: Diagnostic) -> str:
@@ -139,12 +145,12 @@ def test_one_mistake_in_a_scene_is_one_finding(kind: str, drawn: DrawnScene):
 def test_a_repeated_panel_heading_is_one_finding(drawn: DrawnScript):
     """The #63 class: a PANEL number written twice on one page."""
     lines = drawn.text.splitlines()
-    first = next(index for index, line in enumerate(lines) if line.startswith("PANEL "))
+    first = next(index for index, line in enumerate(lines) if _is_a_panel_heading(line))
     lines.insert(first, lines[first])
     text = "\n".join(lines) + "\n"
     found = diagnose_script(text, library=LIBRARY)
     assert [item.rule for item in found] == ["duplicate-panel"]
-    assert _line(text, found[0]).startswith("PANEL ")
+    assert _is_a_panel_heading(_line(text, found[0]))
 
 
 @given(scripts(), st.data())
@@ -167,7 +173,7 @@ def test_a_speaker_outside_the_cast_is_one_finding_at_the_cue(
     wherever in whichever panel it is -- not at the panel's heading, as any other
     `invalid-field`."""
     lines = drawn.text.split("\n")
-    headings = [index for index, line in enumerate(lines) if line.startswith("PANEL ")]
+    headings = [index for index, line in enumerate(lines) if _is_a_panel_heading(line)]
     after = data.draw(st.sampled_from(headings), label="panel")
     lines[after + 1 : after + 1] = ["CARL", "who is this", ""]
     text = "\n".join(lines)
