@@ -394,6 +394,29 @@ RULES: dict[str, Rule] = {
         help="Split the balloon in two, or carry the rest of the words to the next panel.",
         level="note",
     ),
+    "panel-count": Rule(
+        summary="A comic script's PAGE heading states a count its panels do not match",
+        description=(
+            "Dark Horse's script format labels each page with how many panels it has, "
+            "`PAGE ONE (five panels)`. When the panels under it number something else, a "
+            "panel heading has often been missed, or written so that it reads as prose -- "
+            "and nothing else would say so. A note, not an error: the panels that are there "
+            "still compile."
+        ),
+        help="Correct the count, or the panel heading that was not read as one.",
+        level="note",
+    ),
+    "looks-like-dialogue": Rule(
+        summary="A line in a comic script is set like dialogue but is not read as dialogue",
+        description=(
+            "A cue with nothing said under it, or a name in capitals with a line under it "
+            "where nothing is spoken -- before the first PANEL heading, which Dark Horse's "
+            "format opens with the writer's name and address. Read as written, nothing is "
+            "lost, but a line meant as dialogue would not be lettered, so it is pointed out."
+        ),
+        help="If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.",
+        level="note",
+    ),
     "internal": Rule(
         summary="The compiler failed in a way it does not have a rule for",
         description=(
@@ -1268,6 +1291,18 @@ def diagnose_script(
     if _errors(found):
         return _in_source_order(found)
 
+    # What reading the script noticed: a cue with nothing said under it, a page whose
+    # stated count its panels do not match.
+    found += [
+        Diagnostic(
+            rule=note.rule,
+            message=note.message,
+            path=note.path,
+            source=source,
+            region=_script_line(lines, note.line),
+        )
+        for note in document.notes
+    ]
     for name, panel in panels.items():
         written = document.lines[name]
         for path, message in _over_the_word_limits(panel):

@@ -258,6 +258,10 @@ def run_build(args: argparse.Namespace) -> int:
     if not args.quiet:
         for path, _ in outputs:
             print(f"wrote {path}")
+        # What reading the document noticed, each naming its line, then what the compiler
+        # decided in each panel.
+        for note in book.notes:
+            print(f"note: {note}")
         for name, result in book.panels.items():
             for note in result.notes:
                 print(f"note: {note}" if single else f"note: {name}: {note}")

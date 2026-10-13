@@ -48,13 +48,56 @@ function captures(...names: readonly string[]): Captures {
 /** An optional parenthetical, `(whisper)`, as three groups: open, contents, close. */
 const PARENTHETICAL = { capture: raw`(?:(\()([^)]*)(\)))?`, test: raw`(?:\([^)]*\))?` } as const;
 
-/** `PAGE ONE`, `Panel 1.`: a heading keyword and its label. */
-function heading(keyword: string): Shape {
-  return {
-    capture: raw`((?i:${keyword}))[ \t]+([^\s:]+?)[ \t]*([.:]?)[ \t]*$`,
-    test: raw`(?i:${keyword})[ \t]+[^\s:]+?[ \t]*[.:]?[ \t]*$`,
-  };
-}
+/**
+ * Markdown a writer may put around a heading, `## ` before it or `**` around it. The
+ * frontend strips it and reads the heading; the markers are coloured as what they are.
+ */
+const MARKDOWN = {
+  open: raw`((?:#{1,6}[ \t]+)?(?:\*\*|__)?)`,
+  openTest: raw`(?:#{1,6}[ \t]+)?(?:\*\*|__)?`,
+  close: raw`((?:\*\*|__)?)`,
+  closeTest: raw`(?:\*\*|__)?`,
+} as const;
+
+const UNITS = "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen";
+const ONE_TO_NINE = "one|two|three|four|five|six|seven|eight|nine";
+const TENS = "twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety";
+
+/** A page number in words, `ONE` to `NINETY-NINE`, however they are joined. */
+const NUMBER_PHRASE = raw`(?i:(?:${TENS})(?:[ \t-]+(?:${ONE_TO_NINE}))?|${UNITS})`;
+
+/**
+ * A label a panel heading with a description on its line may have: digits, digits and a
+ * letter, one letter, or a number in a word -- so `Panel shows Alice.` stays prose.
+ */
+const NUMBER_LIKE = raw`(?:\d+\p{L}?|(?i:${TENS}|${UNITS})(?!\p{L})|\p{L}(?!\p{L}))`;
+
+/**
+ * Dark Horse's `PAGE ONE (five panels)`. A label of several words is a number in words,
+ * `PAGE TWENTY ONE`; the parenthetical states the count, or is a note.
+ */
+const PAGE: Shape = {
+  capture: raw`${MARKDOWN.open}((?i:page))[ \t]+(${NUMBER_PHRASE}(?=[ \t]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t]*${PARENTHETICAL.capture}[ \t]*([.:]?)[ \t]*${MARKDOWN.close}[ \t]*$`,
+  test: raw`${MARKDOWN.openTest}(?i:page)[ \t]+(?:${NUMBER_PHRASE}(?=[ \t]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t]*${PARENTHETICAL.test}[ \t]*[.:]?[ \t]*${MARKDOWN.closeTest}[ \t]*$`,
+};
+
+/** `PANEL 1`, `Panel One:`: a panel heading alone on its line. */
+const PANEL: Shape = {
+  capture: raw`${MARKDOWN.open}((?i:panel))[ \t]+([^\s:]+?)[ \t]*([.:]?)[ \t]*${MARKDOWN.close}[ \t]*$`,
+  test: raw`${MARKDOWN.openTest}(?i:panel)[ \t]+[^\s:]+?[ \t]*[.:]?[ \t]*${MARKDOWN.closeTest}[ \t]*$`,
+};
+
+/** Dark Horse's `Panel 1. Alice and Bob on a corner.`, the description on the same line. */
+const PANEL_DESCRIBED: Shape = {
+  capture: raw`${MARKDOWN.open}((?i:panel))[ \t]+(${NUMBER_LIKE})[ \t]*([.:—–]|[ \t]-)[ \t]*(\S.*)$`,
+  test: raw`${MARKDOWN.openTest}(?i:panel)[ \t]+${NUMBER_LIKE}[ \t]*(?:[.:—–]|[ \t]-)[ \t]*\S`,
+};
+
+/** A Markdown horizontal rule, `---` or `* * *`, which the frontend reads as a blank line. */
+const RULE: Shape = {
+  capture: raw`(-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})[ \t]*$`,
+  test: raw`(?:-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})[ \t]*$`,
+};
 
 /** `CAPTION (monologue): text`, `SFX: BLAM`: a label with its text on the same line. */
 function labelWithText(keyword: string): Shape {
@@ -82,9 +125,10 @@ const SHORT_LINE = raw`(?=\S(?:.{0,38}\S)?[ \t]*$)`;
 const CUE_NAME = raw`\p{Lu}[\p{Lu}\p{M}\p{Nd} _'.\-]*?`;
 
 const SHAPES = {
-  page: heading("page"),
-  panel: heading("panel"),
-  anyHeading: heading("page|panel"),
+  rule: RULE,
+  page: PAGE,
+  panel: PANEL,
+  panelDescribed: PANEL_DESCRIBED,
   directive: { capture: raw`(@)(\w+)[ \t]*(:)[ \t]*(.+)$`, test: raw`@\w+[ \t]*:[ \t]*\S` },
   caption: labelWithText("caption"),
   sfxLine: labelWithText("sfx"),
@@ -103,7 +147,15 @@ const BLANK = raw`[ \t]*$`;
  * Lines that end a speech even before its first line: the first line under a cue is
  * speech whatever it looks like, except these.
  */
-const INTERRUPTS: readonly Shape[] = [SHAPES.anyHeading, SHAPES.caption, SHAPES.sfxLine, SHAPES.sfxCue];
+const INTERRUPTS: readonly Shape[] = [
+  SHAPES.rule,
+  SHAPES.page,
+  SHAPES.panel,
+  SHAPES.panelDescribed,
+  SHAPES.caption,
+  SHAPES.sfxLine,
+  SHAPES.sfxCue,
+];
 
 /** A speech also ends at a directive and at the next cue, once its first line is read. */
 const ENDS_A_SPEECH: readonly Shape[] = [...INTERRUPTS, SHAPES.directive, SHAPES.cue];
@@ -148,6 +200,7 @@ export const grammar = {
     },
     body: {
       patterns: [
+        { include: "#rule" },
         { include: "#page" },
         { include: "#panel" },
         { include: "#directive" },
@@ -157,13 +210,48 @@ export const grammar = {
         { include: "#prose" },
       ],
     },
+    rule: {
+      comment: "A Markdown horizontal rule, which the frontend reads as the blank line it looks like.",
+      match: line(SHAPES.rule.capture),
+      captures: captures("punctuation.definition.markdown"),
+    },
     page: {
       match: line(SHAPES.page.capture),
-      captures: captures("keyword.control.page", "entity.name.section.page", "punctuation.separator"),
+      captures: captures(
+        "punctuation.definition.markdown",
+        "keyword.control.page",
+        "entity.name.section.page",
+        "punctuation.definition.page-count.begin",
+        "markup.italic.page-count",
+        "punctuation.definition.page-count.end",
+        "punctuation.separator",
+        "punctuation.definition.markdown",
+      ),
     },
     panel: {
-      match: line(SHAPES.panel.capture),
-      captures: captures("keyword.control.panel", "entity.name.section.panel", "punctuation.separator"),
+      comment: "`PANEL 1` alone, or Dark Horse's `Panel 1. Alice and Bob on a corner.`",
+      patterns: [
+        {
+          match: line(SHAPES.panel.capture),
+          captures: captures(
+            "punctuation.definition.markdown",
+            "keyword.control.panel",
+            "entity.name.section.panel",
+            "punctuation.separator",
+            "punctuation.definition.markdown",
+          ),
+        },
+        {
+          match: line(SHAPES.panelDescribed.capture),
+          captures: captures(
+            "punctuation.definition.markdown",
+            "keyword.control.panel",
+            "entity.name.section.panel",
+            "punctuation.separator",
+            "comment.line.prose",
+          ),
+        },
+      ],
     },
     directive: {
       match: line(SHAPES.directive.capture),

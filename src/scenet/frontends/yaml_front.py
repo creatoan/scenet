@@ -114,10 +114,13 @@ class SceneDocument:
             order. A single-panel document has one, named `panel`.
         layout: The page format and the pages. `layout.pages` is empty for a document
             that lays nothing out, which is every document written before pages existed.
+        notes: What reading it noticed that is worth saying but is no fault, each naming
+            its line. Only a comic script has any yet.
     """
 
     panels: dict[str, PanelIR]
     layout: PageLayout
+    notes: tuple[str, ...] = ()
 
 
 def parse_scene(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:

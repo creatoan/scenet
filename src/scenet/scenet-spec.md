@@ -1027,7 +1027,8 @@ scenet build umbrella.script --strip
 
 | Line | Means |
 |---|---|
-| `PANEL 1` | Starts a new panel. Anything before the first one is an error. `PANEL 1:` and `PANEL 1.` are the same panel. |
+| `PANEL 1` | Starts a new panel. `PANEL 1:`, `PANEL 1.` and `Panel One` are the same panel. |
+| `Panel 1. Alice and Bob on a corner.` | Dark Horse's form: the panel, and its description on the same line. |
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
 | `BOB (whisper)` | Same, with a balloon kind. |
@@ -1038,6 +1039,9 @@ scenet build umbrella.script --strip
 | `SFX:` (alone) | Dark Horse's form: the sound is on the next line. |
 | Anything else | Prose. Preserved, never interpreted. |
 | `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
+| `PAGE ONE (five panels)` | Dark Horse's form: the page, and how many panels it has. A count its panels do not match is a `panel-count` note. |
+| `## PANEL 2`, `**PANEL 2**`, `---` | Markdown: the markers are stripped and the heading read; a horizontal rule is a blank line. |
+| Before the first heading | The title page: the writer's name and address, the title. Kept, never interpreted. |
 
 The one detail that trips people up: **a speaker cue is recognised by the name being all
 caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested. Capitals
@@ -1078,6 +1082,48 @@ before cues for the same reason.
 One thing the YAML syntax can express and this cannot: a `spoken` caption's `by`, naming the
 off-panel speaker. Write that panel in YAML, or leave the speaker unnamed — nothing in the drawn
 panel depends on it, since a caption has no tail.
+
+## A script as publishers ask for it
+
+[Dark Horse's script format](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
+is the reference house format, and Scenet reads its layout as written:
+
+```
+Margo Wren
+14 Harbour Lane, Port Ellis
+
+PAGE ONE (two panels)
+
+Panel 1. A lighthouse on a cliff at dusk. Maya climbs the last of the steps.
+
+MAYA:
+Theo? The lamp is out --
+
+Panel 2. Inside. Theo kneels by the dead lamp.
+
+THEO (whisper):
+-- because somebody forgot the oil.
+```
+
+- **The title page** is everything before the first heading. It is kept and never read,
+  as prose is. A name in capitals with a line under it looks like a cue, so it is pointed
+  out as a `looks-like-dialogue` note; a name from the cast there is an error, since it is
+  far more likely a missing PANEL heading. A directive, a caption or a sound effect before
+  the first heading belongs to no panel, and is an error.
+- **A line between a PAGE heading and its first PANEL** belongs to the page, never to the
+  last panel of the page before, which is where it used to end up.
+- **`PAGE ONE (five panels)`** states the count. When the panels under it number something
+  else, a heading has usually been missed, so it is a `panel-count` note. Any other
+  parenthetical, `(splash)` say, is a note to the artist, and is not read as a count.
+- **`Panel 1.` with its description on the same line** is a heading when the label looks
+  like a number — digits, digits and a letter, one letter, or a number in words — so
+  that `Panel shows Alice.` stays the sentence it is.
+- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written.
+- **A cue with nothing said under it** is a `looks-like-dialogue` note rather than vanishing.
+
+Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around
+it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
+It is not a second format: the text of a line is never rewritten.
 
 ## Prose is never interpreted
 
@@ -1266,6 +1312,12 @@ No layout satisfies the panel's constraints. Nothing is misspelled and nothing i
 
 **Fix:** Relax or remove a conflicting staging relation.
 
+### `scenet/looks-like-dialogue`
+
+A line in a comic script is set like dialogue but is not read as dialogue. A cue with nothing said under it, or a name in capitals with a line under it where nothing is spoken -- before the first PANEL heading, which Dark Horse's format opens with the writer's name and address. Read as written, nothing is lost, but a line meant as dialogue would not be lettered, so it is pointed out.
+
+**Fix:** If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.
+
 ### `scenet/missing-field`
 
 A required field is missing. The value is required and was not supplied.
@@ -1289,6 +1341,12 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A document with pages needs panels to lay out.
 
 **Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, or shrink the margin and gutters in `page:`.
+
+### `scenet/panel-count`
+
+A comic script's PAGE heading states a count its panels do not match. Dark Horse's script format labels each page with how many panels it has, `PAGE ONE (five panels)`. When the panels under it number something else, a panel heading has often been missed, or written so that it reads as prose -- and nothing else would say so. A note, not an error: the panels that are there still compile.
+
+**Fix:** Correct the count, or the panel heading that was not read as one.
 
 ### `scenet/panel-geometry`
 

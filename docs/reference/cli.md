@@ -225,6 +225,8 @@ note as information rather than a red squiggle.
 | `scenet/balloon-placement` | error | No legal position exists for a balloon (`--deep` only) |
 | `scenet/sfx-placement` | error | No legal position exists for a sound effect (`--deep` only) |
 | `scenet/word-limit` | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |
+| `scenet/panel-count` | note | A comic script's `PAGE ONE (five panels)` names a count its panels do not match |
+| `scenet/looks-like-dialogue` | note | A cue in a comic script with nothing said under it, or a name in capitals with a line under it outside any panel |
 | `scenet/internal` | error | A failure with no more specific rule — worth reporting |
 
 ### Source positions

@@ -49,8 +49,50 @@ export const scriptLanguageConfiguration: Monaco.languages.LanguageConfiguration
 //
 // Headings are case-insensitive, as the frontend's are, spelled out letter by letter
 // because a cue has to stay case-sensitive in the same tokenizer.
-const PAGE = /^(\s*)([Pp][Aa][Gg][Ee])(\s+)([^\s:]+?)(\s*[.:]?\s*)$/;
-const PANEL = /^(\s*)([Pp][Aa][Nn][Ee][Ll])(\s+)([^\s:]+?)(\s*[.:]?\s*)$/;
+/** A word in any case, spelled letter by letter: a cue in the same tokenizer is not. */
+const anyCase = (word: string): string =>
+  [...word].map((letter) => `[${letter.toUpperCase()}${letter.toLowerCase()}]`).join("");
+const oneOf = (words: readonly string[]): string => words.map(anyCase).join("|");
+
+const UNITS = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+  "nineteen",
+];
+const ONE_TO_NINE = UNITS.slice(1, 10);
+const TENS = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+/** A page number in words, `ONE` to `NINETY-NINE`, however they are joined. */
+const NUMBER_PHRASE = String.raw`(?:(?:${oneOf(TENS)})(?:[ \t-]+(?:${oneOf(ONE_TO_NINE)}))?|${oneOf(UNITS)})`;
+/**
+ * A label a panel heading with a description on its line may have: digits, digits and a
+ * letter, one letter, or a number in a word -- so `Panel shows Alice.` stays prose.
+ */
+const NUMBER_LIKE = String.raw`(?:\d+\p{L}?|(?:${oneOf(TENS)}|${oneOf(UNITS)})(?!\p{L})|\p{L}(?!\p{L}))`;
+/** A page's label: a number in words, `TWENTY ONE`, or one token, `3A`. */
+const PAGE_LABEL = String.raw`${NUMBER_PHRASE}(?=\s*(?:\(|[.:*_]|$))|[^\s:()]+?`;
+/** Markdown a writer may put around a heading: `## ` before it, `**` around it. */
+const MARKDOWN_OPEN = String.raw`(?:#{1,6}[ \t]+)?(?:\*\*|__)?`;
+const MARKDOWN_CLOSE = String.raw`(?:\*\*|__)?`;
+
+const unicode = (pattern: string): RegExp => new RegExp(pattern, "u");
+
+// A Markdown horizontal rule, `---` or `* * *`, which the frontend reads as a blank line.
+const RULE = /^(\s*)(-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})(\s*)$/;
+// Dark Horse's `PAGE ONE (five panels)`, and a page with no count.
+const PAGE_WITH_COUNT = unicode(
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")})(\s+)(${PAGE_LABEL})(\s*\()([^)]*)(\)\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+);
+const PAGE = unicode(
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")})(\s+)(${PAGE_LABEL})(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+);
+// `PANEL 1` alone, and Dark Horse's `Panel 1. Alice and Bob on a corner.`
+const PANEL = unicode(
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("panel")})(\s+)([^\s:]+?)(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+);
+const PANEL_DESCRIBED = unicode(
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("panel")})(\s+)(${NUMBER_LIKE})(\s*(?:[.:—–]|\s-)\s*)(\S.*)$`,
+);
 const DIRECTIVE = /^(\s*)(@)(\w+)(\s*:\s*)(.+)$/;
 const CAPTION_WITH_KIND = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*\()([^)]*)(\)\s*:\s*)(.+)$/;
 const CAPTION = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*:\s*)(.+)$/;
@@ -81,8 +123,34 @@ type Rule = Monaco.languages.IMonarchLanguageRule;
 
 /** Headings, captions and sound effects, which end whatever came before them. */
 const STRUCTURE: Rule[] = [
-  [PAGE, ["", { token: "keyword.page", switchTo: "@root" }, "", "string.page", "delimiter"]],
-  [PANEL, ["", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter"]],
+  [RULE, ["", { token: "keyword.markdown", switchTo: "@root" }, ""]],
+  [
+    PAGE_WITH_COUNT,
+    [
+      "",
+      "keyword.markdown",
+      { token: "keyword.page", switchTo: "@root" },
+      "",
+      "string.page",
+      "delimiter",
+      "annotation.page-count",
+      "delimiter",
+      "keyword.markdown",
+      "",
+    ],
+  ],
+  [
+    PAGE,
+    ["", "keyword.markdown", { token: "keyword.page", switchTo: "@root" }, "", "string.page", "delimiter", "keyword.markdown", ""],
+  ],
+  [
+    PANEL,
+    ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "keyword.markdown", ""],
+  ],
+  [
+    PANEL_DESCRIBED,
+    ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "comment.prose"],
+  ],
   [
     CAPTION_WITH_KIND,
     ["", { token: "keyword.caption", switchTo: "@root" }, "delimiter", "annotation.caption", "delimiter", "string.caption"],
@@ -116,7 +184,7 @@ const CUES: Rule[] = [
 
 /**
  * The tokenizer, a state machine over the same line shapes as the frontend's own loop
- * (`_read_panels`), so that what is coloured as dialogue is what compiles as dialogue:
+ * (`_Reader`), so that what is coloured as dialogue is what compiles as dialogue:
  *
  * - `preamble` — blank lines before anything else. Front matter can only open here; a
  *   `---` further down is prose, as writers use it for a scene divider.

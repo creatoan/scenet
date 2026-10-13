@@ -61,7 +61,7 @@ actor missing from the cast, a cycle in `left_of`.
 Comic script carries its structure in line shape, so a Monarch tokenizer — a state
 machine over regular expressions, line by line — is the whole implementation. No parser.
 
-Its states mirror the compiler's own loop over the script (`_read_panels` in
+Its states mirror the compiler's own loop over the script (`_Reader` in
 `scenet/frontends/script_front.py`): blank lines before anything else, where front matter
 may open; the front matter, delegated to the YAML tokenizer; the body; the line after a
 cue, which is speech whatever it looks like; and the rest of a speech.

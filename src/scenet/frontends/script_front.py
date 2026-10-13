@@ -54,8 +54,29 @@ FRONT_MATTER = re.compile(r"^\s*---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
 # The label is everything up to an optional trailing colon or full stop -- `PANEL 1:` and
 # Dark Horse's `Panel 1.` both name panel `1`. A greedy `\S+` used to take the colon, so
 # the panel was called `1:` and `scenet build` wrote a file Windows cannot hold.
-PANEL_HEADING = re.compile(r"^PANEL\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
-PAGE_HEADING = re.compile(r"^PAGE\s+([^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
+PANEL_HEADING = re.compile(r"^PANEL\s+(?P<label>[^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
+# Dark Horse's `Panel 1. Alice and Bob on a corner.`: the description on the heading's own
+# line, after a full stop, a colon, a dash or a spaced hyphen.
+PANEL_WITH_DESCRIPTION = re.compile(
+    r"^PANEL\s+(?P<label>[^\s.:\u2014\u2013-]+)\s*(?:[.:\u2014\u2013]|\s-)\s*(?P<description>\S.*)$",
+    re.IGNORECASE,
+)
+# A label a panel with a description on its line may have: `1`, `4B`, `C`.
+NUMBER_LIKE = re.compile(r"\d+[^\W\d_]?|[^\W\d_]")
+# Dark Horse's `PAGE ONE (five panels)`. The label may be several words when they make a
+# number, `PAGE TWENTY ONE`; the parenthetical may state the count, or be a note.
+PAGE_HEADING = re.compile(
+    r"^PAGE\s+(?P<label>[^\s:()]+(?:[\s-]+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\))?\s*[.:]?\s*$",
+    re.IGNORECASE,
+)
+# The count in a PAGE heading's parenthetical: `five panels`, `1 panel`.
+PANEL_COUNT = re.compile(r"^(?P<count>\w+(?:[\s-]\w+)?)\s+panels?$", re.IGNORECASE)
+# Markdown a writer may put around a label: `## PANEL 2`, `**PANEL 2**`, `**ALICE:**`.
+MARKDOWN_HEADING = re.compile(r"^#{1,6}\s+")
+BOLD_LABEL = re.compile(r"^(\*\*|__)(\S(?:.*?\S)?)\1(.*)$")
+# A Markdown horizontal rule, `---` or `* * *`, which reads as the blank line it looks like.
+# `--` is two hyphens, Dark Horse's carry-over mark, and is not one.
+HORIZONTAL_RULE = re.compile(r"^([-*_])(?:[ \t]*\1){2,}$")
 DIRECTIVE = re.compile(r"^@(\w+)\s*:\s*(.+)$")
 # A cue is a character name in capitals, optionally followed by a parenthetical. Any
 # letter may start it, not only A to Z: `HÉLÈNE` is a name in capitals, and her lines used
@@ -252,120 +273,418 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
     return loaded, text[match.end() :], consumed
 
 
-def _page_label(token: str) -> str:
-    """How a page is named, when its panels have to be told apart from another page's.
+def _number_value(token: str) -> int | None:
+    """The number a page or panel label spells, if it spells one.
 
-    Digits are read as a number, so `07` and `7` are one page. English number words --
-    `TWO`, `twenty-one` -- become the digits a writer would say aloud. Anything else, `3A`
-    say, is kept exactly as written.
+    Digits, or English number words up to ninety-nine, however they are joined: `TWO`,
+    `twenty-one`, `TWENTY ONE`.
 
     Example:
-        >>> [_page_label(token) for token in ("TWO", "twenty-one", "07", "3A")]
-        ['2', '21', '7', '3A']
+        >>> [_number_value(token) for token in ("TWO", "twenty-one", "Twenty One", "07", "3A")]
+        [2, 21, 21, 7, None]
     """
     if token.isascii() and token.isdigit():
-        return str(int(token))
-    word = token.lower()
-    if word in _UNITS:
-        return str(_UNITS[word])
-    if word in _TENS:
-        return str(_TENS[word])
-    tens, hyphen, unit = word.partition("-")
-    if hyphen and tens in _TENS and 1 <= _UNITS.get(unit, 0) <= 9:
-        return str(_TENS[tens] + _UNITS[unit])
-    return token
+        return int(token)
+    words = token.lower().replace("-", " ").split()
+    if len(words) == 1 and words[0] in _UNITS:
+        return _UNITS[words[0]]
+    if len(words) == 1:
+        return _TENS.get(words[0])
+    if len(words) == 2 and words[0] in _TENS and 1 <= _UNITS.get(words[1], 0) <= 9:
+        return _TENS[words[0]] + _UNITS[words[1]]
+    return None
 
 
-def _read_panels(body: str, source: Path | None, *, offset: int = 0) -> dict[str, _PanelDraft]:
-    """Walk the script body, accumulating one draft per PANEL heading.
+def _number_label(token: str) -> str:
+    """How a page or a panel is named.
+
+    Digits are read as a number, so `07` and `7` are one page. English number words --
+    `TWO`, `twenty-one` -- become the digits a writer would say aloud, so `Panel One` and
+    `PANEL 1` are the same panel. Anything else, `3A` say, is kept exactly as written.
+
+    Example:
+        >>> [_number_label(token) for token in ("TWO", "twenty-one", "07", "3A")]
+        ['2', '21', '7', '3A']
+    """
+    value = _number_value(token)
+    return token if value is None else str(value)
+
+
+#: The name the highlighting tests have always read page labels with.
+_page_label = _number_label
+
+
+def _recognisable(line: str) -> str:
+    """A line with the Markdown a writer may have put around its label taken off.
+
+    Writers keep scripts in Markdown, so `## PANEL 2` and `**PANEL 2**` are headings, and
+    `**ALICE:**` a cue. The markers are stripped, then the convention is read; this is
+    only what a line is recognised as, and the text itself is never rewritten.
+
+    Example:
+        >>> [_recognisable(line) for line in ("## PANEL 2", "**ALICE:** Hi.", "__PANEL 3__")]
+        ['PANEL 2', 'ALICE: Hi.', 'PANEL 3']
+    """
+    line = MARKDOWN_HEADING.sub("", line, count=1)
+    bold = BOLD_LABEL.match(line)
+    if bold is not None:
+        line = (bold.group(2) + bold.group(3)).strip()
+    return line
+
+
+@dataclass(frozen=True, slots=True)
+class _PageHeading:
+    """A PAGE heading: its name, as written and as read, and the count it promises."""
+
+    label: str
+    written: str
+    count: int | None = None
+    count_text: str = ""
+
+
+def _read_page_heading(line: str) -> _PageHeading | None:
+    """Read a PAGE heading, or return None if the line is not one.
+
+    Dark Horse's `PAGE ONE (five panels)`: the parenthetical states how many panels the
+    page has. Any other parenthetical -- `(splash)` -- is a note for the artist, and is
+    not read as a count. A label of several words is a heading only when the words make a
+    number, `PAGE TWENTY ONE`; `PAGE THREE IS WHERE IT BEGINS` is not one.
+    """
+    match = PAGE_HEADING.match(line)
+    if match is None:
+        return None
+    written = match.group("label")
+    if any(character.isspace() for character in written) and _number_value(written) is None:
+        return None
+    note = (match.group("note") or "").strip()
+    stated = PANEL_COUNT.match(note)
+    count = _number_value(stated.group("count")) if stated is not None else None
+    return _PageHeading(
+        label=_number_label(written),
+        written=written,
+        count=count,
+        count_text=note if count is not None else "",
+    )
+
+
+def _read_panel_heading(line: str, number: int, page: str | None) -> _PanelDraft | None:
+    """Read a PANEL heading, opening the panel it names, or return None if it is not one.
+
+    Dark Horse writes the description on the heading's own line, `Panel 1. Alice and Bob
+    on a corner.`. With a description after it, the label must look like a number --
+    digits, digits and a letter, one letter, or a number in words -- so that `Panel
+    shows Alice.` stays the sentence it is.
+    """
+    bare = PANEL_HEADING.match(line)
+    if bare is not None:
+        return _PanelDraft(line=number, label=_number_label(bare.group("label")), page=page)
+    described = PANEL_WITH_DESCRIPTION.match(line)
+    if described is None:
+        return None
+    label = described.group("label")
+    if not NUMBER_LIKE.fullmatch(label) and _number_value(label) is None:
+        return None
+    draft = _PanelDraft(line=number, label=_number_label(label), page=page)
+    draft.description.append(described.group("description").strip())
+    return draft
+
+
+@dataclass(frozen=True, slots=True)
+class ScriptNote:
+    """Something the script frontend noticed that is worth saying but is not a fault.
+
+    Attributes:
+        rule: Catalogue identifier, a rule whose level is `note`.
+        message: What was noticed, phrased for whoever wrote the script.
+        line: One-based line it is on.
+        path: Where it is, structurally, so a finding's fingerprint survives an edit above
+            it: the panel's name and what in it, or the page's.
+    """
+
+    rule: str
+    message: str
+    line: int
+    path: tuple[str | int, ...] = ()
+
+
+@dataclass
+class _Note:
+    """A note while the script is still being read, before its panels have their names."""
+
+    rule: str
+    message: str
+    line: int
+    draft: _PanelDraft | None = None
+    tail: tuple[str | int, ...] = ()
+
+
+@dataclass
+class _Reading:
+    """Everything reading a script body found."""
+
+    drafts: dict[str, _PanelDraft]
+    notes: list[ScriptNote]
+    title_page: list[str]
+    page_notes: dict[str, list[str]]
+
+
+class _Reader:
+    """The script body, read line by line into panel drafts.
+
+    The order lines are tested in is the format, so it is spelled out here once:
+
+    1. A blank line, or a Markdown horizontal rule, ends whatever was being written.
+    2. A PAGE heading, then a PANEL heading -- after `#` markers and `**` are stripped.
+    3. Outside any panel -- before the first heading, or between a PAGE heading and its
+       first PANEL -- prose is the title page or a note on the page; anything that would
+       belong to a panel is refused.
+    4. Inside one: a directive, a caption, a sound effect, then the line a cue is waiting
+       for, then a continuation of the speech, then a cue, then prose.
+    """
+
+    def __init__(self, source: Path | None, cast: frozenset[str]) -> None:
+        self.source = source
+        self.cast = cast
+        self.drafts: list[_PanelDraft] = []
+        self.current: _PanelDraft | None = None
+        self.page: str | None = None
+        self.notes: list[_Note] = []
+        self.title_page: list[str] = []
+        self.page_notes: dict[str, list[str]] = {}
+        # A cue waiting for its first line of speech, and where it is.
+        self.pending_cue: tuple[str, BalloonKind] | None = None
+        self.cue_line = 0
+        # The speech being written. Everything after a cue up to a blank line is one
+        # balloon, so a line a writer wrapped by hand belongs to it.
+        self.speech: dict[str, Any] | None = None
+        # A bare `SFX:` cue, waiting for its sound on the next line: where it was, and
+        # what its parenthetical said.
+        self.sound: tuple[int, dict[str, Any]] | None = None
+        # A name in capitals outside any panel, which is a cue if a line follows it.
+        self.loose_cue: tuple[str, int] | None = None
+        # The open PAGE heading, if it stated a count, and the panels under it so far.
+        self.page_heading: tuple[int, _PageHeading] | None = None
+        self.panels_on_page = 0
+
+    def read(self, body: str, offset: int) -> None:
+        """Read every line of the body, `offset` lines into the file."""
+        # Split on line feeds alone: `splitlines` also breaks at a line or paragraph
+        # separator, a form feed and more, which an editor shows inside one line, so
+        # every line number after one was wrong.
+        for number, raw in enumerate(body.split("\n"), start=offset + 1):
+            self.line(raw.strip(), number)
+        self.end_of_item()
+        self.end_of_page()
+
+    def line(self, written: str, number: int) -> None:
+        """Read one line, stripped of surrounding whitespace."""
+        if not written or HORIZONTAL_RULE.match(written):
+            # A blank line ends a dialogue block, so a cue never reaches across one and
+            # picks up the next panel's description as its speech. A Markdown rule is a
+            # visible blank line.
+            self.end_of_item()
+            return
+        line = _recognisable(written)
+        if self.heading(line, number):
+            return
+        if self.current is None:
+            self.outside(line, written, number)
+        else:
+            self.inside(line, written, number, self.current)
+
+    def heading(self, line: str, number: int) -> bool:
+        """Open a page or a panel, if the line is a heading."""
+        page = _read_page_heading(line)
+        if page is not None:
+            self.end_of_item()
+            self.end_of_page()
+            self.page = page.label
+            self.current = None
+            self.page_heading = (number, page) if page.count is not None else None
+            self.panels_on_page = 0
+            return True
+        draft = _read_panel_heading(line, number, self.page)
+        if draft is None:
+            return False
+        self.end_of_item()
+        self.current = draft
+        self.drafts.append(draft)
+        self.panels_on_page += 1
+        return True
+
+    def outside(self, line: str, written: str, number: int) -> None:
+        """A line before the first heading, or between a PAGE heading and its first PANEL.
+
+        Dark Horse's format opens with the writer's name and address, so prose here is
+        kept as the title page, or as a note on the page. A name in capitals with a line
+        under it looks like a cue, and is noted, since nothing there is spoken; one in the
+        cast is a forgotten PANEL heading, and is refused, as is anything else a panel
+        would hold.
+        """
+        where = (
+            "before the first PANEL heading"
+            if self.page is None and not self.drafts
+            else f"between PAGE {self.page} and its first PANEL heading"
+        )
+        if self.loose_cue is not None:
+            name, at = self.loose_cue
+            self.loose_cue = None
+            self.notes.append(
+                _Note(
+                    "looks-like-dialogue",
+                    f"'{name}' is set as a speaker's cue, with a line under it, but {where} "
+                    "nothing is spoken: it is read as prose. If it is a speaker, put it under "
+                    "a PANEL heading",
+                    at,
+                    tail=("outside", name),
+                )
+            )
+        if any(pattern.match(line) for pattern in _BELONGS_TO_A_PANEL):
+            raise ScriptSyntaxError(
+                f"line {number}: {written!r} is {where}, so it belongs to no panel",
+                source=self.source,
+                line=number,
+            )
+        if _looks_like_a_cue(line):
+            name = _cue_name(line)
+            if name in self.cast:
+                raise ScriptSyntaxError(
+                    f"line {number}: {name} speaks {where}, so the line belongs to no "
+                    "panel. Is a PANEL heading missing above it?",
+                    source=self.source,
+                    line=number,
+                )
+            self.loose_cue = (name, number)
+        if self.page is None:
+            self.title_page.append(written)
+        else:
+            self.page_notes.setdefault(self.page, []).append(written)
+
+    def inside(self, line: str, written: str, number: int, current: _PanelDraft) -> None:
+        """A line in a panel."""
+        if _apply_directive(line, current, number, self.source):
+            self.speech = None
+            return
+
+        caption = _read_caption(line, number, self.source)
+        if caption is not None:
+            self.abandon_cue()
+            current.add(caption, number)
+            self.speech = None
+            return
+
+        # Checked before cues, as a caption is: `SFX` is a perfectly good character name
+        # as far as the cue pattern is concerned.
+        taken, self.sound = _take_sound(line, number, self.source, current, self.sound)
+        if taken:
+            self.abandon_cue()
+            self.speech = None
+            return
+
+        if self.pending_cue is not None:
+            speaker, kind = self.pending_cue
+            self.speech = {"by": speaker, "text": written, "kind": kind.value}
+            current.add({"say": self.speech}, self.cue_line)
+            self.pending_cue = None
+            return
+
+        # A line that looks like a cue still starts a new speech, so two speeches with no
+        # blank line between them stay two speeches, as they always have.
+        if self.speech is not None and not _looks_like_a_cue(line):
+            self.speech["text"] = f"{self.speech['text']} {written}"
+            return
+
+        self.speech = None
+        cue = _read_cue(line)
+        if cue is not None:
+            self.pending_cue, self.cue_line = cue, number
+            return
+        # Prose. Kept for tooling and round-tripping, never interpreted.
+        current.description.append(written)
+
+    def abandon_cue(self) -> None:
+        """A cue that nothing was said under: noted, since its line went somewhere else."""
+        if self.pending_cue is None or self.current is None:
+            return
+        name = self.pending_cue[0]
+        self.notes.append(
+            _Note(
+                "looks-like-dialogue",
+                f"{name} is a cue with nothing said under it: the line after it is blank, "
+                "or is not a line of dialogue. Write the line under the cue, or delete it",
+                self.cue_line,
+                draft=self.current,
+                tail=("cue", self.cue_line - self.current.line),
+            )
+        )
+        self.pending_cue = None
+
+    def end_of_item(self) -> None:
+        """A blank line, a heading or the end: whatever was being written is finished."""
+        _no_sound(self.sound, self.source)
+        self.abandon_cue()
+        self.speech = self.sound = self.loose_cue = None
+
+    def end_of_page(self) -> None:
+        """Hold a page to the count its heading stated, now that its panels are known."""
+        if self.page_heading is None:
+            return
+        line, page = self.page_heading
+        self.page_heading = None
+        found = self.panels_on_page
+        if page.count == found:
+            return
+        follow = "panel follows" if found == 1 else "panels follow"
+        self.notes.append(
+            _Note(
+                "panel-count",
+                f"PAGE {page.written} says {page.count_text}, but {found} {follow} it. A "
+                "panel heading may have been missed, or read as prose",
+                line,
+                tail=("page", page.label),
+            )
+        )
+
+    def reading(self) -> _Reading:
+        """What was read, with every panel named."""
+        drafts = _name_panels(self.drafts, self.source)
+        names = {id(draft): name for name, draft in drafts.items()}
+        notes = [
+            ScriptNote(
+                rule=note.rule,
+                message=f"line {note.line}: {note.message}",
+                line=note.line,
+                path=(names[id(note.draft)], *note.tail) if note.draft else note.tail,
+            )
+            for note in self.notes
+        ]
+        return _Reading(drafts, notes, self.title_page, self.page_notes)
+
+
+#: Lines only a panel can hold, refused outside one: a directive, a caption, a sound.
+_BELONGS_TO_A_PANEL = (DIRECTIVE, CAPTION_LINE, BARE_CAPTION, SFX_LINE, BARE_SFX)
+
+
+def _cue_name(line: str) -> str:
+    """The name a cue line gives, which `_looks_like_a_cue` has already accepted."""
+    cue = CUE.match(line)
+    return cue.group(1).strip() if cue is not None else line
+
+
+def _read_script(
+    body: str, source: Path | None, *, offset: int = 0, cast: frozenset[str] = frozenset()
+) -> _Reading:
+    """Read the script body into panel drafts, and what was noticed along the way.
 
     Args:
         body: The script after its front matter.
         source: The file, for error messages.
         offset: Lines of the file before the body, added to every reported line number.
+        cast: The front matter's cast, which tells a forgotten PANEL heading from a title.
     """
-    drafts: list[_PanelDraft] = []
-    current: _PanelDraft | None = None
-    page: str | None = None
-    pending_cue: tuple[str, BalloonKind] | None = None
-    # Where the pending cue is, which is where its speech is reported from.
-    cue_line = 0
-    # The speech being written. Everything after a cue up to a blank line is one balloon,
-    # so a line a writer wrapped by hand belongs to it -- it used to be filed as prose and
-    # thrown away.
-    speech: dict[str, Any] | None = None
-    # A bare `SFX:` cue, waiting for its sound on the next line: where it was, and what
-    # its parenthetical said.
-    sound: tuple[int, dict[str, Any]] | None = None
-
-    # Split on line feeds alone: `splitlines` also breaks at a line or paragraph separator,
-    # a form feed and more, which an editor shows inside one line, so every line number
-    # after one was wrong.
-    for number, raw in enumerate(body.split("\n"), start=offset + 1):
-        line = raw.strip()
-
-        if not line:
-            # A blank line ends a dialogue block, so a cue never reaches across one
-            # and picks up the next panel's description as its speech.
-            _no_sound(sound, source)
-            pending_cue = speech = None
-            continue
-
-        heading = _read_heading(line, number, page)
-        if heading is not None:
-            _no_sound(sound, source)
-            page, opened = heading
-            if opened is not None:
-                current = opened
-                drafts.append(current)
-            pending_cue = speech = None
-            continue
-
-        if current is None:
-            raise ScriptSyntaxError(
-                f"line {number}: content before the first PANEL heading: {line!r}",
-                source=source,
-                line=number,
-            )
-
-        if _apply_directive(line, current, number, source):
-            speech = None
-            continue
-
-        caption = _read_caption(line, number, source)
-        if caption is not None:
-            current.add(caption, number)
-            pending_cue = speech = None
-            continue
-
-        # Checked before cues, as a caption is: `SFX` is a perfectly good character name
-        # as far as the cue pattern is concerned.
-        taken, sound = _take_sound(line, number, source, current, sound)
-        if taken:
-            pending_cue = speech = None
-            continue
-
-        if pending_cue is not None:
-            speaker, kind = pending_cue
-            speech = {"by": speaker, "text": line, "kind": kind.value}
-            current.add({"say": speech}, cue_line)
-            pending_cue = None
-            continue
-
-        # A line that looks like a cue still starts a new speech, so two speeches with no
-        # blank line between them stay two speeches, as they always have.
-        if speech is not None and not _looks_like_a_cue(line):
-            speech["text"] = f"{speech['text']} {line}"
-            continue
-
-        speech = None
-        pending_cue, cue_line = _read_cue(line), number
-        if pending_cue is None:
-            # Prose. Kept for tooling and round-tripping, never interpreted.
-            current.description.append(line)
-
-    _no_sound(sound, source)
-    return _name_panels(drafts, source)
+    reader = _Reader(source, cast)
+    reader.read(body, offset)
+    return reader.reading()
 
 
 def _name_panels(drafts: list[_PanelDraft], source: Path | None) -> dict[str, _PanelDraft]:
@@ -472,26 +791,6 @@ def _read_cue(line: str) -> tuple[str, BalloonKind] | None:
         return None
     modifier = (cue.group(2) or "").strip().lower()
     return cue.group(1).strip(), KIND_MODIFIERS.get(modifier, BalloonKind.SPEECH)
-
-
-def _read_heading(
-    line: str, number: int, page: str | None
-) -> tuple[str | None, _PanelDraft | None] | None:
-    """Read a PAGE or PANEL heading, or return None if the line is not one.
-
-    Pages are not laid out yet, but they do keep panels apart: scripts number panels per
-    page, and two PANEL 1s are two panels.
-
-    Returns:
-        The page from here on, and the panel the heading opens -- `None` for a PAGE.
-    """
-    page_match = PAGE_HEADING.match(line)
-    if page_match:
-        return _page_label(page_match.group(1)), None
-    panel_match = PANEL_HEADING.match(line)
-    if panel_match:
-        return page, _PanelDraft(line=number, label=panel_match.group(1), page=page)
-    return None
 
 
 def _no_sound(waiting: tuple[int, dict[str, Any]] | None, source: Path | None) -> None:
@@ -646,10 +945,20 @@ class ScriptDocument:
     Attributes:
         panels: Panel name to scene graph, in the order the panels appear.
         lines: Panel name to the lines it was written on.
+        notes: What reading it noticed that is worth saying but is not a fault -- a cue
+            with nothing said under it, a page whose count its panels do not match.
+        descriptions: Panel name to its prose, which is kept and never interpreted.
+        title_page: The prose before the first heading: Dark Horse's format opens with the
+            writer's name and address.
+        page_notes: Page to the prose between its heading and its first panel.
     """
 
     panels: dict[str, PanelIR]
     lines: dict[str, PanelLines]
+    notes: tuple[ScriptNote, ...] = ()
+    descriptions: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    title_page: tuple[str, ...] = ()
+    page_notes: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDocument:
@@ -669,7 +978,11 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     # and the same whatever editor saved it.
     text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
-    panels = _read_panels(body, source, offset=offset)
+    cast = front_matter.get("cast")
+    reading = _read_script(
+        body, source, offset=offset, cast=frozenset(cast if isinstance(cast, dict) else ())
+    )
+    panels = reading.drafts
 
     if not panels:
         raise ScriptSyntaxError("no PANEL headings found", source=source)
@@ -680,6 +993,10 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
             name: PanelLines(heading=draft.line, events=tuple(draft.event_lines))
             for name, draft in panels.items()
         },
+        notes=tuple(reading.notes),
+        descriptions={name: tuple(draft.description) for name, draft in panels.items()},
+        title_page=tuple(reading.title_page),
+        page_notes={page: tuple(lines) for page, lines in reading.page_notes.items()},
     )
 
 

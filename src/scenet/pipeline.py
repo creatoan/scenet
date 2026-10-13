@@ -46,7 +46,7 @@ from scenet.core import (
     vector_pair,
 )
 from scenet.errors import PanelSyntaxError, RuleViolationError, ScenetError
-from scenet.frontends.script_front import load_script, parse_script
+from scenet.frontends.script_front import load_script, parse_script_document
 from scenet.frontends.yaml_front import (
     SceneDocument,
     load_panel,
@@ -645,10 +645,15 @@ class Book:
             compiled at its frame's size and the page's type size; one on no page, as it
             would have been alone.
         pages: One Page Core per page, in order. Empty for a scene with no `pages:`.
+        notes: What reading the document noticed that is worth saying but is no fault --
+            in a comic script, a cue with nothing said under it, or a page whose stated
+            count its panels do not match. Each names its line. A panel's own notes, on
+            what the compiler decided, are on its `CompileResult`.
     """
 
     panels: dict[str, CompileResult]
     pages: tuple[PageCore, ...]
+    notes: tuple[str, ...] = ()
 
     @property
     def fonts(self) -> dict[str, FontMetrics]:
@@ -757,7 +762,7 @@ def _compile_document(
             # `build` does, and that way names no panel in its errors.
             exc.panel = name
             raise
-    return Book(panels=panels, pages=tuple(pages))
+    return Book(panels=panels, pages=tuple(pages), notes=document.notes)
 
 
 def _core_frame(frame: Frame) -> CoreFrame:
@@ -886,7 +891,12 @@ FRONTENDS = {
 
 def _script_document(text: str, *, source: Path | None) -> SceneDocument:
     """A comic script, as a scene with no pages: its PAGE headings lay nothing out yet."""
-    return SceneDocument(panels=parse_script(text, source=source), layout=PageLayout())
+    document = parse_script_document(text, source=source)
+    return SceneDocument(
+        panels=document.panels,
+        layout=PageLayout(),
+        notes=tuple(note.message for note in document.notes),
+    )
 
 
 def _load_script_document(path: Path) -> SceneDocument:

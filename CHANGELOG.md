@@ -24,6 +24,15 @@ below 1.0 means.
   - `check` exits 1 only on an error, and prints `ok` for a document with only notes.
   - The MCP server's findings gain `level`, and `validate` calls a document valid when
     none is an error. (Part of #75)
+- **Comic scripts in Dark Horse's published layout compile.** `PAGE ONE (five panels)` is a
+  page heading whose count is checked against the panels under it, as the new
+  `panel-count` note. `Panel 1. Alice and Bob on a corner.` is a panel heading with its
+  description on the same line, and `Panel One` is panel `1`. A title page — the writer's
+  name and address — may come before the first heading. Markdown's `## PANEL 2`,
+  `**PANEL 2**` and horizontal rules are read as the headings and blank lines they mark.
+  A cue with nothing said under it, and a name in capitals with a line under it on the
+  title page, are `looks-like-dialogue` notes. `scenet build` prints these notes, and
+  `Book.notes` carries them. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.
@@ -95,6 +104,14 @@ below 1.0 means.
 
 ### Changed
 
+- **Comic scripts: what a few lines mean has changed** (Part of #75):
+  - Prose before the first PANEL heading is a title page, not an error. A directive, a
+    caption, a sound effect or a cast member's cue there is still one.
+  - A panel numbered in words is named by its number: `PANEL ONE` is panel `1`, and
+    `scenet build` writes `name.1.svg` for it rather than `name.ONE.svg`.
+  - `Panel 1. A description.` is a heading; it was prose.
+  - A line of three or more `-`, `*` or `_` ends a speech, as a blank line does; it was
+    joined onto the speech.
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
   or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
   what is measured is still exactly what is drawn. Every example's output changes once:
@@ -109,6 +126,12 @@ below 1.0 means.
 
 ### Fixed
 
+- **A line between a PAGE heading and its first PANEL was filed into the panel before the
+  page**: a speech there was spoken in the previous page's last panel. It now belongs to
+  the page, and a speech there is an error, since it belongs to no panel. (Part of #75)
+- **The playground took a YAML panel that opens with a `---` document marker for a comic
+  script**, and a script written as Dark Horse asks, `Panel 1.`, for YAML. A script is now
+  told by its fenced front matter or a panel heading in any of its forms. (Part of #75)
 - **Spoken captions by two speakers were quoted as one run.** Consecutive `spoken`
   captions open a quote each and close only the last, but the run did not end when the
   speaker changed, so the first speaker's words were never closed. A change of `by` now

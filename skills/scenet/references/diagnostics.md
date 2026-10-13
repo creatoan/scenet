@@ -64,6 +64,12 @@ No layout satisfies the panel's constraints. Nothing is misspelled and nothing i
 
 **Fix:** Relax or remove a conflicting staging relation.
 
+### `scenet/looks-like-dialogue`
+
+A line in a comic script is set like dialogue but is not read as dialogue. A cue with nothing said under it, or a name in capitals with a line under it where nothing is spoken -- before the first PANEL heading, which Dark Horse's format opens with the writer's name and address. Read as written, nothing is lost, but a line meant as dialogue would not be lettered, so it is pointed out.
+
+**Fix:** If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.
+
 ### `scenet/missing-field`
 
 A required field is missing. The value is required and was not supplied.
@@ -87,6 +93,12 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A document with pages needs panels to lay out.
 
 **Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, or shrink the margin and gutters in `page:`.
+
+### `scenet/panel-count`
+
+A comic script's PAGE heading states a count its panels do not match. Dark Horse's script format labels each page with how many panels it has, `PAGE ONE (five panels)`. When the panels under it number something else, a panel heading has often been missed, or written so that it reads as prose -- and nothing else would say so. A note, not an error: the panels that are there still compile.
+
+**Fix:** Correct the count, or the panel heading that was not read as one.
 
 ### `scenet/panel-geometry`
 
