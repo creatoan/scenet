@@ -205,6 +205,19 @@ class AnchorX(StrEnum):
     RIGHT_EDGE = "right_edge"
 
 
+class Side(StrEnum):
+    """A side of the panel's frame: where an off-panel speaker is.
+
+    An off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel
+    Dialogue*: "the tail of the balloon generally butts against the panel border".
+    """
+
+    LEFT = "left"
+    RIGHT = "right"
+    TOP = "top"
+    BOTTOM = "bottom"
+
+
 class PlacementZone(StrEnum):
     """Where in the panel a balloon would prefer to sit.
 
@@ -864,23 +877,44 @@ class SayEvent(Strict):
         verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,
             carried into the model so that a script entry knows which sort of event it
             is without the frontend having to remember.
-        by: Actor id of the speaker; must be in the cast.
+        by: Actor id of the speaker; must be in the cast, unless they speak from off
+            panel, when it is the name of somebody who is not drawn.
         text: What is said. Line breaking is the compiler's job, so write it as one
             string and do not insert newlines yourself. A word between underscores is
             stressed, and lettered in bold italic: `I _told_ you`.
         prefer: Optional hint about where the balloon should sit. The weakest of all
             the placement terms -- face avoidance and reading order override it.
         kind: Which sort of balloon carries it.
+        off_panel: Whether the speaker is off panel: `true`, or the side of the frame
+            they are on. The tail then ends on the frame -- on that side, or, with none
+            named, on the nearer of left and right to where the balloon is put.
 
     Script order **is** reading order, and reading order is a hard constraint. Reorder
     these and you reorder the panel.
     """
 
     verb: Literal["say"] = "say"
-    by: str
+    by: SvgText
     text: LetteredText = Field(min_length=1)
     prefer: PlacementZone | None = None
     kind: BalloonKind = BalloonKind.SPEECH
+    off_panel: bool | Side = False
+
+    @field_validator("off_panel", mode="before")
+    @classmethod
+    def check_off_panel(cls, value: object) -> object:
+        """`true`, `false` or a side, and one finding for anything else.
+
+        Validated as a plain union, a wrong value failed both members and was reported
+        twice, once as not a boolean and once as not a side, when it is one mistake.
+        """
+        if isinstance(value, bool) or value in {side.value for side in Side}:
+            return value
+        sides = ", ".join(f"'{side.value}'" for side in Side)
+        raise ValueError(
+            f"off_panel is true, false, or the side of the frame the speaker is on: {sides}; "
+            f"not {value!r}"
+        )
 
 
 class CaptionEvent(Strict):
@@ -1130,10 +1164,23 @@ class PanelIR(Strict):
                 continue
             if not isinstance(event, SayEvent):
                 continue
+            # An off-panel speaker is somebody nobody draws, so not in the cast -- and one
+            # who is drawn in this panel cannot also be speaking from outside it.
+            if event.off_panel is not False:
+                if event.by in known:
+                    raise RuleViolationError(
+                        f"script entry {index} is spoken from off panel by '{event.by}', "
+                        "who is drawn in this panel; leave them out of the cast, or drop "
+                        "off_panel",
+                        rule="off-panel-speaker",
+                        loc=("script", index, event.verb, "by"),
+                    )
+                continue
             if event.by not in known:
                 raise RuleViolationError(
                     f"script entry {index} is spoken by unknown actor '{event.by}'; "
-                    f"cast is {sorted(known)}",
+                    f"cast is {sorted(known)}. If they speak from outside the panel, "
+                    "say so with off_panel",
                     rule="unknown-actor",
                     loc=("script", index, event.verb, "by"),
                 )

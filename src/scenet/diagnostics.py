@@ -381,6 +381,17 @@ RULES: dict[str, Rule] = {
         ),
         help="Make it smaller or shorter, drop its rotation or arc, or give the panel more room.",
     ),
+    "off-panel-speaker": Rule(
+        summary="A line is spoken from off panel by somebody drawn in the panel",
+        description=(
+            "An off-panel speaker is somebody nobody draws: their balloon's tail ends on the "
+            "frame, on their side, because there is no mouth in the panel to point at. So "
+            "they are never in the panel's cast. A line marked `off_panel` whose speaker is "
+            "in the cast contradicts itself, and so does one speaker both on and off panel "
+            "in the same panel."
+        ),
+        help="Leave the speaker out of this panel's cast, or drop off_panel.",
+    ),
     "word-limit": Rule(
         summary="A balloon, caption or panel holds more words than a letterer fits well",
         description=(

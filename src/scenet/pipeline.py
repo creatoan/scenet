@@ -448,6 +448,10 @@ def compile_ir(
         emanata={actor: drawn.zones for actor, drawn in emanata.items() if drawn.zones},
         exclusions=exclusions,
         inside=_margined(outline, panel.panel.margin) if outline is not None else None,
+        # The frame itself, which an off-panel speaker's tail ends on: lettering keeps
+        # inside the margin, a pointer to somebody outside the panel does not.
+        bounds=BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
+        outline=outline,
     )
 
     declared = _declared_faces(family)
@@ -514,6 +518,7 @@ def compile_ir(
                     control=(point_pair(balloon.tail.control) if balloon.tail.control else None),
                 ),
                 runs=_core_runs(balloon.block, Face.REGULAR),
+                off_panel=balloon.off_panel,
             )
             for balloon in layout.balloons
         ),

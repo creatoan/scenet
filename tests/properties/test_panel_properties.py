@@ -91,7 +91,7 @@ def test_check_agrees_with_the_compiler(drawn: Drawn):
     reports the one finding whose rule names how it failed.
 
     This is also the failure property: `compile_source` is called without a safety net,
-    so anything but the two expected failures escapes and fails the test.
+    so anything but the three expected failures escapes and fails the test.
     """
     findings = diagnose_source(drawn.text, library=LIBRARY, deep=True)
     try:
@@ -100,6 +100,9 @@ def test_check_agrees_with_the_compiler(drawn: Drawn):
         assert [finding.rule for finding in findings] == ["balloon-placement"]
     except LayoutError:
         assert [finding.rule for finding in findings] == ["layout"]
+    except SfxPlacementError:
+        # A sound effect with nowhere to go; this property did not expect one before.
+        assert [finding.rule for finding in findings] == ["sfx-placement"]
     else:
         assert findings == []
 

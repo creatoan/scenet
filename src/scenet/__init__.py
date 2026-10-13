@@ -122,6 +122,7 @@ from scenet.ir import (
     SfxEvent,
     SfxSize,
     ShotType,
+    Side,
     Spans,
     StackedPanel,
     Tier,
@@ -202,6 +203,7 @@ __all__ = [
     "SfxEvent",
     "SfxSize",
     "ShotType",
+    "Side",
     # -- laying panels out on pages ------------------------------------------
     "PageFormat",
     "PageLayout",

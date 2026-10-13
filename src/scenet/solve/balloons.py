@@ -27,7 +27,7 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
-from shapely.geometry import Polygon, box
+from shapely.geometry import LineString, Polygon, box
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
@@ -45,6 +45,7 @@ from scenet.ir import (
     SayEvent,
     ScriptEvent,
     SfxEvent,
+    Side,
     TimeOfDay,
 )
 from scenet.solve.backdrop import LADDER, ResolvedBackdrop, contrast_ratio
@@ -190,7 +191,10 @@ class PlacedBalloon:
         kind: Which sort of balloon to draw.
         box: Where it ended up.
         block: The text, already broken into lines and measured.
-        tail: The route from balloon to mouth.
+        tail: The route from balloon to mouth -- or, for a speaker off panel, to the
+            frame on their side.
+        off_panel: The side of the frame an off-panel speaker is on, as resolved, or
+            `None` for one who is drawn.
     """
 
     id: str
@@ -200,6 +204,7 @@ class PlacedBalloon:
     box: BBox
     block: TextBlock
     tail: TailRoute
+    off_panel: Side | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -772,6 +777,8 @@ def place_script(
     emanata: Mapping[str, Sequence[Sequence[Point]]] | None = None,
     exclusions: Sequence[BBox] = (),
     inside: Sequence[tuple[float, float]] | None = None,
+    bounds: BBox | None = None,
+    outline: Sequence[tuple[float, float]] | None = None,
 ) -> ScriptLayout:
     """Place every sound effect, then every balloon and caption in script order.
 
@@ -810,6 +817,10 @@ def place_script(
         inside: The shape every box must lie within, when the panel is not a rectangle,
             margins already applied -- as `panel` has them. A box must also lie within
             `panel`; candidates are still generated in it.
+        bounds: The panel's own rectangle, margins not applied: the frame an off-panel
+            speaker's tail ends on. Defaults to `panel`.
+        outline: The panel's own outline when it is not a rectangle, margins not
+            applied, which that tail ends on instead.
 
     Returns:
         Everything that carries words, placed.
@@ -888,6 +899,28 @@ def place_script(
                 )
             )
             placed.append(captions[-1].box)
+            continue
+
+        if event.off_panel is not False:
+            balloons.append(
+                _place_off_panel(
+                    event,
+                    identifier=f"b{len(balloons)}",
+                    order=order,
+                    actors=actors,
+                    hulls=hulls,
+                    faces=faces,
+                    panel=panel,
+                    frame=_Frame(bounds or panel, outline),
+                    placed=placed,
+                    font_size=size,
+                    typeface=family,
+                    masses=masses,
+                    emanata=marks,
+                    limits=limits,
+                )
+            )
+            placed.append(balloons[-1].box)
             continue
 
         balloons.append(
@@ -973,6 +1006,134 @@ def _place_balloon(
         block=block,
         tail=route_tail(best, mouth, obstacles, speaker_face=speaker.face),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _Frame:
+    """The edge an off-panel speaker's tail ends on: the panel's rectangle, or its outline."""
+
+    bounds: BBox
+    outline: Sequence[tuple[float, float]] | None = None
+
+
+#: Where an off-panel balloon would rather sit, by the side its speaker is on: near that
+#: side, high, since a balloon reads before the picture it is over.
+_SIDE_ZONES = {
+    Side.LEFT: PlacementZone.TOP_LEFT,
+    Side.RIGHT: PlacementZone.TOP_RIGHT,
+    Side.TOP: PlacementZone.TOP_CENTRE,
+    Side.BOTTOM: PlacementZone.BOTTOM_CENTRE,
+}
+
+
+def _place_off_panel(
+    event: SayEvent,
+    *,
+    identifier: str,
+    order: int,
+    actors: dict[str, ResolvedPuppet],
+    hulls: dict[str, Polygon],
+    faces: list[Circle],
+    panel: BBox,
+    frame: _Frame,
+    placed: list[BBox],
+    font_size: float,
+    typeface: Typeface,
+    masses: Sequence[tuple[Polygon, float]],
+    emanata: Sequence[BaseGeometry],
+    limits: _Limits = _NO_LIMITS,
+) -> PlacedBalloon:
+    """Choose a position for a balloon whose speaker is not drawn, and route its tail.
+
+    There is no mouth to stay near, so it is placed as a caption is -- the same zones, the
+    same hard rules, reading order included -- drawn toward the side named, if one is.
+    With none named, the side is the nearer of left and right to where it went: a
+    balloon sits high, so "nearest edge" would aim most tails at the top border, which
+    reads as a speaker above. Its tail then ends on the frame on that side -- Blambot:
+    "the tail of the balloon generally butts against the panel border".
+    """
+    named = event.off_panel if isinstance(event.off_panel, Side) else None
+    block = layout_text(styled(event.text), font_size=font_size, typeface=typeface)
+    balloon_box = balloon_size(block)
+    prefer = event.prefer or (_SIDE_ZONES[named] if named is not None else PlacementZone.TOP_LEFT)
+
+    best: BBox | None = None
+    best_cost = math.inf
+    for candidate in _caption_positions(balloon_box, panel):
+        if not _reading_order_allows(placed, candidate):
+            continue
+        cost = _score_caption(
+            candidate,
+            actors=actors,
+            hulls=hulls,
+            panel=panel,
+            prefer=prefer,
+            placed=placed,
+            masses=masses,
+            emanata=emanata,
+            limits=limits,
+        )
+        if cost < best_cost:
+            best, best_cost = candidate, cost
+
+    if best is None:
+        raise BalloonPlacementError(
+            f"no legal position for balloon {order} spoken from off panel by '{event.by}': "
+            "every candidate either covered a face, left the panel, overlapped another "
+            "balloon, lay under an inset, or broke reading order"
+        )
+
+    side = named
+    if side is None:
+        side = Side.LEFT if best.centre.x <= panel.x + panel.width / 2 else Side.RIGHT
+    return PlacedBalloon(
+        id=identifier,
+        speaker=event.by,
+        order=order,
+        kind=event.kind,
+        box=best,
+        block=block,
+        tail=route_tail(best, _edge_point(best, side, frame), faces, speaker_face=None),
+        off_panel=side,
+    )
+
+
+def _edge_point(balloon: BBox, side: Side, frame: _Frame) -> Point:
+    """Where an off-panel tail meets the frame: straight out from the balloon to that side.
+
+    On a slanted panel the side is the outline's, so the point is where a line straight
+    out from the balloon's centre crosses it.
+
+    Example:
+        >>> _edge_point(BBox(100, 50, 40, 20), Side.LEFT, _Frame(BBox(0, 0, 300, 200)))
+        Point(x=0, y=60.0)
+    """
+    centre = balloon.centre
+    bounds = frame.bounds
+    target = {
+        Side.LEFT: Point(bounds.x, centre.y),
+        Side.RIGHT: Point(bounds.right, centre.y),
+        Side.TOP: Point(centre.x, bounds.y),
+        Side.BOTTOM: Point(centre.x, bounds.bottom),
+    }[side]
+    if frame.outline is None:
+        return target
+    # Past the rectangle, so the line is sure to reach a slanted edge however it leans.
+    beyond = Point(
+        centre.x + 2 * (target.x - centre.x) or centre.x,
+        centre.y + 2 * (target.y - centre.y) or centre.y,
+    )
+    crossing = LineString([(centre.x, centre.y), (beyond.x, beyond.y)]).intersection(
+        Polygon(frame.outline).exterior
+    )
+    points = [
+        Point(float(x), float(y))
+        for geometry in getattr(crossing, "geoms", [crossing])
+        for x, y in getattr(geometry, "coords", [])
+    ]
+    if not points:  # pragma: no cover -- the line runs from inside to beyond the frame
+        return target
+    return min(points, key=centre.distance_to)
 
 
 def _place_caption(

@@ -208,6 +208,7 @@ note as information rather than a red squiggle.
 | `scenet/invalid-field` | error | A known key holding the wrong type or an out-of-range value |
 | `scenet/panel-geometry` | error | Non-positive size, or margins leaving no usable area |
 | `scenet/unknown-actor` | error | An id in `staging` or `script` that is not in `cast` |
+| `scenet/off-panel-speaker` | error | A line spoken from off panel by somebody drawn in the panel |
 | `scenet/unbalanced-emphasis` | error | An underscore that opens emphasis in a line of `text`, with none to close it |
 | `scenet/reflexive-relation` | error | A relation relating an actor to itself |
 | `scenet/caption-speaker` | error | `by` on a caption whose `kind` is not `spoken` |
