@@ -33,6 +33,13 @@ below 1.0 means.
   A cue with nothing said under it, and a name in capitals with a line under it on the
   title page, are `looks-like-dialogue` notes. `scenet build` prints these notes, and
   `Book.notes` carries them. (Part of #75)
+- **Comic scripts read Dark Horse's lettering labels.** `CAP:` and `CAPTION` take their
+  text from the line or the lines under them; Dark Horse's `CAP/ALICE` is a spoken
+  caption by Alice, with the writer's quotation marks taken off so they are not doubled;
+  `ALICE (V.O.)` is a voice over, lettered as a spoken caption. `ALICE: Hello.` is
+  dialogue when Alice is in the panel's cast, and a `looks-like-dialogue` note otherwise.
+  `(burst)` is a shout, several parentheticals are read together, and Blambot's numbered
+  items, `1. ALICE:`, are read with their number set aside. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.
@@ -112,6 +119,11 @@ below 1.0 means.
   - `Panel 1. A description.` is a heading; it was prose.
   - A line of three or more `-`, `*` or `_` ends a speech, as a blank line does; it was
     joined onto the speech.
+  - An all-caps `NAME: text` with NAME in the cast is dialogue; it was prose. One in the
+    middle of a speech starts a new balloon; it was joined onto the speech above.
+  - A bare `CAPTION` line starts a caption whose text is under it; it was an error.
+  - `CAP`, `CAPTION` and `SFX` are reserved, and cannot be a cast member's id.
+  - A balloon's text in one pair of quotation marks is lettered without them.
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
   or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
   what is measured is still exactly what is drawn. Every example's output changes once:

@@ -99,21 +99,57 @@ const RULE: Shape = {
   test: raw`(?:-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})[ \t]*$`,
 };
 
-/** `CAPTION (monologue): text`, `SFX: BLAM`: a label with its text on the same line. */
+/**
+ * Any number of parentheticals, `(OP) (whisper)` or `(OP, whisper)`, as three groups: the
+ * first opening bracket, everything to the last closing one, and that bracket.
+ */
+const PARENTHETICALS = {
+  capture: raw`(?:(\()([^)]*(?:\)[ \t]*\([^)]*)*)(\)))?`,
+  test: raw`(?:\([^)]*\)[ \t]*)*`,
+} as const;
+
+/** Blambot's numbered lettering items, `1.` or `2)` before a label. */
+const NUMBERED = { capture: raw`(\d+[.)]?[ \t]+)?`, test: raw`(?:\d+[.)]?[ \t]+)?` } as const;
+
+/** Markdown bold around a label, `**ALICE:**`. */
+const BOLD = { capture: raw`((?:\*\*|__)?)`, test: raw`(?:\*\*|__)?` } as const;
+
+/** `SFX: BLAM`: a label with its text on the same line. */
 function labelWithText(keyword: string): Shape {
   return {
-    capture: raw`((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:)[ \t]*(.+)$`,
-    test: raw`(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:[ \t]*\S`,
+    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:)[ \t]*(.+)$`,
+    test: raw`${NUMBERED.test}(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:[ \t]*\S`,
   };
 }
 
 /** Dark Horse's `SFX:` on a line of its own, the text on the next. */
 function labelAlone(keyword: string): Shape {
   return {
-    capture: raw`((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:?)[ \t]*$`,
-    test: raw`(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:?[ \t]*$`,
+    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:?)[ \t]*$`,
+    test: raw`${NUMBERED.test}(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:?[ \t]*$`,
   };
 }
+
+/** `CAP`, `CAPTION`, never `CAPTAIN`. */
+const CAPTION_KEYWORD = raw`(?i:caption|cap)(?![\p{L}\p{N}_])`;
+
+/** Dark Horse's `CAP/CHARACTER`: who speaks a caption, after a slash. */
+const CAPTION_SPEAKER = {
+  capture: raw`(?:(/)[ \t]*([^():/]+?)[ \t]*)?`,
+  test: raw`(?:/[ \t]*[^():/]+?[ \t]*)?`,
+} as const;
+
+/** `CAP: Later.`, `CAPTION (monologue): ...`, `CAP/ALICE: "..."`: a caption with its text. */
+const CAPTION_LINE: Shape = {
+  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t]*(:)${BOLD.capture}[ \t]*(\S.*)$`,
+  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t]*:${BOLD.test}[ \t]*\S`,
+};
+
+/** `CAP:`, `CAPTION`, `CAP/ALICE` alone: its text runs on the lines under it. */
+const CAPTION_ALONE: Shape = {
+  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t]*(:?)${BOLD.capture}[ \t]*$`,
+  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t]*:?${BOLD.test}[ \t]*$`,
+};
 
 /** The frontend's forty-character limit on a cue, once trimmed. */
 const SHORT_LINE = raw`(?=\S(?:.{0,38}\S)?[ \t]*$)`;
@@ -130,12 +166,18 @@ const SHAPES = {
   panel: PANEL,
   panelDescribed: PANEL_DESCRIBED,
   directive: { capture: raw`(@)(\w+)[ \t]*(:)[ \t]*(.+)$`, test: raw`@\w+[ \t]*:[ \t]*\S` },
-  caption: labelWithText("caption"),
+  captionLine: CAPTION_LINE,
+  captionAlone: CAPTION_ALONE,
   sfxLine: labelWithText("sfx"),
   sfxCue: labelAlone("sfx"),
+  /** `ALICE: Hello.`: a cue with its line after the colon. */
+  inlineCue: {
+    capture: raw`${NUMBERED.capture}${BOLD.capture}(${CUE_NAME})[ \t]*${PARENTHETICALS.capture}[ \t]*(:)${BOLD.capture}[ \t]*(\S.*)$`,
+    test: raw`${NUMBERED.test}${BOLD.test}${CUE_NAME}[ \t]*${PARENTHETICALS.test}[ \t]*:${BOLD.test}[ \t]*\S`,
+  },
   cue: {
-    capture: raw`${SHORT_LINE}(${CUE_NAME})[ \t]*${PARENTHETICAL.capture}[ \t]*(:?)[ \t]*$`,
-    test: raw`${SHORT_LINE}${CUE_NAME}[ \t]*${PARENTHETICAL.test}[ \t]*:?[ \t]*$`,
+    capture: raw`${NUMBERED.capture}${SHORT_LINE}(${CUE_NAME})[ \t]*${PARENTHETICALS.capture}[ \t]*(:?)[ \t]*$`,
+    test: raw`${NUMBERED.test}${SHORT_LINE}${CUE_NAME}[ \t]*${PARENTHETICALS.test}[ \t]*:?[ \t]*$`,
   },
 } as const satisfies Record<string, Shape>;
 
@@ -152,9 +194,13 @@ const INTERRUPTS: readonly Shape[] = [
   SHAPES.page,
   SHAPES.panel,
   SHAPES.panelDescribed,
-  SHAPES.caption,
+  SHAPES.captionLine,
+  SHAPES.captionAlone,
   SHAPES.sfxLine,
   SHAPES.sfxCue,
+  // The highlighter cannot see the cast, so every `NAME: text` in capitals is a cue here;
+  // the compiler reads one whose name is not in the cast as prose, and notes it.
+  SHAPES.inlineCue,
 ];
 
 /** A speech also ends at a directive and at the next cue, once its first line is read. */
@@ -206,6 +252,7 @@ export const grammar = {
         { include: "#directive" },
         { include: "#caption" },
         { include: "#sfx" },
+        { include: "#inline-speech" },
         { include: "#speech" },
         { include: "#prose" },
       ],
@@ -263,13 +310,49 @@ export const grammar = {
       ),
     },
     caption: {
-      match: line(SHAPES.caption.capture),
+      comment:
+        "A caption: `CAP: Later.` with its text on the line, or `CAP:`, `CAPTION` or Dark Horse's `CAP/ALICE` with the text on the lines under it. Checked before cues, as the compiler checks it.",
+      patterns: [{ include: "#caption-line" }, { include: "#caption-block" }],
+    },
+    "caption-line": {
+      match: line(SHAPES.captionLine.capture),
       captures: captures(
+        "constant.numeric.balloon-number",
+        "punctuation.definition.markdown",
         "keyword.other.caption",
+        "punctuation.separator",
+        "entity.name.type.caption-speaker",
         ...PARENTHETICAL_SCOPES("caption-kind"),
         "punctuation.separator",
+        "punctuation.definition.markdown",
         "string.unquoted.caption",
       ),
+    },
+    "caption-block": {
+      name: "meta.caption.scenet-script",
+      begin: line(SHAPES.captionAlone.capture),
+      beginCaptures: captures(
+        "constant.numeric.balloon-number",
+        "punctuation.definition.markdown",
+        "keyword.other.caption",
+        "punctuation.separator",
+        "entity.name.type.caption-speaker",
+        ...PARENTHETICAL_SCOPES("caption-kind"),
+        "punctuation.separator",
+        "punctuation.definition.markdown",
+      ),
+      end: startOfAnyOf(ENDS_A_SPEECH),
+      patterns: [
+        { include: "#caption-pending" },
+        { match: raw`^[ \t]*(\S.*)$`, captures: captures("string.unquoted.caption") },
+      ],
+    },
+    "caption-pending": {
+      comment: "The first line under a caption label is its text, whatever it looks like.",
+      begin: raw`\G`,
+      end: `${startOfAnyOf(INTERRUPTS)}|^${LEAD}(?!${SHAPES.directive.test})(\\S.*)$`,
+      endCaptures: captures("string.unquoted.caption"),
+      patterns: [{ include: "#directive" }],
     },
     sfx: {
       comment:
@@ -279,6 +362,7 @@ export const grammar = {
     "sfx-line": {
       match: line(SHAPES.sfxLine.capture),
       captures: captures(
+        "constant.numeric.balloon-number",
         "keyword.other.sfx",
         ...PARENTHETICAL_SCOPES("sfx-parenthetical"),
         "punctuation.separator",
@@ -290,6 +374,7 @@ export const grammar = {
       name: "meta.sfx.scenet-script",
       begin: line(SHAPES.sfxCue.capture),
       beginCaptures: captures(
+        "constant.numeric.balloon-number",
         "keyword.other.sfx",
         ...PARENTHETICAL_SCOPES("sfx-parenthetical"),
         "punctuation.separator",
@@ -297,12 +382,30 @@ export const grammar = {
       end: raw`^(?=[ \t]*$)|^[ \t]*(\S.*)$`,
       endCaptures: captures("string.unquoted.sfx"),
     },
+    "inline-speech": {
+      comment:
+        "`ALICE: Hello.`, a cue with its line after the colon, and the lines it wraps onto.",
+      name: "meta.speech.scenet-script",
+      begin: line(SHAPES.inlineCue.capture),
+      beginCaptures: captures(
+        "constant.numeric.balloon-number",
+        "punctuation.definition.markdown",
+        "entity.name.type.cue",
+        ...PARENTHETICAL_SCOPES("parenthetical"),
+        "punctuation.separator",
+        "punctuation.definition.markdown",
+        "string.unquoted.dialogue",
+      ),
+      end: startOfAnyOf(ENDS_A_SPEECH),
+      patterns: [{ match: raw`^[ \t]*(\S.*)$`, captures: captures("string.unquoted.dialogue") }],
+    },
     speech: {
       comment:
         "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
       name: "meta.speech.scenet-script",
       begin: line(SHAPES.cue.capture),
       beginCaptures: captures(
+        "constant.numeric.balloon-number",
         "entity.name.type.cue",
         ...PARENTHETICAL_SCOPES("parenthetical"),
         "punctuation.separator",

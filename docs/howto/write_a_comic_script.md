@@ -44,9 +44,14 @@ scenet build umbrella.script --strip
 | `Panel 1. Alice and Bob on a corner.` | Dark Horse's form: the panel, and its description on the same line. |
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
-| `BOB (whisper)` | Same, with a balloon kind. |
-| `CAPTION: Midnight.` | A caption box. The text is on the same line. |
-| `CAPTION (monologue): ...` | Same, with a caption kind. |
+| `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
+| `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
+| `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |
+| `CAPTION: Midnight.`, `CAP: Midnight.` | A caption box, its text on the same line. |
+| `CAP:` or `CAPTION` (alone) | Dark Horse's form: the caption's text is on the lines under it, to a blank line. |
+| `CAPTION (monologue): ...` | Same, with a caption kind. `(voice over)` is the spoken kind. |
+| `CAP/ALICE` | Dark Horse's caption carrying a character's speech: a spoken caption by `ALICE`. |
+| `1. ALICE:`, `2) CAP:` | Blambot's numbered lettering items: the number is set aside. |
 | `SFX: BLAM` | A sound effect. The sound is on the same line. |
 | `SFX (BOB, large): KRAK` | Same, coming from `BOB`, at a size. |
 | `SFX:` (alone) | Dark Horse's form: the sound is on the next line. |
@@ -87,14 +92,26 @@ it looks — `BLAM` is in capitals, which would otherwise make it a character's 
 nothing under it is reported rather than dropped. Turns, arcs and hollow letters are written in YAML;
 see [`sfx`](../reference/language.md#sfx).
 
-`CAPTION` is checked before speaker cues, because as far as the cue pattern is concerned it is a
-perfectly good character name. That is also why the text has to be on the same line: a bare
-`CAPTION` line is rejected rather than read as a character about to speak. `SFX` is checked
-before cues for the same reason.
+`CAP`, `CAPTION` and `SFX` are checked before speaker cues, because as far as the cue pattern
+is concerned each is a perfectly good character name. So they are reserved: none can be a cast
+member's id. A caption or a sound effect with its text to follow also wins over a cue waiting for
+its line — `BOB (whisper)` then `CAPTION: Later.` is a caption, and a note says Bob had nothing
+to say.
 
-One thing the YAML syntax can express and this cannot: a `spoken` caption's `by`, naming the
-off-panel speaker. Write that panel in YAML, or leave the speaker unnamed — nothing in the drawn
-panel depends on it, since a caption has no tail.
+**A cue may carry its line after a colon**, `ALICE: Hello.`, as Dark Horse's guide itself does. A
+writer's note to the artist looks exactly the same — `NOTE: redraw the rain` — so the line is
+dialogue only when the name is in the panel's cast: the front matter's, and any `@cast:` in the
+panel, wherever in it. A name in capitals that is not in the cast is read as it would otherwise
+be — prose, or a wrapped line of the speech above — and a `looks-like-dialogue` note says so, since
+a misspelled speaker looks the same. A name in lower case, `Junior: Die, you dirty rat!`, is
+dialogue only when it is exactly a cast member's id, and otherwise silent prose.
+
+**A caption can carry speech.** Dark Horse's `CAP/ALICE`, with the words in quotation marks,
+is a `spoken` caption by `ALICE`. The compiler letters a spoken caption's quotation marks itself
+— one opening each box, one closing the speaker's last — so the writer's are taken off rather
+than doubled, and so is one enclosing pair around a balloon's text. A voice over, `ALICE (V.O.)`,
+is the same thing written as a cue: [Blambot](https://blambot.com/pages/comic-script-basics)
+defines `CAPTION (VOICE OVER)` as a character "speaking, but … not in the location shown".
 
 ## A script as publishers ask for it
 

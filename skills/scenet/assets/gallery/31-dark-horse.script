@@ -1,0 +1,46 @@
+---
+panel:
+  size: [900, 640]
+cast:
+  MAYA: {reference: alice, pose: pointing,     at: left_third}
+  THEO: {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+---
+Margo Wren
+14 Harbour Lane, Port Ellis
+
+The Lighthouse, Issue 1
+
+PAGE ONE (three panels)
+
+Panel 1. Dusk on the cliff path. Maya has climbed the last of the steps; Theo waits by the door.
+@shot: full_shot
+@setting: {place: shore, time: dusk}
+
+CAP:
+Port Ellis. The night the lamp went out.
+
+MAYA:
+Theo? The lamp is out --
+
+THEO:
+-- because somebody forgot the oil.
+
+Panel 2. Closer. Maya points back down the path, furious.
+@shot: medium_shot
+
+1. MAYA (burst):
+Somebody!
+
+2. THEO (whisper): I was going to fetch it.
+
+Panel 3. Inside, the lamp blazes again. Both of them squint into the light.
+@shot: medium_close_up
+
+SFX (THEO, large): FWOOMP
+
+CAP/MAYA
+“-- and that was how the harbour got its light back.”

@@ -64,6 +64,9 @@
           "include": "#sfx"
         },
         {
+          "include": "#inline-speech"
+        },
+        {
           "include": "#speech"
         },
         {
@@ -172,27 +175,118 @@
       }
     },
     "caption": {
-      "match": "^[ \\t]*((?i:caption))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
+      "comment": "A caption: `CAP: Later.` with its text on the line, or `CAP:`, `CAPTION` or Dark Horse's `CAP/ALICE` with the text on the lines under it. Checked before cues, as the compiler checks it.",
+      "patterns": [
+        {
+          "include": "#caption-line"
+        },
+        {
+          "include": "#caption-block"
+        }
+      ]
+    },
+    "caption-line": {
+      "match": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)((?i:caption|cap)(?![\\p{L}\\p{N}_]))[ \\t]*(?:(/)[ \\t]*([^():/]+?)[ \\t]*)?(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:)((?:\\*\\*|__)?)[ \\t]*(\\S.*)$",
       "captures": {
         "1": {
-          "name": "keyword.other.caption.scenet-script"
+          "name": "constant.numeric.balloon-number.scenet-script"
         },
         "2": {
-          "name": "punctuation.definition.caption-kind.begin.scenet-script"
+          "name": "punctuation.definition.markdown.scenet-script"
         },
         "3": {
-          "name": "markup.italic.caption-kind.scenet-script"
+          "name": "keyword.other.caption.scenet-script"
         },
         "4": {
-          "name": "punctuation.definition.caption-kind.end.scenet-script"
-        },
-        "5": {
           "name": "punctuation.separator.scenet-script"
         },
+        "5": {
+          "name": "entity.name.type.caption-speaker.scenet-script"
+        },
         "6": {
+          "name": "punctuation.definition.caption-kind.begin.scenet-script"
+        },
+        "7": {
+          "name": "markup.italic.caption-kind.scenet-script"
+        },
+        "8": {
+          "name": "punctuation.definition.caption-kind.end.scenet-script"
+        },
+        "9": {
+          "name": "punctuation.separator.scenet-script"
+        },
+        "10": {
+          "name": "punctuation.definition.markdown.scenet-script"
+        },
+        "11": {
           "name": "string.unquoted.caption.scenet-script"
         }
       }
+    },
+    "caption-block": {
+      "name": "meta.caption.scenet-script",
+      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)((?i:caption|cap)(?![\\p{L}\\p{N}_]))[ \\t]*(?:(/)[ \\t]*([^():/]+?)[ \\t]*)?(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:?)((?:\\*\\*|__)?)[ \\t]*$",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.numeric.balloon-number.scenet-script"
+        },
+        "2": {
+          "name": "punctuation.definition.markdown.scenet-script"
+        },
+        "3": {
+          "name": "keyword.other.caption.scenet-script"
+        },
+        "4": {
+          "name": "punctuation.separator.scenet-script"
+        },
+        "5": {
+          "name": "entity.name.type.caption-speaker.scenet-script"
+        },
+        "6": {
+          "name": "punctuation.definition.caption-kind.begin.scenet-script"
+        },
+        "7": {
+          "name": "markup.italic.caption-kind.scenet-script"
+        },
+        "8": {
+          "name": "punctuation.definition.caption-kind.end.scenet-script"
+        },
+        "9": {
+          "name": "punctuation.separator.scenet-script"
+        },
+        "10": {
+          "name": "punctuation.definition.markdown.scenet-script"
+        }
+      },
+      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
+      "patterns": [
+        {
+          "include": "#caption-pending"
+        },
+        {
+          "match": "^[ \\t]*(\\S.*)$",
+          "captures": {
+            "1": {
+              "name": "string.unquoted.caption.scenet-script"
+            }
+          }
+        }
+      ]
+    },
+    "caption-pending": {
+      "comment": "The first line under a caption label is its text, whatever it looks like.",
+      "begin": "\\G",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "endCaptures": {
+        "1": {
+          "name": "string.unquoted.caption.scenet-script"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#directive"
+        }
+      ]
     },
     "sfx": {
       "comment": "A sound effect: `SFX: BLAM`, `SFX (BOB, large): KRAK`, or Dark Horse's bare `SFX:` cue with the sound on the next line. Checked before cues, as the compiler checks it: `SFX` is a perfectly good name in capitals.",
@@ -206,24 +300,27 @@
       ]
     },
     "sfx-line": {
-      "match": "^[ \\t]*((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
+      "match": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
       "captures": {
         "1": {
-          "name": "keyword.other.sfx.scenet-script"
+          "name": "constant.numeric.balloon-number.scenet-script"
         },
         "2": {
-          "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script"
+          "name": "keyword.other.sfx.scenet-script"
         },
         "3": {
-          "name": "markup.italic.sfx-parenthetical.scenet-script"
+          "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script"
         },
         "4": {
-          "name": "punctuation.definition.sfx-parenthetical.end.scenet-script"
+          "name": "markup.italic.sfx-parenthetical.scenet-script"
         },
         "5": {
-          "name": "punctuation.separator.scenet-script"
+          "name": "punctuation.definition.sfx-parenthetical.end.scenet-script"
         },
         "6": {
+          "name": "punctuation.separator.scenet-script"
+        },
+        "7": {
           "name": "string.unquoted.sfx.scenet-script"
         }
       }
@@ -231,21 +328,24 @@
     "sfx-cue": {
       "comment": "The next line is the sound, whatever it looks like: `BLAM` is in capitals too.",
       "name": "meta.sfx.scenet-script",
-      "begin": "^[ \\t]*((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
       "beginCaptures": {
         "1": {
-          "name": "keyword.other.sfx.scenet-script"
+          "name": "constant.numeric.balloon-number.scenet-script"
         },
         "2": {
-          "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script"
+          "name": "keyword.other.sfx.scenet-script"
         },
         "3": {
-          "name": "markup.italic.sfx-parenthetical.scenet-script"
+          "name": "punctuation.definition.sfx-parenthetical.begin.scenet-script"
         },
         "4": {
-          "name": "punctuation.definition.sfx-parenthetical.end.scenet-script"
+          "name": "markup.italic.sfx-parenthetical.scenet-script"
         },
         "5": {
+          "name": "punctuation.definition.sfx-parenthetical.end.scenet-script"
+        },
+        "6": {
           "name": "punctuation.separator.scenet-script"
         }
       },
@@ -256,28 +356,76 @@
         }
       }
     },
+    "inline-speech": {
+      "comment": "`ALICE: Hello.`, a cue with its line after the colon, and the lines it wraps onto.",
+      "name": "meta.speech.scenet-script",
+      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:)((?:\\*\\*|__)?)[ \\t]*(\\S.*)$",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.numeric.balloon-number.scenet-script"
+        },
+        "2": {
+          "name": "punctuation.definition.markdown.scenet-script"
+        },
+        "3": {
+          "name": "entity.name.type.cue.scenet-script"
+        },
+        "4": {
+          "name": "punctuation.definition.parenthetical.begin.scenet-script"
+        },
+        "5": {
+          "name": "markup.italic.parenthetical.scenet-script"
+        },
+        "6": {
+          "name": "punctuation.definition.parenthetical.end.scenet-script"
+        },
+        "7": {
+          "name": "punctuation.separator.scenet-script"
+        },
+        "8": {
+          "name": "punctuation.definition.markdown.scenet-script"
+        },
+        "9": {
+          "name": "string.unquoted.dialogue.scenet-script"
+        }
+      },
+      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
+      "patterns": [
+        {
+          "match": "^[ \\t]*(\\S.*)$",
+          "captures": {
+            "1": {
+              "name": "string.unquoted.dialogue.scenet-script"
+            }
+          }
+        }
+      ]
+    },
     "speech": {
       "comment": "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
       "name": "meta.speech.scenet-script",
-      "begin": "^[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:?)[ \\t]*$",
       "beginCaptures": {
         "1": {
-          "name": "entity.name.type.cue.scenet-script"
+          "name": "constant.numeric.balloon-number.scenet-script"
         },
         "2": {
-          "name": "punctuation.definition.parenthetical.begin.scenet-script"
+          "name": "entity.name.type.cue.scenet-script"
         },
         "3": {
-          "name": "markup.italic.parenthetical.scenet-script"
+          "name": "punctuation.definition.parenthetical.begin.scenet-script"
         },
         "4": {
-          "name": "punctuation.definition.parenthetical.end.scenet-script"
+          "name": "markup.italic.parenthetical.scenet-script"
         },
         "5": {
+          "name": "punctuation.definition.parenthetical.end.scenet-script"
+        },
+        "6": {
           "name": "punctuation.separator.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
       "patterns": [
         {
           "include": "#pending"
@@ -295,7 +443,7 @@
     "pending": {
       "comment": "From the end of the cue line to the end of the first line of speech. While it is open, the speech's end is not tested, so the first line is speech whatever it looks like: `OK.` is spoken, not a cue. A directive leaves the cue waiting.",
       "begin": "\\G",
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?i:caption)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
       "endCaptures": {
         "1": {
           "name": "string.unquoted.dialogue.scenet-script"

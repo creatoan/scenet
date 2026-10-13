@@ -187,6 +187,13 @@
   "29-type-size.strip.svg": "39cddf266bbe9f285481b3bc163a641dbdc7f5ba158d3d74b5b574e3c6db9730",
   "30-sound-effects.debug.svg": "3a0c04e90047ad44942dec8656ef32889a7429f1b0b444c8a6f7b6c342fe9f1e",
   "30-sound-effects.svg": "0491082a141f7adf829818b91ab1d3545d9c3be18e4e9d5adb78546866e07b2c",
+  "31-dark-horse.1.debug.svg": "f6711fc722bb4bffeb3b0e42ff68ed33293841af544836d0815a3dc3a297d0e4",
+  "31-dark-horse.1.svg": "4ff2a3bb6066718bc188590e1b1f37fb225121da4d0449d57993cd200c5b30f9",
+  "31-dark-horse.2.debug.svg": "0586511a896497114c427c8c0e8312fed8503d79748d4a9696c5c294de5936e0",
+  "31-dark-horse.2.svg": "5eb26edc3df55e99f8cf69460ca7ad99517450e3310a6aaa0af6ba6a4ded3d4b",
+  "31-dark-horse.3.debug.svg": "9758467d51670abb241cd5d7a65b104541f349c12d4087368d7d77de6149e4bc",
+  "31-dark-horse.3.svg": "338cab0b7a6f82f1412301beb5ce7619bca436758d9a245e60603ce11156f04d",
+  "31-dark-horse.strip.svg": "03a52eff1f37cacab9849f79bb7582ba468a154f83238f643c86ddc48c8d206a",
   "live-text/01-two-characters.svg": "6f733a4f4c58105446db08530a16447d7aaa45a7bb7c456bb0c27bda0e4dbb65",
   "live-text/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "live-text/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -287,5 +294,9 @@
   "live-text/29-type-size.inside.svg": "bae7240c8ae141aa1a8347290b102291d58fcbf4618790a1e602030f1fbfe476",
   "live-text/29-type-size.page-1.svg": "80b95dfc4f450cf73cd47f42dc5dc6d02ba9af1b7b6d303b5b094f81bdfd9996",
   "live-text/29-type-size.strip.svg": "6616d9e9cd4272c13fdc8ce1071392919516e3b83e6abd3c881711c50961e5f4",
-  "live-text/30-sound-effects.svg": "ade779a9768bc3d7b77606a2d2329b57ab498417183ab4e46d87399d4935b035"
+  "live-text/30-sound-effects.svg": "ade779a9768bc3d7b77606a2d2329b57ab498417183ab4e46d87399d4935b035",
+  "live-text/31-dark-horse.1.svg": "2d7a34ce392838efa3dde550084ade3f791f4dfd8828830469576a5bb19f3bf6",
+  "live-text/31-dark-horse.2.svg": "89e3ad985fd481c6466276284fdda61f267ab5ebb3d14f4e4a740c9a4a32c0bf",
+  "live-text/31-dark-horse.3.svg": "075039e543c6e022487c30ba4cb4b8c1910f014202bb2bbe701d7e26bfb0a691",
+  "live-text/31-dark-horse.strip.svg": "226f4c9aafd52034b79faedfb5f98aa8d15b1bea695c1b3758695b5dc62d3081"
 }

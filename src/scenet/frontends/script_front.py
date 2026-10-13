@@ -78,23 +78,33 @@ BOLD_LABEL = re.compile(r"^(\*\*|__)(\S(?:.*?\S)?)\1(.*)$")
 # `--` is two hyphens, Dark Horse's carry-over mark, and is not one.
 HORIZONTAL_RULE = re.compile(r"^([-*_])(?:[ \t]*\1){2,}$")
 DIRECTIVE = re.compile(r"^@(\w+)\s*:\s*(.+)$")
-# A cue is a character name in capitals, optionally followed by a parenthetical. Any
-# letter may start it, not only A to Z: `HÉLÈNE` is a name in capitals, and her lines used
-# to be filed as prose. Whether the letters are capitals is `_looks_like_a_cue`'s test.
-CUE = re.compile(r"^([^\W\d_][\w '.-]*?)\s*(?:\(([^)]*)\))?\s*:?\s*$")
-# `CAPTION: Midnight. The docks.`, optionally `CAPTION (monologue): ...`. The text is
-# on the same line, which is what distinguishes a caption from a character cue.
-CAPTION_LINE = re.compile(r"^CAPTION\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
-# A CAPTION line with nothing after the colon. It matches `CUE` perfectly, so without
-# this it would be read as a character called CAPTION and quietly swallow the next
-# line as their dialogue.
-BARE_CAPTION = re.compile(r"^CAPTION\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
+# A cue is a character name in capitals, then any parentheticals -- `BOB (OP) (whisper)`, or
+# one with commas, `BOB (OP, whisper)` -- and an optional colon. Any letter may start it,
+# not only A to Z: `HÉLÈNE` is a name in capitals, and her lines used to be filed as prose.
+# Whether the letters are capitals is `_looks_like_a_cue`'s test.
+CUE = re.compile(r"^([^\W\d_][\w '.-]*?)\s*((?:\([^)]*\)\s*)*):?\s*$")
+# A cue with its line after the colon: `ALICE: Hello.` Dialogue only when the name is in the
+# panel's cast -- a writer's `NOTE: redraw this` is not -- or, in capitals, a note says why
+# it was not.
+INLINE_CUE = re.compile(
+    r"^(?P<name>[^\W\d_][\w '.-]*?)\s*(?P<mods>(?:\([^)]*\)\s*)*):\s*(?P<text>\S.*)$"
+)
+# `CAPTION: Midnight.`, `CAP (monologue):` with the text under it, and Dark Horse's
+# `CAP/CHARACTER`, a caption carrying a character's speech. The text follows the colon, or
+# runs on the lines under the label to a blank line. `CAPTAIN` is not `CAP`.
+CAPTION_LABEL = re.compile(
+    r"^(?:CAPTION|CAP)(?!\w)\s*(?:/\s*(?P<speaker>[^():/]+?)\s*)?(?P<mods>(?:\([^)]*\)\s*)*)"
+    r"(?:(?P<colon>:)\s*(?P<text>.*?))?\s*$",
+    re.IGNORECASE,
+)
 # `SFX: BLAM`, optionally `SFX (BOB, large): BLAM` -- who it comes from, how loud. The
 # sound on the same line.
 SFX_LINE = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
 # Dark Horse's form: `SFX:` as a cue, the sound on the next line. Without this it is a
 # character called SFX, and the sound would be lettered in a balloon.
 BARE_SFX = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
+# Blambot: "Each item in the lettering area should be numbered." `1. ALICE:`, `2) CAP:`.
+BALLOON_NUMBER = re.compile(r"^\d+[.)]?\s+")
 
 # Parentheticals a letterer would act on. Anything else is a performance note for the
 # artist and is not something the compiler can represent.
@@ -107,7 +117,28 @@ KIND_MODIFIERS = {
     "yelling": BalloonKind.SHOUT,
     "thought": BalloonKind.THOUGHT,
     "thinking": BalloonKind.THOUGHT,
+    # Dark Horse's `(burst)`; Blambot: "(BURST), meaning the dialogue is shouted and should
+    # be in a burst balloon".
+    "burst": BalloonKind.SHOUT,
 }
+
+# A voice over: Blambot's "CAPTION (VOICE OVER), meaning the character is speaking, but is
+# not in the location shown in the current panel". On a cue, the line is a spoken caption by
+# that character; on a caption, it is the spoken kind.
+VOICE_OVER = {"v.o.", "vo", "voice over", "voice-over", "voiceover"}
+
+# Labels a line starts with that are never a speaker: a cast member called `CAP` would be
+# read as a caption every time it spoke. Compared without regard to case.
+RESERVED_NAMES = {"cap", "caption", "sfx"}
+
+# Quotation marks a writer puts around speech, which the compiler adds itself where they
+# belong. Spelled as code points, so no editor turns one into another.
+_DOUBLE_QUOTE = '"'
+_OPENING_QUOTES = (_DOUBLE_QUOTE, chr(0x201C), chr(0x00AB))
+_CLOSING_QUOTES = (_DOUBLE_QUOTE, chr(0x201D), chr(0x00BB))
+_QUOTE_PAIRS = tuple(zip(_OPENING_QUOTES, _CLOSING_QUOTES, strict=True))
+# French typography spaces the inside of guillemets, often with a no-break space.
+_QUOTE_SPACE = " " + chr(0x00A0) + chr(0x202F)
 
 # The parenthetical on a CAPTION line, which says what the box is doing. Spelled the
 # same as the IR's own vocabulary, since a writer typing `(monologue)` means the thing
@@ -428,6 +459,23 @@ class _Reading:
     page_notes: dict[str, list[str]]
 
 
+@dataclass
+class _Pending:
+    """A label waiting for its text on the next line: a cue, a caption or a sound effect.
+
+    Attributes:
+        verb: The event it will be: `say`, `caption` or `sfx`.
+        payload: Its fields so far, everything but the text.
+        line: Where the label is, which is where the event is reported from.
+        name: A cue's speaker, to say who had nothing to say.
+    """
+
+    verb: str
+    payload: dict[str, Any]
+    line: int
+    name: str = ""
+
+
 class _Reader:
     """The script body, read line by line into panel drafts.
 
@@ -438,28 +486,33 @@ class _Reader:
     3. Outside any panel -- before the first heading, or between a PAGE heading and its
        first PANEL -- prose is the title page or a note on the page; anything that would
        belong to a panel is refused.
-    4. Inside one: a directive, a caption, a sound effect, then the line a cue is waiting
-       for, then a continuation of the speech, then a cue, then prose.
+    4. Inside one, a directive; then a label with its text on the line (a caption, a sound
+       effect, with its text on the line or under it, or a cue whose name is in the
+       panel's cast with its line after it), which wins even over a label waiting for its
+       text; then the line a label is waiting for, whatever it looks like; then a
+       continuation of the speech or caption being written; then a cue alone on its line;
+       then prose. A balloon number before a label is set aside first.
     """
 
-    def __init__(self, source: Path | None, cast: frozenset[str]) -> None:
+    def __init__(
+        self, source: Path | None, cast: frozenset[str], panel_casts: list[frozenset[str]]
+    ) -> None:
         self.source = source
         self.cast = cast
+        # Each panel's own cast, from its `@cast:` directives, in heading order: a line's
+        # speaker may be cast further down the panel.
+        self.panel_casts = panel_casts
         self.drafts: list[_PanelDraft] = []
         self.current: _PanelDraft | None = None
         self.page: str | None = None
         self.notes: list[_Note] = []
         self.title_page: list[str] = []
         self.page_notes: dict[str, list[str]] = {}
-        # A cue waiting for its first line of speech, and where it is.
-        self.pending_cue: tuple[str, BalloonKind] | None = None
-        self.cue_line = 0
-        # The speech being written. Everything after a cue up to a blank line is one
-        # balloon, so a line a writer wrapped by hand belongs to it.
-        self.speech: dict[str, Any] | None = None
-        # A bare `SFX:` cue, waiting for its sound on the next line: where it was, and
-        # what its parenthetical said.
-        self.sound: tuple[int, dict[str, Any]] | None = None
+        # A label waiting for its text on the next line.
+        self.pending: _Pending | None = None
+        # The speech or caption being written. Everything up to a blank line is one
+        # balloon or box, so a line a writer wrapped by hand belongs to it.
+        self.writing: dict[str, Any] | None = None
         # A name in capitals outside any panel, which is a cue if a line follows it.
         self.loose_cue: tuple[str, int] | None = None
         # The open PAGE heading, if it stated a count, and the panels under it so far.
@@ -563,67 +616,182 @@ class _Reader:
     def inside(self, line: str, written: str, number: int, current: _PanelDraft) -> None:
         """A line in a panel."""
         if _apply_directive(line, current, number, self.source):
-            self.speech = None
+            # A directive leaves a waiting label waiting, but ends a speech.
+            self.writing = None
             return
-
-        caption = _read_caption(line, number, self.source)
-        if caption is not None:
-            self.abandon_cue()
-            current.add(caption, number)
-            self.speech = None
+        labelled = self.unnumbered(line)
+        if self.inline_label(labelled, number, current):
             return
-
-        # Checked before cues, as a caption is: `SFX` is a perfectly good character name
-        # as far as the cue pattern is concerned.
-        taken, self.sound = _take_sound(line, number, self.source, current, self.sound)
-        if taken:
-            self.abandon_cue()
-            self.speech = None
+        if self.pending is not None:
+            self.fulfil(written, current)
             return
-
-        if self.pending_cue is not None:
-            speaker, kind = self.pending_cue
-            self.speech = {"by": speaker, "text": written, "kind": kind.value}
-            current.add({"say": self.speech}, self.cue_line)
-            self.pending_cue = None
-            return
-
         # A line that looks like a cue still starts a new speech, so two speeches with no
         # blank line between them stay two speeches, as they always have.
-        if self.speech is not None and not _looks_like_a_cue(line):
-            self.speech["text"] = f"{self.speech['text']} {written}"
+        if self.writing is not None and not _looks_like_a_cue(labelled):
+            self.writing["text"] = f"{self.writing['text']} {written}"
             return
-
-        self.speech = None
-        cue = _read_cue(line)
-        if cue is not None:
-            self.pending_cue, self.cue_line = cue, number
+        self.writing = None
+        if self.cue_alone(labelled, number):
             return
         # Prose. Kept for tooling and round-tripping, never interpreted.
         current.description.append(written)
 
-    def abandon_cue(self) -> None:
-        """A cue that nothing was said under: noted, since its line went somewhere else."""
-        if self.pending_cue is None or self.current is None:
+    def cast_here(self) -> frozenset[str]:
+        """The open panel's cast: the front matter's, and what its own `@cast:` adds."""
+        return self.cast | self.panel_casts[len(self.drafts) - 1]
+
+    def unnumbered(self, line: str) -> str:
+        """A line with a balloon number taken off, when what follows it is a label.
+
+        Otherwise the line stands as written: `1 MORE TIME`, wrapped onto a line of its
+        own, is the end of a speech, not a numbered cue for a character called MORE TIME.
+        """
+        number = BALLOON_NUMBER.match(line)
+        if number is None:
+            return line
+        rest = line[number.end() :]
+        inline = INLINE_CUE.match(rest)
+        if (
+            CAPTION_LABEL.match(rest)
+            or SFX_LINE.match(rest)
+            or BARE_SFX.match(rest)
+            or (inline is not None and inline.group("name").strip() in self.cast_here())
+            or (
+                _looks_like_a_cue(rest)
+                and (rest.endswith(":") or _cue_name(rest) in self.cast_here())
+            )
+        ):
+            return rest
+        return line
+
+    def inline_label(self, line: str, number: int, current: _PanelDraft) -> bool:
+        """A caption or a sound effect, or a cast member's cue with its line after it.
+
+        These win even over a label waiting for its text: `BOB (whisper)` and then
+        `CAPTION: Later.` is a caption, and Bob has nothing to say. `CAPTION` and `SFX`
+        are never a speaker, so a caption or a sound effect with its text to follow wins
+        too. A cue alone does not: the line under a cue is its line, whatever it looks
+        like -- `OK.` is spoken.
+        """
+        caption = CAPTION_LABEL.match(line)
+        if caption is not None:
+            self.abandon()
+            self.writing = None
+            fields = self.caption(caption, number)
+            if not caption.group("text"):
+                self.pending = _Pending("caption", fields, number)
+                return True
+            # A caption on its line is complete: the line under it is not more of it.
+            current.add({"caption": {**fields, "text": caption.group("text")}}, number)
+            return True
+        effect = _read_sfx(line, number, self.source)
+        if effect is not None:
+            self.abandon()
+            self.writing = None
+            payload, text = effect
+            if text is None:
+                self.pending = _Pending("sfx", payload, number)
+            else:
+                current.add({"sfx": {**payload, "text": text}}, number)
+            return True
+        cue = INLINE_CUE.match(line)
+        if cue is None:
+            return False
+        name = cue.group("name").strip()
+        if name not in self.cast_here():
+            self.not_a_speaker(name, number, current)
+            return False
+        self.abandon()
+        verb, payload = _line_for(name, _modifiers(cue.group("mods")), number, self.source)
+        payload["text"] = cue.group("text")
+        current.add({verb: payload}, number)
+        self.writing = payload
+        return True
+
+    def not_a_speaker(self, name: str, number: int, current: _PanelDraft) -> None:
+        """`NAME: text` in capitals with NAME not in the cast: read as it would otherwise be.
+
+        A writer's `NOTE: redraw this` is not dialogue, and becomes prose. But it looks
+        like dialogue, and a misspelled speaker looks exactly the same, so it is noted.
+        A name in lower case -- `Later: they meet` -- is ordinary prose, and is not.
+        """
+        letters = [character for character in name if character.isalpha()]
+        if self.pending is not None or not letters or not all(c.isupper() for c in letters):
             return
-        name = self.pending_cue[0]
+        read_as = "part of the speech above" if self.writing is not None else "prose"
         self.notes.append(
             _Note(
                 "looks-like-dialogue",
-                f"{name} is a cue with nothing said under it: the line after it is blank, "
-                "or is not a line of dialogue. Write the line under the cue, or delete it",
-                self.cue_line,
-                draft=self.current,
-                tail=("cue", self.cue_line - self.current.line),
+                f"'{name}:' is set like a line of dialogue, but {name} is not in this panel's "
+                f"cast, so the line is read as {read_as}. If {name} speaks, add them to the cast",
+                number,
+                draft=current,
+                tail=("line", number - current.line),
             )
         )
-        self.pending_cue = None
+
+    def fulfil(self, written: str, current: _PanelDraft) -> None:
+        """The line a label was waiting for: its text, whatever it looks like."""
+        pending = self.pending
+        if pending is None:  # pragma: no cover -- only called with one waiting
+            return
+        self.pending = None
+        payload = {**pending.payload, "text": written}
+        current.add({pending.verb: payload}, pending.line)
+        # A speech or a caption runs on to a blank line; a sound effect is one line.
+        self.writing = payload if pending.verb != "sfx" else None
+
+    def cue_alone(self, line: str, number: int) -> bool:
+        """A cue on a line of its own, its line to follow."""
+        cue = _read_cue(line)
+        if cue is None:
+            return False
+        name, modifiers = cue
+        verb, payload = _line_for(name, modifiers, number, self.source)
+        self.pending = _Pending(verb, payload, number, name=name)
+        return True
+
+    def caption(self, label: re.Match[str], number: int) -> dict[str, Any]:
+        """A caption's fields from its label: the kind, and who speaks it, if anyone."""
+        speaker = (label.group("speaker") or "").strip() or None
+        kind = _caption_kind(speaker, _modifiers(label.group("mods")), number, self.source)
+        return {"kind": kind.value, **({"by": speaker} if speaker else {})}
+
+    def abandon(self) -> None:
+        """A label with nothing under it: its next line was blank, a heading or a label."""
+        pending = self.pending
+        self.pending = None
+        if pending is None or self.current is None:
+            return
+        if pending.verb == "sfx":
+            raise ScriptSyntaxError(
+                f"line {pending.line}: an SFX cue with no sound after it; write the sound on "
+                "the next line, or after the colon, as 'SFX: BLAM'",
+                source=self.source,
+                line=pending.line,
+            )
+        if pending.verb == "caption" and not pending.name:
+            raise ScriptSyntaxError(
+                f"line {pending.line}: a caption with no text; write it after the colon, as "
+                "'CAPTION: Midnight.', or on the line under the label",
+                source=self.source,
+                line=pending.line,
+            )
+        self.notes.append(
+            _Note(
+                "looks-like-dialogue",
+                f"{pending.name} is a cue with nothing said under it: the line after it is "
+                "blank, or is not a line of dialogue. Write the line under the cue, or delete it",
+                pending.line,
+                draft=self.current,
+                tail=("cue", pending.line - self.current.line),
+            )
+        )
 
     def end_of_item(self) -> None:
         """A blank line, a heading or the end: whatever was being written is finished."""
-        _no_sound(self.sound, self.source)
-        self.abandon_cue()
-        self.speech = self.sound = self.loose_cue = None
+        self.abandon()
+        self.writing = self.loose_cue = None
 
     def end_of_page(self) -> None:
         """Hold a page to the count its heading stated, now that its panels are known."""
@@ -646,7 +814,10 @@ class _Reader:
         )
 
     def reading(self) -> _Reading:
-        """What was read, with every panel named."""
+        """What was read, with every panel named and its speech as it will be lettered."""
+        for draft in self.drafts:
+            for event in draft.events:
+                _take_off_quotes(event)
         drafts = _name_panels(self.drafts, self.source)
         names = {id(draft): name for name, draft in drafts.items()}
         notes = [
@@ -662,13 +833,180 @@ class _Reader:
 
 
 #: Lines only a panel can hold, refused outside one: a directive, a caption, a sound.
-_BELONGS_TO_A_PANEL = (DIRECTIVE, CAPTION_LINE, BARE_CAPTION, SFX_LINE, BARE_SFX)
+_BELONGS_TO_A_PANEL = (DIRECTIVE, CAPTION_LABEL, SFX_LINE, BARE_SFX)
 
 
 def _cue_name(line: str) -> str:
     """The name a cue line gives, which `_looks_like_a_cue` has already accepted."""
     cue = CUE.match(line)
     return cue.group(1).strip() if cue is not None else line
+
+
+def _modifiers(parentheticals: str | None) -> list[str]:
+    """Every word in a label's parentheticals, in the order written, lower case.
+
+    `(OP) (whisper)` and `(OP, whisper)` say the same. Collected into a list, never a set,
+    so what is reported about them does not depend on how a set iterates.
+
+    Example:
+        >>> _modifiers("(OP) (Whisper, burst)")
+        ['op', 'whisper', 'burst']
+    """
+    return [
+        part.strip().lower()
+        for group in re.findall(r"\(([^)]*)\)", parentheticals or "")
+        for part in group.split(",")
+        if part.strip()
+    ]
+
+
+def _line_for(
+    name: str, modifiers: list[str], number: int, source: Path | None
+) -> tuple[str, dict[str, Any]]:
+    """What a cue's line is: a balloon of some kind, or a voice over's spoken caption.
+
+    Raises:
+        ScriptSyntaxError: Rule `invalid-field`, for two kinds of balloon at once, or a
+            voice over with a kind of balloon it does not have.
+    """
+    kinds = list(
+        dict.fromkeys(KIND_MODIFIERS[word] for word in modifiers if word in KIND_MODIFIERS)
+    )
+    if any(word in VOICE_OVER for word in modifiers):
+        if kinds:
+            raise ScriptSyntaxError(
+                f"line {number}: {name} speaks in voice over, which is lettered as a caption "
+                f"and has no balloon to {kinds[0].value} in",
+                source=source,
+                line=number,
+                rule="invalid-field",
+            )
+        return "caption", {"by": name, "kind": CaptionKind.SPOKEN.value}
+    if len(kinds) > 1:
+        raise ScriptSyntaxError(
+            f"line {number}: {name}'s line cannot be both {kinds[0].value} and "
+            f"{kinds[1].value}; a balloon has one kind",
+            source=source,
+            line=number,
+            rule="invalid-field",
+        )
+    kind = kinds[0] if kinds else BalloonKind.SPEECH
+    return "say", {"by": name, "kind": kind.value}
+
+
+def _caption_kind(
+    speaker: str | None, modifiers: list[str], number: int, source: Path | None
+) -> CaptionKind:
+    """A caption's kind from its parentheticals: spoken, if it names a speaker and no kind.
+
+    Raises:
+        ScriptSyntaxError: An unknown kind, or two.
+    """
+    kinds: list[CaptionKind] = []
+    for word in modifiers:
+        if word in VOICE_OVER:
+            kinds.append(CaptionKind.SPOKEN)
+        elif word in CAPTION_KINDS:
+            kinds.append(CAPTION_KINDS[word])
+        else:
+            known = ", ".join([*sorted(CAPTION_KINDS), "voice over"])
+            raise ScriptSyntaxError(
+                f"line {number}: unknown caption kind '{word}'; known kinds are {known}",
+                source=source,
+                line=number,
+            )
+    distinct = list(dict.fromkeys(kinds))
+    if len(distinct) > 1:
+        raise ScriptSyntaxError(
+            f"line {number}: a caption cannot be both {distinct[0].value} and {distinct[1].value}",
+            source=source,
+            line=number,
+            rule="invalid-field",
+        )
+    if distinct:
+        return distinct[0]
+    return CaptionKind.SPOKEN if speaker else CaptionKind.LOCALE
+
+
+def _take_off_quotes(event: dict[str, Any]) -> None:
+    """The quotation marks a writer put around speech, which the lettering adds itself.
+
+    A balloon takes no quotation marks, so one enclosing pair is taken off, when nothing
+    inside is quoted. A spoken caption's are the compiler's to add -- one opening each box,
+    one closing the speaker's last -- so the writer's opening mark is taken off, and its
+    closing one with it. French typography's spaces inside guillemets go too.
+    """
+    if "say" in event:
+        event["say"]["text"] = _unquoted(event["say"]["text"])
+    elif "caption" in event and event["caption"].get("kind") == CaptionKind.SPOKEN.value:
+        event["caption"]["text"] = _unquoted_spoken(event["caption"]["text"])
+
+
+def _unquoted(text: str) -> str:
+    """Speech without one enclosing pair of quotation marks, if nothing inside is quoted."""
+    for opening, closing in _QUOTE_PAIRS:
+        if len(text) > 1 and text.startswith(opening) and text.endswith(closing):
+            inner = text[1:-1].strip(_QUOTE_SPACE)
+            if inner and not any(mark in inner for mark in (*_OPENING_QUOTES, *_CLOSING_QUOTES)):
+                return inner
+    return text
+
+
+def _unquoted_spoken(text: str) -> str:
+    """A spoken caption without the writer's opening mark, nor its closing one if it has one.
+
+    Blambot's run opens every box with a quote and closes only the last, so a box may well
+    open and not close.
+    """
+    if not text.startswith(_OPENING_QUOTES):
+        return text
+    inner = text[1:].lstrip(_QUOTE_SPACE)
+    if inner.endswith(_CLOSING_QUOTES):
+        closed = inner[:-1].rstrip(_QUOTE_SPACE)
+        if not any(mark in closed for mark in (*_OPENING_QUOTES, *_CLOSING_QUOTES)):
+            inner = closed
+    return inner or text
+
+
+def _panel_casts(body: str) -> list[frozenset[str]]:
+    """Each panel's own cast, from its `@cast:` directives, in the order of the headings.
+
+    Read before the panels are, because a cue on one line may name a cast member a
+    directive further down the same panel adds.
+    """
+    casts: list[set[str]] = []
+    for raw in body.split("\n"):
+        line = _recognisable(raw.strip())
+        if _read_page_heading(line) is not None:
+            continue
+        if _read_panel_heading(line, 0, None) is not None:
+            casts.append(set())
+            continue
+        directive = DIRECTIVE.match(line)
+        if directive is None or directive.group(1) != "cast" or not casts:
+            continue
+        try:
+            members = load(directive.group(2).strip())
+        except yaml.YAMLError:
+            continue  # reported, at its line, when the panel itself is read
+        if isinstance(members, dict):
+            casts[-1].update(str(name) for name in members)
+    return [frozenset(cast) for cast in casts]
+
+
+def _reserved_name(cast: object) -> str | None:
+    """A cast member whose id is a label, `CAP` say, which could never speak."""
+    if not isinstance(cast, dict):
+        return None
+    return next((str(name) for name in cast if str(name).lower() in RESERVED_NAMES), None)
+
+
+def _reserved_message(name: str) -> str:
+    """Why a cast member cannot be called `name`."""
+    return (
+        f"'{name}' is reserved: a line that starts with it is a caption or a sound effect, "
+        "never a speaker's cue. Give the cast member another id"
+    )
 
 
 def _read_script(
@@ -682,7 +1020,7 @@ def _read_script(
         offset: Lines of the file before the body, added to every reported line number.
         cast: The front matter's cast, which tells a forgotten PANEL heading from a title.
     """
-    reader = _Reader(source, cast)
+    reader = _Reader(source, cast, _panel_casts(body))
     reader.read(body, offset)
     return reader.reading()
 
@@ -779,62 +1117,25 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
+    reserved = _reserved_name(draft.settings[key]) if key == "cast" else None
+    if reserved is not None:
+        raise ScriptSyntaxError(
+            f"line {number}: {_reserved_message(reserved)}",
+            source=source,
+            line=number,
+            rule="invalid-field",
+        )
     return True
 
 
-def _read_cue(line: str) -> tuple[str, BalloonKind] | None:
-    """Parse a character cue, or return None if the line is not one."""
+def _read_cue(line: str) -> tuple[str, list[str]] | None:
+    """Parse a character cue -- its name and its modifiers -- or return None if not one."""
     if not _looks_like_a_cue(line):
         return None
     cue = CUE.match(line)
     if cue is None:  # pragma: no cover -- _looks_like_a_cue already matched
         return None
-    modifier = (cue.group(2) or "").strip().lower()
-    return cue.group(1).strip(), KIND_MODIFIERS.get(modifier, BalloonKind.SPEECH)
-
-
-def _no_sound(waiting: tuple[int, dict[str, Any]] | None, source: Path | None) -> None:
-    """Refuse an `SFX:` cue that nothing follows, rather than lose the sound it announced.
-
-    Called wherever a waiting cue would be abandoned: a blank line, a heading, the end.
-    """
-    if waiting is None:
-        return
-    line = waiting[0]
-    raise ScriptSyntaxError(
-        f"line {line}: an SFX cue with no sound after it; write the sound on the next line, "
-        "or after the colon, as 'SFX: BLAM'",
-        source=source,
-        line=line,
-    )
-
-
-def _take_sound(
-    line: str,
-    number: int,
-    source: Path | None,
-    draft: _PanelDraft,
-    waiting: tuple[int, dict[str, Any]] | None,
-) -> tuple[bool, tuple[int, dict[str, Any]] | None]:
-    """Read a line as part of a sound effect, if it is one.
-
-    A waiting `SFX:` cue takes the next line whatever it looks like -- `BLAM` is in
-    capitals, and would otherwise be read as a character's cue.
-
-    Returns:
-        Whether the line was taken, and the cue still waiting for its sound, if any.
-    """
-    if waiting is not None:
-        draft.add({"sfx": {**waiting[1], "text": line}}, waiting[0])
-        return True, None
-    effect = _read_sfx(line, number, source)
-    if effect is None:
-        return False, None
-    payload, text = effect
-    if text is None:
-        return True, (number, payload)
-    draft.add({"sfx": {**payload, "text": text}}, number)
-    return True, None
+    return cue.group(1).strip(), _modifiers(cue.group(2))
 
 
 def _read_sfx(
@@ -870,35 +1171,6 @@ def _read_sfx(
         else:
             payload["from"] = item
     return payload, (found.group(2).strip() if found.re is SFX_LINE else None)
-
-
-def _read_caption(line: str, number: int, source: Path | None) -> dict[str, Any] | None:
-    """Parse a `CAPTION:` line, or return None if the line is not one.
-
-    Tested before character cues, because `CAPTION` on its own is a perfectly good
-    character name as far as the cue pattern is concerned.
-    """
-    match = CAPTION_LINE.match(line)
-    if not match:
-        if BARE_CAPTION.match(line):
-            raise ScriptSyntaxError(
-                f"line {number}: a CAPTION carries its text on the same line, as "
-                f"'CAPTION: Midnight. The docks.'",
-                source=source,
-                line=number,
-            )
-        return None
-
-    modifier = (match.group(1) or "").strip().lower()
-    if modifier and modifier not in CAPTION_KINDS:
-        known = ", ".join(sorted(CAPTION_KINDS))
-        raise ScriptSyntaxError(
-            f"line {number}: unknown caption kind '{modifier}'; known kinds are {known}",
-            source=source,
-            line=number,
-        )
-    kind = CAPTION_KINDS.get(modifier, CaptionKind.LOCALE)
-    return {"caption": {"text": match.group(2).strip(), "kind": kind.value}}
 
 
 def normalise_text(text: str) -> str:
@@ -979,6 +1251,22 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
     cast = front_matter.get("cast")
+    reserved = _reserved_name(cast)
+    if reserved is not None:
+        line = next(
+            (
+                number
+                for number, written in enumerate(text.split("\n"), start=1)
+                if re.search(rf"(?<![\w-]){re.escape(reserved)}\s*:", written)
+            ),
+            None,
+        )
+        raise ScriptSyntaxError(
+            f"{f'line {line}: ' if line else ''}{_reserved_message(reserved)}",
+            source=source,
+            line=line,
+            rule="invalid-field",
+        )
     reading = _read_script(
         body, source, offset=offset, cast=frozenset(cast if isinstance(cast, dict) else ())
     )

@@ -94,3 +94,6 @@ examples:
   - file: 30-sound-effects.panel.yaml
     title: "Sound effects: letters that are part of the picture"
     kind: panel
+  - file: 31-dark-horse.script
+    title: "Written as Dark Horse asks: title page, counts, CAP and CAP/NAME"
+    kind: script

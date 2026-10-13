@@ -131,6 +131,17 @@ standardised comic script format at all. But the informal industry convention (`
 Planned as the human-facing frontend in phase 5 — better than inventing a syntax, because writers
 already write this one.
 
+**Dark Horse's published guide is the reference house format.** Its
+[*Script Format and Specifications*](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
+is public and citable, and the frontend reads its layout as written: a title page before page one,
+`PAGE ONE (five panels)` with the count checked, `Panel 1.` with its description on the same line,
+`CHARACTER:` cues, `CAP:` and `CAP/CHARACTER`, `SFX:`, `(thought)`, `(whisper)` and `(burst)`, and
+`--` carried over. Three things were relaxed: a cue may carry its line after the colon — the guide
+itself does so once, `NEW CHARACTER: underline words…` — when the name is in the cast; Markdown's
+heading markers and bold are tolerated, though the guide asks for no formatting, because writers
+keep scripts in Markdown; and Blambot's numbered lettering items are read too. "About 25 words per
+balloon, and about 50 words per panel" became the `word-limit` note: a house limit, not a fault.
+
 ### MPEG-4 FBA feature *groups* — and only the groups
 
 [Overview (PDF)](https://visagetechnologies.com/uploads/2012/08/MPEG-4FBAOverview.pdf)

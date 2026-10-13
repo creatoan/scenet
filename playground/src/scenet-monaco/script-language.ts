@@ -94,34 +94,124 @@ const PANEL_DESCRIBED = unicode(
   String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("panel")})(\s+)(${NUMBER_LIKE})(\s*(?:[.:—–]|\s-)\s*)(\S.*)$`,
 );
 const DIRECTIVE = /^(\s*)(@)(\w+)(\s*:\s*)(.+)$/;
-const CAPTION_WITH_KIND = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*\()([^)]*)(\)\s*:\s*)(.+)$/;
-const CAPTION = /^(\s*)([Cc][Aa][Pp][Tt][Ii][Oo][Nn])(\s*:\s*)(.+)$/;
-// A sound effect, with its sound on the line -- `SFX: BLAM`, `SFX (BOB, large): KRAK` --
-// or Dark Horse's bare `SFX:` cue, the sound on the next line.
-const SFX_WITH_PARENTHETICAL = /^(\s*)([Ss][Ff][Xx])(\s*\()([^)]*)(\)\s*:\s*)(.+)$/;
-const SFX = /^(\s*)([Ss][Ff][Xx])(\s*:\s*)(.+)$/;
-const SFX_CUE_WITH_PARENTHETICAL = /^(\s*)([Ss][Ff][Xx])(\s*\()([^)]*)(\)\s*:?\s*)$/;
-const SFX_CUE = /^(\s*)([Ss][Ff][Xx])(\s*:?\s*)$/;
-// A cue is a name in capitals, then an optional parenthetical and colon, on a line of at
-// most forty characters once trimmed -- longer, and it is a shouted description. Any
-// capital letter counts, `HÉLÈNE`'s as well as `ALICE`'s, and so does a combining accent:
-// the compiler composes `E` and `◌́` into `É` before it reads a line, and an editor on
-// macOS may well have stored them apart. With the `u` flag (`unicode` below), `.` is a
-// code point, so forty characters are counted as Python counts them.
+// A cue is a name in capitals, then any parentheticals and a colon, on a line of at most
+// forty characters once trimmed -- longer, and it is a shouted description. Any capital
+// letter counts, `HÉLÈNE`'s as well as `ALICE`'s, and so does a combining accent: the
+// compiler composes `E` and `◌́` into `É` before it reads a line, and an editor on macOS may
+// well have stored them apart. With the `u` flag (`unicode` below), `.` is a code point, so
+// forty characters are counted as Python counts them.
 const CUE_NAME = String.raw`\p{Lu}[\p{Lu}\p{M}\p{Nd} _'.\-]*?`;
-const CUE_WITH_PARENTHETICAL = new RegExp(
-  String.raw`^(\s*)(?=\S(?:.{0,38}\S)?\s*$)(${CUE_NAME})(\s*\()([^)]*)(\)\s*:?\s*)$`,
-  "u",
-);
-const CUE = new RegExp(String.raw`^(\s*)(?=\S(?:.{0,38}\S)?\s*$)(${CUE_NAME})(\s*:?\s*)$`, "u");
+const SHORT_LINE = String.raw`(?=\S(?:.{0,38}\S)?\s*$)`;
 
 type Rule = Monaco.languages.IMonarchLanguageRule;
+type Action = string | Monaco.languages.IExpandedMonarchLanguageAction;
+
+/**
+ * One group of a rule: its pattern, which holds no group of its own, and its token.
+ *
+ * Every group of a Monarch rule has to take part in every match -- Monaco reads the length
+ * of each, and one that did not match is `undefined` -- so a part that may be absent is
+ * written as two rules, one with it and one without, rather than an optional group.
+ */
+interface Part {
+  readonly pattern: string;
+  readonly action: Action;
+}
+
+const part = (pattern: string, action: Action): Part => ({ pattern, action });
+
+/** A whole-line rule from its parts, in order. */
+function rule(parts: readonly Part[]): Rule {
+  return [
+    unicode(`^${parts.map((each) => `(${each.pattern})`).join("")}$`),
+    parts.map((each) => each.action),
+  ];
+}
+
+/** Every combination of the parts that may be left out, as one rule each. */
+function variants(...choices: readonly (readonly Part[])[][]): Part[][] {
+  return choices.reduce<Part[][]>(
+    (made, options) => made.flatMap((before) => options.map((option) => [...before, ...option])),
+    [[]],
+  );
+}
+
+const LEAD = part(String.raw`\s*`, "");
+// Blambot's numbered lettering items, `1.` or `2)` before a label.
+const NUMBERED = part(String.raw`(?:\d+[.)]?[ \t]+)?`, "number.balloon");
+// Markdown bold around a label, `**ALICE:**`.
+const BOLD = part(String.raw`(?:\*\*|__)?`, "keyword.markdown");
+// Any number of parentheticals, `(OP) (whisper)` or `(OP, whisper)`.
+const parentheticals = (token: string): Part[] => [
+  part(String.raw`\s*\(`, "delimiter"),
+  part(String.raw`[^)]*(?:\)\s*\([^)]*)*`, token),
+  part(String.raw`\)`, "delimiter"),
+];
+const withOrWithout = (parts: Part[]): Part[][] => [parts, []];
+
+// `CAP: Later.`, `CAPTION (monologue)` with its text under it, Dark Horse's `CAP/ALICE`.
+const CAPTION_WORD = String.raw`(?:${anyCase("caption")}|${anyCase("cap")})(?![\p{L}\p{N}_])`;
+const CAPTION_SPEAKER = [
+  part(String.raw`\s*\/\s*`, "delimiter"),
+  part(String.raw`[^():\/\s](?:[^():\/]*[^():\/\s])?`, "type.caption-speaker"),
+];
+const CAPTIONS: Rule[] = [true, false].flatMap((inline) =>
+  variants(withOrWithout(CAPTION_SPEAKER), withOrWithout(parentheticals("annotation.caption"))).map(
+    (optional) =>
+      rule([
+        LEAD,
+        NUMBERED,
+        BOLD,
+        part(CAPTION_WORD, { token: "keyword.caption", switchTo: inline ? "@root" : "@captionFirst" }),
+        ...optional,
+        ...(inline
+          ? [part(String.raw`\s*:`, "delimiter"), BOLD, part(String.raw`\s*`, ""), part(String.raw`\S.*`, "string.caption")]
+          : [part(String.raw`\s*:?`, "delimiter"), BOLD, part(String.raw`\s*`, "")]),
+      ]),
+  ),
+);
+
+// A sound effect, with its sound on the line -- `SFX: BLAM`, `SFX (BOB, large): KRAK` --
+// or Dark Horse's bare `SFX:` cue, the sound on the next line.
+const SOUNDS: Rule[] = [true, false].flatMap((inline) =>
+  variants(withOrWithout(parentheticals("annotation.sfx"))).map((optional) =>
+    rule([
+      LEAD,
+      NUMBERED,
+      part(anyCase("sfx"), { token: "keyword.sfx", switchTo: inline ? "@root" : "@sound" }),
+      ...optional,
+      ...(inline
+        ? [part(String.raw`\s*:\s*`, "delimiter"), part(String.raw`.+`, "string.sfx")]
+        : [part(String.raw`\s*:?\s*`, "delimiter")]),
+    ]),
+  ),
+);
+
+// `ALICE: Hello.`: a cue with its line after the colon, and the lines it wraps onto. The
+// tokenizer cannot see the cast, so every `NAME: text` in capitals is one here; the compiler
+// reads one whose name is not in the cast as prose, and notes it.
+const INLINE_CUES: Rule[] = variants(withOrWithout(parentheticals("annotation"))).map((optional) =>
+  rule([
+    LEAD,
+    NUMBERED,
+    BOLD,
+    part(CUE_NAME, { token: "type.identifier", switchTo: "@dialogue" }),
+    ...optional,
+    part(String.raw`\s*:`, "delimiter"),
+    BOLD,
+    part(String.raw`\s*`, ""),
+    part(String.raw`\S.*`, "string.dialogue"),
+  ]),
+);
 
 // A state change rides on a group that always matches something: Monaco skips the
 // action of a group that matched nothing, state change and all, so `ALICE` with no
 // colon would never start a speech if the change were on the colon's group.
 
-/** Headings, captions and sound effects, which end whatever came before them. */
+/**
+ * Headings, captions, sound effects and cues with their line on theirs, which end
+ * whatever came before them, even a cue waiting for its line.
+ */
 const STRUCTURE: Rule[] = [
   [RULE, ["", { token: "keyword.markdown", switchTo: "@root" }, ""]],
   [
@@ -151,21 +241,9 @@ const STRUCTURE: Rule[] = [
     PANEL_DESCRIBED,
     ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "comment.prose"],
   ],
-  [
-    CAPTION_WITH_KIND,
-    ["", { token: "keyword.caption", switchTo: "@root" }, "delimiter", "annotation.caption", "delimiter", "string.caption"],
-  ],
-  [CAPTION, ["", { token: "keyword.caption", switchTo: "@root" }, "delimiter", "string.caption"]],
-  [
-    SFX_WITH_PARENTHETICAL,
-    ["", { token: "keyword.sfx", switchTo: "@root" }, "delimiter", "annotation.sfx", "delimiter", "string.sfx"],
-  ],
-  [SFX, ["", { token: "keyword.sfx", switchTo: "@root" }, "delimiter", "string.sfx"]],
-  [
-    SFX_CUE_WITH_PARENTHETICAL,
-    ["", { token: "keyword.sfx", switchTo: "@sound" }, "delimiter", "annotation.sfx", "delimiter"],
-  ],
-  [SFX_CUE, ["", { token: "keyword.sfx", switchTo: "@sound" }, "delimiter"]],
+  ...CAPTIONS,
+  ...SOUNDS,
+  ...INLINE_CUES,
 ];
 
 /** A directive, and the state it leaves the tokenizer in. */
@@ -174,13 +252,15 @@ function directive(state: string): Rule {
 }
 
 /** A cue, which makes the next line speech. */
-const CUES: Rule[] = [
-  [
-    CUE_WITH_PARENTHETICAL,
-    ["", { token: "type.identifier", switchTo: "@speech" }, "delimiter", "annotation", "delimiter"],
-  ],
-  [CUE, ["", { token: "type.identifier", switchTo: "@speech" }, "delimiter"]],
-];
+const CUES: Rule[] = variants(withOrWithout(parentheticals("annotation"))).map((optional) =>
+  rule([
+    LEAD,
+    NUMBERED,
+    part(`${SHORT_LINE}${CUE_NAME}`, { token: "type.identifier", switchTo: "@speech" }),
+    ...optional,
+    part(String.raw`\s*:?\s*`, "delimiter"),
+  ]),
+);
 
 /**
  * The tokenizer, a state machine over the same line shapes as the frontend's own loop
@@ -196,6 +276,9 @@ const CUES: Rule[] = [
  *   caption, a sound effect, a directive or the next cue.
  * - `sound` — the line after a bare `SFX:` cue, which is the sound whatever it looks like:
  *   `BLAM` is in capitals too.
+ * - `captionFirst`, `captionMore` — the lines under a caption label, `CAP:` or Dark Horse's
+ *   `CAP/ALICE`: the first is its text whatever it looks like, and the text runs on to a
+ *   blank line, as a speech does.
  *
  * Every transition is a `switchTo`, never a push, so the stack does not grow with the
  * length of the script.
@@ -230,6 +313,21 @@ export const scriptMonarchTokens: Monaco.languages.IMonarchLanguage = {
       ...STRUCTURE,
       directive("@speech"),
       [/.+$/, { token: "string.dialogue", switchTo: "@dialogue" }],
+    ],
+
+    captionFirst: [
+      [/^\s*$/, { token: "", switchTo: "@root" }],
+      ...STRUCTURE,
+      directive("@captionFirst"),
+      [/.+$/, { token: "string.caption", switchTo: "@captionMore" }],
+    ],
+
+    captionMore: [
+      [/^\s*$/, { token: "", switchTo: "@root" }],
+      ...STRUCTURE,
+      directive("@root"),
+      ...CUES,
+      [/.+$/, "string.caption"],
     ],
 
     sound: [
