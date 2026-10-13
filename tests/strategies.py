@@ -16,6 +16,7 @@ written rather than from what the compiler made of it.
 """
 
 import string
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
@@ -433,15 +434,23 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
     Panel numbers either run straight through or start again on each page, the case
     #63 was about. Cues carry balloon modifiers, speeches run on over continuation
     lines, and captions name their kind.
+
+    The second speaker's name may carry an accent, and a cue may spell it decomposed, as
+    a macOS editor stores it, while the front matter has it composed: one name either way.
     """
-    cast = ["ALICE", "BOB"]
+    second = draw(st.sampled_from(["BOB", "JOSÉ", "ZOË"]))
+    spellings = {
+        "ALICE": ["ALICE"],
+        second: sorted({second, unicodedata.normalize("NFD", second)}),
+    }
+    cast = list(spellings)
     restart = draw(st.booleans())
     out = [
         "---",
         "cast:",
         "  ALICE: {reference: alice, at: left_third}",
-        "  BOB: {reference: bob, at: right_third}",
-        "staging: [ALICE left_of BOB]",
+        f"  {second}: {{reference: bob, at: right_third}}",
+        f"staging: [ALICE left_of {second}]",
         "---",
         "",
     ]
@@ -463,7 +472,8 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
                     modifier = draw(
                         st.sampled_from(["", " (whisper)", " (shouting)", " (thinking)"])
                     )
-                    out += [f"{draw(st.sampled_from(cast))}{modifier}", draw(_spoken())]
+                    name = draw(st.sampled_from(spellings[draw(st.sampled_from(cast))]))
+                    out += [f"{name}{modifier}", draw(_spoken())]
                     if draw(st.integers(0, 3)) == 0:
                         out.append(draw(_spoken()))  # a continuation line
                     out.append("")

@@ -5,12 +5,13 @@ nearly all their staging, and restating it per panel is where continuity errors 
 in.
 """
 
+import unicodedata
 from pathlib import Path
 
 import pytest
 
 from scenet.compose import CompositionError, merge, resolve_overrides
-from scenet.diagnostics import diagnose_source
+from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.frontends.script_front import ScriptSyntaxError, load_script, parse_script
 from scenet.frontends.yaml_front import PanelSyntaxError, load_scene, parse_panel, parse_scene
 from scenet.ir import BalloonKind, CaptionEvent, CaptionKind, SayEvent, ShotType
@@ -470,6 +471,68 @@ class TestLineEndings:
         """PyYAML already handles this, but nothing said so."""
         source = "cast:\n  a: {reference: alice}\n"
         assert parse_panel(source) == parse_panel(source.replace("\n", "\r\n"))
+
+
+class TestTheTextIsReadOneWay:
+    """Whatever the editor saved, a script reads the same.
+
+    A name with an accent is a name: a French script's `HÉLÈNE` used to fail the cue
+    pattern's ASCII capitals, and her line was filed as prose without a word. A macOS
+    editor may store that É decomposed, as E and a combining accent, while the front
+    matter typed elsewhere has it composed; the two are the same name. A byte-order mark,
+    which some Windows editors still write, used to hide the front matter. And a line
+    holds whatever a line holds: a line separator inside one must not move the line
+    numbers of everything after it.
+    """
+
+    @staticmethod
+    def _cast(*names: str) -> str:
+        members = ", ".join(f"{name}: {{reference: alice}}" for name in names)
+        return f"---\ncast: {{{members}}}\n---\n"
+
+    @pytest.mark.parametrize(
+        ("cue", "kind"),
+        [
+            ("HÉLÈNE", BalloonKind.SPEECH),
+            ("JOSÉ (whisper)", BalloonKind.WHISPER),
+            ("ZOË:", BalloonKind.SPEECH),
+            ("ÅSA (shouting)", BalloonKind.SHOUT),
+        ],
+    )
+    def test_a_name_with_an_accent_is_a_cue(self, cue: str, kind: BalloonKind):
+        name = cue.split(" ")[0].rstrip(":")
+        (line,) = parse_script(f"{self._cast(name)}PANEL 1\n{cue}\nBonjour.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.by, line.text, line.kind) == (name, "Bonjour.", kind)
+
+    def test_a_name_in_lower_case_is_still_prose(self):
+        panel = parse_script(f"{self._cast('ALICE')}PANEL 1\nHélène\nBonjour.\n")["1"]
+        assert panel.script == ()
+
+    def test_a_decomposed_name_is_the_composed_one(self):
+        decomposed = unicodedata.normalize("NFD", "HÉLÈNE")
+        assert decomposed != "HÉLÈNE"
+        composed_cast = parse_script(f"{self._cast('HÉLÈNE')}PANEL 1\n{decomposed}\nOui.\n")
+        decomposed_cast = parse_script(f"{self._cast(decomposed)}PANEL 1\nHÉLÈNE\nOui.\n")
+        assert composed_cast == decomposed_cast
+        (line,) = composed_cast["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.by == "HÉLÈNE"
+
+    def test_a_byte_order_mark_does_not_hide_the_front_matter(self):
+        script = f"{self._cast('ALICE')}PANEL 1\nALICE\nHello.\n"
+        assert parse_script("﻿" + script) == parse_script(script)
+        assert diagnose_script("﻿" + script) == []
+
+    @pytest.mark.parametrize("separator", [" ", " ", "\x85", "\x0c", "\x1c"])
+    def test_a_separator_inside_a_line_moves_no_line_number(self, separator: str):
+        script = f"{self._cast('ALICE')}PANEL 1\nRain{separator}falls.\nPANEL 1\n"
+        with pytest.raises(ScriptSyntaxError) as raised:
+            parse_script(script)
+        assert raised.value.line == 6
+        (finding,) = diagnose_script(script)
+        assert finding.region is not None
+        assert finding.region.start.line == 6
 
 
 class TestPanelNamesAreText:

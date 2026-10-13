@@ -24,3 +24,7 @@
 [["dialogue", "Hello"]]
 [["cue-name", "BOB"]]
 [["dialogue", "Hi."]]
+[["panel-keyword", "PANEL"], ["panel-label", "4"]]
+[["directive-marker", "@"], ["directive-name", "cast"], ["directive-value", "{HÉLÈNE: {reference: alice}}"]]
+[["cue-name", "HÉLÈNE"], ["cue-parenthetical", "whisper"]]
+[["dialogue", "Ça va."]]
