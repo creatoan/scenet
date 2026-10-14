@@ -9,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import BalloonPlacementError
 from scenet.geom import BBox, Circle, Point, Vector
-from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent, Side
+from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent, Side, TypeSize
 from scenet.solve.balloons import (
     READING_EPSILON,
     W_CAPTION_EDGE,
@@ -632,6 +632,17 @@ class TestOffPanel:
         ]
         marked = place_script([self._unseen()], {}, self.PANEL, emanata={"a": [zone]})
         assert marked.balloons[0].box.overlap_area(unmarked) == 0
+
+    def test_small_type_is_padded_as_a_drawn_speakers_is(self):
+        """Blambot's small type in a big balloon, whoever says it."""
+        unseen = SayEvent(by="carol", text="psst.", size=TypeSize.SMALL, off_panel=Side.LEFT)
+        drawn = SayEvent(by="a", text="psst.", size=TypeSize.SMALL)
+        actors = {"a": _actor(face=Circle(450.0, 280.0, 25.0))}
+        boxes = [
+            place_script([event], actors, self.PANEL, font_size=12.0).balloons[0].box
+            for event in (unseen, drawn)
+        ]
+        assert (boxes[0].width, boxes[0].height) == (boxes[1].width, boxes[1].height)
 
     def test_no_room_names_the_balloon_and_who_speaks_it(self):
         cramped = BBox(0.0, 0.0, 30.0, 30.0)
