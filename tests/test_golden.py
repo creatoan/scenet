@@ -108,8 +108,14 @@ class TestTheHashSeedChangesNothing:
 
 
 class TestThePathChangesNothing:
-    #: A scene with pages and a comic script: between them they write every kind of file.
-    SOURCES = ("24-page.scene.yaml", "13-comic-script.script")
+    #: A scene with pages and a comic script in each format it reads: between them they
+    #: write every kind of file.
+    SOURCES = (
+        "24-page.scene.yaml",
+        "13-comic-script.script",
+        "31-dark-horse.script",
+        "33-planche.script",
+    )
 
     def _build(self, source: str, out: Path, cwd: Path) -> dict[str, bytes]:
         out.mkdir(parents=True)
