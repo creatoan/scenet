@@ -53,9 +53,12 @@ going straight to pixels. The same split pays for itself here, in four ways:
       "id": "b0",
       "speaker": "alice",
       "order": 1,
+      "kind": "speech",
       "box": { "x": 60.0, "y": 55.0, "width": 330.0, "height": 118.0 },
       "lines": ["You forgot your", "umbrella!"],
-      "tail": { "kind": "straight", "from": [225.0, 173.0], "to": [263.1, 268.4] }
+      "font_size": 28.0,
+      "line_height": 35.0,
+      "tail": { "start": [225.0, 173.0], "end": [263.1, 268.4], "control": null, "width": 14.0 }
     }
   ],
   "captions": [
