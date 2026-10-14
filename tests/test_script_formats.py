@@ -13,7 +13,7 @@ import pytest
 
 from scenet import compile_script
 from scenet.cli import main
-from scenet.diagnostics import Diagnostic, diagnose_script
+from scenet.diagnostics import Diagnostic, diagnose_script, diagnose_source
 from scenet.errors import ScriptSyntaxError
 from scenet.frontends.script_front import parse_script, parse_script_document
 from scenet.ir import CaptionEvent, PanelIR, SayEvent, Side
@@ -606,3 +606,136 @@ class TestOffPanelCues:
             "PANEL 1\nALICE (OP)\nHey!\n"
         )
         assert [item.rule for item in diagnose_script(script)] == ["unknown-puppet"]
+
+
+class TestFrench:
+    """Franco-Belgian scripts: *planche*, *case* or *vignette*, *récitatif* or *cartouche*,
+    *onomatopée* (Cité internationale de la bande dessinée, lexique), and the *échelle des
+    plans* for shots."""
+
+    FRONT = "---\ncast: {LÉA: {reference: alice}, Léa: {reference: bob}}\n---\n"
+
+    def read(self, body: str) -> dict[str, PanelIR]:
+        return parse_script(self.FRONT + body)
+
+    @pytest.mark.parametrize(
+        ("heading", "names"),
+        [
+            ("PLANCHE 1\nCASE 1\nCASE 2\nPLANCHE 2\nCASE 1\n", ["1-1", "1-2", "2-1"]),
+            ("PLANCHE UNE\nVIGNETTE 1\n", ["1"]),
+            ("Planche 3 (2 cases)\nCase 1 : La plage.\nCase 2.\n", ["1", "2"]),
+        ],
+    )
+    def test_pages_and_panels(self, heading: str, names: list[str]):
+        assert list(self.read(heading)) == names
+
+    def test_a_panel_heading_comes_before_a_cue(self):
+        """`CASE 2` is a name in capitals as far as a cue goes."""
+        document = parse_script_document(self.FRONT + "CASE 1 : Le port.\nLÉA\nBonjour.\n")
+        assert document.descriptions["1"] == ("Le port.",)
+
+    def test_a_case_with_no_number_is_still_a_cue(self):
+        script = "---\ncast: {CASE: {reference: bob}}\n---\nCASE 1\nCASE\nEnquête close.\n"
+        (line,) = parse_script(script)["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.by == "CASE"
+
+    @pytest.mark.parametrize("count", ["(six cases)", "(6 vignettes)", "(SIX CASES)", "(une case)"])
+    def test_the_count_in_french(self, count: str):
+        cases = 1 if "une" in count else 6
+        body = f"PLANCHE 1 {count}\n" + "".join(f"CASE {n}\n" for n in range(1, cases + 1))
+        assert diagnose_script(self.FRONT + body) == []
+
+    @pytest.mark.parametrize(
+        "label", ["RÉCITATIF", "RECITATIF", "Récitatif", "NARRATIF", "CARTOUCHE"]
+    )
+    def test_a_caption_by_its_french_names(self, label: str):
+        (line,) = self.read(f"CASE 1\n{label} : Dimanche soir.\n")["1"].script
+        assert isinstance(line, CaptionEvent)
+        assert (line.text, line.kind.value) == ("Dimanche soir.", "locale")
+
+    def test_a_caption_carrying_speech(self):
+        quoted = f"{GUILLEMET_OPEN}{NBSP}Je reviendrai.{NBSP}{GUILLEMET_CLOSE}"
+        (line,) = self.read(f"CASE 1\nCARTOUCHE/LÉA : {quoted}\n")["1"].script
+        assert isinstance(line, CaptionEvent)
+        assert (line.by, line.kind.value, line.text) == ("LÉA", "spoken", "Je reviendrai.")
+
+    @pytest.mark.parametrize("label", ["ONOMATOPÉE", "ONOMATOPEE", "Onomatopée"])
+    def test_a_sound_effect(self, label: str):
+        quoted = f"{GUILLEMET_OPEN} FLOP ! {GUILLEMET_CLOSE}"
+        (effect,) = self.read(f"CASE 1\n{label} : {quoted}\n")["1"].script
+        assert effect.verb == "sfx"
+
+    @pytest.mark.parametrize("space", [" ", NBSP, chr(0x202F)])
+    def test_a_space_before_the_colon(self, space: str):
+        (line,) = self.read(f"CASE 1\nLÉA{space}: Bonjour.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.by, line.text) == ("LÉA", "Bonjour.")
+
+    def test_a_name_in_lower_case_that_is_cast(self):
+        quoted = f"{GUILLEMET_OPEN} Plus qu'une heure ! {GUILLEMET_CLOSE}"
+        (line,) = self.read(f"CASE 1\nLéa : {quoted}\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.by, line.text) == ("Léa", "Plus qu'une heure !")
+
+    @pytest.mark.parametrize(
+        ("modifier", "kind", "off_panel"),
+        [
+            ("(pensée)", "thought", False),
+            ("(off)", "speech", True),
+            ("(hors champ)", "speech", True),
+        ],
+    )
+    def test_french_modifiers(self, modifier: str, kind: str, off_panel: bool):
+        (line,) = self.read(f"CASE 1\nLÉA {modifier}\nHm.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.kind.value, line.off_panel is not False) == (kind, off_panel)
+
+    @pytest.mark.parametrize(
+        ("written", "shot"),
+        [
+            ("plan d'ensemble", "long_shot"),
+            ("PE", "long_shot"),
+            ("plan moyen", "full_shot"),
+            ("plan américain", "cowboy"),
+            ("P.A.", "cowboy"),
+            ("plan rapproché taille", "medium_shot"),
+            ("plan mi-moyen", "medium_shot"),
+            ("plan rapproché poitrine", "medium_close_up"),
+            ("plan rapproché", "medium_close_up"),
+            ("plan rapproché épaule", "close_up"),
+            ("gros plan", "big_close_up"),
+            ("Gros Plan", "big_close_up"),
+            ("GP", "big_close_up"),
+            ("très gros plan", "extreme_close_up"),
+            ("tres gros plan", "extreme_close_up"),
+        ],
+    )
+    def test_a_shot_by_its_french_name(self, written: str, shot: str):
+        assert self.read(f"CASE 1\n@shot: {written}\n")["1"].camera.shot.value == shot
+
+    @pytest.mark.parametrize(
+        ("written", "angle"),
+        [
+            ("plongée", "high"),
+            ("contre-plongée", "low"),
+            ("contre plongee", "low"),
+            ("angle normal", "eye_level"),
+        ],
+    )
+    def test_an_angle_by_its_french_name(self, written: str, angle: str):
+        assert self.read(f"CASE 1\n@angle: {written}\n")["1"].camera.angle.value == angle
+
+    def test_an_unknown_shot_names_the_french_ones_too(self):
+        with pytest.raises(ScriptSyntaxError, match="gros plan") as raised:
+            self.read("CASE 1\n@shot: plan général\n")
+        assert (raised.value.rule, raised.value.line) == ("invalid-field", 5)
+
+    def test_yaml_stays_english(self):
+        (found,) = diagnose_source("camera: {shot: gros plan}\ncast: {a: {reference: alice}}\n")
+        assert found.rule == "invalid-field"
+
+    @pytest.mark.parametrize("name", ["RÉCITATIF", "CARTOUCHE", "ONOMATOPÉE"])
+    def test_a_french_label_is_reserved_too(self, name: str):
+        with pytest.raises(ScriptSyntaxError, match="reserved"):
+            parse_script(f"---\ncast: {{{name}: {{reference: alice}}}}\n---\nCASE 1\n")
