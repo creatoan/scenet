@@ -9,7 +9,7 @@ import { describe, test } from "node:test";
 import { detectKind } from "./kind.ts";
 
 describe("detectKind", () => {
-  for (const heading of ["PANEL 1", "Panel 1.", "panel 1", "Panel 1. A corner, in the rain.", "## PANEL 2", "**PANEL 2**", "Panel One"]) {
+  for (const heading of ["PANEL 1", "Panel 1.", "panel 1", "Panel 1. A corner, in the rain.", "## PANEL 2", "**PANEL 2**", "Panel One", "CASE 2", "Vignette 3 : La plage."]) {
     test(`a script is one with a panel heading: ${heading}`, () => {
       assert.equal(detectKind(`PAGE ONE\n\n${heading}\nALICE\nHi.\n`), "script");
     });

@@ -12,10 +12,10 @@ const FRONT_MATTER = /^\s*---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
 
 /**
  * A panel heading as the compiler reads one: `PANEL 1` alone, or Dark Horse's `Panel 1.
- * A corner.`, in any case, after Markdown's `##` or inside its `**`.
+ * A corner.`, or French `CASE 2`, in any case, after Markdown's `##` or inside its `**`.
  */
 const PANEL_HEADING = new RegExp(
-  String.raw`^[ \t]*(?:#{1,6}[ \t]+)?(?:\*\*|__)?panel[ \t]+(?:[^\s:]+?[ \t]*[.:]?[ \t]*(?:\*\*|__)?[ \t]*$|[^\s.:—–-]+[ \t]*(?:[.:—–]|[ \t]-)[ \t]*\S)`,
+  String.raw`^[ \t]*(?:#{1,6}[ \t]+)?(?:\*\*|__)?(?:panel|(?:case|vignette)(?=[ \t]+\d))[ \t]+(?:[^\s:]+?[ \t]*[.:]?[ \t]*(?:\*\*|__)?[ \t]*$|[^\s.:—–-]+[ \t]*(?:[.:—–]|[ \t]-)[ \t]*\S)`,
   "imu",
 );
 

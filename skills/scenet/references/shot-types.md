@@ -44,6 +44,9 @@ which is why `extreme_close_up` is the one shot in the table that needs it despi
 
 ## Table
 
+A comic script may name these in French; see
+[French scripts](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#french-scripts) for the rung-by-rung table.
+
 | `shot` | Crop landmark | Headroom | Footroom | Reads as |
 |---|---|---|---|---|
 | `long_shot` (alias `wide`) | `feet` | 0.28 | 0.10 | Figure small in its environment |

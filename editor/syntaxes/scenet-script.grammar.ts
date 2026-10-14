@@ -53,8 +53,8 @@ const PARENTHETICAL = { capture: raw`(?:(\()([^)]*)(\)))?`, test: raw`(?:\([^)]*
  * frontend strips it and reads the heading; the markers are coloured as what they are.
  */
 const MARKDOWN = {
-  open: raw`((?:#{1,6}[ \t]+)?(?:\*\*|__)?)`,
-  openTest: raw`(?:#{1,6}[ \t]+)?(?:\*\*|__)?`,
+  open: raw`((?:#{1,6}[ \t\x{00A0}\x{202F}]+)?(?:\*\*|__)?)`,
+  openTest: raw`(?:#{1,6}[ \t\x{00A0}\x{202F}]+)?(?:\*\*|__)?`,
   close: raw`((?:\*\*|__)?)`,
   closeTest: raw`(?:\*\*|__)?`,
 } as const;
@@ -62,6 +62,8 @@ const MARKDOWN = {
 const UNITS = "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen";
 const ONE_TO_NINE = "one|two|three|four|five|six|seven|eight|nine";
 const TENS = "twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety";
+/** French numbers to twenty, for `PLANCHE UNE` and `CASE DEUX`. */
+const FRENCH = "z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt";
 
 /** A page number in words, `ONE` to `NINETY-NINE`, however they are joined. */
 const NUMBER_PHRASE = raw`(?i:(?:${TENS})(?:[ \t-]+(?:${ONE_TO_NINE}))?|${UNITS})`;
@@ -70,33 +72,39 @@ const NUMBER_PHRASE = raw`(?i:(?:${TENS})(?:[ \t-]+(?:${ONE_TO_NINE}))?|${UNITS}
  * A label a panel heading with a description on its line may have: digits, digits and a
  * letter, one letter, or a number in a word -- so `Panel shows Alice.` stays prose.
  */
-const NUMBER_LIKE = raw`(?:\d+\p{L}?|(?i:${TENS}|${UNITS})(?!\p{L})|\p{L}(?!\p{L}))`;
+const NUMBER_LIKE = raw`(?:\d+\p{L}?|(?i:${TENS}|${UNITS}|${FRENCH})(?!\p{L})|\p{L}(?!\p{L}))`;
 
 /**
  * Dark Horse's `PAGE ONE (five panels)`. A label of several words is a number in words,
  * `PAGE TWENTY ONE`; the parenthetical states the count, or is a note.
  */
 const PAGE: Shape = {
-  capture: raw`${MARKDOWN.open}((?i:page))[ \t]+(${NUMBER_PHRASE}(?=[ \t]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t]*${PARENTHETICAL.capture}[ \t]*([.:]?)[ \t]*${MARKDOWN.close}[ \t]*$`,
-  test: raw`${MARKDOWN.openTest}(?i:page)[ \t]+(?:${NUMBER_PHRASE}(?=[ \t]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t]*${PARENTHETICAL.test}[ \t]*[.:]?[ \t]*${MARKDOWN.closeTest}[ \t]*$`,
+  capture: raw`${MARKDOWN.open}((?i:page|planche))[ \t\x{00A0}\x{202F}]+(${NUMBER_PHRASE}(?=[ \t\x{00A0}\x{202F}]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.capture}[ \t\x{00A0}\x{202F}]*([.:]?)[ \t\x{00A0}\x{202F}]*${MARKDOWN.close}[ \t\x{00A0}\x{202F}]*$`,
+  test: raw`${MARKDOWN.openTest}(?i:page|planche)[ \t\x{00A0}\x{202F}]+(?:${NUMBER_PHRASE}(?=[ \t\x{00A0}\x{202F}]*(?:\(|[.:*_]|$))|[^\s:()]+?)[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.test}[ \t\x{00A0}\x{202F}]*[.:]?[ \t\x{00A0}\x{202F}]*${MARKDOWN.closeTest}[ \t\x{00A0}\x{202F}]*$`,
 };
 
 /** `PANEL 1`, `Panel One:`: a panel heading alone on its line. */
 const PANEL: Shape = {
-  capture: raw`${MARKDOWN.open}((?i:panel))[ \t]+([^\s:]+?)[ \t]*([.:]?)[ \t]*${MARKDOWN.close}[ \t]*$`,
-  test: raw`${MARKDOWN.openTest}(?i:panel)[ \t]+[^\s:]+?[ \t]*[.:]?[ \t]*${MARKDOWN.closeTest}[ \t]*$`,
+  capture: raw`${MARKDOWN.open}((?i:panel))[ \t\x{00A0}\x{202F}]+([^\s:]+?)[ \t\x{00A0}\x{202F}]*([.:]?)[ \t\x{00A0}\x{202F}]*${MARKDOWN.close}[ \t\x{00A0}\x{202F}]*$`,
+  test: raw`${MARKDOWN.openTest}(?i:panel)[ \t\x{00A0}\x{202F}]+[^\s:]+?[ \t\x{00A0}\x{202F}]*[.:]?[ \t\x{00A0}\x{202F}]*${MARKDOWN.closeTest}[ \t\x{00A0}\x{202F}]*$`,
+};
+
+/** `CASE 2`, `VIGNETTE 3`: French panel headings, alone on their line, with a number. */
+const FRENCH_PANEL: Shape = {
+  capture: raw`${MARKDOWN.open}((?i:case|vignette))[ \t\x{00A0}\x{202F}]+(${NUMBER_LIKE})[ \t\x{00A0}\x{202F}]*([.:]?)[ \t\x{00A0}\x{202F}]*${MARKDOWN.close}[ \t\x{00A0}\x{202F}]*$`,
+  test: raw`${MARKDOWN.openTest}(?i:case|vignette)[ \t\x{00A0}\x{202F}]+${NUMBER_LIKE}[ \t\x{00A0}\x{202F}]*[.:]?[ \t\x{00A0}\x{202F}]*${MARKDOWN.closeTest}[ \t\x{00A0}\x{202F}]*$`,
 };
 
 /** Dark Horse's `Panel 1. Alice and Bob on a corner.`, the description on the same line. */
 const PANEL_DESCRIBED: Shape = {
-  capture: raw`${MARKDOWN.open}((?i:panel))[ \t]+(${NUMBER_LIKE})[ \t]*([.:—–]|[ \t]-)[ \t]*(\S.*)$`,
-  test: raw`${MARKDOWN.openTest}(?i:panel)[ \t]+${NUMBER_LIKE}[ \t]*(?:[.:—–]|[ \t]-)[ \t]*\S`,
+  capture: raw`${MARKDOWN.open}((?i:panel|case|vignette))[ \t\x{00A0}\x{202F}]+(${NUMBER_LIKE})[ \t\x{00A0}\x{202F}]*([.:—–]|[ \t\x{00A0}\x{202F}]-)[ \t\x{00A0}\x{202F}]*(\S.*)$`,
+  test: raw`${MARKDOWN.openTest}(?i:panel|case|vignette)[ \t\x{00A0}\x{202F}]+${NUMBER_LIKE}[ \t\x{00A0}\x{202F}]*(?:[.:—–]|[ \t\x{00A0}\x{202F}]-)[ \t\x{00A0}\x{202F}]*\S`,
 };
 
 /** A Markdown horizontal rule, `---` or `* * *`, which the frontend reads as a blank line. */
 const RULE: Shape = {
-  capture: raw`(-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})[ \t]*$`,
-  test: raw`(?:-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})[ \t]*$`,
+  capture: raw`(-(?:[ \t\x{00A0}\x{202F}]*-){2,}|\*(?:[ \t\x{00A0}\x{202F}]*\*){2,}|_(?:[ \t\x{00A0}\x{202F}]*_){2,})[ \t\x{00A0}\x{202F}]*$`,
+  test: raw`(?:-(?:[ \t\x{00A0}\x{202F}]*-){2,}|\*(?:[ \t\x{00A0}\x{202F}]*\*){2,}|_(?:[ \t\x{00A0}\x{202F}]*_){2,})[ \t\x{00A0}\x{202F}]*$`,
 };
 
 /**
@@ -104,12 +112,12 @@ const RULE: Shape = {
  * first opening bracket, everything to the last closing one, and that bracket.
  */
 const PARENTHETICALS = {
-  capture: raw`(?:(\()([^)]*(?:\)[ \t]*\([^)]*)*)(\)))?`,
-  test: raw`(?:\([^)]*\)[ \t]*)*`,
+  capture: raw`(?:(\()([^)]*(?:\)[ \t\x{00A0}\x{202F}]*\([^)]*)*)(\)))?`,
+  test: raw`(?:\([^)]*\)[ \t\x{00A0}\x{202F}]*)*`,
 } as const;
 
 /** Blambot's numbered lettering items, `1.` or `2)` before a label. */
-const NUMBERED = { capture: raw`(\d+[.)]?[ \t]+)?`, test: raw`(?:\d+[.)]?[ \t]+)?` } as const;
+const NUMBERED = { capture: raw`(\d+[.)]?[ \t\x{00A0}\x{202F}]+)?`, test: raw`(?:\d+[.)]?[ \t\x{00A0}\x{202F}]+)?` } as const;
 
 /** Markdown bold around a label, `**ALICE:**`. */
 const BOLD = { capture: raw`((?:\*\*|__)?)`, test: raw`(?:\*\*|__)?` } as const;
@@ -117,42 +125,42 @@ const BOLD = { capture: raw`((?:\*\*|__)?)`, test: raw`(?:\*\*|__)?` } as const;
 /** `SFX: BLAM`: a label with its text on the same line. */
 function labelWithText(keyword: string): Shape {
   return {
-    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:)[ \t]*(.+)$`,
-    test: raw`${NUMBERED.test}(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:[ \t]*\S`,
+    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.capture}[ \t\x{00A0}\x{202F}]*(:)[ \t\x{00A0}\x{202F}]*(.+)$`,
+    test: raw`${NUMBERED.test}(?i:${keyword})[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.test}[ \t\x{00A0}\x{202F}]*:[ \t\x{00A0}\x{202F}]*\S`,
   };
 }
 
 /** Dark Horse's `SFX:` on a line of its own, the text on the next. */
 function labelAlone(keyword: string): Shape {
   return {
-    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t]*${PARENTHETICAL.capture}[ \t]*(:?)[ \t]*$`,
-    test: raw`${NUMBERED.test}(?i:${keyword})[ \t]*${PARENTHETICAL.test}[ \t]*:?[ \t]*$`,
+    capture: raw`${NUMBERED.capture}((?i:${keyword}))[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.capture}[ \t\x{00A0}\x{202F}]*(:?)[ \t\x{00A0}\x{202F}]*$`,
+    test: raw`${NUMBERED.test}(?i:${keyword})[ \t\x{00A0}\x{202F}]*${PARENTHETICAL.test}[ \t\x{00A0}\x{202F}]*:?[ \t\x{00A0}\x{202F}]*$`,
   };
 }
 
 /** `CAP`, `CAPTION`, never `CAPTAIN`. */
-const CAPTION_KEYWORD = raw`(?i:caption|cap)(?![\p{L}\p{N}_])`;
+const CAPTION_KEYWORD = raw`(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\p{L}\p{N}_])`;
 
 /** Dark Horse's `CAP/CHARACTER`: who speaks a caption, after a slash. */
 const CAPTION_SPEAKER = {
-  capture: raw`(?:(/)[ \t]*([^():/]+?)[ \t]*)?`,
-  test: raw`(?:/[ \t]*[^():/]+?[ \t]*)?`,
+  capture: raw`(?:(/)[ \t\x{00A0}\x{202F}]*([^():/]+?)[ \t\x{00A0}\x{202F}]*)?`,
+  test: raw`(?:/[ \t\x{00A0}\x{202F}]*[^():/]+?[ \t\x{00A0}\x{202F}]*)?`,
 } as const;
 
 /** `CAP: Later.`, `CAPTION (monologue): ...`, `CAP/ALICE: "..."`: a caption with its text. */
 const CAPTION_LINE: Shape = {
-  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t]*(:)${BOLD.capture}[ \t]*(\S.*)$`,
-  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t]*:${BOLD.test}[ \t]*\S`,
+  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t\x{00A0}\x{202F}]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t\x{00A0}\x{202F}]*(:)${BOLD.capture}[ \t\x{00A0}\x{202F}]*(\S.*)$`,
+  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t\x{00A0}\x{202F}]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t\x{00A0}\x{202F}]*:${BOLD.test}[ \t\x{00A0}\x{202F}]*\S`,
 };
 
 /** `CAP:`, `CAPTION`, `CAP/ALICE` alone: its text runs on the lines under it. */
 const CAPTION_ALONE: Shape = {
-  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t]*(:?)${BOLD.capture}[ \t]*$`,
-  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t]*:?${BOLD.test}[ \t]*$`,
+  capture: raw`${NUMBERED.capture}${BOLD.capture}(${CAPTION_KEYWORD})[ \t\x{00A0}\x{202F}]*${CAPTION_SPEAKER.capture}${PARENTHETICALS.capture}[ \t\x{00A0}\x{202F}]*(:?)${BOLD.capture}[ \t\x{00A0}\x{202F}]*$`,
+  test: raw`${NUMBERED.test}${BOLD.test}${CAPTION_KEYWORD}[ \t\x{00A0}\x{202F}]*${CAPTION_SPEAKER.test}${PARENTHETICALS.test}[ \t\x{00A0}\x{202F}]*:?${BOLD.test}[ \t\x{00A0}\x{202F}]*$`,
 };
 
 /** The frontend's forty-character limit on a cue, once trimmed. */
-const SHORT_LINE = raw`(?=\S(?:.{0,38}\S)?[ \t]*$)`;
+const SHORT_LINE = raw`(?=\S(?:.{0,38}\S)?[ \t\x{00A0}\x{202F}]*$)`;
 /**
  * A name in capitals: only the name is tested, not the parenthetical. Any capital letter
  * counts, `HÉLÈNE`'s as well as `ALICE`'s, and so does a combining accent, since the
@@ -164,26 +172,27 @@ const SHAPES = {
   rule: RULE,
   page: PAGE,
   panel: PANEL,
+  frenchPanel: FRENCH_PANEL,
   panelDescribed: PANEL_DESCRIBED,
-  directive: { capture: raw`(@)(\w+)[ \t]*(:)[ \t]*(.+)$`, test: raw`@\w+[ \t]*:[ \t]*\S` },
+  directive: { capture: raw`(@)(\w+)[ \t\x{00A0}\x{202F}]*(:)[ \t\x{00A0}\x{202F}]*(.+)$`, test: raw`@\w+[ \t\x{00A0}\x{202F}]*:[ \t\x{00A0}\x{202F}]*\S` },
   captionLine: CAPTION_LINE,
   captionAlone: CAPTION_ALONE,
-  sfxLine: labelWithText("sfx"),
-  sfxCue: labelAlone("sfx"),
+  sfxLine: labelWithText("sfx|onomatop[eé]e"),
+  sfxCue: labelAlone("sfx|onomatop[eé]e"),
   /** `ALICE: Hello.`: a cue with its line after the colon. */
   inlineCue: {
-    capture: raw`${NUMBERED.capture}${BOLD.capture}(${CUE_NAME})[ \t]*${PARENTHETICALS.capture}[ \t]*(:)${BOLD.capture}[ \t]*(\S.*)$`,
-    test: raw`${NUMBERED.test}${BOLD.test}${CUE_NAME}[ \t]*${PARENTHETICALS.test}[ \t]*:${BOLD.test}[ \t]*\S`,
+    capture: raw`${NUMBERED.capture}${BOLD.capture}(${CUE_NAME})[ \t\x{00A0}\x{202F}]*${PARENTHETICALS.capture}[ \t\x{00A0}\x{202F}]*(:)${BOLD.capture}[ \t\x{00A0}\x{202F}]*(\S.*)$`,
+    test: raw`${NUMBERED.test}${BOLD.test}${CUE_NAME}[ \t\x{00A0}\x{202F}]*${PARENTHETICALS.test}[ \t\x{00A0}\x{202F}]*:${BOLD.test}[ \t\x{00A0}\x{202F}]*\S`,
   },
   cue: {
-    capture: raw`${NUMBERED.capture}${SHORT_LINE}(${CUE_NAME})[ \t]*${PARENTHETICALS.capture}[ \t]*(:?)[ \t]*$`,
-    test: raw`${NUMBERED.test}${SHORT_LINE}${CUE_NAME}[ \t]*${PARENTHETICALS.test}[ \t]*:?[ \t]*$`,
+    capture: raw`${NUMBERED.capture}${SHORT_LINE}(${CUE_NAME})[ \t\x{00A0}\x{202F}]*${PARENTHETICALS.capture}[ \t\x{00A0}\x{202F}]*(:?)[ \t\x{00A0}\x{202F}]*$`,
+    test: raw`${NUMBERED.test}${SHORT_LINE}${CUE_NAME}[ \t\x{00A0}\x{202F}]*${PARENTHETICALS.test}[ \t\x{00A0}\x{202F}]*:?[ \t\x{00A0}\x{202F}]*$`,
   },
 } as const satisfies Record<string, Shape>;
 
 /** The frontend strips a line before reading it. */
-const LEAD = raw`[ \t]*`;
-const BLANK = raw`[ \t]*$`;
+const LEAD = raw`[ \t\x{00A0}\x{202F}]*`;
+const BLANK = raw`[ \t\x{00A0}\x{202F}]*$`;
 
 /**
  * Lines that end a speech even before its first line: the first line under a cue is
@@ -193,6 +202,7 @@ const INTERRUPTS: readonly Shape[] = [
   SHAPES.rule,
   SHAPES.page,
   SHAPES.panel,
+  SHAPES.frenchPanel,
   SHAPES.panelDescribed,
   SHAPES.captionLine,
   SHAPES.captionAlone,
@@ -231,16 +241,16 @@ export const grammar = {
     preamble: {
       comment:
         "Blank lines before anything else, where front matter may open. Begins only on a first line that is blank or a fence, and ends at the first other non-blank line, so a later --- is prose.",
-      begin: raw`\A(?=[ \t]*(?:---[ \t]*)?$)`,
-      end: raw`^(?=[ \t]*\S)(?![ \t]*---[ \t]*$)`,
+      begin: raw`\A(?=[ \t\x{00A0}\x{202F}]*(?:---[ \t\x{00A0}\x{202F}]*)?$)`,
+      end: raw`^(?=[ \t\x{00A0}\x{202F}]*\S)(?![ \t\x{00A0}\x{202F}]*---[ \t\x{00A0}\x{202F}]*$)`,
       patterns: [{ include: "#front-matter" }],
     },
     "front-matter": {
       name: "meta.frontmatter.scenet-script",
       contentName: "meta.embedded.block.frontmatter",
-      begin: raw`^[ \t]*(---)[ \t]*$`,
+      begin: raw`^[ \t\x{00A0}\x{202F}]*(---)[ \t\x{00A0}\x{202F}]*$`,
       beginCaptures: captures("punctuation.separator.frontmatter"),
-      end: raw`^(---)[ \t]*$`,
+      end: raw`^(---)[ \t\x{00A0}\x{202F}]*$`,
       endCaptures: captures("punctuation.separator.frontmatter"),
       patterns: [{ include: "source.yaml" }],
     },
@@ -280,6 +290,16 @@ export const grammar = {
       patterns: [
         {
           match: line(SHAPES.panel.capture),
+          captures: captures(
+            "punctuation.definition.markdown",
+            "keyword.control.panel",
+            "entity.name.section.panel",
+            "punctuation.separator",
+            "punctuation.definition.markdown",
+          ),
+        },
+        {
+          match: line(SHAPES.frenchPanel.capture),
           captures: captures(
             "punctuation.definition.markdown",
             "keyword.control.panel",
@@ -344,7 +364,7 @@ export const grammar = {
       end: startOfAnyOf(ENDS_A_SPEECH),
       patterns: [
         { include: "#caption-pending" },
-        { match: raw`^[ \t]*(\S.*)$`, captures: captures("string.unquoted.caption") },
+        { match: raw`^[ \t\x{00A0}\x{202F}]*(\S.*)$`, captures: captures("string.unquoted.caption") },
       ],
     },
     "caption-pending": {
@@ -379,7 +399,7 @@ export const grammar = {
         ...PARENTHETICAL_SCOPES("sfx-parenthetical"),
         "punctuation.separator",
       ),
-      end: raw`^(?=[ \t]*$)|^[ \t]*(\S.*)$`,
+      end: raw`^(?=[ \t\x{00A0}\x{202F}]*$)|^[ \t\x{00A0}\x{202F}]*(\S.*)$`,
       endCaptures: captures("string.unquoted.sfx"),
     },
     "inline-speech": {
@@ -397,7 +417,7 @@ export const grammar = {
         "string.unquoted.dialogue",
       ),
       end: startOfAnyOf(ENDS_A_SPEECH),
-      patterns: [{ match: raw`^[ \t]*(\S.*)$`, captures: captures("string.unquoted.dialogue") }],
+      patterns: [{ match: raw`^[ \t\x{00A0}\x{202F}]*(\S.*)$`, captures: captures("string.unquoted.dialogue") }],
     },
     speech: {
       comment:
@@ -413,7 +433,7 @@ export const grammar = {
       end: startOfAnyOf(ENDS_A_SPEECH),
       patterns: [
         { include: "#pending" },
-        { match: raw`^[ \t]*(\S.*)$`, captures: captures("string.unquoted.dialogue") },
+        { match: raw`^[ \t\x{00A0}\x{202F}]*(\S.*)$`, captures: captures("string.unquoted.dialogue") },
       ],
     },
     pending: {
@@ -426,7 +446,7 @@ export const grammar = {
     },
     prose: {
       comment: "Everything else. Preserved by the compiler, interpreted by nothing.",
-      match: raw`^[ \t]*(\S.*)$`,
+      match: raw`^[ \t\x{00A0}\x{202F}]*(\S.*)$`,
       captures: captures("comment.line.prose"),
     },
   },

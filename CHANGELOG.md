@@ -59,6 +59,12 @@ below 1.0 means.
 - **Small lettering.** `say: {..., size: small}` letters a line at three quarters of the
   dialogue size, in a balloon padded as the normal size would be: muttered, as Blambot
   describes it. A comic script's `(small)` and `(weak)` give it. (Part of #75)
+- **French comic scripts.** `PLANCHE 1 (six cases)`, `CASE 2` and `VIGNETTE 2` are headings;
+  `RÉCITATIF`, `CARTOUCHE` and `NARRATIF` are captions; `ONOMATOPÉE` is a sound effect;
+  `LÉA : « Bonjour. »` is a cue and its line, with a no-break space before the colon. `(pensée)`
+  is a thought, `(off)` and `(hors champ)` off-panel speech. `@shot:` and `@angle:` take the
+  *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
+  and *plongée*, *contre-plongée*. Both highlighters follow. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

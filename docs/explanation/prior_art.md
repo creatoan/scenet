@@ -142,6 +142,22 @@ heading markers and bold are tolerated, though the guide asks for no formatting,
 keep scripts in Markdown; and Blambot's numbered lettering items are read too. "About 25 words per
 balloon, and about 50 words per panel" became the `word-limit` note: a house limit, not a fault.
 
+### French scripts — Cité, BnF, Alloprof, Lyon, OQLF, *Plan (cinéma)*, Blankcomic
+
+[Cité lexicon](https://www.citebd.org/sites/default/files/2023-07/lexique_bd.pdf) ·
+[BnF, *Créer une BD*](https://takamtikou.bnf.fr/sites/default/files/database/pdf/2020-12/creer-une-bd.pdf) ·
+[*Plan (cinéma)*](https://fr.wikipedia.org/wiki/Plan_(cin%C3%A9ma)) ·
+[OQLF, *gros plan*](https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8877451/gros-plan) ·
+[Blankcomic's script example](https://blankcomic.com/fr/blog/synopsis-scenario-bd-exemple)
+
+The Cité's lexicon supplied the keywords: *planche*, *case* or *vignette*, *narratif* or *récitatif*,
+*onomatopée*; Alloprof and the BnF add *cartouche* as another name for the same box, which is why all
+three are aliases of `CAPTION` rather than a caption kind. Blankcomic's example is the source for
+writing a cue as `Léa : « … »`, with a space before the colon and guillemets, and for *bulle de
+pensée*. The shot names follow French Wikipedia's *échelle des plans*; where the sources disagree
+on *gros plan* — the BnF, the Lyon academy and Wikipedia's ladder at the face, the OQLF at the
+shoulders — the majority, and the one-to-one fit with Scenet's ladder, decided it.
+
 ### MPEG-4 FBA feature *groups* — and only the groups
 
 [Overview (PDF)](https://visagetechnologies.com/uploads/2012/08/MPEG-4FBAOverview.pdf)

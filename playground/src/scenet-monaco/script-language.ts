@@ -61,6 +61,11 @@ const UNITS = [
 ];
 const ONE_TO_NINE = UNITS.slice(1, 10);
 const TENS = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+/** French numbers to twenty, for `PLANCHE UNE` and `CASE DEUX`. */
+const FRENCH = [
+  "zéro", "zero", "un", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit",
+  "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "vingt",
+];
 
 /** A page number in words, `ONE` to `NINETY-NINE`, however they are joined. */
 const NUMBER_PHRASE = String.raw`(?:(?:${oneOf(TENS)})(?:[ \t-]+(?:${oneOf(ONE_TO_NINE)}))?|${oneOf(UNITS)})`;
@@ -68,30 +73,35 @@ const NUMBER_PHRASE = String.raw`(?:(?:${oneOf(TENS)})(?:[ \t-]+(?:${oneOf(ONE_T
  * A label a panel heading with a description on its line may have: digits, digits and a
  * letter, one letter, or a number in a word -- so `Panel shows Alice.` stays prose.
  */
-const NUMBER_LIKE = String.raw`(?:\d+\p{L}?|(?:${oneOf(TENS)}|${oneOf(UNITS)})(?!\p{L})|\p{L}(?!\p{L}))`;
+const NUMBER_LIKE = String.raw`(?:\d+\p{L}?|(?:${oneOf(TENS)}|${oneOf(UNITS)}|${oneOf(FRENCH)})(?!\p{L})|\p{L}(?!\p{L}))`;
 /** A page's label: a number in words, `TWENTY ONE`, or one token, `3A`. */
 const PAGE_LABEL = String.raw`${NUMBER_PHRASE}(?=\s*(?:\(|[.:*_]|$))|[^\s:()]+?`;
 /** Markdown a writer may put around a heading: `## ` before it, `**` around it. */
-const MARKDOWN_OPEN = String.raw`(?:#{1,6}[ \t]+)?(?:\*\*|__)?`;
+const MARKDOWN_OPEN = String.raw`(?:#{1,6}[ \t\u00A0\u202F]+)?(?:\*\*|__)?`;
 const MARKDOWN_CLOSE = String.raw`(?:\*\*|__)?`;
 
 const unicode = (pattern: string): RegExp => new RegExp(pattern, "u");
 
 // A Markdown horizontal rule, `---` or `* * *`, which the frontend reads as a blank line.
-const RULE = /^(\s*)(-(?:[ \t]*-){2,}|\*(?:[ \t]*\*){2,}|_(?:[ \t]*_){2,})(\s*)$/;
+const RULE = /^(\s*)(-(?:[ \t\u00A0\u202F]*-){2,}|\*(?:[ \t\u00A0\u202F]*\*){2,}|_(?:[ \t\u00A0\u202F]*_){2,})(\s*)$/;
 // Dark Horse's `PAGE ONE (five panels)`, and a page with no count.
 const PAGE_WITH_COUNT = unicode(
-  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")})(\s+)(${PAGE_LABEL})(\s*\()([^)]*)(\)\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")}|${anyCase("planche")})(\s+)(${PAGE_LABEL})(\s*\()([^)]*)(\)\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
 );
 const PAGE = unicode(
-  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")})(\s+)(${PAGE_LABEL})(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("page")}|${anyCase("planche")})(\s+)(${PAGE_LABEL})(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
 );
 // `PANEL 1` alone, and Dark Horse's `Panel 1. Alice and Bob on a corner.`
 const PANEL = unicode(
   String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("panel")})(\s+)([^\s:]+?)(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
 );
+// `CASE 2`, `VIGNETTE 3`: French panel headings alone on their line, with a number --
+// `CASE` is a word too.
+const FRENCH_PANEL = unicode(
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${oneOf(["case", "vignette"])})(\s+)(${NUMBER_LIKE})(\s*[.:]?\s*)(${MARKDOWN_CLOSE})(\s*)$`,
+);
 const PANEL_DESCRIBED = unicode(
-  String.raw`^(\s*)(${MARKDOWN_OPEN})(${anyCase("panel")})(\s+)(${NUMBER_LIKE})(\s*(?:[.:—–]|\s-)\s*)(\S.*)$`,
+  String.raw`^(\s*)(${MARKDOWN_OPEN})(${oneOf(["panel", "case", "vignette"])})(\s+)(${NUMBER_LIKE})(\s*(?:[.:—–]|\s-)\s*)(\S.*)$`,
 );
 const DIRECTIVE = /^(\s*)(@)(\w+)(\s*:\s*)(.+)$/;
 // A cue is a name in capitals, then any parentheticals and a colon, on a line of at most
@@ -138,7 +148,7 @@ function variants(...choices: readonly (readonly Part[])[][]): Part[][] {
 
 const LEAD = part(String.raw`\s*`, "");
 // Blambot's numbered lettering items, `1.` or `2)` before a label.
-const NUMBERED = part(String.raw`(?:\d+[.)]?[ \t]+)?`, "number.balloon");
+const NUMBERED = part(String.raw`(?:\d+[.)]?[ \t\u00A0\u202F]+)?`, "number.balloon");
 // Markdown bold around a label, `**ALICE:**`.
 const BOLD = part(String.raw`(?:\*\*|__)?`, "keyword.markdown");
 // Any number of parentheticals, `(OP) (whisper)` or `(OP, whisper)`.
@@ -150,7 +160,7 @@ const parentheticals = (token: string): Part[] => [
 const withOrWithout = (parts: Part[]): Part[][] => [parts, []];
 
 // `CAP: Later.`, `CAPTION (monologue)` with its text under it, Dark Horse's `CAP/ALICE`.
-const CAPTION_WORD = String.raw`(?:${anyCase("caption")}|${anyCase("cap")})(?![\p{L}\p{N}_])`;
+const CAPTION_WORD = String.raw`(?:${oneOf(["caption", "cap", "récitatif", "recitatif", "narratif", "cartouche"])})(?![\p{L}\p{N}_])`;
 const CAPTION_SPEAKER = [
   part(String.raw`\s*\/\s*`, "delimiter"),
   part(String.raw`[^():\/\s](?:[^():\/]*[^():\/\s])?`, "type.caption-speaker"),
@@ -178,7 +188,7 @@ const SOUNDS: Rule[] = [true, false].flatMap((inline) =>
     rule([
       LEAD,
       NUMBERED,
-      part(anyCase("sfx"), { token: "keyword.sfx", switchTo: inline ? "@root" : "@sound" }),
+      part(oneOf(["sfx", "onomatopée", "onomatopee"]), { token: "keyword.sfx", switchTo: inline ? "@root" : "@sound" }),
       ...optional,
       ...(inline
         ? [part(String.raw`\s*:\s*`, "delimiter"), part(String.raw`.+`, "string.sfx")]
@@ -238,6 +248,10 @@ const STRUCTURE: Rule[] = [
     ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "keyword.markdown", ""],
   ],
   [
+    FRENCH_PANEL,
+    ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "keyword.markdown", ""],
+  ],
+  [
     PANEL_DESCRIBED,
     ["", "keyword.markdown", { token: "keyword.panel", switchTo: "@root" }, "", "number.panel", "delimiter", "comment.prose"],
   ],
@@ -293,11 +307,11 @@ export const scriptMonarchTokens: Monaco.languages.IMonarchLanguage = {
   tokenizer: {
     preamble: [
       [/^\s*$/, ""],
-      [/^\s*---[ \t]*$/, { token: "meta.separator", switchTo: "@frontMatter", nextEmbedded: "yaml" }],
+      [/^\s*---[ \t\u00A0\u202F]*$/, { token: "meta.separator", switchTo: "@frontMatter", nextEmbedded: "yaml" }],
       [/^/, { token: "@rematch", switchTo: "@root" }],
     ],
 
-    frontMatter: [[/^---[ \t]*$/, { token: "meta.separator", switchTo: "@root", nextEmbedded: "@pop" }]],
+    frontMatter: [[/^---[ \t\u00A0\u202F]*$/, { token: "meta.separator", switchTo: "@root", nextEmbedded: "@pop" }]],
 
     root: [
       ...STRUCTURE,

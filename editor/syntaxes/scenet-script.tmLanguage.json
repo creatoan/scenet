@@ -14,8 +14,8 @@
   "repository": {
     "preamble": {
       "comment": "Blank lines before anything else, where front matter may open. Begins only on a first line that is blank or a fence, and ends at the first other non-blank line, so a later --- is prose.",
-      "begin": "\\A(?=[ \\t]*(?:---[ \\t]*)?$)",
-      "end": "^(?=[ \\t]*\\S)(?![ \\t]*---[ \\t]*$)",
+      "begin": "\\A(?=[ \\t\\x{00A0}\\x{202F}]*(?:---[ \\t\\x{00A0}\\x{202F}]*)?$)",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*\\S)(?![ \\t\\x{00A0}\\x{202F}]*---[ \\t\\x{00A0}\\x{202F}]*$)",
       "patterns": [
         {
           "include": "#front-matter"
@@ -25,13 +25,13 @@
     "front-matter": {
       "name": "meta.frontmatter.scenet-script",
       "contentName": "meta.embedded.block.frontmatter",
-      "begin": "^[ \\t]*(---)[ \\t]*$",
+      "begin": "^[ \\t\\x{00A0}\\x{202F}]*(---)[ \\t\\x{00A0}\\x{202F}]*$",
       "beginCaptures": {
         "1": {
           "name": "punctuation.separator.frontmatter.scenet-script"
         }
       },
-      "end": "^(---)[ \\t]*$",
+      "end": "^(---)[ \\t\\x{00A0}\\x{202F}]*$",
       "endCaptures": {
         "1": {
           "name": "punctuation.separator.frontmatter.scenet-script"
@@ -76,7 +76,7 @@
     },
     "rule": {
       "comment": "A Markdown horizontal rule, which the frontend reads as the blank line it looks like.",
-      "match": "^[ \\t]*(-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*(-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.markdown.scenet-script"
@@ -84,7 +84,7 @@
       }
     },
     "page": {
-      "match": "^[ \\t]*((?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?)((?i:page))[ \\t]+((?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*([.:]?)[ \\t]*((?:\\*\\*|__)?)[ \\t]*$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*((?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?)((?i:page|planche))[ \\t\\x{00A0}\\x{202F}]+((?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:(\\()([^)]*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*([.:]?)[ \\t\\x{00A0}\\x{202F}]*((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.markdown.scenet-script"
@@ -116,7 +116,7 @@
       "comment": "`PANEL 1` alone, or Dark Horse's `Panel 1. Alice and Bob on a corner.`",
       "patterns": [
         {
-          "match": "^[ \\t]*((?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?)((?i:panel))[ \\t]+([^\\s:]+?)[ \\t]*([.:]?)[ \\t]*((?:\\*\\*|__)?)[ \\t]*$",
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*((?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?)((?i:panel))[ \\t\\x{00A0}\\x{202F}]+([^\\s:]+?)[ \\t\\x{00A0}\\x{202F}]*([.:]?)[ \\t\\x{00A0}\\x{202F}]*((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*$",
           "captures": {
             "1": {
               "name": "punctuation.definition.markdown.scenet-script"
@@ -136,7 +136,27 @@
           }
         },
         {
-          "match": "^[ \\t]*((?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?)((?i:panel))[ \\t]+((?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L})))[ \\t]*([.:—–]|[ \\t]-)[ \\t]*(\\S.*)$",
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*((?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?)((?i:case|vignette))[ \\t\\x{00A0}\\x{202F}]+((?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L})))[ \\t\\x{00A0}\\x{202F}]*([.:]?)[ \\t\\x{00A0}\\x{202F}]*((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.markdown.scenet-script"
+            },
+            "2": {
+              "name": "keyword.control.panel.scenet-script"
+            },
+            "3": {
+              "name": "entity.name.section.panel.scenet-script"
+            },
+            "4": {
+              "name": "punctuation.separator.scenet-script"
+            },
+            "5": {
+              "name": "punctuation.definition.markdown.scenet-script"
+            }
+          }
+        },
+        {
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*((?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?)((?i:panel|case|vignette))[ \\t\\x{00A0}\\x{202F}]+((?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L})))[ \\t\\x{00A0}\\x{202F}]*([.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
           "captures": {
             "1": {
               "name": "punctuation.definition.markdown.scenet-script"
@@ -158,7 +178,7 @@
       ]
     },
     "directive": {
-      "match": "^[ \\t]*(@)(\\w+)[ \\t]*(:)[ \\t]*(.+)$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*(@)(\\w+)[ \\t\\x{00A0}\\x{202F}]*(:)[ \\t\\x{00A0}\\x{202F}]*(.+)$",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.scenet-script"
@@ -186,7 +206,7 @@
       ]
     },
     "caption-line": {
-      "match": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)((?i:caption|cap)(?![\\p{L}\\p{N}_]))[ \\t]*(?:(/)[ \\t]*([^():/]+?)[ \\t]*)?(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:)((?:\\*\\*|__)?)[ \\t]*(\\S.*)$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?((?:\\*\\*|__)?)((?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_]))[ \\t\\x{00A0}\\x{202F}]*(?:(/)[ \\t\\x{00A0}\\x{202F}]*([^():/]+?)[ \\t\\x{00A0}\\x{202F}]*)?(?:(\\()([^)]*(?:\\)[ \\t\\x{00A0}\\x{202F}]*\\([^)]*)*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:)((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
       "captures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -225,7 +245,7 @@
     },
     "caption-block": {
       "name": "meta.caption.scenet-script",
-      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)((?i:caption|cap)(?![\\p{L}\\p{N}_]))[ \\t]*(?:(/)[ \\t]*([^():/]+?)[ \\t]*)?(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:?)((?:\\*\\*|__)?)[ \\t]*$",
+      "begin": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?((?:\\*\\*|__)?)((?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_]))[ \\t\\x{00A0}\\x{202F}]*(?:(/)[ \\t\\x{00A0}\\x{202F}]*([^():/]+?)[ \\t\\x{00A0}\\x{202F}]*)?(?:(\\()([^)]*(?:\\)[ \\t\\x{00A0}\\x{202F}]*\\([^)]*)*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:?)((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*$",
       "beginCaptures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -258,13 +278,13 @@
           "name": "punctuation.definition.markdown.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:page|planche)[ \\t\\x{00A0}\\x{202F}]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel)[ \\t\\x{00A0}\\x{202F}]+[^\\s:]+?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel|case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*(?:[.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*@\\w+[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?=\\S(?:.{0,38}\\S)?[ \\t\\x{00A0}\\x{202F}]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$)",
       "patterns": [
         {
           "include": "#caption-pending"
         },
         {
-          "match": "^[ \\t]*(\\S.*)$",
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
           "captures": {
             "1": {
               "name": "string.unquoted.caption.scenet-script"
@@ -276,7 +296,7 @@
     "caption-pending": {
       "comment": "The first line under a caption label is its text, whatever it looks like.",
       "begin": "\\G",
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:page|planche)[ \\t\\x{00A0}\\x{202F}]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel)[ \\t\\x{00A0}\\x{202F}]+[^\\s:]+?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel|case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*(?:[.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S)|^[ \\t\\x{00A0}\\x{202F}]*(?!@\\w+[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S)(\\S.*)$",
       "endCaptures": {
         "1": {
           "name": "string.unquoted.caption.scenet-script"
@@ -300,7 +320,7 @@
       ]
     },
     "sfx-line": {
-      "match": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:)[ \\t]*(.+)$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?((?i:sfx|onomatop[eé]e))[ \\t\\x{00A0}\\x{202F}]*(?:(\\()([^)]*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:)[ \\t\\x{00A0}\\x{202F}]*(.+)$",
       "captures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -328,7 +348,7 @@
     "sfx-cue": {
       "comment": "The next line is the sound, whatever it looks like: `BLAM` is in capitals too.",
       "name": "meta.sfx.scenet-script",
-      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?i:sfx))[ \\t]*(?:(\\()([^)]*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "begin": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?((?i:sfx|onomatop[eé]e))[ \\t\\x{00A0}\\x{202F}]*(?:(\\()([^)]*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:?)[ \\t\\x{00A0}\\x{202F}]*$",
       "beginCaptures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -349,7 +369,7 @@
           "name": "punctuation.separator.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$)|^[ \\t]*(\\S.*)$",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$)|^[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
       "endCaptures": {
         "1": {
           "name": "string.unquoted.sfx.scenet-script"
@@ -359,7 +379,7 @@
     "inline-speech": {
       "comment": "`ALICE: Hello.`, a cue with its line after the colon, and the lines it wraps onto.",
       "name": "meta.speech.scenet-script",
-      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?((?:\\*\\*|__)?)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:)((?:\\*\\*|__)?)[ \\t]*(\\S.*)$",
+      "begin": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?((?:\\*\\*|__)?)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t\\x{00A0}\\x{202F}]*(?:(\\()([^)]*(?:\\)[ \\t\\x{00A0}\\x{202F}]*\\([^)]*)*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:)((?:\\*\\*|__)?)[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
       "beginCaptures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -389,10 +409,10 @@
           "name": "string.unquoted.dialogue.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:page|planche)[ \\t\\x{00A0}\\x{202F}]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel)[ \\t\\x{00A0}\\x{202F}]+[^\\s:]+?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel|case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*(?:[.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*@\\w+[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?=\\S(?:.{0,38}\\S)?[ \\t\\x{00A0}\\x{202F}]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$)",
       "patterns": [
         {
-          "match": "^[ \\t]*(\\S.*)$",
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
           "captures": {
             "1": {
               "name": "string.unquoted.dialogue.scenet-script"
@@ -404,7 +424,7 @@
     "speech": {
       "comment": "A cue -- a name in capitals, an optional parenthetical and colon, at most forty characters once trimmed -- and the speech under it. The speech ends at a blank line, a heading, a caption, a directive or the next cue. Its first line is handled by #pending.",
       "name": "meta.speech.scenet-script",
-      "begin": "^[ \\t]*(\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t]*(?:(\\()([^)]*(?:\\)[ \\t]*\\([^)]*)*)(\\)))?[ \\t]*(:?)[ \\t]*$",
+      "begin": "^[ \\t\\x{00A0}\\x{202F}]*(\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?=\\S(?:.{0,38}\\S)?[ \\t\\x{00A0}\\x{202F}]*$)(\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?)[ \\t\\x{00A0}\\x{202F}]*(?:(\\()([^)]*(?:\\)[ \\t\\x{00A0}\\x{202F}]*\\([^)]*)*)(\\)))?[ \\t\\x{00A0}\\x{202F}]*(:?)[ \\t\\x{00A0}\\x{202F}]*$",
       "beginCaptures": {
         "1": {
           "name": "constant.numeric.balloon-number.scenet-script"
@@ -425,13 +445,13 @@
           "name": "punctuation.separator.scenet-script"
         }
       },
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*@\\w+[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?=\\S(?:.{0,38}\\S)?[ \\t]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?[ \\t]*$)",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:page|planche)[ \\t\\x{00A0}\\x{202F}]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel)[ \\t\\x{00A0}\\x{202F}]+[^\\s:]+?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel|case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*(?:[.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*@\\w+[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?=\\S(?:.{0,38}\\S)?[ \\t\\x{00A0}\\x{202F}]*$)\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$)",
       "patterns": [
         {
           "include": "#pending"
         },
         {
-          "match": "^[ \\t]*(\\S.*)$",
+          "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
           "captures": {
             "1": {
               "name": "string.unquoted.dialogue.scenet-script"
@@ -443,7 +463,7 @@
     "pending": {
       "comment": "From the end of the cue line to the end of the first line of speech. While it is open, the speech's end is not tested, so the first line is speech whatever it looks like: `OK.` is spoken, not a cue. A directive leaves the cue waiting.",
       "begin": "\\G",
-      "end": "^(?=[ \\t]*$|[ \\t]*(?:-(?:[ \\t]*-){2,}|\\*(?:[ \\t]*\\*){2,}|_(?:[ \\t]*_){2,})[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:page)[ \\t]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t]*(?:\\([^)]*\\))?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+[^\\s:]+?[ \\t]*[.:]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:#{1,6}[ \\t]+)?(?:\\*\\*|__)?(?i:panel)[ \\t]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t]*(?:[.:—–]|[ \\t]-)[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?(?i:caption|cap)(?![\\p{L}\\p{N}_])[ \\t]*(?:/[ \\t]*[^():/]+?[ \\t]*)?(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:?(?:\\*\\*|__)?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:[ \\t]*\\S|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?i:sfx)[ \\t]*(?:\\([^)]*\\))?[ \\t]*:?[ \\t]*$|[ \\t]*(?:\\d+[.)]?[ \\t]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t]*(?:\\([^)]*\\)[ \\t]*)*[ \\t]*:(?:\\*\\*|__)?[ \\t]*\\S)|^[ \\t]*(?!@\\w+[ \\t]*:[ \\t]*\\S)(\\S.*)$",
+      "end": "^(?=[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:-(?:[ \\t\\x{00A0}\\x{202F}]*-){2,}|\\*(?:[ \\t\\x{00A0}\\x{202F}]*\\*){2,}|_(?:[ \\t\\x{00A0}\\x{202F}]*_){2,})[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:page|planche)[ \\t\\x{00A0}\\x{202F}]+(?:(?i:(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[ \\t-]+(?:one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)(?=[ \\t\\x{00A0}\\x{202F}]*(?:\\(|[.:*_]|$))|[^\\s:()]+?)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel)[ \\t\\x{00A0}\\x{202F}]+[^\\s:]+?[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*[.:]?[ \\t\\x{00A0}\\x{202F}]*(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:#{1,6}[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:panel|case|vignette)[ \\t\\x{00A0}\\x{202F}]+(?:\\d+\\p{L}?|(?i:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|z[eé]ro|une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt)(?!\\p{L})|\\p{L}(?!\\p{L}))[ \\t\\x{00A0}\\x{202F}]*(?:[.:—–]|[ \\t\\x{00A0}\\x{202F}]-)[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?(?i:caption|cap|r[eé]citatif|narratif|cartouche)(?![\\p{L}\\p{N}_])[ \\t\\x{00A0}\\x{202F}]*(?:/[ \\t\\x{00A0}\\x{202F}]*[^():/]+?[ \\t\\x{00A0}\\x{202F}]*)?(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:?(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?i:sfx|onomatop[eé]e)[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\))?[ \\t\\x{00A0}\\x{202F}]*:?[ \\t\\x{00A0}\\x{202F}]*$|[ \\t\\x{00A0}\\x{202F}]*(?:\\d+[.)]?[ \\t\\x{00A0}\\x{202F}]+)?(?:\\*\\*|__)?\\p{Lu}[\\p{Lu}\\p{M}\\p{Nd} _'.\\-]*?[ \\t\\x{00A0}\\x{202F}]*(?:\\([^)]*\\)[ \\t\\x{00A0}\\x{202F}]*)*[ \\t\\x{00A0}\\x{202F}]*:(?:\\*\\*|__)?[ \\t\\x{00A0}\\x{202F}]*\\S)|^[ \\t\\x{00A0}\\x{202F}]*(?!@\\w+[ \\t\\x{00A0}\\x{202F}]*:[ \\t\\x{00A0}\\x{202F}]*\\S)(\\S.*)$",
       "endCaptures": {
         "1": {
           "name": "string.unquoted.dialogue.scenet-script"
@@ -457,7 +477,7 @@
     },
     "prose": {
       "comment": "Everything else. Preserved by the compiler, interpreted by nothing.",
-      "match": "^[ \\t]*(\\S.*)$",
+      "match": "^[ \\t\\x{00A0}\\x{202F}]*(\\S.*)$",
       "captures": {
         "1": {
           "name": "comment.line.prose.scenet-script"

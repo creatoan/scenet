@@ -45,7 +45,7 @@ from pydantic import ValidationError
 from scenet.compose import OVER_KEY, merge, resolve_overrides
 from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import errors_of, normalise, rule_for_pydantic, summarise
-from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize, Side
+from scenet.ir import BalloonKind, CameraAngle, CaptionKind, PanelIR, SfxSize, ShotType, Side
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
@@ -55,11 +55,13 @@ FRONT_MATTER = re.compile(r"^\s*---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
 # The label is everything up to an optional trailing colon or full stop -- `PANEL 1:` and
 # Dark Horse's `Panel 1.` both name panel `1`. A greedy `\S+` used to take the colon, so
 # the panel was called `1:` and `scenet build` wrote a file Windows cannot hold.
-PANEL_HEADING = re.compile(r"^PANEL\s+(?P<label>[^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE)
+PANEL_HEADING = re.compile(
+    r"^(?P<keyword>PANEL|CASE|VIGNETTE)\s+(?P<label>[^\s:]+?)\s*[.:]?\s*$", re.IGNORECASE
+)
 # Dark Horse's `Panel 1. Alice and Bob on a corner.`: the description on the heading's own
 # line, after a full stop, a colon, a dash or a spaced hyphen.
 PANEL_WITH_DESCRIPTION = re.compile(
-    r"^PANEL\s+(?P<label>[^\s.:\u2014\u2013-]+)\s*(?:[.:\u2014\u2013]|\s-)\s*(?P<description>\S.*)$",
+    r"^(?P<keyword>PANEL|CASE|VIGNETTE)\s+(?P<label>[^\s.:\u2014\u2013-]+)\s*(?:[.:\u2014\u2013]|\s-)\s*(?P<description>\S.*)$",
     re.IGNORECASE,
 )
 # A label a panel with a description on its line may have: `1`, `4B`, `C`.
@@ -67,11 +69,13 @@ NUMBER_LIKE = re.compile(r"\d+[^\W\d_]?|[^\W\d_]")
 # Dark Horse's `PAGE ONE (five panels)`. The label may be several words when they make a
 # number, `PAGE TWENTY ONE`; the parenthetical may state the count, or be a note.
 PAGE_HEADING = re.compile(
-    r"^PAGE\s+(?P<label>[^\s:()]+(?:[\s-]+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\))?\s*[.:]?\s*$",
+    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+(?:[\s-]+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\))?\s*[.:]?\s*$",
     re.IGNORECASE,
 )
-# The count in a PAGE heading's parenthetical: `five panels`, `1 panel`.
-PANEL_COUNT = re.compile(r"^(?P<count>\w+(?:[\s-]\w+)?)\s+panels?$", re.IGNORECASE)
+# The count in a PAGE heading's parenthetical: `five panels`, `1 panel`, `six cases`.
+PANEL_COUNT = re.compile(
+    r"^(?P<count>\w+(?:[\s-]\w+)*)\s+(?:panels?|cases?|vignettes?)$", re.IGNORECASE
+)
 # Markdown a writer may put around a label: `## PANEL 2`, `**PANEL 2**`, `**ALICE:**`.
 MARKDOWN_HEADING = re.compile(r"^#{1,6}\s+")
 BOLD_LABEL = re.compile(r"^(\*\*|__)(\S(?:.*?\S)?)\1(.*)$")
@@ -94,16 +98,16 @@ INLINE_CUE = re.compile(
 # `CAP/CHARACTER`, a caption carrying a character's speech. The text follows the colon, or
 # runs on the lines under the label to a blank line. `CAPTAIN` is not `CAP`.
 CAPTION_LABEL = re.compile(
-    r"^(?:CAPTION|CAP)(?!\w)\s*(?:/\s*(?P<speaker>[^():/]+?)\s*)?(?P<mods>(?:\([^)]*\)\s*)*)"
+    r"^(?:CAPTION|CAP|R[EÉ]CITATIF|NARRATIF|CARTOUCHE)(?!\w)\s*(?:/\s*(?P<speaker>[^():/]+?)\s*)?(?P<mods>(?:\([^)]*\)\s*)*)"
     r"(?:(?P<colon>:)\s*(?P<text>.*?))?\s*$",
     re.IGNORECASE,
 )
 # `SFX: BLAM`, optionally `SFX (BOB, large): BLAM` -- who it comes from, how loud. The
 # sound on the same line.
-SFX_LINE = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
+SFX_LINE = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
 # Dark Horse's form: `SFX:` as a cue, the sound on the next line. Without this it is a
 # character called SFX, and the sound would be lettered in a balloon.
-BARE_SFX = re.compile(r"^SFX\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
+BARE_SFX = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
 # Blambot: "Each item in the lettering area should be numbered." `1. ALICE:`, `2) CAP:`.
 BALLOON_NUMBER = re.compile(r"^\d+[.)]?\s+")
 
@@ -121,6 +125,9 @@ KIND_MODIFIERS = {
     # Dark Horse's `(burst)`; Blambot: "(BURST), meaning the dialogue is shouted and should
     # be in a burst balloon".
     "burst": BalloonKind.SHOUT,
+    # French: a *bulle de pensée* is a thought balloon (Blankcomic's script example).
+    "pensée": BalloonKind.THOUGHT,
+    "pensee": BalloonKind.THOUGHT,
 }
 
 # A voice over: Blambot's "CAPTION (VOICE OVER), meaning the character is speaking, but is
@@ -130,7 +137,20 @@ VOICE_OVER = {"v.o.", "vo", "voice over", "voice-over", "voiceover"}
 
 # Off panel: Dark Horse's `(OP)`, Blambot's `(OFF)`, the screenplay's `(O.S.)` and its older
 # spelling `(O.C.)`. The speaker is in the scene but not in the frame.
-OFF_PANEL = {"op", "off", "o.s.", "os", "o.c.", "oc", "off-panel", "off panel", "offpanel"}
+OFF_PANEL = {
+    "op",
+    "off",
+    "o.s.",
+    "os",
+    "o.c.",
+    "oc",
+    "off-panel",
+    "off panel",
+    "offpanel",
+    # French cinema's *hors-champ*, out of the frame.
+    "hors champ",
+    "hors-champ",
+}
 
 # Dark Horse's `(small)`, and `(weak)`, which Blambot reads as "dialogue should be
 # diminished": smaller type. Comicraft's weak lettering is also erratic; that hand is
@@ -142,7 +162,17 @@ SIDES = {side.value: side for side in Side}
 
 # Labels a line starts with that are never a speaker: a cast member called `CAP` would be
 # read as a caption every time it spoke. Compared without regard to case.
-RESERVED_NAMES = {"cap", "caption", "sfx"}
+RESERVED_NAMES = {
+    "cap",
+    "caption",
+    "sfx",
+    "récitatif",
+    "recitatif",
+    "narratif",
+    "cartouche",
+    "onomatopée",
+    "onomatopee",
+}
 
 # Quotation marks a writer puts around speech, which the compiler adds itself where they
 # belong. Spelled as code points, so no editor turns one into another.
@@ -160,6 +190,42 @@ CAPTION_KINDS = {kind.value: kind for kind in CaptionKind}
 
 # How loud an SFX is, as its parenthetical may say.
 SFX_SIZES = {size.value: size for size in SfxSize}
+
+# The *échelle des plans*, rung for rung against `shot_types.md`, compared folded. *Gros
+# plan* is cut above the shoulders, at the face (BnF, *Créer une BD*; Ac-Lyon; French
+# Wikipedia's ladder puts *plan rapproché épaule* between it and *plan rapproché*), so it is
+# `big_close_up`, and the shoulders' own rung is `close_up`. OQLF puts *gros plan* at the
+# shoulders; that divergence is recorded in `write_a_comic_script.md`. *Plan général* and
+# *plan italien* are left out rather than collapse two rungs into one.
+FRENCH_SHOTS = {
+    "plan d ensemble": "long_shot",
+    "pe": "long_shot",
+    "plan moyen": "full_shot",
+    "pm": "full_shot",
+    "plan americain": "cowboy",
+    "pa": "cowboy",
+    "plan rapproche taille": "medium_shot",
+    "plan mi moyen": "medium_shot",
+    "prt": "medium_shot",
+    "pmm": "medium_shot",
+    "plan rapproche poitrine": "medium_close_up",
+    "plan rapproche": "medium_close_up",
+    "prp": "medium_close_up",
+    "pr": "medium_close_up",
+    "plan rapproche epaule": "close_up",
+    "plan epaule": "close_up",
+    "gros plan": "big_close_up",
+    "gp": "big_close_up",
+    "tres gros plan": "extreme_close_up",
+    "tgp": "extreme_close_up",
+}
+
+# *Plongée* looks down on the subject, *contre-plongée* up at it.
+FRENCH_ANGLES = {
+    "plongee": "high",
+    "contre plongee": "low",
+    "angle normal": "eye_level",
+}
 
 # Directives that name a camera property rather than a top-level panel key.
 CAMERA_DIRECTIVES = {"shot", "angle"}
@@ -193,6 +259,53 @@ _UNIT_WORDS = (
 _TEN_WORDS = ("twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
 _UNITS = {word: value for value, word in enumerate(_UNIT_WORDS)}
 _TENS = {word: 10 * value for value, word in enumerate(_TEN_WORDS, start=2)}
+
+
+# French numbers to twenty, for `PLANCHE UNE` and `(six cases)`: a page holds no more.
+_FRENCH_NUMBERS = {
+    word: value
+    for value, word in enumerate(
+        (
+            "zero",
+            "un",
+            "deux",
+            "trois",
+            "quatre",
+            "cinq",
+            "six",
+            "sept",
+            "huit",
+            "neuf",
+            "dix",
+            "onze",
+            "douze",
+            "treize",
+            "quatorze",
+            "quinze",
+            "seize",
+            "dix sept",
+            "dix huit",
+            "dix neuf",
+            "vingt",
+        )
+    )
+} | {"une": 1}
+
+
+def _folded(text: str) -> str:
+    """Text as French names are compared, so a writer's spelling need not be exact.
+
+    Lower case, no accents, no apostrophes, hyphens or full stops, single spaces.
+
+    Example:
+        >>> _folded("Plan d'Ensemble"), _folded("contre-plongée"), _folded("P.A.")
+        ('plan d ensemble', 'contre plongee', 'pa')
+    """
+    decomposed = unicodedata.normalize("NFD", text.lower())
+    plain = "".join(character for character in decomposed if not unicodedata.combining(character))
+    for mark in ("'", chr(0x2019), "-"):
+        plain = plain.replace(mark, " ")
+    return " ".join(plain.replace(".", "").split())
 
 
 @dataclass
@@ -329,6 +442,9 @@ def _number_value(token: str) -> int | None:
     """
     if token.isascii() and token.isdigit():
         return int(token)
+    french = _FRENCH_NUMBERS.get(" ".join(_folded(token).split()))
+    if french is not None:
+        return french
     words = token.lower().replace("-", " ").split()
     if len(words) == 1 and words[0] in _UNITS:
         return _UNITS[words[0]]
@@ -398,7 +514,13 @@ def _read_page_heading(line: str) -> _PageHeading | None:
     if match is None:
         return None
     written = match.group("label")
-    if any(character.isspace() for character in written) and _number_value(written) is None:
+    several = any(character.isspace() for character in written)
+    french = match.group("keyword").upper() != "PAGE"
+    if (
+        (several or french)
+        and _number_value(written) is None
+        and not NUMBER_LIKE.fullmatch(written)
+    ):
         return None
     note = (match.group("note") or "").strip()
     stated = PANEL_COUNT.match(note)
@@ -420,17 +542,29 @@ def _read_panel_heading(line: str, number: int, page: str | None) -> _PanelDraft
     shows Alice.` stays the sentence it is.
     """
     bare = PANEL_HEADING.match(line)
-    if bare is not None:
+    # `CASE` and `VIGNETTE` are words too: `CASE CLOSED` is a cue, not a panel.
+    if bare is not None and _is_a_panel_label(bare.group("keyword"), bare.group("label")):
         return _PanelDraft(line=number, label=_number_label(bare.group("label")), page=page)
     described = PANEL_WITH_DESCRIPTION.match(line)
     if described is None:
         return None
     label = described.group("label")
-    if not NUMBER_LIKE.fullmatch(label) and _number_value(label) is None:
+    if not _is_a_panel_label("CASE", label):
         return None
     draft = _PanelDraft(line=number, label=_number_label(label), page=page)
     draft.description.append(described.group("description").strip())
     return draft
+
+
+def _is_a_panel_label(keyword: str, label: str) -> bool:
+    """Whether a heading's label names a panel.
+
+    Anything after `PANEL` alone on its line; only a number after `CASE` or `VIGNETTE`, or
+    before a description, since those are words too.
+    """
+    if keyword.upper() == "PANEL":
+        return True
+    return NUMBER_LIKE.fullmatch(label) is not None or _number_value(label) is not None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1173,7 +1307,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
         )
     draft.directive_lines[path] = number
     if key in CAMERA_DIRECTIVES:
-        draft.camera[key] = value
+        draft.camera[key] = _camera_word(key, value, number, source, draft.label)
         return True
     if key == OVER_KEY:
         # A panel's name, kept as written: YAML would read `07` as the number 7.
@@ -1203,6 +1337,46 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             rule="invalid-field",
         )
     return True
+
+
+def _camera_word(key: str, value: str, number: int, source: Path | None, panel: str) -> str:
+    """A shot or an angle as the language spells it, from English or from French.
+
+    Raises:
+        ScriptSyntaxError: Rule `invalid-field`, for a word that is neither, naming both
+            the English and the French ones.
+    """
+    english = [item.value for item in (ShotType if key == "shot" else CameraAngle)]
+    french = FRENCH_SHOTS if key == "shot" else FRENCH_ANGLES
+    if value in english:
+        return value
+    translated = french.get(_folded(value))
+    if translated is not None:
+        return translated
+    named = sorted({_FRENCH_SPELLINGS.get(word, word) for word in french if len(word) > 3})
+    raise ScriptSyntaxError(
+        f"line {number}: in PANEL {panel}, unknown {key} '{value}'; known are "
+        f"{', '.join(english)}, or in French {', '.join(named)}",
+        source=source,
+        line=number,
+        rule="invalid-field",
+    )
+
+
+# The French names as written, for a message: the table compares them folded.
+_FRENCH_SPELLINGS = {
+    "plan d ensemble": "plan d'ensemble",
+    "plan americain": "plan américain",
+    "plan rapproche taille": "plan rapproché taille",
+    "plan mi moyen": "plan mi-moyen",
+    "plan rapproche poitrine": "plan rapproché poitrine",
+    "plan rapproche": "plan rapproché",
+    "plan rapproche epaule": "plan rapproché épaule",
+    "plan epaule": "plan épaule",
+    "tres gros plan": "très gros plan",
+    "plongee": "plongée",
+    "contre plongee": "contre-plongée",
+}
 
 
 def _read_cue(line: str) -> tuple[str, list[str]] | None:

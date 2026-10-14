@@ -159,6 +159,49 @@ Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `
 it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
 It is not a second format: the text of a line is never rewritten.
 
+## French scripts
+
+A Franco-Belgian script is read in its own words. The vocabulary is the
+[Cité internationale de la bande dessinée](https://www.citebd.org/sites/default/files/2023-07/lexique_bd.pdf)'s:
+
+| French | Means |
+|---|---|
+| `PLANCHE 1 (six cases)` | A page, and its count — `cases` or `vignettes`, in digits or words to *vingt* |
+| `CASE 2`, `VIGNETTE 2`, `Case 2 : La plage.` | A panel. Followed by a number only: `CASE` alone is a word, and a cue |
+| `RÉCITATIF :`, `CARTOUCHE :`, `NARRATIF :` | A caption, exactly as `CAPTION:` — its kind in the parenthetical, `/NAME` for speech |
+| `ONOMATOPÉE : FLOP` | A sound effect, as `SFX:` |
+| `LÉA : « Bonjour. »` | A cue and its line. The space before the colon may be a no-break space, and the guillemets are taken off |
+| `(pensée)`, `(off)`, `(hors champ)` | A thought balloon; off-panel speech |
+
+*Récitatif*, *cartouche* and *narratif* all name the caption box itself (Cité; Alloprof's
+"cartouche (ou récitatif)"; the BnF), which is why they are aliases of `CAPTION` rather than a kind
+of their own: the parenthetical says what the box is doing, `CARTOUCHE (monologue)` for a
+character's thoughts.
+
+**Shots and angles may be written in French**, in a comic script's `@shot:` and `@angle:` only — the
+YAML language and its schema stay in English. Case, accents, apostrophes and hyphens do not matter,
+and the usual abbreviations are read: `GP`, `P.A.`. The *échelle des plans* maps rung for rung onto
+[the shot ladder](https://creatoan.github.io/scenet/reference/shot_types.html):
+
+| French | Abbreviation | Cuts | `shot` |
+|---|---|---|---|
+| plan d'ensemble | PE | the setting, figures small | `long_shot` |
+| plan moyen | PM | head to foot | `full_shot` |
+| plan américain | PA | mid-thigh | `cowboy` |
+| plan rapproché taille, plan mi-moyen | PRT, PMM | the waist | `medium_shot` |
+| plan rapproché poitrine, plan rapproché | PRP, PR | the chest | `medium_close_up` |
+| plan rapproché épaule, plan épaule | | the shoulders | `close_up` |
+| gros plan | GP | the face | `big_close_up` |
+| très gros plan | TGP | a detail | `extreme_close_up` |
+
+*Gros plan* is `big_close_up` because the French sources put its cut above the shoulders, at the
+face: the BnF's *Créer une BD* ("coupé souvent au-dessus des épaules… s'attache au visage"), the
+Lyon academy's sheet (at the neck), and French Wikipedia's ladder, which has its own
+*plan rapproché épaule* between *plan rapproché* and *gros plan*. Quebec's OQLF defines *gros plan*
+at the shoulders instead; writing `plan rapproché épaule` gets that framing. *Plan général* and
+*plan italien* have no rung of their own, and `medium_full` no French name; none is invented. The
+angles are *plongée* (`high`), *contre-plongée* (`low`) and *angle normal* (`eye_level`).
+
 ## Off-panel speech
 
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
