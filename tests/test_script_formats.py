@@ -16,7 +16,7 @@ from scenet.cli import main
 from scenet.diagnostics import Diagnostic, diagnose_script
 from scenet.errors import ScriptSyntaxError
 from scenet.frontends.script_front import parse_script, parse_script_document
-from scenet.ir import CaptionEvent, PanelIR, SayEvent
+from scenet.ir import CaptionEvent, PanelIR, SayEvent, Side
 
 FRONT = "---\ncast: {ALICE: {reference: alice}, BOB: {reference: bob}}\n---\n"
 
@@ -517,3 +517,88 @@ class TestOver:
 
     def test_written_twice_it_is_a_repeated_directive(self):
         assert found("PANEL 1\n\nPANEL 2\n@over: 1\n@over: 1\n") == [("error", "duplicate-key", 8)]
+
+
+class TestOffPanelCues:
+    """Dark Horse: `CHARACTER (OP):` -- "Characters speaking from off-panel are indicated
+    this way." Off panel means in the scene, not in the frame: the front matter is the
+    scene's cast, so the speaker is left out of that one panel, and the tail ends on the
+    frame on their side."""
+
+    STAGED = (
+        "---\n"
+        "cast:\n"
+        "  ALICE: {reference: alice, at: left_third}\n"
+        "  BOB: {reference: bob, at: right_third}\n"
+        "staging: [ALICE left_of BOB, BOB looking_at ALICE]\n"
+        "---\n"
+    )
+
+    def read(self, body: str) -> dict[str, PanelIR]:
+        return parse_script(self.STAGED + body)
+
+    def test_the_speaker_is_left_out_of_that_panel_only(self):
+        result = self.read("PANEL 1\nALICE (OP)\nHey!\n\nPANEL 2\nALICE\nHi.\n")
+        assert set(result["1"].cast) == {"BOB"}
+        assert result["1"].staging == ()
+        assert set(result["2"].cast) == {"ALICE", "BOB"}
+
+    def test_their_tail_ends_on_the_side_they_stood(self):
+        (line,) = self.read("PANEL 1\nALICE (OP)\nHey!\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.by, line.off_panel) == ("ALICE", Side.LEFT)
+
+    def test_each_relation_left_out_is_a_note(self):
+        script = self.STAGED + "PANEL 1\nALICE (OP)\nHey!\n"
+        found_here = diagnose_script(script, source=Path("x.script"))
+        assert [(item.rule, item.level) for item in found_here] == [
+            ("dropped-relation", "note"),
+            ("dropped-relation", "note"),
+        ]
+        assert all(item.region is not None and item.region.start.line == 8 for item in found_here)
+
+    @pytest.mark.parametrize(
+        "marker", ["(OFF)", "(O.S.)", "(O.C.)", "(off-panel)", "(OP, whisper)"]
+    )
+    def test_every_spelling(self, marker: str):
+        (line,) = panels(f"PANEL 1\nCARL {marker}\nHey!\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.off_panel is True
+
+    def test_a_side_may_be_named(self):
+        (line,) = self.read("PANEL 1\nALICE (OP, right)\nHey!\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.off_panel == Side.RIGHT
+
+    def test_a_side_word_without_a_marker_is_a_performance_note(self):
+        (line,) = panels("PANEL 1\nALICE (left)\nHey!\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.off_panel is False
+
+    def test_somebody_never_cast_speaks_too(self):
+        said = panels("PANEL 1\nPHONE (OP)\nRing.\nPHONE (OP): Ring.\n")["1"].script
+        assert [(line.by, line.off_panel) for line in said if isinstance(line, SayEvent)] == [
+            ("PHONE", True),
+            ("PHONE", True),
+        ]
+
+    def test_a_panels_own_cast_cannot_name_them(self):
+        with pytest.raises(ScriptSyntaxError) as raised:
+            panels("PANEL 1\n@cast: {CARL: {reference: bob}}\nCARL (OP)\nHey!\n")
+        assert (raised.value.rule, raised.value.line) == ("off-panel-speaker", 6)
+
+    def test_nor_can_one_speaker_be_on_and_off_panel_in_one_panel(self):
+        with pytest.raises(ScriptSyntaxError) as raised:
+            self.read("PANEL 1\nALICE\nHi.\n\nALICE (OP)\nBye.\n")
+        assert (raised.value.rule, raised.value.line) == ("off-panel-speaker", 11)
+
+    def test_a_panel_over_it_does_not_inherit_the_absence(self):
+        result = self.read("PANEL 1\nALICE (OP)\nHey!\n\nPANEL 2\n@over: 1\n")
+        assert set(result["2"].cast) == {"ALICE", "BOB"}
+
+    def test_a_fault_in_a_member_off_panel_everywhere_is_still_found(self):
+        script = (
+            "---\ncast: {ALICE: {reference: alicee}, BOB: {reference: bob}}\n---\n"
+            "PANEL 1\nALICE (OP)\nHey!\n"
+        )
+        assert [item.rule for item in diagnose_script(script)] == ["unknown-puppet"]
