@@ -56,7 +56,7 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
-from scenet.ir import Face, Mark, PageLayout, PanelIR, PanelSpec
+from scenet.ir import Face, Mark, PanelIR, PanelSpec
 from scenet.lettering import Lettering, typeface_for
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
@@ -895,11 +895,11 @@ FRONTENDS = {
 
 
 def _script_document(text: str, *, source: Path | None) -> SceneDocument:
-    """A comic script, as a scene with no pages: its PAGE headings lay nothing out yet."""
+    """A comic script, as a scene: its PAGE headings lay its panels out on pages."""
     document = parse_script_document(text, source=source)
     return SceneDocument(
         panels=document.panels,
-        layout=PageLayout(),
+        layout=document.layout,
         notes=tuple(note.message for note in document.notes),
     )
 

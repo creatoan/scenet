@@ -60,8 +60,9 @@ scenet build umbrella.script --strip
 | `SFX (BOB, large): KRAK` | Same, coming from `BOB`, at a size. |
 | `SFX:` (alone) | Dark Horse's form: the sound is on the next line. |
 | Anything else | Prose. Preserved, never interpreted. |
-| `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
+| `PAGE ONE` | Starts a page: the panels under it are laid out on it. See [Pages](#pages). |
 | `PAGE ONE (five panels)` | Dark Horse's form: the page, and how many panels it has. A count its panels do not match is a `panel-count` note. |
+| `@tiers: 2 1 2` | Right after a PAGE heading: how many panels each tier of that page holds, from the top. |
 | `## PANEL 2`, `**PANEL 2**`, `---` | Markdown: the markers are stripped and the heading read; a horizontal rule is a blank line. |
 | Before the first heading | The title page: the writer's name and address, the title. Kept, never interpreted. |
 
@@ -158,6 +159,56 @@ THEO (whisper):
 Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around
 it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
 It is not a second format: the text of a line is never rewritten.
+
+## Pages
+
+**Each PAGE heading is a page**, and the panels under it are laid out on it, as a scene's
+[`pages:`](https://creatoan.github.io/scenet/reference/language.html#page-and-pages) would lay them out. Dark Horse leaves "exact
+panel layout" to the artist, and here the compiler is the artist, so a page's panels go into tiers
+by a fixed rule, in reading order:
+
+| Panels | Tiers, top to bottom |
+|---|---|
+| 1 | 1 |
+| 2 | 1, 1 |
+| 3 | 1, 1, 1 |
+| 4 | 2, 2 |
+| 5 | 2, 1, 2 |
+| 6 | 2, 2, 2 |
+| 7 | 2, 3, 2 |
+| 8 | 3, 2, 3 |
+| 9 | 3, 3, 3 |
+| more | rows of three, the extra panels in the earlier tiers: 10 is 3, 3, 2, 2 |
+
+Three tiers is the most up to nine panels, because a page's lettering height assumes three; an odd
+panel takes a tier of its own in the middle, where a beat sits best.
+
+**Say otherwise with `@tiers:`**, written right after the PAGE heading and before its first panel:
+
+```
+PAGE TWO
+@tiers: 1 2
+
+PANEL 1
+...
+```
+
+That page's first panel takes the top tier alone, and the next two share the one under it. The
+counts must add up to the page's panels; when they do not, or `@tiers:` is written anywhere else,
+it is a `page-layout` error at its line. Anything finer — a panel twice as wide, a tier taller than
+the rest, columns, insets, slants — is a scene's `pages:`; see [Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
+
+**The front matter's `page:` sets the format** every page shares: its size, margin and gutters.
+A script has no `pages:` key — its pages are its PAGE headings — so writing one is an error.
+
+- **A panel on a page is compiled at the size of its frame**, and every panel on it letters at one
+  size, as on any page. The front matter's `panel: {size: ...}` still sizes panels that are on no
+  page.
+- **Panels before the first PAGE heading are on no page.** They compile on their own, as every
+  panel of a script without PAGE headings does.
+- **Page files are numbered by position**: `scenet build story.script` writes the first page to
+  `story.page-1.svg` whatever its heading says, so an excerpt that starts at `PAGE SEVEN` still
+  writes `page-1`. Each panel is written on its own as well, as before.
 
 ## French scripts
 

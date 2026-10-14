@@ -664,6 +664,9 @@ A scene can lay its panels out on pages. `pages:` is a list of pages; each page 
 **tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
 share.
 
+A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
+not `pages:`. See [Write a panel as a comic script](../howto/write_a_comic_script.md#pages).
+
 A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
 unquoted `1:` as a number, so a panel named by its number is written `'1':`.
 

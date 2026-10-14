@@ -133,6 +133,12 @@ below 1.0 means.
   highlight them, and the playground colours an effect's `from:` as an actor. Sound
   effects are recorded in `docs/explanation/design_decisions.md` and `prior_art.md`.
   (Closes #73)
+- **A comic script's PAGE headings lay its panels out on pages**, as a scene's `pages:`
+  does. A page's panels go into tiers by a fixed rule — at most three tiers up to nine
+  panels, an odd one alone in the middle tier — or by `@tiers: 2 1 2` written right after
+  the heading. The front matter's `page:` sets the format; `pages:` there is an error, as
+  is a `@tiers:` that does not add up or is written elsewhere, under `page-layout`.
+  `scenet build` writes each page, with its Page Core and overlay. (Part of #75)
 
 ### Changed
 
@@ -149,6 +155,10 @@ below 1.0 means.
   - A bare `CAPTION` line starts a caption whose text is under it; it was an error.
   - `CAP`, `CAPTION` and `SFX` are reserved, and cannot be a cast member's id.
   - A balloon's text in one pair of quotation marks is lettered without them.
+  - A script with PAGE headings now writes its pages, `name.page-1.svg` and on, and the
+    panels on them are compiled at the size of their frames and lettered at the page's
+    one size, so they look different from before. The front matter's `panel: {size}`
+    now sizes only panels that are on no page.
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
   or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
   what is measured is still exactly what is drawn. Every example's output changes once:

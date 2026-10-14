@@ -44,8 +44,23 @@ from pydantic import ValidationError
 
 from scenet.compose import OVER_KEY, merge, resolve_overrides
 from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
-from scenet.frontends.common import errors_of, normalise, rule_for_pydantic, summarise
-from scenet.ir import BalloonKind, CameraAngle, CaptionKind, PanelIR, SfxSize, ShotType, Side
+from scenet.frontends.common import (
+    errors_of,
+    normalise,
+    normalise_layout,
+    rule_for_pydantic,
+    summarise,
+)
+from scenet.ir import (
+    BalloonKind,
+    CameraAngle,
+    CaptionKind,
+    PageLayout,
+    PanelIR,
+    SfxSize,
+    ShotType,
+    Side,
+)
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
@@ -604,6 +619,18 @@ class _Reading:
     notes: list[ScriptNote]
     title_page: list[str]
     page_notes: dict[str, list[str]]
+    pages: list["_PageDraft"]
+
+
+@dataclass
+class _PageDraft:
+    """One page being accumulated: its panels, and the tiers `@tiers:` gave them, if any."""
+
+    label: str
+    line: int
+    drafts: list[_PanelDraft] = field(default_factory=list)
+    tiers: list[int] | None = None
+    tiers_line: int = 0
 
 
 @dataclass
@@ -664,6 +691,8 @@ class _Reader:
         self.loose_cue: tuple[str, int] | None = None
         # The open PAGE heading, if it stated a count, and the panels under it so far.
         self.page_heading: tuple[int, _PageHeading] | None = None
+        # Every page, in order, with the panels under its heading.
+        self.pages: list[_PageDraft] = []
         self.panels_on_page = 0
 
     def read(self, body: str, offset: int) -> None:
@@ -699,6 +728,7 @@ class _Reader:
             self.end_of_item()
             self.end_of_page()
             self.page = page.label
+            self.pages.append(_PageDraft(label=page.label, line=number))
             self.current = None
             self.page_heading = (number, page) if page.count is not None else None
             self.panels_on_page = 0
@@ -709,6 +739,8 @@ class _Reader:
         self.end_of_item()
         self.current = draft
         self.drafts.append(draft)
+        if self.pages:
+            self.pages[-1].drafts.append(draft)
         self.panels_on_page += 1
         return True
 
@@ -739,6 +771,8 @@ class _Reader:
                     tail=("outside", name),
                 )
             )
+        if self.tiers(line, number):
+            return
         if any(pattern.match(line) for pattern in _BELONGS_TO_A_PANEL):
             raise ScriptSyntaxError(
                 f"line {number}: {written!r} is {where}, so it belongs to no panel",
@@ -762,6 +796,7 @@ class _Reader:
 
     def inside(self, line: str, written: str, number: int, current: _PanelDraft) -> None:
         """A line in a panel."""
+        _no_tiers_here(line, number, self.source)
         if _apply_directive(line, current, number, self.source):
             # A directive leaves a waiting label waiting, but ends a speech.
             self.writing = None
@@ -782,6 +817,35 @@ class _Reader:
             return
         # Prose. Kept for tooling and round-tripping, never interpreted.
         current.description.append(written)
+
+    def tiers(self, line: str, number: int) -> bool:
+        """`@tiers: 2 1 2` between a PAGE heading and its first panel: that page's tiers."""
+        directive = DIRECTIVE.match(line)
+        if directive is None or directive.group(1) != "tiers":
+            return False
+        page = self.pages[-1] if self.pages else None
+        if page is None:
+            _no_tiers_here(line, number, self.source)
+            return False
+        if page.tiers is not None:
+            raise ScriptSyntaxError(
+                f"line {number}: '@tiers' is written twice for PAGE {page.label}; the first is on "
+                f"line {page.tiers_line}",
+                source=self.source,
+                line=number,
+                rule="duplicate-key",
+            )
+        counts = [int(count) for count in re.findall(r"\d+", directive.group(2))]
+        if not counts or 0 in counts:
+            raise ScriptSyntaxError(
+                f"line {number}: '@tiers' is how many panels each tier holds, from the top, as "
+                "'@tiers: 2 1 2'",
+                source=self.source,
+                line=number,
+                rule="page-layout",
+            )
+        page.tiers, page.tiers_line = counts, number
+        return True
 
     def cast_here(self) -> frozenset[str]:
         """The open panel's cast: the front matter's, and what its own `@cast:` adds."""
@@ -980,7 +1044,88 @@ class _Reader:
             )
             for note in self.notes
         ]
-        return _Reading(drafts, notes, self.title_page, self.page_notes)
+        return _Reading(drafts, notes, self.title_page, self.page_notes, self.pages)
+
+
+def _no_tiers_here(line: str, number: int, source: Path | None) -> None:
+    """Refuse `@tiers:` anywhere but right after a PAGE heading, before its first panel."""
+    directive = DIRECTIVE.match(line)
+    if directive is not None and directive.group(1) == "tiers":
+        raise ScriptSyntaxError(
+            f"line {number}: '@tiers' lays out a page's panels, so it belongs right after a "
+            "PAGE heading, before its first panel",
+            source=source,
+            line=number,
+            rule="page-layout",
+        )
+
+
+def default_tiers(count: int) -> list[int]:
+    """How many panels each tier of a page holds, when the script does not say.
+
+    Dark Horse leaves "exact panel layout" to the artist, and the compiler is the artist,
+    so it follows a fixed rule: three tiers at most up to nine panels -- the lettering
+    height of a page assumes three -- with an odd panel in a tier of its own in the middle,
+    and beyond nine, rows of three with the extras in the earlier tiers.
+
+    Example:
+        >>> [default_tiers(count) for count in (1, 4, 5, 7, 10)]
+        [[1], [2, 2], [2, 1, 2], [2, 3, 2], [3, 3, 2, 2]]
+    """
+    fixed = {
+        1: [1],
+        2: [1, 1],
+        3: [1, 1, 1],
+        4: [2, 2],
+        5: [2, 1, 2],
+        6: [2, 2, 2],
+        7: [2, 3, 2],
+        8: [3, 2, 3],
+        9: [3, 3, 3],
+    }
+    if count in fixed:
+        return fixed[count]
+    rows = -(-count // 3)
+    base, extra = divmod(count, rows)
+    return [base + 1 if row < extra else base for row in range(rows)]
+
+
+def _layout(reading: _Reading, page_format: object, source: Path | None) -> PageLayout:
+    """The pages a script's PAGE headings lay its panels out on.
+
+    Raises:
+        ScriptSyntaxError: Rule `page-layout`, for `@tiers:` that do not add up to the
+            page's panels, or a page format that does not validate.
+    """
+    names = {id(draft): name for name, draft in reading.drafts.items()}
+    pages = []
+    for page in reading.pages:
+        if not page.drafts:
+            continue
+        panels = [names[id(draft)] for draft in page.drafts]
+        counts = page.tiers or default_tiers(len(panels))
+        if sum(counts) != len(panels):
+            raise ScriptSyntaxError(
+                f"line {page.tiers_line}: '@tiers' places {sum(counts)} panels, but PAGE "
+                f"{page.label} has {len(panels)}",
+                source=source,
+                line=page.tiers_line,
+                rule="page-layout",
+            )
+        tiers, start = [], 0
+        for count in counts:
+            tiers.append({"panels": panels[start : start + count]})
+            start += count
+        pages.append({"tiers": tiers})
+    data: dict[str, Any] = {"pages": pages}
+    if page_format is not None:
+        data["page"] = page_format
+    try:
+        return PageLayout.model_validate(normalise_layout(data))
+    except ValidationError as exc:
+        raise ScriptSyntaxError(
+            f"invalid page format: {summarise(exc)}", source=source, rule="page-layout"
+        ) from exc
 
 
 #: Lines only a panel can hold, refused outside one: a directive, a caption, a sound.
@@ -1474,6 +1619,7 @@ class ScriptDocument:
         title_page: The prose before the first heading: Dark Horse's format opens with the
             writer's name and address.
         page_notes: Page to the prose between its heading and its first panel.
+        layout: The pages its PAGE headings lay its panels out on; none without them.
     """
 
     panels: dict[str, PanelIR]
@@ -1482,6 +1628,7 @@ class ScriptDocument:
     descriptions: dict[str, tuple[str, ...]] = field(default_factory=dict)
     title_page: tuple[str, ...] = ()
     page_notes: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    layout: PageLayout = field(default_factory=PageLayout)
 
 
 def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDocument:
@@ -1501,6 +1648,14 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     # and the same whatever editor saved it.
     text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
+    if "pages" in front_matter:
+        raise ScriptSyntaxError(
+            "a comic script's pages come from its PAGE headings, so its front matter has no "
+            "`pages:`; `page:` sets their format",
+            source=source,
+            rule="page-layout",
+        )
+    page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     reserved = _reserved_name(cast)
     if reserved is not None:
@@ -1527,6 +1682,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         raise ScriptSyntaxError("no PANEL headings found", source=source)
 
     notes = list(reading.notes)
+    layout = _layout(reading, page_format, source)
     return ScriptDocument(
         panels=_validate(panels, front_matter, source, notes),
         lines={
@@ -1537,6 +1693,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         descriptions={name: tuple(draft.description) for name, draft in panels.items()},
         title_page=tuple(reading.title_page),
         page_notes={page: tuple(lines) for page, lines in reading.page_notes.items()},
+        layout=layout,
     )
 
 

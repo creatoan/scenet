@@ -66,8 +66,9 @@ sequence.scene.yaml  →  sequence.establishing.svg
                         sequence.strip.svg          (with --strip)
 ```
 
-A document that lays its panels out with `pages:` also writes each page beside them, with its Page
-Core and overlay when `--core` and `--debug` ask for them:
+A document that lays its panels out with `pages:`, or a comic script with `PAGE` headings, also
+writes each page beside them, with its Page Core and overlay when `--core` and `--debug` ask for
+them. Pages are numbered by position, from 1, whatever a script's headings call them:
 
 ```
 story.scene.yaml     →  story.page-1.svg

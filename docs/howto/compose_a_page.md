@@ -109,6 +109,10 @@ in a narrow slanted panel is the usual way to lose one, and the compiler says wh
 `examples/gallery/24-page.scene.yaml` is a whole page, and the playground offers it as
 "A page: panels in tiers".
 
+A comic script lays out its pages too: each `PAGE` heading is a page, its panels in tiers
+by a fixed rule or by `@tiers:`. See
+[Write a panel as a comic script](write_a_comic_script.md#pages).
+
 ## What the page decides, and what it does not
 
 ```python
@@ -189,6 +193,6 @@ to be inherited from with `over:`.
 
 ## Not yet
 
-Frames of other shapes; right-to-left reading for manga; a comic
-script's `PAGE` headings laying out pages; and print sizes with trim and bleed. See
+Frames of other shapes; right-to-left reading for manga; and print sizes with trim and
+bleed. See
 [the plan](../explanation/status.md).
