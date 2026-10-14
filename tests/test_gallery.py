@@ -140,6 +140,11 @@ class TestTheGalleryCoversTheLanguage:
         missing = [name for name in names if name not in text]
         assert missing == []
 
+    def test_every_type_size_appears(self):
+        """Small type is read at the size it is lettered, so it has been looked at."""
+        text = self._all_text()
+        assert "size: small" in text
+
     def test_every_off_panel_side_appears(self):
         """A tail ending on each edge of the frame has been looked at, and one whose side
         the compiler chose."""
