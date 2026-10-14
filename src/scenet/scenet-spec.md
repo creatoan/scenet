@@ -28,7 +28,8 @@ nowhere to put them, and unknown keys are rejected.
    language; see the `language` part.
 2. **Comic script** — `*.script`. The format comic writers already use: `PANEL 1`,
    `@shot:`, a character cue, the dialogue under it, with a short YAML front matter
-   declaring the cast. See the `comic-script` part.
+   declaring the cast. Dark Horse's published layout is read as written, and so are
+   French scripts; each PAGE heading is a page. See the `comic-script` part.
 
 **If you cannot run code** — a chat app, NotebookLM — write a comic script. It is the
 closest thing to what you would write anyway, and the person you are helping compiles
@@ -70,7 +71,7 @@ so always check.
 - `preamble` — Start here: what Scenet is, the two ways to write a panel, the check-and-fix loop, and the mistakes generators make most
 - `language` — The language reference: every block and key of a panel or scene document
 - `shot-types` — Normative: what each camera shot frames, in head-heights
-- `comic-script` — The comic-script format: PANEL 1, @shot:, character cues, dialogue
+- `comic-script` — The comic-script format: PAGE and PANEL headings as Dark Horse writes them, @shot:, cues, captions, off-panel speech, pages, and French scripts
 - `characters` — The shipped puppets, with every pose and expression each declares
 - `diagnostics` — Every rule `scenet check` reports, and what to do about each
 - `schema` — The JSON Schema for a single-panel YAML document

@@ -30,7 +30,8 @@ every one of them, deterministically: the same document always gives the same pi
   the whole language: camera angles, settings, captions, gaze, placement hints.
   Reference: `references/language.md`.
 - **Comic script** — `name.script` — when the user thinks in script form or the story
-  comes first. Reference: `references/comic-script.md`.
+  comes first. Dark Horse's published layout is read as written, and so are French
+  scripts (`PLANCHE 1`, `CASE 2`). Reference: `references/comic-script.md`.
 
 Start from the closest worked example in `assets/gallery/` rather than from nothing;
 `assets/gallery/manifest.yaml` lists them with titles. Every one is known to compile.

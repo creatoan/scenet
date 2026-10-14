@@ -45,8 +45,9 @@ It contributes:
 - Schema association for `*.panel.yaml` and `*.scene.yaml`, so no `$schema` comment is
   needed.
 - **Highlighting for `.script` comic scripts**, the same as the playground's: page and
-  panel headings, `@` directives, captions, cues and their parentheticals, dialogue apart
-  from prose, and the front matter coloured as the YAML it is. It follows the compiler's
+  panel headings in Dark Horse's layout and in French, `@` directives, captions and
+  `CAP/NAME`, sound effects, cues and their parentheticals, balloon numbers, dialogue
+  apart from prose, and the front matter coloured as the YAML it is. It follows the compiler's
   reading line for line, so a line coloured as dialogue is a line that compiles as
   dialogue.
 - **The findings of `scenet check`**, when a panel, scene or comic script is opened or

@@ -37,8 +37,10 @@ the language the compiler actually accepts.
 
 **Ask for a comic script, not YAML.** A `.script` is the format comic writers already use —
 `PANEL 1`, `@shot:`, a character cue, the dialogue under it — which is far closer to what a model
-writes unprompted than a YAML document is, and it has no indentation to get wrong. See
-[write a panel as a comic script](write_a_comic_script.md).
+writes unprompted than a YAML document is, and it has no indentation to get wrong. Dark Horse's
+published format is accepted as written, as are French scripts — `PLANCHE 1`, `CASE 2`,
+`RÉCITATIF :` — so a model that learned either from published scripts needs no retraining.
+See [write a panel as a comic script](write_a_comic_script.md).
 
 ### NotebookLM
 
@@ -53,9 +55,10 @@ and cannot render any of it. The workflow:
    ```
    Write this scene as a Scenet comic script (.script). Follow the spec pack exactly:
    declare the cast in the YAML front matter, cast only the puppets listed under
-   Characters, and use only the poses and expressions each one declares. One PANEL per
-   beat; name the shot with @shot:. Do not describe positions in prose — the compiler
-   ignores prose.
+   Characters, and use only the poses and expressions each one declares. Lay it out as
+   Dark Horse asks: PAGE ONE (n panels), then Panel 1. with its description, a cue in
+   capitals with the dialogue under it, CAP: for captions. One panel per beat; name the
+   shot with @shot:. Do not describe positions in prose — the compiler ignores prose.
    ```
 
 3. Save the reply as `scene.script` and check it locally:

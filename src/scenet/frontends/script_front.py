@@ -3,7 +3,11 @@
 Checked before building this: Fountain has no native panel, caption or SFX support,
 and there is no standardised comic script format at all. But the informal industry
 convention is stable across publishers -- `PANEL 1`, a prose description, a character
-cue in capitals, the dialogue beneath it -- so that is what this parses.
+cue in capitals, the dialogue beneath it -- so that is what this parses. Dark Horse
+publishes its own house format, and it is read as written: `PAGE ONE (five panels)`,
+`Panel 1.` with its description, `CAP:` and `CAP/NAME`, numbered lettering, Markdown
+around any of it. So is a French script: `PLANCHE 1`, `CASE 2`, `RÉCITATIF :`, the
+*échelle des plans*. Each PAGE heading is a page.
 
 **The honest limitation.** A prose description like "Alice and Bob face each other on
 a rainy street corner" cannot be compiled. Turning that into staging needs natural

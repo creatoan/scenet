@@ -64,7 +64,8 @@ below 1.0 means.
   `LÉA : « Bonjour. »` is a cue and its line, with a no-break space before the colon. `(pensée)`
   is a thought, `(off)` and `(hors champ)` off-panel speech. `@shot:` and `@angle:` take the
   *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
-  and *plongée*, *contre-plongée*. Both highlighters follow. (Part of #75)
+  and *plongée*, *contre-plongée*. Both highlighters follow, and the gallery gains
+  `33-planche.script`. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.
@@ -138,7 +139,9 @@ below 1.0 means.
   panels, an odd one alone in the middle tier — or by `@tiers: 2 1 2` written right after
   the heading. The front matter's `page:` sets the format; `pages:` there is an error, as
   is a `@tiers:` that does not add up or is written elsewhere, under `page-layout`.
-  `scenet build` writes each page, with its Page Core and overlay. (Part of #75)
+  `scenet build` writes each page, with its Page Core and overlay. With it, every row of
+  #75 is done: the spec pack, the Agent Skill and *Drive Scenet from a model* now say that
+  Dark Horse's format and French scripts are read as written. (Closes #75)
 
 ### Changed
 

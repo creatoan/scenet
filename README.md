@@ -83,6 +83,8 @@ BOB (whisper)
 I know.
 ```
 
+Dark Horse's published script format is read as written, and so are French scripts.
+
 From any of these, the compiler works out the rest: how large each figure must be for a medium shot, where they
 stand, which way they face, how big each balloon needs to be for its text, where a balloon can sit
 without covering a face, and how its tail reaches the speaker's mouth — all while preserving
@@ -97,7 +99,7 @@ computational geometry. The same input always produces byte-identical output.
 browser, or an editor.** Framing, actor placement, balloon
 and caption placement, reading order, tail routing, drawn faces and the marks around them, tonal backdrops,
 pages of tiers and SVG emission all
-work, from either of two frontends. Not yet built: insets and free-form page layouts, print output, and
+work, from either of two frontends. Not yet built: print output, and
 the interpretation layer that would give a panel a *style*. See
 [the phase plan](docs/explanation/status.md) for detail.
 
