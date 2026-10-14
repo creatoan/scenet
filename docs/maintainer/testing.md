@@ -315,6 +315,18 @@ below. Anything else is new, and is triaged the same way.
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
 
+Off-panel speech (#75) added 26 survivors in its first run, `38632507033`; 14 are killed by
+`TestOffPanel` and `TestTheNearerSide` in `tests/test_balloons.py` and by
+`tests/test_off_panel.py`, and these 12 are accepted:
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_place_off_panel` 50 | `cost < best_cost` to `<=` | Which of two positions of exactly equal cost is kept. Both are legal, and the candidates come in a fixed order, so either choice is the same every run; `_place_caption` keeps the first, and so does this. |
+| `_place_off_panel` 84 | `speaker_face=None` dropped | `None` is the parameter's default. |
+| `_edge_point` 29, 34 | the line out doubled to tripled | Any end past the rectangle crosses the outline at the same point. |
+| `_edge_point` 31 | `or centre.y` to `and centre.y` | For left and right the line's height is the centre's either way. For top and bottom the line collapses to a point, crosses nothing, and falls back to the rectangle's edge -- which is where it would have crossed, because a slant leans only the gutters: a panel's top and bottom stay level. |
+| `_edge_point` 47, 53, 54, 57, 60, 64, 66 | the handling of several crossings, or none | The line runs from the balloon, inside the outline, to beyond it, and a panel's outline is convex, so it crosses exactly once: a single point, which has `coords` and no `geoms`. |
+
 **`solve/text.py`** -- triaged: of the 50 survivors, 36 are killed by tests in
 `tests/test_text.py`, and these 14 are accepted. Most of the 36 were in `FontMetrics`'s
 constructor, and survived for a reason worth knowing: `load_metrics` is cached, so a test

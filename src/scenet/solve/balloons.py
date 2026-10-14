@@ -1111,9 +1111,7 @@ def _place_off_panel(
             "balloon, lay under an inset, or broke reading order"
         )
 
-    side = named
-    if side is None:
-        side = Side.LEFT if best.centre.x <= panel.x + panel.width / 2 else Side.RIGHT
+    side = named if named is not None else _nearer_side(best, panel)
     return PlacedBalloon(
         id=identifier,
         speaker=event.by,
@@ -1124,6 +1122,16 @@ def _place_off_panel(
         tail=route_tail(best, _edge_point(best, side, frame), faces, speaker_face=None),
         off_panel=side,
     )
+
+
+def _nearer_side(balloon: BBox, panel: BBox) -> Side:
+    """The nearer of the panel's left and right to a balloon's centre: left on a tie.
+
+    Example:
+        >>> _nearer_side(BBox(100, 50, 40, 20), BBox(0, 0, 300, 200))
+        <Side.LEFT: 'left'>
+    """
+    return Side.LEFT if balloon.centre.x <= panel.x + panel.width / 2 else Side.RIGHT
 
 
 def _edge_point(balloon: BBox, side: Side, frame: _Frame) -> Point:
