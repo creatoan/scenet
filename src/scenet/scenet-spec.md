@@ -440,10 +440,11 @@ script:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth |
+| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
 | `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
+| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
@@ -452,6 +453,31 @@ compiler must decide the line breaks before it can place anything.
 A line of text, a caption and an actor id may not contain a control character other than tab, line
 feed and carriage return. Each one is written into the SVG, and XML has no way to write those
 characters at all, not even escaped, so a panel holding one is refused with the character named.
+
+### Off-panel speech
+
+```yaml
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: caller, text: "Open up!", off_panel: left}
+  - say: {by: bob, text: "Who is it?"}
+```
+
+A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
+on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
+the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
+put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+aim most tails at the top border, which reads as a speaker above.
+
+An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
+panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
+balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
+face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
+to the panel's outline when it is slanted.
+
+A scene whose panels share a cast through `over:` cannot leave one member out of one panel, since an
+override cannot delete; write that panel's cast out in full. A comic script can, with `(OP)`.
 
 ### `caption`
 
@@ -1369,6 +1395,12 @@ The document is not a mapping. A panel document is a mapping of top-level keys -
 
 **Fix:** Wrap the content in top-level keys, or check you meant to compile this file.
 
+### `scenet/off-panel-speaker`
+
+A line is spoken from off panel by somebody drawn in the panel. An off-panel speaker is somebody nobody draws: their balloon's tail ends on the frame, on their side, because there is no mouth in the panel to point at. So they are never in the panel's cast. A line marked `off_panel` whose speaker is in the cast contradicts itself, and so does one speaker both on and off panel in the same panel.
+
+**Fix:** Leave the speaker out of this panel's cast, or drop off_panel.
+
 ### `scenet/ordering-cycle`
 
 Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into a linear order before the solver runs, because Cassowary is a linear solver and cannot express the disjunction 'A left of B or B left of A'. A cycle has no linear order and so no solution.
@@ -1907,7 +1939,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
       "properties": {
         "by": {
           "title": "By",
@@ -1916,6 +1948,18 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "kind": {
           "$ref": "#/$defs/BalloonKind",
           "default": "speech"
+        },
+        "off_panel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Side"
+            }
+          ],
+          "default": false,
+          "title": "Off Panel"
         },
         "prefer": {
           "anyOf": [
@@ -2066,6 +2110,17 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "extreme_close_up"
       ],
       "title": "ShotType",
+      "type": "string"
+    },
+    "Side": {
+      "description": "A side of the panel's frame: where an off-panel speaker is.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\".",
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ],
+      "title": "Side",
       "type": "string"
     },
     "Spans": {
@@ -3571,4 +3626,39 @@ SFX (THEO, large): FWOOMP
 
 CAP/MAYA
 “-- and that was how the harbour got its light back.”
+```
+
+## Off-panel speech: a tail to the frame, for somebody nobody draws
+
+`32-off-panel.scene.yaml`
+
+```yaml
+# Off-panel speech: a voice from somebody nobody draws.
+#
+# `off_panel` on a `say` line names a speaker who is not in the cast. The balloon's tail
+# ends on the frame, on the speaker's side -- "the tail of the balloon generally butts
+# against the panel border" (Blambot) -- named, or, with `off_panel: true`, the nearer of
+# left and right to where the balloon was put.
+
+panel: {size: [900, 600]}
+setting: {place: room, time: night}
+
+panels:
+  knock:
+    camera: {shot: medium_shot}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: caller, text: "Open up!", off_panel: left, kind: shout}
+      - say: {by: bob, text: "Who is it?"}
+      - say: {by: neighbour, text: "Keep it down in there.", off_panel: right}
+
+  answer:
+    over: knock
+    camera: {shot: close_up}
+    script:
+      - say: {by: upstairs, text: "Is everything all right?", off_panel: top}
+      - say: {by: bob, text: "Fine. Go back to sleep."}
+      - say: {by: caller, text: "Then open the door.", off_panel: bottom}
+      - say: {by: caller, text: "I know you're there.", off_panel: true}
 ```

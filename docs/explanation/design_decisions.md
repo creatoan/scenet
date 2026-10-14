@@ -26,6 +26,17 @@ reported with its rule and its place, as SARIF `note`, so an editor shows it as 
 and never fails anything. `--deep` runs on a document with notes, since notes do not stop the
 compile it would run.
 
+## An off-panel speaker is not in the cast
+
+Off-panel speech needs a speaker who is not drawn, and every speaker used to have to be in the cast
+— which is the list of who *is* drawn. So `off_panel` lets `by` name anybody, and forbids naming a
+cast member: somebody both drawn and off panel in one panel contradicts themselves, and is
+`off-panel-speaker`. The tail ends on the frame (Blambot), never nowhere: a tailless balloon was
+considered and set aside, since a balloon with no pointer has no attributed speaker. Panel Core
+records the side the solver settled on, so a reader of the Core knows the tail's end is on the
+frame and the speaker is not an actor; the field is left out when unset, and every Core written
+before it is unchanged.
+
 ## Cassowary is linear, so the language must resolve disjunctions
 
 Non-overlap between two actors is a disjunction — A left of B, **or** B left of A — and no linear

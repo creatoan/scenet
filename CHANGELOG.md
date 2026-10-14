@@ -45,6 +45,12 @@ below 1.0 means.
   dialogue. `@over: 1` names panel 1 on the same page first, then the panel named `1`. A
   missing panel, a cycle or a panel over itself is one `composition` finding at the
   `@over:` line. (Part of #75)
+- **Off-panel speech.** `say: {by: caller, text: "Open up!", off_panel: left}` is spoken by
+  somebody nobody draws: the balloon's tail ends on the frame, on that side, or on the
+  slanted outline of a slanted panel. `off_panel: true` lets the compiler take the nearer of
+  left and right. The speaker is not in the cast, and one who is drawn cannot speak from off
+  panel: the new error `off-panel-speaker`. Panel Core balloons gain `off_panel`, the side,
+  written only when set, so no existing Core changes. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

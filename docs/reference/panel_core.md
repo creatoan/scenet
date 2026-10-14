@@ -149,6 +149,12 @@ script order, so a caption between two lines of dialogue takes the number betwee
 balloon list can have gaps in it. A panel with no captions is unaffected, which is why this did not
 need a `format_version` bump.
 
+**A balloon spoken from [off panel](language.md#off-panel-speech) carries `off_panel`**, the side
+of the frame its speaker is on, as the solver settled it: `left`, `right`, `top` or `bottom`. When
+it is set, `speaker` names somebody who is not an actor, so it is not looked up among `actors`, and
+the tail's `end` lies on the frame on that side — on `outline`, when the panel has one. A balloon
+whose speaker is drawn has no `off_panel` key, so no existing Core changes.
+
 `backdrop` is absent on a panel that says nothing about where it is, which is why adding it did not
 need a bump either. Its masses carry **fully resolved numeric polygons and tone values**, the same
 discipline as `capsules`, `blobs` and `face_marks`: the emitter is left with no layout decision, and

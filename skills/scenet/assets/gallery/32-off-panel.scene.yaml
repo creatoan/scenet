@@ -1,0 +1,28 @@
+# Off-panel speech: a voice from somebody nobody draws.
+#
+# `off_panel` on a `say` line names a speaker who is not in the cast. The balloon's tail
+# ends on the frame, on the speaker's side -- "the tail of the balloon generally butts
+# against the panel border" (Blambot) -- named, or, with `off_panel: true`, the nearer of
+# left and right to where the balloon was put.
+
+panel: {size: [900, 600]}
+setting: {place: room, time: night}
+
+panels:
+  knock:
+    camera: {shot: medium_shot}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: caller, text: "Open up!", off_panel: left, kind: shout}
+      - say: {by: bob, text: "Who is it?"}
+      - say: {by: neighbour, text: "Keep it down in there.", off_panel: right}
+
+  answer:
+    over: knock
+    camera: {shot: close_up}
+    script:
+      - say: {by: upstairs, text: "Is everything all right?", off_panel: top}
+      - say: {by: bob, text: "Fine. Go back to sleep."}
+      - say: {by: caller, text: "Then open the door.", off_panel: bottom}
+      - say: {by: caller, text: "I know you're there.", off_panel: true}

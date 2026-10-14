@@ -82,6 +82,12 @@ The document is not a mapping. A panel document is a mapping of top-level keys -
 
 **Fix:** Wrap the content in top-level keys, or check you meant to compile this file.
 
+### `scenet/off-panel-speaker`
+
+A line is spoken from off panel by somebody drawn in the panel. An off-panel speaker is somebody nobody draws: their balloon's tail ends on the frame, on their side, because there is no mouth in the panel to point at. So they are never in the panel's cast. A line marked `off_panel` whose speaker is in the cast contradicts itself, and so does one speaker both on and off panel in the same panel.
+
+**Fix:** Leave the speaker out of this panel's cast, or drop off_panel.
+
 ### `scenet/ordering-cycle`
 
 Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into a linear order before the solver runs, because Cassowary is a linear solver and cannot express the disjunction 'A left of B or B left of A'. A cycle has no linear order and so no solution.

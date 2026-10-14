@@ -361,10 +361,11 @@ script:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth |
+| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
 | `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
+| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
@@ -373,6 +374,31 @@ compiler must decide the line breaks before it can place anything.
 A line of text, a caption and an actor id may not contain a control character other than tab, line
 feed and carriage return. Each one is written into the SVG, and XML has no way to write those
 characters at all, not even escaped, so a panel holding one is refused with the character named.
+
+### Off-panel speech
+
+```yaml
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: caller, text: "Open up!", off_panel: left}
+  - say: {by: bob, text: "Who is it?"}
+```
+
+A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
+on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
+the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
+put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+aim most tails at the top border, which reads as a speaker above.
+
+An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
+panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
+balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
+face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
+to the panel's outline when it is slanted.
+
+A scene whose panels share a cast through `over:` cannot leave one member out of one panel, since an
+override cannot delete; write that panel's cast out in full. A comic script can, with `(OP)`.
 
 ### `caption`
 
