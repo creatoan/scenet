@@ -947,6 +947,37 @@
         ],
         "width": 14.0
       }
+    },
+    {
+      "box": {
+        "height": 80.64,
+        "width": 109.54,
+        "x": 12.8,
+        "y": 279.68
+      },
+      "font_size": 22.4,
+      "id": "b2",
+      "kind": "speech",
+      "line_height": 28.0,
+      "lines": [
+        "Who's up",
+        "there?"
+      ],
+      "off_panel": "left",
+      "order": 3,
+      "speaker": "KEEPER",
+      "tail": {
+        "control": null,
+        "end": [
+          0.0,
+          320.0
+        ],
+        "start": [
+          12.8,
+          320.0
+        ],
+        "width": 14.0
+      }
     }
   ],
   "captions": [

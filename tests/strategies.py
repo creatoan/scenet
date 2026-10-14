@@ -500,6 +500,11 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
                     name = draw(st.sampled_from(cast))
                     out += [f"{name} (V.O.)", draw(_spoken()), ""]
                     lines.append(("caption", None))
+                elif draw(st.integers(0, 6)) == 0:
+                    # Somebody never drawn, heard from off panel.
+                    marker = draw(st.sampled_from(["(OP)", "(OFF)", "(O.S.)", "(OP, left)"]))
+                    out += [f"PHONE {marker}", draw(_spoken()), ""]
+                    lines.append(("say", "PHONE"))
                 elif draw(st.integers(0, 3)) == 0:
                     # A cue with its line on the same line.
                     speaker = draw(st.sampled_from(cast))

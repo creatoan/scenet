@@ -392,6 +392,18 @@ RULES: dict[str, Rule] = {
         ),
         help="Leave the speaker out of this panel's cast, or drop off_panel.",
     ),
+    "dropped-relation": Rule(
+        summary="A shared staging relation does not apply in a panel where its actor is off panel",
+        description=(
+            "A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the "
+            "scene, not in the frame. A relation the front matter states for every panel -- "
+            "`ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not "
+            "drawn, so it is left out of that panel. A note, since that changes what the "
+            "panel stages: Bob is placed, and looks, without her."
+        ),
+        help="Nothing to do if that is what the panel means; otherwise draw her in it.",
+        level="note",
+    ),
     "word-limit": Rule(
         summary="A balloon, caption or panel holds more words than a letterer fits well",
         description=(
@@ -1448,6 +1460,23 @@ def _diagnose_script_cast(
                         region=DOCUMENT_START,
                     )
                 )
+
+    # A member who speaks from off panel wherever they appear is in no panel's cast, so
+    # no panel above checked them -- and a typo in their puppet would go unseen. They are
+    # checked here on their own, against the front matter.
+    unseen = {
+        actor: member
+        for actor, member in shared.items()
+        if all(actor not in panel.cast for panel in panels.values())
+    }
+    if unseen:
+        try:
+            alone = PanelIR.model_validate(normalise({"cast": unseen}))
+        except (ValidationError, ScenetError):
+            return found  # a malformed member is reported where the panels are validated
+        for item in _diagnose_cast(alone, front, source, prefix=(), library=library):
+            if item not in found:
+                found.append(item)
     return found
 
 

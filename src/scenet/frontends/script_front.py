@@ -45,7 +45,7 @@ from pydantic import ValidationError
 from scenet.compose import OVER_KEY, merge, resolve_overrides
 from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import errors_of, normalise, rule_for_pydantic, summarise
-from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize
+from scenet.ir import BalloonKind, CaptionKind, PanelIR, SfxSize, Side
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
@@ -127,6 +127,13 @@ KIND_MODIFIERS = {
 # not in the location shown in the current panel". On a cue, the line is a spoken caption by
 # that character; on a caption, it is the spoken kind.
 VOICE_OVER = {"v.o.", "vo", "voice over", "voice-over", "voiceover"}
+
+# Off panel: Dark Horse's `(OP)`, Blambot's `(OFF)`, the screenplay's `(O.S.)` and its older
+# spelling `(O.C.)`. The speaker is in the scene but not in the frame.
+OFF_PANEL = {"op", "off", "o.s.", "os", "o.c.", "oc", "off-panel", "off panel", "offpanel"}
+
+# The side of the frame an off-panel speaker is on, when a cue names it: `(OP, left)`.
+SIDES = {side.value: side for side in Side}
 
 # Labels a line starts with that are never a speaker: a cast member called `CAP` would be
 # read as a caption every time it spoke. Compared without regard to case.
@@ -699,7 +706,11 @@ class _Reader:
         if cue is None:
             return False
         name = cue.group("name").strip()
-        if name not in self.cast_here():
+        modifiers = _modifiers(cue.group("mods"))
+        # Somebody who speaks from off panel, or in voice over, is not drawn, so need not
+        # be in the cast: `PHONE (OP): Ring.` is a line, as `PHONE (OP)` above it would be.
+        unseen = any(word in OFF_PANEL or word in VOICE_OVER for word in modifiers)
+        if name not in self.cast_here() and not unseen:
             self.not_a_speaker(name, number, current)
             return False
         self.abandon()
@@ -873,7 +884,16 @@ def _line_for(
     kinds = list(
         dict.fromkeys(KIND_MODIFIERS[word] for word in modifiers if word in KIND_MODIFIERS)
     )
+    off_panel = any(word in OFF_PANEL for word in modifiers)
     if any(word in VOICE_OVER for word in modifiers):
+        if off_panel:
+            raise ScriptSyntaxError(
+                f"line {number}: {name} speaks in voice over, as a caption, and from off "
+                "panel, as a balloon; a line is one or the other",
+                source=source,
+                line=number,
+                rule="invalid-field",
+            )
         if kinds:
             raise ScriptSyntaxError(
                 f"line {number}: {name} speaks in voice over, which is lettered as a caption "
@@ -892,7 +912,12 @@ def _line_for(
             rule="invalid-field",
         )
     kind = kinds[0] if kinds else BalloonKind.SPEECH
-    return "say", {"by": name, "kind": kind.value}
+    payload: dict[str, Any] = {"by": name, "kind": kind.value}
+    if off_panel:
+        # A side is only a side beside a marker: `(left)` alone is a note for the artist.
+        side = next((SIDES[word] for word in modifiers if word in SIDES), None)
+        payload["off_panel"] = side.value if side is not None else True
+    return "say", payload
 
 
 def _caption_kind(
@@ -1318,13 +1343,14 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     if not panels:
         raise ScriptSyntaxError("no PANEL headings found", source=source)
 
+    notes = list(reading.notes)
     return ScriptDocument(
-        panels=_validate(panels, front_matter, source),
+        panels=_validate(panels, front_matter, source, notes),
         lines={
             name: PanelLines(heading=draft.line, events=tuple(draft.event_lines))
             for name, draft in panels.items()
         },
-        notes=tuple(reading.notes),
+        notes=tuple(notes),
         descriptions={name: tuple(draft.description) for name, draft in panels.items()},
         title_page=tuple(reading.title_page),
         page_notes={page: tuple(lines) for page, lines in reading.page_notes.items()},
@@ -1334,6 +1360,116 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
 def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
     """Parse comic script into one validated panel per PANEL heading."""
     return parse_script_document(text, source=source).panels
+
+
+def _off_panel(
+    document: dict[str, Any],
+    name: str,
+    draft: _PanelDraft,
+    notes: list[ScriptNote],
+    source: Path | None,
+) -> dict[str, Any]:
+    """A panel with everybody who speaks from off panel in it left out of it.
+
+    Off panel means in the scene but not in the frame. The front matter is the scene's
+    cast, so `ALICE (OP)` leaves Alice out of this panel -- and out of every staging
+    relation that names her, each with a note, since that changes what the panel stages.
+    It is worked out from the panel's own lines, after its `@over:` chain and the front
+    matter are merged, so a panel over this one does not inherit her absence. Where she
+    was written to stand, `at: left_third` say, is the side her tail ends on, unless the
+    cue named one.
+
+    Raises:
+        ScriptSyntaxError: Rule `off-panel-speaker`, for a speaker the panel's own
+            `@cast:` draws, or one who speaks both on and off panel in it.
+    """
+    speakers: dict[str, int] = {}
+    drawn: dict[str, int] = {}
+    for index, event in enumerate(draft.events):
+        say = event.get("say")
+        if say is None:
+            continue
+        side = speakers if say.get("off_panel", False) is not False else drawn
+        side.setdefault(say["by"], index)
+    own_cast = draft.settings.get("cast")
+    for speaker, index in speakers.items():
+        line = draft.event_lines[index]
+        if speaker in drawn:
+            later = draft.event_lines[max(index, drawn[speaker])]
+            raise ScriptSyntaxError(
+                f"line {later}: {speaker} speaks both on and off panel in PANEL {name}; a "
+                "speaker is drawn in a panel, or speaks from outside it",
+                source=source,
+                line=later,
+                rule="off-panel-speaker",
+            )
+        if isinstance(own_cast, dict) and speaker in own_cast:
+            raise ScriptSyntaxError(
+                f"line {line}: {speaker} speaks from off panel, but this panel's own @cast: "
+                "draws them; leave them out of it",
+                source=source,
+                line=line,
+                rule="off-panel-speaker",
+            )
+    cast = document.get("cast")
+    leaving = [speaker for speaker in speakers if isinstance(cast, dict) and speaker in cast]
+    if not leaving or not isinstance(cast, dict):
+        return document
+    document = {
+        **document,
+        "cast": {key: value for key, value in cast.items() if key not in leaving},
+    }
+    document["script"] = [_on_their_side(event, cast) for event in document.get("script", [])]
+    staging = document.get("staging")
+    if isinstance(staging, list):
+        kept = []
+        for index, relation in enumerate(staging):
+            named = next((speaker for speaker in leaving if _names(relation, speaker)), None)
+            if named is None:
+                kept.append(relation)
+                continue
+            line = draft.event_lines[speakers[named]]
+            notes.append(
+                ScriptNote(
+                    rule="dropped-relation",
+                    message=(
+                        f"line {line}: '{_relation_text(relation)}' does not apply in PANEL "
+                        f"{name}, where {named} speaks from off panel and is not drawn"
+                    ),
+                    line=line,
+                    path=(name, "staging", index),
+                )
+            )
+        document["staging"] = kept
+    return document
+
+
+def _on_their_side(event: dict[str, Any], cast: dict[str, Any]) -> dict[str, Any]:
+    """An off-panel line with no side named, given the side its speaker was written at."""
+    say = event.get("say")
+    if say is None or say.get("off_panel") is not True:
+        return event
+    member = cast.get(say["by"])
+    at = str(member.get("at", "")) if isinstance(member, dict) else ""
+    side = next((value for value in ("left", "right") if at.startswith(value)), None)
+    return event if side is None else {"say": {**say, "off_panel": side}}
+
+
+def _names(relation: object, actor: str) -> bool:
+    """Whether a staging relation, as written, names an actor as subject or object."""
+    if isinstance(relation, str):
+        words = relation.split()
+        return bool(words) and actor in (words[0], words[-1])
+    if isinstance(relation, dict):
+        return actor in (relation.get("subject"), relation.get("object"))
+    return False
+
+
+def _relation_text(relation: object) -> str:
+    """A staging relation as a sentence, however it was written."""
+    if isinstance(relation, dict):
+        return " ".join(str(relation.get(key, "")) for key in ("subject", "predicate", "object"))
+    return str(relation)
 
 
 def _over_target(target: str, name: str, draft: _PanelDraft, names: Collection[str]) -> str:
@@ -1386,7 +1522,10 @@ def _composed(panels: dict[str, _PanelDraft], source: Path | None) -> dict[str, 
 
 
 def _validate(
-    panels: dict[str, _PanelDraft], front_matter: dict[str, Any], source: Path | None
+    panels: dict[str, _PanelDraft],
+    front_matter: dict[str, Any],
+    source: Path | None,
+    notes: list[ScriptNote],
 ) -> dict[str, PanelIR]:
     """Validate each drafted panel over the front matter, reporting the first fault.
 
@@ -1396,7 +1535,7 @@ def _validate(
     composed = _composed(panels, source)
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
-        combined = merge(front_matter, composed[name])
+        combined = _off_panel(merge(front_matter, composed[name]), name, draft, notes, source)
         try:
             result[name] = PanelIR.model_validate(normalise(combined))
         except PanelSyntaxError as exc:

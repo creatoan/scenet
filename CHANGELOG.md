@@ -51,6 +51,11 @@ below 1.0 means.
   left and right. The speaker is not in the cast, and one who is drawn cannot speak from off
   panel: the new error `off-panel-speaker`. Panel Core balloons gain `off_panel`, the side,
   written only when set, so no existing Core changes. (Part of #75)
+- **`ALICE (OP)` in a comic script is off-panel speech**, as are `(OFF)`, `(O.S.)` and
+  `(O.C.)`. Alice is left out of that panel's cast and of the staging that names her, each
+  relation with a `dropped-relation` note, and her tail ends on the frame on the side she
+  was written to stand, unless the cue names one, `(OP, right)`. A cue for somebody never
+  cast, `PHONE (OP)`, works too. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

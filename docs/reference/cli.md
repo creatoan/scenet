@@ -228,6 +228,7 @@ note as information rather than a red squiggle.
 | `scenet/word-limit` | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |
 | `scenet/panel-count` | note | A comic script's `PAGE ONE (five panels)` names a count its panels do not match |
 | `scenet/looks-like-dialogue` | note | A cue in a comic script with nothing said under it, or a name in capitals with a line under it outside any panel |
+| `scenet/dropped-relation` | note | A shared staging relation left out of a comic-script panel where its actor speaks `(OP)` |
 | `scenet/internal` | error | A failure with no more specific rule — worth reporting |
 
 ### Source positions

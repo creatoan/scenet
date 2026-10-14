@@ -47,6 +47,7 @@ scenet build umbrella.script --strip
 | `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
 | `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
 | `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |
+| `ALICE (OP)` | Dark Horse's off-panel speech: Alice is left out of this panel, and her balloon's tail ends on the frame. `(OFF)`, `(O.S.)` and `(O.C.)` too. |
 | `CAPTION: Midnight.`, `CAP: Midnight.` | A caption box, its text on the same line. |
 | `CAP:` or `CAPTION` (alone) | Dark Horse's form: the caption's text is on the lines under it, to a blank line. |
 | `CAPTION (monologue): ...` | Same, with a caption kind. `(voice over)` is the spoken kind. |
@@ -154,6 +155,24 @@ THEO (whisper):
 Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around
 it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
 It is not a second format: the text of a line is never rewritten.
+
+## Off-panel speech
+
+Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
+`(OFF)`, and screenplays `(O.S.)` or the older `(O.C.)`. All four mean the same here: the line is
+spoken by somebody who is not drawn, and the balloon's tail ends on the frame, on their side —
+see [off-panel speech](../reference/language.md#off-panel-speech).
+
+Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
+`ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
+that names her — `BOB looking_at ALICE` does not apply there, and a `dropped-relation` note says
+so. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
+the cue names one: `ALICE (OP, right)`. Somebody never cast — `PHONE (OP)` — is heard just the
+same, from the side nearer the balloon.
+
+A panel whose own `@cast:` draws her, or in which she speaks both on and off panel, is
+`off-panel-speaker`. A panel `@over:` hers does not inherit her absence: it is worked out from each
+panel's own lines.
 
 ## One panel over another
 

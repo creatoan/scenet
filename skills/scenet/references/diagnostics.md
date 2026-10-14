@@ -28,6 +28,12 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
 
+### `scenet/dropped-relation`
+
+A shared staging relation does not apply in a panel where its actor is off panel. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. A relation the front matter states for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
+
+**Fix:** Nothing to do if that is what the panel means; otherwise draw her in it.
+
 ### `scenet/duplicate-key`
 
 A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
