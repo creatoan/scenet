@@ -121,6 +121,42 @@ class TestTheTail:
         # Within the rounding Panel Core applies to every coordinate.
         assert boundary.distance(ShapelyPoint(balloon.tail.end)) < 0.01
 
+    @pytest.mark.parametrize("side", ["left", "top"])
+    def test_on_a_slanted_panel_it_ends_on_the_side_named(self, side: str):
+        """Straight out from the balloon to that side -- not across to the opposite one.
+
+        The balloon is asked to sit mid-panel, far enough from every edge that a line
+        aimed the wrong way would reach the opposite one.
+        """
+        source = (
+            "page: {size: [1500, 1000], margin: 60, gutter: 30, tier_gutter: 40}\n"
+            "pages:\n  - tiers:\n      - {slant: 14, panels: [a, b]}\n"
+            "panels:\n"
+            "  a:\n    cast: {bob: {reference: bob}}\n"
+            "    script:\n      - say: {by: bob, text: 'Who?'}\n"
+            "  b:\n    cast: {bob: {reference: bob}}\n"
+            "    script:\n"
+            f"      - say: {{by: carol, text: Me., off_panel: {side}, prefer: middle_center}}\n"
+        )
+        (balloon,) = compile_book(source).panels["b"].core.balloons
+        box = balloon.box.as_bbox()
+        end = balloon.tail.end
+        if side == "left":
+            assert end[0] < box.x
+            assert end[1] == pytest.approx(box.centre.y, abs=0.01)
+        else:
+            assert end[1] < box.y
+            assert end[0] == pytest.approx(box.centre.x, abs=0.01)
+
+    def test_it_ends_on_the_frame_not_the_margin(self):
+        """Lettering keeps inside the margin; a pointer to somebody outside the panel does not."""
+        source = "panel: {size: [900, 600], margin: 40}\n" + panel(
+            "{by: carol, text: Over here!, off_panel: left}"
+        ).removeprefix("panel: {size: [900, 600]}\n")
+        (balloon,) = compiled(source).balloons
+        assert balloon.box.as_bbox().x >= 40.0
+        assert balloon.tail.end[0] == pytest.approx(0.0)
+
     def test_it_is_the_same_every_time(self):
         source = panel("{by: carol, text: Over here!, off_panel: true}")
         assert compiled(source).to_json() == compiled(source).to_json()

@@ -9,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import BalloonPlacementError
 from scenet.geom import BBox, Circle, Point, Vector
-from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent
+from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent, Side
 from scenet.solve.balloons import (
     READING_EPSILON,
     W_CAPTION_EDGE,
@@ -25,6 +25,7 @@ from scenet.solve.balloons import (
     _emanata_cost,
     _Limits,
     _mass_cost,
+    _nearer_side,
     _occlusion_cost,
     _reading_order_allows,
     _rim_point,
@@ -606,3 +607,47 @@ class TestPlaceScript:
         assert not _curve_hits(
             balloon.tail.start, balloon.tail.control, balloon.tail.end, [bystander]
         )
+
+
+class TestOffPanel:
+    """A balloon whose speaker is not drawn is placed with what `place_script` was handed."""
+
+    PANEL = BBox(0.0, 0.0, 600.0, 400.0)
+
+    def _unseen(self, text: str = "Over here!") -> SayEvent:
+        return SayEvent(by="carol", text=text, off_panel=Side.LEFT)
+
+    def test_it_is_measured_in_the_face_given(self):
+        italic = load_metrics(str(ITALIC_FONT_PATH))
+        layout = place_script([self._unseen()], {}, self.PANEL, metrics=italic, font_size=12.0)
+        assert layout.balloons[0].block == layout_text("Over here!", font_size=12.0, metrics=italic)
+
+    def test_it_keeps_off_emanata(self):
+        unmarked = place_script([self._unseen()], {}, self.PANEL).balloons[0].box
+        zone = [
+            Point(unmarked.x, unmarked.y),
+            Point(unmarked.right, unmarked.y),
+            Point(unmarked.right, unmarked.bottom),
+            Point(unmarked.x, unmarked.bottom),
+        ]
+        marked = place_script([self._unseen()], {}, self.PANEL, emanata={"a": [zone]})
+        assert marked.balloons[0].box.overlap_area(unmarked) == 0
+
+    def test_no_room_names_the_balloon_and_who_speaks_it(self):
+        cramped = BBox(0.0, 0.0, 30.0, 30.0)
+        with pytest.raises(BalloonPlacementError, match="off panel by 'carol'"):
+            place_script([self._unseen("Far too much to say.")], {}, cramped, font_size=12.0)
+
+
+class TestTheNearerSide:
+    """With no side named, a tail goes to the nearer of left and right -- left on a tie."""
+
+    PANEL = BBox(100.0, 0.0, 600.0, 400.0)
+
+    @pytest.mark.parametrize(
+        ("centre_x", "side"),
+        [(400.0, Side.LEFT), (339.0, Side.LEFT), (401.0, Side.RIGHT), (650.0, Side.RIGHT)],
+    )
+    def test_by_where_the_balloon_went(self, centre_x: float, side: Side):
+        balloon = BBox(centre_x - 20.0, 30.0, 40.0, 20.0)
+        assert _nearer_side(balloon, self.PANEL) is side
