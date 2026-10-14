@@ -203,6 +203,15 @@
   "32-off-panel.knock.debug.svg": "880a7717ffb102562c2f95e55977a8d0fe03555eb9ba60f0f9a8e09c71550ae8",
   "32-off-panel.knock.svg": "2fd0f0106f040b153d9f155a1525b6a0c9bd0c2510b5313af5fc771ee854d71b",
   "32-off-panel.strip.svg": "919a36d1543537399e067eefb54f8d7b1e6bf1ccc4e49a24180866d00796fe52",
+  "33-planche.1.debug.svg": "61231c27ca5b1a0f76769b02bef0b6266d428d05cf8de4e29aff1793efe5ad9b",
+  "33-planche.1.svg": "ba4d083239048c97e05b1232efaa68eefc403d1f2dd6f7d55b69cd3abe38a27d",
+  "33-planche.2.debug.svg": "e048e8a027ff46e8c9612bafaa41015a57554a5344967906665ea64e642c9153",
+  "33-planche.2.svg": "ab908345ad520fb8b105f3dc721632fb9ab5c96389e947924655815a171a2cbd",
+  "33-planche.3.debug.svg": "2fd8dc271b9bb24f5002bc7f3c2108e377c4157ced47a338ecb25f1fea73d4e6",
+  "33-planche.3.svg": "9fa1e50c5dbf454bd67f199f0b3a8b6d144023b4ca8d9c63dff9990776cff83e",
+  "33-planche.page-1.debug.svg": "0c28f0f461971774ff31e4c95f0a003b8faec12fd6e2c5bf16128e760d2e77f0",
+  "33-planche.page-1.svg": "c8db529da949789d5f0e1329cfc34d9d67f7fd7096275830b3601432e37e1e64",
+  "33-planche.strip.svg": "7756807be20ebc1b5adb3946cc42100de917298159b8d75b124e3272a568e1bf",
   "live-text/01-two-characters.svg": "6f733a4f4c58105446db08530a16447d7aaa45a7bb7c456bb0c27bda0e4dbb65",
   "live-text/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "live-text/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -312,5 +321,10 @@
   "live-text/31-dark-horse.strip.svg": "6b340e5b1727671ca77b858b44e75b912d9fef714b54a36b35f7555d763acac3",
   "live-text/32-off-panel.answer.svg": "d941c026013405b7170eb14058462b6ca39c719edc2bacdb59cbfd8c4b146dd1",
   "live-text/32-off-panel.knock.svg": "717ce434eb7b8b60d89eaad8c847ee4dd8cd41848bef648a27118a0c13486886",
-  "live-text/32-off-panel.strip.svg": "9940b4f48aa9c4bb0cf854caeb17564c9a61ce9e357f76a07d766aa9cb4ce52c"
+  "live-text/32-off-panel.strip.svg": "9940b4f48aa9c4bb0cf854caeb17564c9a61ce9e357f76a07d766aa9cb4ce52c",
+  "live-text/33-planche.1.svg": "18df6fd51635bdf40602c3d6c567b9c813eccd99fd507e2c5f6bc303b858cb0d",
+  "live-text/33-planche.2.svg": "ec134b9daa4e1ebd3a614ea751370ae3319cdbe55b9f7ebabbab4f6cf781443a",
+  "live-text/33-planche.3.svg": "a8a5e9304df24c24d517fb05cd95088176ebaa30b17a3277a1b1d79f6ecd9347",
+  "live-text/33-planche.page-1.svg": "e1172590a7987f7fb87ea5a8313d6ed351c9c315c46e75bb5d6da3133a70b1de",
+  "live-text/33-planche.strip.svg": "7a862d5d0664802068fbec10687d631bbcf2aca3f4c1a7042db019db7c1e3fc6"
 }

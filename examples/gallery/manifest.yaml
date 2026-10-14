@@ -100,3 +100,6 @@ examples:
   - file: 32-off-panel.scene.yaml
     title: "Off-panel speech: a tail to the frame, for somebody nobody draws"
     kind: scene
+  - file: 33-planche.script
+    title: "A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans"
+    kind: script
