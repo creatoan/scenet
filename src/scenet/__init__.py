@@ -127,6 +127,7 @@ from scenet.ir import (
     StackedPanel,
     Tier,
     TimeOfDay,
+    TypeSize,
     Weather,
 )
 from scenet.pipeline import (
@@ -225,6 +226,7 @@ __all__ = [
     "SettingSpec",
     "Spans",
     "TimeOfDay",
+    "TypeSize",
     "Weather",
     # -- puppets -------------------------------------------------------------
     "Landmark",

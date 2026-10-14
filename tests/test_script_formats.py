@@ -339,6 +339,10 @@ class TestVoiceOver:
     def test_inline_too(self):
         assert only("PANEL 1\nALICE (VO): Never.\n") == [("caption", "ALICE", "spoken", "Never.")]
 
+    def test_nor_small_type(self):
+        with pytest.raises(ScriptSyntaxError, match="voice over"):
+            panels("PANEL 1\nALICE (V.O., small)\nHm.\n")
+
     def test_a_voice_over_has_no_balloon_to_whisper_in(self):
         with pytest.raises(ScriptSyntaxError, match="voice over") as raised:
             panels("PANEL 1\nALICE (V.O., whisper)\nHm.\n")

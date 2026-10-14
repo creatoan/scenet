@@ -26,6 +26,17 @@ reported with its rule and its place, as SARIF `note`, so an editor shows it as 
 and never fails anything. `--deep` runs on a document with notes, since notes do not stop the
 compile it would run.
 
+## Small and weak lettering are one size
+
+Dark Horse names `(small)` and `(weak)` beside `(burst)`. Blambot defines small dialogue by its
+effect — "a reduced font size is used when a character mutters something" — and the balloon stays
+the size it would have been, so the line reads as said quietly rather than as a small balloon.
+`say.size: small` is exactly that: type at three quarters of the panel's dialogue size, padded as
+normal type would be. Blambot's script guide reads `(WEAK)` as "dialogue should be diminished", so
+a weak line is small too. Comicraft also letters weak dialogue in an erratic hand; that is not
+drawn, since no source fixes what the hand should be, and drawing an invented one would be worse
+than drawing none.
+
 ## An off-panel speaker is not in the cast
 
 Off-panel speech needs a speaker who is not drawn, and every speaker used to have to be in the cast

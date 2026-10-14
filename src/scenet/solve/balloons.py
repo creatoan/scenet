@@ -47,10 +47,12 @@ from scenet.ir import (
     SfxEvent,
     Side,
     TimeOfDay,
+    TypeSize,
 )
 from scenet.solve.backdrop import LADDER, ResolvedBackdrop, contrast_ratio
 from scenet.solve.sfx import PlacedEffect, place_effects
 from scenet.solve.text import (
+    PADDING_FACTOR,
     FontMetrics,
     TextBlock,
     Typeface,
@@ -111,6 +113,12 @@ CAPTION_FONT_SIZE_FRACTION = 0.030
 # generous because the outline is a curve pulling away from the text at the corners; a
 # rectangle does not, so the same padding would look slack.
 CAPTION_PADDING_FACTOR = 0.42
+
+#: Small lettering against the panel's dialogue size: a step down a letterer would make
+#: by eye, as the caption size is one. The balloon keeps the padding the normal size
+#: would have, which is what makes small type read as muttered rather than as a
+#: smaller balloon.
+SMALL_TYPE_FRACTION = 0.75
 
 # How strongly a caption is drawn to the panel edge. The opposite sign to `W_EDGE`:
 # tucking into a corner is where a caption belongs, not a compromise it settles for.
@@ -901,6 +909,7 @@ def place_script(
             placed.append(captions[-1].box)
             continue
 
+        lettering = _Lettering.of(event, size)
         if event.off_panel is not False:
             balloons.append(
                 _place_off_panel(
@@ -913,7 +922,7 @@ def place_script(
                     panel=panel,
                     frame=_Frame(bounds or panel, outline),
                     placed=placed,
-                    font_size=size,
+                    lettering=lettering,
                     typeface=family,
                     masses=masses,
                     emanata=marks,
@@ -933,7 +942,7 @@ def place_script(
                 faces=faces,
                 panel=panel,
                 placed=placed,
-                font_size=size,
+                lettering=lettering,
                 typeface=family,
                 masses=masses,
                 emanata=marks,
@@ -955,7 +964,7 @@ def _place_balloon(
     faces: list[Circle],
     panel: BBox,
     placed: list[BBox],
-    font_size: float,
+    lettering: "_Lettering",
     typeface: Typeface,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
@@ -963,8 +972,8 @@ def _place_balloon(
 ) -> PlacedBalloon:
     """Choose a position for one balloon and route its tail."""
     speaker = actors[event.by]
-    block = layout_text(styled(event.text), font_size=font_size, typeface=typeface)
-    balloon_box = balloon_size(block)
+    block = layout_text(styled(event.text), font_size=lettering.font_size, typeface=typeface)
+    balloon_box = balloon_size(block, lettering.padding_factor)
 
     best: BBox | None = None
     best_cost = math.inf
@@ -1009,6 +1018,25 @@ def _place_balloon(
 
 
 @dataclass(frozen=True, slots=True)
+class _Lettering:
+    """How one balloon is lettered: its type size, and the padding that goes around it."""
+
+    font_size: float
+    padding_factor: float = PADDING_FACTOR
+
+    @classmethod
+    def of(cls, event: SayEvent, size: float) -> "_Lettering":
+        """A line's lettering, against the panel's dialogue size.
+
+        Small type keeps the padding normal type would have -- the balloon keeps its
+        room -- so its factor grows as its size shrinks.
+        """
+        if event.size is TypeSize.SMALL:
+            return cls(size * SMALL_TYPE_FRACTION, PADDING_FACTOR / SMALL_TYPE_FRACTION)
+        return cls(size)
+
+
+@dataclass(frozen=True, slots=True)
 class _Frame:
     """The edge an off-panel speaker's tail ends on: the panel's rectangle, or its outline."""
 
@@ -1037,7 +1065,7 @@ def _place_off_panel(
     panel: BBox,
     frame: _Frame,
     placed: list[BBox],
-    font_size: float,
+    lettering: "_Lettering",
     typeface: Typeface,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
@@ -1053,8 +1081,8 @@ def _place_off_panel(
     "the tail of the balloon generally butts against the panel border".
     """
     named = event.off_panel if isinstance(event.off_panel, Side) else None
-    block = layout_text(styled(event.text), font_size=font_size, typeface=typeface)
-    balloon_box = balloon_size(block)
+    block = layout_text(styled(event.text), font_size=lettering.font_size, typeface=typeface)
+    balloon_box = balloon_size(block, lettering.padding_factor)
     prefer = event.prefer or (_SIDE_ZONES[named] if named is not None else PlacementZone.TOP_LEFT)
 
     best: BBox | None = None

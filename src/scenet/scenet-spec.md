@@ -444,6 +444,7 @@ script:
 | `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
+| `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
 | `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
@@ -1057,6 +1058,7 @@ scenet build umbrella.script --strip
 | `Panel 1. Alice and Bob on a corner.` | Dark Horse's form: the panel, and its description on the same line. |
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
+| `BOB (small)` | Muttered: smaller type, in a balloon that keeps its room. `(weak)` is the same. |
 | `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
 | `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
 | `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |
@@ -1964,7 +1966,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n    size: `small` for a line muttered, said under the breath or weakly: smaller type,\n        in a balloon with the room it would have had.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
       "properties": {
         "by": {
           "title": "By",
@@ -1996,6 +1998,10 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null
+        },
+        "size": {
+          "$ref": "#/$defs/TypeSize",
+          "default": "normal"
         },
         "text": {
           "minLength": 1,
@@ -2168,6 +2174,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "night"
       ],
       "title": "TimeOfDay",
+      "type": "string"
+    },
+    "TypeSize": {
+      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.\n\nDark Horse lists \"(small), (burst), and (weak)\" among the common indications for\nmodified lettering. Blambot, *Small Dialogue / Big Balloon*: \"A reduced font size is\nused when a character mutters something, says something to him/herself, or speaks\nsheepishly\" -- smaller type, in the room the balloon would have had.",
+      "enum": [
+        "normal",
+        "small"
+      ],
+      "title": "TypeSize",
       "type": "string"
     },
     "Weather": {
@@ -3667,6 +3682,8 @@ CAP/MAYA
 # ends on the frame, on the speaker's side -- "the tail of the balloon generally butts
 # against the panel border" (Blambot) -- named, or, with `off_panel: true`, the nearer of
 # left and right to where the balloon was put.
+#
+# Bob mutters his answer: `size: small` letters it smaller, in a balloon that keeps its room.
 
 panel: {size: [900, 600]}
 setting: {place: room, time: night}
@@ -3686,7 +3703,7 @@ panels:
     camera: {shot: close_up}
     script:
       - say: {by: upstairs, text: "Is everything all right?", off_panel: top}
-      - say: {by: bob, text: "Fine. Go back to sleep."}
+      - say: {by: bob, text: "Fine. Go back to sleep.", size: small}
       - say: {by: caller, text: "Then open the door.", off_panel: bottom}
       - say: {by: caller, text: "I know you're there.", off_panel: true}
 ```

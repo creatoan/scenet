@@ -44,6 +44,7 @@ scenet build umbrella.script --strip
 | `Panel 1. Alice and Bob on a corner.` | Dark Horse's form: the panel, and its description on the same line. |
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
+| `BOB (small)` | Muttered: smaller type, in a balloon that keeps its room. `(weak)` is the same. |
 | `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
 | `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
 | `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |

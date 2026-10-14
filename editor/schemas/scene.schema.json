@@ -739,7 +739,7 @@
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n    size: `small` for a line muttered, said under the breath or weakly: smaller type,\n        in a balloon with the room it would have had.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
       "properties": {
         "by": {
           "title": "By",
@@ -771,6 +771,10 @@
             }
           ],
           "default": null
+        },
+        "size": {
+          "$ref": "#/$defs/TypeSize",
+          "default": "normal"
         },
         "text": {
           "minLength": 1,
@@ -1017,6 +1021,15 @@
         "night"
       ],
       "title": "TimeOfDay",
+      "type": "string"
+    },
+    "TypeSize": {
+      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.\n\nDark Horse lists \"(small), (burst), and (weak)\" among the common indications for\nmodified lettering. Blambot, *Small Dialogue / Big Balloon*: \"A reduced font size is\nused when a character mutters something, says something to him/herself, or speaks\nsheepishly\" -- smaller type, in the room the balloon would have had.",
+      "enum": [
+        "normal",
+        "small"
+      ],
+      "title": "TypeSize",
       "type": "string"
     },
     "Weather": {

@@ -56,6 +56,9 @@ below 1.0 means.
   relation with a `dropped-relation` note, and her tail ends on the frame on the side she
   was written to stand, unless the cue names one, `(OP, right)`. A cue for somebody never
   cast, `PHONE (OP)`, works too. (Part of #75)
+- **Small lettering.** `say: {..., size: small}` letters a line at three quarters of the
+  dialogue size, in a balloon padded as the normal size would be: muttered, as Blambot
+  describes it. A comic script's `(small)` and `(weak)` give it. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

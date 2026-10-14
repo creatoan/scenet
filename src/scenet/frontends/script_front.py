@@ -132,6 +132,11 @@ VOICE_OVER = {"v.o.", "vo", "voice over", "voice-over", "voiceover"}
 # spelling `(O.C.)`. The speaker is in the scene but not in the frame.
 OFF_PANEL = {"op", "off", "o.s.", "os", "o.c.", "oc", "off-panel", "off panel", "offpanel"}
 
+# Dark Horse's `(small)`, and `(weak)`, which Blambot reads as "dialogue should be
+# diminished": smaller type. Comicraft's weak lettering is also erratic; that hand is
+# not drawn.
+SMALL_TYPE = {"small", "weak"}
+
 # The side of the frame an off-panel speaker is on, when a cue names it: `(OP, left)`.
 SIDES = {side.value: side for side in Side}
 
@@ -894,10 +899,12 @@ def _line_for(
                 line=number,
                 rule="invalid-field",
             )
-        if kinds:
+        small = [word for word in modifiers if word in SMALL_TYPE]
+        if kinds or small:
+            what = kinds[0].value if kinds else small[0]
             raise ScriptSyntaxError(
                 f"line {number}: {name} speaks in voice over, which is lettered as a caption "
-                f"and has no balloon to {kinds[0].value} in",
+                f"and has no balloon to be {what} in",
                 source=source,
                 line=number,
                 rule="invalid-field",
@@ -913,6 +920,8 @@ def _line_for(
         )
     kind = kinds[0] if kinds else BalloonKind.SPEECH
     payload: dict[str, Any] = {"by": name, "kind": kind.value}
+    if any(word in SMALL_TYPE for word in modifiers):
+        payload["size"] = "small"
     if off_panel:
         # A side is only a side beside a marker: `(left)` alone is a note for the artist.
         side = next((SIDES[word] for word in modifiers if word in SIDES), None)

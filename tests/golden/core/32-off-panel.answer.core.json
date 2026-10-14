@@ -575,15 +575,15 @@
     },
     {
       "box": {
-        "height": 75.6,
-        "width": 140.39,
-        "x": 740.75,
-        "y": 367.71
+        "height": 62.48,
+        "width": 111.06,
+        "x": 738.4,
+        "y": 367.22
       },
-      "font_size": 21.0,
+      "font_size": 15.75,
       "id": "b1",
       "kind": "speech",
-      "line_height": 26.25,
+      "line_height": 19.69,
       "lines": [
         "Fine. Go back",
         "to sleep."
@@ -593,12 +593,12 @@
       "tail": {
         "control": null,
         "end": [
-          673.87,
-          388.23
+          675.61,
+          385.23
         ],
         "start": [
-          740.75,
-          396.66
+          738.4,
+          392.25
         ],
         "width": 14.0
       }

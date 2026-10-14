@@ -4,6 +4,8 @@
 # ends on the frame, on the speaker's side -- "the tail of the balloon generally butts
 # against the panel border" (Blambot) -- named, or, with `off_panel: true`, the nearer of
 # left and right to where the balloon was put.
+#
+# Bob mutters his answer: `size: small` letters it smaller, in a balloon that keeps its room.
 
 panel: {size: [900, 600]}
 setting: {place: room, time: night}
@@ -23,6 +25,6 @@ panels:
     camera: {shot: close_up}
     script:
       - say: {by: upstairs, text: "Is everything all right?", off_panel: top}
-      - say: {by: bob, text: "Fine. Go back to sleep."}
+      - say: {by: bob, text: "Fine. Go back to sleep.", size: small}
       - say: {by: caller, text: "Then open the door.", off_panel: bottom}
       - say: {by: caller, text: "I know you're there.", off_panel: true}

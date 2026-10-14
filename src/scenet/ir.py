@@ -205,6 +205,19 @@ class AnchorX(StrEnum):
     RIGHT_EDGE = "right_edge"
 
 
+class TypeSize(StrEnum):
+    """How large a line of dialogue is lettered, against the panel's dialogue size.
+
+    Dark Horse lists "(small), (burst), and (weak)" among the common indications for
+    modified lettering. Blambot, *Small Dialogue / Big Balloon*: "A reduced font size is
+    used when a character mutters something, says something to him/herself, or speaks
+    sheepishly" -- smaller type, in the room the balloon would have had.
+    """
+
+    NORMAL = "normal"
+    SMALL = "small"
+
+
 class Side(StrEnum):
     """A side of the panel's frame: where an off-panel speaker is.
 
@@ -888,6 +901,8 @@ class SayEvent(Strict):
         off_panel: Whether the speaker is off panel: `true`, or the side of the frame
             they are on. The tail then ends on the frame -- on that side, or, with none
             named, on the nearer of left and right to where the balloon is put.
+        size: `small` for a line muttered, said under the breath or weakly: smaller type,
+            in a balloon with the room it would have had.
 
     Script order **is** reading order, and reading order is a hard constraint. Reorder
     these and you reorder the panel.
@@ -899,6 +914,7 @@ class SayEvent(Strict):
     prefer: PlacementZone | None = None
     kind: BalloonKind = BalloonKind.SPEECH
     off_panel: bool | Side = False
+    size: TypeSize = TypeSize.NORMAL
 
     @field_validator("off_panel", mode="before")
     @classmethod
