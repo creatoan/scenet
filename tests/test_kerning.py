@@ -355,4 +355,5 @@ class TestNames:
         assert (metrics.family, metrics.style) == ("Tested", "Regular")
 
     def test_the_style_is_read_from_the_font(self):
-        assert load_metrics(str(ITALIC_FONT_PATH)).style == "Italic"
+        # Built here, not through the cache: a cached face never runs the constructor.
+        assert FontMetrics(ITALIC_FONT_PATH).style == "Italic"
