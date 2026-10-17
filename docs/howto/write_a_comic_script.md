@@ -277,6 +277,9 @@ A panel whose own `@cast:` draws her, or in which she speaks both on and off pan
 `off-panel-speaker`. A panel `@over:` hers does not inherit her absence: it is worked out from each
 panel's own lines.
 
+To leave somebody out of a panel who says nothing in it, write `@cast: {BOB: null}` there. As in
+YAML, the relations that name him go with him, each with a `dropped-relation` note.
+
 ## One panel over another
 
 Consecutive panels share nearly everything — the place, the weather, who stands where — and

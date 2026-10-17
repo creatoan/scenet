@@ -49,7 +49,7 @@ from pydantic_core import ErrorDetails
 
 from scenet import __version__
 from scenet.assets.contract import PuppetLibrary, default_library
-from scenet.compose import merge, resolve_overrides
+from scenet.compose import merge, relation_text, resolve_overrides, settle
 from scenet.emphasis import plain
 from scenet.errors import (
     BalloonPlacementError,
@@ -393,13 +393,14 @@ RULES: dict[str, Rule] = {
         help="Leave the speaker out of this panel's cast, or drop off_panel.",
     ),
     "dropped-relation": Rule(
-        summary="A shared staging relation does not apply in a panel where its actor is off panel",
+        summary="A shared staging relation does not apply in a panel its actor is left out of",
         description=(
             "A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the "
-            "scene, not in the frame. A relation the front matter states for every panel -- "
-            "`ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not "
-            "drawn, so it is left out of that panel. A note, since that changes what the "
-            "panel stages: Bob is placed, and looks, without her."
+            "scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that "
+            "would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated "
+            "for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold "
+            "where she is not drawn, so it is left out of that panel. A note, since that "
+            "changes what the panel stages: Bob is placed, and looks, without her."
         ),
         help="Nothing to do if that is what the panel means; otherwise draw her in it.",
         level="note",
@@ -909,6 +910,22 @@ def _diagnose_panel(
     Returns:
         Findings, unsorted.
     """
+    data, dropped = settle(data)
+    notes = [
+        Diagnostic(
+            rule="dropped-relation",
+            message=(
+                f"'{relation_text(item.relation)}' does not apply in this panel, which leaves "
+                f"{item.actor} out of it"
+            ),
+            path=(*prefix, "cast", item.actor),
+            source=source,
+            region=locate(text, (*prefix, "cast", item.actor))
+            or locate(text, prefix)
+            or DOCUMENT_START,
+        )
+        for item in dropped
+    ]
     try:
         normalised = normalise(data)
     except ScenetError as exc:
@@ -938,7 +955,7 @@ def _diagnose_panel(
             )
         ]
 
-    found = _diagnose_cast(panel, text, source, prefix=prefix, library=library)
+    found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
     if _errors(found):
         # A cast that does not resolve is not a document `--deep` can usefully

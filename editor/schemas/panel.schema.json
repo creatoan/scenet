@@ -682,7 +682,15 @@
     },
     "cast": {
       "additionalProperties": {
-        "$ref": "#/$defs/CastMember"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/CastMember"
+          },
+          {
+            "description": "Leaves a cast member this panel would inherit out of it, and every staging relation that names them.",
+            "type": "null"
+          }
+        ]
       },
       "title": "Cast",
       "type": "object"

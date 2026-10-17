@@ -483,8 +483,10 @@ balloon is placed as a caption is — no mouth to stay near — under the same r
 face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
 to the panel's outline when it is slanted.
 
-A scene whose panels share a cast through `over:` cannot leave one member out of one panel, since an
-override cannot delete; write that panel's cast out in full. A comic script can, with `(OP)`.
+A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
+`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
+See [Leaving something out](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#leaving-something-out). A comic script
+does it with `(OP)`.
 
 ### `caption`
 
@@ -1303,6 +1305,9 @@ A panel whose own `@cast:` draws her, or in which she speaks both on and off pan
 `off-panel-speaker`. A panel `@over:` hers does not inherit her absence: it is worked out from each
 panel's own lines.
 
+To leave somebody out of a panel who says nothing in it, write `@cast: {BOB: null}` there. As in
+YAML, the relations that name him go with him, each with a `dropped-relation` note.
+
 ## One panel over another
 
 Consecutive panels share nearly everything — the place, the weather, who stands where — and
@@ -1478,7 +1483,7 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 ### `scenet/dropped-relation`
 
-A shared staging relation does not apply in a panel where its actor is off panel. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. A relation the front matter states for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
+A shared staging relation does not apply in a panel its actor is left out of. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
 
 **Fix:** Nothing to do if that is what the panel means; otherwise draw her in it.
 
@@ -2324,7 +2329,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "cast": {
       "additionalProperties": {
-        "$ref": "#/$defs/CastMember"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/CastMember"
+          },
+          {
+            "description": "Leaves a cast member this panel would inherit out of it, and every staging relation that names them.",
+            "type": "null"
+          }
+        ]
       },
       "title": "Cast",
       "type": "object"

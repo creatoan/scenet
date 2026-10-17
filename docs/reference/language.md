@@ -403,8 +403,10 @@ balloon is placed as a caption is — no mouth to stay near — under the same r
 face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
 to the panel's outline when it is slanted.
 
-A scene whose panels share a cast through `over:` cannot leave one member out of one panel, since an
-override cannot delete; write that panel's cast out in full. A comic script can, with `(OP)`.
+A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
+`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
+See [Leaving something out](../howto/compile_a_sequence.md#leaving-something-out). A comic script
+does it with `(OP)`.
 
 ### `caption`
 

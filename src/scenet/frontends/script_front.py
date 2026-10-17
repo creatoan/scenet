@@ -46,7 +46,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import OVER_KEY, merge, resolve_overrides
+from scenet.compose import OVER_KEY, merge, names, relation_text, resolve_overrides, settle
 from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import (
     errors_of,
@@ -1784,7 +1784,7 @@ def _off_panel(
     if isinstance(staging, list):
         kept = []
         for index, relation in enumerate(staging):
-            named = next((speaker for speaker in leaving if _names(relation, speaker)), None)
+            named = next((speaker for speaker in leaving if names(relation, speaker)), None)
             if named is None:
                 kept.append(relation)
                 continue
@@ -1793,7 +1793,7 @@ def _off_panel(
                 ScriptNote(
                     rule="dropped-relation",
                     message=(
-                        f"line {line}: '{_relation_text(relation)}' does not apply in PANEL "
+                        f"line {line}: '{relation_text(relation)}' does not apply in PANEL "
                         f"{name}, where {named} speaks from off panel and is not drawn"
                     ),
                     line=line,
@@ -1813,23 +1813,6 @@ def _on_their_side(event: dict[str, Any], cast: dict[str, Any]) -> dict[str, Any
     at = str(member.get("at", "")) if isinstance(member, dict) else ""
     side = next((value for value in ("left", "right") if at.startswith(value)), None)
     return event if side is None else {"say": {**say, "off_panel": side}}
-
-
-def _names(relation: object, actor: str) -> bool:
-    """Whether a staging relation, as written, names an actor as subject or object."""
-    if isinstance(relation, str):
-        words = relation.split()
-        return bool(words) and actor in (words[0], words[-1])
-    if isinstance(relation, dict):
-        return actor in (relation.get("subject"), relation.get("object"))
-    return False
-
-
-def _relation_text(relation: object) -> str:
-    """A staging relation as a sentence, however it was written."""
-    if isinstance(relation, dict):
-        return " ".join(str(relation.get(key, "")) for key in ("subject", "predicate", "object"))
-    return str(relation)
 
 
 def _over_target(target: str, name: str, draft: _PanelDraft, names: Collection[str]) -> str:
@@ -1895,7 +1878,22 @@ def _validate(
     composed = _composed(panels, source)
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
-        combined = _off_panel(merge(front_matter, composed[name]), name, draft, notes, source)
+        settled, dropped = settle(merge(front_matter, composed[name]))
+        line = draft.directive_lines.get(("cast",)) or draft.directive_lines.get((OVER_KEY,))
+        line = line or draft.line
+        notes.extend(
+            ScriptNote(
+                rule="dropped-relation",
+                message=(
+                    f"line {line}: '{relation_text(item.relation)}' does not apply in PANEL "
+                    f"{name}, which leaves {item.actor} out of it"
+                ),
+                line=line,
+                path=(name, "staging", item.index),
+            )
+            for item in dropped
+        )
+        combined = _off_panel(settled, name, draft, notes, source)
         try:
             result[name] = PanelIR.model_validate(normalise(combined))
         except PanelSyntaxError as exc:

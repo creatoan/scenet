@@ -66,6 +66,11 @@ below 1.0 means.
   *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
   and *plongée*, *contre-plongée*. Both highlighters follow, and the gallery gains
   `33-planche.script`. (Part of #75)
+- **`null` leaves an inherited cast member out of a panel**: `cast: {bob: null}` in a scene's
+  panel, under `over:` or over the scene's defaults, or `@cast: {BOB: null}` in a script. It
+  follows JSON Merge Patch (RFC 7386), "If the value is null, remove". The staging relations
+  that name him go too, each a `dropped-relation` note, and the JSON Schema accepts the `null`.
+  (Part of #75)
 - **French delivery words**, from the BnF's sheet on balloons: `(murmure)` and `(chuchoté)` are
   a whisper, `(cri)` and `(crié)` a shout, `(à voix basse)` small type. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet

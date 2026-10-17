@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import merge, resolve_overrides
+from scenet.compose import merge, resolve_overrides, settle
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
     LAYOUT_KEYS,
@@ -73,6 +73,7 @@ def _validate_panel(data: dict[str, Any], source: Path | None) -> PanelIR:
     Raises:
         PanelSyntaxError: The document is well-formed YAML but not a valid panel.
     """
+    data, _ = settle(data)
     try:
         return PanelIR.model_validate(normalise(data))
     except PanelSyntaxError as exc:
