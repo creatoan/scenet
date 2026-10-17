@@ -326,23 +326,41 @@ these 11 are accepted, numbered as in run `38642945474`:
 | `_edge_point` 31 | `or centre.y` to `and centre.y` | For left and right the line's height is the centre's either way. For top and bottom the line collapses to a point, crosses nothing, and falls back to the rectangle's edge -- which is where it would have crossed, because a slant leans only the gutters: a panel's top and bottom stay level. |
 | `_edge_point` 47, 53, 54, 57, 60, 64, 66 | the handling of several crossings, or none | The line runs from the balloon, inside the outline, to beyond it, and a panel's outline is convex, so it crosses exactly once: a single point, which has `coords` and no `geoms`. |
 
-**`solve/text.py`** -- triaged: of the 50 survivors, 36 are killed by tests in
-`tests/test_text.py`, and these 14 are accepted. Most of the 36 were in `FontMetrics`'s
-constructor, and survived for a reason worth knowing: `load_metrics` is cached, so a test
-that measures only through it uses the instance built at import and never runs the
-constructor under a mutant. The tests now build one of their own.
+**`solve/text.py`** -- triaged twice. The first pass, before kerning, killed 36 of 50
+survivors; most were in `FontMetrics`'s constructor, and survived for a reason worth knowing:
+`load_metrics` is cached, so a test that measures only through it uses the instance built at
+import and never runs the constructor under a mutant. The tests build one of their own.
+
+Kerning, an author's own face and dashes that keep to their word brought it to 81 survivors
+in run `39038961474`, whose numbers are the ones below. 37 are killed by tests in
+`tests/test_kerning.py` and `tests/test_text.py`. Kerning is the reason most of those exist:
+a font in every shape a reader must handle -- Apple's `kern` table, a skipped subtable before
+a kept one, a `latn` script beside `DFLT`, two lookups kerning one pair, a class row shorter
+than its classes, a font with no `name` table -- is built in the test, since the shipped
+faces are none of them. These 44 are accepted:
 
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
-| `FontMetrics.__init__` 4, 6, 8 | `lazy=True` to `None`, `False`, or left out | Laziness decides when fontTools parses a table, not what it reads from it. |
-| `FontMetrics.__init__` 27, 29, 32 | the default for a missing `.notdef` changed | Every TrueType font has a `.notdef`, glyph 0, with an advance in `hmtx`, so the default is never used. |
-| `FontMetrics.advance` 6, 8, 10 | the default for a glyph with no advance changed, or always looked up | Every glyph the character map names has an advance in `hmtx`; a character with no glyph looks up `None`, which is not a glyph name, and gets `.notdef` either way. |
-| `FontMetrics.glyph_outlines` 6 | `name is None or name not in glyph_set` to `and` | Every glyph the character map names is in the glyph set, so the second test only ever agrees with the first. |
-| `candidate_measures` 16 | runs end one word further | The extra run repeats `words[start:]`, a width already in the set. |
-| `layout_text` 18 | `line_widths=()` left out | `()` is its default. |
-| `layout_text` 73 | `score < best_score` to `<=` | An exact tie between two different wrappings needs two different blocks to score the same float; equal wrappings tie, and either is the same block. |
-| `layout_text` 91 | the fallback joins words with `XX XX` | The fallback is reached only when every block is 0 wide. With two words or more, the space between them has width, so the fallback only ever sets one word. |
-| `_keep_marks_with_their_words` 8, 11, 13 | `strict=True` to `None`, `False`, or left out | `_words` gives one gap fewer than words, always, so the two lists never differ in length and `strict` never has anything to refuse. Numbered as in run `39038961474`. |
+| `FontMetrics.__init__` 8, 10, 12 | `lazy=True` to `None`, `False`, or left out | Laziness decides when fontTools parses a table, not what it reads from it. |
+| `FontMetrics.__init__` 31, 33, 36 | the default for a missing `.notdef` changed | Every TrueType font has a `.notdef`, glyph 0, with an advance in `hmtx`, so the default is never used. |
+| `FontMetrics._raw_advance` 5, 7, 9 | the default for a glyph with no advance changed, or always looked up | Every glyph the character map names has an advance in `hmtx`; a character with no glyph looks up `None`, which is not a glyph name, and gets `.notdef` either way. |
+| `FontMetrics._pair` 1, 2, 20 | the cache never hit, or written as `None` | The cache only saves work: a miss computes the same sum again. |
+| `FontMetrics.glyph_outlines` 20 | `name is None or name not in glyph_set` to `and` | Every glyph the character map names is in the glyph set, so the second test only ever agrees with the first. |
+| `Typeface.face` 4 | the regular face loaded through its file path | `SHIPPED_FACES` names the same file `load_metrics()` opens: a second cache entry, the same metrics. |
+| `Typeface.measure` 26, 29, 30; `_pair_table` 6, 9, 10 | `strict=True` to `None`, `False`, or left out | A `Styled` refuses faces that do not match its characters one for one, and a PairPos format 1 has one pair set per covered glyph, so neither `zip` has anything to refuse. |
+| `_x_advance` 5 | the default `0` to `None` | Followed by `or 0`: a record with no `XAdvance` is zero either way. |
+| `_legacy_kerning` 7, 10 | the default for a table with no `kernTables` | fontTools always gives a `kern` table its `kernTables`, an empty list at least. |
+| `_legacy_kerning` 20, 29, 32, 35, 40, 43, 46 | the defaults for a subtable's `format`, `coverage` and `apple` | Every subtable fontTools reads has a `format`, and a format 0 one -- the only kind read further -- always has its `coverage` and `apple`. |
+| `_legacy_kerning` 52 | the Apple mask `0xC0` to `0xC1` | Bit 0 of Apple's coverage flags is reserved, and zero. |
+| `_words` 4 | the first gap's face `None` | A gap is recorded only after whitespace has set its face. |
+| `_words` 20 | the last word sliced to `None` instead of the length | The same slice. |
+| `_candidates` 17, 19; `candidate_measures` 15, 17 | runs that end before they start, or a gap too many | An empty run measures the one word `_line` starts from, a width already in the set; a gap past the last word is never read. |
+| `layout_text` 16 | the line height taken from the regular face | Line height is the size times a fixed factor, the same for every face. |
+| `layout_text` 34 | `line_widths=()` left out | `()` is its default. |
+| `layout_text` 96 | `score < best_score` to `<=` | An exact tie between two different wrappings needs two different blocks to score the same float; equal wrappings tie, and either is the same block. |
+| `layout_text` 101 | the fallback line built with no gaps | The fallback is reached only when every block is 0 wide. With two words or more, the space between them has width, so the fallback only ever sets one word -- and one word has no gap to read. |
+| `_keep_marks_with_their_words` 8, 11, 13 | `strict=True` to `None`, `False`, or left out | `_words` gives one gap fewer than words, always, so the two lists never differ in length and `strict` never has anything to refuse. |
+
 **`solve/page.py`** -- triaged: of the 49 survivors, 26 are killed by tests in
 `tests/test_page_solver.py`, which call the solver's pieces directly at the edges each one
 holds -- an inset that exactly fits, two insets exactly a gutter apart, a lean that leaves
