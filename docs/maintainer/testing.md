@@ -73,7 +73,7 @@ by design: the reference cannot be checked against a cast that did not validate.
 
 `tests/test_golden.py` checks the promise in the reference that two machines produce files
 `cmp` calls equal, which compiling twice in one process cannot see. It builds the whole
-gallery through `scenet build`, in every CI job -- Linux on 3.12 and 3.14, and Windows -- and
+gallery through `scenet build`, in every CI job -- Linux on 3.12, 3.13 and 3.14, and Windows -- and
 compares the bytes on disk with what is committed:
 
 - `tests/golden/core/` holds every Panel Core and Page Core, so a layout change is reviewed

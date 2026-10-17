@@ -50,7 +50,7 @@ git switch -c fix/whatever
 # ... work ...
 git push -u origin fix/whatever
 gh pr create --fill
-gh pr checks --watch      # all six must pass
+gh pr checks --watch      # the required ones must pass
 gh pr merge --squash --delete-branch
 ```
 
@@ -59,7 +59,7 @@ The ruleset requires:
 | Rule | Why |
 |---|---|
 | Pull request required | Nothing reaches `main` without a diff somebody could have read |
-| Six status checks green | Both Python versions, docs, licences, strict types, TypeScript |
+| Seven status checks green | Python 3.12 and 3.14, docs, licences, strict types, TypeScript, the editor end to end |
 | Branch up to date before merge | A green check against a stale base proves nothing |
 | Linear history | `main` stays bisectable; a regression can be found by halving |
 | No force push, no deletion | History is evidence |
@@ -92,7 +92,8 @@ These are enforced by tests, not by good intentions:
 
 ## Python version floor
 
-The floor is **3.12**, and CI runs the suite on both 3.12 and 3.14. This is not
+The floor is **3.12**, and CI runs the suite on 3.12, 3.13 and 3.14 -- every version
+`pyproject.toml` lists as supported, which a test holds it to. The floor is not
 decoration. Before Python 3.14 and PEP 649, annotations are evaluated at definition time,
 so a self-referential `-> Point` inside `class Point` raises `NameError` at import.
 Developing only on 3.14 hides that completely — it first surfaced in the browser, where

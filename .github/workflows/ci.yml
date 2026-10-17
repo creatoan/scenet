@@ -39,7 +39,11 @@ jobs:
         # `class Point` raises NameError at import. Developing only on 3.14 hides that
         # entirely -- it surfaced first in the browser, where Pyodide ran an older
         # Python. This job is what stops it coming back.
-        python: ["3.12", "3.14"]
+        #
+        # 3.13 sits between them and has nothing of its own to catch, but pyproject.toml
+        # lists it to PyPI as supported, and a promise is only kept if something checks it.
+        # tests/test_workflows.py holds this list to the classifiers.
+        python: ["3.12", "3.13", "3.14"]
     # Every uv command in the job, not only the sync. Left to itself, `uv run` reads
     # .python-version (3.14), finds the 3.12 environment the sync made, and replaces it
     # with a 3.14 one holding the default groups only -- so this job ran its tests on
