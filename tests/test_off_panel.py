@@ -13,9 +13,9 @@ import pytest
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import Polygon
 
-from scenet import compile_book, compile_source, parse_panel, render
+from scenet import compile_book, compile_script, compile_source, parse_panel, render
 from scenet.core import PanelCore
-from scenet.diagnostics import diagnose_source
+from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.ir import SayEvent, Side
 from tests.invariants import assert_lettering_is_placed
@@ -187,3 +187,78 @@ class TestTheEmitters:
 
     def test_the_debug_overlay_says_where_the_speaker_is(self):
         assert "-&gt; carol (off panel, left)" in render_debug(compiled(self.SOURCE))
+
+
+class TestLookingOffPanel:
+    """`looking_at` may name somebody heard from off panel: the figure turns their way.
+
+    Blambot's tail "butts against the panel border" on the speaker's side, and a figure
+    answering them looks there -- not at whoever happens to be drawn beside them.
+    """
+
+    def source(self, side: str, *, facing: str = "", prefer: str = "") -> str:
+        facing_key = f", facing: {facing}" if facing else ""
+        prefer_key = f", prefer: {prefer}" if prefer else ""
+        return (
+            f"panel: {{size: [900, 600]}}\n"
+            f"cast:\n  bob: {{reference: bob, at: center{facing_key}}}\n"
+            "staging: [bob looking_at carol]\n"
+            f"script:\n  - say: {{by: carol, text: Over here!, off_panel: {side}{prefer_key}}}\n"
+        )
+
+    def test_it_is_valid(self):
+        assert diagnose_source(self.source("left")) == []
+
+    def test_only_looking_may_name_them(self):
+        source = self.source("left").replace("bob looking_at carol", "bob left_of carol")
+        (found,) = diagnose_source(source)
+        assert found.rule == "unknown-actor"
+
+    def test_somebody_who_is_not_heard_is_still_unknown(self):
+        source = self.source("left").replace("off_panel: left", "off_panel: left, by: dan")
+        source = source.replace("by: carol, ", "")
+        (found,) = diagnose_source(source)
+        assert found.rule == "unknown-actor"
+
+    @pytest.mark.parametrize(("side", "towards"), [("left", -1.0), ("right", 1.0)])
+    def test_the_figure_turns_and_looks_their_way(self, side: str, towards: float):
+        (bob,) = compiled(self.source(side)).actors
+        assert bob.gaze[0] * towards > 0
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[0] == pytest.approx(towards)
+
+    def test_above_the_frame_he_looks_up(self):
+        (bob,) = compiled(self.source("top")).actors
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[1] == pytest.approx(-1.0)
+
+    @pytest.mark.parametrize("facing", ["left", "right"])
+    def test_with_no_side_named_the_voice_is_where_he_looks(self, facing: str):
+        core = compiled(self.source("true", facing=facing))
+        (bob,) = core.actors
+        (balloon,) = core.balloons
+        assert balloon.off_panel == Side(facing)
+        assert balloon.tail.end[0] == pytest.approx(0.0 if facing == "left" else 900.0)
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[0] == pytest.approx(-1.0 if facing == "left" else 1.0)
+
+
+class TestLookingOffPanelInAScript:
+    SCRIPT = (
+        "---\ncast:\n"
+        "  ALICE: {reference: alice, at: left_third}\n"
+        "  BOB: {reference: bob, at: right_third}\n"
+        "staging:\n  - ALICE left_of BOB\n  - BOB looking_at ALICE\n  - ALICE looking_at BOB\n"
+        "---\nPANEL 1\nALICE (OP)\nUp here!\n\nBOB\nWhere?\n"
+    )
+
+    def test_whoever_looks_at_her_still_does(self):
+        book = compile_script(self.SCRIPT)
+        (bob,) = book.panels["1"].core.actors
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[0] == pytest.approx(-1.0)  # she stood at left_third
+
+    def test_only_what_cannot_hold_is_noted(self):
+        found = diagnose_script(self.SCRIPT)
+        dropped = sorted(item.message.split("'")[1] for item in found)
+        assert dropped == ["ALICE left_of BOB", "ALICE looking_at BOB"]

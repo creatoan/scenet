@@ -544,7 +544,11 @@ class TestOffPanelCues:
     def test_the_speaker_is_left_out_of_that_panel_only(self):
         result = self.read("PANEL 1\nALICE (OP)\nHey!\n\nPANEL 2\nALICE\nHi.\n")
         assert set(result["1"].cast) == {"BOB"}
-        assert result["1"].staging == ()
+        # Bob may still look toward where she is heard from; nothing else can hold.
+        assert [
+            (relation.subject, relation.predicate.value, relation.object)
+            for relation in result["1"].staging
+        ] == [("BOB", "looking_at", "ALICE")]
         assert set(result["2"].cast) == {"ALICE", "BOB"}
 
     def test_their_tail_ends_on_the_side_they_stood(self):
@@ -555,10 +559,8 @@ class TestOffPanelCues:
     def test_each_relation_left_out_is_a_note(self):
         script = self.STAGED + "PANEL 1\nALICE (OP)\nHey!\n"
         found_here = diagnose_script(script, source=Path("x.script"))
-        assert [(item.rule, item.level) for item in found_here] == [
-            ("dropped-relation", "note"),
-            ("dropped-relation", "note"),
-        ]
+        assert [(item.rule, item.level) for item in found_here] == [("dropped-relation", "note")]
+        assert "ALICE left_of BOB" in found_here[0].message
         assert all(item.region is not None and item.region.start.line == 8 for item in found_here)
 
     @pytest.mark.parametrize(
