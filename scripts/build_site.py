@@ -1,7 +1,14 @@
-"""Build the GitHub Pages site for one version of Scenet.
+"""Build the GitHub Pages site: every version of Scenet, as Pages serves it.
 
 One Pages site per repository, so the documentation, the playground and the published
-schemas share an origin. A version's site is:
+schemas share an origin. It holds several versions (scripts/site_versions.py):
+
+    site/                     the latest release
+    site/dev/                 this checkout -- main, on Pages
+    site/vX.Y/                each released minor version
+    site/switcher.json        the version switcher's data
+
+Each version's site is:
 
     index.html ...            documentation (Sphinx)
     playground/               the browser playground (Vite)
@@ -9,9 +16,10 @@ schemas share an origin. A version's site is:
     scenet-spec.md            the spec pack: the whole language, in one file for a model
     llms.txt                  an index for retrieval systems, per llmstxt.org
 
-Nothing in it depends on where it is served from, because a release's site is served at
-the site's root and under its own `vX.Y/` alike (scripts/site_versions.py). What it does
-carry is which version it documents: the installed package's, or `dev` for `main`.
+A release's site is built once, by the release, and attached to it; this downloads those
+rather than rebuilding them, so a version is served exactly as it was released. Nothing in
+a version's site depends on where it is served from. What it does carry is which version
+it documents: the installed package's for a release, `dev` for this checkout.
 
 The schemas are served from a stable URL on purpose. Any editor with a YAML language
 server can validate a panel document against them with a one-line comment and no
@@ -19,9 +27,11 @@ Scenet-specific plugin -- see docs/howto/editor_support.md.
 
 Run from the repository root:
 
-    uv run python scripts/build_site.py                       # into site/
-    uv run python scripts/build_site.py --dev                 # main's, labelled dev
-    uv run python scripts/build_site.py --release-archive F   # archived for the release
+    uv run python scripts/build_site.py                       # releases from GitHub
+    uv run python scripts/build_site.py --releases DIR        # releases from DIR
+    uv run python scripts/build_site.py --release-archive F   # this checkout, as a release
+
+Downloading the releases uses the `gh` command line, signed in or given `GH_TOKEN`.
 """
 
 import argparse
@@ -38,6 +48,8 @@ import site_versions
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STAGING = ROOT / "build" / "site-release"
+DEV_STAGING = ROOT / "build" / "site-dev"
+RELEASES = ROOT / "build" / "site-releases"
 DOCS_BUILD = ROOT / "docs" / "_build" / "html"
 # Sphinx's pickled build state. Left to its default it lands inside the HTML, and would be
 # published -- several megabytes nobody reads, in every version of the site.
@@ -159,11 +171,16 @@ def archive_release(archive: Path) -> None:
 
 
 def main() -> None:
-    """Build the documentation and the playground, then put them together."""
+    """Build this checkout's site, and put every version together, or archive a release."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    label = parser.add_mutually_exclusive_group()
-    label.add_argument("--dev", action="store_true", help="build main's site, labelled dev")
-    label.add_argument(
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument(
+        "--releases",
+        type=Path,
+        metavar="DIR",
+        help="take the releases' site archives from DIR instead of downloading them",
+    )
+    source.add_argument(
         "--release-archive",
         type=Path,
         metavar="FILE",
@@ -174,16 +191,30 @@ def main() -> None:
         "--skip-playground", action="store_true", help="reuse an existing playground build"
     )
     args = parser.parse_args()
+    dev = args.release_archive is None
 
     if not args.skip_docs:
-        build_docs(dev=args.dev)
+        build_docs(dev=dev)
     if not args.skip_playground:
         build_playground()
-    if args.release_archive is None:
-        compose(SITE, dev=args.dev)
-    else:
+
+    if not dev:
         compose(STAGING, dev=False)
         archive_release(args.release_archive.resolve())
+        return
+
+    compose(DEV_STAGING, dev=True)
+    if args.releases is None:
+        archives = site_versions.download(site_versions.REPOSITORY, RELEASES)
+    else:
+        archives = site_versions.select_archives(args.releases)
+    try:
+        size = site_versions.assemble(DEV_STAGING, archives, SITE)
+    except site_versions.SiteError as error:
+        sys.exit(str(error))
+    latest = site_versions.archive_version(archives[0])
+    served = ", ".join(site_versions.archive_version(archive).directory for archive in archives)
+    print(f"\nsite/: {latest} at the root, then dev/, {served}: {size / 1e6:.1f} MB")
 
 
 if __name__ == "__main__":

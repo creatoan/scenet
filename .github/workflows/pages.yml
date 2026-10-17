@@ -1,18 +1,32 @@
 name: Pages
 
-# One Pages site per repository, so everything shares an origin:
+# One Pages site per repository, holding every version of Scenet's site:
 #
-#   /                     the documentation
-#   /playground/          the browser playground
-#   /schemas/*.json       the JSON Schemas, at stable URLs anyone can validate against
+#   /                     the latest release: documentation, playground, schemas, spec pack
+#   /dev/                 main, rebuilt on every push
+#   /vX.Y/                each released minor version, its highest patch
+#   /switcher.json        the version switcher's data, read by every version
 #
-# The playground is self-contained: the Python runtime, the wheels, the editor and the
+# A deployment replaces the whole site and keeps nothing, so every deploy contains every
+# version. The releases' sites are not rebuilt here: each release built its own and
+# attached it as scenet-X.Y.Z-site.zip (release.yml), and this downloads them. So a deploy
+# is a function of main and the releases -- a push changes /dev/ and nothing else, and a
+# release, once its workflow completes, moves the root and adds its /vX.Y/.
+#
+# Each playground is self-contained: the Python runtime, the wheels, the editor and the
 # schemas are all served from here. It makes no request to any other origin, which is
 # what lets its Content-Security-Policy say 'self' and mean it.
 
 on:
   push:
     branches: [main]
+  # When a release completes. Not `release: published`, which never fires: release.yml
+  # creates the release with GITHUB_TOKEN, and events that token causes start no workflow.
+  # Not a job in release.yml either: it would run on the tag, and the github-pages
+  # environment deploys from main only. `workflow_run` runs on main.
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -25,8 +39,15 @@ concurrency:
 
 jobs:
   build:
+    # A pull request can add a workflow named Release, and its runs would set this off
+    # too; only a release started by a push -- a tag -- counts. Whatever its conclusion:
+    # a registry listing that fails after the release is out must not hold the root back.
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     steps:
+      # main, always; never the commit or the artifacts of the run that set this off.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -43,15 +64,18 @@ jobs:
 
       - run: uv sync --frozen --group docs
 
-      # The playground installs the wheel `uv build` produces, unmodified. There is no
+      # main's playground installs the wheel `uv build` produces, unmodified. There is no
       # browser-specific build of the compiler, so nothing there can diverge from what
       # the command line runs.
       - name: Build the wheel
         run: uv build --wheel
 
-      # Builds the documentation with warnings as errors, builds the playground, and
-      # assembles both into site/. Nothing in it depends on the path it is served from.
+      # Builds main's documentation, labelled dev, and its playground; downloads the site
+      # attached to each release; and assembles them all into site/, checking each says
+      # the version it is served as.
       - name: Build the site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: uv run python scripts/build_site.py
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

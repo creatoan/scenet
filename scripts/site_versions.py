@@ -18,17 +18,25 @@ Run from the repository root, to check a documentation build:
 """
 
 import argparse
+import hashlib
+import json
 import re
+import shutil
 import stat
+import subprocess
 import sys
 import zipfile
 from importlib.metadata import version as package_version
 from pathlib import Path, PurePosixPath
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from urllib.parse import urlsplit
 
 #: Where the site is published. Every canonical link points under it.
 SITE_URL = "https://creatoan.github.io/scenet/"
+
+#: The repository whose releases carry each version's site.
+REPOSITORY = "creatoan/scenet"
+GH = "gh"
 
 #: The path the site is served under, on Pages and in the local preview alike.
 SITE_PATH = urlsplit(SITE_URL).path
@@ -257,6 +265,280 @@ def _check_entry(archive: Path, info: zipfile.ZipInfo, top: str) -> None:
         raise SiteError(f"{archive.name}: entry {name!r} is not inside {top}/")
     if stat.S_ISLNK(info.external_attr >> 16):
         raise SiteError(f"{archive.name}: entry {name!r} is a link, which Pages refuses")
+
+
+# ---------------------------------------------------------------- which releases
+
+
+class ReleaseSite(NamedTuple):
+    """A release whose site is attached to it, and the attachment's digest if known."""
+
+    version: Version
+    digest: str | None
+
+
+def select(releases: list[dict[str, Any]]) -> tuple[list[ReleaseSite], list[str]]:
+    """Choose the release that serves each minor version, from the GitHub releases API.
+
+    The highest patch of each minor version that has its site attached. Drafts,
+    pre-releases and tags that are not `vX.Y.Z` are never served.
+
+    Args:
+        releases: Release objects as `GET /repos/{owner}/{repo}/releases` lists them.
+
+    Returns:
+        The chosen releases, newest first, and a note on each release passed over for
+        having no site -- worth saying, since its minor version then serves an older patch.
+    """
+    chosen: dict[tuple[int, int], ReleaseSite] = {}
+    notes: list[str] = []
+    for release in releases:
+        tag = str(release.get("tag_name", ""))
+        if release.get("draft") or release.get("prerelease") or not tag.startswith("v"):
+            continue
+        try:
+            version = Version.parse(tag)
+        except ValueError:
+            continue
+        assets = {str(asset["name"]): asset for asset in release.get("assets", [])}
+        asset = assets.get(version.archive)
+        if asset is None:
+            notes.append(f"{tag} has no {version.archive} attached; it is not served")
+            continue
+        key = (version.major, version.minor)
+        if key not in chosen or chosen[key].version < version:
+            chosen[key] = ReleaseSite(version, asset.get("digest"))
+    return sorted(chosen.values(), reverse=True), sorted(notes)
+
+
+def select_archives(directory: Path) -> list[Path]:
+    """Choose, among the site archives in a directory, the highest patch of each minor.
+
+    Returns:
+        The chosen archives, newest first. Other files are ignored.
+    """
+    chosen: dict[tuple[int, int], tuple[Version, Path]] = {}
+    for path in directory.iterdir():
+        try:
+            version = archive_version(path)
+        except SiteError:
+            continue
+        key = (version.major, version.minor)
+        if key not in chosen or chosen[key][0] < version:
+            chosen[key] = (version, path)
+    return [path for _, path in sorted(chosen.values(), reverse=True)]
+
+
+def download(repository: str, into: Path) -> list[Path]:
+    """Download the site attached to each release that serves a minor version.
+
+    Uses the `gh` command line, which reads its token from `GH_TOKEN`. An archive already
+    downloaded is kept when it matches the digest GitHub lists for the attachment.
+
+    Returns:
+        The archives, newest first.
+
+    Raises:
+        SiteError: A download does not match the digest GitHub lists for it.
+    """
+    listed = subprocess.run(  # noqa: S603
+        [GH, "api", "--paginate", "--slurp", f"repos/{repository}/releases"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    releases = [release for page in json.loads(listed) for release in page]
+    sites, notes = select(releases)
+    for note in notes:
+        print(f"note: {note}", flush=True)
+
+    into.mkdir(parents=True, exist_ok=True)
+    archives: list[Path] = []
+    for site in sites:
+        archive = into / site.version.archive
+        if not (archive.is_file() and _digest_matches(archive, site.digest)):
+            print(f"$ gh release download {site.version.tag} ({site.version.archive})", flush=True)
+            subprocess.run(  # noqa: S603
+                [GH, "release", "download", site.version.tag, "--repo", repository,
+                 "--pattern", site.version.archive, "--dir", str(into), "--clobber"],
+                check=True,
+            )  # fmt: skip
+            if not _digest_matches(archive, site.digest):
+                raise SiteError(f"{archive.name} does not match the digest GitHub lists")
+        archives.append(archive)
+    return archives
+
+
+def _digest_matches(archive: Path, digest: str | None) -> bool:
+    """True when the file has the listed `sha256:` digest, or none is listed."""
+    if digest is None:
+        return True
+    algorithm, _, expected = digest.partition(":")
+    if algorithm != "sha256":
+        return True
+    return hashlib.sha256(archive.read_bytes()).hexdigest() == expected
+
+
+# ---------------------------------------------------------------- the assembled site
+
+#: Versions under vX.Y/ that keep their playground, newest first. The root and dev/
+#: always keep theirs. A playground is 28 MB of a version's 40, and Pages caps a site
+#: at 1 GB with no way for two versions to share a file.
+PLAYGROUNDS_KEPT = 3
+
+#: The largest site GitHub Pages publishes.
+SIZE_LIMIT = 1_000_000_000
+
+#: Where a version's playground was, once it has retired.
+RETIRED_PLAYGROUND = """\
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scenet {minor} playground, retired</title>
+    <link rel="canonical" href="{site}playground/" />
+  </head>
+  <body>
+    <h1>The Scenet {minor} playground has retired</h1>
+    <p>
+      To keep this site within GitHub Pages' size limit, only the newest versions keep a
+      playground. The <a href="../">documentation of {minor}</a> is still here.
+    </p>
+    <ul>
+      <li><a href="../../playground/">The playground of the latest release</a></li>
+      <li>
+        The whole {version} site, playground included, is attached to
+        <a href="https://github.com/{repository}/releases/tag/{tag}">its release</a> as
+        <code>{archive}</code>. Serve it from any local web server.
+      </li>
+    </ul>
+    <p>Scenet is a deliberately AI-generated project.</p>
+  </body>
+</html>
+"""
+
+
+def switcher_entries(versions: list[Version]) -> list[dict[str, Any]]:
+    """The version switcher's data: dev, then each minor version, newest first.
+
+    The newest is served at the root, and is the one entry marked preferred -- which the
+    theme's warning banner needs exactly one of.
+    """
+    newest = sorted(versions, reverse=True)
+    entries: list[dict[str, Any]] = [{"name": DEV, "version": DEV, "url": f"{SITE_PATH}{DEV}/"}]
+    for index, version in enumerate(newest):
+        if index == 0:
+            entries.append(
+                {
+                    "name": f"{version.minor_name} (latest)",
+                    "version": version.minor_name,
+                    "url": SITE_PATH,
+                    "preferred": True,
+                }
+            )
+        else:
+            entries.append(
+                {
+                    "name": version.minor_name,
+                    "version": version.minor_name,
+                    "url": f"{SITE_PATH}{version.directory}/",
+                }
+            )
+    return entries
+
+
+def retire_playground(directory: Path, version: Version) -> None:
+    """Replace a version's playground by a page saying where to go instead."""
+    playground = directory / "playground"
+    shutil.rmtree(playground, ignore_errors=True)
+    playground.mkdir()
+    (playground / "index.html").write_text(
+        RETIRED_PLAYGROUND.format(
+            minor=version.minor_name,
+            version=version,
+            tag=version.tag,
+            archive=version.archive,
+            site=SITE_URL,
+            repository=REPOSITORY,
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+_VERSION_DIRECTORY = re.compile(r"v\d+\.\d+")
+
+
+def assemble(dev: Path, archives: list[Path], out: Path) -> int:
+    """Put every version of the site together.
+
+    The latest release goes at the root, `main` under dev/, each minor version under
+    vX.Y/, and the version switcher's data beside them. Every input is checked to say
+    the version it is served as, so no copy can show the wrong banner or the wrong
+    version in the switcher.
+
+    Args:
+        dev: The built site of `main`, labelled dev.
+        archives: The site archive of each minor version's release, one per minor.
+        out: Where to write the site; anything there is replaced.
+
+    Returns:
+        The site's size in bytes.
+
+    Raises:
+        SiteError: No release, two of one minor version, an input that does not say the
+            version it is served as, a root entry in a version's way, or a site over the
+            size Pages publishes.
+    """
+    if not archives:
+        raise SiteError("no release has a site attached; see docs/maintainer/releasing.md")
+    versions = {archive: archive_version(archive) for archive in archives}
+    minors = [version.minor_name for version in versions.values()]
+    for minor in sorted(set(minors)):
+        if minors.count(minor) > 1:
+            raise SiteError(f"two archives for {minor}; give the highest patch of each")
+    ordered = sorted(archives, key=versions.__getitem__, reverse=True)
+    latest = versions[ordered[0]]
+
+    check_docs(dev, DEV, DEV)
+    if out.exists():
+        shutil.rmtree(out)
+
+    read_archive(ordered[0], out)
+    in_the_way = sorted(
+        path.name
+        for path in out.iterdir()
+        if path.name in {DEV, "switcher.json"} or _VERSION_DIRECTORY.fullmatch(path.name)
+    )
+    if in_the_way:
+        raise SiteError(f"{latest}'s site has {', '.join(in_the_way)} where a version goes")
+    check_docs(out, latest.minor_name, str(latest))
+
+    for index, archive in enumerate(ordered):
+        version = versions[archive]
+        directory = out / version.directory
+        read_archive(archive, directory)
+        check_docs(directory, version.minor_name, str(version))
+        if index >= PLAYGROUNDS_KEPT:
+            retire_playground(directory, version)
+
+    shutil.copytree(dev, out / DEV)
+
+    (out / "switcher.json").write_text(
+        json.dumps(switcher_entries(list(versions.values())), indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    (out / ".nojekyll").touch()
+
+    size = sum(path.stat().st_size for path in out.rglob("*") if path.is_file())
+    if size > SIZE_LIMIT:
+        raise SiteError(
+            f"the site is {size / 1e6:.0f} MB, over GitHub Pages' {SIZE_LIMIT / 1e9:.0f} GB "
+            "limit; keep fewer playgrounds (PLAYGROUNDS_KEPT)"
+        )
+    return size
 
 
 # ---------------------------------------------------------------- command line
