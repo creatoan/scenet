@@ -512,7 +512,18 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
                     lines.append(("say", speaker))
                 else:
                     modifier = draw(
-                        st.sampled_from(["", " (whisper)", " (shouting)", " (thinking)"])
+                        st.sampled_from(
+                            [
+                                "",
+                                " (whisper)",
+                                " (shouting)",
+                                " (thinking)",
+                                " (murmure)",
+                                " (crié)",
+                                " (pensée)",
+                                " (à voix basse)",
+                            ]
+                        )
                     )
                     speaker = draw(st.sampled_from(cast))
                     name = draw(st.sampled_from(spellings[speaker]))
