@@ -56,6 +56,11 @@ Pushing the tag is what starts everything. **Tag only a green `main`** — the r
 workflow re-runs every gate anyway, but discovering a failure after the tag exists means
 deleting a tag, and `v*` tags are protected against exactly that.
 
+Nothing about the package itself should surprise you at this point: every pull request
+already builds the sdist and the wheel, checks with `twine check --strict` that PyPI can
+render the description, runs the same wheel smoke test as the release (`scripts/smoke_wheel.py`),
+and builds the wheel again from the sdist alone. That is CI's **Package** job.
+
 ## What happens next
 
 ```

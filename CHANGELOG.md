@@ -10,6 +10,14 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Changed
+
+- **Every pull request checks the package as a release would.** CI's new Package job builds
+  the sdist and the wheel, runs `twine check --strict` on them, smoke-tests the wheel from an
+  empty directory, and builds the wheel again from the sdist alone, comparing the two. The
+  smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
+  Nothing is published: TestPyPI stays a manual rehearsal.
+
 ## [0.11.0] - 2026-10-17
 
 **Lettering, sound effects, and comic scripts as publishers write them.** A stressed word is

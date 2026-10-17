@@ -65,21 +65,12 @@ jobs:
 
       # Proves the wheel is installable and exposes the public API, from a clean
       # environment with no project checkout on the path. `import scenet` succeeding in
-      # the repository root proves nothing -- the source tree is right there.
+      # the repository root proves nothing -- the source tree is right there. The same
+      # script runs on every pull request, in `ci.yml`'s Package job.
       - name: Smoke-test the wheel in isolation
         run: |
           cd "$(mktemp -d)"
-          uv run --no-project --with "$GITHUB_WORKSPACE"/dist/*.whl python - <<'PY'
-          import importlib.resources
-          import scenet
-          assert scenet.__version__ != "0.0.0+unknown", "version metadata missing"
-          assert importlib.resources.files("scenet").joinpath("py.typed").is_file(), \
-              "py.typed missing from the wheel: downstream type checkers will ignore us"
-          result = scenet.compile_source("{cast: {a: {reference: alice}}}")
-          assert len(result.core.actors) == 1
-          assert scenet.render(result.core).lstrip().startswith("<?xml")
-          print("wheel OK:", scenet.__version__, len(scenet.__all__), "public names")
-          PY
+          uv run --no-project --with "$GITHUB_WORKSPACE"/dist/*.whl             python "$GITHUB_WORKSPACE/scripts/smoke_wheel.py"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

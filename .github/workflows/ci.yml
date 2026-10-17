@@ -217,6 +217,46 @@ jobs:
           echo "::error::scenet check reported findings in examples/gallery"
           exit 1
 
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    # What `release.yml` checks before it publishes, checked on every pull request
+    # instead: a file missing from the wheel or the sdist, or a README PyPI cannot
+    # render, would otherwise show only once a tag is pushed. Nothing is published --
+    # TestPyPI stays a manual rehearsal, since a pull request must never hold a
+    # publishing credential.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Build sdist and wheel
+        run: |
+          uv build
+
+      # PyPI refuses an upload whose description it cannot render; this is the same
+      # check, run before anything is uploaded. Pinned, as every tool here is.
+      - name: Check the metadata PyPI will show
+        run: |
+          uvx --from twine==6.1.0 twine check --strict dist/*
+
+      - name: Smoke-test the wheel in isolation
+        run: |
+          cd "$(mktemp -d)"
+          uv run --no-project --with "$GITHUB_WORKSPACE"/dist/*.whl             python "$GITHUB_WORKSPACE/scripts/smoke_wheel.py"
+
+      # Whoever installs from the sdist -- a distribution packager, or pip with no wheel
+      # for their platform -- builds the wheel from it alone. A file the build needs but
+      # the sdist leaves out would break them and nobody else.
+      - name: Build the wheel again from the sdist alone
+        run: |
+          uv build --wheel dist/*.tar.gz --out-dir "$RUNNER_TEMP/from-sdist"
+          diff <(unzip -Z1 dist/*.whl | sort) <(unzip -Z1 "$RUNNER_TEMP"/from-sdist/*.whl | sort)
+
   typescript:
     name: TypeScript
     runs-on: ubuntu-latest
