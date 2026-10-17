@@ -124,3 +124,48 @@ class TestReleaseWorkflowCallsIt:
         assert release["permissions"] == {"contents": "read"}
         job = release["jobs"]["registry"]
         assert job["permissions"]["id-token"] == "write"
+
+
+class TestThePackageIsCheckedOnEveryPullRequest:
+    """What `release.yml` checks before publishing, CI checks on every pull request.
+
+    A file missing from the wheel or the sdist, or a README PyPI cannot render, otherwise
+    shows only when a tag is pushed -- the one moment it is too late to be cheap.
+    """
+
+    @pytest.fixture
+    def steps(self) -> str:
+        job = _load("ci.yml")["jobs"]["package"]
+        return "\n".join(str(step.get("run", "")) for step in job["steps"])
+
+    def test_it_runs_on_pull_requests(self):
+        assert "pull_request" in _triggers(_load("ci.yml"))
+
+    def test_it_builds_both_distributions(self, steps: str):
+        assert re.search(r"^uv build\s*$", steps, re.MULTILINE)
+
+    def test_it_checks_what_pypi_will_show_with_a_pinned_twine(self, steps: str):
+        assert re.search(r"twine==\d+\.\d+\.\d+ twine check --strict", steps)
+
+    def test_it_builds_the_wheel_again_from_the_sdist_alone(self, steps: str):
+        assert re.search(r"uv build --wheel \S*\.tar\.gz", steps)
+
+    def test_it_smoke_tests_the_wheel_as_the_release_does(self, steps: str):
+        release = _load("release.yml")["jobs"]["build"]
+        released = "\n".join(str(step.get("run", "")) for step in release["steps"])
+        assert "scripts/smoke_wheel.py" in steps
+        assert "scripts/smoke_wheel.py" in released
+
+    def test_it_publishes_nothing(self):
+        job = _load("ci.yml")["jobs"]["package"]
+        assert "environment" not in job
+        assert "id-token" not in str(job.get("permissions", {}))
+
+
+def test_the_smoke_test_runs_outside_the_checkout():
+    """`import scenet` succeeding in the repository root proves nothing."""
+    text = (Path(__file__).resolve().parents[1] / "scripts" / "smoke_wheel.py").read_text(
+        encoding="utf-8"
+    )
+    assert "py.typed" in text
+    assert "__version__" in text
