@@ -32,8 +32,11 @@ whole gallery:
 https://creatoan.github.io/scenet/scenet-spec.md
 ```
 
-It is regenerated from the compiler's own sources on every documentation build, so it describes
-the language the compiler actually accepts.
+It is generated from the compiler's own sources, so it describes the language the compiler
+actually accepts — the latest release's, at that address. If you have an earlier release
+installed, take its own from under its minor version, as in
+`https://creatoan.github.io/scenet/v0.11/scenet-spec.md`; the one at `/dev/` describes `main`.
+The copy inside the package, which `scenet mcp` serves, is always the installed version's.
 
 **Ask for a comic script, not YAML.** A `.script` is the format comic writers already use —
 `PANEL 1`, `@shot:`, a character cue, the dialogue under it — which is far closer to what a model

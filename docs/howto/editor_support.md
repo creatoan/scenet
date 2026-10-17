@@ -22,6 +22,16 @@ cast:
 
 For a multi-panel document use `scene.schema.json` instead.
 
+That URL always serves the schema of the **latest release**. To validate against the release
+you have installed instead, put its minor version in the path — each release's schemas stay
+online under it:
+
+```yaml
+# yaml-language-server: $schema=https://creatoan.github.io/scenet/v0.11/schemas/panel.schema.json
+```
+
+`dev/` in place of the version gives `main`'s, for language not released yet.
+
 That comment is understood by the YAML language server used by VS Code, Neovim, Helix,
 Emacs (lsp-mode), IntelliJ and Zed, among others. You get:
 

@@ -85,6 +85,10 @@ push tag v0.2.0
       │              sdist + wheel + vsix + site attached
       │
       └─ registry  → listed in the MCP registry, from the PyPI package
+
+then, once the run completes:
+
+      Pages        → the site's root serves the release; /vX.Y/ holds it too
 ```
 
 **For this repository, all of it is switched on**: PyPI publishing, the approval before it,
@@ -134,6 +138,49 @@ That attachment is the one build of the release's site there will ever be. The
 documentation site serves every version from the attachments, so the site of a version is
 exactly what was released, whatever has changed since. Anyone can also download it to read
 offline; the playground in it needs a local web server, not `file://`.
+
+### What the site serves
+
+| Path | What |
+|---|---|
+| `/scenet/` | The latest release: documentation, playground, `schemas/`, `scenet-spec.md`, `llms.txt` |
+| `/scenet/dev/` | `main`, rebuilt on every push |
+| `/scenet/vX.Y/` | Each released minor version, its highest patch, from 0.8 |
+| `/scenet/switcher.json` | The version switcher's data, which every version reads |
+
+`pages.yml` builds `main`, downloads the site attached to each release, and assembles them
+(`scripts/build_site.py`). It runs on every push to `main`, which changes `/dev/` and
+nothing else, and when the release workflow completes, which moves the root to the new
+release. **Run it by hand** (**Actions → Pages → Run workflow**) after a backfill, or after
+deleting a release's site:
+
+```bash
+gh workflow run pages.yml
+```
+
+Some consequences worth knowing:
+
+- **A documentation fix merged to `main` appears under `/dev/` only.** The root changes when a
+  release does. To correct the documentation of a release people are using, cut a patch
+  release: `/vX.Y/` and the root then serve it.
+- **Only the three newest minor versions keep their playground**, besides the root and
+  `/dev/`. An older version keeps its documentation, schemas and spec pack, and its
+  `playground/` becomes a page pointing at the latest playground and at the full site on the
+  release. GitHub Pages caps a site at 1 GB; the assembly fails before it gets there.
+- **Every page names its counterpart at the root as canonical**, so search engines send
+  readers to the current documentation.
+
+To look at the site as it will deploy, build it and serve it locally — under `/scenet/`,
+as Pages does, which the version switcher needs:
+
+```bash
+uv run python scripts/build_site.py
+uv run python scripts/serve_site.py
+```
+
+That downloads the releases' sites with `gh`, so it must be signed in. With
+`--releases DIR` it takes them from a directory instead, such as the one `backfill_site.py`
+writes to.
 
 ### Backfilling a release made before that
 

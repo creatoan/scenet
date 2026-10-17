@@ -211,3 +211,116 @@ One trap worth recording: a bare `uv run` **re-syncs the project**, silently rei
 dependencies `--no-dev` just pruned, so the gate checks the wrong environment and passes
 meaninglessly. `uv run --no-sync` is required. This was caught by running the gate and reading its
 output, not by reasoning about it — which is the general lesson.
+
+## The documentation site serves every release from the site attached to it
+
+The site's root used to be `main`, rebuilt on every push. So between releases it described
+language a released `scenet` refused, the playground ran an unreleased compiler, and an
+editor validating against `schemas/panel.schema.json` was checked against unreleased models.
+Now the root is the latest release, `main` is under `/dev/`, and each minor version is under
+`/vX.Y/` ([#171](https://github.com/creatoan/scenet/issues/171)). The layout is the one
+pandas uses: stable at the root, development under it, old versions beside it.
+
+**Where old versions come from.** A Pages deployment replaces the whole site and keeps
+nothing, so every deploy must contain every version. Each release builds its site once, from
+the wheel it publishes and before it publishes anything, and attaches it to the GitHub Release
+as `scenet-X.Y.Z-site.zip`. `pages.yml` downloads those. The alternatives each failed on
+something concrete:
+
+- *Rebuilding every tag at deploy time.* The playground's build downloads the newest font
+  wheels from PyPI, so a rebuild is not what shipped. Old lockfiles also rot.
+- *A `gh-pages` branch.* At about 40 MB per version, it puts into history what every clone
+  fetches. It also needs a workflow write token, and changes the Pages source setting.
+- *A separate repository* needs a credential reaching across repositories.
+- *Workflow artifacts* expire.
+- *Read the Docs* moves the documentation to another domain, breaking every stable URL.
+  It also injects its own script into a site whose playground's Content-Security-Policy says
+  `'self'` and means it.
+
+**What moves the root.** `pages.yml` runs on `workflow_run` when the Release workflow
+completes, and only for runs a push started.
+
+- `release: published` never fires, because the release is created with `GITHUB_TOKEN`,
+  and events that token causes start no workflow.
+- A deploy from the tag's ref is refused, because the `github-pages` environment allows
+  only `main`.
+- `workflow_run` runs on the default branch and needs no new permission.
+- It is limited to push-started runs because a pull request can add a workflow with the
+  same name, and its runs would set it off too.
+- It is not limited to successful runs. A registry listing that fails after the release
+  is out must not keep the root on the previous release.
+
+Every deploy is a function of `main` and the releases' attachments. So a push rebuilds
+`/dev/`, and everything else comes out byte-identical to the previous deploy.
+
+**One build, at two paths.** A release's site is served at the root and at its `/vX.Y/`
+unchanged, so nothing in it may depend on where it is:
+
+- The playground's Vite base is relative.
+- The documentation's links are relative already.
+- The version switcher reads `/scenet/switcher.json`. The theme advises a fully resolved
+  URL so that no build reads a stale copy of its own. A site-absolute path cannot do that
+  either, and with it the local preview, served under `/scenet/` as Pages serves it, shows
+  the real switcher before anything is deployed.
+- The theme's build-time check of that file is off: it would fetch it over the network, and
+  fail the build with `-W` whenever it is not there yet.
+
+What a build does carry, `scripts/site_versions.py` checks on every page. That is which
+version it documents, where the switcher is, and its canonical link.
+
+**`main` says it is `dev`.** The theme hides its warning banner when a build's
+`version_match` equals the preferred entry's `version`. Otherwise it calls the version an
+unstable development one when the release string contains "dev", or an old one when it
+compares lower. Between releases `main` carries the last release's version number, so it
+would compare equal and get no banner. `SCENET_DOCS_VERSION=dev` labels it.
+
+**Canonical links, not `noindex`.** Every page of every copy names its counterpart at the
+root as canonical, as docs.python.org does from its 3.12 and development pages to `/3/`.
+`/dev/` is not marked `noindex`: Google advises against using it to steer canonical
+selection within a site. A project site cannot have a `robots.txt` either, since one is only
+read at the host's root, `creatoan.github.io/robots.txt`. A page that has no counterpart at
+the root — one removed since — points at a missing page, which a search engine ignores.
+
+**By minor version.** Below 1.0 a minor version is where this project's language may change
+(see [Releasing](../maintainer/releasing.md#versioning)), and a patch release is a fix to it.
+So `/v0.11/` serves the highest 0.11 patch, and fixing a release's documentation means
+cutting a patch release. numpy and pandas version their documentation by minor too.
+
+**Old playgrounds retire.**
+
+- A version's site is about 40 MB, of which the playground is 28 MB and Pyodide 22 MB.
+- Pages caps a site at 1 GB, and its artifact may contain no links, so versions cannot
+  share a copy.
+- The root, `/dev/` and the three newest minor versions keep their playground.
+- An older version keeps its documentation, schemas and spec pack. Its `playground/`
+  becomes a page pointing at the latest playground, and at the complete site attached to
+  its release.
+- The assembly fails above 1 GB, before Pages would.
+
+**Releases before 0.8 are not on the site.** Releases up to 0.11.0 predate the attachment,
+and `scripts/backfill_site.py` builds one for them: the release's own sources and lockfiles,
+the wheel it published, and only the files that version a build laid over them. That needs
+the release's site tooling to be v0.11.0's, which holds from v0.8.0. Before that, the
+documentation configuration itself differs. Those versions' documentation stays readable at
+their tags on GitHub.
+
+**Every version's playground shares one origin.** So a draft saved in one version's
+playground opens in another's, where a construct from `/dev/` may not compile. A shared link
+carries its document in the URL and is not affected.
+
+Sources:
+
+- pydata-sphinx-theme, [version switcher](https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html)
+  and [warning banner](https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/announcements.html)
+- GitHub,
+  [triggering a workflow from a workflow](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow),
+  [`workflow_run`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_run)
+  and [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
+- [upload-pages-artifact](https://github.com/actions/upload-pages-artifact) on links
+- Vite, [relative base](https://vite.dev/guide/build.html#relative-base)
+- Google, [consolidating duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)
+- [RFC 9309 §2.3](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.3) on where
+  `robots.txt` is read
+- numpy's and pandas' switcher data:
+  [numpy](https://numpy.org/doc/_static/versions.json),
+  [pandas](https://pandas.pydata.org/versions.json)

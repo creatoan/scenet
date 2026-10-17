@@ -10,6 +10,22 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- **The documentation site documents what you install.** Its root, and every address
+  already in use there — the documentation, the playground, `schemas/panel.schema.json`,
+  `scenet-spec.md`, `llms.txt` — now serves the latest release, not unreleased `main`.
+  `main` moves to [`/dev/`](https://creatoan.github.io/scenet/dev/), and each minor version
+  from 0.8 stays online under its own path, such as
+  [`/v0.10/`](https://creatoan.github.io/scenet/v0.10/), its playground running that
+  release's compiler. A version switcher in the navbar keeps the page you are on. `/dev/` and
+  older versions carry a banner linking to the same page in the latest. Pin a schema or the
+  spec pack to a release by putting its version in the path:
+  `…/scenet/v0.11/schemas/panel.schema.json` (#171).
+- **Each release attaches its built site** as `scenet-X.Y.Z-site.zip`, built from the wheel
+  it publishes, before PyPI. The site serves every version from these, unchanged. Releases
+  0.8.0 to 0.11.0 have theirs backfilled.
+
 ### Changed
 
 - **Every pull request checks the package as a release would.** CI's new Package job builds
