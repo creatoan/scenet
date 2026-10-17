@@ -16,16 +16,19 @@ from fontTools.ttLib import TTFont
 from scenet.ir import Face
 from scenet.solve.text import (
     DEFAULT_FONT_PATH,
+    ITALIC_FONT_PATH,
     LINE_PENALTY,
     TARGET_ASPECT,
     FontMetrics,
     TextBlock,
+    Typeface,
     _shape_score,
     balloon_size,
     candidate_measures,
     layout_text,
     load_metrics,
     styled,
+    wrap_styled,
     wrap_to_width,
 )
 
@@ -168,6 +171,21 @@ class TestLineBreakingCraft:
     def test_with_only_one_word_beside_it(self, metrics: FontMetrics, text: str):
         narrow = metrics.measure("Wait", 40)
         assert wrap_to_width(text, metrics, 40, narrow) == [text]
+
+    def test_each_space_keeps_the_face_it_was_written_in(self):
+        """A stressed span across two words, then plain ones: the space inside the span
+        is bold italic, the ones after it are not."""
+        lines = wrap_styled(styled("_one two_ three four"), Typeface(), 40, 10_000)
+        assert [line.runs for line in lines] == [
+            (("one two", Face.BOLD_ITALIC), (" three four", Face.REGULAR))
+        ]
+
+    def test_plain_text_is_wrapped_and_measured_in_the_face_given(self, metrics: FontMetrics):
+        italic = load_metrics(str(ITALIC_FONT_PATH))
+        text = "mmmm mmmm"
+        assert metrics.measure(text, 40) > italic.measure(text, 40)
+        assert wrap_to_width(text, italic, 40, italic.measure(text, 40)) == [text]
+        assert italic.measure(text, 40) in candidate_measures(["mmmm", "mmmm"], italic, 40)
 
     def test_the_space_it_keeps_is_set_in_the_face_around_it(self):
         """Inside a stressed span the space is bold italic, as a space between two
