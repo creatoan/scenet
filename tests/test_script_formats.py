@@ -684,12 +684,33 @@ class TestFrench:
             ("(pensée)", "thought", False),
             ("(off)", "speech", True),
             ("(hors champ)", "speech", True),
+            # BnF, *Les bulles de la BD*: a balloon with a dotted outline when somebody
+            # murmurs; *chuchoter* is to murmur (Larousse).
+            ("(murmure)", "whisper", False),
+            ("(murmuré)", "whisper", False),
+            ("(chuchoté)", "whisper", False),
+            # The same sheet: capitals, bold and wider for somebody who "crie fort".
+            ("(cri)", "shout", False),
+            ("(crié)", "shout", False),
+            ("(crie)", "shout", False),
         ],
     )
     def test_french_modifiers(self, modifier: str, kind: str, off_panel: bool):
         (line,) = self.read(f"CASE 1\nLÉA {modifier}\nHm.\n")["1"].script
         assert isinstance(line, SayEvent)
         assert (line.kind.value, line.off_panel is not False) == (kind, off_panel)
+
+    @pytest.mark.parametrize("modifier", ["(à voix basse)", "(a voix basse)", "(voix basse)"])
+    def test_spoken_low_is_small_type(self, modifier: str):
+        """BnF: type smaller than the rest gives the impression the character "parle bas"."""
+        (line,) = self.read(f"CASE 1\nLÉA {modifier}\nHm.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.kind.value, line.size.value) == ("speech", "small")
+
+    def test_a_word_no_source_gives_stays_a_note_to_the_artist(self):
+        (line,) = self.read("CASE 1\nLÉA (hurlé)\nHm.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.kind.value, line.size.value) == ("speech", "normal")
 
     @pytest.mark.parametrize(
         ("written", "shot"),
