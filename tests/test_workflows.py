@@ -342,6 +342,15 @@ class TestSiteBackfill:
         assert backfill["jobs"]["attach"]["needs"] == "build"
 
 
+def test_every_python_the_package_claims_is_tested():
+    """PyPI shows the classifiers as a promise; each version in them gets a CI job."""
+    pyproject = (WORKFLOWS.parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    claimed = re.findall(r'"Programming Language :: Python :: (3\.\d+)"', pyproject)
+    tested = _load("ci.yml")["jobs"]["check"]["strategy"]["matrix"]["python"]
+    assert claimed
+    assert tested == claimed
+
+
 def test_every_pull_request_checks_the_docs_say_their_version():
     """The switcher, the banner and canonical links rest on settings a build carries."""
     steps = _load("ci.yml")["jobs"]["docs"]["steps"]
