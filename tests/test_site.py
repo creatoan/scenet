@@ -15,6 +15,7 @@ theme's output would test only the imitation.
 import importlib.util
 import json
 import os
+import re
 import runpy
 import subprocess
 import sys
@@ -61,6 +62,7 @@ globals().update(
 extensions = ["myst_parser"]
 intersphinx_mapping = {{}}
 templates_path = [{templates!r}]
+html_static_path = [{static!r}]
 """
 
 _INDEX = """\
@@ -71,7 +73,12 @@ howto/other
 ```
 """
 
-_OTHER = "# Another page\n\nOne level down, so its links are not at the root.\n"
+_OTHER = """\
+# Another page
+
+One level down, so its links are not at the root. Written as on GitHub, where only an
+absolute link works: [the playground](https://creatoan.github.io/scenet/playground/#src=abc).
+"""
 
 
 @pytest.fixture(scope="session")
@@ -86,7 +93,11 @@ def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str], Path
         source = base / "source"
         (source / "howto").mkdir(parents=True)
         (source / "conf.py").write_text(
-            _CONF.format(conf=str(DOCS / "conf.py"), templates=str(DOCS / "_templates")),
+            _CONF.format(
+                conf=str(DOCS / "conf.py"),
+                templates=str(DOCS / "_templates"),
+                static=str(DOCS / "_static"),
+            ),
             encoding="utf-8",
         )
         (source / "index.md").write_text(_INDEX, encoding="utf-8")
@@ -168,9 +179,11 @@ class TestConf:
         assert conf["html_baseurl"] == site_versions.SITE_URL
         assert site_versions.SITE_URL == "https://creatoan.github.io/scenet/"
 
-    def test_the_playground_link_is_the_versions_own(self, monkeypatch: pytest.MonkeyPatch):
+    def test_the_playground_is_in_the_navbar(self, monkeypatch: pytest.MonkeyPatch):
+        """Beside Tutorial and How-to guides, named, rather than an icon at the far end."""
         options = _conf(monkeypatch, None)["html_theme_options"]
-        assert "playground-link" in options["navbar_end"]
+        assert options["navbar_center"] == ["navbar-nav", "playground-link"]
+        assert "playground-link" not in options.get("navbar_end", [])
         assert not any("playground" in link["url"] for link in options["icon_links"])
 
 
@@ -251,6 +264,26 @@ class TestCheckDocs:
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         assert 'href="../playground/"' in page
         assert "creatoan.github.io/scenet/playground" not in page
+
+    def test_a_link_written_to_the_playground_stays_in_its_version(
+        self, build_docs: Callable[[str], Path]
+    ):
+        """Absolute in the Markdown, so it works on GitHub; relative once built."""
+        page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
+        assert 'href="../playground/#src=abc"' in page
+
+    def test_the_navbar_names_the_playground(self, build_docs: Callable[[str], Path]):
+        page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
+        header = page[page.index("<header") : page.index("</header>")]
+        assert re.search(r'<a class="nav-link[^"]*" href="\.\./playground/">\s*Playground', header)
+
+
+class TestPlaygroundSwitcher:
+    """The playground reads the same switcher.json as the documentation."""
+
+    def test_it_reads_the_one_the_docs_read(self):
+        source = (ROOT / "playground" / "src" / "versions.ts").read_text(encoding="utf-8")
+        assert f'"{site_versions.SWITCHER_URL}"' in source
 
 
 def _copy(source: Path, target: Path) -> Path:
@@ -681,6 +714,7 @@ class TestBackfill:
         assert {
             "docs/conf.py",
             "docs/_templates/playground-link.html",
+            "docs/_static/scenet.css",
             "scripts/build_site.py",
             "scripts/site_versions.py",
             "playground/vite.config.ts",
