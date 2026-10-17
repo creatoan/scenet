@@ -49,10 +49,10 @@ jobs:
       - name: Build the wheel
         run: uv build --wheel
 
-      # Builds the documentation with warnings as errors, builds the playground with the
-      # right base path, and assembles both into site/.
+      # Builds the documentation with warnings as errors, builds the playground, and
+      # assembles both into site/. Nothing in it depends on the path it is served from.
       - name: Build the site
-        run: uv run python scripts/build_site.py --base /${{ github.event.repository.name }}
+        run: uv run python scripts/build_site.py
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 

@@ -3,13 +3,15 @@ import { defineConfig } from "vite";
 /**
  * The playground build.
  *
- * `base` is settable because the same bundle is served from two places: `/` when you
- * run `npm run dev`, and `/scenet/playground/` on GitHub Pages. Every asset reference in
- * the app is resolved against `document.baseURI` rather than hardcoded, so this is the
- * only place the difference appears.
+ * `base` is relative, because one build is served from several places: `/` under
+ * `npm run dev`, and on GitHub Pages both `/scenet/playground/` and the release's own
+ * `/scenet/vX.Y/playground/` -- a release's site is built once and served unchanged at
+ * both. Relative, "all generated URLs [are] relative to each file" (Vite's docs), and
+ * every asset the app fetches itself is resolved against `document.baseURI`, so nothing
+ * here knows where it is served from.
  */
 export default defineConfig({
-  base: process.env["SCENET_BASE"] ?? "/",
+  base: "./",
   build: {
     outDir: "dist",
     emptyOutDir: true,

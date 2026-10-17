@@ -7,6 +7,7 @@
 # Warnings are errors in CI (`sphinx-build -W`). A broken cross-reference or a page
 # missing from a toctree fails the build rather than quietly producing a worse site.
 
+import os
 import sys
 from datetime import UTC, datetime
 from importlib.metadata import version as package_version
@@ -28,8 +29,24 @@ project = "Scenet"
 # No personal name here or anywhere else in the repository, deliberately.
 copyright = f"{datetime.now(UTC).year}, Scenet contributors"
 author = "Scenet contributors"
-release = package_version("scenet")
-version = ".".join(release.split(".")[:2])
+
+# Which version this documents. The site serves several -- the latest release at its root,
+# `main` under /dev/, each minor version under /vX.Y/ -- and the version switcher and the
+# warning banner key on what each build says here (docs/explanation/design_decisions.md).
+#
+# A release documents the installed package. The build of `main` says "dev", which
+# scripts/build_site.py sets: between releases `main` carries the last release's version
+# number, so it could not be told apart otherwise. An explicit X.Y.Z is for the tests.
+_documented = os.environ.get("SCENET_DOCS_VERSION") or package_version("scenet")
+if _documented == "dev":
+    release = version = "dev"
+else:
+    release = _documented
+    version = ".".join(release.split(".")[:2])
+
+# Every page of every version names its counterpart at the root as canonical, so a search
+# engine sends readers to the current documentation rather than an old copy of it.
+html_baseurl = "https://creatoan.github.io/scenet/"
 
 # -- General ------------------------------------------------------------------
 
@@ -118,6 +135,7 @@ intersphinx_timeout = 10
 # -- HTML ----------------------------------------------------------------------
 
 html_theme = "pydata_sphinx_theme"
+templates_path = ["_templates"]
 html_title = f"Scenet {version}"
 html_copy_source = False
 html_show_sourcelink = False
@@ -135,12 +153,20 @@ html_theme_options = {
             "url": "https://pypi.org/project/scenet/",
             "icon": "fa-solid fa-box",
         },
-        {
-            "name": "Playground",
-            "url": "https://creatoan.github.io/scenet/playground/",
-            "icon": "fa-solid fa-play",
-        },
     ],
+    # The Playground link is a template rather than an icon link, because it is relative:
+    # each version's documentation opens that version's playground, running its compiler.
+    "navbar_start": ["navbar-logo", "version-switcher"],
+    "navbar_end": ["theme-switcher", "playground-link", "navbar-icon-links"],
+    # One switcher.json for every version, so an old version lists the releases made after
+    # it. Site-absolute rather than a full URL, so the local preview -- served under
+    # /scenet/ too -- reads the one beside it. See scripts/site_versions.py.
+    "switcher": {"json_url": "/scenet/switcher.json", "version_match": version},
+    # The check fetches json_url while building: a network request, and a -W failure
+    # whenever the file is not there yet. scripts/site_versions.py checks the file instead.
+    "check_switcher": False,
+    # Shown on /dev/ and on old versions, with a link to the same page in the latest.
+    "show_version_warning_banner": True,
     "footer_start": ["copyright"],
     "footer_end": [],
 }

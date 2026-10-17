@@ -1,13 +1,17 @@
-"""Assemble the GitHub Pages site.
+"""Build the GitHub Pages site for one version of Scenet.
 
 One Pages site per repository, so the documentation, the playground and the published
-schemas share an origin:
+schemas share an origin. A version's site is:
 
-    site/                     documentation (Sphinx)
-    site/playground/          the browser playground (Vite)
-    site/schemas/*.json       the JSON Schemas, at stable URLs
-    site/scenet-spec.md       the spec pack: the whole language, in one file for a model
-    site/llms.txt             an index for retrieval systems, per llmstxt.org
+    index.html ...            documentation (Sphinx)
+    playground/               the browser playground (Vite)
+    schemas/*.json            the JSON Schemas, at stable URLs
+    scenet-spec.md            the spec pack: the whole language, in one file for a model
+    llms.txt                  an index for retrieval systems, per llmstxt.org
+
+Nothing in it depends on where it is served from, because a release's site is served at
+the site's root and under its own `vX.Y/` alike (scripts/site_versions.py). What it does
+carry is which version it documents: the installed package's, or `dev` for `main`.
 
 The schemas are served from a stable URL on purpose. Any editor with a YAML language
 server can validate a panel document against them with a one-line comment and no
@@ -15,7 +19,9 @@ Scenet-specific plugin -- see docs/howto/editor_support.md.
 
 Run from the repository root:
 
-    uv run python scripts/build_site.py
+    uv run python scripts/build_site.py                       # into site/
+    uv run python scripts/build_site.py --dev                 # main's, labelled dev
+    uv run python scripts/build_site.py --release-archive F   # archived for the release
 """
 
 import argparse
@@ -23,12 +29,15 @@ import os
 import shutil
 import subprocess
 import sys
+from importlib.metadata import version as package_version
 from pathlib import Path
 
 import build_spec
+import site_versions
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
+STAGING = ROOT / "build" / "site-release"
 DOCS_BUILD = ROOT / "docs" / "_build" / "html"
 PLAYGROUND = ROOT / "playground"
 SCHEMAS = ROOT / "editor" / "schemas"
@@ -52,8 +61,16 @@ def run(command: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> 
         sys.exit(result.returncode)
 
 
-def build_docs() -> None:
-    """Build the documentation with warnings as errors."""
+def documented(*, dev: bool) -> tuple[str, str]:
+    """What the documentation says it is: the switcher's `version_match`, and the release."""
+    if dev:
+        return site_versions.DEV, site_versions.DEV
+    release = package_version("scenet")
+    return site_versions.Version.parse(release).minor_name, release
+
+
+def build_docs(*, dev: bool) -> None:
+    """Build the documentation with warnings as errors, labelled with its version."""
     run(
         [
             sys.executable,
@@ -67,57 +84,84 @@ def build_docs() -> None:
             str(DOCS_BUILD),
         ],
         cwd=ROOT,
+        # Read by docs/conf.py. A release needs nothing: it documents the installed package.
+        env={"SCENET_DOCS_VERSION": site_versions.DEV} if dev else None,
     )
 
 
-def build_playground(base: str) -> None:
-    """Build the playground, told where it will be served from.
-
-    Args:
-        base: URL path the playground is served under, with leading and trailing
-            slashes -- `/scenet/playground/` on GitHub Pages.
-    """
+def build_playground() -> None:
+    """Build the playground. Its base is relative, so one build serves at any path."""
     npm = "npm.cmd" if sys.platform == "win32" else "npm"
     # `npm ci` wipes node_modules, which fails on Windows if anything is holding a file
     # in it -- a running dev server, most often. CI always starts clean, so only install
     # when there is nothing there.
     if not (PLAYGROUND / "node_modules").is_dir():
         run([npm, "ci"], cwd=PLAYGROUND)
-    run([npm, "run", "build"], cwd=PLAYGROUND, env={"SCENET_BASE": base})
+    run([npm, "run", "build"], cwd=PLAYGROUND)
 
 
-def assemble() -> None:
-    """Copy the built pieces into `site/`."""
-    if SITE.exists():
-        shutil.rmtree(SITE)
-    shutil.copytree(DOCS_BUILD, SITE)
-    shutil.copytree(PLAYGROUND / "dist", SITE / "playground")
+def compose(out: Path, *, dev: bool) -> None:
+    """Copy one version's built pieces into `out`, after checking the docs say which it is.
 
-    schemas = SITE / "schemas"
+    Raises:
+        SystemExit: The documentation build does not carry its version on every page.
+    """
+    version_match, release = documented(dev=dev)
+    try:
+        pages = site_versions.check_docs(DOCS_BUILD, version_match, release)
+    except site_versions.SiteError as error:
+        sys.exit(f"{error}\n(rebuild without --skip-docs?)")
+    print(f"docs: {pages} pages document {release}")
+
+    if out.exists():
+        shutil.rmtree(out)
+    shutil.copytree(DOCS_BUILD, out)
+    shutil.copytree(PLAYGROUND / "dist", out / "playground")
+
+    schemas = out / "schemas"
     schemas.mkdir(parents=True, exist_ok=True)
     for name in ("panel.schema.json", "scene.schema.json"):
         shutil.copyfile(SCHEMAS / name, schemas / name)
 
     # Generated fresh from the sources rather than copied from the committed spec pack,
     # so the published one is current even on a branch that forgot to regenerate.
-    build_spec.write_site_files(SITE)
+    build_spec.write_site_files(out)
 
-    # Sphinx writes .nojekyll itself for _static/, but Pages also needs it at the root
-    # or every directory beginning with an underscore is silently dropped.
-    (SITE / ".nojekyll").touch()
+    # Sphinx writes .nojekyll itself for _static/, but a site served from a branch also
+    # needs it at the root or every directory beginning with an underscore is dropped.
+    (out / ".nojekyll").touch()
+    _report(out)
 
-    total = sum(path.stat().st_size for path in SITE.rglob("*") if path.is_file())
-    files = sum(1 for path in SITE.rglob("*") if path.is_file())
-    print(f"\nsite/: {files} files, {total / 1e6:.1f} MB")
+
+def _report(tree: Path) -> None:
+    files = [path for path in tree.rglob("*") if path.is_file()]
+    total = sum(path.stat().st_size for path in files)
+    print(f"\n{tree.relative_to(ROOT)}/: {len(files)} files, {total / 1e6:.1f} MB", flush=True)
+
+
+def archive_release(archive: Path) -> None:
+    """Archive the release site just composed, under the name the release attaches.
+
+    Raises:
+        SystemExit: The file name is not the installed version's archive name.
+    """
+    version = site_versions.Version.parse(package_version("scenet"))
+    if archive.name != version.archive:
+        sys.exit(f"{archive.name}: the release being built is {version}; name it {version.archive}")
+    site_versions.write_archive(STAGING, archive, version)
+    print(f"{archive}: {archive.stat().st_size / 1e6:.1f} MB")
 
 
 def main() -> None:
-    """Build the documentation and the playground, then assemble them."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--base",
-        default="/",
-        help="URL path the playground is served under (default: / for local preview)",
+    """Build the documentation and the playground, then put them together."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    label = parser.add_mutually_exclusive_group()
+    label.add_argument("--dev", action="store_true", help="build main's site, labelled dev")
+    label.add_argument(
+        "--release-archive",
+        type=Path,
+        metavar="FILE",
+        help="build the installed release's site and zip it to FILE, scenet-X.Y.Z-site.zip",
     )
     parser.add_argument("--skip-docs", action="store_true", help="reuse an existing docs build")
     parser.add_argument(
@@ -126,10 +170,14 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.skip_docs:
-        build_docs()
+        build_docs(dev=args.dev)
     if not args.skip_playground:
-        build_playground(f"{args.base.rstrip('/')}/playground/")
-    assemble()
+        build_playground()
+    if args.release_archive is None:
+        compose(SITE, dev=args.dev)
+    else:
+        compose(STAGING, dev=False)
+        archive_release(args.release_archive.resolve())
 
 
 if __name__ == "__main__":

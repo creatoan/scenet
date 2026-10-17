@@ -1,0 +1,13 @@
+{#- The playground of the version being read, as a navbar icon like the others.
+
+    Not an entry in `icon_links`, whose URL is used as written: a relative one would break
+    one directory down. `pathto(..., 1)` resolves from each page, so the documentation of
+    /dev/ opens /dev/playground/, and a release's opens the playground running its wheel. -#}
+<ul class="navbar-icon-links" aria-label="Playground">
+  <li class="nav-item">
+    <a href="{{ pathto('playground/', 1) }}" title="Playground" class="nav-link pst-navbar-icon" data-bs-toggle="tooltip" data-bs-placement="bottom">
+      <i class="fa-solid fa-play fa-lg" aria-hidden="true"></i>
+      <span class="visually-hidden">Playground</span>
+    </a>
+  </li>
+</ul>
