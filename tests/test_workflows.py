@@ -247,6 +247,57 @@ class TestTheReleaseBuildsItsSite:
         assert "creatoan.github.io/scenet/v${MINOR}/" in _script(release["jobs"]["github-release"])
 
 
+class TestPagesWorkflow:
+    """The latest release at the root, main under /dev/, assembled on every deploy."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def pages(cls) -> dict[Any, Any]:
+        return _load("pages.yml")
+
+    def test_a_push_or_a_finished_release_deploys(self, pages: dict[Any, Any]):
+        triggers = _triggers(pages)
+        assert set(triggers) == {"push", "workflow_run", "workflow_dispatch"}
+        assert triggers["push"] == {"branches": ["main"]}
+        assert triggers["workflow_run"] == {"workflows": ["Release"], "types": ["completed"]}
+
+    def test_only_a_release_a_push_started(self, pages: dict[Any, Any]):
+        """A pull request can add a workflow called Release; its runs must not deploy."""
+        condition = pages["jobs"]["build"]["if"]
+        assert "github.event_name != 'workflow_run'" in condition
+        assert "github.event.workflow_run.event == 'push'" in condition
+        assert "conclusion" not in condition  # a failed registry listing must not stop it
+
+    def test_it_builds_main_and_nothing_the_trigger_named(self, pages: dict[Any, Any]):
+        """Never the triggering run's commit or artifacts: main, and the releases."""
+        build = pages["jobs"]["build"]
+        (checkout,) = [s for s in build["steps"] if "checkout@" in str(s.get("uses", ""))]
+        assert "ref" not in checkout.get("with", {})
+        assert _downloads(build) == []
+        assert "head_sha" not in str(pages)
+
+    def test_it_reads_the_releases_with_a_read_only_token(self, pages: dict[Any, Any]):
+        build = pages["jobs"]["build"]
+        assert "permissions" not in build
+        assert pages["permissions"] == {"contents": "read"}
+        (step,) = [s for s in build["steps"] if "scripts/build_site.py" in str(s.get("run", ""))]
+        assert step["env"]["GH_TOKEN"] == "${{ github.token }}"  # noqa: S105 -- not a secret
+        assert "--release-archive" not in step["run"]
+
+    def test_only_the_deploy_holds_the_credential(self, pages: dict[Any, Any]):
+        holders = [
+            name
+            for name, job in pages["jobs"].items()
+            if (job.get("permissions") or {}).get("id-token") == "write"
+            or (job.get("permissions") or {}).get("pages") == "write"
+        ]
+        assert holders == ["deploy"]
+        assert pages["jobs"]["deploy"]["environment"]["name"] == "github-pages"
+
+    def test_deploys_queue_rather_than_cancel(self, pages: dict[Any, Any]):
+        assert pages["concurrency"]["cancel-in-progress"] is False
+
+
 class TestSiteBackfill:
     """Attaching a site to a release made before releases carried one."""
 

@@ -38,6 +38,7 @@ SURFACES = {
     "playground/README.md": "anyone reading the playground source",
     "skills/scenet/SKILL.md": "the Agent Skill, loaded into a coding agent's context",
     "src/scenet/scenet-spec.md": "the spec pack, handed to chat models and served over MCP",
+    "scripts/site_versions.py": "the page left where an old version's playground was",
 }
 
 

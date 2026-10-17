@@ -13,6 +13,7 @@ theme's output would test only the imitation.
 """
 
 import importlib.util
+import json
 import os
 import runpy
 import subprocess
@@ -92,7 +93,19 @@ def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str], Path
         (source / "howto" / "other.md").write_text(_OTHER, encoding="utf-8")
         output = base / "html"
         result = subprocess.run(  # noqa: S603
-            [sys.executable, "-m", "sphinx", "-W", "-q", "-b", "html", str(source), str(output)],
+            [
+                sys.executable,
+                "-m",
+                "sphinx",
+                "-W",
+                "-q",
+                "-b",
+                "html",
+                "-d",
+                str(base / "doctrees"),
+                str(source),
+                str(output),
+            ],
             env={**os.environ, "SCENET_DOCS_VERSION": documented},
             capture_output=True,
             text=True,
@@ -330,6 +343,323 @@ class TestArchive:
         site_versions.write_archive(_tree(tmp_path / "tree"), archive, self.VERSION)
         with pytest.raises(site_versions.SiteError, match="name"):
             site_versions.read_archive(archive, tmp_path / "out")
+
+
+# ---------------------------------------------------------------- the assembled site
+
+
+def _version_site(docs: Path, target: Path, label: str) -> Path:
+    """A version's whole site: real documentation, stand-ins for the rest."""
+    _copy(docs, target)
+    (target / "playground").mkdir()
+    (target / "playground" / "index.html").write_text(f"<p>{label}</p>\n", encoding="utf-8")
+    (target / "schemas").mkdir()
+    (target / "schemas" / "panel.schema.json").write_text(f'{{"title": "{label}"}}\n')
+    (target / "scenet-spec.md").write_text(f"# Scenet {label}\n", encoding="utf-8")
+    (target / "llms.txt").write_text(f"# Scenet {label}\n", encoding="utf-8")
+    return target
+
+
+@pytest.fixture(scope="session")
+def release_archive(
+    build_docs: Callable[[str], Path], tmp_path_factory: pytest.TempPathFactory
+) -> Callable[[str], Path]:
+    """The archive a release attaches, holding a real build of its documentation."""
+    made: dict[str, Path] = {}
+
+    def make(release: str) -> Path:
+        if release not in made:
+            version = site_versions.Version.parse(release)
+            base = tmp_path_factory.mktemp(f"release-{release}")
+            tree = _version_site(build_docs(release), base / "tree", release)
+            made[release] = base / version.archive
+            site_versions.write_archive(tree, made[release], version)
+        return made[release]
+
+    return make
+
+
+@pytest.fixture
+def dev_site(build_docs: Callable[[str], Path], tmp_path: Path) -> Path:
+    return _version_site(build_docs("dev"), tmp_path / "dev-build", "dev")
+
+
+@pytest.fixture
+def assembled(release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path) -> Path:
+    out = tmp_path / "site"
+    site_versions.assemble(dev_site, [release_archive("0.10.0"), release_archive("0.11.0")], out)
+    return out
+
+
+def _switcher(site: Path) -> list[dict[str, Any]]:
+    return json.loads((site / "switcher.json").read_text(encoding="utf-8"))
+
+
+def _baked(page: Path, name: str) -> str:
+    """A value the theme writes into a page's DOCUMENTATION_OPTIONS."""
+    text = page.read_text(encoding="utf-8")
+    marker = f"DOCUMENTATION_OPTIONS.{name} = '"
+    start = text.index(marker) + len(marker)
+    return text[start : text.index("'", start)]
+
+
+#: Where each copy is, and what it documents: the root is the latest release.
+COPIES = {"": "0.11", "v0.11/": "0.11", "v0.10/": "0.10", "dev/": "dev"}
+
+
+class TestAssembledSite:
+    """The latest release at the root, main under dev/, each minor version under vX.Y/."""
+
+    def test_the_layout(self, assembled: Path):
+        assert (assembled / "llms.txt").read_text(encoding="utf-8") == "# Scenet 0.11.0\n"
+        assert "0.11.0" in (assembled / "schemas" / "panel.schema.json").read_text()
+        assert "0.11.0" in (assembled / "playground" / "index.html").read_text()
+        for prefix, label in [("v0.11/", "0.11.0"), ("v0.10/", "0.10.0"), ("dev/", "dev")]:
+            assert (assembled / prefix / "scenet-spec.md").read_text() == f"# Scenet {label}\n"
+            assert label in (assembled / prefix / "playground" / "index.html").read_text()
+        assert sorted(path.name for path in assembled.iterdir() if path.is_dir()) == sorted(
+            ["_static", "dev", "howto", "playground", "schemas", "v0.10", "v0.11"]
+        )
+
+    def test_a_release_is_served_exactly_as_attached(
+        self, assembled: Path, release_archive: Callable[[str], Path], tmp_path: Path
+    ):
+        unpacked = tmp_path / "unpacked"
+        site_versions.read_archive(release_archive("0.10.0"), unpacked)
+        assert _contents(assembled / "v0.10") == _contents(unpacked)
+        root = {
+            name: data
+            for name, data in _contents(assembled).items()
+            if not name.startswith(("dev/", "v0.1")) and name not in {"switcher.json", ".nojekyll"}
+        }
+        assert root == _contents(assembled / "v0.11")
+
+    def test_the_switcher_lists_dev_then_each_version(self, assembled: Path):
+        assert _switcher(assembled) == [
+            {"name": "dev", "version": "dev", "url": "/scenet/dev/"},
+            {"name": "0.11 (latest)", "version": "0.11", "url": "/scenet/", "preferred": True},
+            {"name": "0.10", "version": "0.10", "url": "/scenet/v0.10/"},
+        ]
+
+    def test_exactly_one_version_is_preferred(self, assembled: Path):
+        """The banner does nothing at all otherwise (the theme's documented requirement)."""
+        assert [entry["version"] for entry in _switcher(assembled) if entry.get("preferred")] == [
+            "0.11"
+        ]
+
+    @pytest.mark.parametrize(("prefix", "version_match"), COPIES.items())
+    def test_each_copy_is_in_the_switcher(self, assembled: Path, prefix: str, version_match: str):
+        """So the switcher can show which version a reader is on."""
+        for page in ("index.html", "howto/other.html"):
+            baked = _baked(assembled / prefix / page, "theme_switcher_version_match")
+            assert baked == version_match
+            assert baked in {entry["version"] for entry in _switcher(assembled)}
+            assert _baked(assembled / prefix / page, "theme_switcher_json_url") == (
+                "/scenet/switcher.json"
+            )
+
+    @pytest.mark.parametrize("prefix", COPIES)
+    def test_every_page_is_canonical_at_the_root(self, assembled: Path, prefix: str):
+        page = (assembled / prefix / "howto" / "other.html").read_text(encoding="utf-8")
+        assert (
+            '<link rel="canonical" href="https://creatoan.github.io/scenet/howto/other.html"'
+            in page
+        )
+
+    @pytest.mark.parametrize(
+        ("prefix", "shown"), [("", False), ("v0.11/", False), ("v0.10/", True), ("dev/", True)]
+    )
+    def test_the_banner_shows_on_dev_and_old_versions_only(
+        self, assembled: Path, prefix: str, shown: bool
+    ):
+        """The theme hides it exactly when the build's version_match is the preferred one."""
+        page = assembled / prefix / "index.html"
+        text = page.read_text(encoding="utf-8")
+        assert 'id="bd-header-version-warning"' in text
+        assert "show_version_warning_banner =" in text
+        (preferred,) = [entry for entry in _switcher(assembled) if entry.get("preferred")]
+        assert (_baked(page, "theme_switcher_version_match") != preferred["version"]) is shown
+
+    def test_the_banner_calls_dev_unstable_and_old_versions_old(self, assembled: Path):
+        """Its words come from the release string: "dev" in it, or lower than the latest."""
+
+        def release(prefix: str) -> str:
+            options = assembled / prefix / "_static" / "documentation_options.js"
+            text = options.read_text(encoding="utf-8")
+            return text.split("VERSION: '", 1)[1].split("'", 1)[0]
+
+        assert "dev" in release("dev/")
+        assert site_versions.Version.parse(release("v0.10/")) < site_versions.Version(0, 11, 0)
+
+    def test_a_push_to_main_changes_only_dev(
+        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+    ):
+        archives = [release_archive("0.10.0"), release_archive("0.11.0")]
+        before, after = tmp_path / "before", tmp_path / "after"
+        site_versions.assemble(dev_site, archives, before)
+        (dev_site / "llms.txt").write_text("# Scenet dev, one commit later\n", encoding="utf-8")
+        site_versions.assemble(dev_site, archives, after)
+        old, new = _contents(before), _contents(after)
+        assert old.keys() == new.keys()
+        assert [name for name in old if old[name] != new[name]] == ["dev/llms.txt"]
+
+    def test_the_latest_is_the_highest_version_not_the_last_given(
+        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+    ):
+        """A patch to an older minor version must not take the root."""
+        out = tmp_path / "site"
+        site_versions.assemble(
+            dev_site, [release_archive("0.11.0"), release_archive("0.10.0")], out
+        )
+        assert _baked(out / "index.html", "theme_switcher_version_match") == "0.11"
+
+
+class TestAssemblyRefuses:
+    def test_no_release(self, dev_site: Path, tmp_path: Path):
+        with pytest.raises(site_versions.SiteError, match="no release"):
+            site_versions.assemble(dev_site, [], tmp_path / "site")
+
+    def test_a_mislabelled_release(
+        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+    ):
+        """An archive whose pages say another version would show the wrong banner."""
+        wrong = tmp_path / "scenet-0.12.0-site.zip"
+        unpacked = tmp_path / "unpacked"
+        site_versions.read_archive(release_archive("0.11.0"), unpacked)
+        site_versions.write_archive(unpacked, wrong, site_versions.Version(0, 12, 0))
+        with pytest.raises(site_versions.SiteError, match="version_match"):
+            site_versions.assemble(dev_site, [wrong], tmp_path / "site")
+
+    def test_a_dev_build_labelled_as_a_release(
+        self, release_archive: Callable[[str], Path], build_docs: Callable[[str], Path],
+        tmp_path: Path,
+    ):  # fmt: skip
+        mislabelled = _version_site(build_docs("0.10.0"), tmp_path / "dev", "dev")
+        with pytest.raises(site_versions.SiteError, match="version_match"):
+            site_versions.assemble(mislabelled, [release_archive("0.11.0")], tmp_path / "site")
+
+    def test_two_of_one_minor_version(
+        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+    ):
+        archive = release_archive("0.11.0")
+        twin = tmp_path / "scenet-0.11.1-site.zip"
+        twin.write_bytes(archive.read_bytes())
+        with pytest.raises(site_versions.SiteError, match=r"0\.11"):
+            site_versions.assemble(dev_site, [archive, twin], tmp_path / "site")
+
+    def test_a_root_entry_in_the_way_of_a_version(
+        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+    ):
+        unpacked = tmp_path / "unpacked"
+        site_versions.read_archive(release_archive("0.11.0"), unpacked)
+        (unpacked / "dev").mkdir()
+        (unpacked / "dev" / "notes.html").write_text("<p>a page called dev</p>\n")
+        archive = tmp_path / "scenet-0.11.0-site.zip"
+        site_versions.write_archive(unpacked, archive, site_versions.Version(0, 11, 0))
+        with pytest.raises(site_versions.SiteError, match="dev"):
+            site_versions.assemble(dev_site, [archive], tmp_path / "site")
+
+    def test_a_site_over_the_pages_limit(
+        self,
+        release_archive: Callable[[str], Path],
+        dev_site: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        monkeypatch.setattr(site_versions, "SIZE_LIMIT", 1000)
+        with pytest.raises(site_versions.SiteError, match="limit"):
+            site_versions.assemble(dev_site, [release_archive("0.11.0")], tmp_path / "site")
+
+
+class TestOldPlaygroundsRetire:
+    """The root, dev and the newest minor versions keep a playground; older ones do not."""
+
+    def test_the_newest_keep_theirs(self):
+        assert site_versions.PLAYGROUNDS_KEPT == 3
+
+    def test_an_older_one_becomes_a_page_pointing_on(
+        self,
+        release_archive: Callable[[str], Path],
+        dev_site: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        monkeypatch.setattr(site_versions, "PLAYGROUNDS_KEPT", 1)
+        out = tmp_path / "site"
+        site_versions.assemble(
+            dev_site, [release_archive("0.10.0"), release_archive("0.11.0")], out
+        )
+        assert [path.name for path in (out / "v0.10" / "playground").iterdir()] == ["index.html"]
+        stub = (out / "v0.10" / "playground" / "index.html").read_text(encoding="utf-8")
+        assert 'href="../../playground/"' in stub
+        assert "releases/tag/v0.10.0" in stub
+        assert "scenet-0.10.0-site.zip" in stub
+        assert "AI-generated" in stub
+        assert "0.11.0" in (out / "v0.11" / "playground" / "index.html").read_text()
+        assert "0.11.0" in (out / "playground" / "index.html").read_text()
+        assert "dev" in (out / "dev" / "playground" / "index.html").read_text()
+        # The rest of the old version is still served.
+        assert (out / "v0.10" / "schemas" / "panel.schema.json").is_file()
+        assert (out / "v0.10" / "howto" / "other.html").is_file()
+
+
+# ---------------------------------------------------------------- which releases
+
+
+def _release(tag: str, *assets: str, draft: bool = False, prerelease: bool = False):
+    return {
+        "tag_name": tag,
+        "draft": draft,
+        "prerelease": prerelease,
+        "assets": [{"name": name, "digest": f"sha256:{name}"} for name in assets],
+    }
+
+
+class TestSelect:
+    """Which release serves each minor version, from what the releases API lists."""
+
+    def test_the_highest_patch_of_each_minor_with_a_site(self):
+        releases = [
+            _release("v0.11.1", "scenet-0.11.1-site.zip", "scenet-0.11.1-py3-none-any.whl"),
+            _release("v0.11.0", "scenet-0.11.0-site.zip"),
+            _release("v0.10.0", "scenet-0.10.0-site.zip"),
+            _release("v0.10.1", "scenet-0.10.1-site.zip"),
+        ]
+        sites, _ = site_versions.select(releases)
+        assert [str(site.version) for site in sites] == ["0.11.1", "0.10.1"]
+        assert sites[0].digest == "sha256:scenet-0.11.1-site.zip"
+
+    def test_a_release_without_a_site_is_passed_over_and_said(self):
+        releases = [
+            _release("v0.11.1", "scenet-0.11.1-py3-none-any.whl"),
+            _release("v0.11.0", "scenet-0.11.0-site.zip"),
+            _release("v0.7.0"),
+        ]
+        sites, notes = site_versions.select(releases)
+        assert [str(site.version) for site in sites] == ["0.11.0"]
+        assert any("v0.11.1" in note for note in notes)
+        assert any("v0.7.0" in note for note in notes)
+
+    def test_drafts_prereleases_and_other_tags_are_not_served(self):
+        releases = [
+            _release("v0.12.0", "scenet-0.12.0-site.zip", draft=True),
+            _release("v0.12.1", "scenet-0.12.1-site.zip", prerelease=True),
+            _release("v0.13.0rc1", "scenet-0.13.0rc1-site.zip"),
+            _release("nightly", "scenet-0.11.0-site.zip"),
+            _release("v0.11.0", "scenet-0.11.0-site.zip"),
+        ]
+        sites, _ = site_versions.select(releases)
+        assert [str(site.version) for site in sites] == ["0.11.0"]
+
+    def test_from_a_directory(self, tmp_path: Path):
+        for name in ["scenet-0.10.0-site.zip", "scenet-0.10.2-site.zip", "scenet-0.11.0-site.zip"]:
+            (tmp_path / name).write_bytes(b"")
+        (tmp_path / "notes.txt").write_text("not an archive")
+        chosen = site_versions.select_archives(tmp_path)
+        assert [path.name for path in chosen] == [
+            "scenet-0.11.0-site.zip",
+            "scenet-0.10.2-site.zip",
+        ]
 
 
 # ---------------------------------------------------------------- backfill
