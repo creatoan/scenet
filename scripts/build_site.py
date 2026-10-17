@@ -39,6 +39,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STAGING = ROOT / "build" / "site-release"
 DOCS_BUILD = ROOT / "docs" / "_build" / "html"
+# Sphinx's pickled build state. Left to its default it lands inside the HTML, and would be
+# published -- several megabytes nobody reads, in every version of the site.
+DOCTREES = ROOT / "docs" / "_build" / "doctrees"
 PLAYGROUND = ROOT / "playground"
 SCHEMAS = ROOT / "editor" / "schemas"
 
@@ -80,6 +83,8 @@ def build_docs(*, dev: bool) -> None:
             "--keep-going",
             "-b",
             "html",
+            "-d",
+            str(DOCTREES),
             "docs",
             str(DOCS_BUILD),
         ],
@@ -115,7 +120,8 @@ def compose(out: Path, *, dev: bool) -> None:
 
     if out.exists():
         shutil.rmtree(out)
-    shutil.copytree(DOCS_BUILD, out)
+    # .doctrees too, in case an earlier build left one in the HTML.
+    shutil.copytree(DOCS_BUILD, out, ignore=shutil.ignore_patterns(".doctrees"))
     shutil.copytree(PLAYGROUND / "dist", out / "playground")
 
     schemas = out / "schemas"
