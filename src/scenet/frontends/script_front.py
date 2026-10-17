@@ -61,6 +61,7 @@ from scenet.ir import (
     CaptionKind,
     PageLayout,
     PanelIR,
+    Predicate,
     SfxSize,
     ShotType,
     Side,
@@ -1734,6 +1735,8 @@ def _off_panel(
     Off panel means in the scene but not in the frame. The front matter is the scene's
     cast, so `ALICE (OP)` leaves Alice out of this panel -- and out of every staging
     relation that names her, each with a note, since that changes what the panel stages.
+    All but one kind: `BOB looking_at ALICE` still holds, since Bob may look toward the
+    side of the frame she is heard from.
     It is worked out from the panel's own lines, after its `@over:` chain and the front
     matter are merged, so a panel over this one does not inherit her absence. Where she
     was written to stand, `at: left_third` say, is the side her tail ends on, unless the
@@ -1785,7 +1788,7 @@ def _off_panel(
         kept = []
         for index, relation in enumerate(staging):
             named = next((speaker for speaker in leaving if names(relation, speaker)), None)
-            if named is None:
+            if named is None or _looks_toward(relation, named, leaving):
                 kept.append(relation)
                 continue
             line = draft.event_lines[speakers[named]]
@@ -1802,6 +1805,22 @@ def _off_panel(
             )
         document["staging"] = kept
     return document
+
+
+def _looks_toward(relation: object, speaker: str, leaving: Collection[str]) -> bool:
+    """Whether a relation is somebody still drawn looking at a speaker who is not."""
+    if isinstance(relation, str):
+        words = relation.split()
+        if len(words) != 3:
+            return False
+        subject, predicate, target = words
+    elif isinstance(relation, dict):
+        subject, predicate, target = (
+            relation.get(key) for key in ("subject", "predicate", "object")
+        )
+    else:
+        return False
+    return predicate == Predicate.LOOKING_AT.value and target == speaker and subject not in leaving
 
 
 def _on_their_side(event: dict[str, Any], cast: dict[str, Any]) -> dict[str, Any]:

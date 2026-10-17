@@ -66,6 +66,11 @@ below 1.0 means.
   *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
   and *plongée*, *contre-plongée*. Both highlighters follow, and the gallery gains
   `33-planche.script`. (Part of #75)
+- **A figure may look at somebody heard from off panel**: `bob looking_at carol`, where Carol
+  speaks `off_panel: left`, turns Bob toward the left of the frame and aims his eyes out of it.
+  With no side named, Carol is heard from the side Bob faces. In a comic script,
+  `BOB looking_at ALICE` now survives `ALICE (OP)` instead of being dropped with a note.
+  (Part of #75)
 - **`null` leaves an inherited cast member out of a panel**: `cast: {bob: null}` in a scene's
   panel, under `over:` or over the scene's defaults, or `@cast: {BOB: null}` in a script. It
   follows JSON Merge Patch (RFC 7386), "If the value is null, remove". The staging relations

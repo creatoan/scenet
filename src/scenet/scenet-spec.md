@@ -408,7 +408,7 @@ scene-graph representations used elsewhere in computer vision.
 |---|---|
 | `left_of`, `right_of` | Fixes horizontal ordering |
 | `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object |
+| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
 | `ground_shared_with` | Places both actors on the same ground line |
 
 ### Why ordering must be explicit
@@ -482,6 +482,20 @@ panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-s
 balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
 face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
 to the panel's outline when it is slanted.
+
+**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
+staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
+frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
+`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
+look agree.
+
+```yaml
+cast:
+  bob: {reference: bob, at: center}
+staging: [bob looking_at carol]
+script:
+  - say: {by: carol, text: Over here!, off_panel: left}
+```
 
 A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
 `null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
@@ -1296,8 +1310,9 @@ see [off-panel speech](https://creatoan.github.io/scenet/reference/language.html
 
 Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
 `ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
-that names her — `BOB looking_at ALICE` does not apply there, and a `dropped-relation` note says
-so. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
+that names her — `ALICE left_of BOB` does not apply there, and a `dropped-relation` note says
+so. All but one: `BOB looking_at ALICE` still holds, and Bob turns toward the side she is heard
+from. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
 the cue names one: `ALICE (OP, right)`. Somebody never cast — `PHONE (OP)` — is heard just the
 same, from the side nearer the balloon.
 
@@ -1483,7 +1498,7 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 ### `scenet/dropped-relation`
 
-A shared staging relation does not apply in a panel its actor is left out of. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
+A shared staging relation does not apply in a panel its actor is left out of. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated for every panel -- `ALICE left_of BOB`, `ALICE looking_at BOB` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
 
 **Fix:** Nothing to do if that is what the panel means; otherwise draw her in it.
 

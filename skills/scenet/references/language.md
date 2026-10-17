@@ -330,7 +330,7 @@ scene-graph representations used elsewhere in computer vision.
 |---|---|
 | `left_of`, `right_of` | Fixes horizontal ordering |
 | `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object |
+| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
 | `ground_shared_with` | Places both actors on the same ground line |
 
 ### Why ordering must be explicit
@@ -404,6 +404,20 @@ panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-s
 balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
 face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
 to the panel's outline when it is slanted.
+
+**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
+staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
+frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
+`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
+look agree.
+
+```yaml
+cast:
+  bob: {reference: bob, at: center}
+staging: [bob looking_at carol]
+script:
+  - say: {by: carol, text: Over here!, off_panel: left}
+```
 
 A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
 `null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.

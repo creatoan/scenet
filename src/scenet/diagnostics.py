@@ -398,7 +398,7 @@ RULES: dict[str, Rule] = {
             "A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the "
             "scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that "
             "would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated "
-            "for every panel -- `ALICE left_of BOB`, `BOB looking_at ALICE` -- cannot hold "
+            "for every panel -- `ALICE left_of BOB`, `ALICE looking_at BOB` -- cannot hold "
             "where she is not drawn, so it is left out of that panel. A note, since that "
             "changes what the panel stages: Bob is placed, and looks, without her."
         ),

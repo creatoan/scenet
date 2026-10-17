@@ -270,8 +270,9 @@ see [off-panel speech](https://creatoan.github.io/scenet/reference/language.html
 
 Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
 `ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
-that names her — `BOB looking_at ALICE` does not apply there, and a `dropped-relation` note says
-so. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
+that names her — `ALICE left_of BOB` does not apply there, and a `dropped-relation` note says
+so. All but one: `BOB looking_at ALICE` still holds, and Bob turns toward the side she is heard
+from. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
 the cue names one: `ALICE (OP, right)`. Somebody never cast — `PHONE (OP)` — is heard just the
 same, from the side nearer the balloon.
 

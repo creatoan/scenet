@@ -1156,15 +1156,30 @@ class PanelIR(Strict):
         identifier while the source is still in view.
         """
         known = set(self.cast)
+        heard = self.off_panel_speakers()
         for index, relation in enumerate(self.staging):
             for role, actor in (("subject", relation.subject), ("object", relation.object)):
-                if actor not in known:
-                    raise RuleViolationError(
-                        f"staging relation '{relation.predicate}' names unknown actor "
-                        f"'{actor}' as {role}; cast is {sorted(known)}",
-                        rule="unknown-actor",
-                        loc=("staging", index),
+                if actor in known:
+                    continue
+                # Somebody heard from off panel is not drawn, but may be looked at: the
+                # figure turns toward the side of the frame the voice comes from.
+                looked_at = role == "object" and relation.predicate is Predicate.LOOKING_AT
+                if looked_at and actor in heard:
+                    continue
+                message = (
+                    f"staging relation '{relation.predicate}' names unknown actor "
+                    f"'{actor}' as {role}; cast is {sorted(known)}"
+                )
+                if actor in heard:
+                    message += (
+                        f". '{actor}' speaks from off panel, and only looking_at may name "
+                        "somebody who is not drawn"
                     )
+                raise RuleViolationError(
+                    message,
+                    rule="unknown-actor",
+                    loc=("staging", index),
+                )
         # Captions are skipped rather than exempted by accident. A `spoken` caption's
         # `by` names somebody *off panel*, so it is not in the cast by definition and
         # checking it here would make the field impossible to use for what it is for.
@@ -1285,6 +1300,30 @@ class PanelIR(Strict):
             for relation in self.staging
             if relation.predicate is Predicate.LOOKING_AT
         }
+
+    def off_panel_speakers(self) -> dict[str, Side | None]:
+        """Who is heard from off panel, and the side each is heard from, if any line names one.
+
+        Returns:
+            Speaker to the first side a line of theirs names, or None when every line of
+            theirs says only `off_panel: true`, in the order they first speak.
+
+        Example:
+            >>> from scenet import parse_panel
+            >>> panel = parse_panel(
+            ...     "{script: [{say: {by: carol, text: Hi, off_panel: true}},"
+            ...     " {say: {by: carol, text: Here, off_panel: left}}]}"
+            ... )
+            >>> panel.off_panel_speakers()
+            {'carol': <Side.LEFT: 'left'>}
+        """
+        heard: dict[str, Side | None] = {}
+        for event in self.script:
+            if isinstance(event, SayEvent) and event.off_panel is not False:
+                named = event.off_panel if isinstance(event.off_panel, Side) else None
+                if heard.get(event.by) is None:
+                    heard[event.by] = named
+        return heard
 
     def ground_groups(self) -> tuple[frozenset[str], ...]:
         """Actors joined by ground_shared_with, as connected components.
