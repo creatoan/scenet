@@ -162,6 +162,18 @@ class TestThePackageIsCheckedOnEveryPullRequest:
         assert "id-token" not in str(job.get("permissions", {}))
 
 
+def test_the_python_floor_is_really_tested():
+    """`uv run` reads .python-version (3.14) and, finding a 3.12 environment, rebuilds it.
+
+    The 3.12 job synced 3.12, then ran its tests on 3.14 with the default groups only, so
+    the floor went untested. Every uv command in the job must name the matrix's Python.
+    """
+    job = _load("ci.yml")["jobs"]["check"]
+    assert job["env"]["UV_PYTHON"] == "${{ matrix.python }}"
+    script = "\n".join(str(step.get("run", "")) for step in job["steps"])
+    assert "uv run pytest" in script
+
+
 def test_every_pull_request_checks_the_docs_say_their_version():
     """The switcher, the banner and canonical links rest on settings a build carries."""
     steps = _load("ci.yml")["jobs"]["docs"]["steps"]
