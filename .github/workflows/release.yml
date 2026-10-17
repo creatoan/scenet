@@ -107,9 +107,50 @@ jobs:
           path: editor/scenet.vsix
           if-no-files-found: error
 
+  # The release's documentation site: its docs, its playground, its schemas and spec
+  # pack. Pages serves every version from the site attached to its release -- the
+  # latest at the root, each minor version under /vX.Y/ -- so this is the one build of
+  # it there will ever be. Built before anything is published: a site that fails to
+  # build stops the release while it can still be fixed.
+  site:
+    name: Build the documentation site
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - run: uv sync --frozen --group docs
+
+      # The playground installs the very wheel PyPI is about to get, not a rebuild of it.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Build and archive the site
+        run: >-
+          uv run python scripts/build_site.py --release-archive
+          "site-archive/scenet-${GITHUB_REF_NAME#v}-site.zip"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: site-archive/
+          if-no-files-found: error
+
   publish:
     name: Publish to PyPI
-    needs: [build, extension]
+    needs: [build, extension, site]
     runs-on: ubuntu-latest
     # Skipped until the repository variable PYPI_TRUSTED_PUBLISHER is "true".
     #
@@ -148,7 +189,7 @@ jobs:
 
   github-release:
     name: Create the GitHub release
-    needs: [build, extension, publish]
+    needs: [build, extension, site, publish]
     # Runs when PyPI succeeded *or* was skipped, but never after it failed. A GitHub
     # Release is a real release on its own -- the wheel is attached and installable
     # from its URL -- so it should not be held hostage to a PyPI account that has not
@@ -158,6 +199,7 @@ jobs:
       always()
       && needs.build.result == 'success'
       && needs.extension.result == 'success'
+      && needs.site.result == 'success'
       && needs.publish.result != 'failure'
       && needs.publish.result != 'cancelled'
     runs-on: ubuntu-latest
@@ -174,6 +216,12 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: extension
+          path: dist/
+
+      # scenet-X.Y.Z-site.zip, which pages.yml reads every version of the site from.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
           path: dist/
 
       # The release notes are the CHANGELOG section for this version, which `verify`
@@ -197,6 +245,7 @@ jobs:
           PUBLISHED: ${{ needs.publish.result }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          MINOR="${VERSION%.*}"
           WHEEL="scenet-${VERSION}-py3-none-any.whl"
           BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
           {
@@ -214,8 +263,9 @@ jobs:
             echo "The VS Code extension is the attached scenet.vsix:"
             echo "**Extensions** -> **...** -> **Install from VSIX...**"
             echo
-            echo "[Documentation](https://creatoan.github.io/scenet/) |"
-            echo "[Playground](https://creatoan.github.io/scenet/playground/)"
+            # This release's own documentation, which stays when the root moves on.
+            echo "[Documentation](https://creatoan.github.io/scenet/v${MINOR}/) |"
+            echo "[Playground](https://creatoan.github.io/scenet/v${MINOR}/playground/)"
           } >> release-notes.md
 
       # Idempotent, because a release workflow gets re-run. The first v0.1.0 run

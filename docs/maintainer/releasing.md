@@ -75,11 +75,14 @@ push tag v0.2.0
       │
       ├─ extension npm ci → tsc → vsce package → scenet.vsix
       │
+      ├─ site      the documentation and the playground, running the wheel
+      │            `build` made → scenet-0.2.0-site.zip
+      │
       ├─ publish   ⏸ waits for you to approve the `pypi` environment
       │            → pypi.org, via Trusted Publishing, with attestations
       │
       ├─ release   → GitHub Release, notes from CHANGELOG,
-      │              sdist + wheel + vsix attached
+      │              sdist + wheel + vsix + site attached
       │
       └─ registry  → listed in the MCP registry, from the PyPI package
 ```
@@ -118,6 +121,46 @@ tags are protected against deletion.
 It is a real trade. Releases stop being synchronous, which matters when the person who
 tagged is not around to approve; and the gate protects against a mistake that cannot be
 undone. Decide once, deliberately, rather than discovering it mid-release.
+
+## The site attached to each release
+
+Every release carries its documentation site, built by the `site` job: the documentation,
+the playground running the very wheel PyPI gets, the JSON Schemas, the spec pack and
+`llms.txt`, as `scenet-X.Y.Z-site.zip` on the GitHub Release. It is built before anything
+is published, so a documentation build that fails (`sphinx -W`) stops the release while
+nothing is out yet.
+
+That attachment is the one build of the release's site there will ever be. The
+documentation site serves every version from the attachments, so the site of a version is
+exactly what was released, whatever has changed since. Anyone can also download it to read
+offline; the playground in it needs a local web server, not `file://`.
+
+### Backfilling a release made before that
+
+Releases up to 0.11.0 were made before releases carried a site. **Actions → Site backfill
+→ Run workflow**, giving the tag, builds one and attaches it:
+
+```bash
+gh workflow run site-backfill.yml -f tag=v0.11.0
+```
+
+It builds the release's own sources with its own lockfiles, and its playground runs the
+wheel attached to that release. Only the files that make a build versioned
+(`backfill_site.py` lists them) are taken from `main` and laid over the release's. That is
+sound only where the release built its site with the same tooling as v0.11.0, which holds
+from **v0.8.0 to v0.11.0**; the script refuses any other tag. The documentation of v0.1.0
+to v0.7.0 is not on the site, and stays readable at its tag on GitHub.
+
+The workflow never replaces a site already attached. To rebuild one, delete the asset from
+the release first. The same build runs locally, without attaching anything:
+
+```bash
+uv run python scripts/backfill_site.py v0.11.0 --out build/backfill
+```
+
+**If immutable releases are ever enabled** for this repository, a published release can
+no longer gain an asset, and backfilling stops being possible. Releases made by the workflow
+are unaffected: their site is attached as they are created.
 
 ## Listing in the MCP registry
 
