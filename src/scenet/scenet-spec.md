@@ -1248,11 +1248,18 @@ A Franco-Belgian script is read in its own words. The vocabulary is the
 | `ONOMATOPÉE : FLOP` | A sound effect, as `SFX:` |
 | `LÉA : « Bonjour. »` | A cue and its line. The space before the colon may be a no-break space, and the guillemets are taken off |
 | `(pensée)`, `(off)`, `(hors champ)` | A thought balloon; off-panel speech |
+| `(murmure)`, `(chuchoté)`; `(cri)`, `(crié)` | A whisper; a shout |
+| `(à voix basse)` | Small type, as `(small)` |
 
 *Récitatif*, *cartouche* and *narratif* all name the caption box itself (Cité; Alloprof's
 "cartouche (ou récitatif)"; the BnF), which is why they are aliases of `CAPTION` rather than a kind
 of their own: the parenthetical says what the box is doing, `CARTOUCHE (monologue)` for a
 character's thoughts.
+
+The delivery words are the ones a source defines. The BnF's sheet on balloons draws a dotted
+outline for a character who *murmure* — *chuchoter* is to murmur, in Larousse — capitals and
+bold for one who *crie*, and smaller type for one who *parle bas*. Any other word, `(hurlé)` say,
+stays a note to the artist, as an English one does.
 
 **Shots and angles may be written in French**, in a comic script's `@shot:` and `@angle:` only — the
 YAML language and its schema stay in English. Case, accents, apostrophes and hyphens do not matter,

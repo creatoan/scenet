@@ -66,6 +66,8 @@ below 1.0 means.
   *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
   and *plongée*, *contre-plongée*. Both highlighters follow, and the gallery gains
   `33-planche.script`. (Part of #75)
+- **French delivery words**, from the BnF's sheet on balloons: `(murmure)` and `(chuchoté)` are
+  a whisper, `(cri)` and `(crié)` a shout, `(à voix basse)` small type. (Part of #75)
 - **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
   build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
   playground now all go through it, rather than assembling a script each their own way.

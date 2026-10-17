@@ -147,6 +147,15 @@ KIND_MODIFIERS = {
     # French: a *bulle de pensée* is a thought balloon (Blankcomic's script example).
     "pensée": BalloonKind.THOUGHT,
     "pensee": BalloonKind.THOUGHT,
+    # The BnF's *Les bulles de la BD*: a dotted outline when a character "murmure", and
+    # *chuchoter* is to murmur (Larousse). A shout for one who "crie fort".
+    "murmure": BalloonKind.WHISPER,
+    "murmuré": BalloonKind.WHISPER,
+    "chuchoté": BalloonKind.WHISPER,
+    "chuchote": BalloonKind.WHISPER,
+    "cri": BalloonKind.SHOUT,
+    "crié": BalloonKind.SHOUT,
+    "crie": BalloonKind.SHOUT,
 }
 
 # A voice over: Blambot's "CAPTION (VOICE OVER), meaning the character is speaking, but is
@@ -174,7 +183,14 @@ OFF_PANEL = {
 # Dark Horse's `(small)`, and `(weak)`, which Blambot reads as "dialogue should be
 # diminished": smaller type. Comicraft's weak lettering is also erratic; that hand is
 # not drawn.
-SMALL_TYPE = {"small", "weak"}
+SMALL_TYPE = {
+    "small",
+    "weak",
+    # The BnF again: type smaller than the rest reads as a character who "parle bas".
+    "à voix basse",
+    "a voix basse",
+    "voix basse",
+}
 
 # The side of the frame an off-panel speaker is on, when a cue names it: `(OP, left)`.
 SIDES = {side.value: side for side in Side}
