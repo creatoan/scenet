@@ -10,6 +10,31 @@ below 1.0 means.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-17
+
+**Lettering, sound effects, and comic scripts as publishers write them.** A stressed word is
+lettered in bold italic, every pair is kerned, the type size can be set, and an author can
+letter in their own face. Sound effects are lettered into the picture in a display face. A comic
+script may be written as Dark Horse publishes its format, or in French, with captions that carry
+speech, voices from off panel, small type, and its PAGE headings laid out as pages; `scenet
+check` gains notes, the first of them a publisher's word limits.
+
+**Upgrading from 0.10.**
+
+- **Every example's lettering shifts slightly.** Kerning makes most balloons and captions up to
+  about 1.5% narrower, and where two positions had scored nearly equal a balloon may sit
+  somewhere else. Golden files of your own will need regenerating once.
+- **A few comic-script lines mean something new**, each listed under Changed: prose before the
+  first heading is a title page, `PANEL ONE` is panel `1`, `Panel 1. A description.` is a
+  heading, an all-caps `NAME: text` with NAME in the cast is dialogue, a bare `CAPTION` starts a
+  caption, and `CAP`, `CAPTION` and `SFX` are reserved.
+- **A comic script with PAGE headings now writes its pages**, and the panels on them are
+  compiled at the size of their frames and lettered at the page's one size, so they look
+  different; the front matter's `panel: {size}` now sizes only panels on no page.
+- **`scenet check` can print notes** -- `file:line:column: note: rule: message` -- and exits 0
+  when there are only notes. The MCP server's findings gain `level`, and `validate` calls a
+  document with only notes valid.
+
 ### Added
 
 - **`scenet check` reports notes as well as errors.** A note is a house limit rather than a
@@ -1179,7 +1204,8 @@ or has drifted out of step with the code fails the build.
 - `long_shot` and `full_shot` crop at the same landmark, so with no environment to show
   they can differ only by headroom.
 
-[Unreleased]: https://github.com/creatoan/scenet/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/creatoan/scenet/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/creatoan/scenet/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/creatoan/scenet/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/creatoan/scenet/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/creatoan/scenet/compare/v0.7.0...v0.8.0
