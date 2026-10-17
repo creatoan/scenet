@@ -174,6 +174,123 @@ def test_the_python_floor_is_really_tested():
     assert "uv run pytest" in script
 
 
+def _script(job: dict[Any, Any]) -> str:
+    return "\n".join(str(step.get("run", "")) for step in job["steps"])
+
+
+def _downloads(job: dict[Any, Any]) -> list[str]:
+    return [
+        step["with"]["name"]
+        for step in job["steps"]
+        if str(step.get("uses", "")).startswith("actions/download-artifact@")
+    ]
+
+
+#: Grants that publish something: a deployment, an OIDC token, a write to the repository.
+PUBLISHING = {"id-token", "pages", "contents", "packages", "attestations", "deployments"}
+#: Events a pull request -- possibly from a fork -- can set off.
+PULL_REQUEST_EVENTS = {"pull_request", "pull_request_target", "merge_group"}
+
+
+@pytest.mark.parametrize("path", sorted(WORKFLOWS.glob("*.yml")), ids=lambda p: p.name)
+def test_no_pull_request_holds_a_publishing_credential(path: Path):
+    """A workflow a pull request sets off writes nothing and deploys nothing."""
+    workflow = _load(path.name)
+    if not PULL_REQUEST_EVENTS & set(_triggers(workflow)):
+        return
+    grants = [workflow.get("permissions") or {}]
+    for name, job in workflow["jobs"].items():
+        assert "environment" not in job, f"{path.name}: {name} deploys to an environment"
+        grants.append(job.get("permissions") or {})
+    for grant in grants:
+        assert isinstance(grant, dict), f"{path.name}: permissions must be listed one by one"
+        for scope, level in grant.items():
+            assert scope not in PUBLISHING or level != "write", f"{path.name}: {scope}: write"
+
+
+class TestTheReleaseBuildsItsSite:
+    """Pages serves every release from the site attached to it, built by the release."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def release(cls) -> dict[Any, Any]:
+        return _load("release.yml")
+
+    def test_it_is_built_from_the_wheel_the_release_publishes(self, release: dict[Any, Any]):
+        job = release["jobs"]["site"]
+        assert job["needs"] == "build"
+        assert _downloads(job) == ["distributions"]
+        assert "scripts/build_site.py --release-archive" in _script(job)
+
+    def test_it_publishes_nothing_itself(self, release: dict[Any, Any]):
+        job = release["jobs"]["site"]
+        assert "permissions" not in job
+        assert "environment" not in job
+        uploads = [s for s in job["steps"] if "upload-artifact@" in str(s.get("uses", ""))]
+        assert [step["with"]["name"] for step in uploads] == ["site"]
+
+    def test_pypi_waits_for_it(self, release: dict[Any, Any]):
+        """Everything that can fail runs before anything is published."""
+        assert "site" in release["jobs"]["publish"]["needs"]
+
+    def test_pypi_gets_the_distributions_only(self, release: dict[Any, Any]):
+        assert _downloads(release["jobs"]["publish"]) == ["distributions"]
+
+    def test_the_github_release_attaches_it(self, release: dict[Any, Any]):
+        job = release["jobs"]["github-release"]
+        assert "site" in job["needs"]
+        assert "needs.site.result == 'success'" in job["if"]
+        assert "site" in _downloads(job)
+
+    def test_the_notes_link_the_releases_own_documentation(self, release: dict[Any, Any]):
+        """The root moves on to the next release; the notes are forever."""
+        assert "creatoan.github.io/scenet/v${MINOR}/" in _script(release["jobs"]["github-release"])
+
+
+class TestSiteBackfill:
+    """Attaching a site to a release made before releases carried one."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def backfill(cls) -> dict[Any, Any]:
+        return _load("site-backfill.yml")
+
+    def test_it_is_run_by_hand_for_one_tag(self, backfill: dict[Any, Any]):
+        triggers = _triggers(backfill)
+        assert set(triggers) == {"workflow_dispatch"}
+        assert triggers["workflow_dispatch"]["inputs"]["tag"]["required"] is True
+
+    def test_only_attaching_can_write(self, backfill: dict[Any, Any]):
+        """The build runs an old release's npm install and build; it holds nothing."""
+        assert backfill["permissions"] == {"contents": "read"}
+        writers = [
+            name
+            for name, job in backfill["jobs"].items()
+            if "write" in (job.get("permissions") or {}).values()
+        ]
+        assert writers == ["attach"]
+        assert backfill["jobs"]["attach"]["permissions"] == {"contents": "write"}
+
+    def test_the_tag_never_reaches_a_shell_as_code(self, backfill: dict[Any, Any]):
+        """An input interpolated into `run:` is spliced into the script before it runs."""
+        for job in backfill["jobs"].values():
+            assert "${{" not in _script(job)
+            assert "inputs.tag" not in _script(job)
+
+    def test_it_builds_with_the_backfill_script(self, backfill: dict[Any, Any]):
+        job = backfill["jobs"]["build"]
+        assert "scripts/backfill_site.py" in _script(job)
+        (checkout,) = [s for s in job["steps"] if "checkout@" in str(s.get("uses", ""))]
+        assert checkout["with"]["fetch-depth"] == 0
+        assert checkout["with"]["persist-credentials"] is False
+
+    def test_it_never_replaces_an_attached_site(self, backfill: dict[Any, Any]):
+        script = _script(backfill["jobs"]["attach"])
+        assert "gh release upload" in script
+        assert "--clobber" not in script
+        assert backfill["jobs"]["attach"]["needs"] == "build"
+
+
 def test_every_pull_request_checks_the_docs_say_their_version():
     """The switcher, the banner and canonical links rest on settings a build carries."""
     steps = _load("ci.yml")["jobs"]["docs"]["steps"]

@@ -332,6 +332,45 @@ class TestArchive:
             site_versions.read_archive(archive, tmp_path / "out")
 
 
+# ---------------------------------------------------------------- backfill
+
+
+class TestBackfill:
+    """Releases v0.8.0 to v0.11.0 get their site built with today's tooling overlaid."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def backfill(cls) -> ModuleType:
+        return _load("backfill_site")
+
+    def test_what_it_overlays_exists(self, backfill: ModuleType):
+        for relative in backfill.OVERLAY:
+            assert (ROOT / relative).is_file(), relative
+
+    def test_it_overlays_what_makes_a_build_versioned(self, backfill: ModuleType):
+        assert {
+            "docs/conf.py",
+            "docs/_templates/playground-link.html",
+            "scripts/build_site.py",
+            "scripts/site_versions.py",
+            "playground/vite.config.ts",
+        } <= set(backfill.OVERLAY)
+
+    def test_the_tooling_it_requires_unchanged_exists(self, backfill: ModuleType):
+        """Files it compares at the tag with the last release before versioning."""
+        assert backfill.BEFORE_VERSIONING == "v0.11.0"
+        for relative in backfill.TOOLING:
+            assert (ROOT / relative).is_file(), relative
+
+    def test_a_tag(self, backfill: ModuleType):
+        assert backfill.release_tag("v0.11.0") == site_versions.Version(0, 11, 0)
+
+    @pytest.mark.parametrize("tag", ["0.11.0", "v0.11", "main", "v0.11.0; rm -rf /"])
+    def test_anything_else_is_refused(self, backfill: ModuleType, tag: str):
+        with pytest.raises(ValueError, match="tag"):
+            backfill.release_tag(tag)
+
+
 # ---------------------------------------------------------------- local preview
 
 
