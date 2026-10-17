@@ -25,6 +25,7 @@ from scenet.solve.text import (
     candidate_measures,
     layout_text,
     load_metrics,
+    styled,
     wrap_to_width,
 )
 
@@ -162,6 +163,17 @@ class TestLineBreakingCraft:
                 assert any(character.isalnum() for character in line), (measure, lines)
                 if index:
                     assert not line.startswith(("-", "\u2014", "\u2013", ".", "\u2026")), lines
+
+    @pytest.mark.parametrize("text", ["Wait --", "-- Wait"])
+    def test_with_only_one_word_beside_it(self, metrics: FontMetrics, text: str):
+        narrow = metrics.measure("Wait", 40)
+        assert wrap_to_width(text, metrics, 40, narrow) == [text]
+
+    def test_the_space_it_keeps_is_set_in_the_face_around_it(self):
+        """Inside a stressed span the space is bold italic, as a space between two
+        stressed words is -- one run, not three."""
+        block = layout_text(styled("_out --_"), font_size=40)
+        assert block.runs == ((("out --", Face.BOLD_ITALIC),),)
 
     def test_a_dash_written_against_its_word_was_always_one_word(self, metrics: FontMetrics):
         narrow = metrics.measure("out--", 40)
