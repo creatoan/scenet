@@ -139,6 +139,34 @@ class TestLineBreakingCraft:
         block = layout_text(text, font_size=40, metrics=metrics)
         assert " ".join(block.lines) == text
 
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Theo? The lamp is out --",
+            "-- because somebody forgot the oil.",
+            "I was going to -- never mind.",
+            "Well ... maybe not.",
+            "And then \u2014 nothing.",
+            "So\u2026 \u2026 \u2026 that was it.",
+        ],
+    )
+    def test_a_dash_or_an_ellipsis_keeps_to_its_word(self, metrics: FontMetrics, text: str):
+        """Blambot: "no space before or after an ellipsis or double dash" -- so the mark
+        belongs to the word it is written against, and a line never starts with one
+        after the first, nor holds one alone. Checked at every measure the search tries."""
+        words = text.split()
+        for measure in candidate_measures(words, metrics, 40):
+            lines = wrap_to_width(text, metrics, 40, measure)
+            assert " ".join(lines) == text
+            for index, line in enumerate(lines):
+                assert any(character.isalnum() for character in line), (measure, lines)
+                if index:
+                    assert not line.startswith(("-", "\u2014", "\u2013", ".", "\u2026")), lines
+
+    def test_a_dash_written_against_its_word_was_always_one_word(self, metrics: FontMetrics):
+        narrow = metrics.measure("out--", 40)
+        assert wrap_to_width("lamp is out--", metrics, 40, narrow) == ["lamp", "is", "out--"]
+
     def test_empty_text_produces_an_empty_block(self, metrics: FontMetrics):
         block = layout_text("", font_size=40, metrics=metrics)
         assert block.lines == ()
