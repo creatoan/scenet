@@ -342,6 +342,7 @@ constructor under a mutant. The tests now build one of their own.
 | `layout_text` 18 | `line_widths=()` left out | `()` is its default. |
 | `layout_text` 73 | `score < best_score` to `<=` | An exact tie between two different wrappings needs two different blocks to score the same float; equal wrappings tie, and either is the same block. |
 | `layout_text` 91 | the fallback joins words with `XX XX` | The fallback is reached only when every block is 0 wide. With two words or more, the space between them has width, so the fallback only ever sets one word. |
+| `_keep_marks_with_their_words` 8, 11, 13 | `strict=True` to `None`, `False`, or left out | `_words` gives one gap fewer than words, always, so the two lists never differ in length and `strict` never has anything to refuse. Numbered as in run `39038961474`. |
 **`solve/page.py`** -- triaged: of the 49 survivors, 26 are killed by tests in
 `tests/test_page_solver.py`, which call the solver's pieces directly at the edges each one
 holds -- an inset that exactly fits, two insets exactly a gutter apart, a lean that leaves
@@ -377,14 +378,15 @@ down, and one drawn a thousand times smaller. This one is accepted.
 **`solve/staging.py`** -- triaged: of the 22 survivors, 13 are killed by tests in
 `tests/test_staging.py`. The one that does the most work frames a cast drawn five hundred
 times smaller: a puppet's units are its own, so the composition must come out the same,
-even with the whole cast less than one unit wide. These 9 are accepted.
+even with the whole cast less than one unit wide. These 8 are accepted. A ninth,
+`_facing_for` 5, is killed since a gaze may be aimed at somebody off panel, who is in no
+order (`tests/test_off_panel.py`; run `39038963872`).
 
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
 | `_fit_cast_across_frame` 8, 16 | widths measured with `facing_right` `None` or `False` | A mirrored silhouette is exactly as wide. |
 | `_fit_cast_across_frame` 22, 23 | widths measured from an origin of `(1, 0)` or `(0, 1)` | Moving a silhouette does not change its width. |
 | `_fit_cast_across_frame` 40 | `native_total <= 0` to `< 0` | Every part has a positive width or radius, so a cast's total width is never 0. |
-| `_facing_for` 5 | `target in order and actor in order` to `or` | The order holds the whole cast, and a gaze target is a cast member -- the IR checks it -- so both are always in it. |
 | `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
 | `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
 | `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
