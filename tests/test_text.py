@@ -16,15 +16,19 @@ from fontTools.ttLib import TTFont
 from scenet.ir import Face
 from scenet.solve.text import (
     DEFAULT_FONT_PATH,
+    ITALIC_FONT_PATH,
     LINE_PENALTY,
     TARGET_ASPECT,
     FontMetrics,
     TextBlock,
+    Typeface,
     _shape_score,
     balloon_size,
     candidate_measures,
     layout_text,
     load_metrics,
+    styled,
+    wrap_styled,
     wrap_to_width,
 )
 
@@ -138,6 +142,60 @@ class TestLineBreakingCraft:
         text = "Nothing may be silently dropped or duplicated by wrapping."
         block = layout_text(text, font_size=40, metrics=metrics)
         assert " ".join(block.lines) == text
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Theo? The lamp is out --",
+            "-- because somebody forgot the oil.",
+            "I was going to -- never mind.",
+            "Well ... maybe not.",
+            "And then \u2014 nothing.",
+            "So\u2026 \u2026 \u2026 that was it.",
+        ],
+    )
+    def test_a_dash_or_an_ellipsis_keeps_to_its_word(self, metrics: FontMetrics, text: str):
+        """Blambot: "no space before or after an ellipsis or double dash" -- so the mark
+        belongs to the word it is written against, and a line never starts with one
+        after the first, nor holds one alone. Checked at every measure the search tries."""
+        words = text.split()
+        for measure in candidate_measures(words, metrics, 40):
+            lines = wrap_to_width(text, metrics, 40, measure)
+            assert " ".join(lines) == text
+            for index, line in enumerate(lines):
+                assert any(character.isalnum() for character in line), (measure, lines)
+                if index:
+                    assert not line.startswith(("-", "\u2014", "\u2013", ".", "\u2026")), lines
+
+    @pytest.mark.parametrize("text", ["Wait --", "-- Wait"])
+    def test_with_only_one_word_beside_it(self, metrics: FontMetrics, text: str):
+        narrow = metrics.measure("Wait", 40)
+        assert wrap_to_width(text, metrics, 40, narrow) == [text]
+
+    def test_each_space_keeps_the_face_it_was_written_in(self):
+        """A stressed span across two words, then plain ones: the space inside the span
+        is bold italic, the ones after it are not."""
+        lines = wrap_styled(styled("_one two_ three four"), Typeface(), 40, 10_000)
+        assert [line.runs for line in lines] == [
+            (("one two", Face.BOLD_ITALIC), (" three four", Face.REGULAR))
+        ]
+
+    def test_plain_text_is_wrapped_and_measured_in_the_face_given(self, metrics: FontMetrics):
+        italic = load_metrics(str(ITALIC_FONT_PATH))
+        text = "mmmm mmmm"
+        assert metrics.measure(text, 40) > italic.measure(text, 40)
+        assert wrap_to_width(text, italic, 40, italic.measure(text, 40)) == [text]
+        assert italic.measure(text, 40) in candidate_measures(["mmmm", "mmmm"], italic, 40)
+
+    def test_the_space_it_keeps_is_set_in_the_face_around_it(self):
+        """Inside a stressed span the space is bold italic, as a space between two
+        stressed words is -- one run, not three."""
+        block = layout_text(styled("_out --_"), font_size=40)
+        assert block.runs == ((("out --", Face.BOLD_ITALIC),),)
+
+    def test_a_dash_written_against_its_word_was_always_one_word(self, metrics: FontMetrics):
+        narrow = metrics.measure("out--", 40)
+        assert wrap_to_width("lamp is out--", metrics, 40, narrow) == ["lamp", "is", "out--"]
 
     def test_empty_text_produces_an_empty_block(self, metrics: FontMetrics):
         block = layout_text("", font_size=40, metrics=metrics)

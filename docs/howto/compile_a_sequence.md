@@ -24,7 +24,9 @@ panels:
 ```
 
 The keyword is borrowed from [OpenUSD's composition arcs](../explanation/prior_art.md),
-where `over` means exactly this: name a parent, then state the difference.
+where `over` means exactly this: name a parent, then state the difference. A comic script
+writes the same thing as an `@over:` directive; see
+[Write a panel as a comic script](write_a_comic_script.md#one-panel-over-another).
 
 ```python
 from scenet import compile_scene
@@ -83,6 +85,33 @@ alice = panels["changed"].core.actor("alice")
 assert alice.pose == "arms_crossed"
 assert alice.reference == "alice"
 ```
+
+### Leaving something out
+
+A third rule takes something away: **`null` removes what it would have inherited**, as JSON Merge
+Patch ([RFC 7386](https://www.rfc-editor.org/rfc/rfc7386)) has it — "If the value is null,
+remove". It reaches whatever lies beneath, the panel it is `over:` and the scene's defaults alike.
+A cast member who goes takes every staging relation that names them along, since none can hold in
+a panel they are not in; `scenet check` notes each one as `dropped-relation`.
+
+```python
+from scenet import compile_scene
+
+panels = compile_scene("""
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third}
+staging: [alice left_of bob]
+panels:
+  both: {}
+  alone:
+    cast: {bob: null}
+""")
+
+assert [actor.id for actor in panels["alone"].core.actors] == ["alice"]
+```
+
+A `null` inside a list is left as it is: a list is replaced whole, never merged into.
 
 ## Shared defaults
 

@@ -1,0 +1,9 @@
+---
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@setting: {weather: rain}
+ALICE
+Wet again.
+
+@setting: {place: docks}

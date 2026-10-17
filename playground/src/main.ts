@@ -318,6 +318,8 @@ async function main(): Promise<void> {
   const showResult = (result: CompileResult, model: monaco.editor.ITextModel): void => {
     clearMarkers();
     if (result.ok) {
+      // Notes, if any: a document that compiles has no error to show.
+      monaco.editor.setModelMarkers(model, SCENET_MARKER_OWNER, toMarkers(monaco, result.findings));
       lastGood = result;
       errorBox.hidden = true;
       errorBox.replaceChildren();

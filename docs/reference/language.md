@@ -328,7 +328,7 @@ scene-graph representations used elsewhere in computer vision.
 |---|---|
 | `left_of`, `right_of` | Fixes horizontal ordering |
 | `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object |
+| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
 | `ground_shared_with` | Places both actors on the same ground line |
 
 ### Why ordering must be explicit
@@ -361,18 +361,66 @@ script:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth |
+| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
 | `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
+| `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
+| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
 compiler must decide the line breaks before it can place anything.
 
+A double dash, a dash or an ellipsis written as a word of its own — `out --`, `... maybe` — is
+never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+space before or after it, so it belongs to its word: it stays on the line of the word before
+it, or of the word after it when it opens the balloon. The space is still lettered as written.
+
 A line of text, a caption and an actor id may not contain a control character other than tab, line
 feed and carriage return. Each one is written into the SVG, and XML has no way to write those
 characters at all, not even escaped, so a panel holding one is refused with the character named.
+
+### Off-panel speech
+
+```yaml
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: caller, text: "Open up!", off_panel: left}
+  - say: {by: bob, text: "Who is it?"}
+```
+
+A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
+on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
+the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
+put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+aim most tails at the top border, which reads as a speaker above.
+
+An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
+panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
+balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
+face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
+to the panel's outline when it is slanted.
+
+**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
+staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
+frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
+`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
+look agree.
+
+```yaml
+cast:
+  bob: {reference: bob, at: center}
+staging: [bob looking_at carol]
+script:
+  - say: {by: carol, text: Over here!, off_panel: left}
+```
+
+A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
+`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
+See [Leaving something out](../howto/compile_a_sequence.md#leaving-something-out). A comic script
+does it with `(OP)`.
 
 ### `caption`
 
@@ -404,9 +452,10 @@ render an inner voice: a `monologue` caption and a `thought` balloon. Both are c
 different eras of the same convention, not a duplication.
 
 **Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
-captions, each opens with a quote and only the last one closes — the run is one continuous line of
-off-panel speech, and closing every box would read as a series of interruptions. Write the words;
-the marks are lettering.
+captions by one speaker, each opens with a quote and only the last one closes — the run is one
+continuous line of off-panel speech, and closing every box would read as a series of interruptions.
+A change of speaker (`by`) ends the run, so each speaker's last box closes, as Blambot asks: end
+quotes "should appear as each speaker finishes". Write the words; the marks are lettering.
 
 **`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
 who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
@@ -635,6 +684,9 @@ not pick it here either. Write in capitals if you want them.
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
 **tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
 share.
+
+A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
+not `pages:`. See [Write a panel as a comic script](../howto/write_a_comic_script.md#pages).
 
 A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
 unquoted `1:` as a number, so a panel named by its number is written `'1':`.

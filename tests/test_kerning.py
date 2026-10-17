@@ -19,22 +19,28 @@ import importlib
 import string
 from functools import cache
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
-from fontTools.ttLib import newTable
+from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.tables._k_e_r_n import KernTable_format_0
 
 from scenet.emit.svg import render
 from scenet.ir import Face
 from scenet.pipeline import compile_source
 from scenet.solve.text import (
+    ITALIC_FONT_PATH,
     SHIPPED_FACES,
     FontMetrics,
     Styled,
     Typeface,
+    _ClassPairs,
+    _gpos_kerning,
+    _pair_table,
+    _x_advance,
     load_metrics,
 )
 
@@ -218,3 +224,136 @@ class TestOutput:
         second = compile_source(source).core
         assert first.to_json() == second.to_json()
         assert render(first) == render(second)
+
+
+def _legacy(path: Path, *subtables: Any, version: float = 0) -> Path:
+    """The two-letter font, with a legacy `kern` table holding these subtables."""
+    _font(path)
+    font = TTFont(str(path))
+    kern: Any = newTable("kern")
+    kern.version = version
+    kern.kernTables = list(subtables)
+    font["kern"] = kern
+    font.save(str(path))
+    return path
+
+
+def _subtable(coverage: int, *, apple: bool = False) -> Any:
+    table: Any = KernTable_format_0(apple=apple)
+    table.coverage = coverage
+    table.tupleIndex = 0
+    table.kernTable = {("A", "V"): -80}
+    return table
+
+
+class TestTheLegacyTableInFull:
+    def test_an_apple_table_reads_its_own_flags(self, tmp_path: Path):
+        """Apple's `kern` (version 1.0) flags vertical and cross-stream in the high bits,
+        so a coverage of 0 is horizontal there -- and would be skipped read as OpenType's."""
+        path = _legacy(tmp_path / "apple.ttf", _subtable(0, apple=True), version=1.0)
+        assert FontMetrics(path).kerning("A", "V") == pytest.approx(-0.08)
+
+    def test_a_skipped_subtable_does_not_end_the_table(self, tmp_path: Path):
+        path = _legacy(tmp_path / "two.ttf", _subtable(0), _subtable(1))
+        assert FontMetrics(path).kerning("A", "V") == pytest.approx(-0.08)
+
+
+class TestTheGposTableInFull:
+    def test_latin_is_read_before_the_default_script(self, tmp_path: Path):
+        fea = (
+            "languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n"
+            "feature kern { script latn; pos A V -80; } kern;"
+        )
+        assert FontMetrics(_font(tmp_path / "latn.ttf", features=fea)).kerning(
+            "A", "V"
+        ) == pytest.approx(-0.08)
+
+    def test_every_lookup_adds_its_adjustment(self, tmp_path: Path):
+        """As a shaper applies each lookup in turn: two that kern a pair kern it twice."""
+        fea = (
+            "lookup ONE { pos A V -30; } ONE;\nlookup TWO { pos A V -50; } TWO;\n"
+            "feature kern { lookup ONE; lookup TWO; } kern;"
+        )
+        assert FontMetrics(_font(tmp_path / "two.ttf", features=fea)).kerning(
+            "A", "V"
+        ) == pytest.approx(-0.08)
+
+    @pytest.mark.parametrize("missing", ["ScriptList", "FeatureList", "LookupList"])
+    def test_a_gpos_table_missing_a_list_kerns_nothing(self, missing: str):
+        lists = {"ScriptList": object(), "FeatureList": object(), "LookupList": object()}
+        lists[missing] = None
+        font: Any = {"GPOS": SimpleNamespace(table=SimpleNamespace(**lists))}
+        assert _gpos_kerning(font) == []
+
+
+class TestClassPairs:
+    PAIRS = _ClassPairs(
+        coverage=frozenset({"A", "B"}),
+        first={"A": 1},
+        second={"V": 1, "W": 2},
+        values=((0, -10), (0, -80)),
+    )
+
+    def test_a_covered_glyph_no_class_lists_is_in_class_zero(self):
+        assert self.PAIRS.adjust("B", "V") == -10
+        assert self.PAIRS.adjust("A", "V") == -80
+
+    def test_a_second_class_past_the_row_is_not_an_answer(self):
+        assert self.PAIRS.adjust("A", "W") is None
+
+    def test_a_subtable_with_no_class_definitions_puts_every_glyph_in_class_zero(self):
+        cell = SimpleNamespace(Value1=SimpleNamespace(XAdvance=-40))
+        subtable = SimpleNamespace(
+            Format=2,
+            Coverage=SimpleNamespace(glyphs=["A"]),
+            ClassDef1=None,
+            ClassDef2=None,
+            Class1Record=[SimpleNamespace(Class2Record=[cell])],
+        )
+        table = _pair_table(subtable)
+        assert table is not None
+        assert table.adjust("A", "V") == -40
+
+    def test_a_value_record_that_does_not_move_the_advance_is_zero(self):
+        assert _x_advance(SimpleNamespace(YAdvance=12)) == 0
+        assert _x_advance(None) == 0
+
+
+class TestAPairWithACharacterTheFontLacks:
+    """Never kerned -- even against a font whose class 0 kerns everything it meets."""
+
+    def metrics(self, tmp_path: Path) -> FontMetrics:
+        metrics = FontMetrics(_font(tmp_path / "class.ttf"))
+        everything = _ClassPairs(coverage=frozenset({"A"}), first={}, second={}, values=((-50,),))
+        metrics._kerning = [(everything,)]
+        return metrics
+
+    def test_kerning(self, tmp_path: Path):
+        metrics = self.metrics(tmp_path)
+        assert metrics.kerning("A", "\u200b") == 0.0
+        assert metrics.kerning("A", "V") == pytest.approx(-0.05)
+
+    def test_step(self, tmp_path: Path):
+        metrics = self.metrics(tmp_path)
+        assert metrics.step("A", "\u200b") == metrics.advance("A")
+
+
+class TestNames:
+    def test_a_font_with_no_name_table_is_named_by_its_file(self, tmp_path: Path):
+        metrics = FontMetrics(_font(tmp_path / "plain.ttf"))
+        assert (metrics.family, metrics.style) == ("plain", "Regular")
+
+    def test_a_name_table_without_a_style_is_regular(self, tmp_path: Path):
+        path = _font(tmp_path / "named.ttf")
+        font = TTFont(str(path))
+        builder = FontBuilder(font=font)
+        builder.setupNameTable({"familyName": "Tested"})
+        name: Any = font["name"]
+        name.removeNames(nameID=2)
+        font.save(str(path))
+        metrics = FontMetrics(path)
+        assert (metrics.family, metrics.style) == ("Tested", "Regular")
+
+    def test_the_style_is_read_from_the_font(self):
+        # Built here, not through the cache: a cached face never runs the constructor.
+        assert FontMetrics(ITALIC_FONT_PATH).style == "Italic"

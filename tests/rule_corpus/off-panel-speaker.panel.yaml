@@ -1,0 +1,4 @@
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: bob, text: "I am right here.", off_panel: true}

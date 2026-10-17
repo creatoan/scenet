@@ -24,6 +24,7 @@ from scenet.ir import (
     Mark,
     MassKind,
     Plane,
+    Side,
     TimeOfDay,
     Weather,
     tag_by,
@@ -459,7 +460,8 @@ class CoreBalloon(CoreModel):
 
     Attributes:
         id: Stable identifier, `b0`, `b1`, ... in script order.
-        speaker: Actor id of whoever is talking.
+        speaker: Actor id of whoever is talking -- or, when `off_panel` is set, the name
+            of somebody off panel, who is not an actor.
         order: Position in reading order, counting from zero.
         kind: Which sort of balloon to draw.
         box: Where it sits.
@@ -491,6 +493,11 @@ class CoreBalloon(CoreModel):
     line_height: float
     tail: Tail
     runs: tuple[tuple[CoreRun, ...], ...] = ()
+    # Set when the speaker is off panel: the side of the frame they are on, which the
+    # tail ends on. Then `speaker` names somebody who is not an actor. Left out of the
+    # document when unset, so every Core written before it reads -- and is written --
+    # exactly as it was.
+    off_panel: Side | None = None
 
     @model_validator(mode="after")
     def check_runs(self) -> "CoreBalloon":
@@ -712,6 +719,8 @@ class PanelCore(CoreModel):
         _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=())
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=())
+        for balloon in payload["balloons"]:
+            _drop_unused(balloon, off_panel=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod

@@ -104,10 +104,26 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         around = balloon.box.as_bbox().expanded(1.5)
         assert around.x <= start[0] <= around.right, f"tail of {balloon.id} starts off it"
         assert around.y <= start[1] <= around.bottom, f"tail of {balloon.id} starts off it"
-        face = core.actor(balloon.speaker).face_exclusion.as_circle()
         end = balloon.tail.end
+        if balloon.off_panel is not None:
+            # Nobody drawn to point at: the tail ends on the frame, on the speaker's side.
+            assert _on_the_frame(core, end), f"tail of {balloon.id} stops short of the frame"
+            continue
+        face = core.actor(balloon.speaker).face_exclusion.as_circle()
         distance = math.hypot(end[0] - face.cx, end[1] - face.cy)
         assert distance <= face.r * TAIL_REACH, f"tail of {balloon.id} misses its speaker"
+
+
+def _on_the_frame(core: PanelCore, point: tuple[float, float]) -> bool:
+    """Whether a point lies on the panel's edge: its outline when it has one, else its
+    rectangle."""
+    corners = core.outline or (
+        (0.0, 0.0),
+        (core.width, 0.0),
+        (core.width, core.height),
+        (0.0, core.height),
+    )
+    return Polygon(corners).exterior.distance(ShapelyPoint(point)) <= TOLERANCE
 
 
 def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:

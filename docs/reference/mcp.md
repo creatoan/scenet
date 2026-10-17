@@ -18,7 +18,7 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 |---|---|---|
 | `get_spec` | `section` (optional) | The spec pack, one part at a time, as Markdown |
 | `list_puppets` | — | Every character, with each pose and expression it declares |
-| `validate` | `source`, `syntax`, `deep` | `{valid, findings}`, every finding at once |
+| `validate` | `source`, `syntax`, `deep` | `{valid, findings}`, every finding at once; `valid` when none is an error |
 | `compile` | `source`, `syntax` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
 | `render` | `source`, `syntax`, `live_text` | A summary, then one SVG per panel, then one per page |
 
@@ -56,13 +56,17 @@ the network, or answers differently on a second call. A client can run them with
 | Field | |
 |---|---|
 | `rule` | Stable rule id, such as `scenet/unknown-actor` — the [same catalogue](cli.md#rules) `scenet check` reports |
+| `level` | `error`, which stops the document compiling, or `note`, a house limit such as a balloon over the words a publisher asks for, which does not |
 | `message` | What is wrong, naming the offending construct |
 | `fix` | What to do about it |
 | `where` | Path to the offending value, such as `script.0.say.by`; empty for the whole document |
 | `line`, `column`, `end_line`, `end_column` | 1-based |
 
+A document whose only findings are notes is `valid`: it compiles as it is. Weigh each note,
+and fix it if the panel should read better.
+
 `compile` and `render` refuse a document that does not compile with a **tool error**, whose
-text lists the same findings with the same fixes. A solver failure is located as well as a
+text lists the same findings with the same fixes, errors only. A solver failure is located as well as a
 syntax one: only a failure pays for the deep check that locates it, so a document that compiles
 is compiled once.
 

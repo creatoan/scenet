@@ -38,6 +38,8 @@ export interface Finding {
   readonly endLine: number;
   /** One-based and exclusive. */
   readonly endColumn: number;
+  /** An error stops the document compiling; a note reports a house limit, and does not. */
+  readonly level: "error" | "note";
 }
 
 export interface CompileSuccess {
@@ -47,6 +49,8 @@ export interface CompileSuccess {
   readonly core: string;
   readonly notes: readonly string[];
   readonly panels: readonly string[];
+  /** What `scenet check` says of a document that compiles: notes only, if anything. */
+  readonly findings: readonly Finding[];
 }
 
 export interface CompileFailure {
@@ -91,25 +95,13 @@ _SCENET_FOLDER = Path("${DOCUMENT_FOLDER}")
 os.makedirs(_SCENET_FOLDER / "${FONT_FOLDER}", exist_ok=True)
 
 
-def _scenet_findings(source, kind, exc):
-    """Locate what is wrong, with the checker \`scenet check\` runs.
+def _scenet_check(source, kind, *, deep):
+    """What \`scenet check\` finds, as the editor's findings."""
+    from scenet.diagnostics import diagnose_script, diagnose_source
 
-    The cheap pass first, which is what places a bad key or an unknown actor on its
-    line. Layout failures only surface in a real compile, so if the cheap pass finds
-    nothing it is run again with deep=True. Anything still unplaced goes on line 1.
-    """
-    try:
-        from scenet.diagnostics import diagnose_script, diagnose_source
-
-        diagnose = diagnose_script if kind == "script" else diagnose_source
-        found = diagnose(source, base=_SCENET_FOLDER) or diagnose(
-            source, base=_SCENET_FOLDER, deep=True
-        )
-    except Exception:
-        found = []
-
+    diagnose = diagnose_script if kind == "script" else diagnose_source
     findings = []
-    for item in found:
+    for item in diagnose(source, base=_SCENET_FOLDER, deep=deep):
         region = item.region
         findings.append({
             "rule": item.rule,
@@ -118,8 +110,27 @@ def _scenet_findings(source, kind, exc):
             "column": region.start.column if region else 1,
             "endLine": region.end.line if region else 1,
             "endColumn": region.end.column if region else 2,
+            "level": item.level,
         })
-    if not findings:
+    return findings
+
+
+def _scenet_findings(source, kind, exc):
+    """Locate what is wrong, with the checker \`scenet check\` runs.
+
+    The cheap pass first, which is what places a bad key or an unknown actor on its
+    line. Layout failures only surface in a real compile, so if the cheap pass finds no
+    error -- a note is not one -- it is run again with deep=True. Anything still unplaced
+    goes on line 1.
+    """
+    try:
+        findings = _scenet_check(source, kind, deep=False)
+        if not any(item["level"] == "error" for item in findings):
+            findings = _scenet_check(source, kind, deep=True)
+    except Exception:
+        findings = []
+
+    if not any(item["level"] == "error" for item in findings):
         findings.append({
             "rule": getattr(exc, "rule", None) or type(exc).__name__,
             "message": str(exc),
@@ -127,28 +138,24 @@ def _scenet_findings(source, kind, exc):
             "column": 1,
             "endLine": 1,
             "endColumn": 2,
+            "level": "error",
         })
     return findings
 
 
 def _scenet_compile(source, kind):
     try:
-        from scenet import compile_book, parse_script, compile_ir
+        from scenet import compile_book, compile_script
         from scenet.emit.debug_svg import render_debug
         from scenet.emit.page import render_pages
         from scenet.emit.strip import render_strip
         from scenet.emit.svg import render
 
-        pages = ()
-        if kind == "script":
-            results = {
-                name: compile_ir(panel, base=_SCENET_FOLDER)
-                for name, panel in parse_script(source).items()
-            }
-        else:
-            book = compile_book(source, base=_SCENET_FOLDER)
-            results = book.panels
-            pages = book.pages
+        # Compiled as \`scenet build\` compiles it, whichever kind it is.
+        compile = compile_script if kind == "script" else compile_book
+        book = compile(source, base=_SCENET_FOLDER)
+        results = book.panels
+        pages = book.pages
 
         names = list(results)
         single = len(names) == 1
@@ -199,6 +206,9 @@ def _scenet_compile(source, kind):
             "core": core,
             "notes": notes,
             "panels": names,
+            # A document that compiles has no error, but may have notes -- a balloon over
+            # the words a publisher asks for -- which the editor shows as information.
+            "findings": _scenet_check(source, kind, deep=False),
         })
     except Exception as exc:
         return json.dumps({

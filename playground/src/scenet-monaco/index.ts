@@ -39,8 +39,11 @@ import {
   scriptMonarchTokens,
   scriptThemeRules,
 } from "./script-language";
+import type { ScenetDocumentKind } from "./kind";
 import { SEMANTIC_TOKEN_TYPES, encodeTokens, scenetTokens } from "./semantic";
 
+export { detectKind, type ScenetDocumentKind } from "./kind";
+export { SCENET_MARKER_OWNER, toMarkers, type ScenetFinding } from "./markers";
 export { SCRIPT_LANGUAGE_ID } from "./script-language";
 
 /** Names of the editor themes this module defines. */
@@ -168,65 +171,6 @@ function isScenetDocument(path: string): boolean {
   return path.endsWith(".panel.yaml") || path.endsWith(".scene.yaml");
 }
 
-/**
- * One finding from the compiler's checker, as `scenet.diagnostics` reports it.
- *
- * Lines and columns are one-based and the end column is exclusive -- SARIF's convention,
- * which is also Monaco's, so they need no adjustment.
- */
-export interface ScenetFinding {
-  readonly rule: string;
-  readonly message: string;
-  readonly line: number;
-  readonly column: number;
-  readonly endLine: number;
-  readonly endColumn: number;
-}
-
-/** Owner name for markers set from compiler findings, distinct from the schema's. */
-export const SCENET_MARKER_OWNER = "scenet";
-
-/** Turn compiler findings into editor markers. */
-export function toMarkers(
-  monaco: typeof Monaco,
-  findings: readonly ScenetFinding[],
-): Monaco.editor.IMarkerData[] {
-  return findings.map((finding) => {
-    const sameLine = finding.endLine <= finding.line;
-    return {
-      severity: monaco.MarkerSeverity.Error,
-      message: finding.message,
-      code: finding.rule,
-      source: "scenet",
-      startLineNumber: finding.line,
-      startColumn: finding.column,
-      endLineNumber: Math.max(finding.line, finding.endLine),
-      // A zero-width marker is invisible; one character at least.
-      endColumn: sameLine ? Math.max(finding.endColumn, finding.column + 1) : finding.endColumn,
-    };
-  });
-}
-
-/** Which of the three document kinds a source string is. */
-export type ScenetDocumentKind = "panel" | "scene" | "script";
-
-/**
- * Guess a document's kind from its text.
- *
- * The compiler dispatches on the file extension, which a browser editor does not have.
- * Two cheap signals stand in: a `panels:` key at the left margin means a scene, and a
- * `PANEL` heading means a comic script. Anything else is a single panel, which is also
- * the right answer for an empty buffer.
- */
-export function detectKind(source: string): ScenetDocumentKind {
-  if (/^\s*PANEL\s+\S+\s*$/m.test(source) || /^---\s*$/m.test(source.split("\n")[0] ?? "")) {
-    return "script";
-  }
-  if (/^panels\s*:/m.test(source)) {
-    return "scene";
-  }
-  return "panel";
-}
 
 /** The model URI to use for a document of the given kind. */
 export function modelUriFor(kind: ScenetDocumentKind): string {

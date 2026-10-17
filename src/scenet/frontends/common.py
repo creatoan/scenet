@@ -320,6 +320,36 @@ def _merge_misspellings(errors: list[ErrorDetails]) -> list[ErrorDetails]:
     return [error for index, error in enumerate(merged) if index not in dropped]
 
 
+#: pydantic error types that deserve their own rule. Everything else that pydantic
+#: raises at field level is reported as `invalid-field`, which is honest: the catalogue
+#: should not grow a rule per validator in a library this project does not own.
+PYDANTIC_RULES = {
+    "missing": "missing-field",
+    "extra_forbidden": "unknown-key",
+}
+
+
+def rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]:
+    """Decide which rule a pydantic error belongs to, and where it points.
+
+    A `RuleViolationError` raised inside a validator survives in `ctx["error"]`, carrying
+    the rule it broke and the path it knew about -- which is the only way a model-level
+    validator can report anything more precise than "the document".
+
+    Here rather than in `diagnostics`, which imports the frontends: the comic-script
+    frontend needs the same answer to say which rule a panel broke, and where.
+    `diagnostics` adds its own check that the catalogue has the rule.
+
+    Example:
+        >>> rule_for_pydantic({"type": "missing", "loc": ("cast",), "msg": "", "input": None})
+        ('missing-field', ('cast',))
+    """
+    original = (error.get("ctx") or {}).get("error")
+    if isinstance(original, RuleViolationError):
+        return original.rule, original.loc or tuple(error["loc"])
+    return PYDANTIC_RULES.get(str(error["type"]), "invalid-field"), tuple(error["loc"])
+
+
 def summarise(exc: ValidationError) -> str:
     """Flatten pydantic's error list into something a human can act on.
 

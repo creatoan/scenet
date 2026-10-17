@@ -5,12 +5,13 @@ nearly all their staging, and restating it per panel is where continuity errors 
 in.
 """
 
+import unicodedata
 from pathlib import Path
 
 import pytest
 
 from scenet.compose import CompositionError, merge, resolve_overrides
-from scenet.diagnostics import diagnose_source
+from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.frontends.script_front import ScriptSyntaxError, load_script, parse_script
 from scenet.frontends.yaml_front import PanelSyntaxError, load_scene, parse_panel, parse_scene
 from scenet.ir import BalloonKind, CaptionEvent, CaptionKind, SayEvent, ShotType
@@ -197,9 +198,9 @@ CAPTION (monologue): I should have brought an umbrella.
 
     def test_a_bare_caption_line_is_not_read_as_a_cue(self):
         """`CAPTION` on its own matches the character-cue pattern, so it has to be
-        ruled out before cue detection or the next line becomes its dialogue."""
-        with pytest.raises(ScriptSyntaxError, match="CAPTION"):
-            parse_script("""
+        ruled out before cue detection or the next line becomes its dialogue. It used to
+        be refused; as Dark Horse's `CAP:` asks, its text is now the line under it."""
+        panels = parse_script("""
 ---
 cast: {ALICE: {reference: alice}}
 ---
@@ -207,6 +208,9 @@ PANEL 1
 CAPTION
 Midnight. The docks.
 """)
+        (event,) = panels["1"].script
+        assert isinstance(event, CaptionEvent)
+        assert event.text == "Midnight. The docks."
 
     def test_prose_descriptions_are_not_interpreted(self):
         """Turning prose into staging needs language understanding, and guessing
@@ -249,7 +253,7 @@ PANEL 2
 
     def test_content_before_the_first_panel_is_rejected(self):
         with pytest.raises(ScriptSyntaxError, match="before the first PANEL"):
-            parse_script("---\ncast: {A: {reference: alice}}\n---\nstray text\nPANEL 1\n")
+            parse_script("---\ncast: {A: {reference: alice}}\n---\n@shot: close_up\nPANEL 1\n")
 
     def test_a_script_with_no_panels_is_rejected(self):
         with pytest.raises(ScriptSyntaxError, match="no PANEL headings"):
@@ -265,11 +269,11 @@ PANEL 2
         ("text", "line"),
         [
             # No front matter: the body is the file.
-            ("\n\nstray prose\nPANEL 1\n", 3),
-            # Front matter occupies lines 1-4, so the stray line is the file's line 6.
-            ("---\ncast: {A: {reference: alice}}\nscene: x\n---\n\nstray prose\nPANEL 1\n", 6),
+            ("\n\n@shot: close_up\nPANEL 1\n", 3),
+            # Front matter occupies lines 1-4, so the stray directive is the file's line 6.
+            ("---\ncast: {A: {reference: alice}}\nscene: x\n---\n\n@shot: close_up\nPANEL 1\n", 6),
             # Blank lines before the opening fence count too.
-            ("\n\n---\ncast: {A: {reference: alice}}\n---\nstray prose\nPANEL 1\n", 6),
+            ("\n\n---\ncast: {A: {reference: alice}}\n---\n@shot: close_up\nPANEL 1\n", 6),
         ],
         ids=["no-front-matter", "after-front-matter", "after-leading-blank-lines"],
     )
@@ -286,9 +290,10 @@ PANEL 2
             parse_script(text)
         assert caught.value.line == 5
 
-    def test_a_panel_that_does_not_validate_is_located_at_its_heading(self):
+    def test_a_panel_that_does_not_validate_is_located_where_it_is_wrong(self):
         """It used to carry no line at all, so `scenet check` pointed at line 1 -- the
-        front-matter fence -- whichever panel was wrong."""
+        front-matter fence -- whichever panel was wrong. Then it pointed at the panel's
+        heading; now at the directive that set the bad value."""
         text = (
             "---\ncast: {A: {reference: alice}}\n---\n"
             "PANEL 1\nA\nHello.\n\n"
@@ -296,7 +301,7 @@ PANEL 2
         )
         with pytest.raises(ScriptSyntaxError, match="in PANEL 2") as caught:
             parse_script(text)
-        assert caught.value.line == 8
+        assert (caught.value.line, caught.value.rule) == (9, "invalid-field")
 
     def test_shipped_script_example_parses(self):
         panels = load_script(EXAMPLES / "umbrella.script")
@@ -470,6 +475,113 @@ class TestLineEndings:
         """PyYAML already handles this, but nothing said so."""
         source = "cast:\n  a: {reference: alice}\n"
         assert parse_panel(source) == parse_panel(source.replace("\n", "\r\n"))
+
+
+class TestADirectiveIsWrittenOnce:
+    """A directive written twice in one panel used to keep the second, silently.
+
+    `@setting: {weather: rain}` and then `@setting: {place: docks}` lost the rain without
+    a word -- exactly the loss `duplicate-key` exists to report in YAML, where a key
+    written twice in one mapping is the same mistake.
+    """
+
+    FRONT = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\n"
+
+    @pytest.mark.parametrize(
+        ("first", "second"),
+        [
+            ("@setting: {weather: rain}", "@setting: {place: docks}"),
+            ("@shot: close_up", "@shot: full_shot"),
+            ("@angle: low", "@angle: high"),
+            ("@lettering: {size: 30}", "@lettering: {size: 40}"),
+        ],
+    )
+    def test_the_second_is_one_finding_that_names_the_first(self, first: str, second: str):
+        script = f"{self.FRONT}{first}\nRain.\n{second}\n"
+        with pytest.raises(ScriptSyntaxError, match="line 5") as raised:
+            parse_script(script)
+        assert (raised.value.rule, raised.value.line) == ("duplicate-key", 7)
+        (finding,) = diagnose_script(script)
+        assert finding.rule == "duplicate-key"
+        assert finding.region is not None
+        assert finding.region.start.line == 7
+
+    def test_the_same_directive_on_two_panels_is_two_settings(self):
+        script = f"{self.FRONT}@shot: close_up\nPANEL 2\n@shot: full_shot\n"
+        panels = parse_script(script)
+        assert [panel.camera.shot for panel in panels.values()] == [
+            ShotType.CLOSE_UP,
+            ShotType.FULL_SHOT,
+        ]
+
+    def test_a_script_directive_would_replace_the_cues(self):
+        """The cues write the panel's script; a `@script:` beside them was dropped."""
+        script = f"{self.FRONT}@script: [{{say: {{by: ALICE, text: Hi}}}}]\nALICE\nBye.\n"
+        with pytest.raises(ScriptSyntaxError, match="cues") as raised:
+            parse_script(script)
+        assert (raised.value.rule, raised.value.line) == ("duplicate-key", 5)
+
+
+class TestTheTextIsReadOneWay:
+    """Whatever the editor saved, a script reads the same.
+
+    A name with an accent is a name: a French script's `HÉLÈNE` used to fail the cue
+    pattern's ASCII capitals, and her line was filed as prose without a word. A macOS
+    editor may store that É decomposed, as E and a combining accent, while the front
+    matter typed elsewhere has it composed; the two are the same name. A byte-order mark,
+    which some Windows editors still write, used to hide the front matter. And a line
+    holds whatever a line holds: a line separator inside one must not move the line
+    numbers of everything after it.
+    """
+
+    @staticmethod
+    def _cast(*names: str) -> str:
+        members = ", ".join(f"{name}: {{reference: alice}}" for name in names)
+        return f"---\ncast: {{{members}}}\n---\n"
+
+    @pytest.mark.parametrize(
+        ("cue", "kind"),
+        [
+            ("HÉLÈNE", BalloonKind.SPEECH),
+            ("JOSÉ (whisper)", BalloonKind.WHISPER),
+            ("ZOË:", BalloonKind.SPEECH),
+            ("ÅSA (shouting)", BalloonKind.SHOUT),
+        ],
+    )
+    def test_a_name_with_an_accent_is_a_cue(self, cue: str, kind: BalloonKind):
+        name = cue.split(" ", maxsplit=1)[0].rstrip(":")
+        (line,) = parse_script(f"{self._cast(name)}PANEL 1\n{cue}\nBonjour.\n")["1"].script
+        assert isinstance(line, SayEvent)
+        assert (line.by, line.text, line.kind) == (name, "Bonjour.", kind)
+
+    def test_a_name_in_lower_case_is_still_prose(self):
+        panel = parse_script(f"{self._cast('ALICE')}PANEL 1\nHélène\nBonjour.\n")["1"]
+        assert panel.script == ()
+
+    def test_a_decomposed_name_is_the_composed_one(self):
+        decomposed = unicodedata.normalize("NFD", "HÉLÈNE")
+        assert decomposed != "HÉLÈNE"
+        composed_cast = parse_script(f"{self._cast('HÉLÈNE')}PANEL 1\n{decomposed}\nOui.\n")
+        decomposed_cast = parse_script(f"{self._cast(decomposed)}PANEL 1\nHÉLÈNE\nOui.\n")
+        assert composed_cast == decomposed_cast
+        (line,) = composed_cast["1"].script
+        assert isinstance(line, SayEvent)
+        assert line.by == "HÉLÈNE"
+
+    def test_a_byte_order_mark_does_not_hide_the_front_matter(self):
+        script = f"{self._cast('ALICE')}PANEL 1\nALICE\nHello.\n"
+        assert parse_script("\ufeff" + script) == parse_script(script)
+        assert diagnose_script("\ufeff" + script) == []
+
+    @pytest.mark.parametrize("separator", ["\u2028", "\u2029", "\x85", "\x0c", "\x1c"])
+    def test_a_separator_inside_a_line_moves_no_line_number(self, separator: str):
+        script = f"{self._cast('ALICE')}PANEL 1\nRain{separator}falls.\nPANEL 1\n"
+        with pytest.raises(ScriptSyntaxError) as raised:
+            parse_script(script)
+        assert raised.value.line == 6
+        (finding,) = diagnose_script(script)
+        assert finding.region is not None
+        assert finding.region.start.line == 6
 
 
 class TestPanelNamesAreText:

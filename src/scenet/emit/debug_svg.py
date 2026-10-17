@@ -142,6 +142,8 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
             f'  <text x="{fmt(box.x + 4)}" y="{fmt(box.y - 8)}" font-size="18" '
             f'font-family="monospace" fill="{BALLOON}">'
             f"{escape(balloon.id)} #{balloon.order} -&gt; {escape(balloon.speaker)}"
+            # A speaker off panel is nobody drawn: say so, and which side they are on.
+            f"{f' (off panel, {balloon.off_panel.value})' if balloon.off_panel else ''}"
             f"{' curved' if tail.control else ''}</text>"
         )
 

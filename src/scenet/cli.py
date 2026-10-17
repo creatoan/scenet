@@ -91,7 +91,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="validate documents without compiling them",
         description=(
             "Report everything wrong with one or more documents, and exit non-zero if "
-            "anything is. Nothing is written unless you ask for it.\n\n"
+            "anything is an error. A note -- a balloon over a publisher's word limit, say "
+            "-- is reported but does not fail the check. Nothing is written unless you ask "
+            "for it.\n\n"
             "The default output is the same prose the compiler prints. `--format sarif` "
             "emits SARIF 2.1.0, which GitHub code scanning ingests directly and which "
             "editors and agents can consume -- the checks that matter most here, such as "
@@ -256,6 +258,10 @@ def run_build(args: argparse.Namespace) -> int:
     if not args.quiet:
         for path, _ in outputs:
             print(f"wrote {path}")
+        # What reading the document noticed, each naming its line, then what the compiler
+        # decided in each panel.
+        for note in book.notes:
+            print(f"note: {note}")
         for name, result in book.panels.items():
             for note in result.notes:
                 print(f"note: {note}" if single else f"note: {name}: {note}")
@@ -409,8 +415,9 @@ def run_check(args: argparse.Namespace) -> int:
         args: Parsed arguments from :func:`build_parser <scenet.cli.build_parser>`.
 
     Returns:
-        A process exit status: `0` when every document is valid, `1` when any has a
-        finding, `2` when a file does not exist or has an extension no frontend reads.
+        A process exit status: `0` when no document has an error (notes may have been
+        printed), `1` when any has one, `2` when a file does not exist or has an
+        extension no frontend reads.
 
     Unlike `build`, this never stops at the first fault. pydantic reports every field
     error at once and a run over several files reports all of them, because a caller
@@ -431,6 +438,8 @@ def run_check(args: argparse.Namespace) -> int:
     found: list[Diagnostic] = []
     for path in sources:
         found.extend(diagnose_file(path, deep=args.deep))
+    # A note reports a house limit, and the document still compiles: only an error fails.
+    status = 1 if any(item.level == "error" for item in found) else 0
 
     if args.format == "sarif":
         # Relative to the working directory, which is the repository root under CI and
@@ -445,24 +454,27 @@ def run_check(args: argparse.Namespace) -> int:
             # stdout carries the document and nothing else, so that
             # `scenet check --format sarif x > results.sarif` produces a parseable file.
             _print_document(report)
-        return 1 if found else 0
+        return status
 
     lines = []
     for item in found:
         where = item.source if item.source else "<string>"
         line = item.region.start.line if item.region else 1
         column = item.region.start.column if item.region else 1
-        lines.append(f"{where}:{line}:{column}: {item.rule}: {item.message}\n")
+        # A note says so where a compiler puts it, after the position; an error's line is
+        # unchanged, so nothing that reads it has to learn a new shape.
+        level = "note: " if item.level == "note" else ""
+        lines.append(f"{where}:{line}:{column}: {level}{item.rule}: {item.message}\n")
     if args.output:
         # The report and nothing else, as for SARIF: empty when every document is valid.
         _write_report(args.output, "".join(lines), quiet=args.quiet)
-        return 1 if found else 0
+        return status
     sys.stderr.write("".join(lines))
 
-    if not found and not args.quiet:
+    if not status and not args.quiet:
         for path in sources:
             print(f"{path}: ok")
-    return 1 if found else 0
+    return status
 
 
 def _write_report(output: Path, report: str, *, quiet: bool) -> None:

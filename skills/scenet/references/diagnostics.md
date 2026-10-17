@@ -28,9 +28,15 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
 
+### `scenet/dropped-relation`
+
+A shared staging relation does not apply in a panel its actor is left out of. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated for every panel -- `ALICE left_of BOB`, `ALICE looking_at BOB` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
+
+**Fix:** Nothing to do if that is what the panel means; otherwise draw her in it.
+
 ### `scenet/duplicate-key`
 
-A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
 
 **Fix:** Delete or rename one of the two; the message says which lines they are on.
 
@@ -64,6 +70,12 @@ No layout satisfies the panel's constraints. Nothing is misspelled and nothing i
 
 **Fix:** Relax or remove a conflicting staging relation.
 
+### `scenet/looks-like-dialogue`
+
+A line in a comic script is set like dialogue but is not read as dialogue. A cue with nothing said under it, or a name in capitals with a line under it where nothing is spoken -- before the first PANEL heading, which Dark Horse's format opens with the writer's name and address. Read as written, nothing is lost, but a line meant as dialogue would not be lettered, so it is pointed out.
+
+**Fix:** If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.
+
 ### `scenet/missing-field`
 
 A required field is missing. The value is required and was not supplied.
@@ -76,6 +88,12 @@ The document is not a mapping. A panel document is a mapping of top-level keys -
 
 **Fix:** Wrap the content in top-level keys, or check you meant to compile this file.
 
+### `scenet/off-panel-speaker`
+
+A line is spoken from off panel by somebody drawn in the panel. An off-panel speaker is somebody nobody draws: their balloon's tail ends on the frame, on their side, because there is no mouth in the panel to point at. So they are never in the panel's cast. A line marked `off_panel` whose speaker is in the cast contradicts itself, and so does one speaker both on and off panel in the same panel.
+
+**Fix:** Leave the speaker out of this panel's cast, or drop off_panel.
+
 ### `scenet/ordering-cycle`
 
 Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into a linear order before the solver runs, because Cassowary is a linear solver and cannot express the disjunction 'A left of B or B left of A'. A cycle has no linear order and so no solution.
@@ -87,6 +105,12 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A document with pages needs panels to lay out.
 
 **Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, or shrink the margin and gutters in `page:`.
+
+### `scenet/panel-count`
+
+A comic script's PAGE heading states a count its panels do not match. Dark Horse's script format labels each page with how many panels it has, `PAGE ONE (five panels)`. When the panels under it number something else, a panel heading has often been missed, or written so that it reads as prose -- and nothing else would say so. A note, not an error: the panels that are there still compile.
+
+**Fix:** Correct the count, or the panel heading that was not read as one.
 
 ### `scenet/panel-geometry`
 
@@ -153,3 +177,9 @@ Reference to a pose the character does not have. A cast member's `pose` names on
 Reference to a character the library does not contain. A cast member's `reference` names a puppet that is not installed.
 
 **Fix:** Check the name against the shipped library, or supply your own.
+
+### `scenet/word-limit`
+
+A balloon, caption or panel holds more words than a letterer fits well. Dark Horse's script format asks for 'approximately 25 words per balloon, and about 50 words per panel, max'. It is a house limit, not a contradiction: the panel still compiles, so this is a note, and `scenet check` passes. Words are counted as they are lettered: anything between spaces that holds a letter or a digit, so `--` and an ellipsis are not words, and emphasis markers add none. A panel counts its balloons and captions; a sound effect is not counted.
+
+**Fix:** Split the balloon in two, or carry the rest of the words to the next panel.

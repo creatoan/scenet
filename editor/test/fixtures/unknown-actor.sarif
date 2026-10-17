@@ -35,7 +35,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "script entry 0 is spoken by unknown actor 'bpb'; cast is ['alice', 'bob']"
+            "text": "script entry 0 is spoken by unknown actor 'bpb'; cast is ['alice', 'bob']. If they speak from outside the panel, say so with off_panel"
           },
           "locations": [
             {
@@ -53,7 +53,7 @@
             }
           ],
           "partialFingerprints": {
-            "scenetDiagnostic/v1": "a9575d474eb3b0369c2a7bbe5ff035fb"
+            "scenetDiagnostic/v1": "c65bcd50ad09078814a950d7894ceb34"
           }
         }
       ]

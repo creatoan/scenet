@@ -12,6 +12,77 @@ below 1.0 means.
 
 ### Added
 
+- **`scenet check` reports notes as well as errors.** A note is a house limit rather than a
+  contradiction: the document still builds, so a note never fails the check. The first is
+  Dark Horse's word limit, `word-limit`: a balloon or caption over about 25 words, or a
+  panel over about 50, in YAML and in comic scripts alike. Words are counted as lettered,
+  so `--` and emphasis underscores add none, and sound effects are not counted.
+  - In text, a note reads `file:line:column: note: rule: message`; an error's line is
+    unchanged.
+  - In SARIF, the level comes from the rule, in `defaultConfiguration` and in each result,
+    so VS Code and the playground show a note as information.
+  - `check` exits 1 only on an error, and prints `ok` for a document with only notes.
+  - The MCP server's findings gain `level`, and `validate` calls a document valid when
+    none is an error. (Part of #75)
+- **Comic scripts in Dark Horse's published layout compile.** `PAGE ONE (five panels)` is a
+  page heading whose count is checked against the panels under it, as the new
+  `panel-count` note. `Panel 1. Alice and Bob on a corner.` is a panel heading with its
+  description on the same line, and `Panel One` is panel `1`. A title page — the writer's
+  name and address — may come before the first heading. Markdown's `## PANEL 2`,
+  `**PANEL 2**` and horizontal rules are read as the headings and blank lines they mark.
+  A cue with nothing said under it, and a name in capitals with a line under it on the
+  title page, are `looks-like-dialogue` notes. `scenet build` prints these notes, and
+  `Book.notes` carries them. (Part of #75)
+- **Comic scripts read Dark Horse's lettering labels.** `CAP:` and `CAPTION` take their
+  text from the line or the lines under them; Dark Horse's `CAP/ALICE` is a spoken
+  caption by Alice, with the writer's quotation marks taken off so they are not doubled;
+  `ALICE (V.O.)` is a voice over, lettered as a spoken caption. `ALICE: Hello.` is
+  dialogue when Alice is in the panel's cast, and a `looks-like-dialogue` note otherwise.
+  `(burst)` is a shout, several parentheticals are read together, and Blambot's numbered
+  items, `1. ALICE:`, are read with their number set aside. (Part of #75)
+- **`@over:` in comic scripts** writes a panel as a change to another, with the merge
+  rules `over:` has in YAML: the panel inherits the other's directives, never its
+  dialogue. `@over: 1` names panel 1 on the same page first, then the panel named `1`. A
+  missing panel, a cycle or a panel over itself is one `composition` finding at the
+  `@over:` line. (Part of #75)
+- **Off-panel speech.** `say: {by: caller, text: "Open up!", off_panel: left}` is spoken by
+  somebody nobody draws: the balloon's tail ends on the frame, on that side, or on the
+  slanted outline of a slanted panel. `off_panel: true` lets the compiler take the nearer of
+  left and right. The speaker is not in the cast, and one who is drawn cannot speak from off
+  panel: the new error `off-panel-speaker`. Panel Core balloons gain `off_panel`, the side,
+  written only when set, so no existing Core changes. (Part of #75)
+- **`ALICE (OP)` in a comic script is off-panel speech**, as are `(OFF)`, `(O.S.)` and
+  `(O.C.)`. Alice is left out of that panel's cast and of the staging that names her, each
+  relation with a `dropped-relation` note, and her tail ends on the frame on the side she
+  was written to stand, unless the cue names one, `(OP, right)`. A cue for somebody never
+  cast, `PHONE (OP)`, works too. (Part of #75)
+- **Small lettering.** `say: {..., size: small}` letters a line at three quarters of the
+  dialogue size, in a balloon padded as the normal size would be: muttered, as Blambot
+  describes it. A comic script's `(small)` and `(weak)` give it. (Part of #75)
+- **French comic scripts.** `PLANCHE 1 (six cases)`, `CASE 2` and `VIGNETTE 2` are headings;
+  `RÉCITATIF`, `CARTOUCHE` and `NARRATIF` are captions; `ONOMATOPÉE` is a sound effect;
+  `LÉA : « Bonjour. »` is a cue and its line, with a no-break space before the colon. `(pensée)`
+  is a thought, `(off)` and `(hors champ)` off-panel speech. `@shot:` and `@angle:` take the
+  *échelle des plans* — `gros plan` is `big_close_up`, `plan rapproché épaule` is `close_up` —
+  and *plongée*, *contre-plongée*. Both highlighters follow, and the gallery gains
+  `33-planche.script`. (Part of #75)
+- **A figure may look at somebody heard from off panel**: `bob looking_at carol`, where Carol
+  speaks `off_panel: left`, turns Bob toward the left of the frame and aims his eyes out of it.
+  With no side named, Carol is heard from the side Bob faces. In a comic script,
+  `BOB looking_at ALICE` now survives `ALICE (OP)` instead of being dropped with a note.
+  (Part of #75)
+- **`null` leaves an inherited cast member out of a panel**: `cast: {bob: null}` in a scene's
+  panel, under `over:` or over the scene's defaults, or `@cast: {BOB: null}` in a script. It
+  follows JSON Merge Patch (RFC 7386), "If the value is null, remove". The staging relations
+  that name him go too, each a `dropped-relation` note, and the JSON Schema accepts the `null`.
+  (Part of #75)
+- **French delivery words**, from the BnF's sheet on balloons: `(murmure)` and `(chuchoté)` are
+  a whisper, `(cri)` and `(crié)` a shout, `(à voix basse)` small type. (Part of #75)
+- **`compile_script`** compiles a comic script handed over as text, exactly as `scenet
+  build` compiles a `.script` file. `scenet check --deep`, the MCP server and the
+  playground now all go through it, rather than assembling a script each their own way.
+  (Part of #75)
+
 - **A stressed word is lettered in bold italic.** Write it between underscores, the way a
   script underlines it: `I _told_ you`. It works in dialogue and captions, in YAML and in
   comic scripts, and the word is measured in bold italic as well as drawn in it, so it
@@ -75,9 +146,34 @@ below 1.0 means.
   highlight them, and the playground colours an effect's `from:` as an actor. Sound
   effects are recorded in `docs/explanation/design_decisions.md` and `prior_art.md`.
   (Closes #73)
+- **A comic script's PAGE headings lay its panels out on pages**, as a scene's `pages:`
+  does. A page's panels go into tiers by a fixed rule — at most three tiers up to nine
+  panels, an odd one alone in the middle tier — or by `@tiers: 2 1 2` written right after
+  the heading. The front matter's `page:` sets the format; `pages:` there is an error, as
+  is a `@tiers:` that does not add up or is written elsewhere, under `page-layout`.
+  `scenet build` writes each page, with its Page Core and overlay. With it, every row of
+  #75 is done: the spec pack, the Agent Skill and *Drive Scenet from a model* now say that
+  Dark Horse's format and French scripts are read as written. (Closes #75)
 
 ### Changed
 
+- **Comic scripts: what a few lines mean has changed** (Part of #75):
+  - Prose before the first PANEL heading is a title page, not an error. A directive, a
+    caption, a sound effect or a cast member's cue there is still one.
+  - A panel numbered in words is named by its number: `PANEL ONE` is panel `1`, and
+    `scenet build` writes `name.1.svg` for it rather than `name.ONE.svg`.
+  - `Panel 1. A description.` is a heading; it was prose.
+  - A line of three or more `-`, `*` or `_` ends a speech, as a blank line does; it was
+    joined onto the speech.
+  - An all-caps `NAME: text` with NAME in the cast is dialogue; it was prose. One in the
+    middle of a speech starts a new balloon; it was joined onto the speech above.
+  - A bare `CAPTION` line starts a caption whose text is under it; it was an error.
+  - `CAP`, `CAPTION` and `SFX` are reserved, and cannot be a cast member's id.
+  - A balloon's text in one pair of quotation marks is lettered without them.
+  - A script with PAGE headings now writes its pages, `name.page-1.svg` and on, and the
+    panels on them are compiled at the size of their frames and lettered at the page's
+    one size, so they look different from before. The front matter's `panel: {size}`
+    now sizes only panels that are on no page.
 - **Lettering is kerned.** Pair adjustments are read from the font's GPOS `kern` feature,
   or a legacy `kern` table, and applied to measurement and to the glyph outlines alike, so
   what is measured is still exactly what is drawn. Every example's output changes once:
@@ -86,9 +182,45 @@ below 1.0 means.
   scored nearly equal a balloon may sit somewhere else. `--live-text` relies on the
   renderer kerning as the compiler measured it, which browsers do by default. Checked pair
   by pair against HarfBuzz, which is a test dependency only. (Part of #74)
+- The VS Code extension's comic-script grammar is generated from one definition of each
+  kind of line, rather than hand-written with every heading spelled out in up to four
+  places. Highlighting is unchanged. (Part of #75)
 
 ### Fixed
 
+- **A `--` or `...` written apart from its word could be lettered alone on the last line**,
+  or at the start of one: `the lamp is out --` broke before the dash. Blambot sets both with
+  no space, so a dash or an ellipsis now stays with the word it is written against. The space
+  is still lettered as written; no gallery example moves. (Part of #75)
+- **A line between a PAGE heading and its first PANEL was filed into the panel before the
+  page**: a speech there was spoken in the previous page's last panel. It now belongs to
+  the page, and a speech there is an error, since it belongs to no panel. (Part of #75)
+- **The playground took a YAML panel that opens with a `---` document marker for a comic
+  script**, and a script written as Dark Horse asks, `Panel 1.`, for YAML. A script is now
+  told by its fenced front matter or a panel heading in any of its forms. (Part of #75)
+- **Spoken captions by two speakers were quoted as one run.** Consecutive `spoken`
+  captions open a quote each and close only the last, but the run did not end when the
+  speaker changed, so the first speaker's words were never closed. A change of `by` now
+  ends the run. No shipped example moves. (Part of #75)
+- **A comic-script directive written twice in one panel silently kept the second.**
+  `@setting: {weather: rain}` and then `@setting: {place: docks}` lost the rain. The second
+  is now `duplicate-key`, at its line, naming the first. An `@script:` directive, which the
+  panel's cues used to overwrite without a word, is `duplicate-key` too. (Part of #75)
+- **A fault in a comic-script panel kept neither its rule nor its line.** Everything
+  validation found was reported as `invalid-field` at the PANEL heading: a speaker not in
+  the cast, an unknown place, a bad `@shot:`. It now keeps its own rule (`unknown-actor`,
+  `unknown-place`, ...) and points at the cue or directive that holds it. When a panel
+  has several, the first in reading order is reported. (Part of #75)
+- **A cue with an accented name lost its dialogue.** `HÉLÈNE` or `ZOË (whisper)` failed the
+  cue pattern's A-to-Z capitals, so the cue and the line under it were filed as prose
+  without a word. Any capital letter now starts a cue, in the compiler and in both
+  highlighters. A script is also read composed (Unicode NFC), so a name a macOS editor
+  stored as `E` and a separate accent matches the front matter's `É`. (Part of #75)
+- **A comic script saved with a byte-order mark** was rejected for having content before
+  the first PANEL heading: the mark hid the front matter. It is now ignored. (Part of #75)
+- **Line numbers in a comic script's findings could be wrong** after a line holding a
+  line separator, form feed or similar character, which Python splits a line at and an
+  editor does not. Lines are now split at line feeds alone. (Part of #75)
 - **The VS Code preview could not run `uv run scenet`**, the setting its README suggests:
   it ran the compiler from wherever VS Code runs extensions, its own install directory,
   where `uv` finds no project. It now runs from the document's workspace folder.

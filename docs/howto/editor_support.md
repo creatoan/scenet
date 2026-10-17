@@ -45,14 +45,17 @@ It contributes:
 - Schema association for `*.panel.yaml` and `*.scene.yaml`, so no `$schema` comment is
   needed.
 - **Highlighting for `.script` comic scripts**, the same as the playground's: page and
-  panel headings, `@` directives, captions, cues and their parentheticals, dialogue apart
-  from prose, and the front matter coloured as the YAML it is. It follows the compiler's
+  panel headings in Dark Horse's layout and in French, `@` directives, captions and
+  `CAP/NAME`, sound effects, cues and their parentheticals, balloon numbers, dialogue
+  apart from prose, and the front matter coloured as the YAML it is. It follows the compiler's
   reading line for line, so a line coloured as dialogue is a line that compiles as
   dialogue.
 - **The findings of `scenet check`**, when a panel, scene or comic script is opened or
   saved: an actor not in the cast, an ordering cycle, a pose the puppet lacks, and every
   other rule in the [catalogue](../reference/cli.md#rules), underlined where they are and
   listed under **Problems** with their rule. A comic-script finding underlines its line.
+  A note, such as a balloon over the words a publisher asks for, is shown as information
+  rather than as an error, since the document still compiles; the playground does the same.
   Set `scenet.checkDeep` to check with `--deep` as well, which costs a real compile on
   every save, and `scenet.checkOnSave` to turn checking off.
 - **Scenet: Preview panel**, which compiles the current document and shows the SVG beside

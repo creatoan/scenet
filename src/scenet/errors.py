@@ -59,7 +59,14 @@ class ScenetError(Exception):
     See Also:
         :exc:`SourceError <scenet.errors.SourceError>`, for the "bad document" branch.
         :exc:`SolverError <scenet.errors.SolverError>`, for the "impossible layout" branch.
+
+    Attributes:
+        panel: The panel being compiled when it was raised, set as it passes out of a
+            whole document's compile, so a finding can say which panel it is about; `None`
+            when it was not raised compiling one.
     """
+
+    panel: str | None = None
 
 
 class RuleViolationError(ValueError):

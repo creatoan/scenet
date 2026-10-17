@@ -18,11 +18,11 @@ promised to survive a minor version.
 
 | | Names |
 |---|---|
-| **Compiling** | `compile_source` · `compile_file` · `compile_scene` · `compile_scene_file` · `compile_document` · `compile_ir` · `CompileResult` |
+| **Compiling** | `compile_source` · `compile_file` · `compile_scene` · `compile_scene_file` · `compile_script` · `compile_document` · `compile_ir` · `CompileResult` |
 | **Parsing only** | `parse_panel` · `parse_scene` · `parse_script` · `load_panel` · `load_scene` · `load_script` |
 | **Rendering** | `render` · `render_debug` · `render_strip` |
 | **Tiers** | `PanelIR` · `PanelCore` |
-| **Describing a panel** | `PanelSpec` · `CameraSpec` · `LetteringSpec` · `FontSpec` · `CastMember` · `Relation` · `SayEvent` · `CaptionEvent` · `SfxEvent` · `SfxSize` · `ShotType` · `CameraAngle` · `AnchorX` · `PlacementZone` · `Facing` · `Predicate` · `BalloonKind` · `CaptionKind` |
+| **Describing a panel** | `PanelSpec` · `CameraSpec` · `LetteringSpec` · `FontSpec` · `CastMember` · `Relation` · `SayEvent` · `CaptionEvent` · `SfxEvent` · `SfxSize` · `ShotType` · `Side` · `TypeSize` · `CameraAngle` · `AnchorX` · `PlacementZone` · `Facing` · `Predicate` · `BalloonKind` · `CaptionKind` |
 | **Describing a setting** | `SettingSpec` · `Mass` · `MassKind` · `Plane` · `Spans` · `Horizon` · `TimeOfDay` · `Weather` · `Place` · `PLACES` |
 | **Characters** | `PuppetLibrary` · `PuppetSpec` · `Landmark` · `default_library` · `load_puppet` |
 | **Errors** | `ScenetError` · `SourceError` · `SolverError` · `AssetError` · `PanelSyntaxError` · `ScriptSyntaxError` · `CompositionError` · `LayoutError` · `BalloonPlacementError` · `SfxPlacementError` · `UnknownPuppetError` |

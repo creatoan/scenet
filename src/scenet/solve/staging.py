@@ -26,7 +26,7 @@ from scenet.assets.contract import PuppetLibrary, PuppetSpec
 from scenet.assets.kinematics import ResolvedPuppet, resolve
 from scenet.errors import LayoutError
 from scenet.geom import Point
-from scenet.ir import AnchorX, Facing, PanelIR, Predicate
+from scenet.ir import AnchorX, Facing, PanelIR, Predicate, Side
 from scenet.solve.camera import CameraSolution, solve_camera
 
 # Where each anchor sits, as a fraction of panel width. The edge anchors are inset
@@ -245,7 +245,8 @@ def _facing_for(panel: PanelIR, actor: str, order: tuple[str, ...]) -> bool:
     An explicit `facing` always wins. Otherwise `looking_at` turns the actor toward
     its target, using the declared left-to-right order rather than solved coordinates
     -- because facing has to be known *before* solving, since it changes the
-    silhouette's width and therefore the constraints themselves.
+    silhouette's width and therefore the constraints themselves. A target heard from off
+    panel, on the left or the right, turns the actor to that side of the frame.
     """
     member = panel.cast[actor]
     targets = panel.gaze_targets()
@@ -253,6 +254,11 @@ def _facing_for(panel: PanelIR, actor: str, order: tuple[str, ...]) -> bool:
         target = targets[actor]
         if target in order and actor in order:
             return order.index(target) > order.index(actor)
+        # Somebody heard from off panel, on a side the script named: turn that way. Above
+        # or below the frame, or a side not yet decided, leaves the facing as it was.
+        side = panel.off_panel_speakers().get(target)
+        if side in (Side.LEFT, Side.RIGHT):
+            return side is Side.RIGHT
     return member.facing is Facing.RIGHT
 
 

@@ -42,13 +42,15 @@ from scenet.errors import (
     PanelSyntaxError,
     RuleViolationError,
     ScenetError,
+    ScriptSyntaxError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
 )
 from scenet.frontends.positions import DOCUMENT_START, locate, syntax_error_region
+from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
-from scenet.pipeline import compile_source
+from scenet.pipeline import compile_script, compile_source
 
 # A panel whose only fault is the speaker's name. The interesting case, because no JSON
 # Schema can catch it: the actor exists as a string, it just is not in the cast.
@@ -118,6 +120,22 @@ _SEAM_CASES: dict[str, str] = {
     "unknown_expression": "cast: {a: {reference: alice, expression: smirking}}\n",
     "unknown_puppet_reference": "cast: {a: {reference: nobody}}\n",
     "cast_less": "panel: {size: [420, 560]}\n",
+    "a_long_balloon": (
+        'cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: "'
+        + " ".join(["word"] * 30)
+        + '"}\n'
+    ),
+}
+
+# The same seam, for comic scripts, which `check` and `build` used to assemble each their
+# own way.
+_SCRIPT_SEAM_CASES: dict[str, str] = {
+    "clean": "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHello.\n",
+    "unknown_speaker": "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nB\nHello.\n",
+    "cast_less": "PANEL 1\nRain.\n",
+    "a_long_speech": (
+        "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\n" + " ".join(["word"] * 30) + "\n"
+    ),
 }
 
 
@@ -941,8 +959,8 @@ class TestAScriptFindingIsALine:
         assert found.region == self.line(5, "Panel 1.")
 
     def test_content_before_the_first_panel_spans_its_line(self):
-        (found,) = diagnose_script("stray prose here\n\nPANEL 1\n", source=Path("x.script"))
-        assert found.region == self.line(1, "stray prose here")
+        (found,) = diagnose_script("@shot: close_up\n\nPANEL 1\n", source=Path("x.script"))
+        assert found.region == self.line(1, "@shot: close_up")
 
     def test_the_line_is_the_file_line_after_front_matter(self):
         script = "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\nALICE\nHi.\n\nPANEL 1\n"
@@ -952,6 +970,76 @@ class TestAScriptFindingIsALine:
     def test_a_line_ending_is_not_part_of_the_line(self):
         (found,) = diagnose_script("PANEL 1\r\n\r\nPANEL 1\r\n", source=Path("x.script"))
         assert found.region == self.line(3, "PANEL 1")
+
+
+class TestAScriptFaultIsWhereItIs:
+    """A fault the IR finds in a script keeps its rule, and points at the line it is on.
+
+    A script panel is assembled from its lines and then validated as a whole, and every
+    fault validation found used to be reported as `invalid-field` at the PANEL heading: an
+    unknown speaker, an unknown place and a bad shot alike, wherever in the panel they were
+    written. The rule and the line are both known, so a finding carries both.
+    """
+
+    FRONT = "---\ncast: {ALICE: {reference: alice}}\n---\n"
+
+    def find(self, body: str) -> tuple[str, int, str]:
+        script = self.FRONT + body
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.region is not None
+        line = found.region.start.line
+        return found.rule, line, script.split("\n")[line - 1]
+
+    @pytest.mark.parametrize(
+        ("body", "rule", "line"),
+        [
+            pytest.param(
+                "PANEL 1\nALICE\nHi.\n\nCARL\nWho?\n", "unknown-actor", "CARL", id="speaker"
+            ),
+            pytest.param(
+                "PANEL 1\nALICE\nHi.\nSFX (CARL): BLAM\n", "unknown-actor", "SFX (CARL)", id="sfx"
+            ),
+            pytest.param(
+                "PANEL 1\nRain.\n@setting: {place: nowhere}\n",
+                "unknown-place",
+                "@setting",
+                id="place",
+            ),
+            pytest.param("PANEL 1\nRain.\n@shot: nope\n", "invalid-field", "@shot", id="shot"),
+            pytest.param(
+                "PANEL 1\nRain.\n@shot: close_up\n@panel: {size: [0, 10]}\n",
+                "panel-geometry",
+                "@panel",
+                id="panel-size",
+            ),
+        ],
+    )
+    def test_it_keeps_its_rule_and_its_line(self, body: str, rule: str, line: str):
+        found_rule, _, text = self.find(body)
+        assert found_rule == rule
+        assert text.startswith(line)
+
+    def test_the_first_fault_in_the_panel_is_the_one_reported(self):
+        """Pydantic lists faults in field order, which is not reading order."""
+        assert self.find("PANEL 1\n@angle: sideways\n@shot: nope\n")[1:] == (5, "@angle: sideways")
+        assert self.find("PANEL 1\n@shot: nope\n@angle: sideways\n")[1:] == (5, "@shot: nope")
+
+    def test_a_field_fault_comes_before_a_speaker_the_panel_cannot_resolve(self):
+        """A panel's references are resolved only once its fields are valid, so an unknown
+        speaker after a bad `@shot:` is found on the next check, not this one."""
+        assert self.find("PANEL 1\nCARL\nWho?\n@shot: nope\n")[:2] == ("invalid-field", 7)
+
+    def test_a_fault_in_the_front_matter_is_still_at_the_panel(self):
+        """Nothing in the panel holds it, and the front matter is located separately."""
+        script = "---\ncast: {ALICE: {reference: alice, at: nowhere}}\n---\nPANEL 1\n"
+        (found,) = diagnose_script(script, source=Path("x.script"))
+        assert found.rule == "invalid-field"
+
+    def test_the_error_the_compiler_raises_carries_them_too(self):
+        with pytest.raises(ScriptSyntaxError) as raised:
+            parse_script(self.FRONT + "PANEL 1\nALICE\nHi.\n\nCARL\nWho?\n")
+        assert (raised.value.rule, raised.value.line) == ("unknown-actor", 8)
+        assert "CARL" in str(raised.value)
 
 
 class TestCheckAndBuildAgree:
@@ -972,10 +1060,26 @@ class TestCheckAndBuildAgree:
 
     @pytest.mark.parametrize("name", sorted(_SEAM_CASES))
     def test_a_clean_deep_check_means_a_successful_build(self, name: str):
+        """Clean meaning no errors: a note reports a house limit, and the build goes on."""
         source = _SEAM_CASES[name]
-        checked_clean = diagnose_source(source, deep=True) == []
+        found = diagnose_source(source, deep=True)
+        checked_clean = not [item for item in found if item.level == "error"]
         try:
             compile_source(source)
+            compiled = True
+        except ScenetError:
+            compiled = False
+        assert checked_clean == compiled, (
+            f"{name}: deep check said clean={checked_clean}, build succeeded={compiled}"
+        )
+
+    @pytest.mark.parametrize("name", sorted(_SCRIPT_SEAM_CASES))
+    def test_so_does_a_clean_deep_check_of_a_script(self, name: str):
+        source = _SCRIPT_SEAM_CASES[name]
+        found = diagnose_script(source, deep=True)
+        checked_clean = not [item for item in found if item.level == "error"]
+        try:
+            compile_script(source)
             compiled = True
         except ScenetError:
             compiled = False

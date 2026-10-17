@@ -24,3 +24,7 @@ ALICE
 Hello
 BOB
 Hi.
+PANEL 4
+@cast: {HÉLÈNE: {reference: alice}}
+HÉLÈNE (whisper)
+Ça va.

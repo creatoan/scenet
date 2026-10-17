@@ -45,8 +45,8 @@ from scenet.core import (
     round_pairs,
     vector_pair,
 )
-from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.frontends.script_front import load_script
+from scenet.errors import PanelSyntaxError, RuleViolationError, ScenetError
+from scenet.frontends.script_front import load_script, parse_script_document
 from scenet.frontends.yaml_front import (
     SceneDocument,
     load_panel,
@@ -56,7 +56,7 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
-from scenet.ir import Face, Mark, PageLayout, PanelIR, PanelSpec
+from scenet.ir import Face, Mark, PanelIR, PanelSpec, SayEvent, Side
 from scenet.lettering import Lettering, typeface_for
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
@@ -171,8 +171,37 @@ def _cropped(core: PanelCore, actor: CoreActor, mark: Mark) -> bool:
     return False
 
 
+#: Which way to look for a voice from each side of the frame.
+_TOWARDS = {
+    Side.LEFT: Vector(-1.0, 0.0),
+    Side.RIGHT: Vector(1.0, 0.0),
+    Side.TOP: Vector(0.0, -1.0),
+    Side.BOTTOM: Vector(0.0, 1.0),
+}
+
+
+def _sides_looked_to(panel: PanelIR, placements: Sequence[Placement]) -> dict[str, Side]:
+    """The side of the frame each off-panel speaker somebody looks at is heard from.
+
+    The side the script names, or else the one the first figure looking at them faces --
+    so a voice with no side named comes from where the figure answering it looks, rather
+    than from wherever its balloon happens to go.
+    """
+    heard = panel.off_panel_speakers()
+    facing = {placement.actor_id: placement.facing_right for placement in placements}
+    sides: dict[str, Side] = {}
+    for actor, target in panel.gaze_targets().items():
+        if target in heard and target not in sides:
+            named = heard[target]
+            sides[target] = named or (Side.RIGHT if facing[actor] else Side.LEFT)
+    return sides
+
+
 def _gaze_aims(
-    panel: PanelIR, posed: dict[str, ResolvedPuppet], origins: dict[str, str]
+    panel: PanelIR,
+    posed: dict[str, ResolvedPuppet],
+    origins: dict[str, str],
+    heard: Mapping[str, Side] | None = None,
 ) -> dict[str, Vector]:
     """Unit vectors from each looking character's eyes to what they are looking at.
 
@@ -187,12 +216,19 @@ def _gaze_aims(
         posed: Every actor, already placed. Both ends of a gaze must be resolved
             before the vector between them exists, which is why this runs here.
         origins: Actor id to the anchor its puppet declares as the gaze origin.
+        heard: Off-panel speaker to the side of the frame they are heard from. Looking
+            at one is looking straight out of the frame on that side.
 
     Returns:
         Actor id to unit aim vector, for looking actors only.
     """
     aims: dict[str, Vector] = {}
     for actor, target in panel.gaze_targets().items():
+        if target not in posed:
+            side = (heard or {}).get(target)
+            if side is not None:
+                aims[actor] = _TOWARDS[side]
+            continue
         looker, looked_at = posed[actor], posed[target]
         eyes = looker.anchors.get(origins[actor], looker.face.centre)
         towards = looked_at.face.centre
@@ -407,7 +443,10 @@ def compile_ir(
     # still nothing to do with the solver: no constraint reads it, and it changes no
     # position -- it only turns the pupils.
     specs = {placement.actor_id: library.get(placement.reference) for placement in placements}
-    aims = _gaze_aims(panel, posed, {actor: spec.gaze.origin for actor, spec in specs.items()})
+    heard = _sides_looked_to(panel, placements)
+    aims = _gaze_aims(
+        panel, posed, {actor: spec.gaze.origin for actor, spec in specs.items()}, heard
+    )
     faces = {
         actor: build_face(
             posed[actor], spec.expression_states(posed[actor].expression), aims.get(actor)
@@ -437,8 +476,16 @@ def compile_ir(
         panel.panel.width - 2 * panel.panel.margin,
         panel.panel.height - 2 * panel.panel.margin,
     )
+    # A line from off panel with no side named is heard from where whoever answers it
+    # looks; with nobody looking, the solver takes the side nearer its balloon.
+    script = tuple(
+        event.model_copy(update={"off_panel": heard[event.by]})
+        if isinstance(event, SayEvent) and event.off_panel is True and event.by in heard
+        else event
+        for event in panel.script
+    )
     layout = place_script(
-        panel.script,
+        script,
         posed,
         frame,
         typeface=family,
@@ -448,6 +495,10 @@ def compile_ir(
         emanata={actor: drawn.zones for actor, drawn in emanata.items() if drawn.zones},
         exclusions=exclusions,
         inside=_margined(outline, panel.panel.margin) if outline is not None else None,
+        # The frame itself, which an off-panel speaker's tail ends on: lettering keeps
+        # inside the margin, a pointer to somebody outside the panel does not.
+        bounds=BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
+        outline=outline,
     )
 
     declared = _declared_faces(family)
@@ -514,6 +565,7 @@ def compile_ir(
                     control=(point_pair(balloon.tail.control) if balloon.tail.control else None),
                 ),
                 runs=_core_runs(balloon.block, Face.REGULAR),
+                off_panel=balloon.off_panel,
             )
             for balloon in layout.balloons
         ),
@@ -645,10 +697,15 @@ class Book:
             compiled at its frame's size and the page's type size; one on no page, as it
             would have been alone.
         pages: One Page Core per page, in order. Empty for a scene with no `pages:`.
+        notes: What reading the document noticed that is worth saying but is no fault --
+            in a comic script, a cue with nothing said under it, or a page whose stated
+            count its panels do not match. Each names its line. A panel's own notes, on
+            what the compiler decided, are on its `CompileResult`.
     """
 
     panels: dict[str, CompileResult]
     pages: tuple[PageCore, ...]
+    notes: tuple[str, ...] = ()
 
     @property
     def fonts(self) -> dict[str, FontMetrics]:
@@ -739,19 +796,25 @@ def _compile_document(
     panels: dict[str, CompileResult] = {}
     for name, panel in document.panels.items():
         frame = frames.get(name)
-        if frame is None:
-            panels[name] = compile_ir(panel, library=library, metrics=metrics, base=base)
-            continue
-        panels[name] = compile_ir(
-            _framed(name, panel, frame),
-            library=library,
-            metrics=metrics,
-            base=base,
-            lettering_height=type_height,
-            exclusions=exclusions.get(name, ()),
-            outline=_local_outline(frame),
-        )
-    return Book(panels=panels, pages=tuple(pages))
+        try:
+            if frame is None:
+                panels[name] = compile_ir(panel, library=library, metrics=metrics, base=base)
+                continue
+            panels[name] = compile_ir(
+                _framed(name, panel, frame),
+                library=library,
+                metrics=metrics,
+                base=base,
+                lettering_height=type_height,
+                exclusions=exclusions.get(name, ()),
+                outline=_local_outline(frame),
+            )
+        except ScenetError as exc:
+            # Which panel, so `check --deep` can say: it compiles a document the one way
+            # `build` does, and that way names no panel in its errors.
+            exc.panel = name
+            raise
+    return Book(panels=panels, pages=tuple(pages), notes=document.notes)
 
 
 def _core_frame(frame: Frame) -> CoreFrame:
@@ -878,9 +941,59 @@ FRONTENDS = {
 }
 
 
+def _script_document(text: str, *, source: Path | None) -> SceneDocument:
+    """A comic script, as a scene: its PAGE headings lay its panels out on pages."""
+    document = parse_script_document(text, source=source)
+    return SceneDocument(
+        panels=document.panels,
+        layout=document.layout,
+        notes=tuple(note.message for note in document.notes),
+    )
+
+
 def _load_script_document(path: Path) -> SceneDocument:
-    """A comic script, as a scene with no pages: its PAGE headings lay nothing out yet."""
-    return SceneDocument(panels=load_script(path), layout=PageLayout())
+    """A comic script read from disk, as `compile_script` reads one handed over as text."""
+    return _script_document(path.read_text(encoding="utf-8"), source=path)
+
+
+def compile_script(
+    text: str,
+    *,
+    source: Path | None = None,
+    base: Path | None = None,
+    library: PuppetLibrary | None = None,
+    metrics: FontMetrics | None = None,
+) -> Book:
+    r"""Compile a comic script, every panel and page of it.
+
+    The one way a script is compiled, whoever asks: `scenet build`, `scenet check --deep`,
+    the MCP server and the playground used to each assemble one by hand, and would have
+    drifted apart the day a script laid out pages.
+
+    Args:
+        text: The script.
+        source: Path it came from, used to prefix error messages and to find the files it
+            names beside it.
+        base: The folder files the script names are read from, in place of the one
+            `source` is in.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against.
+
+    Returns:
+        Every panel, and the pages they are laid out on -- none yet, for a script.
+
+    Raises:
+        ScriptSyntaxError: The script cannot be read, or a panel does not validate.
+
+    Example:
+        >>> from scenet import compile_script
+        >>> book = compile_script("---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n")
+        >>> list(book.panels)
+        ['1']
+    """
+    return _compile_document(
+        _script_document(text, source=source), library, metrics, _folder(source, base)
+    )
 
 
 #: The same extensions, read as whole documents -- panels and the pages they go on.

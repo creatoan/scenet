@@ -53,6 +53,13 @@ through Monaco's own lexer; and `tests/test_script_highlighting.py` checks every
 against the compiler's own reading. A change to the script format fails all three until
 both tokenizers follow it.
 
+The grammar itself is generated. A speech ends at a heading, a caption, a sound effect, a
+directive or the next cue, so each of those lines has to be spelled out again inside the
+lookaheads that end it, and hand-written copies drift. `syntaxes/scenet-script.grammar.ts`
+writes each line shape once and composes the rules and the lookaheads from it; edit that,
+then run `npm run grammar`. `test/grammar-source.test.ts` fails when the committed JSON is
+not what the source builds.
+
 ## Settings
 
 | Setting | Default | |

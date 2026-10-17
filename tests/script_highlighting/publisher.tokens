@@ -25,7 +25,7 @@
 []
 [["panel-keyword", "Panel"], ["panel-label", "3"]]
 [["directive-marker", "@"], ["directive-name", "angle"], ["directive-value", "high"]]
-[["prose", "Panel 1. Alice on a corner."]]
+[["prose", "Panel borders are heavy here."]]
 []
 [["panel-keyword", "Panel"], ["panel-label", "4"]]
 [["sfx-keyword", "SFX"], ["sfx-text", "BLAM"]]

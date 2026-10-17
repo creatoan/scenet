@@ -98,7 +98,7 @@ Goodbye.
 BAD_SCRIPT = """\
 
 
-Somewhere, it is raining.
+@shot: close_up
 
 PANEL 1
 ALICE
@@ -265,6 +265,23 @@ class TestValidate:
 
     def test_an_unknown_syntax_is_refused_by_the_schema(self):
         assert call("validate", {"source": VALID, "syntax": "xml"}).is_error
+
+    def test_a_document_with_only_notes_is_valid(self):
+        """A note reports a house limit, not a fault: the document is still valid."""
+        long = " ".join(["word"] * 26)
+        source = (
+            f'cast: {{bob: {{reference: bob}}}}\nscript:\n  - say: {{by: bob, text: "{long}"}}\n'
+        )
+        result = call("validate", {"source": source})
+        assert result.structured_content is not None
+        assert result.structured_content["valid"] is True
+        (finding,) = result.structured_content["findings"]
+        assert (finding["rule"], finding["level"]) == ("scenet/word-limit", "note")
+
+    def test_every_finding_says_its_level(self):
+        result = call("validate", {"source": UNKNOWN_ACTOR})
+        assert result.structured_content is not None
+        assert [item["level"] for item in result.structured_content["findings"]] == ["error"]
 
 
 class TestCompile:

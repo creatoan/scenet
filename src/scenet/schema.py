@@ -9,7 +9,8 @@ anybody types.** The YAML frontend accepts conveniences that
 - staging written as a sentence, `alice left_of bob`;
 - script entries tagged by verb, `- say: {by: alice, text: ...}`;
 - a setting that names a `place` instead of listing masses;
-- in a scene, panels that state only what differs from what they inherit.
+- in a scene, panels that state only what differs from what they inherit;
+- `null` for a cast member, which leaves an inherited one out (`settle`).
 
 Publishing the IR's schema made an editor flag every one of those as an error -- 21 of
 the 22 gallery documents, on lines that compiled. So the published schema starts from
@@ -47,6 +48,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_verb_tagged_script(schema, definitions)
     _accept_named_places(definitions)
     _accept_one_font_file(definitions)
+    _accept_cast_removal(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
     return schema
@@ -105,6 +107,23 @@ def scene_schema() -> dict[str, Any]:
             },
         },
         "additionalProperties": False,
+    }
+
+
+def _accept_cast_removal(schema: dict[str, Any]) -> None:
+    """Mirror `settle`: `bob: null` leaves an inherited cast member out of the panel."""
+    cast: dict[str, Any] = schema["properties"]["cast"]
+    cast["additionalProperties"] = {
+        "anyOf": [
+            cast["additionalProperties"],
+            {
+                "type": "null",
+                "description": (
+                    "Leaves a cast member this panel would inherit out of it, and every "
+                    "staging relation that names them."
+                ),
+            },
+        ]
     }
 
 

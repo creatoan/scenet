@@ -1,0 +1,9 @@
+---
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB: {reference: bob, at: right_third}
+staging: [ALICE left_of BOB]
+---
+PANEL 1
+ALICE (OP)
+Is anybody there?

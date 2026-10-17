@@ -94,3 +94,12 @@ examples:
   - file: 30-sound-effects.panel.yaml
     title: "Sound effects: letters that are part of the picture"
     kind: panel
+  - file: 31-dark-horse.script
+    title: "Written as Dark Horse asks: title page, counts, CAP and CAP/NAME"
+    kind: script
+  - file: 32-off-panel.scene.yaml
+    title: "Off-panel speech: a tail to the frame, for somebody nobody draws"
+    kind: scene
+  - file: 33-planche.script
+    title: "A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans"
+    kind: script

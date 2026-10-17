@@ -16,6 +16,7 @@ written rather than from what the compiler made of it.
 """
 
 import string
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
@@ -159,6 +160,15 @@ def _event(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
     # fields, rarely enough that most panels are still about their dialogue.
     if draw(st.integers(0, 4)) == 0:
         return draw(_sfx(cast))
+    if draw(st.integers(0, 5)) == 0:
+        # Somebody nobody draws, speaking from off panel: a tail to the frame.
+        return {
+            "say": {
+                "by": draw(_actor_ids().filter(lambda name: name not in cast)),
+                "text": draw(words(max_words=8)),
+                "off_panel": draw(st.sampled_from([True, "left", "right", "top", "bottom"])),
+            }
+        }
     if cast and draw(st.booleans()):
         say: dict[str, Any] = {"by": draw(st.sampled_from(cast)), "text": draw(words(max_words=8))}
         if draw(st.booleans()):
@@ -409,10 +419,14 @@ class DrawnScript:
         text: The script.
         lines: For each panel, in order, how many balloons and captions it was written
             with. The compiled book must hold exactly that many -- nothing lost silently.
+        said: For each panel, what each of those lines is: `("say", speaker)`, or
+            `("caption", None)`. Counting them would not notice a line read as the wrong
+            thing, or as said by somebody else.
     """
 
     text: str
     lines: tuple[int, ...]
+    said: tuple[tuple[tuple[str, str | None], ...], ...] = ()
 
 
 def _spoken() -> st.SearchStrategy[str]:
@@ -433,43 +447,138 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
     Panel numbers either run straight through or start again on each page, the case
     #63 was about. Cues carry balloon modifiers, speeches run on over continuation
     lines, and captions name their kind.
+
+    The second speaker's name may carry an accent, and a cue may spell it decomposed, as
+    a macOS editor stores it, while the front matter has it composed: one name either way.
+
+    Headings come as publishers write them: a title before the first page, `PAGE TWO
+    (three panels)` with the count it really has, `Panel 2. A description.`, numbers in
+    words, and Markdown's `##` and `**`. So do captions -- `CAP:` with its text under it,
+    Dark Horse's `CAP/ALICE` -- and cues with their line on theirs, `ALICE: Hello.`, and a
+    voice over, which is a spoken caption.
     """
-    cast = ["ALICE", "BOB"]
+    second = draw(st.sampled_from(["BOB", "JOSÉ", "ZOË"]))
+    spellings = {
+        "ALICE": ["ALICE"],
+        second: sorted({second, unicodedata.normalize("NFD", second)}),
+    }
+    cast = list(spellings)
     restart = draw(st.booleans())
     out = [
         "---",
         "cast:",
         "  ALICE: {reference: alice, at: left_third}",
-        "  BOB: {reference: bob, at: right_third}",
-        "staging: [ALICE left_of BOB]",
+        f"  {second}: {{reference: bob, at: right_third}}",
+        f"staging: [ALICE left_of {second}]",
         "---",
         "",
     ]
+    if draw(st.booleans()):
+        out += ["The Lighthouse, Issue 1", "by a writer", ""]  # a title page
     counts: list[int] = []
+    said: list[tuple[tuple[str, str | None], ...]] = []
     number = 0
     for page in range(1, draw(st.integers(1, 3)) + 1):
-        out += [f"PAGE {page}", ""]
+        panels_on_page = draw(st.integers(1, 3))
+        out += [_page_heading(draw, page, panels_on_page), ""]
         if restart:
             number = 0
-        for _ in range(draw(st.integers(1, 3))):
+        for index in range(panels_on_page):
             number += 1
-            out += [f"PANEL {number}", "@shot: full_shot", "They stand on a corner.", ""]
-            lines = 0
+            # A panel after the first on its page may be written over the one before it,
+            # which it inherits the directives of and never the dialogue.
+            over = index > 0 and draw(st.integers(0, 3)) == 0
+            directive = f"@over: {number - 1}" if over else "@shot: full_shot"
+            out += [_panel_heading(draw, number), directive, "They stand on a corner.", ""]
+            lines: list[tuple[str, str | None]] = []
             for _ in range(draw(st.integers(0, 3))):
                 if draw(st.integers(0, 3)) == 0:
-                    kind = draw(st.sampled_from(["", " (locale)", " (monologue)"]))
-                    out += [f"CAPTION{kind}: {draw(_spoken())}", ""]
+                    out += [*draw(_caption(cast)), ""]
+                    lines.append(("caption", None))
+                elif draw(st.integers(0, 5)) == 0:
+                    # A voice over: the speaker is heard, in a spoken caption.
+                    name = draw(st.sampled_from(cast))
+                    out += [f"{name} (V.O.)", draw(_spoken()), ""]
+                    lines.append(("caption", None))
+                elif draw(st.integers(0, 6)) == 0:
+                    # Somebody never drawn, heard from off panel.
+                    marker = draw(st.sampled_from(["(OP)", "(OFF)", "(O.S.)", "(OP, left)"]))
+                    out += [f"PHONE {marker}", draw(_spoken()), ""]
+                    lines.append(("say", "PHONE"))
+                elif draw(st.integers(0, 3)) == 0:
+                    # A cue with its line on the same line.
+                    speaker = draw(st.sampled_from(cast))
+                    out += [f"{speaker}: {draw(_spoken())}", ""]
+                    lines.append(("say", speaker))
                 else:
                     modifier = draw(
-                        st.sampled_from(["", " (whisper)", " (shouting)", " (thinking)"])
+                        st.sampled_from(
+                            [
+                                "",
+                                " (whisper)",
+                                " (shouting)",
+                                " (thinking)",
+                                " (murmure)",
+                                " (crié)",
+                                " (pensée)",
+                                " (à voix basse)",
+                            ]
+                        )
                     )
-                    out += [f"{draw(st.sampled_from(cast))}{modifier}", draw(_spoken())]
+                    speaker = draw(st.sampled_from(cast))
+                    name = draw(st.sampled_from(spellings[speaker]))
+                    out += [f"{name}{modifier}", draw(_spoken())]
                     if draw(st.integers(0, 3)) == 0:
                         out.append(draw(_spoken()))  # a continuation line
                     out.append("")
-                lines += 1
-            counts.append(lines)
-    return DrawnScript("\n".join(out) + "\n", tuple(counts))
+                    lines.append(("say", speaker))
+            counts.append(len(lines))
+            said.append(tuple(lines))
+    return DrawnScript("\n".join(out) + "\n", tuple(counts), tuple(said))
+
+
+@st.composite
+def _caption(draw: st.DrawFn, cast: list[str]) -> list[str]:
+    """A caption, as any of the labels a script may give one: `CAPTION:`, `CAP:` with its
+    text on the line or under it, a kind, or Dark Horse's `CAP/NAME` carrying speech."""
+    label = draw(st.sampled_from(["CAPTION", "CAP"]))
+    speaker = draw(st.sampled_from(["", *(f"/{name}" for name in cast)]))
+    kind = "" if speaker else draw(st.sampled_from(["", " (locale)", " (monologue)"]))
+    text = draw(_spoken())
+    if speaker:
+        text = f'"{text}"'
+    if draw(st.booleans()):
+        return [f"{label}{speaker}{kind}: {text}"]
+    return [f"{label}{speaker}{kind}", text]
+
+
+#: Numbers as a script may spell them, for headings.
+_IN_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def _page_heading(draw: st.DrawFn, page: int, panels: int) -> str:
+    """`PAGE 2`, `PAGE TWO`, or Dark Horse's `PAGE TWO (three panels)`, its count true."""
+    label = _IN_WORDS[page].upper() if draw(st.booleans()) else str(page)
+    plural = "panel" if panels == 1 else "panels"
+    count = draw(st.sampled_from(["", f" ({_IN_WORDS[panels]} {plural})", f" ({panels} {plural})"]))
+    marker = draw(st.sampled_from(["", "# "]))
+    return f"{marker}PAGE {label}{count}"
+
+
+def _panel_heading(draw: st.DrawFn, number: int) -> str:
+    """A panel heading as publishers and Markdown write one."""
+    label = _IN_WORDS[number].capitalize() if number < 10 and draw(st.booleans()) else str(number)
+    return draw(
+        st.sampled_from(
+            [
+                f"PANEL {number}",
+                f"Panel {label}.",
+                f"Panel {number}. Close on the corner.",
+                f"## PANEL {number}",
+                f"**PANEL {number}**",
+            ]
+        )
+    )
 
 
 # ---------------------------------------------------------------- broken documents

@@ -163,7 +163,8 @@ nowhere to put them, and unknown keys are rejected.
    language; see the `language` part.
 2. **Comic script** — `*.script`. The format comic writers already use: `PANEL 1`,
    `@shot:`, a character cue, the dialogue under it, with a short YAML front matter
-   declaring the cast. See the `comic-script` part.
+   declaring the cast. Dark Horse's published layout is read as written, and so are
+   French scripts; each PAGE heading is a page. See the `comic-script` part.
 
 **If you cannot run code** — a chat app, NotebookLM — write a comic script. It is the
 closest thing to what you would write anyway, and the person you are helping compiles

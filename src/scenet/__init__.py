@@ -122,10 +122,12 @@ from scenet.ir import (
     SfxEvent,
     SfxSize,
     ShotType,
+    Side,
     Spans,
     StackedPanel,
     Tier,
     TimeOfDay,
+    TypeSize,
     Weather,
 )
 from scenet.pipeline import (
@@ -138,6 +140,7 @@ from scenet.pipeline import (
     compile_ir,
     compile_scene,
     compile_scene_file,
+    compile_script,
     compile_source,
 )
 from scenet.places import PLACES, Place
@@ -158,6 +161,7 @@ __all__ = [
     "compile_ir",
     "compile_scene",
     "compile_scene_file",
+    "compile_script",
     "compile_source",
     # -- parsing, without compiling ------------------------------------------
     "load_panel",
@@ -200,6 +204,7 @@ __all__ = [
     "SfxEvent",
     "SfxSize",
     "ShotType",
+    "Side",
     # -- laying panels out on pages ------------------------------------------
     "PageFormat",
     "PageLayout",
@@ -221,6 +226,7 @@ __all__ = [
     "SettingSpec",
     "Spans",
     "TimeOfDay",
+    "TypeSize",
     "Weather",
     # -- puppets -------------------------------------------------------------
     "Landmark",

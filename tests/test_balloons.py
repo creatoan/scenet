@@ -9,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import BalloonPlacementError
 from scenet.geom import BBox, Circle, Point, Vector
-from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent
+from scenet.ir import CaptionEvent, CaptionKind, Face, PlacementZone, SayEvent, Side, TypeSize
 from scenet.solve.balloons import (
     READING_EPSILON,
     W_CAPTION_EDGE,
@@ -25,6 +25,7 @@ from scenet.solve.balloons import (
     _emanata_cost,
     _Limits,
     _mass_cost,
+    _nearer_side,
     _occlusion_cost,
     _reading_order_allows,
     _rim_point,
@@ -383,6 +384,27 @@ class TestCaptionText:
         assert caption_text(run, 0) == "“Get down!"
         assert caption_text(run, 1) == "“All of you!”"
 
+    def test_a_run_closes_when_its_speaker_changes(self):
+        """Blambot: "end quotes should appear as each speaker finishes/before the next
+        one begins". A run is one speaker's speech; it used to stay open across two."""
+        run = (
+            CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="All of you!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="Why?", kind=CaptionKind.SPOKEN, by="BOB"),
+        )
+        assert [caption_text(run, index) for index in range(3)] == [
+            "“Get down!",
+            "“All of you!”",
+            "“Why?”",
+        ]
+
+    def test_a_named_speaker_and_an_unnamed_one_are_two(self):
+        run = (
+            CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN, by="ALICE"),
+            CaptionEvent(text="Now!", kind=CaptionKind.SPOKEN),
+        )
+        assert caption_text(run, 0) == "“Get down!”"
+
 
 class TestBalloonScore:
     PANEL = BBox(0.0, 0.0, 400.0, 400.0)
@@ -585,3 +607,58 @@ class TestPlaceScript:
         assert not _curve_hits(
             balloon.tail.start, balloon.tail.control, balloon.tail.end, [bystander]
         )
+
+
+class TestOffPanel:
+    """A balloon whose speaker is not drawn is placed with what `place_script` was handed."""
+
+    PANEL = BBox(0.0, 0.0, 600.0, 400.0)
+
+    def _unseen(self, text: str = "Over here!") -> SayEvent:
+        return SayEvent(by="carol", text=text, off_panel=Side.LEFT)
+
+    def test_it_is_measured_in_the_face_given(self):
+        italic = load_metrics(str(ITALIC_FONT_PATH))
+        layout = place_script([self._unseen()], {}, self.PANEL, metrics=italic, font_size=12.0)
+        assert layout.balloons[0].block == layout_text("Over here!", font_size=12.0, metrics=italic)
+
+    def test_it_keeps_off_emanata(self):
+        unmarked = place_script([self._unseen()], {}, self.PANEL).balloons[0].box
+        zone = [
+            Point(unmarked.x, unmarked.y),
+            Point(unmarked.right, unmarked.y),
+            Point(unmarked.right, unmarked.bottom),
+            Point(unmarked.x, unmarked.bottom),
+        ]
+        marked = place_script([self._unseen()], {}, self.PANEL, emanata={"a": [zone]})
+        assert marked.balloons[0].box.overlap_area(unmarked) == 0
+
+    def test_small_type_is_padded_as_a_drawn_speakers_is(self):
+        """Blambot's small type in a big balloon, whoever says it."""
+        unseen = SayEvent(by="carol", text="psst.", size=TypeSize.SMALL, off_panel=Side.LEFT)
+        drawn = SayEvent(by="a", text="psst.", size=TypeSize.SMALL)
+        actors = {"a": _actor(face=Circle(450.0, 280.0, 25.0))}
+        boxes = [
+            place_script([event], actors, self.PANEL, font_size=12.0).balloons[0].box
+            for event in (unseen, drawn)
+        ]
+        assert (boxes[0].width, boxes[0].height) == (boxes[1].width, boxes[1].height)
+
+    def test_no_room_names_the_balloon_and_who_speaks_it(self):
+        cramped = BBox(0.0, 0.0, 30.0, 30.0)
+        with pytest.raises(BalloonPlacementError, match="off panel by 'carol'"):
+            place_script([self._unseen("Far too much to say.")], {}, cramped, font_size=12.0)
+
+
+class TestTheNearerSide:
+    """With no side named, a tail goes to the nearer of left and right -- left on a tie."""
+
+    PANEL = BBox(100.0, 0.0, 600.0, 400.0)
+
+    @pytest.mark.parametrize(
+        ("centre_x", "side"),
+        [(400.0, Side.LEFT), (339.0, Side.LEFT), (401.0, Side.RIGHT), (650.0, Side.RIGHT)],
+    )
+    def test_by_where_the_balloon_went(self, centre_x: float, side: Side):
+        balloon = BBox(centre_x - 20.0, 30.0, 40.0, 20.0)
+        assert _nearer_side(balloon, self.PANEL) is side

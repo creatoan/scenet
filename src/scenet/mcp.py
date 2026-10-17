@@ -71,8 +71,7 @@ from scenet.emit.page import render_page
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.frontends.positions import DOCUMENT_START
-from scenet.frontends.script_front import parse_script
-from scenet.pipeline import Book, compile_book, compile_ir
+from scenet.pipeline import Book, compile_book, compile_script
 from scenet.spec_pack import part
 
 __all__ = [
@@ -156,6 +155,10 @@ class Finding(BaseModel):
     """One thing wrong with a document: which rule, where, and what to do about it."""
 
     rule: str = Field(description="Stable rule id, such as `scenet/unknown-actor`")
+    level: Literal["error", "note"] = Field(
+        description="`error` stops the document compiling; a `note` reports a house limit, "
+        "such as a balloon over the words a publisher asks for, and the document still compiles"
+    )
     message: str = Field(description="What is wrong, naming the offending construct")
     fix: str = Field(description="What to do about it")
     where: str = Field(description="Path to the offending value, such as `script.0.say.by`")
@@ -168,8 +171,10 @@ class Finding(BaseModel):
 class ValidationReport(BaseModel):
     """Everything wrong with a document, all at once."""
 
-    valid: bool = Field(description="True when there are no findings")
-    findings: list[Finding] = Field(description="In source order; fix all of them")
+    valid: bool = Field(description="True when no finding is an error; notes may remain")
+    findings: list[Finding] = Field(
+        description="In source order; fix every error, and weigh each note"
+    )
 
 
 class CompiledPanel(BaseModel):
@@ -291,7 +296,10 @@ def validate(
         Whether the document is valid, and every finding in source order.
     """
     found = _diagnose(source, syntax, deep=deep)
-    return ValidationReport(valid=not found, findings=[_finding(item) for item in found])
+    return ValidationReport(
+        valid=not any(item.level == "error" for item in found),
+        findings=[_finding(item) for item in found],
+    )
 
 
 def compile_panel(source: SourceArg, syntax: SyntaxArg = "yaml") -> CompileReport:
@@ -460,6 +468,7 @@ def _finding(item: Diagnostic) -> Finding:
     region = item.region or DOCUMENT_START
     return Finding(
         rule=f"{RULE_NAMESPACE}/{item.rule}",
+        level=item.level,
         message=item.message,
         fix=RULES[item.rule].help,
         where=".".join(str(step) for step in item.path),
@@ -480,14 +489,10 @@ def _compile(source: str, syntax: Syntax) -> Book:
         library = default_library()
         if syntax == "yaml":
             return compile_book(source, library=library)
-        # A comic script's PAGE headings lay nothing out yet, so a script has no pages.
-        panels = parse_script(source)
-        return Book(
-            panels={name: compile_ir(panel, library=library) for name, panel in panels.items()},
-            pages=(),
-        )
+        return compile_script(source, library=library)
     except ScenetError as exc:
-        found = _diagnose(source, syntax, deep=True)
+        # Only errors explain a failure: a note is a house limit the document can exceed.
+        found = [item for item in _diagnose(source, syntax, deep=True) if item.level == "error"]
         if not found:
             # A clean deep check means a successful build -- the diagnostics tests hold
             # the two to that -- so this is a disagreement between them, and is reported

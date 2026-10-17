@@ -28,7 +28,8 @@ nowhere to put them, and unknown keys are rejected.
    language; see the `language` part.
 2. **Comic script** — `*.script`. The format comic writers already use: `PANEL 1`,
    `@shot:`, a character cue, the dialogue under it, with a short YAML front matter
-   declaring the cast. See the `comic-script` part.
+   declaring the cast. Dark Horse's published layout is read as written, and so are
+   French scripts; each PAGE heading is a page. See the `comic-script` part.
 
 **If you cannot run code** — a chat app, NotebookLM — write a comic script. It is the
 closest thing to what you would write anyway, and the person you are helping compiles
@@ -70,7 +71,7 @@ so always check.
 - `preamble` — Start here: what Scenet is, the two ways to write a panel, the check-and-fix loop, and the mistakes generators make most
 - `language` — The language reference: every block and key of a panel or scene document
 - `shot-types` — Normative: what each camera shot frames, in head-heights
-- `comic-script` — The comic-script format: PANEL 1, @shot:, character cues, dialogue
+- `comic-script` — The comic-script format: PAGE and PANEL headings as Dark Horse writes them, @shot:, cues, captions, off-panel speech, pages, and French scripts
 - `characters` — The shipped puppets, with every pose and expression each declares
 - `diagnostics` — Every rule `scenet check` reports, and what to do about each
 - `schema` — The JSON Schema for a single-panel YAML document
@@ -407,7 +408,7 @@ scene-graph representations used elsewhere in computer vision.
 |---|---|
 | `left_of`, `right_of` | Fixes horizontal ordering |
 | `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object |
+| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
 | `ground_shared_with` | Places both actors on the same ground line |
 
 ### Why ordering must be explicit
@@ -440,18 +441,66 @@ script:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth |
+| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
 | `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
 | `prefer` | zone | A hint about placement, honoured when possible |
 | `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
+| `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
+| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
 compiler must decide the line breaks before it can place anything.
 
+A double dash, a dash or an ellipsis written as a word of its own — `out --`, `... maybe` — is
+never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+space before or after it, so it belongs to its word: it stays on the line of the word before
+it, or of the word after it when it opens the balloon. The space is still lettered as written.
+
 A line of text, a caption and an actor id may not contain a control character other than tab, line
 feed and carriage return. Each one is written into the SVG, and XML has no way to write those
 characters at all, not even escaped, so a panel holding one is refused with the character named.
+
+### Off-panel speech
+
+```yaml
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: caller, text: "Open up!", off_panel: left}
+  - say: {by: bob, text: "Who is it?"}
+```
+
+A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
+on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
+the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
+put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+aim most tails at the top border, which reads as a speaker above.
+
+An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
+panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
+balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
+face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
+to the panel's outline when it is slanted.
+
+**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
+staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
+frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
+`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
+look agree.
+
+```yaml
+cast:
+  bob: {reference: bob, at: center}
+staging: [bob looking_at carol]
+script:
+  - say: {by: carol, text: Over here!, off_panel: left}
+```
+
+A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
+`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
+See [Leaving something out](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#leaving-something-out). A comic script
+does it with `(OP)`.
 
 ### `caption`
 
@@ -483,9 +532,10 @@ render an inner voice: a `monologue` caption and a `thought` balloon. Both are c
 different eras of the same convention, not a duplication.
 
 **Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
-captions, each opens with a quote and only the last one closes — the run is one continuous line of
-off-panel speech, and closing every box would read as a series of interruptions. Write the words;
-the marks are lettering.
+captions by one speaker, each opens with a quote and only the last one closes — the run is one
+continuous line of off-panel speech, and closing every box would read as a series of interruptions.
+A change of speaker (`by`) ends the run, so each speaker's last box closes, as Blambot asks: end
+quotes "should appear as each speaker finishes". Write the words; the marks are lettering.
 
 **`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
 who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
@@ -715,6 +765,9 @@ A scene can lay its panels out on pages. `pages:` is a list of pages; each page 
 **tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
 share.
 
+A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
+not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
+
 A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
 unquoted `1:` as a number, so a panel named by its number is written `'1':`.
 
@@ -918,6 +971,9 @@ which is why `extreme_close_up` is the one shot in the table that needs it despi
 
 ## Table
 
+A comic script may name these in French; see
+[French scripts](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#french-scripts) for the rung-by-rung table.
+
 | `shot` | Crop landmark | Headroom | Footroom | Reads as |
 |---|---|---|---|---|
 | `long_shot` (alias `wide`) | `feet` | 0.28 | 0.10 | Figure small in its environment |
@@ -1026,20 +1082,35 @@ scenet build umbrella.script --strip
 
 | Line | Means |
 |---|---|
-| `PANEL 1` | Starts a new panel. Anything before the first one is an error. `PANEL 1:` and `PANEL 1.` are the same panel. |
-| `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. |
+| `PANEL 1` | Starts a new panel. `PANEL 1:`, `PANEL 1.` and `Panel One` are the same panel. |
+| `Panel 1. Alice and Bob on a corner.` | Dark Horse's form: the panel, and its description on the same line. |
+| `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
-| `BOB (whisper)` | Same, with a balloon kind. |
-| `CAPTION: Midnight.` | A caption box. The text is on the same line. |
-| `CAPTION (monologue): ...` | Same, with a caption kind. |
+| `BOB (small)` | Muttered: smaller type, in a balloon that keeps its room. `(weak)` is the same. |
+| `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
+| `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
+| `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |
+| `ALICE (OP)` | Dark Horse's off-panel speech: Alice is left out of this panel, and her balloon's tail ends on the frame. `(OFF)`, `(O.S.)` and `(O.C.)` too. |
+| `CAPTION: Midnight.`, `CAP: Midnight.` | A caption box, its text on the same line. |
+| `CAP:` or `CAPTION` (alone) | Dark Horse's form: the caption's text is on the lines under it, to a blank line. |
+| `CAPTION (monologue): ...` | Same, with a caption kind. `(voice over)` is the spoken kind. |
+| `CAP/ALICE` | Dark Horse's caption carrying a character's speech: a spoken caption by `ALICE`. |
+| `1. ALICE:`, `2) CAP:` | Blambot's numbered lettering items: the number is set aside. |
 | `SFX: BLAM` | A sound effect. The sound is on the same line. |
 | `SFX (BOB, large): KRAK` | Same, coming from `BOB`, at a size. |
 | `SFX:` (alone) | Dark Horse's form: the sound is on the next line. |
 | Anything else | Prose. Preserved, never interpreted. |
-| `PAGE ONE` | Starts a page. Pages are not laid out yet, but they keep panels apart: see below. |
+| `PAGE ONE` | Starts a page: the panels under it are laid out on it. See [Pages](#pages). |
+| `PAGE ONE (five panels)` | Dark Horse's form: the page, and how many panels it has. A count its panels do not match is a `panel-count` note. |
+| `@tiers: 2 1 2` | Right after a PAGE heading: how many panels each tier of that page holds, from the top. |
+| `## PANEL 2`, `**PANEL 2**`, `---` | Markdown: the markers are stripped and the heading read; a horizontal rule is a blank line. |
+| Before the first heading | The title page: the writer's name and address, the title. Kept, never interpreted. |
 
 The one detail that trips people up: **a speaker cue is recognised by the name being all
-caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested.
+caps, not the whole line.** `BOB (whisper)` qualifies, because only `BOB` is tested. Capitals
+with accents are capitals: `HÉLÈNE` and `ZOË` are cues. The script is read composed (Unicode
+NFC), so a name your editor stored as a letter and a separate accent is the same name the
+front matter spells, and a byte-order mark at the start of the file is ignored.
 
 **A speech runs until a blank line.** Wrap a long line of dialogue wherever you like; the lines
 are joined with a space into one balloon. A line that looks like another cue ends the speech
@@ -1066,14 +1137,213 @@ it looks — `BLAM` is in capitals, which would otherwise make it a character's 
 nothing under it is reported rather than dropped. Turns, arcs and hollow letters are written in YAML;
 see [`sfx`](https://creatoan.github.io/scenet/reference/language.html#sfx).
 
-`CAPTION` is checked before speaker cues, because as far as the cue pattern is concerned it is a
-perfectly good character name. That is also why the text has to be on the same line: a bare
-`CAPTION` line is rejected rather than read as a character about to speak. `SFX` is checked
-before cues for the same reason.
+`CAP`, `CAPTION` and `SFX` are checked before speaker cues, because as far as the cue pattern
+is concerned each is a perfectly good character name. So they are reserved: none can be a cast
+member's id. A caption or a sound effect with its text to follow also wins over a cue waiting for
+its line — `BOB (whisper)` then `CAPTION: Later.` is a caption, and a note says Bob had nothing
+to say.
 
-One thing the YAML syntax can express and this cannot: a `spoken` caption's `by`, naming the
-off-panel speaker. Write that panel in YAML, or leave the speaker unnamed — nothing in the drawn
-panel depends on it, since a caption has no tail.
+**A cue may carry its line after a colon**, `ALICE: Hello.`, as Dark Horse's guide itself does. A
+writer's note to the artist looks exactly the same — `NOTE: redraw the rain` — so the line is
+dialogue only when the name is in the panel's cast: the front matter's, and any `@cast:` in the
+panel, wherever in it. A name in capitals that is not in the cast is read as it would otherwise
+be — prose, or a wrapped line of the speech above — and a `looks-like-dialogue` note says so, since
+a misspelled speaker looks the same. A name in lower case, `Junior: Die, you dirty rat!`, is
+dialogue only when it is exactly a cast member's id, and otherwise silent prose.
+
+**A caption can carry speech.** Dark Horse's `CAP/ALICE`, with the words in quotation marks,
+is a `spoken` caption by `ALICE`. The compiler letters a spoken caption's quotation marks itself
+— one opening each box, one closing the speaker's last — so the writer's are taken off rather
+than doubled, and so is one enclosing pair around a balloon's text. A voice over, `ALICE (V.O.)`,
+is the same thing written as a cue: [Blambot](https://blambot.com/pages/comic-script-basics)
+defines `CAPTION (VOICE OVER)` as a character "speaking, but … not in the location shown".
+
+## A script as publishers ask for it
+
+[Dark Horse's script format](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
+is the reference house format, and Scenet reads its layout as written:
+
+```
+Margo Wren
+14 Harbour Lane, Port Ellis
+
+PAGE ONE (two panels)
+
+Panel 1. A lighthouse on a cliff at dusk. Maya climbs the last of the steps.
+
+MAYA:
+Theo? The lamp is out --
+
+Panel 2. Inside. Theo kneels by the dead lamp.
+
+THEO (whisper):
+-- because somebody forgot the oil.
+```
+
+- **The title page** is everything before the first heading. It is kept and never read,
+  as prose is. A name in capitals with a line under it looks like a cue, so it is pointed
+  out as a `looks-like-dialogue` note; a name from the cast there is an error, since it is
+  far more likely a missing PANEL heading. A directive, a caption or a sound effect before
+  the first heading belongs to no panel, and is an error.
+- **A line between a PAGE heading and its first PANEL** belongs to the page, never to the
+  last panel of the page before, which is where it used to end up.
+- **`PAGE ONE (five panels)`** states the count. When the panels under it number something
+  else, a heading has usually been missed, so it is a `panel-count` note. Any other
+  parenthetical, `(splash)` say, is a note to the artist, and is not read as a count.
+- **`Panel 1.` with its description on the same line** is a heading when the label looks
+  like a number — digits, digits and a letter, one letter, or a number in words — so
+  that `Panel shows Alice.` stays the sentence it is.
+- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written,
+  and is never set at the start of a line or alone on one.
+- **A cue with nothing said under it** is a `looks-like-dialogue` note rather than vanishing.
+
+Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around
+it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
+It is not a second format: the text of a line is never rewritten.
+
+## Pages
+
+**Each PAGE heading is a page**, and the panels under it are laid out on it, as a scene's
+[`pages:`](https://creatoan.github.io/scenet/reference/language.html#page-and-pages) would lay them out. Dark Horse leaves "exact
+panel layout" to the artist, and here the compiler is the artist, so a page's panels go into tiers
+by a fixed rule, in reading order:
+
+| Panels | Tiers, top to bottom |
+|---|---|
+| 1 | 1 |
+| 2 | 1, 1 |
+| 3 | 1, 1, 1 |
+| 4 | 2, 2 |
+| 5 | 2, 1, 2 |
+| 6 | 2, 2, 2 |
+| 7 | 2, 3, 2 |
+| 8 | 3, 2, 3 |
+| 9 | 3, 3, 3 |
+| more | rows of three, the extra panels in the earlier tiers: 10 is 3, 3, 2, 2 |
+
+Three tiers is the most up to nine panels, because a page's lettering height assumes three; an odd
+panel takes a tier of its own in the middle, where a beat sits best.
+
+**Say otherwise with `@tiers:`**, written right after the PAGE heading and before its first panel:
+
+```
+PAGE TWO
+@tiers: 1 2
+
+PANEL 1
+...
+```
+
+That page's first panel takes the top tier alone, and the next two share the one under it. The
+counts must add up to the page's panels; when they do not, or `@tiers:` is written anywhere else,
+it is a `page-layout` error at its line. Anything finer — a panel twice as wide, a tier taller than
+the rest, columns, insets, slants — is a scene's `pages:`; see [Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
+
+**The front matter's `page:` sets the format** every page shares: its size, margin and gutters.
+A script has no `pages:` key — its pages are its PAGE headings — so writing one is an error.
+
+- **A panel on a page is compiled at the size of its frame**, and every panel on it letters at one
+  size, as on any page. The front matter's `panel: {size: ...}` still sizes panels that are on no
+  page.
+- **Panels before the first PAGE heading are on no page.** They compile on their own, as every
+  panel of a script without PAGE headings does.
+- **Page files are numbered by position**: `scenet build story.script` writes the first page to
+  `story.page-1.svg` whatever its heading says, so an excerpt that starts at `PAGE SEVEN` still
+  writes `page-1`. Each panel is written on its own as well, as before.
+
+## French scripts
+
+A Franco-Belgian script is read in its own words. The vocabulary is the
+[Cité internationale de la bande dessinée](https://www.citebd.org/sites/default/files/2023-07/lexique_bd.pdf)'s:
+
+| French | Means |
+|---|---|
+| `PLANCHE 1 (six cases)` | A page, and its count — `cases` or `vignettes`, in digits or words to *vingt* |
+| `CASE 2`, `VIGNETTE 2`, `Case 2 : La plage.` | A panel. Followed by a number only: `CASE` alone is a word, and a cue |
+| `RÉCITATIF :`, `CARTOUCHE :`, `NARRATIF :` | A caption, exactly as `CAPTION:` — its kind in the parenthetical, `/NAME` for speech |
+| `ONOMATOPÉE : FLOP` | A sound effect, as `SFX:` |
+| `LÉA : « Bonjour. »` | A cue and its line. The space before the colon may be a no-break space, and the guillemets are taken off |
+| `(pensée)`, `(off)`, `(hors champ)` | A thought balloon; off-panel speech |
+| `(murmure)`, `(chuchoté)`; `(cri)`, `(crié)` | A whisper; a shout |
+| `(à voix basse)` | Small type, as `(small)` |
+
+*Récitatif*, *cartouche* and *narratif* all name the caption box itself (Cité; Alloprof's
+"cartouche (ou récitatif)"; the BnF), which is why they are aliases of `CAPTION` rather than a kind
+of their own: the parenthetical says what the box is doing, `CARTOUCHE (monologue)` for a
+character's thoughts.
+
+The delivery words are the ones a source defines. The BnF's sheet on balloons draws a dotted
+outline for a character who *murmure* — *chuchoter* is to murmur, in Larousse — capitals and
+bold for one who *crie*, and smaller type for one who *parle bas*. Any other word, `(hurlé)` say,
+stays a note to the artist, as an English one does.
+
+**Shots and angles may be written in French**, in a comic script's `@shot:` and `@angle:` only — the
+YAML language and its schema stay in English. Case, accents, apostrophes and hyphens do not matter,
+and the usual abbreviations are read: `GP`, `P.A.`. The *échelle des plans* maps rung for rung onto
+[the shot ladder](https://creatoan.github.io/scenet/reference/shot_types.html):
+
+| French | Abbreviation | Cuts | `shot` |
+|---|---|---|---|
+| plan d'ensemble | PE | the setting, figures small | `long_shot` |
+| plan moyen | PM | head to foot | `full_shot` |
+| plan américain | PA | mid-thigh | `cowboy` |
+| plan rapproché taille, plan mi-moyen | PRT, PMM | the waist | `medium_shot` |
+| plan rapproché poitrine, plan rapproché | PRP, PR | the chest | `medium_close_up` |
+| plan rapproché épaule, plan épaule | | the shoulders | `close_up` |
+| gros plan | GP | the face | `big_close_up` |
+| très gros plan | TGP | a detail | `extreme_close_up` |
+
+*Gros plan* is `big_close_up` because the French sources put its cut above the shoulders, at the
+face: the BnF's *Créer une BD* ("coupé souvent au-dessus des épaules… s'attache au visage"), the
+Lyon academy's sheet (at the neck), and French Wikipedia's ladder, which has its own
+*plan rapproché épaule* between *plan rapproché* and *gros plan*. Quebec's OQLF defines *gros plan*
+at the shoulders instead; writing `plan rapproché épaule` gets that framing. *Plan général* and
+*plan italien* have no rung of their own, and `medium_full` no French name; none is invented. The
+angles are *plongée* (`high`), *contre-plongée* (`low`) and *angle normal* (`eye_level`).
+
+## Off-panel speech
+
+Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
+`(OFF)`, and screenplays `(O.S.)` or the older `(O.C.)`. All four mean the same here: the line is
+spoken by somebody who is not drawn, and the balloon's tail ends on the frame, on their side —
+see [off-panel speech](https://creatoan.github.io/scenet/reference/language.html#off-panel-speech).
+
+Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
+`ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
+that names her — `ALICE left_of BOB` does not apply there, and a `dropped-relation` note says
+so. All but one: `BOB looking_at ALICE` still holds, and Bob turns toward the side she is heard
+from. Her tail ends on the side she was written to stand on, `at: left_third` being the left, unless
+the cue names one: `ALICE (OP, right)`. Somebody never cast — `PHONE (OP)` — is heard just the
+same, from the side nearer the balloon.
+
+A panel whose own `@cast:` draws her, or in which she speaks both on and off panel, is
+`off-panel-speaker`. A panel `@over:` hers does not inherit her absence: it is worked out from each
+panel's own lines.
+
+To leave somebody out of a panel who says nothing in it, write `@cast: {BOB: null}` there. As in
+YAML, the relations that name him go with him, each with a `dropped-relation` note.
+
+## One panel over another
+
+Consecutive panels share nearly everything — the place, the weather, who stands where — and
+restating it is where continuity errors get in. `@over:` writes a panel as a change to another,
+exactly as [`over:`](https://creatoan.github.io/scenet/howto/compile_a_sequence.html) does in a YAML scene:
+
+```
+PANEL 1
+@shot: full_shot
+@setting: {place: docks, weather: rain}
+
+PANEL 2
+@over: 1
+@shot: close_up
+```
+
+Panel 2 inherits panel 1's directives and replaces its shot. It never inherits dialogue: each
+panel's lines are its own. A label is looked up on the same page first, so `@over: 1` on page two
+is panel `2-1`, and then as a panel's whole name, `1-3`. It may name a panel further down. A panel
+that does not exist, a cycle, or a panel over itself is one `composition` finding, at the `@over:`
+line.
 
 ## Prose is never interpreted
 
@@ -1226,9 +1496,15 @@ A setting names a place and lists masses. A place *is* a mass list -- the preset
 
 **Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
 
+### `scenet/dropped-relation`
+
+A shared staging relation does not apply in a panel its actor is left out of. A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated for every panel -- `ALICE left_of BOB`, `ALICE looking_at BOB` -- cannot hold where she is not drawn, so it is left out of that panel. A note, since that changes what the panel stages: Bob is placed, and looks, without her.
+
+**Fix:** Nothing to do if that is what the panel means; otherwise draw her in it.
+
 ### `scenet/duplicate-key`
 
-A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+A key is written twice in one mapping. YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
 
 **Fix:** Delete or rename one of the two; the message says which lines they are on.
 
@@ -1262,6 +1538,12 @@ No layout satisfies the panel's constraints. Nothing is misspelled and nothing i
 
 **Fix:** Relax or remove a conflicting staging relation.
 
+### `scenet/looks-like-dialogue`
+
+A line in a comic script is set like dialogue but is not read as dialogue. A cue with nothing said under it, or a name in capitals with a line under it where nothing is spoken -- before the first PANEL heading, which Dark Horse's format opens with the writer's name and address. Read as written, nothing is lost, but a line meant as dialogue would not be lettered, so it is pointed out.
+
+**Fix:** If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.
+
 ### `scenet/missing-field`
 
 A required field is missing. The value is required and was not supplied.
@@ -1274,6 +1556,12 @@ The document is not a mapping. A panel document is a mapping of top-level keys -
 
 **Fix:** Wrap the content in top-level keys, or check you meant to compile this file.
 
+### `scenet/off-panel-speaker`
+
+A line is spoken from off panel by somebody drawn in the panel. An off-panel speaker is somebody nobody draws: their balloon's tail ends on the frame, on their side, because there is no mouth in the panel to point at. So they are never in the panel's cast. A line marked `off_panel` whose speaker is in the cast contradicts itself, and so does one speaker both on and off panel in the same panel.
+
+**Fix:** Leave the speaker out of this panel's cast, or drop off_panel.
+
 ### `scenet/ordering-cycle`
 
 Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into a linear order before the solver runs, because Cassowary is a linear solver and cannot express the disjunction 'A left of B or B left of A'. A cycle has no linear order and so no solution.
@@ -1285,6 +1573,12 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A document with pages needs panels to lay out.
 
 **Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, or shrink the margin and gutters in `page:`.
+
+### `scenet/panel-count`
+
+A comic script's PAGE heading states a count its panels do not match. Dark Horse's script format labels each page with how many panels it has, `PAGE ONE (five panels)`. When the panels under it number something else, a panel heading has often been missed, or written so that it reads as prose -- and nothing else would say so. A note, not an error: the panels that are there still compile.
+
+**Fix:** Correct the count, or the panel heading that was not read as one.
 
 ### `scenet/panel-geometry`
 
@@ -1351,6 +1645,12 @@ Reference to a pose the character does not have. A cast member's `pose` names on
 Reference to a character the library does not contain. A cast member's `reference` names a puppet that is not installed.
 
 **Fix:** Check the name against the shipped library, or supply your own.
+
+### `scenet/word-limit`
+
+A balloon, caption or panel holds more words than a letterer fits well. Dark Horse's script format asks for 'approximately 25 words per balloon, and about 50 words per panel, max'. It is a house limit, not a contradiction: the panel still compiles, so this is a note, and `scenet check` passes. Words are counted as they are lettered: anything between spaces that holds a letter or a digit, so `--` and an ellipsis are not words, and emphasis markers add none. A panel counts its balloons and captions; a sound effect is not counted.
+
+**Fix:** Split the balloon in two, or carry the rest of the words to the next panel.
 
 <!-- scenet-spec:part=schema -->
 # JSON Schema
@@ -1800,7 +2100,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n    size: `small` for a line muttered, said under the breath or weakly: smaller type,\n        in a balloon with the room it would have had.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
       "properties": {
         "by": {
           "title": "By",
@@ -1809,6 +2109,18 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "kind": {
           "$ref": "#/$defs/BalloonKind",
           "default": "speech"
+        },
+        "off_panel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Side"
+            }
+          ],
+          "default": false,
+          "title": "Off Panel"
         },
         "prefer": {
           "anyOf": [
@@ -1820,6 +2132,10 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null
+        },
+        "size": {
+          "$ref": "#/$defs/TypeSize",
+          "default": "normal"
         },
         "text": {
           "minLength": 1,
@@ -1961,6 +2277,17 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "title": "ShotType",
       "type": "string"
     },
+    "Side": {
+      "description": "A side of the panel's frame: where an off-panel speaker is.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\".",
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ],
+      "title": "Side",
+      "type": "string"
+    },
     "Spans": {
       "description": "How much of the panel's width a mass covers.\n\nResolved to an extent in the frontend, and that is **not cosmetic**. `CLAUDE.md`\nrequires any construct that would reintroduce a left/right disjunction to resolve it\nbefore the solver, because Cassowary cannot express \"A left of B *or* B left of A\".\nA span is an absolute extent rather than a relation, which is what stops masses\nbecoming an unordered `beside`.",
       "enum": [
@@ -1981,6 +2308,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "night"
       ],
       "title": "TimeOfDay",
+      "type": "string"
+    },
+    "TypeSize": {
+      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.\n\nDark Horse lists \"(small), (burst), and (weak)\" among the common indications for\nmodified lettering. Blambot, *Small Dialogue / Big Balloon*: \"A reduced font size is\nused when a character mutters something, says something to him/herself, or speaks\nsheepishly\" -- smaller type, in the room the balloon would have had.",
+      "enum": [
+        "normal",
+        "small"
+      ],
+      "title": "TypeSize",
       "type": "string"
     },
     "Weather": {
@@ -2008,7 +2344,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "cast": {
       "additionalProperties": {
-        "$ref": "#/$defs/CastMember"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/CastMember"
+          },
+          {
+            "description": "Leaves a cast member this panel would inherit out of it, and every staging relation that names them.",
+            "type": "null"
+          }
+        ]
       },
       "title": "Cast",
       "type": "object"
@@ -3411,4 +3755,147 @@ script:
   - sfx: {text: tok tok tok, prefer: top_right, size: small, arc: 30}
   - sfx: {text: WHOOSH, from: alice, size: medium, arc: -40, hollow: true}
   - say: {by: bob, text: "Nothing. Go back to sleep."}
+```
+
+## Written as Dark Horse asks: title page, counts, CAP and CAP/NAME
+
+`31-dark-horse.script`
+
+```text
+---
+panel:
+  size: [900, 640]
+cast:
+  MAYA: {reference: alice, pose: pointing,     at: left_third}
+  THEO: {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+---
+Margo Wren
+14 Harbour Lane, Port Ellis
+
+The Lighthouse, Issue 1
+
+PAGE ONE (three panels)
+
+Panel 1. Dusk on the cliff path. Maya has climbed the last of the steps; Theo waits by the door.
+@shot: full_shot
+@setting: {place: shore, time: dusk}
+
+CAP:
+Port Ellis. The night the lamp went out.
+
+MAYA:
+Theo? The lamp is out --
+
+THEO:
+-- because somebody forgot the oil.
+
+KEEPER (OP):
+Who's up there?
+
+Panel 2. Closer. Maya points back down the path, furious.
+@shot: medium_shot
+
+1. MAYA (burst):
+Somebody!
+
+2. THEO (whisper): I was going to fetch it.
+
+Panel 3. Inside, the lamp blazes again. Both of them squint into the light.
+@shot: medium_close_up
+
+SFX (THEO, large): FWOOMP
+
+CAP/MAYA
+“-- and that was how the harbour got its light back.”
+```
+
+## Off-panel speech: a tail to the frame, for somebody nobody draws
+
+`32-off-panel.scene.yaml`
+
+```yaml
+# Off-panel speech: a voice from somebody nobody draws.
+#
+# `off_panel` on a `say` line names a speaker who is not in the cast. The balloon's tail
+# ends on the frame, on the speaker's side -- "the tail of the balloon generally butts
+# against the panel border" (Blambot) -- named, or, with `off_panel: true`, the nearer of
+# left and right to where the balloon was put.
+#
+# Bob mutters his answer: `size: small` letters it smaller, in a balloon that keeps its room.
+
+panel: {size: [900, 600]}
+setting: {place: room, time: night}
+
+panels:
+  knock:
+    camera: {shot: medium_shot}
+    cast:
+      bob: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: caller, text: "Open up!", off_panel: left, kind: shout}
+      - say: {by: bob, text: "Who is it?"}
+      - say: {by: neighbour, text: "Keep it down in there.", off_panel: right}
+
+  answer:
+    over: knock
+    camera: {shot: close_up}
+    script:
+      - say: {by: upstairs, text: "Is everything all right?", off_panel: top}
+      - say: {by: bob, text: "Fine. Go back to sleep.", size: small}
+      - say: {by: caller, text: "Then open the door.", off_panel: bottom}
+      - say: {by: caller, text: "I know you're there.", off_panel: true}
+```
+
+## A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans
+
+`33-planche.script`
+
+```text
+---
+panel:
+  size: [900, 640]
+cast:
+  LÉA: {reference: alice, pose: pointing,     at: left_third}
+  TOM: {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - LÉA left_of TOM
+  - LÉA looking_at TOM
+  - LÉA ground_shared_with TOM
+---
+Claire Aubert
+Le Phare, tome 1
+
+PLANCHE 1 (trois cases)
+@tiers: 2 1
+
+CASE 1 : La falaise, le soir. Léa arrive en haut des marches ; Tom l'attend près de la porte.
+@shot: plan d'ensemble
+@setting: {place: shore, time: dusk}
+
+RÉCITATIF : Port-Ellis, le soir où la lampe s'est éteinte.
+
+LÉA :
+« Tom ? La lampe est éteinte ! »
+
+GARDIEN (hors champ) :
+Qui est là-haut ?
+
+CASE 2 : Plus près. Tom hausse les épaules.
+@shot: plan américain
+@angle: contre-plongée
+
+TOM :
+« Quelqu'un a oublié l'huile. »
+
+CASE 3
+@shot: plan rapproché poitrine
+
+TOM (pensée)
+Ce n'était pas moi.
+
+ONOMATOPÉE : FLOP
 ```

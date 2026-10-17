@@ -1,0 +1,43 @@
+---
+panel:
+  size: [900, 640]
+cast:
+  LÉA: {reference: alice, pose: pointing,     at: left_third}
+  TOM: {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - LÉA left_of TOM
+  - LÉA looking_at TOM
+  - LÉA ground_shared_with TOM
+---
+Claire Aubert
+Le Phare, tome 1
+
+PLANCHE 1 (trois cases)
+@tiers: 2 1
+
+CASE 1 : La falaise, le soir. Léa arrive en haut des marches ; Tom l'attend près de la porte.
+@shot: plan d'ensemble
+@setting: {place: shore, time: dusk}
+
+RÉCITATIF : Port-Ellis, le soir où la lampe s'est éteinte.
+
+LÉA :
+« Tom ? La lampe est éteinte ! »
+
+GARDIEN (hors champ) :
+Qui est là-haut ?
+
+CASE 2 : Plus près. Tom hausse les épaules.
+@shot: plan américain
+@angle: contre-plongée
+
+TOM :
+« Quelqu'un a oublié l'huile. »
+
+CASE 3
+@shot: plan rapproché poitrine
+
+TOM (pensée)
+Ce n'était pas moi.
+
+ONOMATOPÉE : FLOP

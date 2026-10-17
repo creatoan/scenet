@@ -254,8 +254,8 @@ Hello there.
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
         path = tmp_path / "bad.script"
-        # Content before the first PANEL heading, which the parser rejects by line.
-        path.write_text("stray prose\n\nPANEL 1\n", encoding="utf-8")
+        # A directive before the first PANEL heading, which the parser rejects by line.
+        path.write_text("@shot: close_up\n\nPANEL 1\n", encoding="utf-8")
         assert main(["check", str(path)]) == 1
         assert ":1:" in capsys.readouterr().err
 
@@ -287,7 +287,7 @@ Hello there.
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
         path = tmp_path / "bad.script"
-        path.write_text("stray prose\n\nPANEL 1\n", encoding="utf-8")
+        path.write_text("@shot: close_up\n\nPANEL 1\n", encoding="utf-8")
         main(["check", "--format", "sarif", str(path)])
         document = json.loads(capsys.readouterr().out)
         region = document["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]
@@ -297,5 +297,5 @@ Hello there.
             "startLine": 1,
             "startColumn": 1,
             "endLine": 1,
-            "endColumn": len("stray prose") + 1,
+            "endColumn": len("@shot: close_up") + 1,
         }

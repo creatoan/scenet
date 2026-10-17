@@ -6,6 +6,8 @@ replaced the panels before them. Each was an input nobody had written. These pro
 write them by the hundred.
 """
 
+import unicodedata
+
 from hypothesis import event, given
 
 from scenet.core import PageCore, PanelCore
@@ -13,6 +15,7 @@ from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.errors import BalloonPlacementError, SfxPlacementError
 from scenet.frontends.script_front import parse_script
+from scenet.ir import SayEvent
 from scenet.pipeline import Book, compile_book
 from tests.invariants import assert_frames_are_placed, assert_svg_is_sound
 from tests.strategies import LIBRARY, DrawnScene, DrawnScript, scenes, scripts
@@ -113,3 +116,13 @@ def test_a_comic_script_loses_nothing(drawn: DrawnScript):
     had lines -- whether panel numbers run on or start again on each page (#63)."""
     panels = parse_script(drawn.text)
     assert tuple(len(panel.script) for panel in panels.values()) == drawn.lines
+    said = tuple(
+        tuple(
+            ("say", unicodedata.normalize("NFC", event.by))
+            if isinstance(event, SayEvent)
+            else ("caption", None)
+            for event in panel.script
+        )
+        for panel in panels.values()
+    )
+    assert said == drawn.said

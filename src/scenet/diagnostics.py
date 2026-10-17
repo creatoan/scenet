@@ -41,7 +41,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import ValidationError
@@ -49,7 +49,8 @@ from pydantic_core import ErrorDetails
 
 from scenet import __version__
 from scenet.assets.contract import PuppetLibrary, default_library
-from scenet.compose import merge, resolve_overrides
+from scenet.compose import merge, relation_text, resolve_overrides, settle
+from scenet.emphasis import plain
 from scenet.errors import (
     BalloonPlacementError,
     CompositionError,
@@ -66,10 +67,12 @@ from scenet.errors import (
 )
 from scenet.frontends.common import (
     LAYOUT_KEYS,
+    PYDANTIC_RULES,
     errors_of,
     normalise,
     normalise_layout,
     panel_name_problem,
+    rule_for_pydantic,
 )
 from scenet.frontends.positions import (
     DOCUMENT_START,
@@ -78,10 +81,10 @@ from scenet.frontends.positions import (
     locate,
     syntax_error_region,
 )
-from scenet.frontends.script_front import FRONT_MATTER, parse_script
-from scenet.ir import PageLayout, PanelIR, check_placements
+from scenet.frontends.script_front import FRONT_MATTER, normalise_text, parse_script_document
+from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
-from scenet.pipeline import compile_book, compile_ir
+from scenet.pipeline import compile_book, compile_ir, compile_script
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
 
@@ -120,11 +123,15 @@ class Rule:
         summary: One line, shown as the alert title.
         description: What the rule checks and why it exists.
         help: What to do about it.
+        level: `error` for a contradiction, which the compiler cannot build past; `note`
+            for a house limit, which a letterer works to and a document can exceed and
+            still compile. Only an error makes `scenet check` fail.
     """
 
     summary: str
     description: str
     help: str
+    level: Literal["error", "note"] = "error"
 
 
 #: Every rule Scenet can report, keyed by its bare identifier.
@@ -149,7 +156,9 @@ RULES: dict[str, Rule] = {
             "reads it with builds the document anyway and keeps only the last value -- so "
             "a panel, a cast member or a pose written twice would lose the first without "
             "a word, and the rest would compile. A merge key's override (`<<: *base`, "
-            "then the key again) is not a repeat."
+            "then the key again) is not a repeat. In a comic script, the same goes for a "
+            "directive written twice in one panel, and for an `@script:` directive, which "
+            "would replace the panel's cues."
         ),
         help="Delete or rename one of the two; the message says which lines they are on.",
     ),
@@ -372,6 +381,66 @@ RULES: dict[str, Rule] = {
         ),
         help="Make it smaller or shorter, drop its rotation or arc, or give the panel more room.",
     ),
+    "off-panel-speaker": Rule(
+        summary="A line is spoken from off panel by somebody drawn in the panel",
+        description=(
+            "An off-panel speaker is somebody nobody draws: their balloon's tail ends on the "
+            "frame, on their side, because there is no mouth in the panel to point at. So "
+            "they are never in the panel's cast. A line marked `off_panel` whose speaker is "
+            "in the cast contradicts itself, and so does one speaker both on and off panel "
+            "in the same panel."
+        ),
+        help="Leave the speaker out of this panel's cast, or drop off_panel.",
+    ),
+    "dropped-relation": Rule(
+        summary="A shared staging relation does not apply in a panel its actor is left out of",
+        description=(
+            "A comic script's `ALICE (OP)` leaves Alice out of that panel: she is in the "
+            "scene, not in the frame. `cast: {alice: null}` leaves her out of a panel that "
+            "would otherwise inherit her, in YAML or in a script's `@cast:`. A relation stated "
+            "for every panel -- `ALICE left_of BOB`, `ALICE looking_at BOB` -- cannot hold "
+            "where she is not drawn, so it is left out of that panel. A note, since that "
+            "changes what the panel stages: Bob is placed, and looks, without her."
+        ),
+        help="Nothing to do if that is what the panel means; otherwise draw her in it.",
+        level="note",
+    ),
+    "word-limit": Rule(
+        summary="A balloon, caption or panel holds more words than a letterer fits well",
+        description=(
+            "Dark Horse's script format asks for 'approximately 25 words per balloon, and "
+            "about 50 words per panel, max'. It is a house limit, not a contradiction: the "
+            "panel still compiles, so this is a note, and `scenet check` passes. Words are "
+            "counted as they are lettered: anything between spaces that holds a letter or a "
+            "digit, so `--` and an ellipsis are not words, and emphasis markers add none. A "
+            "panel counts its balloons and captions; a sound effect is not counted."
+        ),
+        help="Split the balloon in two, or carry the rest of the words to the next panel.",
+        level="note",
+    ),
+    "panel-count": Rule(
+        summary="A comic script's PAGE heading states a count its panels do not match",
+        description=(
+            "Dark Horse's script format labels each page with how many panels it has, "
+            "`PAGE ONE (five panels)`. When the panels under it number something else, a "
+            "panel heading has often been missed, or written so that it reads as prose -- "
+            "and nothing else would say so. A note, not an error: the panels that are there "
+            "still compile."
+        ),
+        help="Correct the count, or the panel heading that was not read as one.",
+        level="note",
+    ),
+    "looks-like-dialogue": Rule(
+        summary="A line in a comic script is set like dialogue but is not read as dialogue",
+        description=(
+            "A cue with nothing said under it, or a name in capitals with a line under it "
+            "where nothing is spoken -- before the first PANEL heading, which Dark Horse's "
+            "format opens with the writer's name and address. Read as written, nothing is "
+            "lost, but a line meant as dialogue would not be lettered, so it is pointed out."
+        ),
+        help="If it is dialogue, put the line under its cue, inside a panel; if not, ignore it.",
+        level="note",
+    ),
     "internal": Rule(
         summary="The compiler failed in a way it does not have a rule for",
         description=(
@@ -383,13 +452,9 @@ RULES: dict[str, Rule] = {
     ),
 }
 
-#: pydantic error types that deserve their own rule. Everything else that pydantic
-#: raises at field level is reported as `invalid-field`, which is honest: the catalogue
-#: should not grow a rule per validator in a library this project does not own.
-_PYDANTIC_RULES = {
-    "missing": "missing-field",
-    "extra_forbidden": "unknown-key",
-}
+#: pydantic error types that deserve their own rule, kept beside the frontends' shared
+#: reading of an error (`frontends.common.rule_for_pydantic`).
+_PYDANTIC_RULES = PYDANTIC_RULES
 
 
 @dataclass(frozen=True, slots=True)
@@ -411,6 +476,11 @@ class Diagnostic:
     path: tuple[str | int, ...] = ()
     source: Path | None = None
     region: Region | None = field(default=None, compare=False)
+
+    @property
+    def level(self) -> Literal["error", "note"]:
+        """Its rule's level: a property, so a finding cannot disagree with its rule."""
+        return RULES[self.rule].level
 
     def fingerprint(self, *, root: Path | None = None) -> str:
         """A stable identity for this finding, for `partialFingerprints`.
@@ -477,13 +547,8 @@ def _rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]
     `_rule_for_scenet_error` reports one: passed through, it ended `to_sarif` in a
     `KeyError` when it looked the rule up.
     """
-    original = (error.get("ctx") or {}).get("error")
-    if isinstance(original, RuleViolationError):
-        rule = original.rule if original.rule in RULES else "internal"
-        return rule, original.loc or tuple(error["loc"])
-
-    kind = str(error["type"])
-    return _PYDANTIC_RULES.get(kind, "invalid-field"), tuple(error["loc"])
+    rule, loc = rule_for_pydantic(error)
+    return (rule if rule in RULES else "internal"), loc
 
 
 def _from_validation_error(
@@ -756,6 +821,67 @@ def _diagnose_lettering(
     return []
 
 
+#: Dark Horse's house limits: "Captions and dialogue should be limited to approximately
+#: 25 words per balloon, and about 50 words per panel, max."
+WORDS_PER_BALLOON = 25
+WORDS_PER_PANEL = 50
+
+
+def word_count(text: str) -> int:
+    """How many words a line letters.
+
+    A word is anything between spaces that holds a letter or a digit, counted on the text
+    as it is lettered: `--` and an ellipsis are punctuation, and the underscores marking
+    emphasis are not lettered at all.
+
+    Example:
+        >>> word_count("I _told_ you -- twice ...")
+        4
+    """
+    return sum(1 for token in plain(text).split() if any(char.isalnum() for char in token))
+
+
+def _over_the_word_limits(panel: PanelIR) -> list[tuple[tuple[str | int, ...], str]]:
+    """Where a panel's lettering runs past Dark Horse's limits, and by how much.
+
+    Returns:
+        Each place, as a path within the panel, with what to say about it: the panel as a
+        whole first, then each balloon or caption over its own limit, in script order.
+    """
+    found: list[tuple[tuple[str | int, ...], str]] = []
+    total = 0
+    for index, event in enumerate(panel.script):
+        if not isinstance(event, SayEvent | CaptionEvent):
+            # A sound effect is part of the picture, not lettering to be read.
+            continue
+        count = word_count(event.text)
+        total += count
+        if count > WORDS_PER_BALLOON:
+            what = "balloon" if isinstance(event, SayEvent) else "caption"
+            found.append(
+                (
+                    ("script", index, event.verb, "text"),
+                    f"this {what} holds {count} words; Dark Horse asks for about "
+                    f"{WORDS_PER_BALLOON} a balloon or caption at most",
+                )
+            )
+    if total > WORDS_PER_PANEL:
+        found.insert(
+            0,
+            (
+                ("script",),
+                f"this panel's balloons and captions hold {total} words; Dark Horse asks "
+                f"for about {WORDS_PER_PANEL} a panel at most",
+            ),
+        )
+    return found
+
+
+def _errors(found: list[Diagnostic]) -> list[Diagnostic]:
+    """The findings that are errors: what stops a document compiling, or a check passing."""
+    return [item for item in found if item.level == "error"]
+
+
 def _diagnose_panel(
     data: dict[str, Any],
     text: str,
@@ -784,6 +910,22 @@ def _diagnose_panel(
     Returns:
         Findings, unsorted.
     """
+    data, dropped = settle(data)
+    notes = [
+        Diagnostic(
+            rule="dropped-relation",
+            message=(
+                f"'{relation_text(item.relation)}' does not apply in this panel, which leaves "
+                f"{item.actor} out of it"
+            ),
+            path=(*prefix, "cast", item.actor),
+            source=source,
+            region=locate(text, (*prefix, "cast", item.actor))
+            or locate(text, prefix)
+            or DOCUMENT_START,
+        )
+        for item in dropped
+    ]
     try:
         normalised = normalise(data)
     except ScenetError as exc:
@@ -813,18 +955,29 @@ def _diagnose_panel(
             )
         ]
 
-    found = _diagnose_cast(panel, text, source, prefix=prefix, library=library)
+    found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
-    if found:
+    if _errors(found):
         # A cast that does not resolve is not a document `--deep` can usefully
         # compile -- it would fail on the same reference with a worse location.
         return found
+
+    found += [
+        Diagnostic(
+            rule="word-limit",
+            message=message,
+            path=prefix + path,
+            source=source,
+            region=locate(text, prefix + path) or locate(text, prefix) or DOCUMENT_START,
+        )
+        for path, message in _over_the_word_limits(panel)
+    ]
 
     if deep:
         try:
             compile_ir(panel, library=library, base=base)
         except ScenetError as exc:
-            return [
+            found.append(
                 Diagnostic(
                     rule=_rule_for_scenet_error(exc),
                     message=_message_of(exc),
@@ -832,9 +985,9 @@ def _diagnose_panel(
                     source=source,
                     region=locate(text, prefix) or DOCUMENT_START,
                 )
-            ]
+            )
 
-    return []
+    return found
 
 
 def _diagnose_scene(
@@ -944,7 +1097,7 @@ def _diagnose_scene(
             if item not in found:
                 found.append(item)
 
-    if deep and paged and not found:
+    if deep and paged and not _errors(found):
         try:
             compile_book(text, source=source, base=base, library=library)
         except ScenetError as exc:
@@ -1149,23 +1302,16 @@ def diagnose_script(
     Returns:
         Findings in source order, empty if the script is valid.
     """
+    lines = normalise_text(text).split("\n")
     try:
-        panels = parse_script(text, source=source)
+        document = parse_script_document(text, source=source)
     except ScriptSyntaxError as exc:
-        line = exc.line or 1
-        lines = text.splitlines()
-        # The whole line: GitHub requires every bound, so "line N" cannot be said with
-        # `startLine` alone, and ending at column 2 would claim the first character.
-        length = len(lines[line - 1]) if line <= len(lines) else 0
         return [
             Diagnostic(
                 rule=_rule_for_scenet_error(exc),
                 message=_message_of(exc),
                 source=source,
-                region=Region(
-                    start=Position(line=line, column=1),
-                    end=Position(line=line, column=length + 1),
-                ),
+                region=_script_line(lines, exc.line or 1),
             )
         ]
     except ScenetError as exc:
@@ -1178,29 +1324,68 @@ def diagnose_script(
             )
         ]
 
+    panels = document.panels
     base = _folder(source, base)
     found = _diagnose_script_cast(text, panels, source, library=library)
     found += _diagnose_script_lettering(text, panels, source, base=base)
-    if found:
+    if _errors(found):
         return _in_source_order(found)
 
-    if deep:
-        for name, panel in panels.items():
-            prefix = (name,)
-            try:
-                compile_ir(panel, library=library, base=base)
-            except ScenetError as exc:
-                return [
-                    Diagnostic(
-                        rule=_rule_for_scenet_error(exc),
-                        message=_message_of(exc),
-                        path=prefix,
-                        source=source,
-                        region=DOCUMENT_START,
-                    )
-                ]
+    # What reading the script noticed: a cue with nothing said under it, a page whose
+    # stated count its panels do not match.
+    found += [
+        Diagnostic(
+            rule=note.rule,
+            message=note.message,
+            path=note.path,
+            source=source,
+            region=_script_line(lines, note.line),
+        )
+        for note in document.notes
+    ]
+    for name, panel in panels.items():
+        written = document.lines[name]
+        for path, message in _over_the_word_limits(panel):
+            event = path[1] if len(path) > 1 else None
+            line = written.events[event] if isinstance(event, int) else written.heading
+            found.append(
+                Diagnostic(
+                    rule="word-limit",
+                    message=message,
+                    path=(name, *path),
+                    source=source,
+                    region=_script_line(lines, line),
+                )
+            )
 
-    return []
+    if deep:
+        # Compiled exactly as `scenet build` compiles it, so the two cannot disagree.
+        try:
+            compile_script(text, source=source, base=base, library=library)
+        except ScenetError as exc:
+            found.append(
+                Diagnostic(
+                    rule=_rule_for_scenet_error(exc),
+                    message=_message_of(exc),
+                    path=(exc.panel,) if exc.panel is not None else (),
+                    source=source,
+                    region=_script_line(lines, document.lines[exc.panel].heading)
+                    if exc.panel in document.lines
+                    else DOCUMENT_START,
+                )
+            )
+
+    return _in_source_order(found)
+
+
+def _script_line(lines: list[str], line: int) -> Region:
+    """A whole line of a script, as a script finding's region.
+
+    The whole line: GitHub requires every bound, so "line N" cannot be said with
+    `startLine` alone, and ending at column 2 would claim the first character.
+    """
+    length = len(lines[line - 1]) if line <= len(lines) else 0
+    return Region(start=Position(line=line, column=1), end=Position(line=line, column=length + 1))
 
 
 def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
@@ -1213,7 +1398,7 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     Returns:
         The padded YAML, and what it holds -- both empty when there is no front matter.
     """
-    normalised = text.replace("\r\n", "\n").replace("\r", "\n")
+    normalised = normalise_text(text)
     match = FRONT_MATTER.match(normalised)
     if not match:
         return "", {}
@@ -1292,6 +1477,23 @@ def _diagnose_script_cast(
                         region=DOCUMENT_START,
                     )
                 )
+
+    # A member who speaks from off panel wherever they appear is in no panel's cast, so
+    # no panel above checked them -- and a typo in their puppet would go unseen. They are
+    # checked here on their own, against the front matter.
+    unseen = {
+        actor: member
+        for actor, member in shared.items()
+        if all(actor not in panel.cast for panel in panels.values())
+    }
+    if unseen:
+        try:
+            alone = PanelIR.model_validate(normalise({"cast": unseen}))
+        except (ValidationError, ScenetError):
+            return found  # a malformed member is reported where the panels are validated
+        for item in _diagnose_cast(alone, front, source, prefix=(), library=library):
+            if item not in found:
+                found.append(item)
     return found
 
 
@@ -1346,7 +1548,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
             "shortDescription": {"text": RULES[name].summary},
             "fullDescription": {"text": RULES[name].description},
             "help": {"text": RULES[name].help},
-            "defaultConfiguration": {"level": "error"},
+            "defaultConfiguration": {"level": RULES[name].level},
         }
         for name in used
     ]
@@ -1355,7 +1557,7 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
         {
             "ruleId": f"{RULE_NAMESPACE}/{item.rule}",
             "ruleIndex": index_of[item.rule],
-            "level": "error",
+            "level": item.level,
             "message": {"text": item.message},
             "locations": [
                 {

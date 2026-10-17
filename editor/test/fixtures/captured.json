@@ -8,5 +8,6 @@
     "sources/duplicate-panel.script",
     "sources/syntax.panel.yaml"
   ],
-  "unknown-actor": ["sources/unknown-actor.panel.yaml"]
+  "unknown-actor": ["sources/unknown-actor.panel.yaml"],
+  "word-limit": ["sources/word-limit.panel.yaml"]
 }

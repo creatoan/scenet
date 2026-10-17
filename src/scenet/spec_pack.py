@@ -32,7 +32,10 @@ SPEC_PARTS: dict[str, str] = {
     ),
     "language": "The language reference: every block and key of a panel or scene document",
     "shot-types": "Normative: what each camera shot frames, in head-heights",
-    "comic-script": "The comic-script format: PANEL 1, @shot:, character cues, dialogue",
+    "comic-script": (
+        "The comic-script format: PAGE and PANEL headings as Dark Horse writes them, "
+        "@shot:, cues, captions, off-panel speech, pages, and French scripts"
+    ),
     "characters": "The shipped puppets, with every pose and expression each declares",
     "diagnostics": "Every rule `scenet check` reports, and what to do about each",
     "schema": "The JSON Schema for a single-panel YAML document",
