@@ -176,6 +176,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A `--` or `...` written apart from its word could be lettered alone on the last line**,
+  or at the start of one: `the lamp is out --` broke before the dash. Blambot sets both with
+  no space, so a dash or an ellipsis now stays with the word it is written against. The space
+  is still lettered as written; no gallery example moves. (Part of #75)
 - **A line between a PAGE heading and its first PANEL was filed into the panel before the
   page**: a speech there was spoken in the previous page's last panel. It now belongs to
   the page, and a speech there is an error, since it belongs to no panel. (Part of #75)

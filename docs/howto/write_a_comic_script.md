@@ -151,7 +151,8 @@ THEO (whisper):
 - **`Panel 1.` with its description on the same line** is a heading when the label looks
   like a number — digits, digits and a letter, one letter, or a number in words — so
   that `Panel shows Alice.` stays the sentence it is.
-- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written.
+- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written,
+  and is never set at the start of a line or alone on one.
 - **A cue with nothing said under it** is a `looks-like-dialogue` note rather than vanishing.
 
 Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around

@@ -452,6 +452,11 @@ script:
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
 compiler must decide the line breaks before it can place anything.
 
+A double dash, a dash or an ellipsis written as a word of its own — `out --`, `... maybe` — is
+never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+space before or after it, so it belongs to its word: it stays on the line of the word before
+it, or of the word after it when it opens the balloon. The space is still lettered as written.
+
 A line of text, a caption and an actor id may not contain a control character other than tab, line
 feed and carriage return. Each one is written into the SVG, and XML has no way to write those
 characters at all, not even escaped, so a panel holding one is refused with the character named.
@@ -1172,7 +1177,8 @@ THEO (whisper):
 - **`Panel 1.` with its description on the same line** is a heading when the label looks
   like a number — digits, digits and a letter, one letter, or a number in words — so
   that `Panel shows Alice.` stays the sentence it is.
-- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written.
+- **`--`**, Dark Horse's mark for a speech carried to the next balloon, is kept as written,
+  and is never set at the start of a line or alone on one.
 - **A cue with nothing said under it** is a `looks-like-dialogue` note rather than vanishing.
 
 Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around

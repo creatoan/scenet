@@ -15,6 +15,7 @@ import functools
 import hashlib
 import io
 import math
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from importlib.resources import files
@@ -676,7 +677,35 @@ def _words(text: Styled) -> tuple[list[Styled], list[Face]]:
             start = index
     if start is not None:
         words.append(text.slice(start, len(text.text)))
-    return words, gaps
+    return _keep_marks_with_their_words(words, gaps)
+
+
+#: A double dash, a dash or an ellipsis standing as a word of its own: `out --`, `... maybe`.
+_MARK = re.compile(r"^(?:-{2,}|[\u2013\u2014]+|\.{3,}|\u2026+)$")
+
+
+def _keep_marks_with_their_words(
+    words: list[Styled], gaps: list[Face]
+) -> tuple[list[Styled], list[Face]]:
+    """Join a dash or an ellipsis written apart to the word it belongs to.
+
+    Blambot: "There should also be no space before or after an ellipsis or double dash".
+    A script may still write one apart -- `the lamp is out --` -- and the space is kept
+    as written. But it is never a place to break: a mark set at the start of a line, or
+    alone on one, reads as a stray. So it joins the word before it, or the word after it
+    when it opens the text.
+    """
+    if len(words) < 2:
+        return words, gaps
+    joined: list[Styled] = [words[0]]
+    joints: list[Face] = []
+    for word, gap in zip(words[1:], gaps, strict=True):
+        if _MARK.match(word.text) or (len(joined) == 1 and _MARK.match(joined[0].text)):
+            joined[-1] = joined[-1] + Styled.of(" ", gap) + word
+        else:
+            joined.append(word)
+            joints.append(gap)
+    return joined, joints
 
 
 def _line(words: Sequence[Styled], gaps: Sequence[Face], start: int, end: int) -> Styled:
