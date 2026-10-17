@@ -162,6 +162,14 @@ class TestThePackageIsCheckedOnEveryPullRequest:
         assert "id-token" not in str(job.get("permissions", {}))
 
 
+def test_every_pull_request_checks_the_docs_say_their_version():
+    """The switcher, the banner and canonical links rest on settings a build carries."""
+    steps = _load("ci.yml")["jobs"]["docs"]["steps"]
+    script = "\n".join(str(step.get("run", "")) for step in steps)
+    assert "scripts/site_versions.py check docs/_build/html" in script
+    assert script.index("sphinx-build") < script.index("site_versions.py check")
+
+
 def test_the_smoke_test_runs_outside_the_checkout():
     """`import scenet` succeeding in the repository root proves nothing."""
     text = (Path(__file__).resolve().parents[1] / "scripts" / "smoke_wheel.py").read_text(
