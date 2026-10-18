@@ -301,7 +301,7 @@ def assert_accessible(svg: str, core: PanelCore) -> None:
     words = [item.label for item in items if item.label]
     expected = " ".join([*([core.description] if core.description else []), *words])
     assert expected, "a panel with no words has nothing to be named by"
-    assert list(root)[0].tag == f"{_SVG}title"
+    assert next(iter(root)).tag == f"{_SVG}title"
     assert accessible_name(root) == expected
     assert root.find(f".//{_SVG}desc") is None
     for attribute in ("aria-labelledby", "aria-describedby"):

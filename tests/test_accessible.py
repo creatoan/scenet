@@ -99,8 +99,9 @@ class TestAPanel:
         assert root.find(f".//{SVG}desc") is None
         for attribute in ("aria-labelledby", "aria-describedby", "aria-description"):
             assert root.get(attribute) is None
-        assert root.find(f"{SVG}title") is not None
-        assert root.find(f"{SVG}title").get("id") is None
+        title = root.find(f"{SVG}title")
+        assert title is not None
+        assert title.get("id") is None
 
     def test_it_keeps_every_promise(self, core: PanelCore):
         svg = render(core)
