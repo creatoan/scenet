@@ -4,9 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
-  # `main` merges through a merge queue, which tests each pull request on top of the
-  # ones queued ahead of it. The queue waits for the required checks on that combined
-  # commit, and only this event produces them -- without it every entry waits forever.
+  # `main` has no merge queue: one was tried and removed on purpose. The event stays so
+  # that turning one back on needs no change here -- a queue waits for the required
+  # checks on the commit it builds, and only this event produces them there. Without it
+  # every entry would wait forever.
   merge_group:
   workflow_dispatch:
 
@@ -222,7 +223,7 @@ jobs:
           github.event_name != 'pull_request'
           || github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: results.sarif
           category: scenet-examples
