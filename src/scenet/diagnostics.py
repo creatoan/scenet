@@ -49,7 +49,14 @@ from pydantic_core import ErrorDetails
 
 from scenet import __version__
 from scenet.assets.contract import PuppetLibrary, default_library
-from scenet.compose import merge, relation_text, resolve_overrides, settle
+from scenet.compose import (
+    DESCRIPTION_KEY,
+    NOT_A_DEFAULT,
+    merge,
+    relation_text,
+    resolve_overrides,
+    settle,
+)
 from scenet.emphasis import plain
 from scenet.errors import (
     BalloonPlacementError,
@@ -990,6 +997,25 @@ def _diagnose_panel(
     return found
 
 
+def _scene_description(data: dict[str, Any], text: str, source: Path | None) -> list[Diagnostic]:
+    """A description beside `panels:`, as one finding where it is written.
+
+    It says what one picture shows, so it is no default: the panels are checked without
+    it, as `build` refuses it before reading them.
+    """
+    if DESCRIPTION_KEY not in data:
+        return []
+    return [
+        Diagnostic(
+            rule="unknown-key",
+            message=NOT_A_DEFAULT,
+            path=(DESCRIPTION_KEY,),
+            source=source,
+            region=locate(text, (DESCRIPTION_KEY,)) or DOCUMENT_START,
+        )
+    ]
+
+
 def _diagnose_scene(
     data: dict[str, Any],
     text: str,
@@ -1066,9 +1092,12 @@ def _diagnose_scene(
     # at a size it will never be drawn at.
     paged = layout is not None and bool(layout.pages)
 
+    found.extend(_scene_description(data, text, source))
     # `page:` and `pages:` lay the panels out; they are not defaults every panel inherits.
     defaults = {
-        key: value for key, value in data.items() if key != "panels" and key not in LAYOUT_KEYS
+        key: value
+        for key, value in data.items()
+        if key not in ("panels", DESCRIPTION_KEY) and key not in LAYOUT_KEYS
     }
     for name, document in composed.items():
         merged = merge(defaults, document) if defaults else document

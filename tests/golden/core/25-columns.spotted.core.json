@@ -1000,6 +1000,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Bob! Don't move!",
       "line_height": 30.63,
       "lines": [
         "Bob! Don't",
@@ -1022,6 +1023,7 @@
     }
   ],
   "captions": [],
+  "description": "Long shot. A street at dusk. Alice, left, pointing, shouting; Bob, centre.",
   "format_version": 1,
   "height": 502.5,
   "width": 1350.0

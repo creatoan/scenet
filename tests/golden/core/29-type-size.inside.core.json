@@ -721,6 +721,7 @@
       "font_size": 26.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: You're letting the rain in.",
       "line_height": 32.5,
       "lines": [
         "You're letting",
@@ -751,6 +752,7 @@
       "font_size": 26.0,
       "id": "b1",
       "kind": "speech",
+      "label": "Alice: Then let me in faster.",
       "line_height": 32.5,
       "lines": [
         "Then let me",
@@ -773,6 +775,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Alice, centre; Bob, centre.",
   "format_version": 1,
   "height": 1370.0,
   "width": 1350.0

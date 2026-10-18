@@ -721,6 +721,7 @@
       "font_size": 20.3,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Room enough?",
       "line_height": 25.38,
       "lines": [
         "Room",
@@ -751,6 +752,7 @@
       "font_size": 20.3,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: Only just.",
       "line_height": 25.38,
       "lines": [
         "Only just."
@@ -772,6 +774,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium close-up. Alice, left; Bob, right.",
   "format_version": 1,
   "height": 700.0,
   "width": 900.0

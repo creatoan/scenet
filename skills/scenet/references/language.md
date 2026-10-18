@@ -28,6 +28,9 @@ rendering — is emitted.
 | Cast and staging | `cast`, `staging` | Who is present, and how they relate |
 | Narrative | `script` | What is said, and in what order |
 
+A panel may also carry a [`description`](#description): what it shows, in words, for a reader who
+cannot see it. It is not a layer: nothing is drawn from it.
+
 Layers are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
 
@@ -604,6 +607,41 @@ A sound effect takes its number in the same sequence — which is the order a re
 screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
 holding it to above-and-left would make many panels impossible to letter.
 
+That sequence is what a screen reader hears. Every SVG names each panel with its
+[description](#description) and then every balloon, caption and sound effect in this order —
+`Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` — whatever order
+they are painted in; see [accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html).
+
+## `description`
+
+What the panel shows, in words, for a reader who cannot see it.
+
+```yaml
+description: Alice and Bob face each other on a rainy street corner. She is exasperated.
+```
+
+| Key | Type | Meaning |
+|---|---|---|
+| `description` | text | One paragraph of prose. Runs of whitespace, line breaks included, are read as one space |
+
+**It is carried, never interpreted.** Nothing is drawn from it — the rain comes from `setting`, the
+exasperation from `expression` — exactly as a comic script's prose is never read by the compiler.
+What it is for is accessible output: it is the first thing a screen reader says about the panel,
+before what is said in it.
+
+In a [comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#prose-is-never-interpreted) a panel's prose is
+its description, unless an `@description:` directive says something else. Left out, accessible
+output says what the panel holds — the shot, the setting, and who is where, doing what.
+
+**It describes one panel**, so it is never inherited:
+
+- written beside `panels:`, where every panel would inherit it, it is refused as `unknown-key`;
+- a panel drawn `over:` another does not take its parent's. It is a different picture, and the
+  parent's words would be wrong to exactly the reader who cannot see that they are.
+
+An empty one is refused, since it would describe the panel with nothing; leave it out instead. Like
+dialogue, it may not hold a character an SVG cannot hold.
+
 ## `lettering`
 
 How the lettering is set: its size, and the face it is set in.
@@ -756,7 +794,9 @@ An **inset** is a small panel set into a corner of another and drawn over it:
 It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
 split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
 2013), so it is never guessed: an inset is read right after its parent unless it says
-`read: before`. Here that is `clock`, `street`, `face`.
+`read: before`. Here that is `clock`, `street`, `face` — and that is the order the page's SVG writes
+them in, which is the order a screen reader follows. The parent is cut around each inset's ring
+rather than painted under it, so an inset read first is still on top.
 
 The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
 words under an inset could not be read. When an inset covers a character's face, the compiler

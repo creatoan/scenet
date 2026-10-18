@@ -863,6 +863,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Bob?",
       "line_height": 30.63,
       "lines": [
         "Bob?"
@@ -884,6 +885,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. Alice, left, surprised; Bob, centre, pointing, shouting, dashing off.",
   "format_version": 1,
   "height": 700.0,
   "width": 1000.0

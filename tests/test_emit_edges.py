@@ -15,10 +15,10 @@ import pytest
 
 from scenet import compile_book, compile_source
 from scenet.core import PanelCore
-from scenet.emit.debug_svg import GAZE, render_debug
+from scenet.emit.debug_svg import GAZE, debug_body, render_debug
 from scenet.emit.page import PAGE_SPACING_FRACTION, render_page, render_pages
-from scenet.emit.strip import render_strip
-from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, render
+from scenet.emit.strip import placed_panel, render_strip
+from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, panel_body, render, typeface_of
 from scenet.pipeline import Book
 
 SPEECH = "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Over here.}\n"
@@ -37,6 +37,16 @@ panels: {one: {}, two: {}, three: {}, four: {}}
 """
 
 
+#: A page with one inset, read after its parent.
+INSETS = """
+cast: {a: {reference: alice}}
+page: {size: [1000, 1500]}
+pages:
+  - tiers: [{panels: [{use: one, insets: [{use: two, at: top_left, size: 0.3}]}]}]
+panels: {one: {}, two: {}}
+"""
+
+
 @pytest.fixture(scope="module")
 def book() -> Book:
     return compile_book(THREE_PAGES)
@@ -47,9 +57,10 @@ def _cores(book: Book) -> dict[str, PanelCore]:
 
 
 def _assert_no_stray_text(svg: str) -> None:
-    """Character data only inside `<text>`: anything else between elements is litter."""
+    """Character data only inside `<text>`, `<title>` and `<desc>`: anything else between
+    elements is litter."""
     for element in ElementTree.fromstring(svg).iter():
-        if not element.tag.endswith("text"):
+        if not element.tag.endswith(("text", "title", "desc")):
             assert not (element.text or "").strip(), element.text
         assert not (element.tail or "").strip(), element.tail
 
@@ -62,7 +73,7 @@ class TestPagesSideBySide:
 
     def test_each_page_starts_where_the_last_one_and_its_space_end(self, book: Book):
         svg = render_pages(book.pages, _cores(book))
-        placed = re.findall(r'<g id="(page-\d+)" transform="translate\(([\d.-]+) 0\)">', svg)
+        placed = re.findall(r'<g id="(page-\d+)" transform="translate\(([\d.-]+) 0\)"[^>]*>', svg)
         assert placed == [("page-1", "0"), ("page-2", "1050"), ("page-3", "2100")]
 
     def test_panel_positions_count_on_across_pages(self, book: Book):
@@ -92,6 +103,60 @@ class TestAStrip:
     def test_by_default_lettering_is_outlined(self):
         core = compile_source(SPEECH).core
         assert "<text" not in render_strip([("one", core), ("two", core)])
+
+
+def _cut(document: str) -> str:
+    """A panel's body as `placed_panel` used to take it: the document, cut as text."""
+    return document.split("\n", 2)[2].rsplit("</svg>", 1)[0].rstrip()
+
+
+class TestAPanelPlacedInADocument:
+    """`placed_panel` draws a panel's body, not a cut of its serialised document.
+
+    Cutting text after the second line made the document's first two lines -- and every
+    attribute of its root -- something the strip and the page silently depended on. The
+    body is now built, and these pin it byte for byte to what the cut produced, including
+    the overlay's blank line where a panel with no setting draws no backdrop.
+    """
+
+    SETTING = SPEECH + "setting: {place: docks, weather: fog}\n"
+
+    @pytest.mark.parametrize("source", [SPEECH, SETTING], ids=["bare", "with a setting"])
+    def test_a_panel(self, source: str):
+        core = compile_source(source).core
+        placed = placed_panel("one", core, 3, 10.0, 20.0, aria=False)
+        assert placed[3] == _cut(render(core, id_prefix="p3-", aria=False))
+
+    @pytest.mark.parametrize("source", [SPEECH, SETTING], ids=["bare", "with a setting"])
+    def test_an_overlay(self, source: str):
+        core = compile_source(source).core
+        placed = placed_panel("one", core, 3, 10.0, 20.0, debug=True)
+        assert placed[3] == _cut(render_debug(core, id_prefix="p3-"))
+        if source == SPEECH:
+            assert "\n\n" in placed[3]
+
+    def test_in_live_text(self):
+        core = compile_source(SPEECH).core
+        placed = placed_panel("one", core, 1, 0.0, 0.0, live_text=True, aria=False)
+        assert placed[3] == _cut(render(core, id_prefix="p1-", live_text=True, aria=False))
+
+    def test_by_default_the_placed_panel_is_named(self):
+        core = compile_source(SPEECH).core
+        assert 'role="img"' in placed_panel("one", core, 1, 0.0, 0.0)[0]
+
+    def test_a_bodys_defaults_are_outlines_and_bare_ids(self):
+        """What `render` writes between its root's tags, with nothing asked for."""
+        core = compile_source(SPEECH).core
+        inner = "\n".join(render(core, aria=False).split("\n")[2:-2])
+        assert "\n".join(panel_body(core, typeface_of(core))) == inner
+        overlay = "\n".join(render_debug(core).split("\n")[2:-2])
+        assert "\n".join(debug_body(core)) == overlay
+
+    def test_a_strip_cuts_no_holes(self):
+        """Only a page draws an inset over its parent; a strip lays them side by side."""
+        book = compile_book(INSETS)
+        strip = render_strip([(name, result.core) for name, result in book.panels.items()])
+        assert "hole" not in strip
 
 
 @pytest.fixture(scope="module")

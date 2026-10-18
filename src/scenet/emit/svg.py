@@ -91,6 +91,7 @@ def render(
     fonts: Mapping[str, FontMetrics] | None = None,
     live_text: bool = False,
     id_prefix: str = "",
+    aria: bool = True,
 ) -> str:
     """Render a compiled panel as a standalone SVG document.
 
@@ -106,20 +107,79 @@ def render(
             one. Nothing a single panel needs; it is what lets a strip hold several
             panels in one document, where ids must be unique. Empty by default, so a
             panel on its own is byte-identical to what it always was.
+        aria: Make the panel one image a screen reader can read, named with what it shows
+            and then everything said in it, in reading order -- see
+            :func:`accessible_name`. `False` writes none of it, for anyone who
+            post-processes the SVG: exactly what was written before it existed.
 
     Raises:
         ValueError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
     """
     family = typeface_of(core, metrics=metrics, fonts=fonts)
+    named, names = accessible_name(core) if aria else ("", [])
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
+        f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}"'
+        f"{named}>",
+        *names,
+        *panel_body(core, family, live_text=live_text, id_prefix=id_prefix),
+        "</svg>",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def accessible_name(core: PanelCore) -> tuple[str, list[str]]:
+    """What makes a panel one image a screen reader can read: its attributes and children.
+
+    The panel is `role="img"`, named by one `<title>`, its first child: the description,
+    then every balloon, caption and sound effect's label, in `order`. The words go in the
+    *name*, which is announced, rather than a description, which often is not (NVDA,
+    JAWS) -- and in nothing else. Named through `aria-labelledby` by a `<title>` and a
+    `<desc>`, the panel was read by NVDA 2026.2 with Edge 155 a second time, the `<desc>` as
+    its description, whenever a reader moved to it by graphic. One title is read once.
+
+    It needs no id either, so a page holding several inlined SVGs -- the VS Code preview, a
+    web comic -- where `getElementById` finds the first match, cannot name one panel with
+    another's words. An image's children are presentational, so nothing inside it is
+    named, and the order is this one sequence whatever order things are painted in. With
+    no words at all, nothing is written: an image with no name is worse than none. Every
+    word was resolved in the pipeline; this only copies.
+
+    Args:
+        core: The compiled panel.
+
+    Returns:
+        The attributes for the panel's root or group, with a leading space, and the lines
+        to write as its first children.
+    """
+    lettered = sorted([*core.balloons, *core.captions, *core.sfx], key=lambda item: item.order)
+    said = [core.description] if core.description is not None else []
+    said += [item.label for item in lettered if item.label]
+    if not said:
+        return "", []
+    return ' role="img"', [f"  <title>{escape(' '.join(said))}</title>"]
+
+
+def panel_body(
+    core: PanelCore, family: Typeface, *, live_text: bool = False, id_prefix: str = ""
+) -> list[str]:
+    """A panel's contents, without the document around them: what a strip or page places.
+
+    Args:
+        core: The compiled panel.
+        family: The faces its lettering was measured in, from :func:`typeface_of`.
+        live_text: Emit lettering as `<text>` rather than glyph outlines.
+        id_prefix: Put in front of every `id` the panel writes, and every reference to one.
+
+    Returns:
+        The lines between the root's opening tag and its closing one, none of them empty.
+    """
     backdrop = core.backdrop
     air = backdrop.atmosphere if backdrop is not None else None
 
-    parts: list[str] = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
-        f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}">',
-    ]
+    parts: list[str] = []
     if air is not None:
         parts.append(_atmosphere_filter(air, id_prefix))
     # A panel that is not a rectangle -- one in a slanted tier -- is drawn whole and
@@ -189,8 +249,7 @@ def render(
             f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
             f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
         )
-    parts.append("</svg>")
-    return "\n".join(part for part in parts if part) + "\n"
+    return [part for part in parts if part]
 
 
 def _render_mass(mass: CoreMass, id_prefix: str) -> str:

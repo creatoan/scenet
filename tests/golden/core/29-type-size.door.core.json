@@ -721,6 +721,7 @@
       "font_size": 26.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Can I come in?",
       "line_height": 32.5,
       "lines": [
         "Can I come",
@@ -756,6 +757,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: The same evening.",
       "line_height": 27.86,
       "lines": [
         "The same",
@@ -765,6 +767,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. Alice, centre; Bob, centre.",
   "format_version": 1,
   "height": 685.0,
   "width": 1350.0
