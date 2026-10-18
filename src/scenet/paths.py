@@ -16,11 +16,18 @@ Nothing here reaches the output. A resolved path is used to open a file and is t
 forgotten; what a Core records about a font is what is in it.
 """
 
+import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from scenet.errors import PanelSyntaxError
 
 __all__ = ["resolve_relative"]
+
+#: The C0 controls and DEL. Python refuses a NUL in any path, raising an error no finding
+#: was made from, and Windows refuses every one of these in a file name, so a path holding
+#: one opened a file on some systems and crashed the compiler on others. Nobody types one
+#: on purpose: it is a slip, reported as one.
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
 
 def resolve_relative(
@@ -44,8 +51,8 @@ def resolve_relative(
         The file's path. Not checked to exist: whoever opens it says what it found.
 
     Raises:
-        PanelSyntaxError: The path is empty or absolute, has a backslash in it, or there
-            is no folder to read it from.
+        PanelSyntaxError: The path is empty or absolute, has a backslash or a control
+            character in it, or there is no folder to read it from.
 
     Example:
         >>> from pathlib import Path
@@ -54,6 +61,14 @@ def resolve_relative(
         >>> found.as_posix()
         'comic/fonts/a.ttf'
     """
+    control = _CONTROL.search(declared)
+    if control is not None:
+        raise PanelSyntaxError(
+            f"the {what} path {declared!r} contains U+{ord(control.group()):04X}, a control "
+            "character a file name cannot hold on every system; delete it",
+            rule=rule,
+            loc=loc,
+        )
     if not declared.strip():
         raise PanelSyntaxError(f"the {what} path is empty", rule=rule, loc=loc)
     if PurePosixPath(declared).is_absolute() or PureWindowsPath(declared).anchor:

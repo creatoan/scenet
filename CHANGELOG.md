@@ -68,6 +68,10 @@ below 1.0 means.
   `fonts\Comic.ttf` as a folder and a file, and every other system as one file name, so the same
   document lettered in its font on one machine and was refused on the next. Write `/` between
   folders.
+- **A control character in a font path is a finding, not a crash.** `lettering: {font:
+  "fonts/a\0.ttf"}` reached the file system, whose `ValueError` was not one the compiler
+  reports, so `scenet build` and `scenet check` both ended in a traceback. Any control
+  character in a declared path is now `font-file`, naming the character.
 - **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
   documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
   It now installs every group, as CI's test jobs do.
