@@ -56,8 +56,27 @@ the command line or the Python API: upgrading from 0.11.0 changes no output.
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
 
+### Fixed
+
+- **A full stop ends a PAGE heading, as it ends a PANEL one.** `Page 4B.` named its page
+  `4B.` and `PAGE 7.` a page called `7.`; `PAGE TWENTY ONE.` and `PLANCHE 3.` were not
+  read as headings at all, since `ONE.` and `3.` are not numbers, so their panels ran on
+  into the page before. They are pages `4B`, `7`, `21` and `3` now. A full stop inside a
+  label, as in `PAGE 3.5`, stays.
+
 ### Security
 
+- **A comic script cannot stall the compiler with one crafted line.** The PAGE heading
+  pattern backtracked exponentially on a line like `PAGE !-!-!-…(`: fifty characters took
+  seconds, and each two more took four times as long. Found by CodeQL, which led to the
+  rest: the PAGE, SFX, caption and cue-with-its-line patterns each let two parts take the
+  same run of space, so a long gap was quadratic or cubic -- a caption line of sixty
+  thousand tabs took twenty seconds, an SFX line with a note three minutes. Every line
+  is now read in time linear in its length, so `scenet build`, `scenet check` (which the
+  editor runs on open and save), the MCP server and the playground cannot be hung by a
+  script. The patterns read every script as before, with one exception at the edge: in
+  `PAGE A - .` the full stop now ends the heading, as it already did in `PAGE A .`,
+  rather than ending the label.
 - **The playground's DOMPurify is 3.4.17**, past two advisories affecting versions up to
   3.4.15 (GHSA-6688-9rhm-gjv2, GHSA-p98j-92pf-mc4p). It reaches the playground through
   monaco-editor, which pins an older version, so the override that lifts it is raised by
