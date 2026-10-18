@@ -37,10 +37,31 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
             several overlays in one document. Empty by default, as in
             :func:`render <scenet.emit.svg.render>`.
     """
-    parts: list[str] = [
+    lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
         f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}">',
+        *debug_body(core, id_prefix=id_prefix),
+        "</svg>",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
+    """The overlay's contents, without the document around them: what a strip places.
+
+    Every part is kept, an empty one included -- a panel with no setting draws no
+    backdrop, and leaves a blank line where it would be -- so the overlay reads the same
+    placed as alone.
+
+    Args:
+        core: The compiled panel.
+        id_prefix: Put in front of every `id` the overlay writes.
+
+    Returns:
+        The lines between the root's opening tag and its closing one.
+    """
+    parts: list[str] = [
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         'fill="#ffffff"/>',
         _thirds(core),
@@ -183,8 +204,7 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         'fill="none" stroke="#111111" stroke-width="4"/>'
     )
-    parts.append("</svg>")
-    return "\n".join(parts) + "\n"
+    return parts
 
 
 def _backdrop(core: PanelCore) -> str:

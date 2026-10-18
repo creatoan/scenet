@@ -136,19 +136,16 @@ def _frames(
     debug: bool,
     fonts: Mapping[str, FontMetrics] | None,
 ) -> list[str]:
-    """Every panel of one page, at its frame, positions counting from `first_position`.
+    """Every panel of one page, at its frame, in reading order from `first_position`.
 
-    Positions follow reading order, but painting does not: every inset is painted after
-    every other panel, so it is on top of its parent even when it is read first. Each one
-    goes down on its clearance, painted white, so its parent's art stops a gutter short of
-    it all round.
+    Document order is reading order -- it is the order a screen reader follows -- so an
+    inset read before its parent is written before it. It stays on top all the same: its
+    parent is cut around the inset's clearance, which is in the parent's own units as its
+    `exclusions`, so the parent's art stops a gutter short of the inset all round whatever
+    is painted first. The clearance is still painted white, just before its inset.
     """
     lines: list[str] = []
-    numbered = list(enumerate(page.frames, start=first_position))
-    painted = [entry for entry in numbered if entry[1].inset_of is None] + [
-        entry for entry in numbered if entry[1].inset_of is not None
-    ]
-    for position, frame in painted:
+    for position, frame in enumerate(page.frames, start=first_position):
         core = panels.get(frame.panel)
         if core is None:
             raise ValueError(f"the page places panel '{frame.panel}', which was not given")
@@ -168,6 +165,7 @@ def _frames(
                 live_text=live_text,
                 debug=debug,
                 fonts=fonts,
+                holes=core.exclusions,
             )
         )
     return lines

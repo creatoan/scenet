@@ -26,11 +26,11 @@ both used to be missing:
   panel's group keeps its name, as `panel-<name>`.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
-from scenet.core import PanelCore
-from scenet.emit.debug_svg import render_debug
-from scenet.emit.svg import attr, fmt, render
+from scenet.core import Box, PanelCore
+from scenet.emit.debug_svg import debug_body
+from scenet.emit.svg import attr, fmt, panel_body, typeface_of
 from scenet.solve.text import FontMetrics
 
 # Space between panels, as a fraction of the tallest panel.
@@ -114,6 +114,7 @@ def placed_panel(
     live_text: bool = False,
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
+    holes: Sequence[Box] = (),
 ) -> list[str]:
     """One panel, rendered on its own and put at `(x, y)` in a larger document.
 
@@ -130,18 +131,20 @@ def placed_panel(
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         debug: Place the panel's diagnostic overlay instead of the panel.
         fonts: The declared fonts the panel was lettered in, by digest.
+        holes: Areas cut out of it, in its own units: on a page, the rings of the insets
+            set into it, which are drawn over it. Each is a clip of its own, nested inside
+            the frame's, so the clips intersect and two rings that touch need no geometry.
 
     Returns:
         The lines of SVG, indented for the document's top level.
     """
     prefix = f"p{position}-"
     frame = f"{prefix}frame"
-    inner = (
-        render_debug(core, id_prefix=prefix)
+    body = (
+        debug_body(core, id_prefix=prefix)
         if debug
-        else render(core, fonts=fonts, live_text=live_text, id_prefix=prefix)
+        else panel_body(core, typeface_of(core, fonts=fonts), live_text=live_text, id_prefix=prefix)
     )
-    body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
     # Clipped to the panel's outline when it has one: a slanted panel's bounding box
     # overlaps its neighbour's, and only the outline is its own.
     shape = (
@@ -149,11 +152,26 @@ def placed_panel(
         if core.outline is not None
         else f'<rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}"/>'
     )
+    whole = f"M0 0 H{fmt(core.width)} V{fmt(core.height)} H0 Z"
+    cut = [
+        (
+            f"{prefix}hole-{number}",
+            f"{whole} M{fmt(hole.x)} {fmt(hole.y)} H{fmt(hole.right)} V{fmt(hole.bottom)} "
+            f"H{fmt(hole.x)} Z",
+        )
+        for number, hole in enumerate(holes, start=1)
+    ]
     return [
         f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})">',
         f'  <clipPath id="{frame}">{shape}</clipPath>',
+        *(
+            f'  <clipPath id="{hole}"><path d="{d}" clip-rule="evenodd"/></clipPath>'
+            for hole, d in cut
+        ),
         f'  <g clip-path="url(#{frame})">',
-        body.rstrip(),
+        *(f'  <g clip-path="url(#{hole})">' for hole, _ in cut),
+        "\n".join(body),
+        *("  </g>" for _ in cut),
         "  </g>",
         "  </g>",
     ]

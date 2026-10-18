@@ -112,14 +112,34 @@ def render(
             in another face would draw text that does not fit the balloons around it.
     """
     family = typeface_of(core, metrics=metrics, fonts=fonts)
-    backdrop = core.backdrop
-    air = backdrop.atmosphere if backdrop is not None else None
-
-    parts: list[str] = [
+    lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
         f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}">',
+        *panel_body(core, family, live_text=live_text, id_prefix=id_prefix),
+        "</svg>",
     ]
+    return "\n".join(lines) + "\n"
+
+
+def panel_body(
+    core: PanelCore, family: Typeface, *, live_text: bool = False, id_prefix: str = ""
+) -> list[str]:
+    """A panel's contents, without the document around them: what a strip or page places.
+
+    Args:
+        core: The compiled panel.
+        family: The faces its lettering was measured in, from :func:`typeface_of`.
+        live_text: Emit lettering as `<text>` rather than glyph outlines.
+        id_prefix: Put in front of every `id` the panel writes, and every reference to one.
+
+    Returns:
+        The lines between the root's opening tag and its closing one, none of them empty.
+    """
+    backdrop = core.backdrop
+    air = backdrop.atmosphere if backdrop is not None else None
+
+    parts: list[str] = []
     if air is not None:
         parts.append(_atmosphere_filter(air, id_prefix))
     # A panel that is not a rectangle -- one in a slanted tier -- is drawn whole and
@@ -189,8 +209,7 @@ def render(
             f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
             f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
         )
-    parts.append("</svg>")
-    return "\n".join(part for part in parts if part) + "\n"
+    return [part for part in parts if part]
 
 
 def _render_mass(mass: CoreMass, id_prefix: str) -> str:

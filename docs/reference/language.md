@@ -787,7 +787,9 @@ An **inset** is a small panel set into a corner of another and drawn over it:
 It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
 split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
 2013), so it is never guessed: an inset is read right after its parent unless it says
-`read: before`. Here that is `clock`, `street`, `face`.
+`read: before`. Here that is `clock`, `street`, `face` — and that is the order the page's SVG writes
+them in, which is the order a screen reader follows. The parent is cut around each inset's ring
+rather than painted under it, so an inset read first is still on top.
 
 The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
 words under an inset could not be read. When an inset covers a character's face, the compiler
