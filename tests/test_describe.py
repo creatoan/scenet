@@ -200,6 +200,12 @@ class TestGenerated:
         source = "cast: {alice: {reference: alice, expression: surprise}}\n"
         assert _described(source, {"alice": 500.0}) == "Medium shot. Alice, centre, surprised."
 
+    def test_a_puppets_own_expression_is_read_with_its_underscores_as_spaces(self):
+        """A puppet of one's own names its own expressions; none of the shipped ones has an
+        underscore, which is how mutation testing found this unchecked (run 39124930311)."""
+        source = "cast: {alice: {reference: alice, expression: wide_eyed}}\n"
+        assert _described(source, {"alice": 500.0}) == "Medium shot. Alice, centre, wide eyed."
+
     def test_marks_in_their_order(self):
         source = "cast: {alice: {reference: alice, marks: [squeans, plewds]}}\n"
         said = _described(source, {"alice": 500.0})
