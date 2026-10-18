@@ -99,8 +99,20 @@ PANEL_WITH_DESCRIPTION = re.compile(
 NUMBER_LIKE = re.compile(r"\d+[^\W\d_]?|[^\W\d_]")
 # Dark Horse's `PAGE ONE (five panels)`. The label may be several words when they make a
 # number, `PAGE TWENTY ONE`; the parenthetical may state the count, or be a note.
+#
+# Every part can match a given stretch in one way only, because a script is untrusted
+# input and backtracking is not free. Words are split on whitespace alone: a word already
+# takes a hyphen, so `TWENTY-ONE` is one word, and when a hyphen could also part two
+# words, `PAGE !-!-!-…(` split in exponentially many ways before failing (CodeQL
+# py/redos). The tail takes trailing space once, after whatever it follows, where three
+# optional runs of it in a row made a long blank line cubic.
+#
+# Each word is as short as the line allows, as PANEL_HEADING's label is, so a closing full
+# stop ends the heading rather than the label: `Page 4B.` is page `4B`, and
+# `PAGE TWENTY ONE.` is twenty-one rather than a sentence. A full stop the line needs
+# inside a word stays there, as in `PAGE 3.5`.
 PAGE_HEADING = re.compile(
-    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+(?:[\s-]+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\))?\s*[.:]?\s*$",
+    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+?(?:\s+[^\s:()]+?)*?)\s*(?:\((?P<note>[^)]*)\)\s*)?(?:[.:]\s*)?$",
     re.IGNORECASE,
 )
 # The count in a PAGE heading's parenthetical: `five panels`, `1 panel`, `six cases`.
@@ -122,23 +134,37 @@ CUE = re.compile(r"^([^\W\d_][\w '.-]*?)\s*((?:\([^)]*\)\s*)*):?\s*$")
 # A cue with its line after the colon: `ALICE: Hello.` Dialogue only when the name is in the
 # panel's cast -- a writer's `NOTE: redraw this` is not -- or, in capitals, a note says why
 # it was not.
+#
+# The name ends on something other than space, so the run after it is the `\s*`'s alone:
+# when both could take it, a long gap was quadratic. A name never kept a trailing space
+# anyway -- the shortest name was always preferred. CUE has the same shape, but only ever
+# reads a line of forty characters or fewer.
 INLINE_CUE = re.compile(
-    r"^(?P<name>[^\W\d_][\w '.-]*?)\s*(?P<mods>(?:\([^)]*\)\s*)*):\s*(?P<text>\S.*)$"
+    r"^(?P<name>[^\W\d_](?:[\w '.-]*?[\w'.-])?)\s*(?P<mods>(?:\([^)]*\)\s*)*):\s*(?P<text>\S.*)$"
 )
 # `CAPTION: Midnight.`, `CAP (monologue):` with the text under it, and Dark Horse's
 # `CAP/CHARACTER`, a caption carrying a character's speech. The text follows the colon, or
 # runs on the lines under the label to a blank line. `CAPTAIN` is not `CAP`.
+#
+# No run of space here can be taken by two parts, for the reason PAGE_HEADING gives: the
+# speaker and the text end on something other than space, and the space that ends the
+# line is taken by whatever comes last rather than once more after it. A speaker of
+# nothing but space, `CAP/ :`, is still one space, as it always was.
 CAPTION_LABEL = re.compile(
-    r"^(?:CAPTION|CAP|R[EÉ]CITATIF|NARRATIF|CARTOUCHE)(?!\w)\s*(?:/\s*(?P<speaker>[^():/]+?)\s*)?(?P<mods>(?:\([^)]*\)\s*)*)"
-    r"(?:(?P<colon>:)\s*(?P<text>.*?))?\s*$",
+    r"^(?:CAPTION|CAP|R[EÉ]CITATIF|NARRATIF|CARTOUCHE)(?!\w)\s*(?:/\s*(?P<speaker>[^():/]*?[^():/\s]|\s)\s*)?(?P<mods>(?:\([^)]*\)\s*)*)"
+    r"(?:(?P<colon>:)\s*(?P<text>(?:.*\S)?)\s*)?$",
     re.IGNORECASE,
 )
 # `SFX: BLAM`, optionally `SFX (BOB, large): BLAM` -- who it comes from, how loud. The
 # sound on the same line.
-SFX_LINE = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\))?\s*:\s*(.+)$", re.IGNORECASE)
+#
+# Space is taken once after each part rather than before and after an optional one, for
+# the reason PAGE_HEADING gives: two optional runs in a row made a long line quadratic
+# here, and three made the bare form below cubic.
+SFX_LINE = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\)\s*)?:\s*(.+)$", re.IGNORECASE)
 # Dark Horse's form: `SFX:` as a cue, the sound on the next line. Without this it is a
 # character called SFX, and the sound would be lettered in a balloon.
-BARE_SFX = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\))?\s*:?\s*$", re.IGNORECASE)
+BARE_SFX = re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*(?:\(([^)]*)\)\s*)?(?::\s*)?$", re.IGNORECASE)
 # Blambot: "Each item in the lettering area should be numbered." `1. ALICE:`, `2) CAP:`.
 BALLOON_NUMBER = re.compile(r"^\d+[.)]?\s+")
 

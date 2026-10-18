@@ -27,6 +27,7 @@ import { fileURLToPath } from "node:url";
 
 import { parse as parseYaml } from "yaml";
 
+import { ensureWheel } from "./pyodide-wheels.ts";
 import { stalenessReason } from "./wheel-freshness.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +41,7 @@ const pyodideDir = dirname(require.resolve("pyodide/package.json"));
 interface PyodidePackage {
   readonly name: string;
   readonly file_name: string;
+  readonly sha256: string;
   readonly depends: readonly string[];
 }
 interface PyodideLock {
@@ -128,12 +130,16 @@ function closure(lock: PyodideLock, wanted: readonly string[]): PyodidePackage[]
   return [...found.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function download(url: string, target: string): Promise<number> {
+async function fetchBytes(url: string): Promise<Uint8Array> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText} for ${url}`);
   }
-  const bytes = Buffer.from(await response.arrayBuffer());
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+async function download(url: string, target: string): Promise<number> {
+  const bytes = await fetchBytes(url);
   await writeFile(target, bytes);
   return bytes.byteLength;
 }
@@ -200,12 +206,9 @@ async function main(): Promise<void> {
   let fetched = 0;
   for (const entry of packages) {
     const target = join(pyodideOut, entry.file_name);
-    if (existsSync(target)) {
-      total += (await readFile(target)).byteLength;
-      continue;
-    }
-    total += await download(base + entry.file_name, target);
-    fetched += 1;
+    const wheel = await ensureWheel(target, base + entry.file_name, entry.sha256, fetchBytes);
+    total += wheel.bytes;
+    if (wheel.fetched) fetched += 1;
   }
 
   console.log(

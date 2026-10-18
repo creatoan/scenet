@@ -89,6 +89,10 @@ fix has to come from `monaco-yaml` shipping an updated worker manager, so that i
 dependency to watch. Dependabot is told to ignore monaco-editor 0.55.x, 0.56.x and 0.57.x
 specifically — 0.58 and later will still be proposed.
 
-**`dompurify` is overridden forward to ^3.4.14.** monaco-editor pins 3.4.8 exactly, and
-four advisories affect everything up to 3.4.12. npm's own `audit fix --force` suggests
-*downgrading* monaco to 0.53 instead, which fixes nothing.
+**`dompurify` is overridden forward to ^3.4.16.** monaco-editor 0.54.0 pins 3.1.7 exactly,
+and even 0.57.0 pins 3.4.15; advisories affect everything up to 3.4.15. npm's own
+`audit fix --force` suggests *downgrading* monaco to 0.53 instead, which fixes nothing.
+
+Dependabot cannot move the override either. Its security update for dompurify fails as
+`update_not_possible`, because the only path it finds downgrades monaco-editor, so a new
+DOMPurify advisory means raising the floor here by hand, the lockfile with it.
