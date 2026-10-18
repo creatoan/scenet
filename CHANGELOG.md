@@ -33,6 +33,12 @@ below 1.0 means.
   writes for it, kept current with the golden files — and a button opens that example in the
   playground. The navbar names the playground beside the sections, and every link to it
   opens the playground of the version being read.
+- **Dependencies and code are watched by GitHub's own security tooling.** Dependabot alerts
+  and security updates cover the dependency graph, which GitHub builds from `uv.lock` and both
+  `package-lock.json` files, transitive dependencies included. A pull request adding a
+  dependency with a high or critical vulnerability fails dependency review. CodeQL analyses
+  the Python, the TypeScript and the workflows on every pull request, on `main` and weekly.
+  Secret scanning rejects a push that contains a credential. See `SECURITY.md`.
 
 ### Changed
 
