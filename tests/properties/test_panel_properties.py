@@ -22,6 +22,7 @@ from tests.invariants import (
     assert_effects_are_placed,
     assert_lettering_is_placed,
     assert_svg_is_sound,
+    assert_words_are_carried,
 )
 from tests.strategies import LIBRARY, Drawn, panels
 
@@ -67,6 +68,7 @@ def test_a_compiled_panel_keeps_every_promise(drawn: Drawn):
         return
     assert_lettering_is_placed(core, margin=drawn.margin)
     assert_effects_are_placed(core, margin=drawn.margin)
+    assert_words_are_carried(core, description=drawn.document.get("description"))
     sizes = _font_sizes(core)
     assert_svg_is_sound(render(core), size=drawn.size, font_sizes=sizes)
     assert_svg_is_sound(render(core, live_text=True), size=drawn.size, font_sizes=sizes)

@@ -114,6 +114,30 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         assert distance <= face.r * TAIL_REACH, f"tail of {balloon.id} misses its speaker"
 
 
+def assert_words_are_carried(core: PanelCore, *, description: str | None = None) -> None:
+    """The panel carries the words it is read in, and each item its own.
+
+    - a description, which is the author's when one was written;
+    - a label on every balloon, caption and sound effect, holding what it letters --
+      a spoken caption's quotation marks aside, since they are lettering, not speech;
+    - and every label is a sentence, so two in a row are heard as two.
+    """
+    assert core.description, "a compiled panel has a description"
+    if description is not None:
+        assert core.description == " ".join(description.split())
+    items = [*core.balloons, *core.captions]
+    for item in items:
+        assert item.label, f"{item.id} has no label"
+        lettered = " ".join(item.lines).strip("“”")
+        assert lettered.rstrip(".") in item.label, f"{item.id}: {item.label!r} lacks {lettered!r}"
+    for effect in core.sfx:
+        assert effect.label, f"{effect.id} has no label"
+        assert effect.text in effect.label
+    for item in (*items, *core.sfx):
+        assert item.label is not None
+        assert item.label.rstrip("\"'”’»)]")[-1:] in tuple(".!?…—–-"), item.label
+
+
 def _on_the_frame(core: PanelCore, point: tuple[float, float]) -> bool:
     """Whether a point lies on the panel's edge: its outline when it has one, else its
     rectangle."""
