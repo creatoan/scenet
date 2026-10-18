@@ -201,9 +201,9 @@ class TestThePageSvg:
         stops at the ring, which is what painting the inset last used to achieve."""
         street = next(g for g in svg.findall(f"{SVG}g") if g.get("id") == "panel-street")
         holes = {
-            clip.get("id"): clip[0]
+            clip.get("id", ""): clip[0]
             for clip in street.findall(f"{SVG}clipPath")
-            if "hole" in (clip.get("id") or "")
+            if "hole" in clip.get("id", "")
         }
         assert sorted(holes) == ["p2-hole-1", "p2-hole-2"]
         # The street's box, then the inset's ring in the street's own units: the clock at
