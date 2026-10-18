@@ -4,9 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
-  # `main` merges through a merge queue, which tests each pull request on top of the
-  # ones queued ahead of it. The queue waits for the required checks on that combined
-  # commit, and only this event produces them -- without it every entry waits forever.
+  # `main` has no merge queue: one was tried and removed on purpose. The event stays so
+  # that turning one back on needs no change here -- a queue waits for the required
+  # checks on the commit it builds, and only this event produces them there. Without it
+  # every entry would wait forever.
   merge_group:
   workflow_dispatch:
 

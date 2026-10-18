@@ -435,7 +435,7 @@ class TestDependencyReview:
         return step
 
     def test_it_reviews_pull_requests_and_the_merge_queue(self, review: dict[Any, Any]):
-        """The queue too, or it could never become a required check: the queue would wait."""
+        """The queue too, if one returns: a required check it never ran would stall it."""
         assert set(_triggers(review)) == {"pull_request", "merge_group"}
 
     def test_a_fork_can_run_it(self, review: dict[Any, Any]):

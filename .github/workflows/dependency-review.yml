@@ -9,9 +9,8 @@ name: Dependency review
 # them against .github/allowed-licenses.txt.
 on:
   pull_request:
-  # For a merge queue, as ci.yml has: main has none today. If one is turned on and this
-  # check is required, the queue waits for it on the queued commit, and only this event
-  # produces it there.
+  # For the same reason as in ci.yml: `main` has no merge queue, but if one is turned
+  # back on and this check is required, only this event produces it on the queued commit.
   merge_group:
 
 # Read-only and secret-free, so a pull request from a fork is reviewed like any other.
