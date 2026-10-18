@@ -10,7 +10,7 @@ below 1.0 means.
 
 ## [Unreleased]
 
-**Upgrading from 0.11.**
+**Upgrading from 0.11.1.**
 
 - **A comic script's prose is now read**, as its panel's description. A line of it holding a
   control character an SVG cannot hold, which used to pass unnoticed, is reported at that
@@ -49,6 +49,31 @@ below 1.0 means.
   tree; results, and how to check with VoiceOver, are in the new how-to, *Make a panel a
   screen reader can read*.
 
+### Changed
+
+- **A page's SVG writes its panels in reading order**, insets included, since document order is
+  what a screen reader follows. An inset used to be painted after every other panel to stay on
+  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
+  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
+  the rings; only a page with insets changes, and only its bytes.
+- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
+  the panel's serialised SVG, which made the panel's first two lines something they silently
+  depended on. Byte for byte the same.
+
+## [0.11.1] - 2026-10-18
+
+**The documentation site documents the release you install, and shows off its playground;
+and two comic-script fixes.** The site's root now serves the latest release, `main` moves under
+`/dev/`, and each minor version keeps its own path; the playground says which version it runs,
+and the home page shows its example compiled, with a button to open it there. A full stop
+now ends a PAGE heading, and no line of a comic script can stall the compiler.
+
+**Upgrading from 0.11.0.** The language, the command line and the Python API are unchanged,
+and so is every YAML document's output. A comic script changes only where a PAGE heading
+ends in a full stop, as in `PAGE 7.` or `PAGE TWENTY ONE.`: see Fixed.
+
+### Added
+
 - **The documentation site documents what you install.** Its root, and every address
   already in use there — the documentation, the playground, `schemas/panel.schema.json`,
   `scenet-spec.md`, `llms.txt` — now serves the latest release, not unreleased `main`.
@@ -65,27 +90,51 @@ below 1.0 means.
 - **The playground says which version it runs**, with the same version switcher as the
   documentation, keeping a shared document across the switch. On `main`'s and on an old
   release's it says so, with a link to the latest. Playgrounds built before this change,
-  those of 0.11 and earlier, carry no switcher.
+  those of 0.11.0 and earlier, carry no switcher.
 - **The documentation's home page shows its example compiled** — the file `scenet build`
   writes for it, kept current with the golden files — and a button opens that example in the
   playground. The navbar names the playground beside the sections, and every link to it
   opens the playground of the version being read.
+- **Dependencies and code are watched by GitHub's own security tooling.** Dependabot alerts
+  and security updates cover the dependency graph, which GitHub builds from `uv.lock` and both
+  `package-lock.json` files, transitive dependencies included. A pull request adding a
+  dependency with a high or critical vulnerability fails dependency review. CodeQL analyses
+  the Python, the TypeScript and the workflows on every pull request, on `main` and weekly.
+  Secret scanning rejects a push that contains a credential. See `SECURITY.md`.
 
 ### Changed
 
-- **A page's SVG writes its panels in reading order**, insets included, since document order is
-  what a screen reader follows. An inset used to be painted after every other panel to stay on
-  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
-  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
-  the rings; only a page with insets changes, and only its bytes.
-- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
-  the panel's serialised SVG, which made the panel's first two lines something they silently
-  depended on. Byte for byte the same.
 - **Every pull request checks the package as a release would.** CI's new Package job builds
   the sdist and the wheel, runs `twine check --strict` on them, smoke-tests the wheel from an
   empty directory, and builds the wheel again from the sdist alone, comparing the two. The
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
+
+### Fixed
+
+- **A full stop ends a PAGE heading, as it ends a PANEL one.** `Page 4B.` named its page
+  `4B.` and `PAGE 7.` a page called `7.`; `PAGE TWENTY ONE.` and `PLANCHE 3.` were not
+  read as headings at all, since `ONE.` and `3.` are not numbers, so their panels ran on
+  into the page before. They are pages `4B`, `7`, `21` and `3` now. A full stop inside a
+  label, as in `PAGE 3.5`, stays.
+
+### Security
+
+- **A comic script cannot stall the compiler with one crafted line.** The PAGE heading
+  pattern backtracked exponentially on a line like `PAGE !-!-!-…(`: fifty characters took
+  seconds, and each two more took four times as long. Found by CodeQL, which led to the
+  rest: the PAGE, SFX, caption and cue-with-its-line patterns each let two parts take the
+  same run of space, so a long gap was quadratic or cubic -- a caption line of sixty
+  thousand tabs took twenty seconds, an SFX line with a note three minutes. Every line
+  is now read in time linear in its length, so `scenet build`, `scenet check` (which the
+  editor runs on open and save), the MCP server and the playground cannot be hung by a
+  script. The patterns read every script as before, with one exception at the edge: in
+  `PAGE A - .` the full stop now ends the heading, as it already did in `PAGE A .`,
+  rather than ending the label.
+- **The playground's DOMPurify is 3.4.17**, past two advisories affecting versions up to
+  3.4.15 (GHSA-6688-9rhm-gjv2, GHSA-p98j-92pf-mc4p). It reaches the playground through
+  monaco-editor, which pins an older version, so the override that lifts it is raised by
+  hand: Dependabot's security update cannot do it.
 
 ## [0.11.0] - 2026-10-17
 

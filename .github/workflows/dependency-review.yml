@@ -1,0 +1,41 @@
+name: Dependency review
+
+# Dependabot alerts on what is already on main. This stops a pull request from putting a
+# known high or critical vulnerability there in the first place: it compares the
+# dependency graph of the pull request with its base -- uv.lock and both package-lock
+# files, transitive dependencies included -- and fails on anything new that is affected.
+#
+# Licences are not checked here; the `Dependency licenses` job in ci.yml already gates
+# them against .github/allowed-licenses.txt.
+on:
+  pull_request:
+  # For the same reason as in ci.yml: `main` has no merge queue, but if one is turned
+  # back on and this check is required, only this event produces it on the queued commit.
+  merge_group:
+
+# Read-only and secret-free, so a pull request from a fork is reviewed like any other.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          # Development dependencies run in CI with a token in reach; `runtime` alone,
+          # the default, would let them through. `unknown` is whatever a lockfile does
+          # not say the scope of.
+          fail-on-scopes: runtime, development, unknown
+          # A comment needs `pull-requests: write`, which a fork's token does not carry.
+          # The summary is on the run instead.
+          comment-summary-in-pr: never
+          # A pull request names its own base and head; the merge queue does not.
+          base-ref: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+          head-ref: ${{ github.event.merge_group.head_sha || github.event.pull_request.head.sha }}
