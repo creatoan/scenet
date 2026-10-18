@@ -108,9 +108,8 @@ describe("svgSize", () => {
 
   test("reads a root that is named for a screen reader", () => {
     const markup =
-      '<svg xmlns="x" width="900" height="700" viewBox="0 0 900 700" role="img" ' +
-      'aria-labelledby="scenet-0a1b-title scenet-0a1b-desc">' +
-      '<title id="scenet-0a1b-title" width="1">Medium shot.</title></svg>';
+      '<svg xmlns="x" width="900" height="700" viewBox="0 0 900 700" role="img">' +
+      '<title width="1">Medium shot. Alice: width="2" is a word here.</title></svg>';
     assert.deepEqual(svgSize(markup), { width: 900, height: 700 });
   });
 

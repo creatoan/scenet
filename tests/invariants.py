@@ -289,10 +289,11 @@ def without_access(svg: str) -> str:
 def assert_accessible(svg: str, core: PanelCore) -> None:
     """A panel is one image, named with what it shows and then its words, in reading order.
 
-    - the root is `role="img"`, named by what the panel's Core says;
+    - the root is `role="img"`, named by its one `<title>`, its first child;
     - the name is the description, then every balloon, caption and sound effect's label in
       `order` -- sound effects too, though they are painted under every balloon;
-    - and every id the name is found through is defined exactly once.
+    - and nothing gives it a description to be read as well: no `<desc>`, no
+      `aria-labelledby` or `aria-describedby`, which NVDA read a second time.
     """
     root = ElementTree.fromstring(svg)
     assert root.get("role") == "img", "a panel is an image"
@@ -300,10 +301,11 @@ def assert_accessible(svg: str, core: PanelCore) -> None:
     words = [item.label for item in items if item.label]
     expected = " ".join([*([core.description] if core.description else []), *words])
     assert expected, "a panel with no words has nothing to be named by"
+    assert list(root)[0].tag == f"{_SVG}title"
     assert accessible_name(root) == expected
-    ids = _ids(root)
-    for name in root.get("aria-labelledby", "").split():
-        assert ids.count(name) == 1, f"{name} is defined {ids.count(name)} times"
+    assert root.find(f".//{_SVG}desc") is None
+    for attribute in ("aria-labelledby", "aria-describedby"):
+        assert root.get(attribute) is None, attribute
 
 
 def _shape(frame: CoreFrame) -> Polygon:

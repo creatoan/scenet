@@ -1,10 +1,13 @@
 """Accessible output: a screen reader can read the panel (#76).
 
 Each panel is one image, named with what it shows and then everything said in it, in the
-one reading order Panel Core keeps. The pattern is the most-tested one there is -- an
-explicit `role="img"` named through `aria-labelledby` by its `<title>` and its `<desc>`
-(Watson & Faulkner; Lembree; Deque; O'Hara) -- and the words are in the *name*, because a
-description alone is often not spoken (Lembree's NVDA and JAWS results; NVDA's own guide).
+one reading order Panel Core keeps: an explicit `role="img"` named by one `<title>`, its
+first child. The words are in the *name*, because a description alone is often not spoken
+(Lembree's NVDA and JAWS results; NVDA's own guide) -- and in nothing else, because NVDA
+2026.2 with Edge 155, moving by graphic, read a `<desc>` named through `aria-labelledby`
+a second time as the description. One title is read once, needs no id, and so cannot be
+confused with another panel's in a page that inlines several.
+
 Children of an image are presentational, so nothing inside a panel is named: the panel is
 read whole, sound effects in their place in the order whatever order they are painted in.
 
@@ -82,18 +85,21 @@ class TestAPanel:
             "Sound effect, from Bob: BLAM. Bob, whispering: I know."
         )
 
-    def test_the_title_comes_first_and_the_desc_after_it(self, core: PanelCore):
+    def test_it_is_named_by_one_title_its_first_child(self, core: PanelCore):
         children = list(_root(render(core)))
         assert children[0].tag == f"{SVG}title"
-        assert children[0].text == core.description
-        assert children[1].tag == f"{SVG}desc"
+        assert (children[0].text or "").startswith(core.description or "")
+        assert [child for child in children if child.tag == f"{SVG}title"] == children[:1]
 
-    def test_it_is_named_by_its_own_title_and_desc(self, core: PanelCore):
+    def test_nothing_is_there_to_be_read_twice(self, core: PanelCore):
+        """No `<desc>`, no `aria-labelledby`, no `aria-describedby`: with them, NVDA read
+        the words once in the name and again as the description."""
         root = _root(render(core))
-        title, desc = root.get("aria-labelledby", "").split()
-        assert title.endswith("-title")
-        assert desc.endswith("-desc")
-        assert [element.get("id") for element in list(root)[:2]] == [title, desc]
+        assert root.find(f".//{SVG}desc") is None
+        for attribute in ("aria-labelledby", "aria-describedby", "aria-description"):
+            assert root.get(attribute) is None
+        assert root.find(f"{SVG}title") is not None
+        assert root.find(f"{SVG}title").get("id") is None
 
     def test_it_keeps_every_promise(self, core: PanelCore):
         svg = render(core)
@@ -123,46 +129,30 @@ class TestAPanel:
         assert accessible_name(root).endswith('Alice: a < b & "c" > d.')
 
 
-class TestThePanelsIds:
-    """Ids that name the panel are found by `getElementById`, which in a page holding
-    several inlined SVGs -- the VS Code preview, any web comic -- returns the first. So the
-    id is the hash of the text it names: two panels that share an id share its text."""
+class TestInlinedTogether:
+    """A page holding several inlined SVGs -- the VS Code preview, any web comic -- has one
+    set of ids, and `getElementById` returns the first. A name that needs none cannot be
+    taken from the wrong panel."""
 
-    def test_two_panels_have_different_ids(self, core: PanelCore):
-        other = compile_source(SPOKEN.replace("Midnight.", "Noon.")).core
-        assert _root(render(core)).get("aria-labelledby") != _root(render(other)).get(
-            "aria-labelledby"
-        )
-
-    def test_the_same_panel_has_the_same_ids(self, core: PanelCore):
-        assert render(core) == render(compile_source(SPOKEN).core)
-
-    def test_inlined_together_every_name_still_resolves_to_its_own_text(self, core: PanelCore):
+    def test_each_panel_is_named_by_its_own_words(self, core: PanelCore):
         other = compile_source(SPOKEN.replace("Midnight.", "Noon.")).core
         body = "".join(render(item).split("\n", 1)[1] for item in (core, other, core))
         page = ElementTree.fromstring(f"<html>{body}</html>")
-        first = {}
-        for element in page.iter():
-            if (identifier := element.get("id")) is not None:
-                first.setdefault(identifier, element)
-        for svg in page.findall(f"{SVG}svg"):
-            names = svg.get("aria-labelledby", "").split()
-            assert " ".join(first[name].text or "" for name in names) == accessible_name(svg)
+        names = [accessible_name(svg) for svg in page.findall(f"{SVG}svg")]
+        assert names[0] == names[2]
+        assert "Caption: Noon." in names[1]
+        assert "Caption: Midnight." in names[0]
 
-    def test_a_strip_prefixes_them_as_it_does_every_id(self, core: PanelCore):
+    def test_a_strip_of_the_same_panel_twice_holds_together(self, core: PanelCore):
         strip = render_strip([("one", core), ("two", core)])
         sizes = [item.font_size for item in (*core.balloons, *core.captions, *core.sfx)]
         assert_svg_is_sound(strip, font_sizes=sizes)
 
 
 class TestAPanelWithNoWords:
-    def test_it_is_named_by_its_title_alone(self):
-        """No `aria-labelledby`, which with no `<desc>` would make Blink read the title
-        again as the description (SVG-AAM section 7.1)."""
+    def test_it_is_named_by_its_description_alone(self):
         root = _root(render(compile_source(SILENT).core))
         assert root.get("role") == "img"
-        assert root.get("aria-labelledby") is None
-        assert root.find(f"{SVG}desc") is None
         assert accessible_name(root) == "Medium shot. Alice, centre."
 
     def test_a_core_without_words_has_no_accessible_markup(self, core: PanelCore):
