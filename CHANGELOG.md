@@ -42,6 +42,13 @@ below 1.0 means.
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
 
+### Security
+
+- **The playground's DOMPurify is 3.4.17**, past two advisories affecting versions up to
+  3.4.15 (GHSA-6688-9rhm-gjv2, GHSA-p98j-92pf-mc4p). It reaches the playground through
+  monaco-editor, which pins an older version, so the override that lifts it is raised by
+  hand: Dependabot's security update cannot do it.
+
 ## [0.11.0] - 2026-10-17
 
 **Lettering, sound effects, and comic scripts as publishers write them.** A stressed word is
