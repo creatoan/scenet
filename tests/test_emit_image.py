@@ -17,6 +17,7 @@ Core; what is written here is how SVG says so, checked against what renderers do
 import base64
 import hashlib
 import os
+import re
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -25,7 +26,7 @@ import pytest
 from scenet.cli import main
 from scenet.core import PanelCore
 from scenet.emit.debug_svg import render_debug
-from scenet.emit.page import render_page
+from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.pipeline import compile_book, compile_source
@@ -130,6 +131,25 @@ class TestEmbedding:
         result = _compile()
         with pytest.raises(ValueError, match=r"art/street.png"):
             render(result.core, embed={})
+
+    def test_the_refusal_names_the_picture_by_the_start_of_its_digest(self):
+        result = _compile()
+        digest = next(iter(result.images))
+        with pytest.raises(ValueError, match=re.escape(f"(sha256 {digest[:12]}...)")):
+            render(result.core, embed={})
+
+    def test_pages_side_by_side_embed_too(self):
+        book = compile_book(
+            "cast: {alice: {reference: alice}}\nsetting: {image: art/street.png}\n"
+            "page: {size: [1500, 1000], margin: 50, gutter: 30}\n"
+            "pages:\n  - tiers:\n      - panels: [one]\n  - tiers:\n      - panels: [two]\n"
+            "panels:\n  one: {}\n  two: {}\n",
+            base=FILES,
+        )
+        cores = {name: result.core for name, result in book.panels.items()}
+        svg = render_pages(book.pages, cores, embed=book.images)
+        assert svg.count('xlink:href="data:image/png;base64,') == 2
+        assert "art/street.png" not in svg.replace("art/street.png 3x2", "")
 
     def test_bytes_that_are_not_the_picture_measured_are_refused(self):
         result = _compile()

@@ -112,11 +112,15 @@ class TestTheSolver:
         assert backdrop.occluders() == ()
 
     def test_a_setting_without_a_picture_is_given_no_pixels(self):
-        with pytest.raises(ValueError, match="pixels"):
+        with pytest.raises(
+            ValueError, match=r"^a supplied picture's pixels are given exactly when it is named$"
+        ):
             solve_backdrop(SettingSpec(), PANEL, pixels=(960, 640))
 
     def test_a_picture_needs_its_pixels(self):
-        with pytest.raises(ValueError, match="pixels"):
+        with pytest.raises(
+            ValueError, match=r"^a supplied picture's pixels are given exactly when it is named$"
+        ):
             solve_backdrop(SettingSpec(image="art/a.png"), PANEL)
 
 

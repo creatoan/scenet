@@ -439,6 +439,29 @@ mutants as before, one renumbered, one new.
 | `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
 | `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
 
+Supplied pictures (#70) changed `solve/backdrop.py`, `solve/describe.py` and every emitter.
+Fresh runs from the stack's emitter branch:
+
+- `solve/describe.py`,
+  [`39154486553`](https://github.com/creatoan/scenet/actions/runs/39154486553): 190 mutants, all
+  killed.
+- `solve/backdrop.py`,
+  [`39154483015`](https://github.com/creatoan/scenet/actions/runs/39154483015): 1001 mutants and
+  8 survivors -- the 7 accepted above, under the same numbers, and `solve_backdrop` 6, a changed
+  message, now killed in `tests/test_image_backdrop.py`.
+- `emit/*`, [`39154489426`](https://github.com/creatoan/scenet/actions/runs/39154489426): 1520
+  mutants and 13 survivors -- the 8 accepted above, `panel_body` 39 now numbered 49; `image_href`
+  11 and `render_pages` 76, killed in `tests/test_emit_image.py`; and these 3, accepted,
+  numbered as in that run.
+
+Each mutant killed was applied by hand to see its test fail.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `emit/svg.py` `image_href` 5 | `quote(href, safe="/")` to `quote(href)` | `/` is already `quote`'s default `safe`. |
+| `emit/svg.py` `image_href` 6 | `safe="/"` to `safe="XX/XX"` | `quote` never escapes a letter, so adding `X` to what it leaves alone changes nothing. |
+| `emit/svg.py` `image_href` 15 | `decode("ascii")` to `decode("ASCII")` | The same codec; Python's codec names are case-insensitive. |
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random
