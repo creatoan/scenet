@@ -76,12 +76,12 @@ class TestPageHeadings:
 
 
 class TestAHostileLineIsReadQuickly:
-    """A line that starts like a PAGE heading or an SFX is read in time linear in its length.
+    """A line of a script is read in time linear in its length, however it is built.
 
     The PAGE pattern once let a hyphen be part of a word or of the space between two, so
-    `PAGE !-!-!-…` split in exponentially many ways before failing; it and the bare SFX
-    pattern both ended in three optional runs of space in a row, which made a long blank
-    stretch cubic. A script is untrusted input, and the playground reads one on every
+    `PAGE !-!-!-…` split in exponentially many ways before failing. Others let two parts
+    take the same run of space, which made a long blank stretch quadratic, or cubic where
+    three met. A script is untrusted input, and the playground reads one on every
     keystroke. Each line here took seconds before; a second is a bound no machine should
     come near now.
     """
@@ -99,6 +99,11 @@ class TestAHostileLineIsReadQuickly:
             # The SFX line with its sound, read first, had two runs in a row: quadratic,
             # so it takes a longer line to show.
             pytest.param("SFX" + "\t" * 30_000 + "!", id="sfx-a-very-long-line"),
+            # A cue with its line, and a caption, are tried on every line in a panel. The
+            # cue's name took spaces as well as the run after it, and the caption ended in
+            # one run after another: both quadratic.
+            pytest.param("A" + " " * 10_000 + "!", id="a-long-gap-after-a-name"),
+            pytest.param("CAPTION" + "\t" * 20_000 + "!", id="a-long-gap-after-caption"),
         ],
     )
     def test_it_is_read_in_well_under_a_second(self, line: str):
