@@ -266,9 +266,10 @@ class TestAPage:
             ("group", "Page 1 of 2, 2 panels."),
             ("group", "Page 2 of 2, 1 panel."),
         ]
-        for rect in root.iter(f"{SVG}rect"):
-            if rect.get("fill") in ("#eeeeee", "#ffffff"):
-                assert rect.get("aria-hidden") == "true"
+        # The background, and each page's sheet: shapes of the document's own, outside any
+        # panel. What is inside a panel is an image's, and presentational already.
+        sheets = [*root.findall(f"{SVG}rect"), *(page.find(f"{SVG}rect") for page in pages)]
+        assert [rect.get("aria-hidden") for rect in sheets if rect is not None] == ["true"] * 3
 
     def test_an_insets_ring_is_hidden(self):
         book = compile_book(
