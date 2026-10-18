@@ -49,6 +49,17 @@ below 1.0 means.
   tree; results, and how to check with VoiceOver, are in the new how-to, *Make a panel a
   screen reader can read*.
 
+### Changed
+
+- **A page's SVG writes its panels in reading order**, insets included, since document order is
+  what a screen reader follows. An inset used to be painted after every other panel to stay on
+  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
+  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
+  the rings; only a page with insets changes, and only its bytes.
+- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
+  the panel's serialised SVG, which made the panel's first two lines something they silently
+  depended on. Byte for byte the same.
+
 ## [0.11.1] - 2026-10-18
 
 **The documentation site documents the release you install, and shows off its playground;
@@ -93,14 +104,6 @@ ends in a full stop, as in `PAGE 7.` or `PAGE TWENTY ONE.`: see Fixed.
 
 ### Changed
 
-- **A page's SVG writes its panels in reading order**, insets included, since document order is
-  what a screen reader follows. An inset used to be painted after every other panel to stay on
-  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
-  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
-  the rings; only a page with insets changes, and only its bytes.
-- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
-  the panel's serialised SVG, which made the panel's first two lines something they silently
-  depended on. Byte for byte the same.
 - **Every pull request checks the package as a release would.** CI's new Package job builds
   the sdist and the wheel, runs `twine check --strict` on them, smoke-tests the wheel from an
   empty directory, and builds the wheel again from the sdist alone, comparing the two. The
