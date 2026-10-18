@@ -106,6 +106,13 @@ describe("svgSize", () => {
     assert.deepEqual(svgSize(markup), { width: 4435.2, height: 593.6 });
   });
 
+  test("reads a root that is named for a screen reader", () => {
+    const markup =
+      '<svg xmlns="x" width="900" height="700" viewBox="0 0 900 700" role="img">' +
+      '<title width="1">Medium shot. Alice: width="2" is a word here.</title></svg>';
+    assert.deepEqual(svgSize(markup), { width: 900, height: 700 });
+  });
+
   test("falls back to the viewBox", () => {
     assert.deepEqual(svgSize('<svg viewBox="0 0 640 480">'), { width: 640, height: 480 });
   });

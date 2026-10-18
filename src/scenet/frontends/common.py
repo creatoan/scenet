@@ -123,7 +123,8 @@ def expand_place(setting: object) -> object:
             "'setting' must be a mapping of horizon, masses, time and weather. A "
             "description in prose is not accepted: interpreting one needs language "
             "understanding, and guessing produces panels that are confidently wrong. "
-            f"Name a place instead -- known places are {_known_places()}",
+            f"Name a place instead -- known places are {_known_places()}. To say in words "
+            "what the panel shows, for a reader who cannot see it, write `description:`",
             rule="invalid-field",
             loc=("setting",),
         )

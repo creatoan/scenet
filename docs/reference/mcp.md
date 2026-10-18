@@ -20,7 +20,7 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 | `list_puppets` | — | Every character, with each pose and expression it declares |
 | `validate` | `source`, `syntax`, `deep` | `{valid, findings}`, every finding at once; `valid` when none is an error |
 | `compile` | `source`, `syntax` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
-| `render` | `source`, `syntax`, `live_text` | A summary, then one SVG per panel, then one per page |
+| `render` | `source`, `syntax`, `live_text`, `aria` | A summary, then one SVG per panel, then one per page |
 
 Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
@@ -48,6 +48,11 @@ the network, or answers differently on a second call. A client can run them with
 : Emit selectable `<text>` instead of glyph outlines, as `scenet build --live-text` does. About
   a third the size, which matters inside a model's context, but it depends on the viewer having
   a matching font.
+
+`aria`
+: `true` (default): each panel is an image a screen reader can read, named with what it shows and
+  then everything said in it, in reading order, as `scenet build` writes it — which also gives a
+  model reading the SVG back the panel's words. `false` leaves that out, as `--no-aria` does.
 
 ### Findings
 

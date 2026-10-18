@@ -114,6 +114,31 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         assert distance <= face.r * TAIL_REACH, f"tail of {balloon.id} misses its speaker"
 
 
+def assert_words_are_carried(core: PanelCore, *, description: str | None = None) -> None:
+    """The panel carries the words it is read in, and each item its own.
+
+    - a description, which is the author's when one was written;
+    - a label on every balloon, caption and sound effect, holding what it letters --
+      a spoken caption's quotation marks aside, since they are lettering, not speech;
+    - and every label is a sentence, so two in a row are heard as two.
+    """
+    assert core.description, "a compiled panel has a description"
+    if description is not None:
+        assert core.description == " ".join(description.split())
+    items = [*core.balloons, *core.captions]
+    for item in items:
+        assert item.label, f"{item.id} has no label"
+        lettered = " ".join(item.lines).strip("“”")
+        assert lettered.rstrip(".") in item.label, f"{item.id}: {item.label!r} lacks {lettered!r}"
+    for effect in core.sfx:
+        assert effect.label, f"{effect.id} has no label"
+        assert effect.text in effect.label
+    for item in (*items, *core.sfx):
+        assert item.label is not None
+        closed = item.label.rstrip("\"'”\u2019»)]")
+        assert closed[-1:] in tuple(".!?…—\u2013-"), item.label
+
+
 def _on_the_frame(core: PanelCore, point: tuple[float, float]) -> bool:
     """Whether a point lies on the panel's edge: its outline when it has one, else its
     rectangle."""
@@ -158,9 +183,9 @@ def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:
             assert shared <= TOLERANCE * 100, f"{identifier} overlaps {other_id} by {shared}"
 
 
-# `url(#id)` in a style or presentation attribute, and `href="#id"` on a <use>.
+# `url(#id)` in a style or presentation attribute; `href="#id"` on a <use> is read as an
+# attribute.
 _URL_REFERENCE = re.compile(r"url\(#([^)]+)\)")
-_HREF_REFERENCE = re.compile(r'href="#([^"]+)"')
 # A glyph outline: flipped by `scale(s -s)`, which is how glyphs are told apart from any
 # other transformed path.
 _GLYPH_SCALE = re.compile(r"scale\(([0-9.]+) -([0-9.]+)\)")
@@ -182,7 +207,8 @@ def assert_svg_is_sound(
     """An emitted SVG parses, holds together and draws what was measured.
 
     - it parses as XML;
-    - every `id` is unique, and every `url(#…)` and `href="#…"` names one of them;
+    - every `id` is unique, and every `url(#…)`, `href="#…"` and `aria-labelledby` names
+      one of them -- read from attributes, so words in a `<desc>` cannot pass for one;
     - no number in it is `nan` or `inf`;
     - the root `viewBox` is the panel's size;
     - and every glyph is drawn at exactly the scale it was measured at, `font_size /
@@ -201,11 +227,18 @@ def assert_svg_is_sound(
     repeated = [name for name, count in Counter(ids).items() if count > 1]
     assert not repeated, f"ids are repeated: {repeated}"
     defined = set(ids)
-    for pattern in (_URL_REFERENCE, _HREF_REFERENCE):
-        for name in pattern.findall(svg):
-            assert name in defined, f"#{name} is referenced but never defined"
+    # Attributes only, here and below: the words of live text, a title and a desc are
+    # free to say "inf", or "url(#x)", or "scale(2 -2)".
+    for element in root.iter():
+        for attribute, value in element.attrib.items():
+            named = _URL_REFERENCE.findall(value)
+            if attribute.endswith("href") and value.startswith("#"):
+                named.append(value[1:])
+            for name in named:
+                assert name in defined, f"#{name} is referenced but never defined"
+        for name in element.get("aria-labelledby", "").split():
+            assert name in defined, f"aria-labelledby names #{name}, which is never defined"
 
-    # Attributes only: the words of live text are free to say "inf".
     for element in root.iter():
         for name, value in element.attrib.items():
             assert not _NON_FINITE.search(value), f"{name}={value!r} is not finite"
@@ -216,11 +249,63 @@ def assert_svg_is_sound(
         assert view_box[2:] == expected, f"viewBox {view_box} is not {size}"
 
     scales = {round(font_size / units, 6) for font_size in font_sizes for units in _units_per_em()}
-    for first, second in _GLYPH_SCALE.findall(svg):
+    transforms = " ".join(element.get("transform", "") for element in root.iter())
+    for first, second in _GLYPH_SCALE.findall(transforms):
         assert first == second, f"a glyph is scaled unevenly: {first} by {second}"
         assert any(abs(float(first) - scale) <= 1e-6 for scale in scales), (
             f"a glyph is drawn at scale {first}, but lettering was measured at {sorted(scales)}"
         )
+
+
+_SVG = "{http://www.w3.org/2000/svg}"
+
+
+def accessible_name(element: ElementTree.Element, root: ElementTree.Element | None = None) -> str:
+    """The name accname 1.2 gives an SVG element, as far as Scenet's output needs it.
+
+    `aria-labelledby` first (step 2B): the text of each element it names, in its order,
+    joined by spaces -- looked up in `root`, the whole document, when given. Otherwise the
+    element's own `<title>` child, as SVG-AAM names an SVG element.
+    """
+    document = root if root is not None else element
+    named = element.get("aria-labelledby", "").split()
+    if named:
+        found = {e.get("id"): e for e in document.iter() if e.get("id") is not None}
+        return " ".join("".join(found[name].itertext()) for name in named)
+    title = element.find(f"{_SVG}title")
+    return "".join(title.itertext()) if title is not None else ""
+
+
+def without_access(svg: str) -> str:
+    """An SVG with everything accessible output adds taken out again, as text.
+
+    `role`, `aria-labelledby` and `aria-hidden` attributes, and each `<title>` and `<desc>`
+    line. What is left must be exactly what `aria=False` writes.
+    """
+    svg = re.sub(r' role="[^"]*"| aria-labelledby="[^"]*"| aria-hidden="true"', "", svg)
+    return re.sub(r"\n *<(title|desc)\b[^>]*>[^<]*</\1>", "", svg)
+
+
+def assert_accessible(svg: str, core: PanelCore) -> None:
+    """A panel is one image, named with what it shows and then its words, in reading order.
+
+    - the root is `role="img"`, named by its one `<title>`, its first child;
+    - the name is the description, then every balloon, caption and sound effect's label in
+      `order` -- sound effects too, though they are painted under every balloon;
+    - and nothing gives it a description to be read as well: no `<desc>`, no
+      `aria-labelledby` or `aria-describedby`, which NVDA read a second time.
+    """
+    root = ElementTree.fromstring(svg)
+    assert root.get("role") == "img", "a panel is an image"
+    items = sorted([*core.balloons, *core.captions, *core.sfx], key=lambda item: item.order)
+    words = [item.label for item in items if item.label]
+    expected = " ".join([*([core.description] if core.description else []), *words])
+    assert expected, "a panel with no words has nothing to be named by"
+    assert next(iter(root)).tag == f"{_SVG}title"
+    assert accessible_name(root) == expected
+    assert root.find(f".//{_SVG}desc") is None
+    for attribute in ("aria-labelledby", "aria-describedby"):
+        assert root.get(attribute) is None, attribute
 
 
 def _shape(frame: CoreFrame) -> Polygon:

@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import merge, resolve_overrides, settle
+from scenet.compose import DESCRIPTION_KEY, NOT_A_DEFAULT, merge, resolve_overrides, settle
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
     LAYOUT_KEYS,
@@ -209,7 +209,12 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)
 
     # Anything alongside `panels` is a default every panel inherits, which saves
-    # restating the panel size and camera on each one.
+    # restating the panel size and camera on each one -- except a description, which
+    # says what one picture shows.
+    if DESCRIPTION_KEY in data:
+        raise PanelSyntaxError(
+            NOT_A_DEFAULT, source=source, rule="unknown-key", loc=(DESCRIPTION_KEY,)
+        )
     defaults = {key: value for key, value in data.items() if key != "panels"}
 
     try:

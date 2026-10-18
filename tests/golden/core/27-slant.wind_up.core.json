@@ -642,6 +642,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "shout",
+      "label": "Alice, shouting: Watch me!",
       "line_height": 30.63,
       "lines": [
         "Watch me!"
@@ -663,6 +664,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. A street at night. Alice, left, pointing, shouting.",
   "format_version": 1,
   "height": 753.76,
   "outline": [

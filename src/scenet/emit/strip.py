@@ -26,15 +26,37 @@ both used to be missing:
   panel's group keeps its name, as `panel-<name>`.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
-from scenet.core import PanelCore
-from scenet.emit.debug_svg import render_debug
-from scenet.emit.svg import attr, fmt, render
+from scenet.core import Box, PanelCore
+from scenet.emit.debug_svg import debug_body
+from scenet.emit.svg import accessible_name, attr, fmt, panel_body, typeface_of
 from scenet.solve.text import FontMetrics
+
+#: A document of panels, for a screen reader: a group, each panel in it an image. `group`
+#: is the role every engine computes and screen readers announce; `graphics-document` is
+#: the specification's, but Firefox reduces it to a plain document and no screen-reader
+#: test of it is published (ACT rule 7d6734 calls its support inconsistent).
+GROUP = ' role="group"'
+
+#: On a shape of the document's own -- a background, a page, an inset's ring -- so that
+#: WebKit, which exposes an unnamed shape under a named ancestor as an unnamed image, does
+#: not announce it.
+HIDDEN = ' aria-hidden="true"'
 
 # Space between panels, as a fraction of the tallest panel.
 GUTTER_FRACTION = 0.04
+
+
+def counted(number: int, noun: str) -> str:
+    """`1 panel`, `2 panels`: a count as it is said.
+
+    Example:
+        >>> counted(1, "panel"), counted(3, "page")
+        ('1 panel', '3 pages')
+    """
+    return f"{number} {noun}{'' if number == 1 else 's'}"
+
 
 MARGIN_FRACTION = 0.03
 
@@ -45,6 +67,7 @@ def render_strip(
     live_text: bool = False,
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
+    aria: bool = True,
 ) -> str:
     """Lay panels left to right in reading order.
 
@@ -60,6 +83,9 @@ def render_strip(
             `live_text` does not apply: the overlay labels in plain text already.
         fonts: The declared fonts the panels were lettered in, by digest -- what
             :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
+        aria: Make the strip a named group of panels, each one image a screen reader
+            reads whole, in reading order; its background hidden. `False` writes none of
+            it. An overlay is a diagnostic, and never has it.
 
     Returns:
         One SVG document holding every panel.
@@ -75,11 +101,14 @@ def render_strip(
     width = total_width + 2 * margin
     height = tallest + 2 * margin
 
+    access = aria and not debug
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(width)}" height="{fmt(height)}" '
-        f'viewBox="0 0 {fmt(width)} {fmt(height)}">',
-        f'  <rect x="0" y="0" width="{fmt(width)}" height="{fmt(height)}" fill="#ffffff"/>',
+        f'viewBox="0 0 {fmt(width)} {fmt(height)}"{GROUP if access else ""}>',
+        *([f"  <title>A strip of {counted(len(panels), 'panel')}.</title>"] if access else []),
+        f'  <rect x="0" y="0" width="{fmt(width)}" height="{fmt(height)}" fill="#ffffff"'
+        f"{HIDDEN if access else ''}/>",
     ]
 
     cursor = margin
@@ -96,6 +125,7 @@ def render_strip(
                 live_text=live_text,
                 debug=debug,
                 fonts=fonts,
+                aria=aria,
             )
         )
         cursor += core.width + gutter
@@ -114,6 +144,8 @@ def placed_panel(
     live_text: bool = False,
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
+    holes: Sequence[Box] = (),
+    aria: bool = True,
 ) -> list[str]:
     """One panel, rendered on its own and put at `(x, y)` in a larger document.
 
@@ -130,18 +162,23 @@ def placed_panel(
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         debug: Place the panel's diagnostic overlay instead of the panel.
         fonts: The declared fonts the panel was lettered in, by digest.
+        holes: Areas cut out of it, in its own units: on a page, the rings of the insets
+            set into it, which are drawn over it. Each is a clip of its own, nested inside
+            the frame's, so the clips intersect and two rings that touch need no geometry.
+        aria: Make the panel's group the image a screen reader reads, named as
+            :func:`accessible_name <scenet.emit.svg.accessible_name>` names a panel.
+            Never on an overlay.
 
     Returns:
         The lines of SVG, indented for the document's top level.
     """
     prefix = f"p{position}-"
     frame = f"{prefix}frame"
-    inner = (
-        render_debug(core, id_prefix=prefix)
+    body = (
+        debug_body(core, id_prefix=prefix)
         if debug
-        else render(core, fonts=fonts, live_text=live_text, id_prefix=prefix)
+        else panel_body(core, typeface_of(core, fonts=fonts), live_text=live_text, id_prefix=prefix)
     )
-    body = inner.split("\n", 2)[2].rsplit("</svg>", 1)[0]
     # Clipped to the panel's outline when it has one: a slanted panel's bounding box
     # overlaps its neighbour's, and only the outline is its own.
     shape = (
@@ -149,11 +186,29 @@ def placed_panel(
         if core.outline is not None
         else f'<rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}"/>'
     )
+    whole = f"M0 0 H{fmt(core.width)} V{fmt(core.height)} H0 Z"
+    cut = [
+        (
+            f"{prefix}hole-{number}",
+            f"{whole} M{fmt(hole.x)} {fmt(hole.y)} H{fmt(hole.right)} V{fmt(hole.bottom)} "
+            f"H{fmt(hole.x)} Z",
+        )
+        for number, hole in enumerate(holes, start=1)
+    ]
+    # The panel's group is the image a screen reader reads, named as the panel alone is.
+    named, names = accessible_name(core) if aria and not debug else ("", [])
     return [
-        f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})">',
+        f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})"{named}>',
+        *names,
         f'  <clipPath id="{frame}">{shape}</clipPath>',
+        *(
+            f'  <clipPath id="{hole}"><path d="{d}" clip-rule="evenodd"/></clipPath>'
+            for hole, d in cut
+        ),
         f'  <g clip-path="url(#{frame})">',
-        body.rstrip(),
+        *(f'  <g clip-path="url(#{hole})">' for hole, _ in cut),
+        "\n".join(body),
+        *("  </g>" for _ in cut),
         "  </g>",
         "  </g>",
     ]

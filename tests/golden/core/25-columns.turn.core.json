@@ -642,6 +642,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: ...A puddle?",
       "line_height": 30.63,
       "lines": [
         "...A",
@@ -664,6 +665,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. A street at dusk. Bob, centre, hands on hips, surprised.",
   "format_version": 1,
   "height": 1005.0,
   "width": 528.0

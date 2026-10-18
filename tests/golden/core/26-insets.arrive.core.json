@@ -983,6 +983,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: I brought popcorn?",
       "line_height": 30.63,
       "lines": [
         "I brought",
@@ -1005,6 +1006,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. A street by day. Alice, left, hands on hips; Bob, right, arms crossed, looking at Alice.",
   "format_version": 1,
   "height": 685.0,
   "width": 528.0

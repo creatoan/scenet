@@ -1317,6 +1317,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: It was hideous!",
       "line_height": 30.63,
       "lines": [
         "It was",
@@ -1339,6 +1340,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Alice, left, angry, swearing, looking at Bob; Bob, right, arms crossed, angry, looking at Alice.",
   "format_version": 1,
   "height": 700.0,
   "width": 1000.0

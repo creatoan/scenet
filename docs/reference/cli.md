@@ -11,7 +11,7 @@ Four commands: `build` compiles a document, `check` validates one without compil
 ## `scenet build`
 
 ```
-scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--live-text] [--strip] [--quiet]
+scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--live-text] [--no-aria] [--strip] [--quiet]
 ```
 
 Compiles `SOURCE` to SVG. The frontend is chosen by extension:
@@ -45,6 +45,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   font installed, and on the renderer kerning it as the compiler measured it — browsers
   do by default. The default emits outlines, which makes the file genuinely
   self-contained.
+
+`--no-aria`
+: Write no accessibility markup. By default each panel is an image a screen reader can read
+  — `role="img"`, named by its `<title>` with what it shows and then everything said in it, in
+  reading order — and a strip or a page is a named group of them; see
+  [accessible output](../howto/make_accessible_output.md). This leaves all of that out, for a
+  pipeline that post-processes the SVG, and is otherwise byte-identical: the same file less
+  those attributes and elements. Debug overlays never carry it.
 
 `--strip`
 : For a document of more than one panel, also lay every panel out side by side in reading

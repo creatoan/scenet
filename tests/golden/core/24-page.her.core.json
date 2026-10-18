@@ -1118,6 +1118,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Oh.",
       "line_height": 30.63,
       "lines": [
         "Oh."
@@ -1139,6 +1140,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. A street at night, in the rain. Alice, centre, surprised.",
   "format_version": 1,
   "height": 628.12,
   "width": 660.0

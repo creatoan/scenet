@@ -724,6 +724,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "whisper",
+      "label": "BOB, whispering: I left it on purpose.",
       "line_height": 40.83,
       "lines": [
         "I left it on",
@@ -754,6 +755,7 @@
       "font_size": 32.67,
       "id": "b1",
       "kind": "shout",
+      "label": "ALICE, shouting: You what?!",
       "line_height": 40.83,
       "lines": [
         "You what?!"
@@ -778,6 +780,7 @@
     }
   ],
   "captions": [],
+  "description": "Closer now. Bob will not meet her eye.",
   "format_version": 1,
   "height": 1370.0,
   "width": 1800.0
