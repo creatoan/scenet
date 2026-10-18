@@ -12,11 +12,15 @@ below 1.0 means.
 
 ## [0.11.1] - 2026-10-18
 
-**The documentation site documents the release you install, and shows off its playground.**
-The site's root now serves the latest release, `main` moves under `/dev/`, and each minor
-version keeps its own path; the playground says which version it runs, and the home page
-shows its example compiled, with a button to open it there. Nothing changes in the language,
-the command line or the Python API: upgrading from 0.11.0 changes no output.
+**The documentation site documents the release you install, and shows off its playground;
+and two comic-script fixes.** The site's root now serves the latest release, `main` moves under
+`/dev/`, and each minor version keeps its own path; the playground says which version it runs,
+and the home page shows its example compiled, with a button to open it there. A full stop
+now ends a PAGE heading, and no line of a comic script can stall the compiler.
+
+**Upgrading from 0.11.0.** The language, the command line and the Python API are unchanged,
+and so is every YAML document's output. A comic script changes only where a PAGE heading
+ends in a full stop, as in `PAGE 7.` or `PAGE TWENTY ONE.`: see Fixed.
 
 ### Added
 
