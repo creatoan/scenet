@@ -728,6 +728,7 @@
       "ink": "#111111",
       "italic": false,
       "kind": "spoken",
+      "label": "MAYA, off panel: -- and that was how the harbour got its light back.",
       "line_height": 35.0,
       "lines": [
         "“-- and that was",
@@ -738,6 +739,7 @@
       "speaker": "MAYA"
     }
   ],
+  "description": "Inside, the lamp blazes again. Both of them squint into the light.",
   "format_version": 1,
   "height": 893.33,
   "sfx": [
@@ -796,6 +798,7 @@
       ],
       "hollow": false,
       "id": "s0",
+      "label": "Sound effect, from THEO: FWOOMP.",
       "order": 0,
       "source": "THEO",
       "stroke": "#ffffff",

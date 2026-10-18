@@ -311,7 +311,24 @@ a script is a document people read, and stripping the description would make the
 worse for its primary audience.
 
 If you want the rain, say so with a directive: `@setting: {weather: rain}` draws it. The
-description beside it is never read.
+description beside it is never read by the compiler.
+
+It is read by people, though, and not only the artist: a panel's prose is its
+[`description`](../reference/language.md#description), what accessible output reads to somebody
+who cannot see the panel. Its lines become one paragraph, and Markdown's markers round a word
+(`**Alice**`, `_up_`) are taken off. **Everything** the prose says is read — a note to the artist,
+`NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
+directive, which is kept exactly as written and wins over the prose:
+
+```text
+PANEL 1
+@description: Alice waits on a corner in the rain.
+NOTE: redraw the rain, heavier.
+```
+
+A panel drawn `@over:` another does not inherit its prose: it is a different picture. A description
+in the front matter is refused, since every panel would inherit it. A line of prose holding a
+character an SVG cannot hold is reported at that line.
 
 ## Front matter
 
@@ -339,7 +356,8 @@ PANEL 1
 ```
 
 Everything in the front matter is a default every panel inherits — exactly the same
-mechanism as [shared defaults in a sequence](compile_a_sequence.md#shared-defaults).
+mechanism as [shared defaults in a sequence](compile_a_sequence.md#shared-defaults) — and so a
+`description`, which says what one panel shows, is refused there.
 
 Note the actor ids are written in caps here, to match the speaker cues. That is a
 convention, not a requirement; the ids simply have to agree.
@@ -371,7 +389,7 @@ assert list(panels) == ["1", "2"]
 assert panels["1"].camera.shot.value == "close_up"
 assert panels["1"].script[0].text == "Is anyone there?"
 
-# The prose line is preserved in the source and interpreted nowhere.
+# The prose line is interpreted nowhere: it is the panel's description, as written.
 assert panels["2"].script[0].kind.value == "whisper"
 ```
 

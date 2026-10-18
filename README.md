@@ -99,7 +99,8 @@ computational geometry. The same input always produces byte-identical output.
 browser, or an editor.** Framing, actor placement, balloon
 and caption placement, reading order, tail routing, drawn faces and the marks around them, tonal backdrops,
 pages of tiers and SVG emission all
-work, from either of two frontends. Not yet built: print output, and
+work, from either of two frontends — and every panel can be read by a screen reader, its
+description and then everything said in it, in reading order. Not yet built: print output, and
 the interpretation layer that would give a panel a *style*. See
 [the phase plan](docs/explanation/status.md) for detail.
 

@@ -24,6 +24,7 @@ import { promisify } from "node:util";
 import * as vscode from "vscode";
 
 import { Checker } from "./diagnostics";
+import { ownIds } from "./figures";
 import { buildInvocation } from "./invocation";
 
 const run = promisify(execFile);
@@ -181,7 +182,9 @@ function page(panels: readonly string[], notes: readonly string[]): string {
       : `<div class="notes">${notes.map((n) => `<p>${escapeHtml(n)}</p>`).join("")}</div>`;
   // The SVG is inlined rather than linked so the webview needs no local resource
   // roots, and it is emitted by this project's own compiler rather than fetched.
-  const figures = panels.map((svg) => `<figure>${svg}</figure>`).join("");
+  // Each figure's ids are its own: the page has one set, and a second panel's clip would
+  // otherwise find the first's.
+  const figures = panels.map((svg, index) => `<figure>${ownIds(svg, `f${index + 1}-`)}</figure>`).join("");
   return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head>
 <body>${noteBlock}${figures}</body></html>`;
 }

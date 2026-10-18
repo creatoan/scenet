@@ -686,6 +686,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: Missed.",
       "line_height": 30.63,
       "lines": [
         "Missed."
@@ -707,6 +708,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. A street at night. Bob, centre, hands on hips, laughing.",
   "format_version": 1,
   "height": 628.12,
   "outline": [

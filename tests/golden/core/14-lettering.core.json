@@ -721,6 +721,7 @@
       "font_size": 29.75,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You forgot your umbrella!",
       "line_height": 37.19,
       "lines": [
         "You forgot",
@@ -751,6 +752,7 @@
       "font_size": 29.75,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: I know.",
       "line_height": 37.19,
       "lines": [
         "I know."
@@ -780,6 +782,7 @@
       "font_size": 29.75,
       "id": "b2",
       "kind": "speech",
+      "label": "Alice: It has been raining since six this morning and you knew that.",
       "line_height": 37.19,
       "lines": [
         "It has been raining",
@@ -803,6 +806,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Alice, centre; Bob, centre.",
   "format_version": 1,
   "height": 850.0,
   "width": 1100.0

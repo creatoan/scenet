@@ -1609,6 +1609,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You forgot your umbrella!",
       "line_height": 30.63,
       "lines": [
         "You forgot",
@@ -1644,6 +1645,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Midnight. The corner of Fifth.",
       "line_height": 26.25,
       "lines": [
         "Midnight. The",
@@ -1653,6 +1655,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, right, arms crossed.",
   "format_version": 1,
   "height": 628.12,
   "width": 880.0

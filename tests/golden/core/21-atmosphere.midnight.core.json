@@ -1913,6 +1913,7 @@
       "font_size": 21.7,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You said you would be here at ten.",
       "line_height": 27.13,
       "lines": [
         "You said you",
@@ -1944,6 +1945,7 @@
       "font_size": 21.7,
       "id": "b1",
       "kind": "whisper",
+      "label": "Bob, whispering: I was.",
       "line_height": 27.13,
       "lines": [
         "I was."
@@ -1978,6 +1980,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Midnight. The docks.",
       "line_height": 23.25,
       "lines": [
         "Midnight.",
@@ -1987,6 +1990,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. The docks at night, in the rain. Alice, centre, arms crossed, looking at Bob; Bob, centre.",
   "format_version": 1,
   "height": 620.0,
   "width": 1100.0

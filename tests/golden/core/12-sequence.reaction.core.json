@@ -721,6 +721,7 @@
       "font_size": 19.6,
       "id": "b0",
       "kind": "whisper",
+      "label": "Bob, whispering: Do we.",
       "line_height": 24.5,
       "lines": [
         "Do we."
@@ -742,6 +743,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium close-up. Alice, left, pointing; Bob, right, arms crossed.",
   "format_version": 1,
   "height": 560.0,
   "width": 700.0

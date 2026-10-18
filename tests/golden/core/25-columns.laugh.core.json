@@ -1169,6 +1169,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Your new shoes, Bob!",
       "line_height": 30.63,
       "lines": [
         "Your new",
@@ -1199,6 +1200,7 @@
       "font_size": 24.5,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: Very funny.",
       "line_height": 30.63,
       "lines": [
         "Very funny."
@@ -1220,6 +1222,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. A street at dusk. Alice, centre, laughing, looking at Bob; Bob, centre, angry.",
   "format_version": 1,
   "height": 502.5,
   "width": 1350.0

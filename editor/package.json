@@ -2,7 +2,7 @@
   "name": "scenet",
   "displayName": "Scenet",
   "description": "Authoring support for Scenet comic-panel documents: schema-driven completion, validation, the findings of scenet check as you save, comic-script highlighting, and a live preview. Deliberately AI-generated -- an experiment first, a usable tool second.",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "publisher": "scenet",
   "license": "0BSD",
   "private": true,
@@ -108,7 +108,7 @@
     "test": "node --import tsx --test \"test/**/*.test.ts\""
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "@types/vscode": "~1.100.0",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
