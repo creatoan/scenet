@@ -368,7 +368,8 @@ The picture is centred either way and never stretched.
   one viewer and on its side in the next. Save it with the pixels turned instead.
 
 `scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
-on, without running the solver.
+on, without running the solver. In the [playground](https://creatoan.github.io/scenet/playground/),
+**Image…** adds a picture to the document's `art/` folder for as long as the tab is open.
 
 **Time and weather over a picture.** The veil sits over the picture and under the cast, and
 falling rain or snow over everything, exactly as over masses; `time` chooses their tint, and

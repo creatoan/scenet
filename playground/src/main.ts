@@ -25,6 +25,7 @@ import {
 import { exampleFiles } from "./examples";
 import { download, sourceFilename, stemFor, svgBlob, svgToPng, textBlob } from "./export";
 import { declaredPath, fontFileName } from "./fonts";
+import { declaredImagePath, imageFileName } from "./images";
 import {
   browserStore,
   clearDraft,
@@ -112,6 +113,8 @@ const resetButton = element<HTMLButtonElement>("reset");
 const shareButton = element<HTMLButtonElement>("share");
 const addFontButton = element<HTMLButtonElement>("add-font");
 const fontInput = element<HTMLInputElement>("font-file");
+const addImageButton = element<HTMLButtonElement>("add-image");
+const imageInput = element<HTMLInputElement>("image-file");
 const kindLabel = element<HTMLSpanElement>("kind");
 const splitter = element<HTMLDivElement>("splitter");
 const outputPane = element<HTMLElement>("output-pane");
@@ -634,6 +637,33 @@ async function main(): Promise<void> {
   };
   addFontButton.addEventListener("click", () => fontInput.click());
   fontInput.addEventListener("change", () => void addFonts());
+
+  // A picture the author adds goes into the document's art/ folder, where
+  // `setting: {image: art/Name.png}` finds it. Like a font, it is not kept across reloads
+  // and a share link does not carry it; the preview and the downloads embed it.
+  const addImages = async (): Promise<void> => {
+    if (compiler === undefined) return;
+    const added: string[] = [];
+    for (const file of Array.from(imageInput.files ?? [])) {
+      const name = imageFileName(file.name);
+      if (name === null) continue;
+      const path = declaredImagePath(name);
+      compiler.addFile(path, new Uint8Array(await file.arrayBuffer()));
+      added.push(path);
+    }
+    imageInput.value = "";
+    if (added.length === 0) {
+      setStatus("A picture must be a .png or .jpg file.");
+      return;
+    }
+    await compileNow();
+    setStatus(
+      `Added ${added.join(", ")}. Letter over it with setting: {image: ${added[0]}}. ` +
+        "Pictures stay in this tab only: a reload or a share link does not keep them.",
+    );
+  };
+  addImageButton.addEventListener("click", () => imageInput.click());
+  imageInput.addEventListener("change", () => void addImages());
 
   for (const [name, button] of Object.entries(tabs)) {
     button.addEventListener("click", () => {

@@ -57,6 +57,13 @@ scenet build examples/gallery/34-supplied-art.scene.yaml -o out/ --embed-images
 EXIF orientation as `image-file`, on the line that names it. That last one is refused because
 viewers disagree on obeying the tag: save the picture with its pixels turned instead.
 
+## In the playground
+
+**Image…**, above the editor, adds `.png` and `.jpg` files to the document's `art/` folder; name
+them as above, `setting: {image: art/Name.png}`. They last as long as the tab: a reload, or a share
+link, does not keep them. The preview and every download embed the picture, so a downloaded SVG
+or PNG stands alone.
+
 ## Say what it shows
 
 A screen reader reads each panel as one image, named by its description and then its lettering

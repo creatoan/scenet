@@ -13,7 +13,11 @@ below 1.0 means.
 **Upgrading from 0.11.1.**
 
 - **A font path written with `\` between folders is refused**, on Windows as everywhere else:
-  write `/`.
+  write `/`. So is one holding a control character, which used to crash `build` and `check`.
+- **`conflicting-setting` covers a picture too**: an `image` beside a `place`, `masses` or a
+  `horizon`. Its SARIF description and help say so; a place beside masses is reported exactly
+  as before. A panel that inherits a place and names an image is refused the same way; it
+  writes `place: null` beside the image.
 - **A comic script's prose is now read**, as its panel's description. A line of it holding a
   control character an SVG cannot hold, which used to pass unnoticed, is reported at that
   line as `invalid-field`. `description` in a script's front matter is refused.
@@ -56,6 +60,9 @@ below 1.0 means.
   names, by the path it writes, as base64. They stand in for the document's folder, read in
   memory, so a model can letter over a picture — or in a font — it sends; `render` embeds
   the picture. Still five tools.
+- **The playground's Image… button** adds a `.png` or `.jpg` to the document's `art/` folder,
+  for as long as the tab is open, and the preview and every download embed it. The VS Code
+  preview embeds pictures too, since it is not drawn beside the document.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

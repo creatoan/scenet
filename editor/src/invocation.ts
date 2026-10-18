@@ -81,7 +81,9 @@ export function buildInvocation(request: BuildRequest): Invocation {
   const { command, leadingArgs } = parseExecutable(request.executable);
   return {
     command,
-    args: [...leadingArgs, "build", request.file, "-o", request.output],
+    // The preview is written to a scratch folder and inlined into a webview, where a
+    // picture linked by the path the document wrote would resolve against neither.
+    args: [...leadingArgs, "build", request.file, "-o", request.output, "--embed-images"],
     cwd: request.workspaceFolder ?? dirname(request.file),
   };
 }
