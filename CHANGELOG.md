@@ -10,6 +10,14 @@ below 1.0 means.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-18
+
+**The documentation site documents the release you install, and shows off its playground.**
+The site's root now serves the latest release, `main` moves under `/dev/`, and each minor
+version keeps its own path; the playground says which version it runs, and the home page
+shows its example compiled, with a button to open it there. Nothing changes in the language,
+the command line or the Python API: upgrading from 0.11.0 changes no output.
+
 ### Added
 
 - **The documentation site documents what you install.** Its root, and every address
@@ -28,7 +36,7 @@ below 1.0 means.
 - **The playground says which version it runs**, with the same version switcher as the
   documentation, keeping a shared document across the switch. On `main`'s and on an old
   release's it says so, with a link to the latest. Playgrounds built before this change,
-  those of 0.11 and earlier, carry no switcher.
+  those of 0.11.0 and earlier, carry no switcher.
 - **The documentation's home page shows its example compiled** — the file `scenet build`
   writes for it, kept current with the golden files — and a button opens that example in the
   playground. The navbar names the playground beside the sections, and every link to it
