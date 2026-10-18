@@ -49,8 +49,10 @@ jobs:
         with:
           enable-cache: true
 
+      # Every group, as CI's test jobs: mutmut's clean run is the whole suite, and a test
+      # that needs a group this skips fails it before a single mutant is tried.
       - name: Sync dependencies
-        run: uv sync --frozen --group mutation
+        run: uv sync --frozen --all-groups
 
       # mutmut resumes, and only re-tests functions whose code changed, so keeping its
       # working directory between runs makes most weeks incremental.

@@ -48,6 +48,12 @@ below 1.0 means.
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
 
+### Fixed
+
+- **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
+  documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
+  It now installs every group, as CI's test jobs do.
+
 ### Security
 
 - **A comic script cannot stall the compiler with one crafted line.** The PAGE heading

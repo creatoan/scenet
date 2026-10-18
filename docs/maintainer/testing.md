@@ -212,10 +212,11 @@ everything, runs only the tests that reach the mutated function, and resumes whe
 off, re-testing only functions whose code changed. A tool that ran the whole suite once per
 mutant would take days.
 
-**Running it.** It is in its own dependency group, so a plain `uv sync` does not install it:
+**Running it.** It is in its own dependency group, so a plain `uv sync` does not install it.
+Install every group: its clean run is the whole suite, and `tests/test_site.py` needs `docs`:
 
 ```bash
-uv sync --group mutation
+uv sync --all-groups
 ulimit -v 2097152
 uv run mutmut run --max-children 4
 uv run mutmut results
