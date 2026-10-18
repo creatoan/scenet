@@ -162,7 +162,8 @@ what fraction of the panel a figure fills. This is the single most consequential
 
 ## `setting`
 
-Where and when the panel happens, drawn as **tonal masses** rather than as geometry.
+Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
+picture drawn elsewhere.
 
 ```yaml
 setting:
@@ -170,6 +171,13 @@ setting:
   horizon: mid       # high | mid | low
   time: night        # dawn | day | dusk | night
   weather: rain      # clear | rain | fog | snow
+```
+
+```yaml
+setting:
+  image: art/p01-street.png   # a PNG or JPEG, relative to this document
+  fit: cover                  # cover | contain; left out, cover
+  weather: rain               # drawn over the picture, as over masses
 ```
 
 A panel with no `setting` renders exactly as it always did: figures on white.
@@ -277,7 +285,13 @@ language. The expansion happens in the frontend, exactly as `alice left_of bob` 
 relation — so by the time anything downstream sees a backdrop, there is one representation of it.
 
 `place` and `masses` are **mutually exclusive**. A place *is* a mass list; writing both asks two
-questions at once, and the compiler will not guess which was meant.
+questions at once, and the compiler will not guess which was meant. An `image` is a backdrop of
+its own, so it is written instead of either, never beside one — and never beside a `horizon`,
+which says where masses meet the ground; a picture has its own. A panel that inherits a place
+from a scene's defaults, or from the panel it is `over`, leaves it out with `place: null`
+beside its image. `scenet check` reports any of these pairs as `conflicting-setting`, at the
+key other than `image`, and a `fit` with no image as `invalid-field`. See
+[An image behind the cast](#an-image-behind-the-cast).
 
 **Free prose is deliberately not offered.** `setting: "a rainy street corner at midnight"` needs
 language understanding, and the comic-script frontend already refuses to interpret prose on the
@@ -321,6 +335,18 @@ be the more literal reading and would bury them. Falling weather goes over every
 Rain flips to ink over a bright sky and to paper over a dark one, as inkers do, because a white
 streak over noon is invisible and a black one over midnight is too. Snow never flips: snow is
 white, and the overcast veil is what gives it something to read against.
+
+### An image behind the cast
+
+`image` names a picture drawn elsewhere — painted, pencilled, photographed or rendered — and the
+cast is drawn in front of it, lettered by the same rules as on any other backdrop.
+
+| Key | Values | Default |
+|---|---|---|
+| `image` | A PNG or JPEG file, relative to the folder the document is in | — |
+| `fit` | `cover`: fill the panel, cropping what overhangs, equally on both sides. `contain`: show the whole picture, the panel showing round it | `cover` |
+
+The picture is centred either way and never stretched.
 
 
 ## `cast`
@@ -1552,9 +1578,9 @@ An `over:` chain cannot be resolved. A panel inherits from one that does not exi
 
 ### `scenet/conflicting-setting`
 
-A setting names a place and lists masses. A place *is* a mass list -- the preset expands into exactly what an author could have written -- so naming one and listing the other asks two questions at once, and the compiler will not guess which was meant.
+A setting says what is behind the cast twice. A place *is* a mass list -- the preset expands into exactly what an author could have written -- so naming one and listing the other asks two questions at once, and the compiler will not guess which was meant. A supplied `image` is a whole backdrop of its own, so it stands alone too: beside a place, masses, or a horizon, which only says where masses meet the ground.
 
-**Fix:** Keep the place, or keep the masses. docs/reference/language.md prints what each place expands into.
+**Fix:** Keep one of the place, the masses and the image. On a panel that inherits one, write it as `null` to leave it out. docs/reference/language.md prints what each place expands into.
 
 ### `scenet/dropped-relation`
 
@@ -1880,6 +1906,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "right"
       ],
       "title": "Facing",
+      "type": "string"
+    },
+    "Fit": {
+      "description": "How a supplied picture fills the panel, keeping its own proportions.\n\n| Fit | The picture | SVG's word |\n|---|---|---|\n| `cover` | Fills the panel; what overhangs it is cropped, equally on both sides | `slice` |\n| `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet` |\n\nCentred either way. A picture is never stretched: its shape is a fact about it, and\na figure drawn into it would be stretched with it.",
+      "enum": [
+        "cover",
+        "contain"
+      ],
+      "title": "Fit",
       "type": "string"
     },
     "FontSpec": {
@@ -2212,29 +2247,148 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SettingSpec": {
       "additionalProperties": false,
-      "description": "Where and when the panel happens, as tonal masses rather than drawn geometry.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"setting: {place: docks, time: night}\")\n    >>> panel.setting.time.value, len(panel.setting.masses) > 0\n    ('night', True)",
+      "dependentRequired": {
+        "fit": [
+          "image"
+        ]
+      },
+      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n    image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,\n        relative to the folder the document is in, as a font is. The compiler reads\n        how many pixels it has and nothing else; see :mod:`scenet.images`.\n    fit: How the picture fills the panel. Left out, it is `cover`.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"setting: {place: docks, time: night}\")\n    >>> panel.setting.time.value, len(panel.setting.masses) > 0\n    ('night', True)",
       "not": {
-        "required": [
-          "place",
-          "masses"
+        "anyOf": [
+          {
+            "properties": {
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "place",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "place"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "horizon": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "horizon"
+            ]
+          }
         ]
       },
       "properties": {
+        "fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "horizon": {
-          "$ref": "#/$defs/Horizon",
-          "default": "mid"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Horizon",
+              "default": "mid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Image"
         },
         "masses": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Mass"
-          },
-          "title": "Masses",
-          "type": "array"
+          "anyOf": [
+            {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Mass"
+              },
+              "title": "Masses",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "place": {
-          "$ref": "#/$defs/Place",
-          "description": "A named place, which stands for the list of masses it expands into. Write this or `masses`, not both."
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Place"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them."
         },
         "time": {
           "$ref": "#/$defs/TimeOfDay",
@@ -2495,7 +2649,9 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     "setting": {
       "$ref": "#/$defs/SettingSpec",
       "default": {
+        "fit": null,
         "horizon": "mid",
+        "image": null,
         "masses": [],
         "time": "day",
         "weather": "clear"

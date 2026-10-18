@@ -196,6 +196,15 @@
       "title": "Facing",
       "type": "string"
     },
+    "Fit": {
+      "description": "How a supplied picture fills the panel, keeping its own proportions.\n\n| Fit | The picture | SVG's word |\n|---|---|---|\n| `cover` | Fills the panel; what overhangs it is cropped, equally on both sides | `slice` |\n| `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet` |\n\nCentred either way. A picture is never stretched: its shape is a fact about it, and\na figure drawn into it would be stretched with it.",
+      "enum": [
+        "cover",
+        "contain"
+      ],
+      "title": "Fit",
+      "type": "string"
+    },
     "FontSpec": {
       "anyOf": [
         {
@@ -646,6 +655,158 @@
       "title": "LetteringSpec",
       "type": "object"
     },
+    "PartialSettingSpec": {
+      "additionalProperties": false,
+      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n    image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,\n        relative to the folder the document is in, as a font is. The compiler reads\n        how many pixels it has and nothing else; see :mod:`scenet.images`.\n    fit: How the picture fills the panel. Left out, it is `cover`.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"setting: {place: docks, time: night}\")\n    >>> panel.setting.time.value, len(panel.setting.masses) > 0\n    ('night', True)\n\nIn a scene any of these may be inherited, so none is required here.",
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "place",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "place"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "horizon": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "horizon"
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "horizon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Horizon",
+              "default": "mid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Image"
+        },
+        "masses": {
+          "anyOf": [
+            {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Mass"
+              },
+              "title": "Masses",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "place": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Place"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them."
+        },
+        "time": {
+          "$ref": "#/$defs/TimeOfDay",
+          "default": "day"
+        },
+        "weather": {
+          "$ref": "#/$defs/Weather",
+          "default": "clear"
+        }
+      },
+      "title": "SettingSpec",
+      "type": "object"
+    },
     "Place": {
       "description": "A named setting, expanded into masses by the frontend.\n\nTen to start with, chosen to span the distinctions that change how a backdrop is\nbuilt rather than to be a catalogue: exterior and interior, built and natural, open\nand enclosed. `alley` is the one with a foreground mass, which is what makes it\nread as a place you are standing *in* rather than looking at.\n\nExample:\n    >>> from scenet.places import PLACES, Place\n    >>> [mass.kind.value for mass in PLACES[Place.SHORE]]\n    ['sky', 'water', 'ground']",
       "enum": [
@@ -791,29 +952,148 @@
     },
     "SettingSpec": {
       "additionalProperties": false,
-      "description": "Where and when the panel happens, as tonal masses rather than drawn geometry.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"setting: {place: docks, time: night}\")\n    >>> panel.setting.time.value, len(panel.setting.masses) > 0\n    ('night', True)",
+      "dependentRequired": {
+        "fit": [
+          "image"
+        ]
+      },
+      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n    image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,\n        relative to the folder the document is in, as a font is. The compiler reads\n        how many pixels it has and nothing else; see :mod:`scenet.images`.\n    fit: How the picture fills the panel. Left out, it is `cover`.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"setting: {place: docks, time: night}\")\n    >>> panel.setting.time.value, len(panel.setting.masses) > 0\n    ('night', True)",
       "not": {
-        "required": [
-          "place",
-          "masses"
+        "anyOf": [
+          {
+            "properties": {
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "place",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "place": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "place"
+            ]
+          },
+          {
+            "properties": {
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "masses": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "masses"
+            ]
+          },
+          {
+            "properties": {
+              "horizon": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "image": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "image",
+              "horizon"
+            ]
+          }
         ]
       },
       "properties": {
+        "fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "horizon": {
-          "$ref": "#/$defs/Horizon",
-          "default": "mid"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Horizon",
+              "default": "mid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Image"
         },
         "masses": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Mass"
-          },
-          "title": "Masses",
-          "type": "array"
+          "anyOf": [
+            {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Mass"
+              },
+              "title": "Masses",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "place": {
-          "$ref": "#/$defs/Place",
-          "description": "A named place, which stands for the list of masses it expands into. Write this or `masses`, not both."
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Place"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them."
         },
         "time": {
           "$ref": "#/$defs/TimeOfDay",
@@ -1213,9 +1493,11 @@
             "type": "array"
           },
           "setting": {
-            "$ref": "#/$defs/SettingSpec",
+            "$ref": "#/$defs/PartialSettingSpec",
             "default": {
+              "fit": null,
               "horizon": "mid",
+              "image": null,
               "masses": [],
               "time": "day",
               "weather": "clear"
@@ -1281,9 +1563,11 @@
       "type": "array"
     },
     "setting": {
-      "$ref": "#/$defs/SettingSpec",
+      "$ref": "#/$defs/PartialSettingSpec",
       "default": {
+        "fit": null,
         "horizon": "mid",
+        "image": null,
         "masses": [],
         "time": "day",
         "weather": "clear"

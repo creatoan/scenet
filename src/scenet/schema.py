@@ -210,8 +210,25 @@ def _accept_verb_tagged_script(schema: dict[str, Any], definitions: dict[str, An
     script["items"] = {"anyOf": branches}
 
 
+#: The setting keys that cannot be written together, mirroring `expand_place`: a place
+#: *is* a mass list, and a picture is a backdrop of its own, which a horizon -- placing
+#: masses -- has nothing to do with.
+EXCLUSIVE_SETTING_KEYS = (
+    ("place", "masses"),
+    ("image", "place"),
+    ("image", "masses"),
+    ("image", "horizon"),
+)
+
+
 def _accept_named_places(definitions: dict[str, Any]) -> None:
-    """Mirror `expand_place`: a setting may name a place, but not alongside masses."""
+    """Mirror `expand_place`: a setting names a place, lists masses or names an image.
+
+    Each of those, and a horizon, may also be `null`, which takes away one a panel would
+    otherwise inherit (`settle`) -- which is why two of them only clash when neither is.
+    A fit needs an image; in a scene the image may be inherited, so `_inheritable` lets a
+    panel give the fit alone.
+    """
     definitions["Place"] = {
         "title": "Place",
         "description": inspect.cleandoc(Place.__doc__ or ""),
@@ -219,14 +236,26 @@ def _accept_named_places(definitions: dict[str, Any]) -> None:
         "enum": [place.value for place in Place],
     }
     setting: dict[str, Any] = definitions["SettingSpec"]
-    setting["properties"]["place"] = {
-        "$ref": "#/$defs/Place",
+    properties: dict[str, Any] = setting["properties"]
+    properties["place"] = {
+        "anyOf": [{"$ref": "#/$defs/Place"}, {"type": "null"}],
         "description": (
             "A named place, which stands for the list of masses it expands into. "
-            "Write this or `masses`, not both."
+            "Write this, `masses` or `image`, never two of them."
         ),
     }
-    setting["not"] = {"required": ["place", "masses"]}
+    for key in ("masses", "horizon"):
+        properties[key] = {"anyOf": [properties[key], {"type": "null"}]}
+    setting["not"] = {
+        "anyOf": [
+            {
+                "required": list(pair),
+                "properties": {key: {"not": {"type": "null"}} for key in pair},
+            }
+            for pair in EXCLUSIVE_SETTING_KEYS
+        ]
+    }
+    setting["dependentRequired"] = {"fit": ["image"]}
 
 
 def _accept_panel_names(definitions: dict[str, Any]) -> None:
@@ -262,7 +291,10 @@ def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str,
         partial = _partial_definition(name, definitions)
         return node if partial == name else {**node, "$ref": f"#/$defs/{partial}"}
 
-    loosened = {key: value for key, value in node.items() if key != "required"}
+    # A key one field needs beside it may be inherited as much as a required one.
+    loosened = {
+        key: value for key, value in node.items() if key not in ("required", "dependentRequired")
+    }
     if isinstance(node.get("additionalProperties"), dict):
         loosened["additionalProperties"] = _inheritable(node["additionalProperties"], definitions)
     if "properties" in node:

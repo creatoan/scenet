@@ -99,6 +99,7 @@ from scenet.ir import (
     Column,
     Corner,
     Facing,
+    Fit,
     FontSpec,
     Horizon,
     Inset,
@@ -218,6 +219,7 @@ __all__ = [
     "InsetOrder",
     # -- describing where and when it happens --------------------------------
     "PLACES",
+    "Fit",
     "Horizon",
     "Mass",
     "MassKind",

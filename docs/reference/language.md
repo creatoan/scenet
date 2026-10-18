@@ -82,7 +82,8 @@ what fraction of the panel a figure fills. This is the single most consequential
 
 ## `setting`
 
-Where and when the panel happens, drawn as **tonal masses** rather than as geometry.
+Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
+picture drawn elsewhere.
 
 ```yaml
 setting:
@@ -90,6 +91,13 @@ setting:
   horizon: mid       # high | mid | low
   time: night        # dawn | day | dusk | night
   weather: rain      # clear | rain | fog | snow
+```
+
+```yaml
+setting:
+  image: art/p01-street.png   # a PNG or JPEG, relative to this document
+  fit: cover                  # cover | contain; left out, cover
+  weather: rain               # drawn over the picture, as over masses
 ```
 
 A panel with no `setting` renders exactly as it always did: figures on white.
@@ -197,7 +205,13 @@ language. The expansion happens in the frontend, exactly as `alice left_of bob` 
 relation — so by the time anything downstream sees a backdrop, there is one representation of it.
 
 `place` and `masses` are **mutually exclusive**. A place *is* a mass list; writing both asks two
-questions at once, and the compiler will not guess which was meant.
+questions at once, and the compiler will not guess which was meant. An `image` is a backdrop of
+its own, so it is written instead of either, never beside one — and never beside a `horizon`,
+which says where masses meet the ground; a picture has its own. A panel that inherits a place
+from a scene's defaults, or from the panel it is `over`, leaves it out with `place: null`
+beside its image. `scenet check` reports any of these pairs as `conflicting-setting`, at the
+key other than `image`, and a `fit` with no image as `invalid-field`. See
+[An image behind the cast](#an-image-behind-the-cast).
 
 **Free prose is deliberately not offered.** `setting: "a rainy street corner at midnight"` needs
 language understanding, and the comic-script frontend already refuses to interpret prose on the
@@ -241,6 +255,18 @@ be the more literal reading and would bury them. Falling weather goes over every
 Rain flips to ink over a bright sky and to paper over a dark one, as inkers do, because a white
 streak over noon is invisible and a black one over midnight is too. Snow never flips: snow is
 white, and the overcast veil is what gives it something to read against.
+
+### An image behind the cast
+
+`image` names a picture drawn elsewhere — painted, pencilled, photographed or rendered — and the
+cast is drawn in front of it, lettered by the same rules as on any other backdrop.
+
+| Key | Values | Default |
+|---|---|---|
+| `image` | A PNG or JPEG file, relative to the folder the document is in | — |
+| `fit` | `cover`: fill the panel, cropping what overhangs, equally on both sides. `contain`: show the whole picture, the panel showing round it | `cover` |
+
+The picture is centred either way and never stretched.
 
 
 ## `cast`

@@ -44,6 +44,7 @@ __all__ = [
     "Corner",
     "Face",
     "Facing",
+    "Fit",
     "FontSpec",
     "Horizon",
     "Inset",
@@ -653,6 +654,22 @@ class Weather(StrEnum):
     SNOW = "snow"
 
 
+class Fit(StrEnum):
+    """How a supplied picture fills the panel, keeping its own proportions.
+
+    | Fit | The picture | SVG's word |
+    |---|---|---|
+    | `cover` | Fills the panel; what overhangs it is cropped, equally on both sides | `slice` |
+    | `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet` |
+
+    Centred either way. A picture is never stretched: its shape is a fact about it, and
+    a figure drawn into it would be stretched with it.
+    """
+
+    COVER = "cover"
+    CONTAIN = "contain"
+
+
 class PanelSpec(Strict):
     """The panel's own dimensions.
 
@@ -804,7 +821,7 @@ class LetteringSpec(Strict):
 
 
 class SettingSpec(Strict):
-    """Where and when the panel happens, as tonal masses rather than drawn geometry.
+    """Where and when the panel happens: tonal masses, or a picture drawn elsewhere.
 
     Attributes:
         horizon: Where the ground meets what is behind it.
@@ -812,6 +829,10 @@ class SettingSpec(Strict):
             place in the surface syntax.
         time: When it happens, which shifts the value ladder.
         weather: What the air is doing.
+        image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,
+            relative to the folder the document is in, as a font is. The compiler reads
+            how many pixels it has and nothing else; see :mod:`scenet.images`.
+        fit: How the picture fills the panel. Left out, it is `cover`.
 
     **There is no `place` field here, deliberately.** `place: docks` is surface syntax
     that the frontend expands into exactly the mass list an author could have written
@@ -834,6 +855,39 @@ class SettingSpec(Strict):
     masses: tuple[Mass, ...] = ()
     time: TimeOfDay = TimeOfDay.DAY
     weather: Weather = Weather.CLEAR
+    image: SvgText | None = None
+    fit: Fit | None = None
+
+    @model_validator(mode="after")
+    def check_backdrop(self) -> Self:
+        """Refuse a picture beside masses, and a fit with no picture to fit.
+
+        The frontend says so first, at the line that was written; this holds the same
+        rule for a setting built in Python. A horizon beside a picture is the frontend's
+        alone to refuse: here its default and a written one look the same.
+
+        Returns:
+            The validated setting.
+
+        Raises:
+            RuleViolationError: `conflicting-setting` for masses and a picture, and
+                `invalid-field` for a fit with nothing to fit.
+        """
+        if self.image is not None and self.masses:
+            raise RuleViolationError(
+                "'setting' lists masses and names an image; the picture is the whole "
+                "backdrop, so write one or the other",
+                rule="conflicting-setting",
+                loc=("setting", "masses"),
+            )
+        if self.fit is not None and self.image is None:
+            raise RuleViolationError(
+                "'setting' has a fit and no image; `fit` says how a picture fills the "
+                "panel, so it goes beside `image`",
+                rule="invalid-field",
+                loc=("setting", "fit"),
+            )
+        return self
 
     @property
     def is_bare(self) -> bool:

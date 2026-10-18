@@ -15,6 +15,7 @@ import yaml
 from pydantic import ValidationError
 
 from scenet import compile_source, parse_panel
+from scenet.diagnostics import diagnose_source
 from scenet.errors import PanelSyntaxError
 from scenet.frontends.common import normalise
 from scenet.frontends.yaml_front import parse_scene
@@ -271,9 +272,10 @@ class TestAnImageIsABackdropOfItsOwn:
         assert raised.value.loc == ("setting", "place")
 
     def test_a_fit_needs_an_image(self):
-        with pytest.raises(PanelSyntaxError, match="fit") as raised:
+        with pytest.raises(PanelSyntaxError, match="goes beside `image`"):
             parse_panel("setting: {fit: contain}")
-        assert raised.value.rule == "invalid-field"
+        found = diagnose_source("setting: {fit: contain}")
+        assert [(item.rule, item.path) for item in found] == [("invalid-field", ("setting", "fit"))]
 
     def test_an_unknown_fit_is_refused(self):
         with pytest.raises(PanelSyntaxError, match="cover"):

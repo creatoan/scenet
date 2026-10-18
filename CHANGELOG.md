@@ -28,6 +28,11 @@ below 1.0 means.
 
 ### Added
 
+- **`setting: {image: ..., fit: cover | contain}`**: a picture drawn elsewhere, behind the
+  cast (#70). It is a backdrop of its own, so it is written instead of a `place` or
+  `masses`, never beside them or beside a `horizon` (`conflicting-setting`); a `fit` with
+  no image is `invalid-field`. A panel that inherits a place writes `place: null` beside
+  its image, and the editor's schema now accepts that `null`.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

@@ -312,14 +312,18 @@ RULES: dict[str, Rule] = {
         help="Check the name against the list in docs/reference/language.md.",
     ),
     "conflicting-setting": Rule(
-        summary="A setting names a place and lists masses",
+        summary="A setting says what is behind the cast twice",
         description=(
             "A place *is* a mass list -- the preset expands into exactly what an author "
             "could have written -- so naming one and listing the other asks two "
-            "questions at once, and the compiler will not guess which was meant."
+            "questions at once, and the compiler will not guess which was meant. A "
+            "supplied `image` is a whole backdrop of its own, so it stands alone too: "
+            "beside a place, masses, or a horizon, which only says where masses meet the "
+            "ground."
         ),
         help=(
-            "Keep the place, or keep the masses. docs/reference/language.md prints "
+            "Keep one of the place, the masses and the image. On a panel that inherits "
+            "one, write it as `null` to leave it out. docs/reference/language.md prints "
             "what each place expands into."
         ),
     ),

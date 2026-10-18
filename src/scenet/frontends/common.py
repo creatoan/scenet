@@ -111,7 +111,8 @@ def expand_place(setting: object) -> object:
 
     Raises:
         PanelSyntaxError: `setting` is not a mapping (prose is not accepted), the place
-            is not one the library has, or `place` was given alongside `masses`.
+            is not one the library has, `place` was given alongside `masses`, or an
+            `image` beside a place, masses or a horizon.
 
     Example:
         >>> from scenet.frontends.common import expand_place
@@ -120,7 +121,7 @@ def expand_place(setting: object) -> object:
     """
     if not isinstance(setting, dict):
         raise PanelSyntaxError(
-            "'setting' must be a mapping of horizon, masses, time and weather. A "
+            "'setting' must be a mapping of horizon, masses, time, weather and image. A "
             "description in prose is not accepted: interpreting one needs language "
             "understanding, and guessing produces panels that are confidently wrong. "
             f"Name a place instead -- known places are {_known_places()}. To say in words "
@@ -128,6 +129,7 @@ def expand_place(setting: object) -> object:
             rule="invalid-field",
             loc=("setting",),
         )
+    _image_stands_alone(setting)
     if "place" not in setting:
         return setting
 
@@ -154,6 +156,40 @@ def expand_place(setting: object) -> object:
     expanded = {key: value for key, value in setting.items() if key != "place"}
     expanded["masses"] = list(PLACES[place])
     return expanded
+
+
+#: What a picture cannot be written beside, and why, in the order they are reported. A
+#: horizon is here because it places masses, and a picture brings none to place.
+_BESIDE_AN_IMAGE = {
+    "place": (
+        "names a place and an image; the picture is the whole backdrop, and so is the "
+        "place. On a panel that inherits the place, write `place: null` beside the image"
+    ),
+    "masses": (
+        "lists masses and names an image; the picture is the whole backdrop, so write one "
+        "or the other. On a panel that inherits the masses, write `masses: null`"
+    ),
+    "horizon": (
+        "gives a horizon and names an image; a horizon says where masses meet the ground, "
+        "and a picture has its own. On a panel that inherits it, write `horizon: null`"
+    ),
+}
+
+
+def _image_stands_alone(setting: dict[Any, Any]) -> None:
+    """Refuse a picture written beside a place, masses or a horizon.
+
+    Reported at the other key, as a place beside masses is reported at the place: on a
+    panel that inherits one of the two, that is the one a scene's default wrote, and
+    the finding then points at it once rather than at every panel.
+    """
+    if setting.get("image") is None:
+        return
+    for key, why in _BESIDE_AN_IMAGE.items():
+        if setting.get(key) is not None:
+            raise PanelSyntaxError(
+                f"'setting' {why}", rule="conflicting-setting", loc=("setting", key)
+            )
 
 
 def _known_places() -> str:

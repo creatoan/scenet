@@ -227,7 +227,7 @@ note as information rather than a red squiggle.
 | `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, or no room for its tiers |
 | `scenet/unknown-puppet` | error | A `reference` naming a character the library lacks |
 | `scenet/unknown-place` | error | A setting's `place` naming one the library does not have |
-| `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses` |
+| `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |
 | `scenet/unknown-pose` | error | A `pose` naming one its puppet does not declare |
 | `scenet/unknown-expression` | error | An `expression` naming one its puppet does not declare |
 | `scenet/font-file` | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
