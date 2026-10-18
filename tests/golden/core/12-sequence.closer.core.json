@@ -713,6 +713,7 @@
       "font_size": 19.6,
       "id": "b0",
       "kind": "shout",
+      "label": "Bob, shouting: Fine. Talk.",
       "line_height": 24.5,
       "lines": [
         "Fine. Talk."
@@ -734,6 +735,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up, from a low angle. Alice, left, pointing; Bob, right, hands on hips.",
   "format_version": 1,
   "height": 560.0,
   "width": 700.0

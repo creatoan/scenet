@@ -1151,6 +1151,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "editorial",
+      "label": "Editor's note: It never rains at noon.",
       "line_height": 23.25,
       "lines": [
         "It never rains",
@@ -1160,6 +1161,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. The docks by day. Alice, centre, arms crossed, looking at Bob; Bob, centre.",
   "format_version": 1,
   "height": 620.0,
   "width": 1100.0

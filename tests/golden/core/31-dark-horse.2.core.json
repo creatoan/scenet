@@ -724,6 +724,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "shout",
+      "label": "MAYA, shouting: Somebody!",
       "line_height": 40.83,
       "lines": [
         "Somebody!"
@@ -753,6 +754,7 @@
       "font_size": 32.67,
       "id": "b1",
       "kind": "whisper",
+      "label": "THEO, whispering: I was going to fetch it.",
       "line_height": 40.83,
       "lines": [
         "I was going",
@@ -775,6 +777,7 @@
     }
   ],
   "captions": [],
+  "description": "Closer. Maya points back down the path, furious.",
   "format_version": 1,
   "height": 893.33,
   "width": 1800.0

@@ -1227,6 +1227,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: You wouldn't dare.",
       "line_height": 30.63,
       "lines": [
         "You wouldn't",
@@ -1249,6 +1250,7 @@
     }
   ],
   "captions": [],
+  "description": "Long shot. A street at night. Alice, centre, hands on hips, angry, looking at Bob; Bob, centre, arms crossed, coy.",
   "format_version": 1,
   "height": 628.12,
   "width": 1350.0

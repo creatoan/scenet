@@ -983,6 +983,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: The film started at nine.",
       "line_height": 30.63,
       "lines": [
         "The film",
@@ -1018,6 +1019,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Outside the cinema.",
       "line_height": 26.25,
       "lines": [
         "Outside the",
@@ -1027,6 +1029,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, looking at Alice.",
   "exclusions": [
     {
       "height": 361.4,

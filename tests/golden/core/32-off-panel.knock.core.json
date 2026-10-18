@@ -552,6 +552,7 @@
       "font_size": 21.0,
       "id": "b0",
       "kind": "shout",
+      "label": "Caller, off panel, shouting: Open up!",
       "line_height": 26.25,
       "lines": [
         "Open up!"
@@ -582,6 +583,7 @@
       "font_size": 21.0,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: Who is it?",
       "line_height": 26.25,
       "lines": [
         "Who is it?"
@@ -611,6 +613,7 @@
       "font_size": 21.0,
       "id": "b2",
       "kind": "speech",
+      "label": "Neighbour, off panel: Keep it down in there.",
       "line_height": 26.25,
       "lines": [
         "Keep it down",
@@ -634,6 +637,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. A room at night. Bob, centre, arms crossed.",
   "format_version": 1,
   "height": 600.0,
   "width": 900.0

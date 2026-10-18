@@ -292,9 +292,7 @@ class TestLabels:
         assert said == ["Carol, off panel: Over here!"]
 
     def test_emphasis_is_read_as_the_words(self):
-        assert self._labels("  - say: {by: alice, text: I _told_ you}\n") == [
-            "Alice: I told you."
-        ]
+        assert self._labels("  - say: {by: alice, text: I _told_ you}\n") == ["Alice: I told you."]
 
     @pytest.mark.parametrize(
         ("caption", "said"),
@@ -312,6 +310,7 @@ class TestLabels:
     def test_a_spoken_captions_quotation_marks_are_not_read(self):
         """The marks are lettering, added to the drawn lines, not to what is said."""
         core = compile_source(
+            "cast: {alice: {reference: alice}}\n"
             "script:\n  - caption: {text: Get down!, kind: spoken, by: carol}\n"
         ).core
         assert core.captions[0].lines[0].startswith("“")
@@ -329,20 +328,22 @@ class TestLabels:
         assert label(event[0]) == "Alice: Hi."
 
 
+SPOKEN = (
+    TWO
+    + "script:\n"
+    + "  - caption: {text: Midnight.}\n"
+    + "  - say: {by: alice, text: You forgot your umbrella!}\n"
+    + "  - sfx: {text: BLAM, from: bob}\n"
+    + "  - say: {by: bob, text: I know., kind: whisper}\n"
+)
+
+
+@pytest.fixture(scope="module")
+def core() -> PanelCore:
+    return compile_source(SPOKEN).core
+
+
 class TestInPanelCore:
-    SOURCE = (
-        TWO
-        + "script:\n"
-        + "  - caption: {text: Midnight.}\n"
-        + "  - say: {by: alice, text: You forgot your umbrella!}\n"
-        + "  - sfx: {text: BLAM, from: bob}\n"
-        + "  - say: {by: bob, text: I know., kind: whisper}\n"
-    )
-
-    @pytest.fixture(scope="class")
-    def core(self) -> PanelCore:
-        return compile_source(self.SOURCE).core
-
     def test_the_description_is_generated_from_where_everyone_landed(self, core: PanelCore):
         assert core.description == (
             "Medium shot. A street at night, in the rain. "

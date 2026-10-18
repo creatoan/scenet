@@ -2129,6 +2129,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You know? Then why did you leave it?",
       "line_height": 30.63,
       "lines": [
         "You know? Then",
@@ -2160,6 +2161,7 @@
       "font_size": 24.5,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: So you would come after me.",
       "line_height": 30.63,
       "lines": [
         "So you would",
@@ -2182,6 +2184,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed.",
   "format_version": 1,
   "height": 753.75,
   "width": 1350.0

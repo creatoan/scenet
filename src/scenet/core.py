@@ -25,6 +25,7 @@ from scenet.ir import (
     MassKind,
     Plane,
     Side,
+    SvgText,
     TimeOfDay,
     Weather,
     tag_by,
@@ -473,6 +474,8 @@ class CoreBalloon(CoreModel):
             run is drawn in the face it was measured in. Empty when no line has any --
             and then left out of the JSON, so a balloon without emphasis reads and writes
             exactly as it did before emphasis existed. `lines` stays the plain text.
+        label: Who says it, how, and the words -- `Bob, whispering: I know.` -- as
+            accessible output reads it. Left out of the JSON when unset.
 
     Storing broken lines rather than the original string is deliberate. Wrapping is
     decided during compilation against real font metrics; if the emitter re-measured,
@@ -498,6 +501,9 @@ class CoreBalloon(CoreModel):
     # document when unset, so every Core written before it reads -- and is written --
     # exactly as it was.
     off_panel: Side | None = None
+    # Who says it, how, and the words, as a screen reader is to read them. Left out of the
+    # document when unset, so a Core written before it reads as it did.
+    label: SvgText | None = None
 
     @model_validator(mode="after")
     def check_runs(self) -> "CoreBalloon":
@@ -542,6 +548,9 @@ class CoreCaption(CoreModel):
         runs: For a line with emphasis, the line cut wherever its face changes, exactly
             as on :class:`CoreBalloon <scenet.core.CoreBalloon>`. Left out of the JSON
             when empty.
+        label: What the box says, and in whose voice -- `Caption: Midnight.` -- without
+            the quotation marks a `spoken` caption is lettered with. Left out of the JSON
+            when unset.
 
     There is no tail. That is the difference that makes this its own type rather than
     a fifth :class:`BalloonKind <scenet.ir.BalloonKind>`.
@@ -563,6 +572,7 @@ class CoreCaption(CoreModel):
     ink: str = "#111111"
     speaker: str | None = None
     runs: tuple[tuple[CoreRun, ...], ...] = ()
+    label: SvgText | None = None
 
     @model_validator(mode="after")
     def check_runs(self) -> "CoreCaption":
@@ -611,6 +621,8 @@ class CoreSfx(CoreModel):
         stroke: What they are outlined in -- a paper halo, or ink for a hollow effect.
         stroke_width: The outline's width, in panel units.
         hollow: Whether it is an open effect: all outline, so the art shows through.
+        label: The sound as it is read -- `Sound effect, from Bob: BLAM.` Left out of the
+            JSON when unset.
     """
 
     id: str
@@ -624,6 +636,7 @@ class CoreSfx(CoreModel):
     stroke_width: float
     source: str | None = None
     hollow: bool = False
+    label: SvgText | None = None
 
 
 class PanelCore(CoreModel):
@@ -658,6 +671,9 @@ class PanelCore(CoreModel):
         fonts: The faces lettered in a font other than the shipped one, by face. A face
             not listed is the shipped family's. Left out of the JSON when every face is
             the shipped one.
+        description: What the panel shows, in words, for a reader who cannot see it: the
+            author's, or generated from what it holds. With the labels in `order`, it is
+            what accessible output reads. Left out of the JSON when unset.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -685,6 +701,7 @@ class PanelCore(CoreModel):
     outline: tuple[tuple[float, float], ...] | None = None
     fonts: dict[Face, CoreFont] = Field(default_factory=dict)
     sfx: tuple[CoreSfx, ...] = ()
+    description: SvgText | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -716,9 +733,11 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=())
+        _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=(), description=None)
         for lettered in (*payload["balloons"], *payload["captions"]):
-            _drop_unused(lettered, runs=())
+            _drop_unused(lettered, runs=(), label=None)
+        for effect in payload.get("sfx", []):
+            _drop_unused(effect, label=None)
         for balloon in payload["balloons"]:
             _drop_unused(balloon, off_panel=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"

@@ -1047,6 +1047,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: Then we watch the next one.",
       "line_height": 30.63,
       "lines": [
         "Then we watch",
@@ -1069,6 +1070,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, laughing, looking at Alice.",
   "format_version": 1,
   "height": 685.0,
   "width": 792.0

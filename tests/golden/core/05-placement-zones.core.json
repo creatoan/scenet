@@ -363,6 +363,7 @@
       "font_size": 31.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Top left.",
       "line_height": 39.38,
       "lines": [
         "Top left."
@@ -392,6 +393,7 @@
       "font_size": 31.5,
       "id": "b1",
       "kind": "speech",
+      "label": "Alice: Top right.",
       "line_height": 39.38,
       "lines": [
         "Top right."
@@ -421,6 +423,7 @@
       "font_size": 31.5,
       "id": "b2",
       "kind": "speech",
+      "label": "Alice: Bottom left.",
       "line_height": 39.38,
       "lines": [
         "Bottom left."
@@ -450,6 +453,7 @@
       "font_size": 31.5,
       "id": "b3",
       "kind": "speech",
+      "label": "Alice: Bottom right.",
       "line_height": 39.38,
       "lines": [
         "Bottom",
@@ -472,6 +476,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. Alice, centre.",
   "format_version": 1,
   "height": 900.0,
   "width": 1200.0

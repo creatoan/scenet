@@ -721,6 +721,7 @@
       "font_size": 19.6,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: We need to talk.",
       "line_height": 24.5,
       "lines": [
         "We need to",
@@ -743,6 +744,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. Alice, left, pointing; Bob, right, arms crossed.",
   "format_version": 1,
   "height": 560.0,
   "width": 700.0

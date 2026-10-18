@@ -721,6 +721,7 @@
       "font_size": 28.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: First.",
       "line_height": 35.0,
       "lines": [
         "First."
@@ -750,6 +751,7 @@
       "font_size": 28.0,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: Second.",
       "line_height": 35.0,
       "lines": [
         "Second."
@@ -779,6 +781,7 @@
       "font_size": 28.0,
       "id": "b2",
       "kind": "speech",
+      "label": "Alice: Third.",
       "line_height": 35.0,
       "lines": [
         "Third."
@@ -808,6 +811,7 @@
       "font_size": 28.0,
       "id": "b3",
       "kind": "speech",
+      "label": "Bob: Fourth.",
       "line_height": 35.0,
       "lines": [
         "Fourth."
@@ -829,6 +833,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium full shot. Alice, centre; Bob, centre.",
   "format_version": 1,
   "height": 800.0,
   "width": 1200.0

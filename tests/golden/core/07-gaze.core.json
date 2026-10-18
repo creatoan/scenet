@@ -727,6 +727,7 @@
       "font_size": 28.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Look at me when I am talking to you.",
       "line_height": 35.0,
       "lines": [
         "Look at me when",
@@ -758,6 +759,7 @@
       "font_size": 28.0,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: I am looking.",
       "line_height": 35.0,
       "lines": [
         "I am",
@@ -780,6 +782,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium full shot. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed, looking at Alice.",
   "format_version": 1,
   "height": 800.0,
   "width": 1200.0

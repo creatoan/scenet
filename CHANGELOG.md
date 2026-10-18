@@ -15,6 +15,10 @@ below 1.0 means.
 - **A comic script's prose is now read**, as its panel's description. A line of it holding a
   control character an SVG cannot hold, which used to pass unnoticed, is reported at that
   line as `invalid-field`. `description` in a script's front matter is refused.
+- **Every Panel Core gains `description`, and each balloon, caption and sound effect a
+  `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
+  still valid and writes back byte for byte, but golden Core files of your own will need
+  regenerating once. 0.11 refuses the new keys.
 
 ### Added
 
@@ -25,6 +29,12 @@ below 1.0 means.
   accessible output to read (#76). It describes one panel, so it is never inherited: beside
   `panels:` or in a script's front matter it is refused as `unknown-key`, and a panel drawn
   `over:` another does not take its parent's.
+- **Panel Core carries the words a panel is read in**, built in the pipeline so the emitter
+  copies them. `description` is the panel's own, or generated from what it holds — `Medium
+  shot. A street at night, in the rain. Alice, left, pointing, angry, looking at Bob; Bob,
+  right, arms crossed, sweating.` — and every balloon, caption and sound effect has a
+  `label`: who says it, how, and the words, `Bob, whispering: I know.` Read in `order`, they
+  are the panel's text as its reader takes it. Generated text is templated English.
 
 - **The documentation site documents what you install.** Its root, and every address
   already in use there — the documentation, the playground, `schemas/panel.schema.json`,

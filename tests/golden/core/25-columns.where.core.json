@@ -650,6 +650,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Bob: Why? What is it?",
       "line_height": 30.63,
       "lines": [
         "Why? What",
@@ -672,6 +673,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. A street at dusk. Bob, centre, scared.",
   "format_version": 1,
   "height": 384.0,
   "width": 792.0

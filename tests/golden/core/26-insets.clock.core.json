@@ -720,6 +720,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: 9:14.",
       "line_height": 26.25,
       "lines": [
         "9:14."
@@ -728,6 +729,7 @@
       "speaker": null
     }
   ],
+  "description": "Close-up. A street by day. Bob, centre, bored.",
   "format_version": 1,
   "height": 301.4,
   "width": 297.0
