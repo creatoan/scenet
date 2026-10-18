@@ -182,7 +182,9 @@ class TestTheEmitters:
 
     def test_the_balloon_and_its_tail_are_drawn(self):
         svg = render(compiled(self.SOURCE))
-        assert "Over here!" not in svg  # outlines, not text
+        # Outlines, not text: the words are in the file only as what it is named by.
+        assert "<text" not in svg
+        assert "Carol, off panel: Over here!" in svg
         assert svg.count("<path") >= 2
 
     def test_the_debug_overlay_says_where_the_speaker_is(self):

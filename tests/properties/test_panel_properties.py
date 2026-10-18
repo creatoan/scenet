@@ -19,10 +19,12 @@ from scenet.emit.svg import render
 from scenet.errors import BalloonPlacementError, LayoutError, SfxPlacementError
 from scenet.pipeline import compile_source
 from tests.invariants import (
+    assert_accessible,
     assert_effects_are_placed,
     assert_lettering_is_placed,
     assert_svg_is_sound,
     assert_words_are_carried,
+    without_access,
 )
 from tests.strategies import LIBRARY, Drawn, panels
 
@@ -57,7 +59,20 @@ def test_compiling_twice_gives_the_same_bytes(drawn: Drawn):
     assert first.to_json() == second.to_json()
     assert render(first) == render(second)
     assert render(first, live_text=True) == render(second, live_text=True)
+    assert render(first, aria=False) == render(second, aria=False)
     assert render_debug(first) == render_debug(second)
+
+
+@given(panels())
+def test_without_aria_it_is_the_same_svg_less_what_aria_adds(drawn: Drawn):
+    """The opt-out writes nothing accessible output adds, and nothing else differs."""
+    core = _compile(drawn)
+    if core is None:
+        return
+    for live_text in (False, True):
+        bare = render(core, aria=False, live_text=live_text)
+        assert bare == without_access(render(core, live_text=live_text))
+        assert not any(written in bare for written in ("role=", "aria-", "<title", "<desc"))
 
 
 @given(panels())
@@ -73,6 +88,8 @@ def test_a_compiled_panel_keeps_every_promise(drawn: Drawn):
     assert_svg_is_sound(render(core), size=drawn.size, font_sizes=sizes)
     assert_svg_is_sound(render(core, live_text=True), size=drawn.size, font_sizes=sizes)
     assert_svg_is_sound(render_debug(core), size=drawn.size)
+    assert_accessible(render(core), core)
+    assert_accessible(render(core, live_text=True), core)
 
 
 @given(panels())

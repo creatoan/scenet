@@ -57,9 +57,10 @@ def _cores(book: Book) -> dict[str, PanelCore]:
 
 
 def _assert_no_stray_text(svg: str) -> None:
-    """Character data only inside `<text>`: anything else between elements is litter."""
+    """Character data only inside `<text>`, `<title>` and `<desc>`: anything else between
+    elements is litter."""
     for element in ElementTree.fromstring(svg).iter():
-        if not element.tag.endswith("text"):
+        if not element.tag.endswith(("text", "title", "desc")):
             assert not (element.text or "").strip(), element.text
         assert not (element.tail or "").strip(), element.tail
 
