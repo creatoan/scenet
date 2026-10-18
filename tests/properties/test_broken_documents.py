@@ -83,7 +83,7 @@ def test_one_mistake_is_one_finding_at_the_right_place(kind: str, data: st.DataO
     )
 
 
-@given(panels())
+@given(panels(images=False))
 def test_two_field_mistakes_are_two_findings(drawn: Drawn):
     """Additivity: two independent mistakes in fields are two findings, not one."""
     document = dict(drawn.document)

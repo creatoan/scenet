@@ -15,10 +15,11 @@ YAML text, so a test can derive what it expects -- the margin, say -- from what 
 written rather than from what the compiler made of it.
 """
 
+import hashlib
 import string
 import unicodedata
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from itertools import pairwise
 from typing import Any
@@ -34,6 +35,7 @@ from scenet import (
     CaptionKind,
     CaptionTone,
     Facing,
+    Fit,
     Mark,
     PlacementZone,
     SfxSize,
@@ -44,6 +46,7 @@ from scenet import (
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.places import Place
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
+from tests.images import jpeg, png
 
 __all__ = ["LIBRARY", "Drawn", "panels", "words"]
 
@@ -70,11 +73,23 @@ class Drawn:
 
     Attributes:
         document: The mapping an author would have written.
+        files: The files it names, by the path it writes: a picture behind the cast.
         text: The same document as YAML, which is what goes to the compiler, so the
             frontend is exercised along with everything after it.
     """
 
     document: dict[str, Any]
+    files: dict[str, bytes] = field(default_factory=dict[str, bytes])
+
+    @property
+    def base(self) -> dict[str, bytes] | None:
+        """What to compile it against: the files it names, or no folder at all."""
+        return self.files or None
+
+    @property
+    def files_by_digest(self) -> dict[str, bytes]:
+        """The same files, by the digest a renderer is handed them by."""
+        return {hashlib.sha256(data).hexdigest(): data for data in self.files.values()}
 
     @property
     def text(self) -> str:
@@ -189,8 +204,12 @@ def _event(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
 
 
 @st.composite
-def panels(draw: st.DrawFn) -> Drawn:
+def panels(draw: st.DrawFn, *, images: bool = True) -> Drawn:
     """A single-panel document the compiler should accept.
+
+    With `images`, sometimes set in front of a supplied picture of a drawn size, which the
+    document names and `Drawn.files` holds. Without, it names no file, so a document can
+    be checked with no folder and make exactly the findings a test puts in it.
 
     Draws a size and a margin that leaves room, one to three cast members, `left_of`
     relations read off a drawn permutation -- so they can never form a cycle -- and up to
@@ -243,7 +262,26 @@ def panels(draw: st.DrawFn) -> Drawn:
     # Drawn last, so every panel drawn before descriptions existed is drawn as it was.
     if draw(st.booleans()):
         document["description"] = draw(words(max_words=30))
-    return Drawn(document)
+    # Drawn last again, for the same reason. A picture replaces any place drawn above.
+    files: dict[str, bytes] = {}
+    if images and draw(st.booleans()):
+        across = draw(st.integers(min_value=1, max_value=6000))
+        down = draw(st.integers(min_value=1, max_value=6000))
+        name, picture = draw(
+            st.sampled_from(
+                [("art/drawn.png", png(across, down)), ("art/drawn.jpg", jpeg(across, down))]
+            )
+        )
+        setting = {
+            "image": name,
+            "time": draw(st.sampled_from(list(TimeOfDay))).value,
+            "weather": draw(st.sampled_from(list(Weather))).value,
+        }
+        if draw(st.booleans()):
+            setting["fit"] = draw(st.sampled_from(list(Fit))).value
+        document["setting"] = setting
+        files[name] = picture
+    return Drawn(document, files)
 
 
 # ---------------------------------------------------------------- scenes and pages
@@ -837,7 +875,7 @@ def mistakes(draw: st.DrawFn, kind: str) -> Mistake:
     Each mistake carries the rule and the path its one finding must have, so a test can
     hold `scenet check` to *exactly one* finding per mistake, at the right place.
     """
-    document = draw(panels()).document
+    document = draw(panels(images=False)).document
     document = {
         **document,
         "cast": {name: dict(member) for name, member in document["cast"].items()},

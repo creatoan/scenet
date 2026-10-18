@@ -17,7 +17,7 @@ from scenet.diagnostics import diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.svg import render
 from scenet.errors import BalloonPlacementError, LayoutError, SfxPlacementError
-from scenet.pipeline import compile_source
+from scenet.pipeline import CompileResult, compile_source
 from tests.invariants import (
     assert_accessible,
     assert_effects_are_placed,
@@ -33,16 +33,23 @@ from tests.strategies import LIBRARY, Drawn, panels
 EXPECTED_FAILURES = (BalloonPlacementError, LayoutError, SfxPlacementError)
 
 
-def _compile(drawn: Drawn) -> PanelCore | None:
+def _result(drawn: Drawn) -> CompileResult | None:
     """The compiled panel, or `None` when it fails in one of the expected ways."""
     try:
-        core = compile_source(drawn.text, library=LIBRARY).core
+        result = compile_source(drawn.text, library=LIBRARY, base=drawn.base)
     except EXPECTED_FAILURES as exc:
         event(f"failed: {type(exc).__name__}")
         return None
     event("compiled")
-    event(f"lettered boxes: {len(core.balloons) + len(core.captions)}")
-    return core
+    event("over a picture" if result.images else "no picture")
+    event(f"lettered boxes: {len(result.core.balloons) + len(result.core.captions)}")
+    return result
+
+
+def _compile(drawn: Drawn) -> PanelCore | None:
+    """The compiled panel's Core, or `None` when it fails in one of the expected ways."""
+    result = _result(drawn)
+    return None if result is None else result.core
 
 
 def _font_sizes(core: PanelCore) -> list[float]:
@@ -52,12 +59,15 @@ def _font_sizes(core: PanelCore) -> list[float]:
 @given(panels())
 def test_compiling_twice_gives_the_same_bytes(drawn: Drawn):
     """Every output, compiled twice in one process, is byte-identical."""
-    first = _compile(drawn)
-    if first is None:
+    compiled = _result(drawn)
+    if compiled is None:
         return
-    second = compile_source(drawn.text, library=LIBRARY).core
+    first = compiled.core
+    again = compile_source(drawn.text, library=LIBRARY, base=drawn.base)
+    second = again.core
     assert first.to_json() == second.to_json()
     assert render(first) == render(second)
+    assert render(first, embed=compiled.images) == render(second, embed=again.images)
     assert render(first, live_text=True) == render(second, live_text=True)
     assert render(first, aria=False) == render(second, aria=False)
     assert render_debug(first) == render_debug(second)
@@ -86,6 +96,9 @@ def test_a_compiled_panel_keeps_every_promise(drawn: Drawn):
     assert_words_are_carried(core, description=drawn.document.get("description"))
     sizes = _font_sizes(core)
     assert_svg_is_sound(render(core), size=drawn.size, font_sizes=sizes)
+    assert_svg_is_sound(
+        render(core, embed=drawn.files_by_digest), size=drawn.size, font_sizes=sizes
+    )
     assert_svg_is_sound(render(core, live_text=True), size=drawn.size, font_sizes=sizes)
     assert_svg_is_sound(render_debug(core), size=drawn.size)
     assert_accessible(render(core), core)
@@ -112,9 +125,9 @@ def test_check_agrees_with_the_compiler(drawn: Drawn):
     This is also the failure property: `compile_source` is called without a safety net,
     so anything but the three expected failures escapes and fails the test.
     """
-    findings = diagnose_source(drawn.text, library=LIBRARY, deep=True)
+    findings = diagnose_source(drawn.text, library=LIBRARY, deep=True, base=drawn.base)
     try:
-        compile_source(drawn.text, library=LIBRARY)
+        compile_source(drawn.text, library=LIBRARY, base=drawn.base)
     except BalloonPlacementError:
         assert [finding.rule for finding in findings] == ["balloon-placement"]
     except LayoutError:

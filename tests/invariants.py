@@ -241,6 +241,9 @@ def assert_svg_is_sound(
 
     for element in root.iter():
         for name, value in element.attrib.items():
+            # A link is not a number, and base64 can spell `inf` as readily as anything.
+            if name.endswith("href"):
+                continue
             assert not _NON_FINITE.search(value), f"{name}={value!r} is not finite"
 
     if size is not None:

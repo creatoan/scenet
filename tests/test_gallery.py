@@ -20,6 +20,7 @@ from scenet import (
     CameraAngle,
     CaptionKind,
     CaptionTone,
+    Fit,
     Horizon,
     Mark,
     MassKind,
@@ -41,7 +42,8 @@ from scenet import (
 )
 
 GALLERY = Path(__file__).parent.parent / "examples" / "gallery"
-MANIFEST = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))
+MANIFEST_PATH = GALLERY / "manifest.yaml"
+MANIFEST = yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8"))
 ENTRIES = MANIFEST["examples"]
 IDS = [entry["file"] for entry in ENTRIES]
 
@@ -52,8 +54,30 @@ class TestManifestMatchesDisk:
         assert missing == []
 
     def test_every_file_is_listed(self):
-        on_disk = {path.name for path in GALLERY.iterdir() if path.name != "manifest.yaml"}
+        on_disk = {
+            path.name for path in GALLERY.iterdir() if path.is_file() and path != MANIFEST_PATH
+        }
         assert on_disk == {entry["file"] for entry in ENTRIES}
+
+    def test_every_file_an_example_names_is_there(self):
+        """A picture an example is drawn over is listed beside it, so the tools that copy
+        the gallery -- the spec pack, the playground -- copy the picture with it."""
+        named = [name for entry in ENTRIES for name in entry.get("files", [])]
+        assert [name for name in named if not (GALLERY / name).is_file()] == []
+
+    def test_every_asset_is_named_by_an_example(self):
+        named = {name for entry in ENTRIES for name in entry.get("files", [])}
+        on_disk = {
+            path.relative_to(GALLERY).as_posix()
+            for path in GALLERY.rglob("*")
+            if path.is_file() and path.parent != GALLERY
+        }
+        assert on_disk == named
+
+    def test_only_documents_sit_at_the_top(self):
+        """Pictures go in a folder, so every file beside the manifest is a document."""
+        top = [path for path in GALLERY.iterdir() if path.is_file() and path != MANIFEST_PATH]
+        assert all(path.name.endswith((".panel.yaml", ".scene.yaml", ".script")) for path in top)
 
     def test_every_entry_has_a_title(self):
         assert all(entry["title"].strip() for entry in ENTRIES)
@@ -103,7 +127,7 @@ class TestTheGalleryCoversTheLanguage:
         return "\n".join(
             path.read_text(encoding="utf-8")
             for path in GALLERY.iterdir()
-            if path.name != "manifest.yaml"
+            if path.is_file() and path != MANIFEST_PATH
         )
 
     def test_every_shot_type_appears(self):
@@ -168,7 +192,7 @@ class TestTheGalleryCoversTheLanguage:
 
     @pytest.mark.parametrize(
         "enum",
-        [MassKind, Plane, Spans, Horizon, TimeOfDay, Weather, Place],
+        [MassKind, Plane, Spans, Horizon, TimeOfDay, Weather, Place, Fit],
         ids=lambda enum: enum.__name__,
     )
     def test_every_setting_word_appears(self, enum):
