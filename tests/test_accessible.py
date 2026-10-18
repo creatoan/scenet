@@ -263,6 +263,13 @@ class TestAPage:
             ("group", "Page 1 of 2, 2 panels."),
             ("group", "Page 2 of 2, 1 panel."),
         ]
+        panels = [
+            g
+            for page in pages
+            for g in page.findall(f"{SVG}g")
+            if g.get("id", "").startswith("panel-")
+        ]
+        assert [g.get("role") for g in panels] == ["img", "img", "img"]
         # The background, and each page's sheet: shapes of the document's own, outside any
         # panel. What is inside a panel is an image's, and presentational already.
         sheets = [*root.findall(f"{SVG}rect"), *(page.find(f"{SVG}rect") for page in pages)]

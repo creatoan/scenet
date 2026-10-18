@@ -15,10 +15,10 @@ import pytest
 
 from scenet import compile_book, compile_source
 from scenet.core import PanelCore
-from scenet.emit.debug_svg import GAZE, render_debug
+from scenet.emit.debug_svg import GAZE, debug_body, render_debug
 from scenet.emit.page import PAGE_SPACING_FRACTION, render_page, render_pages
 from scenet.emit.strip import placed_panel, render_strip
-from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, render
+from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, panel_body, render, typeface_of
 from scenet.pipeline import Book
 
 SPEECH = "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Over here.}\n"
@@ -139,6 +139,18 @@ class TestAPanelPlacedInADocument:
         core = compile_source(SPEECH).core
         placed = placed_panel("one", core, 1, 0.0, 0.0, live_text=True, aria=False)
         assert placed[3] == _cut(render(core, id_prefix="p1-", live_text=True, aria=False))
+
+    def test_by_default_the_placed_panel_is_named(self):
+        core = compile_source(SPEECH).core
+        assert 'role="img"' in placed_panel("one", core, 1, 0.0, 0.0)[0]
+
+    def test_a_bodys_defaults_are_outlines_and_bare_ids(self):
+        """What `render` writes between its root's tags, with nothing asked for."""
+        core = compile_source(SPEECH).core
+        inner = "\n".join(render(core, aria=False).split("\n")[2:-2])
+        assert "\n".join(panel_body(core, typeface_of(core))) == inner
+        overlay = "\n".join(render_debug(core).split("\n")[2:-2])
+        assert "\n".join(debug_body(core)) == overlay
 
     def test_a_strip_cuts_no_holes(self):
         """Only a page draws an inset over its parent; a strip lays them side by side."""
