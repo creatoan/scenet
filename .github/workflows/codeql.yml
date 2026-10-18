@@ -1,0 +1,57 @@
+name: CodeQL
+
+# Static analysis of the code itself, alongside the gallery diagnostics `ci.yml` uploads
+# to the same code-scanning page under its own category. A workflow in the repository
+# rather than GitHub's "default setup", which is a setting nobody reviews: this file is
+# read in a pull request, tested by tests/test_workflows.py, and on the same
+# codeql-action pin as that upload, so Dependabot moves the two together.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # New queries find old code. Monday, between the mutation run and the link check.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Read by the analysis to describe the run it belongs to.
+      actions: read
+      # The upload of the results, and nothing else, which is why it is here alone.
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # None of the three needs a build: CodeQL reads Python and TypeScript from
+        # source. `actions` analyses the workflows, where an expression spliced into a
+        # script is the injection a supply-chain attacker looks for first.
+        include:
+          - language: python
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: /language:${{ matrix.language }}
