@@ -75,14 +75,15 @@ class TestPageHeadings:
         assert list(panels(script)) == ["0-1", f"{page}-1"]
 
 
-class TestAHostileHeadingIsReadQuickly:
-    """A line that starts like a PAGE heading is read in time linear in its length.
+class TestAHostileLineIsReadQuickly:
+    """A line that starts like a PAGE heading or an SFX is read in time linear in its length.
 
-    The heading pattern once let a hyphen be part of a word or of the space between two,
-    so `PAGE !-!-!-…` split in exponentially many ways before failing, and three optional
-    runs of spaces in a row made a long blank stretch cubic. A script is untrusted input,
-    and the playground reads one on every keystroke. Each line here took seconds before;
-    a second is a bound no machine should come near now.
+    The PAGE pattern once let a hyphen be part of a word or of the space between two, so
+    `PAGE !-!-!-…` split in exponentially many ways before failing; it and the bare SFX
+    pattern both ended in three optional runs of space in a row, which made a long blank
+    stretch cubic. A script is untrusted input, and the playground reads one on every
+    keystroke. Each line here took seconds before; a second is a bound no machine should
+    come near now.
     """
 
     @pytest.mark.parametrize(
@@ -91,6 +92,10 @@ class TestAHostileHeadingIsReadQuickly:
             pytest.param("PAGE !" + "-!" * 24 + "(", id="hyphens-between-words"),
             pytest.param("PAGE !" + "\t-" * 24 + "(", id="tabs-and-hyphens"),
             pytest.param("PAGE A" + " " * 1500 + ":x", id="spaces-before-a-stray-colon"),
+            # The same three runs of space ended the bare `SFX` pattern, inside a panel
+            # and out of one alike.
+            pytest.param("SFX" + "\t" * 1500 + "!", id="sfx-tabs-then-a-sound"),
+            pytest.param("SFX" + " " * 1000 + "(x)" + " " * 1000 + "!", id="sfx-around-a-note"),
         ],
     )
     def test_it_is_read_in_well_under_a_second(self, line: str):
