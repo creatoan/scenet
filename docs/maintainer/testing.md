@@ -408,22 +408,35 @@ order (`tests/test_off_panel.py`; run `39038963872`).
 | `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
 | `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
 | `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
+**`solve/describe.py`** (#76) -- a fresh run,
+[`39124930311`](https://github.com/creatoan/scenet/actions/runs/39124930311), tried 177
+mutants and left 2, `_figure` 26 and 27: an expression's underscores read as spaces, which no
+shipped expression has. `test_a_puppets_own_expression_is_read_with_its_underscores_as_spaces`
+kills both. None accepted.
+
 **The emitters** -- triaged together: of their 50 survivors, 36 are killed by
 `tests/test_emit_edges.py`. The goldens pin every byte the gallery produces, so what
 survived is what the gallery never produces: several pages side by side, a curved tail, a
 gaze that is not level, a limb thinner than its outline. A Core is a format people
-hand-edit, so the tests edit a compiled one to hold them. These 14 are accepted.
+hand-edit, so the tests edit a compiled one to hold them.
+
+Accessible output (#76) changed `svg.py`, `strip.py`, `page.py` and `debug_svg.py`: `render`
+and `render_debug` became wrappers round `panel_body` and `debug_body`, which `placed_panel`
+places instead of cutting text, and every renderer took `aria`. A fresh run of `emit/*`,
+[`39124932431`](https://github.com/creatoan/scenet/actions/runs/39124932431), tried 1438
+mutants and left 15. Seven are killed in `tests/test_emit_edges.py`,
+`tests/test_accessible.py` and `tests/test_lettering_face.py`, each applied by hand to see
+its test fail. These 8 are accepted, numbered as in that run -- six of them the same
+mutants as before, one renumbered, one new.
 
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
 | `emit/svg.py` `fmt` 7, 8 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
 | `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
-| `emit/svg.py` `render` 48 | the painter's sort keyed on the whole tuple | `(depth, id)` is already unique: ids are unique among actors and among masses, and no mass shares a depth with an actor -- the backdrop is behind every actor, the foreground in front of all of them -- so the body is never compared. |
-| `emit/svg.py` `render` 69 | the italic face always loaded | Loading it draws nothing; it is used only by captions. |
+| `emit/svg.py` `panel_body` 39 (was `render` 48) | the painter's sort keyed on the whole tuple | `(depth, id)` is already unique: ids are unique among actors and among masses, and no mass shares a depth with an actor -- the backdrop is behind every actor, the foreground in front of all of them -- so the body is never compared. |
 | `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
+| `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
 | `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
-| `emit/strip.py` `placed_panel` 1, 2 | `live_text` or `debug` defaults to `True` | Both callers, the strip and the page, always pass both. |
-| `emit/strip.py` `placed_panel` 19, 22, 23, 34 | the panel's body cut at its `</svg>` some other way | A rendered panel holds exactly one `</svg>`, at its end, and the body is right-stripped after the cut, so every way of cutting gives the same lines. |
 
 ### Exploring with fresh seeds
 
