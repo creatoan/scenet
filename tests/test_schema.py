@@ -76,6 +76,7 @@ class TestPanelSchema:
             "staging",
             "script",
             "lettering",
+            "description",
         }
 
     def test_it_is_a_valid_schema(self):
