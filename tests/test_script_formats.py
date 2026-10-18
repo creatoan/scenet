@@ -74,6 +74,36 @@ class TestPageHeadings:
         script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
         assert list(panels(script)) == ["0-1", f"{page}-1"]
 
+    @pytest.mark.parametrize(
+        ("heading", "page"),
+        [
+            ("Page 4B.", "4B"),
+            ("PAGE 7.", "7"),
+            ("PAGE C.", "C"),
+            ("PAGE ONE.", "1"),
+            ("PAGE TWENTY ONE.", "21"),
+            ("PAGE TWENTY-ONE.", "21"),
+            ("PLANCHE 3.", "3"),
+            ("PLANCHE UNE.", "1"),
+        ],
+    )
+    def test_a_full_stop_ends_the_heading_as_after_a_panel(self, heading: str, page: str):
+        """`Page 4B.` is page `4B`, as `Panel 1.` is panel `1` and the editor colours it.
+
+        The full stop was read into the label, so `PAGE 7.` was a page called `7.`, and
+        `PAGE TWENTY ONE.` or `PLANCHE 3.` were no heading at all: `ONE.` and `3.` are
+        not numbers.
+        """
+        script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
+        assert list(panels(script)) == ["0-1", f"{page}-1"]
+
+    @pytest.mark.parametrize(
+        ("heading", "page"), [("PAGE A.B", "A.B"), ("PAGE 3.5", "3.5"), ("PAGE 4B..", "4B.")]
+    )
+    def test_a_full_stop_inside_the_label_stays(self, heading: str, page: str):
+        script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
+        assert list(panels(script)) == ["0-1", f"{page}-1"]
+
 
 class TestAHostileLineIsReadQuickly:
     """A line of a script is read in time linear in its length, however it is built.
