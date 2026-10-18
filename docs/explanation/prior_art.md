@@ -463,12 +463,14 @@ been tested to do, which are not the same thing.
 the view is a `graphics-document` with an `aria-roledescription` and a label, each mark with a
 description a `graphics-symbol` labelled by it, and `aria: false` hides an item instead.
 
-Taken: an explicit `role="img"` per panel, named through `aria-labelledby` by `<title>` and
-`<desc>`; the dialogue in the name; strips and pages as `role="group"`, their panels in reading
+Taken: an explicit `role="img"` per panel, its name the dialogue as well as the description; strips and pages as `role="group"`, their panels in reading
 order and their own shapes hidden; Vega-Lite's model of words resolved by the compiler, on by
 default with an opt-out. Not taken: `graphics-document` and per-balloon names, for want of any
 published screen-reader result and because a named part's place in document order is its paint
-order, which a sound effect does not share; `aria-describedby` for anything a reader must hear;
+order, which a sound effect does not share; `aria-describedby` for anything a reader must hear; and in the end the most-tested pattern
+itself, `aria-labelledby` by `<title>` and `<desc>`, which NVDA 2026.2 with Edge 155 read a
+second time as the description when moving by graphic — one `<title>` holding everything
+is read once ([recorded results](../howto/make_accessible_output.md#recorded-results));
 `aria-flowto`. See [design decisions](design_decisions.md#a-panel-is-one-image-read-whole-in-reading-order).
 
 ## Future

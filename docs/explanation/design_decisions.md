@@ -115,9 +115,10 @@ would have handed the layout back to the renderer and to installed fonts.
 
 ## A panel is one image, read whole, in reading order
 
-Accessible output (#76) makes each panel `role="img"`, named through `aria-labelledby` by its
-`<title>` — the description — and its `<desc>` — every balloon, caption and sound effect's label,
-in `order`. The sources behind it are in {ref}`prior art <accessible-svg>`.
+Accessible output (#76) makes each panel `role="img"`, named by one `<title>`: the description,
+then every balloon, caption and sound effect's label, in `order`. The sources behind it are in
+{ref}`prior art <accessible-svg>`, and the screen-reader results in
+[the how-to](../howto/make_accessible_output.md#recorded-results).
 
 - **One image, not a document of named parts.** The issue held up Vega-Lite's per-mark labels as
   the precedent, and Vega's own output is a `graphics-document` with `graphics-symbol` marks. That
@@ -127,13 +128,14 @@ in `order`. The sources behind it are in {ref}`prior art <accessible-svg>`.
   sound effect is painted under every balloon, so it cannot be in its place in that order
   without changing the picture. As one image, the panel is read in the one order Core keeps,
   whatever the paint order. Its children are presentational, so nothing inside it is named.
-- **The words are in the name.** A description is often not spoken — Lembree's NVDA and JAWS
-  results, NVDA's own guide — so `aria-describedby` alone would leave the dialogue unread.
-  Naming by both `<title>` and `<desc>` is the most-tested pattern there is.
-- **Ids are hashes of what they name.** Several SVGs inlined in one page share its ids, and
-  `getElementById` finds the first. Hashed, two panels that share an id share its text, so each is
-  still named correctly. A panel with no words is named by its title alone, with no
-  `aria-labelledby`, because Blink would otherwise read the title again as the description.
+- **The words are in the name, and in nothing else.** A description is often not spoken —
+  Lembree's NVDA and JAWS results, NVDA's own guide — so `aria-describedby` alone would leave the
+  dialogue unread. The first version named the panel through `aria-labelledby` by a `<title>`
+  and a `<desc>`, the most-tested pattern in the published results. NVDA 2026.2 with Edge 155 read
+  it in full, once, in browse mode — and a second time, the `<desc>` as the description, every
+  time it moved to the panel by graphic. Of six ways of naming it tried in the same session, one
+  `<title>` holding everything read once both ways, and needs no id, so a page that inlines
+  several panels cannot name one with another's words. The cost is a long tooltip.
 - **Strips and pages are groups of panels.** `role="group"` is what every engine computes; the
   panels are its images, in reading order — which is why a page now writes its panels in reading
   order and cuts each inset's parent around it rather than painting the inset last.

@@ -48,8 +48,8 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `--no-aria`
 : Write no accessibility markup. By default each panel is an image a screen reader can read
-  — `role="img"`, named through its `<title>` and `<desc>` with what it shows and then everything
-  said in it, in reading order — and a strip or a page is a named group of them; see
+  — `role="img"`, named by its `<title>` with what it shows and then everything said in it, in
+  reading order — and a strip or a page is a named group of them; see
   [accessible output](../howto/make_accessible_output.md). This leaves all of that out, for a
   pipeline that post-processes the SVG, and is otherwise byte-identical: the same file less
   those attributes and elements. Debug overlays never carry it.

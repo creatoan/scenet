@@ -19,8 +19,8 @@ below 1.0 means.
   `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
   still valid and writes back byte for byte, but golden Core files of your own will need
   regenerating once. 0.11 refuses the new keys.
-- **Every SVG's bytes change once**, to carry what a screen reader reads: a `role`, a `<title>`
-  and a `<desc>` per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
+- **Every SVG's bytes change once**, to carry what a screen reader reads: a `role` and a `<title>`
+  per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
   differently and lettering stays outlines. `--no-aria` (`aria=False`) gives back exactly the
   SVG written before, for a pipeline that post-processes it; debug overlays are unchanged.
 
@@ -40,14 +40,14 @@ below 1.0 means.
   `label`: who says it, how, and the words, `Bob, whispering: I know.` Read in `order`, they
   are the panel's text as its reader takes it. Generated text is templated English.
 - **A screen reader can read the panel** (#76). Each panel is one image, `role="img"`, named
-  through `aria-labelledby` by its `<title>` — the description — and its `<desc>` — every
-  balloon, caption and sound effect in reading order — since a description alone is often not
-  spoken. The ids are hashes of the text they name, so panels inlined together in one page still
-  name themselves. A strip or a page is a named `role="group"` of its panels, in reading order.
+  by one `<title>`: the description, then every balloon, caption and sound effect in reading
+  order — in the name, since a description alone is often not spoken, and nowhere else, since
+  NVDA read a `<desc>` a second time. It needs no id, so panels inlined together in one page
+  cannot name each other. A strip or a page is a named `role="group"` of its panels, in reading order.
   `scenet build --no-aria`, `aria=False` on every renderer and `aria: false` on the MCP server's
-  `render` leave it all out. Checked against Edge's UI Automation tree; a hand check with NVDA
-  or VoiceOver is described in the new how-to, *Make a panel a screen reader can read*, and
-  still to do.
+  `render` leave it all out. Checked with NVDA 2026.2 and Edge 155, and against Edge's UI Automation
+  tree; results, and how to check with VoiceOver, are in the new how-to, *Make a panel a
+  screen reader can read*.
 
 - **The documentation site documents what you install.** Its root, and every address
   already in use there — the documentation, the playground, `schemas/panel.schema.json`,

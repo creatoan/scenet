@@ -166,9 +166,8 @@ def placed_panel(
             set into it, which are drawn over it. Each is a clip of its own, nested inside
             the frame's, so the clips intersect and two rings that touch need no geometry.
         aria: Make the panel's group the image a screen reader reads, named as
-            :func:`accessible_name <scenet.emit.svg.accessible_name>` names a panel. Its
-            ids carry the position prefix, so they are unique in the document. Never on
-            an overlay.
+            :func:`accessible_name <scenet.emit.svg.accessible_name>` names a panel.
+            Never on an overlay.
 
     Returns:
         The lines of SVG, indented for the document's top level.
@@ -197,7 +196,7 @@ def placed_panel(
         for number, hole in enumerate(holes, start=1)
     ]
     # The panel's group is the image a screen reader reads, named as the panel alone is.
-    named, names = accessible_name(core, prefix) if aria and not debug else ("", [])
+    named, names = accessible_name(core) if aria and not debug else ("", [])
     return [
         f'  <g id={attr("panel-" + name)} transform="translate({fmt(x)} {fmt(y)})"{named}>',
         *names,

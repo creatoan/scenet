@@ -7,32 +7,35 @@ so they reach the reader, and how to check it with a screen reader.
 
 ## What is in the file
 
-A panel is one image, `role="img"`, named through `aria-labelledby` by its `<title>` and its
-`<desc>`:
+A panel is one image, `role="img"`, named by one `<title>`, its first child:
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scenet-5afdd6267a90-title scenet-5afdd6267a90-desc">
-  <title id="scenet-5afdd6267a90-title">Long shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, right, arms crossed.</title>
-  <desc id="scenet-5afdd6267a90-desc">Caption: Midnight. The corner of Fifth. Alice: You forgot your umbrella!</desc>
+<svg xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Long shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, right, arms crossed. Caption: Midnight. The corner of Fifth. Alice: You forgot your umbrella!</title>
   <!-- the panel, drawn as ever -->
 </svg>
 ```
 
-- **The `<title>` is the panel's description**: yours, when you write one, or a comic script's
+- **It starts with the panel's description**: yours, when you write one, or a comic script's
   prose; otherwise generated from the shot, the place, the hour and the weather, and each figure
   left to right with its pose, expression and marks and whom it looks at.
-- **The `<desc>` is everything said, in reading order**: every balloon, caption and sound effect,
-  each saying who and how — `Bob, whispering: I know.` — in the one order
+- **Then everything said, in reading order**: every balloon, caption and sound effect, each
+  saying who and how — `Bob, whispering: I know.` — in the one order
   [Panel Core](../reference/panel_core.md#the-words) keeps. A sound effect is in its place in that
   order, though it is painted under every balloon.
-- **Both are in the name.** A screen reader always reads an image's name, and often does not read
-  its description, so the words are not left to the description alone.
+- **All of it is the name, and nothing else.** A screen reader always reads an image's name, and
+  often does not read its description, so the words are not left to a description. Nor is
+  anything given as one as well: named through `aria-labelledby` by a `<title>` and a `<desc>`,
+  the panel was read by NVDA a second time, the `<desc>` as its description, every time a reader
+  moved to it graphic by graphic — see the results below.
+- **It needs no id**, so several Scenet SVGs inlined in one web page — where `getElementById`
+  finds the first match — cannot name one panel with another's words.
 - **Nothing inside the panel is named.** An image's children are presentational: a name on a
   balloon in there would never be read. The panel is read whole, as one graphic.
 - **Lettering stays outlines.** The words are in the file as what the panel is named by, not as
   `<text>`; with `--live-text`, the text is inside the image and so not read twice.
-- **The ids are a hash of the text they name**, so several Scenet SVGs inlined in one web page —
-  where `getElementById` finds the first match — still each name themselves.
+- **The title is also a tooltip.** A browser shows an SVG's `<title>` when the pointer rests on
+  it, so a sighted reader hovering a panel sees its words.
 
 A [strip](compile_a_sequence.md#rendering-the-whole-thing) or a [page](compose_a_page.md) is a named
 group, `role="group"`, holding one such image per panel in reading order — insets included, read
@@ -55,11 +58,9 @@ script:
 
 root = ElementTree.fromstring(render(core))
 assert root.get("role") == "img"
-named = root.get("aria-labelledby").split()
-found = {element.get("id"): element.text for element in root.iter() if element.get("id")}
-assert " ".join(found[name] for name in named).endswith(
-    "Alice: You forgot your umbrella! Bob, whispering: I know."
-)
+title = root.find("{http://www.w3.org/2000/svg}title")
+assert title is not None
+assert title.text.endswith("Alice: You forgot your umbrella! Bob, whispering: I know.")
 ```
 
 ## Write the description yourself
@@ -99,15 +100,16 @@ written yet; what they embed is exactly this SVG.
 scenet build examples/duel.panel.yaml --no-aria
 ```
 
-writes the same file without any of it — no `role`, `<title>`, `<desc>` or `aria-` attribute —
+writes the same file without any of it — no `role`, `<title>` or `aria-` attribute —
 for a pipeline that post-processes the SVG. It is otherwise byte-identical. From Python it is
 `render(core, aria=False)`, and the same on `render_strip`, `render_page` and `render_pages`; the
 MCP server's `render` tool takes `aria: false`.
 
 ## Check it with a screen reader
 
-What the browser hands a screen reader can be read without one — and has been, see below — but
-what a screen reader then says cannot be golden-tested. To check by hand:
+What a screen reader says cannot be golden-tested, so it is checked by hand — or by a script,
+as below: NVDA run as a portable copy with a silent synthesizer, its speech logged at the
+"input/output" level, while key presses are sent to the browser. To check:
 
 1. Build a panel and a page, and open an HTML page that inlines both.
 2. **NVDA** with Firefox or Chrome, browse mode: arrow onto the panel. Expect "graphic", then the
@@ -125,4 +127,6 @@ what a screen reader then says cannot be golden-tested. To check by hand:
 | Date | Checked with | Result |
 |---|---|---|
 | 2026-10-18 | Edge 155.0.4283.45's UI Automation tree — the API Narrator reads, and one of NVDA's — on Windows 11, for two panels and the `26-insets` page inlined in one HTML page | Each panel is one **Image**, its **Name** the description then every line in order, sound effects in their place. The page is a **Group** named `A page of 5 panels.`, its panels in reading order, the clock (`read: before`) first. Nothing inside a panel is exposed. The `<title>` is also the image's tooltip (`HelpText`); its full description could not be read with the managed UIA client |
-| — | NVDA, VoiceOver | Not yet checked by hand: whether either reads the description after the name, which would repeat the scene |
+| 2026-10-18 | NVDA 2026.2 (portable, speech logged) with Edge 155.0.4283.45, Windows 11; the same page; down arrow in browse mode, then `G` | **As emitted now, one `<title>`:** each panel is announced as a graphic with the description and then every line in order, once, both ways; the page as `A page of 5 panels.`, a group, its panels in reading order, the clock first; nothing inside a panel is read |
+| 2026-10-18 | The same, for the first version: `aria-labelledby` by a `<title>` and a `<desc>` | Browse mode read it once. **Moving by graphic, NVDA read the `<desc>` a second time as the description**, so every line was heard twice. Of six ways of naming the same panel, three read once: one `<title>` holding everything (now emitted, and needing no id), `aria-description=""`, and `aria-describedby` pointing at an empty element. An empty `aria-describedby` did not help, and a `<title>` beside a `<metadata>` was read again as the description |
+| — | VoiceOver, JAWS, NVDA with Firefox | Not yet checked |

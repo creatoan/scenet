@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800" role="img" aria-labelledby="scenet-962897f19efd-title scenet-962897f19efd-desc">
-  <title id="scenet-962897f19efd-title">Medium shot. Alice, left, pointing, looking at Bob; Bob, right, arms crossed.</title>
-  <desc id="scenet-962897f19efd-desc">Alice: You forgot your umbrella! Bob: I know.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800" role="img">
+  <title>Medium shot. Alice, left, pointing, looking at Bob; Bob, right, arms crossed. Alice: You forgot your umbrella! Bob: I know.</title>
   <rect x="0" y="0" width="1000" height="800" fill="#ffffff"/>
   <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
     <g id="actor-alice" fill="#e8e6e1" stroke-width="3">
