@@ -366,3 +366,97 @@ def test_the_smoke_test_runs_outside_the_checkout():
     )
     assert "py.typed" in text
     assert "__version__" in text
+
+
+def _text(name: str) -> str:
+    return (WORKFLOWS / name).read_text(encoding="utf-8")
+
+
+class TestCodeQL:
+    """The Python, the TypeScript and the workflows themselves, analysed by CodeQL."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def codeql(cls) -> dict[Any, Any]:
+        return _load("codeql.yml")
+
+    def test_it_runs_on_pull_requests_on_main_and_every_week(self, codeql: dict[Any, Any]):
+        """Weekly too, because new queries find old code: nothing has to change for that."""
+        triggers = _triggers(codeql)
+        assert "pull_request" in triggers
+        assert triggers["push"] == {"branches": ["main"]}
+        assert [entry["cron"] for entry in triggers["schedule"]]
+
+    def test_it_covers_python_and_typescript(self, codeql: dict[Any, Any]):
+        matrix = codeql["jobs"]["analyze"]["strategy"]["matrix"]["include"]
+        assert {"python", "javascript-typescript"} <= {entry["language"] for entry in matrix}
+
+    def test_only_the_analysis_can_write_to_code_scanning(self, codeql: dict[Any, Any]):
+        assert codeql["permissions"] == {"contents": "read"}
+        writers = [
+            name
+            for name, job in codeql["jobs"].items()
+            if "write" in (job.get("permissions") or {}).values()
+        ]
+        assert writers == ["analyze"]
+        assert codeql["jobs"]["analyze"]["permissions"] == {
+            "contents": "read",
+            "actions": "read",
+            "security-events": "write",
+        }
+
+    def test_it_is_the_codeql_action_the_gallery_uploads_with(self):
+        """One pin for the whole action, so Dependabot moves it in one pull request."""
+        pins = set(
+            re.findall(
+                r"github/codeql-action/[\w-]+@([0-9a-f]{40})", _text("ci.yml") + _text("codeql.yml")
+            )
+        )
+        assert len(pins) == 1
+
+
+class TestDependencyReview:
+    """A pull request adding a known high or critical vulnerability fails before it merges."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def review(cls) -> dict[Any, Any]:
+        return _load("dependency-review.yml")
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def step(cls, review: dict[Any, Any]) -> dict[Any, Any]:
+        (step,) = [
+            s
+            for job in review["jobs"].values()
+            for s in job["steps"]
+            if str(s.get("uses", "")).startswith("actions/dependency-review-action@")
+        ]
+        return step
+
+    def test_it_reviews_pull_requests_and_the_merge_queue(self, review: dict[Any, Any]):
+        """The queue too, or it could never become a required check: the queue would wait."""
+        assert set(_triggers(review)) == {"pull_request", "merge_group"}
+
+    def test_a_fork_can_run_it(self, review: dict[Any, Any]):
+        """Read-only and secret-free, so a fork's pull request is reviewed like any other."""
+        assert review["permissions"] == {"contents": "read"}
+        for job in review["jobs"].values():
+            assert "permissions" not in job
+        assert "secrets." not in _text("dependency-review.yml")
+
+    def test_high_and_critical_fail_it(self, step: dict[Any, Any]):
+        assert step["with"]["fail-on-severity"] == "high"
+
+    def test_development_dependencies_count(self, step: dict[Any, Any]):
+        """They run in CI, with a token in reach; the default would ignore them."""
+        scopes = {scope.strip() for scope in step["with"]["fail-on-scopes"].split(",")}
+        assert {"runtime", "development", "unknown"} <= scopes
+
+    def test_it_never_comments(self, step: dict[Any, Any]):
+        """Commenting needs `pull-requests: write`, which a fork's token does not carry."""
+        assert step["with"]["comment-summary-in-pr"] == "never"
+
+    def test_the_queue_compares_the_commit_it_queued(self, step: dict[Any, Any]):
+        assert "merge_group.base_sha" in step["with"]["base-ref"]
+        assert "merge_group.head_sha" in step["with"]["head-ref"]
