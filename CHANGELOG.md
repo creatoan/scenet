@@ -48,6 +48,14 @@ below 1.0 means.
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
 
+### Fixed
+
+- **A full stop ends a PAGE heading, as it ends a PANEL one.** `Page 4B.` named its page
+  `4B.` and `PAGE 7.` a page called `7.`; `PAGE TWENTY ONE.` and `PLANCHE 3.` were not
+  read as headings at all, since `ONE.` and `3.` are not numbers, so their panels ran on
+  into the page before. They are pages `4B`, `7`, `21` and `3` now. A full stop inside a
+  label, as in `PAGE 3.5`, stays.
+
 ### Security
 
 - **A comic script cannot stall the compiler with one crafted line.** The PAGE heading

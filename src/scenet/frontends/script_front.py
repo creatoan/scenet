@@ -95,8 +95,13 @@ NUMBER_LIKE = re.compile(r"\d+[^\W\d_]?|[^\W\d_]")
 # words, `PAGE !-!-!-…(` split in exponentially many ways before failing (CodeQL
 # py/redos). The tail takes trailing space once, after whatever it follows, where three
 # optional runs of it in a row made a long blank line cubic.
+#
+# Each word is as short as the line allows, as PANEL_HEADING's label is, so a closing full
+# stop ends the heading rather than the label: `Page 4B.` is page `4B`, and
+# `PAGE TWENTY ONE.` is twenty-one rather than a sentence. A full stop the line needs
+# inside a word stays there, as in `PAGE 3.5`.
 PAGE_HEADING = re.compile(
-    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+(?:\s+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\)\s*)?(?:[.:]\s*)?$",
+    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+?(?:\s+[^\s:()]+?)*?)\s*(?:\((?P<note>[^)]*)\)\s*)?(?:[.:]\s*)?$",
     re.IGNORECASE,
 )
 # The count in a PAGE heading's parenthetical: `five panels`, `1 panel`, `six cases`.
