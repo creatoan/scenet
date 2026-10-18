@@ -213,6 +213,8 @@ _KEYS = st.sampled_from(
         "use",
         "place",
         "masses",
+        "lettering",
+        "font",
     ]
 ) | st.text(max_size=8)
 _SCALARS = (

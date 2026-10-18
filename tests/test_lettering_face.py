@@ -351,6 +351,21 @@ class TestMistakes:
             compile_file(path)
         assert raised.value.rule == "font-file"
 
+    @pytest.mark.parametrize("control", ["\\0", "\\x01", "\\x1f", "\\x7f"])
+    def test_a_control_character_is_refused_not_a_crash(self, control: str, folder: Path):
+        """A NUL reached the file system, which raises `ValueError` -- not an error the
+        compiler reports, so `build` and `check` both ended in a traceback."""
+        path = _write(folder, f'lettering: {{font: "fonts/a{control}b.ttf"}}\n{CAST}{SAY}')
+        with pytest.raises(PanelSyntaxError, match="control character") as raised:
+            compile_file(path)
+        assert raised.value.rule == "font-file"
+
+    def test_check_locates_a_control_character(self, folder: Path):
+        path = _write(folder, f'{CAST}lettering: {{font: "fonts/a\\0b.ttf"}}\n{SAY}')
+        found = diagnose_file(path)
+        assert [(item.rule, item.path) for item in found] == [("font-file", ("lettering", "font"))]
+        assert "U+0000" in found[0].message
+
     def test_a_font_a_script_panel_names_is_reported_against_that_panel(self, folder: Path):
         script = (
             "---\ncast: {ALICE: {reference: alice}}\n---\n"
