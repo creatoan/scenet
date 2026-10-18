@@ -224,6 +224,27 @@ class TestWhereTheFileIs:
             resolve_relative(declared, folder, what="font", rule="font-file")
         assert raised.value.rule == "font-file"
 
+    @pytest.mark.parametrize("declared", ["fonts\\Lettering-Regular.ttf", "fonts/a\\b.ttf"])
+    def test_a_backslash_is_refused_on_every_platform(self, declared: str, folder: Path):
+        """A backslash separates folders on Windows and is part of a file name elsewhere,
+        so a document that wrote one found its font on one machine and not another."""
+        with pytest.raises(PanelSyntaxError, match="/ between folders") as raised:
+            resolve_relative(declared, folder, what="font", rule="font-file")
+        assert raised.value.rule == "font-file"
+
+    def test_a_backslash_is_refused_where_the_file_would_open(self, folder: Path):
+        path = _write(folder, f"lettering: {{font: 'fonts\\Lettering-Regular.ttf'}}\n{CAST}{SAY}")
+        with pytest.raises(PanelSyntaxError, match="/ between folders") as raised:
+            compile_file(path)
+        assert raised.value.rule == "font-file"
+
+    def test_check_locates_a_backslash(self, folder: Path):
+        path = _write(folder, f"{CAST}lettering: {{font: 'fonts\\Lettering-Regular.ttf'}}\n{SAY}")
+        found = diagnose_file(path)
+        assert [(item.rule, item.path) for item in found] == [("font-file", ("lettering", "font"))]
+        assert found[0].region is not None
+        assert found[0].region.start.line == 2
+
     def test_a_path_may_climb_out_of_the_document_folder(self, folder: Path):
         (folder / "chapter").mkdir()
         path = _write(

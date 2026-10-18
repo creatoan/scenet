@@ -747,6 +747,13 @@ def _conflicting_setting(document: dict[str, Any], actor: str, _: st.DrawFn) -> 
     return Mistake("conflicting-setting", _dump(document), "conflicting-setting", path, "place")
 
 
+def _font_file(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    """A font path written with Windows' separator, which only Windows reads as one."""
+    document["lettering"] = {"font": "fonts\\Comic.ttf"}
+    path = ("lettering", "font")
+    return Mistake("font-file", _dump(document), "font-file", path, "Comic")
+
+
 def _duplicate_key(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
     text = _dump(document) + "camera: {shot: wide}\n"
     return Mistake("duplicate-key", text, "duplicate-key", (), "camera")
@@ -793,6 +800,7 @@ MISTAKES: dict[str, _Breaker] = {
     "unknown-expression": _unknown_expression,
     "unknown-place": _unknown_place,
     "conflicting-setting": _conflicting_setting,
+    "font-file": _font_file,
     "duplicate-key": _duplicate_key,
     "panel-geometry": _panel_geometry,
     "not-a-mapping": _not_a_mapping,
