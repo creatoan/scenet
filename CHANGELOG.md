@@ -48,6 +48,13 @@ below 1.0 means.
   smoke test is now one script, `scripts/smoke_wheel.py`, that the release runs too.
   Nothing is published: TestPyPI stays a manual rehearsal.
 
+### Fixed
+
+- **The VS Code preview draws each figure with its own clip.** It inlines every SVG a build
+  wrote into one page, and a page has one set of ids, so a second panel in a slanted tier was
+  clipped by the first one's outline, and page 2's panels by page 1's frames. Each figure's
+  ids, and every reference to one, now carry a prefix of their own.
+
 ### Security
 
 - **The playground's DOMPurify is 3.4.17**, past two advisories affecting versions up to
