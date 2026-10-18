@@ -382,8 +382,8 @@ class FontMetrics:
     so no renderer has a say and every pair adjustment is reproduced exactly.
 
     Attributes:
-        path: The file it was read from. Used to open it and nothing else: no path
-            reaches any output.
+        path: The file it was read from, or the path a document wrote for bytes it was
+            handed. Used to open it and nothing else: no path reaches any output.
         sha256: The digest of the file's bytes, which is what Panel Core names a face by.
         family: The family name from the font's `name` table.
         style: The style within the family: `Regular`, `Italic`, `Bold Italic`.
@@ -395,13 +395,16 @@ class FontMetrics:
     Latin line of lettering needs and all that measurement can promise to reproduce.
     """
 
-    def __init__(self, path: Path = DEFAULT_FONT_PATH) -> None:
+    def __init__(self, path: Path = DEFAULT_FONT_PATH, *, data: bytes | None = None) -> None:
         """Open a font and read the tables needed for measurement.
 
         Args:
             path: A TrueType or OpenType file. Defaults to the font that ships as an
                 ordinary dependency of this package -- never a system font lookup,
                 because determinism requires the same metrics everywhere.
+            data: The file's bytes, already read -- from beside a document, or sent with
+                one. `path` is then only the name it goes by: a family name falls back
+                to its stem, so one font names itself the same from a file or from memory.
 
         Raises:
             OSError: The file cannot be read.
@@ -412,7 +415,8 @@ class FontMetrics:
         # Read whole, once. What a font *is* is its bytes: Panel Core names a face by
         # their digest, so a drawing can be refused a file that merely shares a name.
         # It also means no file stays open behind a lazily read font.
-        data = Path(path).read_bytes()
+        if data is None:
+            data = Path(path).read_bytes()
         self.sha256 = self.digest(data)
         self._font = TTFont(io.BytesIO(data), lazy=True)
         # fontTools builds table objects dynamically, so `unitsPerEm` exists at runtime

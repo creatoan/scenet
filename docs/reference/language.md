@@ -268,6 +268,21 @@ cast is drawn in front of it, lettered by the same rules as on any other backdro
 
 The picture is centred either way and never stretched.
 
+- **The path is read as a font's is**: relative to the folder the document is in, wherever
+  `scenet` was run from, with `/` between folders. An absolute path is refused. Text compiled with
+  no file behind it has no folder, so it names a picture only when its caller says which folder it
+  belongs to, or hands the file over with it.
+- **PNG or JPEG**, the two raster formats SVG 2 requires every viewer to draw, told apart by their
+  first bytes rather than by the file's name.
+- **Only the size is read.** The compiler takes from the file how many pixels it has across and
+  down, from its header, and decodes nothing: the solver never sees artwork, here as everywhere.
+- **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag —
+  Chromium turns an SVG `<image>` by it, others do not — so such a picture would be upright in
+  one viewer and on its side in the next. Save it with the pixels turned instead.
+
+`scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
+on, without running the solver.
+
 
 ## `cast`
 

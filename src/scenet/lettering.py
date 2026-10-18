@@ -27,7 +27,7 @@ from pathlib import Path
 
 from scenet.errors import PanelSyntaxError
 from scenet.ir import Face, LetteringSpec
-from scenet.paths import resolve_relative
+from scenet.paths import Folder, read_relative
 from scenet.solve.text import FontMetrics, Typeface
 
 __all__ = ["FONT_RULE", "Lettering", "load_font", "typeface_for"]
@@ -57,12 +57,12 @@ class Lettering:
         return bool(self.declared) and face not in self.declared
 
 
-def load_font(declared: str, base: Path | None, *, loc: tuple[str | int, ...]) -> FontMetrics:
+def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...]) -> FontMetrics:
     """Read one declared font file.
 
     Args:
         declared: The path as the document wrote it.
-        base: The document's folder.
+        base: The document's folder, or the files sent with it.
         loc: Where in the document it was written, for the finding.
 
     Returns:
@@ -73,27 +73,13 @@ def load_font(declared: str, base: Path | None, *, loc: tuple[str | int, ...]) -
             as resolved: findings are output too, and an absolute path in one would make
             it differ between two checkouts.
     """
-    path = resolve_relative(declared, base, what="font", rule=FONT_RULE, loc=loc)
-    try:
-        data = path.read_bytes()
-    except FileNotFoundError as exc:
-        raise PanelSyntaxError(
-            f"font file {declared!r} was not found beside the document",
-            rule=FONT_RULE,
-            loc=loc,
-        ) from exc
-    except OSError as exc:
-        raise PanelSyntaxError(
-            f"font file {declared!r} cannot be read: {exc.strerror or type(exc).__name__}",
-            rule=FONT_RULE,
-            loc=loc,
-        ) from exc
+    data = read_relative(declared, base, what="font", rule=FONT_RULE, loc=loc)
 
     known = _BY_CONTENT.get(FontMetrics.digest(data))
     if known is not None:
         return known
     try:
-        metrics = FontMetrics(path)
+        metrics = FontMetrics(Path(declared), data=data)
     # A file that is not a font can fail inside fontTools in more ways than it documents,
     # and the bytes came from whoever wrote the document. Whatever the failure, the
     # answer to the author is the same.
@@ -108,12 +94,13 @@ def load_font(declared: str, base: Path | None, *, loc: tuple[str | int, ...]) -
     return metrics
 
 
-def typeface_for(spec: LetteringSpec, base: Path | None) -> Lettering:
+def typeface_for(spec: LetteringSpec, base: Folder | None) -> Lettering:
     """The family a panel letters in: the shipped one, or the files it declares.
 
     Args:
         spec: The panel's `lettering` block.
-        base: The document's folder, or `None` for text with no file behind it.
+        base: The document's folder, the files sent with it, or `None` for text with
+            neither.
 
     Returns:
         The family, and which faces were named.

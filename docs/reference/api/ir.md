@@ -40,3 +40,10 @@ Files a document names, found beside the document -- never by an absolute path.
 
 ```{automodule} scenet.paths
 ```
+
+## `scenet.images`
+
+A picture to letter over: how big it is, read from its PNG or JPEG header, and nothing else.
+
+```{automodule} scenet.images
+```

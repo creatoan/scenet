@@ -33,6 +33,11 @@ below 1.0 means.
   `masses`, never beside them or beside a `horizon` (`conflicting-setting`); a `fit` with
   no image is `invalid-field`. A panel that inherits a place writes `place: null` beside
   its image, and the editor's schema now accepts that `null`.
+- **The picture is read from its PNG or JPEG header**, beside the document as a font is, and
+  only its size is taken. `scenet check` reports a picture that is absolute, missing, not a PNG
+  or JPEG, or turned by its EXIF orientation as the new rule `image-file`, without the solver.
+  Text compiled with no folder may be handed the files it names instead: `base` takes a
+  mapping from the path the document writes to the file's bytes, for fonts as for pictures.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

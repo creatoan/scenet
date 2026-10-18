@@ -348,6 +348,21 @@ cast is drawn in front of it, lettered by the same rules as on any other backdro
 
 The picture is centred either way and never stretched.
 
+- **The path is read as a font's is**: relative to the folder the document is in, wherever
+  `scenet` was run from, with `/` between folders. An absolute path is refused. Text compiled with
+  no file behind it has no folder, so it names a picture only when its caller says which folder it
+  belongs to, or hands the file over with it.
+- **PNG or JPEG**, the two raster formats SVG 2 requires every viewer to draw, told apart by their
+  first bytes rather than by the file's name.
+- **Only the size is read.** The compiler takes from the file how many pixels it has across and
+  down, from its header, and decodes nothing: the solver never sees artwork, here as everywhere.
+- **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag —
+  Chromium turns an SVG `<image>` by it, others do not — so such a picture would be upright in
+  one viewer and on its side in the next. Save it with the pixels turned instead.
+
+`scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
+on, without running the solver.
+
 
 ## `cast`
 
@@ -1605,6 +1620,12 @@ Two panels in a comic script have the same name. Panels are named by their PANEL
 A declared font file cannot be read. `lettering.font` names font files, read relative to the folder the document is in. Each must be a relative path, the file must be there, and it must be a TrueType or OpenType font with a Unicode character map, since lettering is measured against it. A document compiled from text with no file behind it has no folder, and so can name no font.
 
 **Fix:** Check the path against the document's folder, write it relative to that folder, or point it at a .ttf or .otf file.
+
+### `scenet/image-file`
+
+A supplied picture cannot be read. `setting.image` names a picture to draw behind the cast, read relative to the folder the document is in. It must be a relative path written with `/`, the file must be there, and it must be a PNG or JPEG whose header gives its size and whose EXIF does not turn it -- renderers disagree on obeying that. A document compiled from text with no file behind it has no folder, and so can name no picture unless the picture is sent with it.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or save the picture as a PNG or JPEG with its pixels upright.
 
 ### `scenet/internal`
 

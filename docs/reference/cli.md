@@ -230,6 +230,7 @@ note as information rather than a red squiggle.
 | `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |
 | `scenet/unknown-pose` | error | A `pose` naming one its puppet does not declare |
 | `scenet/unknown-expression` | error | An `expression` naming one its puppet does not declare |
+| `scenet/image-file` | error | A picture in `setting.image` that is absolute, missing, not a PNG or JPEG, turned by its EXIF orientation, or named by text with no folder |
 | `scenet/font-file` | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
 | `scenet/layout` | error | Valid, but no layout satisfies its required constraints (`--deep` only) |
 | `scenet/balloon-placement` | error | No legal position exists for a balloon (`--deep` only) |

@@ -39,7 +39,7 @@ per-panel settings as `@` directives.
 
 import re
 import unicodedata
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -1707,10 +1707,13 @@ class PanelLines:
         heading: The line of its PANEL heading.
         events: The line each entry of its `script` was written on, in order: a speech's
             cue, a caption's or a sound effect's own line.
+        directives: The line each of its directives was written on, by the path in the
+            panel it sets: `("setting",)` for `@setting:`.
     """
 
     heading: int
     events: tuple[int, ...]
+    directives: Mapping[tuple[str, ...], int] = field(default_factory=dict[tuple[str, ...], int])
 
 
 @dataclass(frozen=True, slots=True)
@@ -1749,7 +1752,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         ...     "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n"
         ... )
         >>> document.lines["1"]
-        PanelLines(heading=4, events=(5,))
+        PanelLines(heading=4, events=(5,), directives={})
     """
     # Anything that reaches here as a string gets the treatment a file would have had,
     # and the same whatever editor saved it.
@@ -1810,7 +1813,11 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     return ScriptDocument(
         panels=_validate(panels, front_matter, source, notes),
         lines={
-            name: PanelLines(heading=draft.line, events=tuple(draft.event_lines))
+            name: PanelLines(
+                heading=draft.line,
+                events=tuple(draft.event_lines),
+                directives=dict(draft.directive_lines),
+            )
             for name, draft in panels.items()
         },
         notes=tuple(notes),

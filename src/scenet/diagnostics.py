@@ -88,9 +88,16 @@ from scenet.frontends.positions import (
     locate,
     syntax_error_region,
 )
-from scenet.frontends.script_front import FRONT_MATTER, normalise_text, parse_script_document
+from scenet.frontends.script_front import (
+    FRONT_MATTER,
+    ScriptDocument,
+    normalise_text,
+    parse_script_document,
+)
+from scenet.images import IMAGE_RULE, load_image
 from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
+from scenet.paths import Folder
 from scenet.pipeline import compile_book, compile_ir, compile_script
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
@@ -349,6 +356,21 @@ RULES: dict[str, Rule] = {
             "as a pose is."
         ),
         help="Check the name against the puppet's declared expressions.",
+    ),
+    "image-file": Rule(
+        summary="A supplied picture cannot be read",
+        description=(
+            "`setting.image` names a picture to draw behind the cast, read relative to the "
+            "folder the document is in. It must be a relative path written with `/`, the "
+            "file must be there, and it must be a PNG or JPEG whose header gives its size "
+            "and whose EXIF does not turn it -- renderers disagree on obeying that. A "
+            "document compiled from text with no file behind it has no folder, and so can "
+            "name no picture unless the picture is sent with it."
+        ),
+        help=(
+            "Check the path against the document's folder, write it relative to that "
+            "folder, or save the picture as a PNG or JPEG with its pixels upright."
+        ),
     ),
     "font-file": Rule(
         summary="A declared font file cannot be read",
@@ -730,6 +752,38 @@ def _asset_diagnostic(
     )
 
 
+def _diagnose_setting(
+    panel: PanelIR,
+    text: str,
+    source: Path | None,
+    *,
+    prefix: tuple[str | int, ...],
+    base: Folder | None,
+) -> list[Diagnostic]:
+    """Read the picture a panel is drawn over, and report it when it cannot be read.
+
+    Part of the cheap pass, as a font is: reading a header is not solving a panel. The
+    message never names the panel, so a picture a scene's default names is one fault
+    however many panels inherit it.
+    """
+    if panel.setting.image is None:
+        return []
+    try:
+        load_image(panel.setting.image, base, loc=("setting", "image"))
+    except ScenetError as exc:
+        path = (*prefix, "setting", "image")
+        return [
+            Diagnostic(
+                rule=IMAGE_RULE,
+                message=_message_of(exc),
+                path=path,
+                source=source,
+                region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+            )
+        ]
+    return []
+
+
 def _diagnose_cast(
     panel: PanelIR,
     text: str,
@@ -788,7 +842,7 @@ def _diagnose_cast(
     return found
 
 
-def _folder(source: Path | None, base: Path | None) -> Path | None:
+def _folder(source: Path | None, base: Folder | None) -> Folder | None:
     """The folder declared files are read from: given, or the document's own."""
     if base is not None:
         return base
@@ -802,7 +856,7 @@ def _diagnose_lettering(
     source: Path | None,
     *,
     prefix: tuple[str | int, ...],
-    base: Path | None,
+    base: Folder | None,
 ) -> list[Diagnostic]:
     """Read every font file a panel declares, and report the first that cannot be read.
 
@@ -901,7 +955,7 @@ def _diagnose_panel(
     prefix: tuple[str | int, ...],
     library: PuppetLibrary | None = None,
     deep: bool = False,
-    base: Path | None = None,
+    base: Folder | None = None,
 ) -> list[Diagnostic]:
     """Validate one panel mapping and report what is wrong with it.
 
@@ -968,6 +1022,7 @@ def _diagnose_panel(
 
     found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
+    found += _diagnose_setting(panel, text, source, prefix=prefix, base=base)
     if _errors(found):
         # A cast that does not resolve is not a document `--deep` can usefully
         # compile -- it would fail on the same reference with a worse location.
@@ -1027,7 +1082,7 @@ def _diagnose_scene(
     *,
     library: PuppetLibrary | None,
     deep: bool,
-    base: Path | None = None,
+    base: Folder | None = None,
 ) -> list[Diagnostic]:
     """Validate a `panels:` sequence, one panel at a time.
 
@@ -1209,7 +1264,7 @@ def diagnose_source(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     deep: bool = False,
 ) -> list[Diagnostic]:
@@ -1304,7 +1359,7 @@ def diagnose_script(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     deep: bool = False,
 ) -> list[Diagnostic]:
@@ -1361,6 +1416,7 @@ def diagnose_script(
     base = _folder(source, base)
     found = _diagnose_script_cast(text, panels, source, library=library)
     found += _diagnose_script_lettering(text, panels, source, base=base)
+    found += _diagnose_script_setting(text, document, source, base=base)
     if _errors(found):
         return _in_source_order(found)
 
@@ -1441,12 +1497,48 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     return padded, loaded if isinstance(loaded, dict) else {}
 
 
+def _diagnose_script_setting(
+    text: str,
+    document: ScriptDocument,
+    source: Path | None,
+    *,
+    base: Folder | None,
+) -> list[Diagnostic]:
+    """Read a script's pictures, reporting a front-matter fault once, where it is.
+
+    As `_diagnose_script_lettering`, with one difference: a picture a panel names in its
+    own `@setting:` directive is reported at that directive's line.
+    """
+    front, declared = _script_front_matter(text)
+    lines = normalise_text(text).split("\n")
+    found: list[Diagnostic] = []
+    for name, panel in document.panels.items():
+        for item in _diagnose_setting(panel, front, source, prefix=(), base=base):
+            if _has_path(declared, item.path):
+                if item not in found:
+                    found.append(item)
+                continue
+            written = document.lines[name]
+            found.append(
+                Diagnostic(
+                    rule=item.rule,
+                    message=item.message,
+                    path=(name, *item.path),
+                    source=source,
+                    region=_script_line(
+                        lines, written.directives.get(("setting",), written.heading)
+                    ),
+                )
+            )
+    return found
+
+
 def _diagnose_script_lettering(
     text: str,
     panels: dict[str, PanelIR],
     source: Path | None,
     *,
-    base: Path | None,
+    base: Folder | None,
 ) -> list[Diagnostic]:
     """Read a script's declared fonts, reporting a front-matter fault once, where it is.
 

@@ -52,6 +52,12 @@ A declared font file cannot be read. `lettering.font` names font files, read rel
 
 **Fix:** Check the path against the document's folder, write it relative to that folder, or point it at a .ttf or .otf file.
 
+### `scenet/image-file`
+
+A supplied picture cannot be read. `setting.image` names a picture to draw behind the cast, read relative to the folder the document is in. It must be a relative path written with `/`, the file must be there, and it must be a PNG or JPEG whose header gives its size and whose EXIF does not turn it -- renderers disagree on obeying that. A document compiled from text with no file behind it has no folder, and so can name no picture unless the picture is sent with it.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or save the picture as a PNG or JPEG with its pixels upright.
+
 ### `scenet/internal`
 
 The compiler failed in a way it does not have a rule for. A Scenet error reached the checker without a more specific rule. Worth reporting: either the document found something genuinely new, or a rule is missing from the catalogue.

@@ -56,8 +56,10 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
+from scenet.images import load_image
 from scenet.ir import Face, Mark, PanelIR, PanelSpec, SayEvent, Side
 from scenet.lettering import Lettering, typeface_for
+from scenet.paths import Folder
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
@@ -83,6 +85,9 @@ class CompileResult:
     #: The fonts the lettering was measured in, other than the shipped family's, by the
     #: digest `PanelCore.fonts` names them by. Hand them to the renderer.
     fonts: dict[str, FontMetrics] = field(default_factory=dict)
+    #: The supplied pictures it was drawn over, by the digest `PanelCore` names them by:
+    #: their bytes, for a renderer asked to embed them rather than link them.
+    images: dict[str, bytes] = field(default_factory=dict)
     #: Faces the document named no file for, and what was used instead -- reported in
     #: `notes` only when something was actually set in one.
     lettering_notes: tuple[str, ...] = ()
@@ -325,7 +330,7 @@ def _stand_in_notes(core: PanelCore, lettering: Lettering, family: Typeface) -> 
     return tuple(notes)
 
 
-def _folder(source: Path | None, base: Path | None) -> Path | None:
+def _folder(source: Path | None, base: Folder | None) -> Folder | None:
     """The folder files a document names are read from: given, or the document's own."""
     if base is not None:
         return base
@@ -388,7 +393,7 @@ def compile_ir(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     lettering_height: float | None = None,
     exclusions: Sequence[BBox] = (),
     outline: Sequence[tuple[float, float]] | None = None,
@@ -400,8 +405,9 @@ def compile_ir(
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: A regular face to measure lettering against, in place of the one the
             panel declares or the shipped one.
-        base: The folder the panel's document is in, which the font files it declares
-            are read from. Without one, a panel that declares a font is refused.
+        base: The folder the panel's document is in, which the font files and the
+            picture it declares are read from -- or those files themselves, by the
+            path it writes. Without one, a panel that names a file is refused.
         lettering_height: The height type sizes are a fraction of, instead of the panel's
             own. A page passes the same value to every panel on it; a panel compiled on
             its own leaves it out. A panel that sets `lettering.size` letters at that size
@@ -417,12 +423,18 @@ def compile_ir(
         The compiled panel, with the fonts it was lettered in.
 
     Raises:
-        PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read.
+        PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read, or
+            `image-file`, for a picture.
     """
     library = library or default_library()
     # Read first: a font that cannot be read is the author's to fix, and is better said
     # before the solver spends anything on a panel it could not letter.
     lettering = typeface_for(panel.lettering, base)
+    image = (
+        load_image(panel.setting.image, base, loc=("setting", "image"))
+        if panel.setting.image is not None
+        else None
+    )
     family = lettering.typeface
     if metrics is not None:
         family = replace(family, regular=metrics)
@@ -618,6 +630,7 @@ def compile_ir(
         placements=placements,
         posed=posed,
         fonts={font.sha256: font for font in declared.values()},
+        images={image.sha256: image.data} if image is not None else {},
         lettering_notes=_stand_in_notes(core, lettering, family),
     )
 
@@ -626,7 +639,7 @@ def compile_source(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> CompileResult:
@@ -729,12 +742,21 @@ class Book:
             digest: font for result in self.panels.values() for digest, font in result.fonts.items()
         }
 
+    @property
+    def images(self) -> dict[str, bytes]:
+        """Every supplied picture any panel was drawn over, once, by digest: what to embed."""
+        return {
+            digest: data
+            for result in self.panels.values()
+            for digest, data in result.images.items()
+        }
+
 
 def compile_book(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> Book:
@@ -783,7 +805,7 @@ def _compile_document(
     document: SceneDocument,
     library: PuppetLibrary | None,
     metrics: FontMetrics | None,
-    base: Path | None,
+    base: Folder | None,
 ) -> Book:
     """Lay out every page, then compile every panel at the size its page gave it."""
     library = library or default_library()
@@ -906,7 +928,7 @@ def compile_scene(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
@@ -975,7 +997,7 @@ def compile_script(
     text: str,
     *,
     source: Path | None = None,
-    base: Path | None = None,
+    base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> Book:

@@ -1,7 +1,7 @@
 """Files a document names, found beside the document.
 
-A document may point at a file it does not contain -- a lettering face now, an image to
-letter over later (#70). Every such path is read **relative to the folder the document
+A document may point at a file it does not contain -- a lettering face, or a picture to
+letter over (#70). Every such path is read **relative to the folder the document
 is in**, the way a link in a web page is, and never as an absolute path. That is what
 lets a document and the files it names travel together and compile the same anywhere,
 and what stops a server compiling documents it was sent from being steered at files of
@@ -10,18 +10,26 @@ its own.
 The folder is the document's, not the working directory's: `scenet build
 comics/one.panel.yaml` reads `fonts/x.ttf` from `comics/fonts/`, wherever it was run
 from. Text compiled with no file behind it has no folder, and can name no file unless
-the caller says which folder it belongs to.
+the caller says which folder it belongs to -- or hands over the files themselves, by the
+path the document writes, which is how a server is sent them: it never reads a folder of
+its own. Both are read the same way, `./art/a.png` and `art/a.png` alike.
 
 Nothing here reaches the output. A resolved path is used to open a file and is then
 forgotten; what a Core records about a font is what is in it.
 """
 
+import posixpath
 import re
+from collections.abc import Mapping
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from scenet.errors import PanelSyntaxError
 
-__all__ = ["resolve_relative"]
+__all__ = ["Folder", "read_relative", "resolve_relative"]
+
+#: Where the files a document names are: the folder it is in, or the files themselves, by
+#: the path the document writes.
+Folder = Path | Mapping[str, bytes]
 
 #: The C0 controls and DEL. Python refuses a NUL in any path, raising an error no finding
 #: was made from, and Windows refuses every one of these in a file name, so a path holding
@@ -61,6 +69,88 @@ def resolve_relative(
         >>> found.as_posix()
         'comic/fonts/a.ttf'
     """
+    _refuse_unportable(declared, what=what, rule=rule, loc=loc)
+    if base is None:
+        raise _no_folder(declared, what=what, rule=rule, loc=loc)
+    return base / declared
+
+
+def read_relative(
+    declared: str,
+    base: Folder | None,
+    *,
+    what: str,
+    rule: str,
+    loc: tuple[str | int, ...] = (),
+) -> bytes:
+    """Read a file a document names, from its folder or from the files sent with it.
+
+    Args:
+        declared: The path as written, with `/` between folders.
+        base: The document's folder; or the files beside it, by the path the document
+            writes, when it was sent as text; or `None` when it has neither.
+        what: What the file is, for the message: `font`, say.
+        rule: The rule every failure is reported under.
+        loc: Where in the document the path was written.
+
+    Returns:
+        The file's bytes.
+
+    Raises:
+        PanelSyntaxError: Anything :func:`resolve_relative` refuses, or the file is not
+            there, or cannot be read. The message names the path as written, never as
+            resolved: a finding is output too, and a folder in it would differ between
+            two checkouts.
+
+    Example:
+        >>> from scenet.paths import read_relative
+        >>> read_relative("./art/a.png", {"art/a.png": b"..."}, what="image", rule="image-file")
+        b'...'
+    """
+    if base is None or isinstance(base, Path):
+        path = resolve_relative(declared, base, what=what, rule=rule, loc=loc)
+        try:
+            return path.read_bytes()
+        except FileNotFoundError as exc:
+            raise _not_found(declared, what=what, rule=rule, loc=loc) from exc
+        # `ValueError` too: a path the file system cannot spell is a path that cannot be
+        # read, and is the author's to fix, whatever the system's reason.
+        except (OSError, ValueError) as exc:
+            reason = exc.strerror if isinstance(exc, OSError) else None
+            raise PanelSyntaxError(
+                f"{what} file {declared!r} cannot be read: {reason or type(exc).__name__}",
+                rule=rule,
+                loc=loc,
+            ) from exc
+    _refuse_unportable(declared, what=what, rule=rule, loc=loc)
+    sent = {posixpath.normpath(name): data for name, data in base.items()}
+    found = sent.get(posixpath.normpath(declared))
+    if found is None:
+        raise _not_found(declared, what=what, rule=rule, loc=loc)
+    return found
+
+
+def _not_found(
+    declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]
+) -> PanelSyntaxError:
+    return PanelSyntaxError(
+        f"{what} file {declared!r} was not found beside the document", rule=rule, loc=loc
+    )
+
+
+def _no_folder(
+    declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]
+) -> PanelSyntaxError:
+    return PanelSyntaxError(
+        f"the {what} {declared!r} is read from beside the document, and this document "
+        "has no folder: it was compiled from text, not from a file",
+        rule=rule,
+        loc=loc,
+    )
+
+
+def _refuse_unportable(declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]) -> None:
+    """Refuse a path that could not be read the same way on every system, or at all."""
     control = _CONTROL.search(declared)
     if control is not None:
         raise PanelSyntaxError(
@@ -87,11 +177,3 @@ def resolve_relative(
             rule=rule,
             loc=loc,
         )
-    if base is None:
-        raise PanelSyntaxError(
-            f"the {what} {declared!r} is read from beside the document, and this document "
-            "has no folder: it was compiled from text, not from a file",
-            rule=rule,
-            loc=loc,
-        )
-    return base / declared
