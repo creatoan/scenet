@@ -7,6 +7,7 @@ tolerated -- stripped, then the convention parsed, never a second format. Each t
 is one row of the issue's table, or one edge of it.
 """
 
+import time
 from pathlib import Path
 
 import pytest
@@ -60,13 +61,42 @@ class TestPageHeadings:
             ("PAGE TWENTY ONE", "21"),
             ("PAGE TWENTY-ONE (one panel)", "21"),
             ("PAGE 7:", "7"),
+            ("PAGE 7 :", "7"),
             ("PAGE 3A", "3A"),
             ("PAGE ONE (splash)", "1"),
+            ("PAGE TWENTY - ONE (one panel).", "21"),
+            ("PAGE 2 (three panels) :", "2"),
+            ("PAGE\tTWO", "2"),
+            ("PLANCHE 3 :", "3"),
         ],
     )
     def test_a_page_is_named_by_its_number(self, heading: str, page: str):
         script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
         assert list(panels(script)) == ["0-1", f"{page}-1"]
+
+
+class TestAHostileHeadingIsReadQuickly:
+    """A line that starts like a PAGE heading is read in time linear in its length.
+
+    The heading pattern once let a hyphen be part of a word or of the space between two,
+    so `PAGE !-!-!-…` split in exponentially many ways before failing, and three optional
+    runs of spaces in a row made a long blank stretch cubic. A script is untrusted input,
+    and the playground reads one on every keystroke. Each line here took seconds before;
+    a second is a bound no machine should come near now.
+    """
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            pytest.param("PAGE !" + "-!" * 24 + "(", id="hyphens-between-words"),
+            pytest.param("PAGE !" + "\t-" * 24 + "(", id="tabs-and-hyphens"),
+            pytest.param("PAGE A" + " " * 1500 + ":x", id="spaces-before-a-stray-colon"),
+        ],
+    )
+    def test_it_is_read_in_well_under_a_second(self, line: str):
+        start = time.perf_counter()
+        found(f"PANEL 1\n{line}\n")
+        assert time.perf_counter() - start < 1.0
 
 
 class TestPanelHeadings:
