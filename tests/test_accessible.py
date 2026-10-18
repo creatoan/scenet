@@ -281,7 +281,7 @@ class TestAPage:
         )
         cores = {name: result.core for name, result in book.panels.items()}
         root = _root(render_page(book.pages[0], cores))
-        rings = [rect for rect in root.findall(f"{SVG}rect")][1:]
+        rings = root.findall(f"{SVG}rect")[1:]
         assert rings
         assert {ring.get("aria-hidden") for ring in rings} == {"true"}
 
