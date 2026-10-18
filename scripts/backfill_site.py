@@ -49,6 +49,7 @@ TOOLING = (
 OVERLAY = (
     "docs/conf.py",
     "docs/_templates/playground-link.html",
+    "docs/_static/scenet.css",
     "scripts/build_site.py",
     "scripts/site_versions.py",
     "playground/vite.config.ts",

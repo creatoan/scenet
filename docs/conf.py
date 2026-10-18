@@ -13,6 +13,9 @@ from datetime import UTC, datetime
 from importlib.metadata import version as package_version
 from pathlib import Path
 
+from docutils import nodes
+from sphinx.application import Sphinx
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # The MCP SDK is imported here, before any extension runs, and not left for autodoc to
@@ -136,6 +139,8 @@ intersphinx_timeout = 10
 
 html_theme = "pydata_sphinx_theme"
 templates_path = ["_templates"]
+html_static_path = ["_static"]
+html_css_files = ["scenet.css"]
 html_title = f"Scenet {version}"
 html_copy_source = False
 html_show_sourcelink = False
@@ -154,10 +159,11 @@ html_theme_options = {
             "icon": "fa-solid fa-box",
         },
     ],
-    # The Playground link is a template rather than an icon link, because it is relative:
-    # each version's documentation opens that version's playground, running its compiler.
+    # The playground is named in the navbar, beside the sections, and not left an icon at
+    # the far end. A template rather than an entry in `external_links`, because it is
+    # relative: each version's documentation opens that version's playground.
     "navbar_start": ["navbar-logo", "version-switcher"],
-    "navbar_end": ["theme-switcher", "playground-link", "navbar-icon-links"],
+    "navbar_center": ["navbar-nav", "playground-link"],
     # One switcher.json for every version, so an old version lists the releases made after
     # it. Site-absolute rather than a full URL, so the local preview -- served under
     # /scenet/ too -- reads the one beside it. See scripts/site_versions.py.
@@ -177,3 +183,25 @@ html_context = {
     "github_version": "main",
     "default_mode": "auto",
 }
+
+# -- Links to the playground ---------------------------------------------------
+#
+# The Markdown links the playground by its full address, the only kind that works where
+# GitHub renders these pages. Built, each link becomes relative, so every version of the
+# documentation opens its own version's playground rather than the latest one's.
+
+_PLAYGROUND = f"{html_baseurl}playground/"
+
+
+def _playground_links_stay_in_their_version(
+    app: Sphinx, doctree: nodes.document, docname: str
+) -> None:
+    root = app.builder.get_relative_uri(docname, "index").removesuffix("index.html")
+    for reference in doctree.findall(nodes.reference):
+        target = reference.get("refuri", "")
+        if target.startswith(_PLAYGROUND):
+            reference["refuri"] = f"{root}playground/{target.removeprefix(_PLAYGROUND)}"
+
+
+def setup(app: Sphinx) -> None:
+    app.connect("doctree-resolved", _playground_links_stay_in_their_version)

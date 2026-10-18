@@ -47,12 +47,21 @@
     <header>
       <div class="masthead">
         <h1>Scenet</h1>
+        <!--
+          Which version of Scenet this playground runs, and the others. Filled in from the
+          site's switcher.json; it stays hidden where there is none, as under npm run dev.
+        -->
+        <select id="version-select" class="version-select" aria-label="Scenet version" hidden></select>
         <nav>
           <a href="../">Documentation</a>
           <a href="https://github.com/creatoan/scenet">GitHub</a>
           <a href="https://pypi.org/project/scenet/">PyPI</a>
         </nav>
       </div>
+      <p id="version-banner" class="version-banner" role="note" hidden>
+        <span id="version-banner-text"></span>
+        <a id="version-latest" href="../playground/">Open the latest release's playground</a>
+      </p>
       <p class="tagline">
         A semantic DSL for comic panels, compiled to SVG. Deterministic geometry — no
         generative image model. The compiler below is the same Python that runs on the

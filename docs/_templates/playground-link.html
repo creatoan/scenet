@@ -1,13 +1,15 @@
-{#- The playground of the version being read, as a navbar icon like the others.
+{#- The playground of the version being read, named in the navbar beside the sections.
 
-    Not an entry in `icon_links`, whose URL is used as written: a relative one would break
-    one directory down. `pathto(..., 1)` resolves from each page, so the documentation of
-    /dev/ opens /dev/playground/, and a release's opens the playground running its wheel. -#}
-<ul class="navbar-icon-links" aria-label="Playground">
-  <li class="nav-item">
-    <a href="{{ pathto('playground/', 1) }}" title="Playground" class="nav-link pst-navbar-icon" data-bs-toggle="tooltip" data-bs-placement="bottom">
-      <i class="fa-solid fa-play fa-lg" aria-hidden="true"></i>
-      <span class="visually-hidden">Playground</span>
-    </a>
-  </li>
-</ul>
+    Not an entry in `external_links`, whose URL is used as written: a relative one would
+    break one directory down. `pathto(..., 1)` resolves from each page, so the documentation
+    of /dev/ opens /dev/playground/, and a release's opens the playground running its wheel.
+    On a narrow screen the theme moves this into the sidebar with the sections. -#}
+<nav class="navbar-nav" aria-label="Playground">
+  <ul class="bd-navbar-elements navbar-nav">
+    <li class="nav-item">
+      <a class="nav-link nav-internal" href="{{ pathto('playground/', 1) }}">
+        Playground
+      </a>
+    </li>
+  </ul>
+</nav>

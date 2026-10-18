@@ -40,6 +40,11 @@ CORES = GOLDEN / "core"
 DIGESTS = GOLDEN / "digests.json"
 COMMAND = "uv run python scripts/update_golden.py"
 
+#: The documentation's home page shows the gallery's first panel, as `scenet build` draws
+#: it -- so the picture is a golden too, kept whole, and rewritten with the others.
+HOME_PICTURE = ROOT / "docs" / "images" / "two-characters.svg"
+HOME_SOURCE = "01-two-characters.svg"
+
 #: Two builds of every document: one with every output, one with live text, whose SVG
 #: differs and whose Core does not.
 VARIANTS = {
@@ -113,6 +118,8 @@ def differences(written: dict[str, bytes]) -> list[str]:
     names += sorted(
         name for name in {*digests, *kept_digests} if digests.get(name) != kept_digests.get(name)
     )
+    if not HOME_PICTURE.is_file() or HOME_PICTURE.read_bytes() != written[HOME_SOURCE]:
+        names.append(str(HOME_PICTURE.relative_to(ROOT).as_posix()))
     return names
 
 
@@ -127,6 +134,8 @@ def write(written: dict[str, bytes]) -> None:
     DIGESTS.write_text(
         json.dumps(digests, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
     )
+    HOME_PICTURE.parent.mkdir(parents=True, exist_ok=True)
+    HOME_PICTURE.write_bytes(written[HOME_SOURCE])
 
 
 def run(argv: list[str] | None = None) -> int:

@@ -27,18 +27,28 @@ You write what is in the panel:
 ```yaml
 panel:
   size: [1000, 800]
+
 camera:
   shot: medium_shot
+
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
 staging:
   - alice left_of bob
   - alice looking_at bob
+  - alice ground_shared_with bob
+
 script:
   - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
   - say: {by: bob,   text: "I know."}
 ```
+
+And this is what it compiles to — not an illustration of the idea, but the file
+`scenet build` writes for that document:
+
+![Alice points at Bob, saying "You forgot your umbrella!"; Bob, arms crossed, answers "I know."](images/two-characters.svg)
 
 From that, the compiler works out the rest: how large each figure must be for a medium
 shot, where they stand, which way they face, how big each balloon needs to be for its
@@ -50,10 +60,18 @@ solving and computational geometry. The same input always produces byte-identica
 
 ## Try it without installing anything
 
+```{button-link} https://creatoan.github.io/scenet/playground/#src=XZBBboQwDEX3OYXLmlZ0V3GDHqGqqsiAgWgAI8doSivuXoeMqmmziv39X_yz4kJT7QBi-KIa3p-rqirhpao-nGtxJsFTHFlrmKkL2-xTkcSoScIptGb8FupJaEn3s1XCytGKlcOiYRlKSAcNM1GvXscg3WH-hpvahHu_tdJ09qPM0bfCMVJXnn4Jw3gDlNBja_AMPZyLikOqDfyY98jPcZ-o913miw161H_CILwtnYVEoc5fg47ngIuthFUzOOJuiZv9N6rSpy1WvPEGPcvACjtvAtvcCE0TPhT2G2fAGpRXn5f9S7qFvpFe4bLw9ak43A8
+:color: primary
+:shadow:
+
+Open this panel in the playground, and change it
+```
+
 The [playground](https://creatoan.github.io/scenet/playground/) runs this compiler — the
 same Python, unmodified — in your browser under WebAssembly via Pyodide. It is not a
 reimplementation: the page installs the exact wheel `uv build` produces, so there is no
-second copy of the geometry to drift out of step.
+second copy of the geometry to drift out of step. Edit the document on the left and the
+panel on the right follows as you type, with every finding underlined where it applies.
 
 ## Thirty seconds
 

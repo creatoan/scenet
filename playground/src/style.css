@@ -83,6 +83,35 @@ footer a {
   color: var(--accent);
 }
 
+/* The version switcher, matching the documentation's: a small select beside the title. */
+.version-select {
+  align-self: center;
+  padding: 0.1rem 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+/* On main's playground and an old release's, as the documentation shows on its pages. */
+.version-banner {
+  margin: 0.5rem 0 0;
+  padding: 0.45rem 0.7rem;
+  max-width: 80ch;
+  border-left: 3px solid var(--error-ink);
+  border-radius: 0 4px 4px 0;
+  background: var(--error-bg);
+  font-size: 0.85rem;
+}
+
+.version-banner a {
+  margin-left: 0.4rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .tagline {
   margin: 0.4rem 0 0;
   max-width: 68ch;

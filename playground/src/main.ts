@@ -49,6 +49,7 @@ import {
   type ScenetDocumentKind,
 } from "./scenet-monaco";
 import { installSplitter } from "./splitter";
+import { banner, currentVersion, fetchVersions, playgroundUrl } from "./versions";
 import { Viewport } from "./viewport";
 import "./style.css";
 
@@ -121,6 +122,8 @@ const zoomControls = element<HTMLDivElement>("zoom-controls");
 const zoomLevel = element<HTMLButtonElement>("zoom-level");
 const downloadMenu = element<HTMLDetailsElement>("download-menu");
 const fullscreenButton = element<HTMLButtonElement>("fullscreen");
+const versionSelect = element<HTMLSelectElement>("version-select");
+const versionBanner = element<HTMLParagraphElement>("version-banner");
 const tabs = {
   panel: element<HTMLButtonElement>("tab-panel"),
   debug: element<HTMLButtonElement>("tab-debug"),
@@ -140,7 +143,48 @@ function setStatus(message: string, busy = false): void {
   statusLine.classList.toggle("busy", busy);
 }
 
+/**
+ * Say which version of Scenet this playground runs, and offer the others.
+ *
+ * Every version of the site has a playground, and nothing else on the page tells them
+ * apart. Switching carries a share link's document along; a draft follows anyway, since
+ * every version's playground shares this origin's storage.
+ */
+async function showVersions(): Promise<void> {
+  const versions = await fetchVersions();
+  const current = currentVersion(versions, location.pathname);
+  if (current === undefined) return;
+
+  for (const version of versions) {
+    const option = document.createElement("option");
+    option.value = version.url;
+    option.textContent = version.name;
+    option.selected = version === current;
+    versionSelect.append(option);
+  }
+  versionSelect.addEventListener("change", () => {
+    const chosen = versions.find((version) => version.url === versionSelect.value);
+    if (chosen !== undefined && chosen !== current) {
+      location.href = playgroundUrl(chosen, location.hash);
+    }
+  });
+  versionSelect.hidden = false;
+
+  const shown = banner(versions, current);
+  if (shown === undefined) return;
+  element<HTMLSpanElement>("version-banner-text").textContent = shown.text;
+  const latest = element<HTMLAnchorElement>("version-latest");
+  latest.href = playgroundUrl(shown.latest, "");
+  // The fragment as it is when followed: an edit drops a share link from the address.
+  latest.addEventListener("click", () => {
+    latest.href = playgroundUrl(shown.latest, location.hash);
+  });
+  versionBanner.hidden = false;
+}
+
 async function main(): Promise<void> {
+  void showVersions();
+
   const schemaBase = (name: string): string =>
     new URL(`schemas/${name}`, document.baseURI).href;
 

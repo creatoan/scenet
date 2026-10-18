@@ -1,0 +1,10 @@
+/* The home page's example, compiled. At the column's full width a 1000-pixel panel fills
+   the screen and pushes the explanation out of sight; at this size it reads as the answer
+   to the YAML above it. */
+img[src$="two-characters.svg"] {
+  display: block;
+  max-width: min(100%, 34rem);
+  margin: 1rem auto 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgb(16 24 40 / 14%);
+}
