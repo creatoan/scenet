@@ -12,7 +12,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
-from scenet.diagnostics import diagnose_script, diagnose_source
+from scenet.diagnostics import Diagnostic, diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel, parse_scene
@@ -36,7 +36,7 @@ def _script(body: str, front: str = FRONT) -> str:
     return f"{front}{body}"
 
 
-def _only(findings: list) -> object:
+def _only(findings: list[Diagnostic]) -> Diagnostic:
     assert len(findings) == 1, [(item.rule, item.message) for item in findings]
     return findings[0]
 

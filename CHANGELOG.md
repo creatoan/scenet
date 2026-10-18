@@ -10,7 +10,21 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.11.**
+
+- **A comic script's prose is now read**, as its panel's description. A line of it holding a
+  control character an SVG cannot hold, which used to pass unnoticed, is reported at that
+  line as `invalid-field`. `description` in a script's front matter is refused.
+
 ### Added
+
+- **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
+  Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
+  one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept
+  exactly as written, says something else. It is carried and never interpreted, for
+  accessible output to read (#76). It describes one panel, so it is never inherited: beside
+  `panels:` or in a script's front matter it is refused as `unknown-key`, and a panel drawn
+  `over:` another does not take its parent's.
 
 - **The documentation site documents what you install.** Its root, and every address
   already in use there — the documentation, the playground, `schemas/panel.schema.json`,
