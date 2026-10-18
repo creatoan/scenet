@@ -165,8 +165,11 @@ renderer is handed fonts by digest and refuses a Core that names one it was not 
 drawing lettering in a face it was not measured in. Fonts are cached by digest too, so a file
 replaced in place is read again.
 
-The path rule lives in `scenet/paths.py`, written to be shared: an image to letter over (#70) is the
-next file a document will name.
+The path rule lives in `scenet/paths.py`, written to be shared, and a picture to letter over (#70) is
+read by it too: the same paths and the same refusals, and in Panel Core the same identity, a digest
+of its bytes. A caller with no folder — text compiled with nothing behind it — may hand over the
+files themselves instead, by the path the document writes; they are read from memory, never
+written to a folder of the server's.
 
 ## The default face stays Source Sans Pro
 

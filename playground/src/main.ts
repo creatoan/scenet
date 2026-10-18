@@ -22,6 +22,7 @@ import {
   type CompileSuccess,
   type Compiler,
 } from "./compiler";
+import { exampleFiles } from "./examples";
 import { download, sourceFilename, stemFor, svgBlob, svgToPng, textBlob } from "./export";
 import { declaredPath, fontFileName } from "./fonts";
 import {
@@ -67,6 +68,8 @@ interface Example {
   readonly kind: ScenetDocumentKind;
   readonly file: string;
   readonly source: string;
+  /** Files it names beside itself, as base64: a picture it is lettered over. */
+  readonly files?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -714,6 +717,9 @@ async function main(): Promise<void> {
   }
 
   document.title = `Scenet ${compiler.version} playground`;
+  // Every picture an example is lettered over, beside the document, before the first
+  // compile: a restored draft or a shared link may name one as well as the example does.
+  for (const file of exampleFiles(examples)) compiler.addFile(file.path, file.bytes);
   await compileNow();
 }
 

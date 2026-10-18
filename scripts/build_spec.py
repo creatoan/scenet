@@ -28,6 +28,7 @@ import posixpath
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -127,9 +128,14 @@ def _fence(content: str, language: str) -> str:
     return f"{ticks}{language}\n{content.rstrip()}\n{ticks}\n"
 
 
-def _gallery_entries() -> list[dict[str, str]]:
+def _gallery_entries() -> list[dict[str, Any]]:
     manifest = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))
     return manifest["examples"]
+
+
+def _named_files(entry: dict[str, Any]) -> list[str]:
+    """The files an example names beside itself -- a picture it is lettered over."""
+    return list(entry.get("files", []))
 
 
 def _preamble() -> str:
@@ -267,7 +273,14 @@ def _gallery() -> str:
         path = GALLERY / entry["file"]
         language = "text" if path.suffix == ".script" else "yaml"
         source = path.read_text(encoding="utf-8")
-        sections.append(f"## {entry['title']}\n\n`{entry['file']}`\n\n{_fence(source, language)}")
+        beside = "".join(
+            f"\n\nIt names `{name}`, which is beside it in the gallery: a picture, not text, "
+            "so not printed here."
+            for name in _named_files(entry)
+        )
+        sections.append(
+            f"## {entry['title']}\n\n`{entry['file']}`{beside}\n\n{_fence(source, language)}"
+        )
     return (
         "# Gallery\n\n"
         "Every example the playground offers, in the order it offers them. The test suite "
@@ -353,6 +366,9 @@ def skill_files() -> dict[Path, bytes]:
     files[gallery / "manifest.yaml"] = (GALLERY / "manifest.yaml").read_bytes()
     for entry in _gallery_entries():
         files[gallery / entry["file"]] = (GALLERY / entry["file"]).read_bytes()
+        # A picture travels with the example that names it, so the skill's copy compiles.
+        for name in _named_files(entry):
+            files[gallery / name] = (GALLERY / name).read_bytes()
     return files
 
 

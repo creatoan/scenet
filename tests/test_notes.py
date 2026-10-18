@@ -190,7 +190,7 @@ GALLERY = Path(__file__).resolve().parents[1] / "examples" / "gallery"
 
 @pytest.mark.parametrize(
     "path",
-    sorted(path for path in GALLERY.iterdir() if path.name != "manifest.yaml"),
+    sorted(path for path in GALLERY.iterdir() if path.is_file() and path.name != "manifest.yaml"),
     ids=lambda path: path.name,
 )
 def test_the_gallery_has_nothing_to_note(path: Path):

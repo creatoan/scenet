@@ -78,6 +78,10 @@ read, a note to the artist included, so when the reader should hear something el
 [Prose is never interpreted](write_a_comic_script.md#prose-is-never-interpreted). A description is
 never inherited: it describes one panel, and a panel drawn `over:` another is a different picture.
 
+Over a [picture of your own](letter_over_your_own_art.md) this matters most. The picture is part of
+the panel's one image and adds nothing to what is read, and a generated description cannot say what
+it shows — not the place, not the hour — only the weather Scenet drew on top of it.
+
 Generated text is **templated English**. A French script's prose is read in French, but the words
 round its dialogue — `Alice, whispering:` — are English, and the file does not say which language
 is which. Write descriptions yourself where that matters.

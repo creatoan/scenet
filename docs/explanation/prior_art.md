@@ -473,6 +473,48 @@ second time as the description when moving by graphic — one `<title>` holding 
 is read once ([recorded results](../howto/make_accessible_output.md#recorded-results));
 `aria-flowto`. See [design decisions](design_decisions.md#a-panel-is-one-image-read-whole-in-reading-order).
 
+### Word balloons on existing frames — Chun, Ryu, Hwang & Cho, ISVC 2006
+
+[*An Automated Procedure for Word Balloon Placement in Cinema Comics*](https://doi.org/10.1007/11919629_58),
+Advances in Visual Computing
+
+Places word balloons on film frames that already exist. Given each actor's position and the order
+of the dialogue, a cartographic labelling algorithm puts every balloon near its speaker in reading
+order, and a measure of layout quality then refines the positions. It is the closest published
+precedent for lettering a picture drawn elsewhere, and the same shape as Scenet's candidate scoring:
+rules first, then a cost.
+
+Taken: the problem as it states it — the picture is given, and lettering is what is placed — and the
+confirmation that a placer needs to know where the speakers are, not what the picture shows. With a
+supplied picture behind Scenet's own figures (#70), the figures carry that geometry already; a
+contract declaring it for figures the artwork draws is #71. Not taken: finding the actors in the
+frame. Positions here come from the document, never from looking at pixels.
+
+### `<image>` in SVG renderers and editors
+
+[SVG 2, Embedded Content](https://www.w3.org/TR/SVG2/embedded.html#ImageElement) ·
+[SVG 2, Linking](https://www.w3.org/TR/SVG2/linking.html#XLinkRefAttrs) ·
+[MDN `<image>`](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/image) ·
+[MDN `xlink:href`](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xlink:href) ·
+[MDN, SVG as an image](https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_as_an_image) ·
+[inkscape/inbox#4411](https://gitlab.com/inkscape/inbox/-/issues/4411) ·
+[inkscape/inbox#4235](https://gitlab.com/inkscape/inbox/-/issues/4235) ·
+[librsvg, referenced files](https://gnome.pages.gitlab.gnome.org/librsvg/Rsvg-2.0/class.Handle.html) ·
+[librsvg#907](https://gitlab.gnome.org/GNOME/librsvg/-/issues/907) ·
+[usvg `resources_dir`](https://docs.rs/usvg/latest/usvg/struct.Options.html) ·
+[WPT `svg-image-orientation-none`](https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_23310%5E%21/)
+
+How a supplied picture is written into the SVG (#70) was checked against what the specification
+asks and what renderers and editors do, which differ.
+
+| Question | What the sources say | What Scenet writes |
+|---|---|---|
+| `href` or `xlink:href` | SVG 2 asks a generator for plain `href`, deprecates the XLink one, reads `href` when both are present, and needs `xmlns:xlink` declared for the old one. MDN keeps `xlink:href` as a fallback. Inkscape does not load a resource named by plain `href` (#4411). librsvg reads both. | `xlink:href` alone, its namespace declared on the element. With both, an editor that rewrites one leaves a stale other that browsers read, and an embedded picture is stored twice. |
+| `preserveAspectRatio` | SVG 2 fits the picture by its intrinsic proportions, `meet` or `slice`, and the user-agent stylesheet clips an `<image>` to its rectangle. Inkscape has honoured it since 0.91. librsvg once mishandled it on its gdk-pixbuf path (#907). | The rectangle is the placed box, which already has the picture's proportions, so the keyword changes nothing where renderers agree; it is kept so one that does not still covers or contains rather than stretching. |
+| A linked file | librsvg loads only files in the SVG's folder or below it, and any `data:` URL; resvg resolves against a `resources_dir`; an SVG used as an image loads nothing it links to, `data:` URLs aside (MDN). | The path as written, which resolves beside the document, where `build` writes; `--embed-images` otherwise. Not rewritten to climb back with `../`, which librsvg refuses. |
+| Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
+| EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
+
 ## Future
 
 ### L-systems

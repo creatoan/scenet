@@ -89,6 +89,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     build.add_argument(
+        "--embed-images",
+        action="store_true",
+        help=(
+            "write each supplied picture into the SVG as a data: URI, so the file stands "
+            "alone; by default it links the picture by the path the document wrote"
+        ),
+    )
+    build.add_argument(
         "--strip",
         action="store_true",
         help="for a multi-panel document, also lay the panels out as a strip",
@@ -271,10 +279,37 @@ def run_build(args: argparse.Namespace) -> int:
         # decided in each panel.
         for note in book.notes:
             print(f"note: {note}")
+        for note in _links_away_from(book, source, base, embedded=args.embed_images):
+            print(f"note: {note}")
         for name, result in book.panels.items():
             for note in result.notes:
                 print(f"note: {note}" if single else f"note: {name}: {note}")
     return 0
+
+
+def _links_away_from(book: Book, source: Path, base: Path, *, embedded: bool) -> list[str]:
+    """What to say about pictures linked from an SVG written away from its document.
+
+    A link is the path the document wrote, which a viewer reads from beside the SVG. Beside
+    the document -- where `build` writes by default -- that finds the picture; anywhere
+    else it does not, and the SVG would show nothing where the picture should be. The
+    path is not rewritten to climb back: librsvg refuses a link out of the SVG's folder,
+    so that would only move the failure.
+    """
+    if embedded or base.parent.resolve() == source.parent.resolve():
+        return []
+    linked = sorted(
+        {
+            result.core.backdrop.image.href
+            for result in book.panels.values()
+            if result.core.backdrop is not None and result.core.backdrop.image is not None
+        }
+    )
+    return [
+        f"{href} is linked, and a viewer looks for it beside the SVG, in {base.parent}, "
+        "not beside the document; copy it there, or build with --embed-images"
+        for href in linked
+    ]
 
 
 #: One file `build` will write, and how to produce what goes in it -- deferred, so that
@@ -290,13 +325,21 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
     one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels.
     """
     outputs: list[_Output] = []
+    embed = book.images if args.embed_images else None
     for name, result in book.panels.items():
         core = result.core
         target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
         outputs.append(
             (
                 target,
-                partial(render, core, fonts=book.fonts, live_text=args.live_text, aria=args.aria),
+                partial(
+                    render,
+                    core,
+                    fonts=book.fonts,
+                    live_text=args.live_text,
+                    aria=args.aria,
+                    embed=embed,
+                ),
             )
         )
         if args.core:
@@ -312,7 +355,12 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
             (
                 base.with_name(f"{base.stem}.strip.svg"),
                 partial(
-                    render_strip, strip, live_text=args.live_text, fonts=book.fonts, aria=args.aria
+                    render_strip,
+                    strip,
+                    live_text=args.live_text,
+                    fonts=book.fonts,
+                    aria=args.aria,
+                    embed=embed,
                 ),
             )
         )
@@ -330,6 +378,7 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
                     live_text=args.live_text,
                     fonts=book.fonts,
                     aria=args.aria,
+                    embed=embed,
                 ),
             )
         )

@@ -122,6 +122,13 @@ The second is that this is how comics actually establish place:
   per hour, monotonic in depth. That is notation, not interpretation, which is why it belongs in a
   compiler.
 
+**Received art is another matter.** The rule is about *drawing* a backdrop in the language, not
+about receiving one. A picture drawn elsewhere — painted, pencilled, photographed, rendered — can
+stand behind the cast with `image:` ([An image behind the cast](#an-image-behind-the-cast)). Its
+perspective is the artist's, and the compiler neither reads nor imitates it: what it takes from the
+file is its size, so the solver still never sees artwork, and the
+[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html)'s promise — the same layout whatever draws it — holds.
+
 ### `masses`
 
 A place is a convenience. Underneath it is a list of masses, which stays authorable whenever you
@@ -284,6 +291,28 @@ The picture is centred either way and never stretched.
 
 `scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
 on, without running the solver.
+
+**Time and weather over a picture.** The veil sits over the picture and under the cast, and
+falling rain or snow over everything, exactly as over masses; `time` chooses their tint, and
+whether rain is drawn in ink or paper. The value ladder — aerial perspective — has nothing to apply
+to: a picture's values are the artist's.
+
+**Nothing else moves.** The picture costs a balloon nothing. The compiler does not know what is in
+it, so a balloon may sit anywhere on it; the cast's faces are what lettering keeps clear of. The
+camera frames the cast exactly as it would in front of masses.
+
+**Linked or embedded.** The SVG names the picture by the path exactly as written, percent-encoded,
+so it is found when the SVG sits beside the document — which is where `scenet build` writes it.
+`scenet build --embed-images` writes the picture's bytes in as a `data:` URI instead, which an SVG
+shown as an `<img>`, turned into a PNG or written anywhere else needs; the playground always embeds.
+Either is byte-identical for the same picture. The link is `xlink:href` rather than SVG 2's plain
+`href`, because Inkscape still does not load a resource named by plain `href`; see
+[prior art](https://creatoan.github.io/scenet/explanation/prior_art.html#image-in-svg-renderers-and-editors).
+
+**Read aloud.** The picture is part of the panel's one image, `role="img"`, so it adds nothing to the
+accessible name and has no title of its own. A generated description names neither the place nor
+the hour over a picture — the compiler has not seen it — only the weather it drew. Write
+`description:` to say what the picture shows.
 
 
 ## `cast`

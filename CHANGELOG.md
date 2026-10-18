@@ -45,6 +45,13 @@ below 1.0 means.
   is byte-identical, and `format_version` stays 1. The picture costs a balloon nothing and does
   not move the camera, and a generated description names no place and no hour over it — only
   the weather drawn on top.
+- **The picture is drawn**, as an `<image>` on the paper, under every figure and the weather,
+  in the rectangle Panel Core placed it in. It is linked by `xlink:href` — Inkscape does not
+  load plain `href` — to the path exactly as written, which resolves when the SVG is beside
+  the document; `scenet build --embed-images` (`embed=` on every renderer) writes its bytes in
+  as a `data:` URI instead, and `build` says so in a note when a link will not resolve. The
+  debug overlay shows where it was placed. A new how-to, *Letter over your own art*, and a
+  gallery example drawn over a picture the repository paints itself, under its own licence.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

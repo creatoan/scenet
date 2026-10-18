@@ -285,9 +285,11 @@ class TestTheHullDecision:
         member. Each figure is exactly where it was -- and every panel still compiles,
         which is what a soft term buys over a hard one."""
         everything = tuple(sorted(Mark))
+        # Read from beside the document, as `build` reads them: a picture it names, say.
+        folder = path.parent
         for name, panel in FRONTENDS[path.suffix](path).items():
-            plain = compile_ir(panel).core
-            marked = compile_ir(_with_marks(panel, everything)).core
+            plain = compile_ir(panel, base=folder).core
+            marked = compile_ir(_with_marks(panel, everything), base=folder).core
             for before, after in zip(plain.actors, marked.actors, strict=True):
                 assert after.transform == before.transform, f"{path.name}:{name}"
                 assert after.hull == before.hull, f"{path.name}:{name}"
@@ -300,7 +302,7 @@ class TestTheHullDecision:
         for panel in FRONTENDS[path.suffix](path).values():
             if any(member.marks for member in panel.cast.values()):
                 continue
-            for actor in compile_ir(panel).core.actors:
+            for actor in compile_ir(panel, base=path.parent).core.actors:
                 assert actor.emanata == ()
                 assert actor.emanata_zones == ()
 

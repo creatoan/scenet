@@ -148,6 +148,8 @@ interface ManifestEntry {
   readonly file: string;
   readonly title: string;
   readonly kind: "panel" | "scene" | "script";
+  /** Files the example names beside itself -- a picture it is lettered over. */
+  readonly files?: readonly string[];
 }
 
 /**
@@ -172,7 +174,19 @@ async function writeExamples(): Promise<void> {
     const source = (await readFile(join(gallery, entry.file), "utf8"))
       .replaceAll("\r\n", "\n")
       .replaceAll("\r", "\n");
-    examples.push({ title: entry.title, kind: entry.kind, file: entry.file, source });
+    // A picture the example is lettered over goes in too, as base64: the page writes it
+    // beside the document in Pyodide's file system, where the compiler reads it.
+    const files: Record<string, string> = {};
+    for (const name of entry.files ?? []) {
+      files[name] = (await readFile(join(gallery, name))).toString("base64");
+    }
+    examples.push({
+      title: entry.title,
+      kind: entry.kind,
+      file: entry.file,
+      source,
+      ...(entry.files === undefined ? {} : { files }),
+    });
   }
 
   await writeFile(

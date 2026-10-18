@@ -57,8 +57,13 @@ VARIANTS = {
 
 
 def gallery() -> list[Path]:
-    """Every document in the gallery, in a fixed order."""
-    return sorted(path for path in GALLERY.iterdir() if path.name != "manifest.yaml")
+    """Every document in the gallery, in a fixed order.
+
+    Files only: a picture an example is lettered over sits in a folder of its own.
+    """
+    return sorted(
+        path for path in GALLERY.iterdir() if path.is_file() and path.name != "manifest.yaml"
+    )
 
 
 def build(sources: list[Path], directory: Path) -> dict[str, bytes]:

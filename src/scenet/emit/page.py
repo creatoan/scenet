@@ -35,6 +35,7 @@ def render_page(
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
+    embed: Mapping[str, bytes] | None = None,
 ) -> str:
     r"""Render one page as a standalone SVG document.
 
@@ -48,6 +49,9 @@ def render_page(
             :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
         aria: Make the page a named group of panels a screen reader reads in order.
             `False` writes none of it. An overlay never has it.
+        embed: The supplied pictures' bytes, by digest -- what
+            :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
+            SVG. Left out, each picture is linked by the path its document wrote.
 
     Returns:
         The page, as SVG.
@@ -74,7 +78,16 @@ def render_page(
         *([f"  <title>A page of {counted(len(page.frames), 'panel')}.</title>"] if access else []),
         f'  <rect x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
         f'fill="{PAGE_FILL}"{HIDDEN if access else ""}/>',
-        *_frames(page, panels, 1, live_text=live_text, debug=debug, fonts=fonts, aria=aria),
+        *_frames(
+            page,
+            panels,
+            1,
+            live_text=live_text,
+            debug=debug,
+            fonts=fonts,
+            aria=aria,
+            embed=embed,
+        ),
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
@@ -88,6 +101,7 @@ def render_pages(
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
+    embed: Mapping[str, bytes] | None = None,
 ) -> str:
     """Render every page side by side, as one SVG document.
 
@@ -104,6 +118,9 @@ def render_pages(
             :attr:`Book.fonts <scenet.pipeline.Book.fonts>` holds.
         aria: Make the document a named group of pages, each a named group of panels a
             screen reader reads in order. `False` writes none of it.
+        embed: The supplied pictures' bytes, by digest -- what
+            :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
+            SVG. Left out, each picture is linked by the path its document wrote.
 
     Returns:
         Every page, left to right, as SVG.
@@ -145,7 +162,14 @@ def render_pages(
         )
         parts.extend(
             _frames(
-                page, panels, position, live_text=live_text, debug=debug, fonts=fonts, aria=aria
+                page,
+                panels,
+                position,
+                live_text=live_text,
+                debug=debug,
+                fonts=fonts,
+                aria=aria,
+                embed=embed,
             )
         )
         parts.append("  </g>")
@@ -164,6 +188,7 @@ def _frames(
     debug: bool,
     fonts: Mapping[str, FontMetrics] | None,
     aria: bool,
+    embed: Mapping[str, bytes] | None,
 ) -> list[str]:
     """Every panel of one page, at its frame, in reading order from `first_position`.
 
@@ -197,6 +222,7 @@ def _frames(
                 fonts=fonts,
                 holes=core.exclusions,
                 aria=aria,
+                embed=embed,
             )
         )
     return lines

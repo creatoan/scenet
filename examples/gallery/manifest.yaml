@@ -103,3 +103,7 @@ examples:
   - file: 33-planche.script
     title: "A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans"
     kind: script
+  - file: 34-supplied-art.scene.yaml
+    title: "A picture drawn elsewhere, behind the cast: cover and contain"
+    kind: scene
+    files: [art/street.png]

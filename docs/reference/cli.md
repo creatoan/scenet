@@ -11,7 +11,7 @@ Four commands: `build` compiles a document, `check` validates one without compil
 ## `scenet build`
 
 ```
-scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--live-text] [--no-aria] [--strip] [--quiet]
+scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--live-text] [--no-aria] [--embed-images] [--strip] [--quiet]
 ```
 
 Compiles `SOURCE` to SVG. The frontend is chosen by extension:
@@ -53,6 +53,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   [accessible output](../howto/make_accessible_output.md). This leaves all of that out, for a
   pipeline that post-processes the SVG, and is otherwise byte-identical: the same file less
   those attributes and elements. Debug overlays never carry it.
+
+`--embed-images`
+: Write each [supplied picture](language.md#an-image-behind-the-cast) into the SVG as a
+  `data:` URI, so the file stands alone. By default a picture is linked by the path the
+  document wrote, which a viewer reads from beside the SVG: that finds it when the SVG is
+  written beside the document, as it is by default. Written anywhere else, the build says so
+  in a `note:`, since the link will not resolve there; an SVG shown as an `<img>`, or turned
+  into a PNG, loads no linked file at all. Embedding is byte-identical for the same picture.
 
 `--strip`
 : For a document of more than one panel, also lay every panel out side by side in reading

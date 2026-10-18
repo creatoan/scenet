@@ -1,0 +1,44 @@
+# A picture drawn elsewhere, behind the cast.
+#
+# `image` names a PNG or JPEG beside this document -- art/street.png, painted by
+# scripts/make_gallery_art.py -- and the cast is drawn in front of it and lettered by the
+# same rules as on any other backdrop. The compiler reads the picture's size and nothing
+# else: it does not know there is a road, so a balloon pays nothing to sit on it.
+#
+# `fit` says how the picture fills the panel, keeping its proportions: `cover` fills it
+# and crops what overhangs, equally top and bottom here; `contain` shows the whole
+# picture, and the panel shows round it. Weather is drawn over the picture as over masses.
+#
+# A link by default -- the SVG names art/street.png, as written -- or the picture's own
+# bytes with `scenet build --embed-images`, which the playground always uses.
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, pose: pointing}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+setting: {image: art/street.png, time: dusk}
+
+panels:
+  arrival:
+    panel: {size: [1200, 600]}
+    setting: {fit: cover, weather: rain}
+    script:
+      - caption: {text: "Eight o'clock. Still raining.", kind: locale, prefer: top_left}
+      - say: {by: alice, text: "You painted every one of those windows?"}
+      - say: {by: bob, text: "Every one. Twice."}
+
+  framed:
+    over: arrival
+    panel: {size: [700, 700]}
+    camera: {shot: full_shot}
+    setting: {fit: contain, weather: clear}
+    script:
+      - say: {by: alice, text: "It looks smaller from here."}

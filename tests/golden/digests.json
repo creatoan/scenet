@@ -212,6 +212,11 @@
   "33-planche.page-1.debug.svg": "0c28f0f461971774ff31e4c95f0a003b8faec12fd6e2c5bf16128e760d2e77f0",
   "33-planche.page-1.svg": "38d61de6d3d47695a618c8f22d2a0c98be5faedd0589a657212f8b6177394486",
   "33-planche.strip.svg": "7237338e8f86cdbaaca55564c1725fea29e714bcc02df39c699179ead603eb2b",
+  "34-supplied-art.arrival.debug.svg": "1697224f3fa759c6da383015d02ac2d009103ac5484b8dffcb886baf2411dbb5",
+  "34-supplied-art.arrival.svg": "9c41b753a6422047454a836bcf84168d6be4276ebbe48a819e3bc909037983ce",
+  "34-supplied-art.framed.debug.svg": "4346e70aaa731c103a937f93f05b5a89448ce101ef8fa81d791b8792c5550ffa",
+  "34-supplied-art.framed.svg": "cb5e94727c79d941cf0e234ac6d7361eb9ed246f225a34e1ca240cf186e5ad64",
+  "34-supplied-art.strip.svg": "07b4f6fa3b83e4f3e944ed6ce5857c1ab9a9ed72073efbd45d114dec04b6a1eb",
   "live-text/01-two-characters.svg": "31f8510d4b62b5659daa41e87875dfc886301b92381ec3ebb8dd3d6bf33b1b96",
   "live-text/02-shot-ladder.big_close_up.svg": "90f12a88cadbf48964134ed7b33876da1dfa794e97a59af9898e0c1d8491e8d8",
   "live-text/02-shot-ladder.close_up.svg": "19ce00ea1f67a38ee4222a9f98524c8161006856acafdaa811ca7b3f53da7b52",
@@ -327,6 +332,9 @@
   "live-text/33-planche.3.svg": "476b0fcac76b6940138b2cefe933091e376c4a0f2338165c729a61b3c9024d0a",
   "live-text/33-planche.page-1.svg": "5cf72c2c8c9d82e47eb83317d3cc13c5699a7bb8ef84d6253d07eaaf4f8fe392",
   "live-text/33-planche.strip.svg": "537d35ffba158c29a01d83b27f9a2bc5ca4dc90d5c950eed676292aefba32b1a",
+  "live-text/34-supplied-art.arrival.svg": "9385e7b98b65822a82de1ad3a181515afca711a76573d957c4273af9ca92d838",
+  "live-text/34-supplied-art.framed.svg": "eeba9c8c897d56d79073f1f0e6dc8b11ccbe409414af6995b3863dfe736e05e1",
+  "live-text/34-supplied-art.strip.svg": "254f6b7fc1870fa91d95c6b518402286183dabfc0615f0fb7c868bdd5fa144bf",
   "no-aria/01-two-characters.svg": "1ed5c1772f0260bb95e4a47ecb91f47330015193305662b69b820a18cfe4606c",
   "no-aria/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "no-aria/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -441,5 +449,8 @@
   "no-aria/33-planche.2.svg": "ab908345ad520fb8b105f3dc721632fb9ab5c96389e947924655815a171a2cbd",
   "no-aria/33-planche.3.svg": "9fa1e50c5dbf454bd67f199f0b3a8b6d144023b4ca8d9c63dff9990776cff83e",
   "no-aria/33-planche.page-1.svg": "c8db529da949789d5f0e1329cfc34d9d67f7fd7096275830b3601432e37e1e64",
-  "no-aria/33-planche.strip.svg": "7756807be20ebc1b5adb3946cc42100de917298159b8d75b124e3272a568e1bf"
+  "no-aria/33-planche.strip.svg": "7756807be20ebc1b5adb3946cc42100de917298159b8d75b124e3272a568e1bf",
+  "no-aria/34-supplied-art.arrival.svg": "cce83cde4685a7ad1d6666191034fef16e82650b1a32d708937dfbcfc6754914",
+  "no-aria/34-supplied-art.framed.svg": "2b76bda15a82873407bfb7a3fd1de6d35a60fc90c2a091b6b46532fb16e468d3",
+  "no-aria/34-supplied-art.strip.svg": "f663b75992dc5743eb67767508ba04b5f7c3e7028beada6f22a2770308e51eda"
 }

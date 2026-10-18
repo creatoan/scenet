@@ -163,11 +163,14 @@ def _scenet_compile(source, kind):
         fonts = {
             digest: font for result in results.values() for digest, font in result.fonts.items()
         }
+        # Every picture embedded: the preview is inlined into this page, and a download is
+        # opened anywhere, or turned into a PNG, none of which could follow a link.
+        images = book.images
 
         if pages:
             # A document that lays its panels out is shown as its pages, side by side.
             cores = {name: result.core for name, result in results.items()}
-            svg = render_pages(pages, cores, fonts=fonts)
+            svg = render_pages(pages, cores, fonts=fonts, embed=images)
             debug = render_pages(pages, cores, debug=True)
             core = json.dumps(
                 {
@@ -181,12 +184,12 @@ def _scenet_compile(source, kind):
             )
         elif single:
             only = results[names[0]]
-            svg = render(only.core, fonts=fonts)
+            svg = render(only.core, fonts=fonts, embed=images)
             debug = render_debug(only.core)
             core = only.core.to_json()
         else:
             pairs = [(name, result.core) for name, result in results.items()]
-            svg = render_strip(pairs, fonts=fonts)
+            svg = render_strip(pairs, fonts=fonts, embed=images)
             debug = render_strip(pairs, debug=True)
             core = json.dumps(
                 {name: json.loads(result.core.to_json()) for name, result in results.items()},
@@ -228,6 +231,14 @@ export interface Compiler {
    * @param bytes - The file's contents.
    */
   addFont(name: string, bytes: Uint8Array): void;
+  /**
+   * Put a file beside the document, replacing one at the same path.
+   *
+   * @param path - Relative to the document's folder, as a document names it; checked by
+   *   `staysInside` first.
+   * @param bytes - The file's contents.
+   */
+  addFile(path: string, bytes: Uint8Array): void;
   readonly version: string;
 }
 
@@ -299,6 +310,11 @@ await micropip.install(_scenet_wheel)
       // The compiler caches fonts by what is in them, so a file replaced here under the
       // same name is read again on the next compile.
       pyodide.FS.writeFile(`${DOCUMENT_FOLDER}/${FONT_FOLDER}/${name}`, bytes);
+    },
+    addFile(path: string, bytes: Uint8Array): void {
+      const target = `${DOCUMENT_FOLDER}/${path}`;
+      pyodide.FS.mkdirTree(target.slice(0, target.lastIndexOf("/")));
+      pyodide.FS.writeFile(target, bytes);
     },
   };
 }

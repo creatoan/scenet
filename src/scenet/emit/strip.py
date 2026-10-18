@@ -68,6 +68,7 @@ def render_strip(
     debug: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
+    embed: Mapping[str, bytes] | None = None,
 ) -> str:
     """Lay panels left to right in reading order.
 
@@ -86,6 +87,9 @@ def render_strip(
         aria: Make the strip a named group of panels, each one image a screen reader
             reads whole, in reading order; its background hidden. `False` writes none of
             it. An overlay is a diagnostic, and never has it.
+        embed: The supplied pictures' bytes, by digest -- what
+            :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into
+            the SVG. Left out, each picture is linked by the path its document wrote.
 
     Returns:
         One SVG document holding every panel.
@@ -125,6 +129,7 @@ def render_strip(
                 live_text=live_text,
                 debug=debug,
                 fonts=fonts,
+                embed=embed,
                 aria=aria,
             )
         )
@@ -146,6 +151,7 @@ def placed_panel(
     fonts: Mapping[str, FontMetrics] | None = None,
     holes: Sequence[Box] = (),
     aria: bool = True,
+    embed: Mapping[str, bytes] | None = None,
 ) -> list[str]:
     """One panel, rendered on its own and put at `(x, y)` in a larger document.
 
@@ -168,6 +174,7 @@ def placed_panel(
         aria: Make the panel's group the image a screen reader reads, named as
             :func:`accessible_name <scenet.emit.svg.accessible_name>` names a panel.
             Never on an overlay.
+        embed: The supplied pictures' bytes, by digest, to write into the SVG.
 
     Returns:
         The lines of SVG, indented for the document's top level.
@@ -177,7 +184,13 @@ def placed_panel(
     body = (
         debug_body(core, id_prefix=prefix)
         if debug
-        else panel_body(core, typeface_of(core, fonts=fonts), live_text=live_text, id_prefix=prefix)
+        else panel_body(
+            core,
+            typeface_of(core, fonts=fonts),
+            live_text=live_text,
+            id_prefix=prefix,
+            embed=embed,
+        )
     )
     # Clipped to the panel's outline when it has one: a slanted panel's bounding box
     # overlaps its neighbour's, and only the outline is its own.

@@ -24,6 +24,7 @@ CAPTION = "#7a52c9"
 GRID = "#c9c9c9"
 MASS = "#3aa39a"
 HORIZON = "#c2451f"
+IMAGE = "#2d7d4f"
 INSET = "#5a5a5a"
 SFX = "#d0451b"
 
@@ -208,7 +209,7 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
 
 
 def _backdrop(core: PanelCore) -> str:
-    """The setting as the solver sees it: outlines, planes, and the horizon.
+    """The setting as the solver sees it: outlines, planes, the horizon, a placed picture.
 
     Drawn as outlines rather than fills, because the question this overlay answers about
     a backdrop is *where the solver thinks the masses are* -- which the finished panel
@@ -229,6 +230,22 @@ def _backdrop(core: PanelCore) -> str:
             f'font-family="monospace" fill="{HORIZON}">horizon</text>',
         ]
     )
+    image = core.backdrop.image
+    if image is not None:
+        # Where the picture was placed, overhang and all: the part of a `cover` picture
+        # outside the panel is cropped from the art, and still where the solver put it.
+        box = image.box
+        lines.append(
+            f'  <rect class="image" x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
+            f'height="{fmt(box.height)}" fill="none" stroke="{IMAGE}" stroke-width="2" '
+            'stroke-dasharray="20 6 4 6"/>'
+        )
+        width, height = image.pixels
+        lines.append(
+            f'  <text x="{fmt(max(box.x, 0.0) + 6)}" y="{fmt(max(box.y, 0.0) + 18)}" '
+            f'font-size="15" font-family="monospace" fill="{IMAGE}">'
+            f"image {escape(image.href)} {width}x{height} px {image.fit.value}</text>"
+        )
     for mass in core.backdrop.masses:
         points = " ".join(f"{fmt(x)},{fmt(y)}" for x, y in mass.polygon)
         top = min(y for _, y in mass.polygon)

@@ -8,9 +8,11 @@ Numbers are formatted through one helper at fixed precision so that output is
 byte-identical across platforms, whose float repr differs in the last digit.
 """
 
+import base64
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
+from urllib.parse import quote
 from xml.sax.saxutils import escape, quoteattr
 
 from scenet.core import (
@@ -18,6 +20,7 @@ from scenet.core import (
     CoreAtmosphere,
     CoreBalloon,
     CoreCaption,
+    CoreImage,
     CoreMass,
     CoreRun,
     CoreSfx,
@@ -49,6 +52,11 @@ CAPTION_STROKE_WIDTH = 2.5
 # panel rather than as marks on top of it. *Which* tone it uses was chosen by the solver
 # and travels in `CoreAtmosphere.fall_tone`.
 WEATHER_OPACITY = 0.85
+
+#: The namespace `xlink:href` is in. SVG 2 deprecates it for plain `href`, and every
+#: renderer still reads it; Inkscape does not yet load a resource named by plain `href`
+#: (inkscape/inbox#4411), and editing the output there is a likely next step.
+XLINK = "http://www.w3.org/1999/xlink"
 
 
 #: Decimal places for a glyph's scale. The scale is size/unitsPerEm, and a font's units are
@@ -92,6 +100,7 @@ def render(
     live_text: bool = False,
     id_prefix: str = "",
     aria: bool = True,
+    embed: Mapping[str, bytes] | None = None,
 ) -> str:
     """Render a compiled panel as a standalone SVG document.
 
@@ -111,10 +120,16 @@ def render(
             and then everything said in it, in reading order -- see
             :func:`accessible_name`. `False` writes none of it, for anyone who
             post-processes the SVG: exactly what was written before it existed.
+        embed: The supplied pictures' bytes, by digest -- what
+            :attr:`CompileResult.images <scenet.pipeline.CompileResult.images>` holds. Given,
+            each picture is written into the SVG as a `data:` URI, and must be here; left
+            out, it is linked by the path the document wrote, which a viewer reads from
+            beside the SVG.
 
     Raises:
         ValueError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
+            Or a picture is to be embedded and was not handed over.
     """
     family = typeface_of(core, metrics=metrics, fonts=fonts)
     named, names = accessible_name(core) if aria else ("", [])
@@ -124,7 +139,7 @@ def render(
         f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}"'
         f"{named}>",
         *names,
-        *panel_body(core, family, live_text=live_text, id_prefix=id_prefix),
+        *panel_body(core, family, live_text=live_text, id_prefix=id_prefix, embed=embed),
         "</svg>",
     ]
     return "\n".join(lines) + "\n"
@@ -163,7 +178,12 @@ def accessible_name(core: PanelCore) -> tuple[str, list[str]]:
 
 
 def panel_body(
-    core: PanelCore, family: Typeface, *, live_text: bool = False, id_prefix: str = ""
+    core: PanelCore,
+    family: Typeface,
+    *,
+    live_text: bool = False,
+    id_prefix: str = "",
+    embed: Mapping[str, bytes] | None = None,
 ) -> list[str]:
     """A panel's contents, without the document around them: what a strip or page places.
 
@@ -172,6 +192,11 @@ def panel_body(
         family: The faces its lettering was measured in, from :func:`typeface_of`.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         id_prefix: Put in front of every `id` the panel writes, and every reference to one.
+        embed: The supplied pictures' bytes, by digest -- what
+            :attr:`CompileResult.images <scenet.pipeline.CompileResult.images>` holds. Given,
+            each picture is written into the SVG as a `data:` URI, and must be here; left
+            out, it is linked by the path the document wrote, which a viewer reads from
+            beside the SVG.
 
     Returns:
         The lines between the root's opening tag and its closing one, none of them empty.
@@ -195,6 +220,10 @@ def panel_body(
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         f'fill="{FILL_PANEL}"/>'
     )
+    # A supplied picture is the farthest thing there is: on the paper, under every mass,
+    # figure and veil.
+    if backdrop is not None and backdrop.image is not None:
+        parts.append(_render_image(backdrop.image, id_prefix, embed))
 
     # Masses and actors share one painter's order, which is the whole point of `plane`
     # mapping onto `depth`: a far mass, the cast, and a foreground mass fall into place
@@ -250,6 +279,73 @@ def panel_body(
             f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
         )
     return [part for part in parts if part]
+
+
+def _render_image(image: CoreImage, id_prefix: str, embed: Mapping[str, bytes] | None) -> str:
+    """A supplied picture, drawn in the box Panel Core placed it in.
+
+    The box already has the picture's proportions, so `preserveAspectRatio` changes
+    nothing for a renderer that reads them as the compiler did; it is there for one that
+    does not, which then still covers or contains rather than stretching. Clipping is the
+    panel's: the root viewport crops a picture that overhangs a lone panel, and the frame's
+    clip one placed in a strip or a page.
+
+    The XLink namespace is declared on the element, so a panel's body carries it into
+    whatever document places it.
+    """
+    box = image.box
+    return (
+        f'  <image id={attr(id_prefix + "image")} xmlns:xlink="{XLINK}" '
+        f'x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" height="{fmt(box.height)}" '
+        f'preserveAspectRatio="{image.preserve_aspect_ratio}" '
+        f"xlink:href={attr(image_href(image, embed))}/>"
+    )
+
+
+def image_href(image: CoreImage, embed: Mapping[str, bytes] | None = None) -> str:
+    """Where an `<image>` finds its picture: the path as written, or the bytes themselves.
+
+    A path is percent-encoded and nothing more, `/` kept: a name with a space, `#` or `:`
+    in it then stays a path rather than becoming a fragment, a query or a scheme. Format
+    conversion, not a decision -- which file it names was the document's.
+
+    Args:
+        image: The picture, as Panel Core records it.
+        embed: The supplied pictures' bytes, by digest, to write as a `data:` URI; or
+            None, to link.
+
+    Returns:
+        The value of `xlink:href`.
+
+    Raises:
+        ValueError: There is something to embed from, and not these bytes.
+
+    Example:
+        >>> from scenet.core import Box, CoreImage
+        >>> from scenet.emit.svg import image_href
+        >>> image = CoreImage(
+        ...     href="art/p 1.png",
+        ...     media_type="image/png",
+        ...     sha256="00",
+        ...     pixels=(1, 1),
+        ...     fit="cover",
+        ...     preserve_aspect_ratio="xMidYMid slice",
+        ...     box=Box(x=0, y=0, width=1, height=1),
+        ... )
+        >>> image_href(image)
+        'art/p%201.png'
+        >>> image_href(image, {"00": b"PNG"})
+        'data:image/png;base64,UE5H'
+    """
+    if embed is None:
+        return quote(image.href, safe="/")
+    data = embed.get(image.sha256)
+    if data is None:
+        raise ValueError(
+            f"the panel is drawn over {image.href!r} (sha256 {image.sha256[:12]}...), and those "
+            "bytes were not handed over to embed; pass CompileResult.images"
+        )
+    return f"data:{image.media_type};base64,{base64.b64encode(data).decode('ascii')}"
 
 
 def _render_mass(mass: CoreMass, id_prefix: str) -> str:
