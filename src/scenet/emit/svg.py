@@ -8,6 +8,7 @@ Numbers are formatted through one helper at fixed precision so that output is
 byte-identical across platforms, whose float repr differs in the last digit.
 """
 
+import hashlib
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
@@ -91,6 +92,7 @@ def render(
     fonts: Mapping[str, FontMetrics] | None = None,
     live_text: bool = False,
     id_prefix: str = "",
+    aria: bool = True,
 ) -> str:
     """Render a compiled panel as a standalone SVG document.
 
@@ -106,20 +108,70 @@ def render(
             one. Nothing a single panel needs; it is what lets a strip hold several
             panels in one document, where ids must be unique. Empty by default, so a
             panel on its own is byte-identical to what it always was.
+        aria: Make the panel one image a screen reader can read, named with what it shows
+            and then everything said in it, in reading order -- see
+            :func:`accessible_name`. `False` writes none of it, for anyone who
+            post-processes the SVG: exactly what was written before it existed.
 
     Raises:
         ValueError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
     """
     family = typeface_of(core, metrics=metrics, fonts=fonts)
+    named, names = accessible_name(core, id_prefix) if aria else ("", [])
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(core.width)}" '
-        f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}">',
+        f'height="{fmt(core.height)}" viewBox="0 0 {fmt(core.width)} {fmt(core.height)}"'
+        f"{named}>",
+        *names,
         *panel_body(core, family, live_text=live_text, id_prefix=id_prefix),
         "</svg>",
     ]
     return "\n".join(lines) + "\n"
+
+
+def accessible_name(core: PanelCore, id_prefix: str = "") -> tuple[str, list[str]]:
+    """What makes a panel one image a screen reader can read: its attributes and children.
+
+    The panel is `role="img"`, named through `aria-labelledby` by a `<title>` -- its
+    description -- and a `<desc>` -- every balloon, caption and sound effect's label, in
+    `order`. Both go in the *name*, which is announced, rather than the description, which
+    often is not (NVDA, JAWS). An image's children are presentational, so nothing inside
+    it is named, and the order is this one sequence whatever order things are painted in.
+
+    The ids are a hash of the text they name. A page holding several inlined SVGs -- the
+    VS Code preview, a web comic -- finds the first element with an id, so two panels that
+    share one must share its text. With no words, the title alone names the panel, and no
+    `aria-labelledby` is written: with no `<desc>` beside it, Blink would also read the
+    title as the description. With neither, nothing is written; an image with no name is
+    worse than none. Every word was resolved in the pipeline; this only copies.
+
+    Args:
+        core: The compiled panel.
+        id_prefix: Put in front of each id, as in :func:`render`.
+
+    Returns:
+        The attributes for the panel's root or group, with a leading space, and the lines
+        to write as its first children.
+    """
+    title = core.description
+    lettered = sorted([*core.balloons, *core.captions, *core.sfx], key=lambda item: item.order)
+    words = " ".join(item.label for item in lettered if item.label)
+    if not words:
+        if title is None:
+            return "", []
+        return ' role="img"', [f"  <title>{escape(title)}</title>"]
+    key = hashlib.sha256(f"{title or ''}\0{words}".encode()).hexdigest()[:12]
+    base = f"{id_prefix}scenet-{key}"
+    named: list[str] = []
+    lines: list[str] = []
+    if title is not None:
+        named.append(f"{base}-title")
+        lines.append(f"  <title id={attr(named[-1])}>{escape(title)}</title>")
+    named.append(f"{base}-desc")
+    lines.append(f"  <desc id={attr(named[-1])}>{escape(words)}</desc>")
+    return f' role="img" aria-labelledby={attr(" ".join(named))}', lines
 
 
 def panel_body(

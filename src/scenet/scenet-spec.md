@@ -685,6 +685,11 @@ A sound effect takes its number in the same sequence — which is the order a re
 screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
 holding it to above-and-left would make many panels impossible to letter.
 
+That sequence is what a screen reader hears. Every SVG names each panel with its
+[description](#description) and then every balloon, caption and sound effect in this order —
+`Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` — whatever order
+they are painted in; see [accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html).
+
 ## `description`
 
 What the panel shows, in words, for a reader who cannot see it.
