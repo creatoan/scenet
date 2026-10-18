@@ -7,6 +7,7 @@ tolerated -- stripped, then the convention parsed, never a second format. Each t
 is one row of the issue's table, or one edge of it.
 """
 
+import time
 from pathlib import Path
 
 import pytest
@@ -60,13 +61,85 @@ class TestPageHeadings:
             ("PAGE TWENTY ONE", "21"),
             ("PAGE TWENTY-ONE (one panel)", "21"),
             ("PAGE 7:", "7"),
+            ("PAGE 7 :", "7"),
             ("PAGE 3A", "3A"),
             ("PAGE ONE (splash)", "1"),
+            ("PAGE TWENTY - ONE (one panel).", "21"),
+            ("PAGE 2 (three panels) :", "2"),
+            ("PAGE\tTWO", "2"),
+            ("PLANCHE 3 :", "3"),
         ],
     )
     def test_a_page_is_named_by_its_number(self, heading: str, page: str):
         script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
         assert list(panels(script)) == ["0-1", f"{page}-1"]
+
+    @pytest.mark.parametrize(
+        ("heading", "page"),
+        [
+            ("Page 4B.", "4B"),
+            ("PAGE 7.", "7"),
+            ("PAGE C.", "C"),
+            ("PAGE ONE.", "1"),
+            ("PAGE TWENTY ONE.", "21"),
+            ("PAGE TWENTY-ONE.", "21"),
+            ("PLANCHE 3.", "3"),
+            ("PLANCHE UNE.", "1"),
+        ],
+    )
+    def test_a_full_stop_ends_the_heading_as_after_a_panel(self, heading: str, page: str):
+        """`Page 4B.` is page `4B`, as `Panel 1.` is panel `1` and the editor colours it.
+
+        The full stop was read into the label, so `PAGE 7.` was a page called `7.`, and
+        `PAGE TWENTY ONE.` or `PLANCHE 3.` were no heading at all: `ONE.` and `3.` are
+        not numbers.
+        """
+        script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
+        assert list(panels(script)) == ["0-1", f"{page}-1"]
+
+    @pytest.mark.parametrize(
+        ("heading", "page"), [("PAGE A.B", "A.B"), ("PAGE 3.5", "3.5"), ("PAGE 4B..", "4B.")]
+    )
+    def test_a_full_stop_inside_the_label_stays(self, heading: str, page: str):
+        script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
+        assert list(panels(script)) == ["0-1", f"{page}-1"]
+
+
+class TestAHostileLineIsReadQuickly:
+    """A line of a script is read in time linear in its length, however it is built.
+
+    The PAGE pattern once let a hyphen be part of a word or of the space between two, so
+    `PAGE !-!-!-…` split in exponentially many ways before failing. Others let two parts
+    take the same run of space, which made a long blank stretch quadratic, or cubic where
+    three met. A script is untrusted input, and the playground reads one on every
+    keystroke. Each line here took seconds before; a second is a bound no machine should
+    come near now.
+    """
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            pytest.param("PAGE !" + "-!" * 24 + "(", id="hyphens-between-words"),
+            pytest.param("PAGE !" + "\t-" * 24 + "(", id="tabs-and-hyphens"),
+            pytest.param("PAGE A" + " " * 1500 + ":x", id="spaces-before-a-stray-colon"),
+            # The same three runs of space ended the bare `SFX` pattern, inside a panel
+            # and out of one alike.
+            pytest.param("SFX" + "\t" * 1500 + "!", id="sfx-tabs-then-a-sound"),
+            pytest.param("SFX" + " " * 1000 + "(x)" + " " * 1000 + "!", id="sfx-around-a-note"),
+            # The SFX line with its sound, read first, had two runs in a row: quadratic,
+            # so it takes a longer line to show.
+            pytest.param("SFX" + "\t" * 30_000 + "!", id="sfx-a-very-long-line"),
+            # A cue with its line, and a caption, are tried on every line in a panel. The
+            # cue's name took spaces as well as the run after it, and the caption ended in
+            # one run after another: both quadratic.
+            pytest.param("A" + " " * 10_000 + "!", id="a-long-gap-after-a-name"),
+            pytest.param("CAPTION" + "\t" * 20_000 + "!", id="a-long-gap-after-caption"),
+        ],
+    )
+    def test_it_is_read_in_well_under_a_second(self, line: str):
+        start = time.perf_counter()
+        found(f"PANEL 1\n{line}\n")
+        assert time.perf_counter() - start < 1.0
 
 
 class TestPanelHeadings:
