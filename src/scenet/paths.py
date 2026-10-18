@@ -25,7 +25,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from scenet.errors import PanelSyntaxError
 
-__all__ = ["Folder", "read_relative", "resolve_relative"]
+__all__ = ["Folder", "check_relative", "read_relative", "resolve_relative"]
 
 #: Where the files a document names are: the folder it is in, or the files themselves, by
 #: the path the document writes.
@@ -69,7 +69,7 @@ def resolve_relative(
         >>> found.as_posix()
         'comic/fonts/a.ttf'
     """
-    _refuse_unportable(declared, what=what, rule=rule, loc=loc)
+    check_relative(declared, what=what, rule=rule, loc=loc)
     if base is None:
         raise _no_folder(declared, what=what, rule=rule, loc=loc)
     return base / declared
@@ -122,7 +122,7 @@ def read_relative(
                 rule=rule,
                 loc=loc,
             ) from exc
-    _refuse_unportable(declared, what=what, rule=rule, loc=loc)
+    check_relative(declared, what=what, rule=rule, loc=loc)
     sent = {posixpath.normpath(name): data for name, data in base.items()}
     found = sent.get(posixpath.normpath(declared))
     if found is None:
@@ -149,8 +149,16 @@ def _no_folder(
     )
 
 
-def _refuse_unportable(declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]) -> None:
-    """Refuse a path that could not be read the same way on every system, or at all."""
+def check_relative(declared: str, *, what: str, rule: str, loc: tuple[str | int, ...] = ()) -> None:
+    """Refuse a path that could not be read the same way on every system, or at all.
+
+    Everything :func:`resolve_relative` refuses but the want of a folder: for a path that
+    is kept rather than opened, as Panel Core keeps a picture's.
+
+    Raises:
+        PanelSyntaxError: The path is empty or absolute, or has a backslash or a control
+            character in it.
+    """
     control = _CONTROL.search(declared)
     if control is not None:
         raise PanelSyntaxError(

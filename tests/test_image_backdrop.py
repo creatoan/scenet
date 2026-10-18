@@ -17,8 +17,8 @@ import pytest
 from pydantic import ValidationError
 
 from scenet.core import CoreBackdrop, CoreImage, PanelCore
-from scenet.geom import BBox
 from scenet.frontends.yaml_front import parse_panel
+from scenet.geom import BBox
 from scenet.ir import Fit, SettingSpec, Weather
 from scenet.pipeline import compile_source
 from scenet.solve.backdrop import fit_box, seed_for, solve_backdrop

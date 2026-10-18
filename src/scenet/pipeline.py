@@ -8,6 +8,7 @@ artwork, and the emitter never makes a layout decision.
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import Literal
 
 from pydantic import ValidationError
 from shapely.geometry import Point, Polygon
@@ -28,6 +29,7 @@ from scenet.core import (
     CoreFont,
     CoreFrame,
     CoreGlyph,
+    CoreImage,
     CoreMass,
     CoreRun,
     CoreSfx,
@@ -56,8 +58,8 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
-from scenet.images import load_image
-from scenet.ir import Face, Mark, PanelIR, PanelSpec, SayEvent, Side
+from scenet.images import SuppliedImage, load_image
+from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, Side
 from scenet.lettering import Lettering, typeface_for
 from scenet.paths import Folder
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
@@ -337,19 +339,41 @@ def _folder(source: Path | None, base: Folder | None) -> Folder | None:
     return source.parent if source is not None else None
 
 
-def _core_backdrop(backdrop: ResolvedBackdrop | None) -> CoreBackdrop | None:
+#: A fit, as SVG's `preserveAspectRatio` says it.
+PRESERVE_ASPECT_RATIO: dict[Fit, Literal["xMidYMid slice", "xMidYMid meet"]] = {
+    Fit.COVER: "xMidYMid slice",
+    Fit.CONTAIN: "xMidYMid meet",
+}
+
+
+def _core_backdrop(
+    backdrop: ResolvedBackdrop | None, image: SuppliedImage | None
+) -> CoreBackdrop | None:
     """Reduce a resolved backdrop to its serialisable Core twin.
 
     Rounding happens here, as it does for every other tier boundary, so that a Core
     document is byte-identical across platforms whose float formatting differs in the
-    last digit.
+    last digit. The picture's facts -- its path, type and digest -- join the rectangle
+    the solver placed it in here, since the solver was told nothing but its size.
     """
     if backdrop is None:
         return None
 
     air = backdrop.atmosphere
+    placed = backdrop.image
     return CoreBackdrop(
-        horizon=rounded(backdrop.horizon),
+        horizon=None if backdrop.horizon is None else rounded(backdrop.horizon),
+        image=None
+        if placed is None or image is None
+        else CoreImage(
+            href=image.href,
+            media_type=image.media_type,
+            sha256=image.sha256,
+            pixels=placed.pixels,
+            fit=placed.fit,
+            preserve_aspect_ratio=PRESERVE_ASPECT_RATIO[placed.fit],
+            box=Box.of(placed.box),
+        ),
         seed=backdrop.seed,
         masses=tuple(
             CoreMass(
@@ -481,6 +505,7 @@ def compile_ir(
         panel.setting,
         BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
         frontmost_actor=max((placement.depth for placement in placements), default=0),
+        pixels=None if image is None else (image.width, image.height),
     )
 
     frame = BBox(
@@ -611,7 +636,7 @@ def compile_ir(
             )
             for caption in layout.captions
         ),
-        backdrop=_core_backdrop(backdrop),
+        backdrop=_core_backdrop(backdrop, image),
         exclusions=tuple(Box.of(area) for area in exclusions),
         outline=tuple(outline) if outline is not None else None,
         sfx=tuple(

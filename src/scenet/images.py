@@ -23,18 +23,20 @@ Every failure -- the path, the file, the header, the orientation -- is rule
 import hashlib
 import struct
 from dataclasses import dataclass, field
+from typing import Final, Literal
 
 from scenet.errors import PanelSyntaxError
 from scenet.paths import Folder, read_relative
 
-__all__ = ["IMAGE_RULE", "JPEG", "PNG", "SuppliedImage", "load_image", "measure"]
+__all__ = ["IMAGE_RULE", "JPEG", "PNG", "MediaType", "SuppliedImage", "load_image", "measure"]
 
 #: The rule every image fault is reported under.
 IMAGE_RULE = "image-file"
 
 #: The two media types, as a `data:` URI names them.
-PNG = "image/png"
-JPEG = "image/jpeg"
+MediaType = Literal["image/png", "image/jpeg"]
+PNG: Final = "image/png"
+JPEG: Final = "image/jpeg"
 
 _PNG_SIGNATURE = bytes.fromhex("89504e470d0a1a0a")
 _JPEG_START = bytes.fromhex("ffd8")
@@ -71,7 +73,7 @@ class SuppliedImage:
     """
 
     href: str
-    media_type: str
+    media_type: MediaType
     sha256: str
     width: int
     height: int
@@ -115,7 +117,7 @@ def load_image(declared: str, base: Folder | None, *, loc: tuple[str | int, ...]
     )
 
 
-def measure(data: bytes) -> tuple[str, int, int]:
+def measure(data: bytes) -> tuple[MediaType, int, int]:
     """A picture's media type and size in pixels, from its header.
 
     Args:

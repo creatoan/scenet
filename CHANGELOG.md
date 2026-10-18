@@ -38,6 +38,13 @@ below 1.0 means.
   or JPEG, or turned by its EXIF orientation as the new rule `image-file`, without the solver.
   Text compiled with no folder may be handed the files it names instead: `base` takes a
   mapping from the path the document writes to the file's bytes, for fonts as for pictures.
+- **The picture is placed, and Panel Core records it.** Centred, filling the panel (`cover`)
+  or shown whole inside it (`contain`), never stretched. `backdrop.image` holds the path as
+  written, the media type, a digest of the bytes, the pixel size, the fit in SVG's words and
+  the rectangle it is drawn in; over a picture `backdrop.horizon` is left out. A Core of masses
+  is byte-identical, and `format_version` stays 1. The picture costs a balloon nothing and does
+  not move the camera, and a generated description names no place and no hour over it — only
+  the weather drawn on top.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

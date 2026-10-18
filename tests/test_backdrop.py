@@ -267,6 +267,7 @@ class TestGeometry:
         )
         assert backdrop is not None
         water, ground = backdrop.masses
+        assert backdrop.horizon is not None
         assert min(point.y for point in water.polygon) <= backdrop.horizon
         assert min(point.y for point in ground.polygon) > backdrop.horizon
 
@@ -289,6 +290,7 @@ class TestGeometry:
             backdrop = solve_backdrop(_setting(Mass(kind=kind)), PANEL)
             assert backdrop is not None
             ys = [point.y for point in backdrop.masses[0].polygon]
+            assert backdrop.horizon is not None
             assert max(ys) == pytest.approx(backdrop.horizon)
             assert min(ys) < backdrop.horizon
 

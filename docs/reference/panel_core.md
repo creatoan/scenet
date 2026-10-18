@@ -161,6 +161,35 @@ discipline as `capsules`, `blobs` and `face_marks`: the emitter is left with no 
 a backdrop can be read, diffed and hand-adjusted like everything else in this tier. `depth` is the
 same painter's order the actors use, so masses and figures sort into one sequence.
 
+A backdrop that is a [supplied picture](language.md#an-image-behind-the-cast) has an `image` in
+place of masses, and no `horizon`: the compiler does not know where the picture's horizon is, and
+does not pretend to. The solver was told the picture's size and nothing else; what it resolved is
+`box`, the rectangle the picture is drawn in — centred, overhanging the panel under `cover`,
+inside it under `contain`. Change `box` and the picture moves.
+
+```json
+"backdrop": {
+  "seed": 3062117294,
+  "image": {
+    "href": "art/p01-street.png",
+    "media_type": "image/png",
+    "sha256": "9f2c…",
+    "pixels": [960, 640],
+    "fit": "cover",
+    "preserve_aspect_ratio": "xMidYMid slice",
+    "box": { "x": 0.0, "y": -100.0, "width": 1200.0, "height": 800.0 }
+  }
+}
+```
+
+`href` is the path exactly as the document wrote it, relative to the document: the one fact about
+where the file was that reaches any output, because a linked SVG needs it. `sha256` is what the
+picture is known by, as a font is — a renderer asked to embed it is handed bytes by digest and
+refuses a Core naming bytes it was not given. `preserve_aspect_ratio` is the fit in SVG's own
+words, recorded so the emitter copies it. A backdrop of masses has no `image` key, and every Core
+written before pictures existed reads and writes byte for byte as it did, so neither `image` nor a
+missing `horizon` needed a `format_version` bump.
+
 An actor with `marks` carries three more fields. `marks` names what was asked for; `emanata` is the
 drawing, in the same `stroke` and `disc` primitives as `face_marks`, with ids numbered per mark
 (`plewd_0`, `plewd_1`, ...); and `emanata_zones` holds one polygon per mark, which is what balloon and

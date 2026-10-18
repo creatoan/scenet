@@ -217,13 +217,18 @@ def _backdrop(core: PanelCore) -> str:
     if core.backdrop is None:
         return ""
 
-    lines = [
-        f'  <line x1="0" y1="{fmt(core.backdrop.horizon)}" x2="{fmt(core.width)}" '
-        f'y2="{fmt(core.backdrop.horizon)}" stroke="{HORIZON}" stroke-width="2" '
-        'stroke-dasharray="14 8"/>',
-        f'  <text x="6" y="{fmt(core.backdrop.horizon - 6)}" font-size="15" '
-        f'font-family="monospace" fill="{HORIZON}">horizon</text>',
-    ]
+    horizon = core.backdrop.horizon
+    lines = (
+        []
+        if horizon is None
+        else [
+            f'  <line x1="0" y1="{fmt(horizon)}" x2="{fmt(core.width)}" '
+            f'y2="{fmt(horizon)}" stroke="{HORIZON}" stroke-width="2" '
+            'stroke-dasharray="14 8"/>',
+            f'  <text x="6" y="{fmt(horizon - 6)}" font-size="15" '
+            f'font-family="monospace" fill="{HORIZON}">horizon</text>',
+        ]
+    )
     for mass in core.backdrop.masses:
         points = " ".join(f"{fmt(x)},{fmt(y)}" for x, y in mass.polygon)
         top = min(y for _, y in mass.polygon)

@@ -891,8 +891,8 @@ class SettingSpec(Strict):
 
     @property
     def is_bare(self) -> bool:
-        """Whether there is nothing to draw: no masses, and nothing in the air."""
-        return not self.masses and self.weather is Weather.CLEAR
+        """Whether there is nothing to draw: no masses, no picture, nothing in the air."""
+        return not self.masses and self.image is None and self.weather is Weather.CLEAR
 
 
 class CastMember(Strict):

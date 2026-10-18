@@ -47,7 +47,7 @@ from hashlib import blake2b
 from random import Random
 
 from scenet.geom import BBox, Circle, Point
-from scenet.ir import Mass, MassKind, Plane, SettingSpec, Spans, TimeOfDay, Weather
+from scenet.ir import Fit, Mass, MassKind, Plane, SettingSpec, Spans, TimeOfDay, Weather
 
 __all__ = [
     "ATMOSPHERE",
@@ -60,10 +60,12 @@ __all__ = [
     "TONE_INDEX",
     "ResolvedAtmosphere",
     "ResolvedBackdrop",
+    "ResolvedImage",
     "ResolvedMass",
     "ResolvedVeil",
     "contrast_ratio",
     "depth_for",
+    "fit_box",
     "lightness",
     "seed_for",
     "solve_backdrop",
@@ -407,32 +409,58 @@ class ResolvedAtmosphere:
 
 
 @dataclass(frozen=True, slots=True)
+class ResolvedImage:
+    """A supplied picture, placed.
+
+    Attributes:
+        pixels: Its size, `(width, height)`: the one fact about the file the solver has.
+        fit: How it fills the panel.
+        box: Where it lands, in panel units -- larger than the panel under `cover`, inside
+            it under `contain`.
+    """
+
+    pixels: tuple[int, int]
+    fit: Fit
+    box: BBox
+
+
+@dataclass(frozen=True, slots=True)
 class ResolvedBackdrop:
     """Everything behind, around and in front of the cast.
 
     Attributes:
-        horizon: Where the ground meets what is behind it, in panel units.
+        horizon: Where the ground meets what is behind it, in panel units. None over a
+            supplied picture, whose horizon is wherever the artist put it.
         masses: The tonal masses, back to front.
         atmosphere: The air, or None when the weather is clear.
         seed: What every profile in here was generated from.
+        image: The supplied picture behind everything, or None.
     """
 
-    horizon: float
+    horizon: float | None
     seed: int
     masses: tuple[ResolvedMass, ...] = ()
     atmosphere: ResolvedAtmosphere | None = None
+    image: ResolvedImage | None = None
 
     def occluders(self) -> tuple[tuple[tuple[Point, ...], Plane], ...]:
         """The masses a balloon should prefer not to sit on, with their planes.
 
         Masses are **not** exclusions. Balloons sit over backgrounds routinely; that is
         the point of having a background. This feeds a soft cost instead.
+
+        A supplied picture is not among them. It is one plane whose content the solver
+        does not know, so there is nothing to price: a balloon may sit anywhere on it.
         """
         return tuple((mass.polygon, mass.plane) for mass in self.masses)
 
 
 def solve_backdrop(
-    setting: SettingSpec, panel: BBox, *, frontmost_actor: int = 0
+    setting: SettingSpec,
+    panel: BBox,
+    *,
+    frontmost_actor: int = 0,
+    pixels: tuple[int, int] | None = None,
 ) -> ResolvedBackdrop | None:
     """Resolve a declared setting into masses, tones and atmosphere.
 
@@ -442,6 +470,11 @@ def solve_backdrop(
             edge, exactly as artwork does, and only lettering is kept inside a margin.
         frontmost_actor: The largest depth any actor was given, so a foreground mass can
             be placed in front of the whole cast.
+        pixels: The supplied picture's size, read from its file, when the setting names
+            one. It is all the solver is told of it.
+
+    Raises:
+        ValueError: A picture is named and its size not given, or the other way round.
 
     Returns:
         The resolved backdrop, or None when there is nothing to draw -- which is what
@@ -454,10 +487,20 @@ def solve_backdrop(
         >>> solve_backdrop(SettingSpec(), BBox(0.0, 0.0, 800.0, 600.0)) is None
         True
     """
+    if (setting.image is None) != (pixels is None):
+        raise ValueError("a supplied picture's pixels are given exactly when it is named")
     if setting.is_bare:
         return None
 
     seed = seed_for(setting, panel.width, panel.height)
+    if pixels is not None:
+        fit = setting.fit or Fit.COVER
+        return ResolvedBackdrop(
+            horizon=None,
+            seed=seed,
+            atmosphere=_atmosphere(setting, panel, seed),
+            image=ResolvedImage(pixels=pixels, fit=fit, box=fit_box(pixels, panel, fit)),
+        )
     horizon = panel.height * setting.horizon.fraction
 
     grounded = _meets_horizon(setting.masses)
@@ -485,6 +528,41 @@ def solve_backdrop(
         seed=seed,
         masses=tuple(masses),
         atmosphere=_atmosphere(setting, panel, seed),
+    )
+
+
+def fit_box(pixels: tuple[int, int], panel: BBox, fit: Fit) -> BBox:
+    """Where a picture lands in a panel: centred, scaled, never stretched.
+
+    `cover` scales it until it fills the panel, so one pair of edges overhangs equally;
+    `contain` until it fits inside, so the panel shows round it on two sides. SVG's
+    `preserveAspectRatio` says the same in its own words, `xMidYMid slice` and `meet`,
+    and a renderer that follows it draws exactly this rectangle.
+
+    Args:
+        pixels: The picture's size, `(width, height)`; only its proportions matter.
+        panel: The rectangle to fill.
+        fit: How.
+
+    Returns:
+        The picture's rectangle, in the panel's units.
+
+    Example:
+        >>> from scenet.geom import BBox
+        >>> from scenet.ir import Fit
+        >>> from scenet.solve.backdrop import fit_box
+        >>> fit_box((960, 640), BBox(0.0, 0.0, 1200.0, 600.0), Fit.COVER)
+        BBox(x=0.0, y=-100.0, width=1200.0, height=800.0)
+    """
+    across, down = pixels
+    scales = (panel.width / across, panel.height / down)
+    scale = max(scales) if fit is Fit.COVER else min(scales)
+    width, height = across * scale, down * scale
+    return BBox(
+        panel.x + (panel.width - width) / 2,
+        panel.y + (panel.height - height) / 2,
+        width,
+        height,
     )
 
 

@@ -12,15 +12,17 @@ different path-rounding convention produces a huge diff that means nothing.
 import json
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, Tag, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, Tag, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
+from scenet.images import MediaType
 from scenet.ir import (
     UNTAGGED,
     BalloonKind,
     CaptionKind,
     Face,
+    Fit,
     Mark,
     MassKind,
     Plane,
@@ -30,6 +32,7 @@ from scenet.ir import (
     Weather,
     tag_by,
 )
+from scenet.paths import check_relative
 
 CORE_FORMAT_VERSION = 1
 
@@ -305,26 +308,75 @@ class CoreAtmosphere(CoreModel):
     fall_tone: str = ""
 
 
-class CoreBackdrop(CoreModel):
-    """Where the panel is, resolved: masses, tones, and the air.
+def _relative(href: str) -> str:
+    """Refuse a hand-edited link no document could have written."""
+    check_relative(href, what="image", rule="image-file")
+    return href
+
+
+class CoreImage(CoreModel):
+    """A supplied picture behind the cast, placed (#70).
+
+    Everything a renderer needs, resolved: where the picture is, what it is, and the
+    rectangle it is drawn in. Nothing about its content -- the solver never saw any.
 
     Attributes:
-        horizon: Where the ground meets what is behind it, in panel units.
+        href: The path exactly as the document wrote it, relative to the document. A
+            linked SVG points at the picture by it; nothing else about where the file
+            was reaches the output.
+        media_type: `image/png` or `image/jpeg`, from the file's own bytes -- what a
+            `data:` URI of it is labelled.
+        sha256: The digest of its bytes, which is what it is known by: an embedding
+            renderer is handed bytes by digest, and refuses a Core naming bytes it was
+            not given, as it refuses a font.
+        pixels: Its size, `(width, height)`, read from its header.
+        fit: How it fills the panel.
+        preserve_aspect_ratio: The same fit in SVG's words, `xMidYMid slice` for `cover`
+            and `xMidYMid meet` for `contain`. Recorded rather than derived, as
+            :attr:`CoreCaption.italic <scenet.core.CoreCaption.italic>` is: the emitter
+            copies it. `box` already has the picture's proportions, so a renderer that
+            reads them as the compiler did draws the same either way; this says what to
+            do to one that does not.
+        box: Where the picture is drawn, in panel units: centred, larger than the panel
+            under `cover` and cropped by it, inside it under `contain`. Change it and
+            the picture moves.
+    """
+
+    href: Annotated[str, AfterValidator(_relative)]
+    media_type: MediaType
+    sha256: str
+    pixels: tuple[int, int]
+    fit: Fit
+    preserve_aspect_ratio: Literal["xMidYMid slice", "xMidYMid meet"]
+    box: Box
+
+
+class CoreBackdrop(CoreModel):
+    """Where the panel is, resolved: masses, tones, the air, or a supplied picture.
+
+    Attributes:
+        horizon: Where the ground meets what is behind it, in panel units. Left out over
+            a supplied picture, whose horizon the compiler does not know.
         seed: What every silhouette in here was generated from. Kept so that a Core
             document explains itself: two panels with the same masses and different
             skylines differ here, and here is where to look.
         masses: The tonal masses, back to front.
         atmosphere: The air, or None when the weather is clear.
+        image: The supplied picture behind everything, or None. Left out of the JSON
+            when unset.
 
     Optional on :class:`PanelCore <scenet.core.PanelCore>`, so every document written
     before this existed is still a valid one -- which is why adding it did not need a
-    `format_version` bump, the same argument captions made.
+    `format_version` bump, the same argument captions made. `image` and a missing
+    `horizon` are additions of the same kind: a backdrop of masses reads and writes
+    byte for byte as it did.
     """
 
-    horizon: float
+    horizon: float | None = None
     seed: int
     masses: tuple[CoreMass, ...] = ()
     atmosphere: CoreAtmosphere | None = None
+    image: CoreImage | None = None
 
 
 class CoreActor(CoreModel):
@@ -736,6 +788,8 @@ class PanelCore(CoreModel):
         _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=(), description=None)
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=(), label=None)
+        if payload.get("backdrop") is not None:
+            _drop_unused(payload["backdrop"], horizon=None, image=None)
         for effect in payload.get("sfx", []):
             _drop_unused(effect, label=None)
         for balloon in payload["balloons"]:

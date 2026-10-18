@@ -246,10 +246,17 @@ def _place(setting: SettingSpec) -> str:
 
 
 def _setting(setting: SettingSpec) -> str:
-    """The place, the hour and the weather, or nothing for a panel set nowhere."""
+    """The place, the hour and the weather, or nothing for a panel set nowhere.
+
+    Over a supplied picture only the weather is said: it is drawn over the picture, and
+    the compiler knows it. The place and the hour are in the picture, which it has never
+    seen -- so it says nothing of them rather than something it would have to guess.
+    """
     if setting.is_bare:
         return ""
     weather = WEATHERS[setting.weather]
+    if setting.image is not None:
+        return f"{weather[0].upper()}{weather[1:]}." if weather else ""
     return f"{_place(setting)} {TIMES[setting.time]}{f', {weather}' if weather else ''}."
 
 
@@ -305,7 +312,9 @@ def describe(panel: PanelIR, faces: Mapping[str, float], width: float) -> str:
         return panel.description
     setting = _setting(panel.setting)
     if not panel.cast:
-        return setting or "An empty panel."
+        # A picture is not nothing, though nothing can be said of what it shows.
+        empty = "A panel with no figures." if panel.setting.image else "An empty panel."
+        return setting or empty
     cast = sorted(panel.cast, key=lambda actor: (faces[actor], actor))
     figures = "; ".join(_figure(panel, actor, faces[actor], width) for actor in cast)
     return " ".join(part for part in (_shot(panel), setting, f"{figures}.") if part)
