@@ -7,7 +7,9 @@
 #
 # Readers split about evenly over whether an inset comes before the panel it sits in
 # or after it (Cohn, 2013), so it never guesses: it is read after its parent unless it
-# says `read: before`. Here the clock is read first, then the street, then the face.
+# says `read: before`. Here the clock is read first, then the street, then the face,
+# and the page is written in that order; the street is cut around the clock, which is
+# how the clock stays on top though it comes first.
 #
 # The street's art is drawn as if the insets were not there. Only its lettering moves:
 # the caption would have sat where the clock is.

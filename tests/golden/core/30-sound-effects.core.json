@@ -721,6 +721,7 @@
       "font_size": 26.6,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: What was that?",
       "line_height": 33.25,
       "lines": [
         "What was",
@@ -751,6 +752,7 @@
       "font_size": 26.6,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: Nothing. Go back to sleep.",
       "line_height": 33.25,
       "lines": [
         "Nothing. Go",
@@ -773,6 +775,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. Alice, centre; Bob, centre, arms crossed.",
   "format_version": 1,
   "height": 800.0,
   "sfx": [
@@ -815,6 +818,7 @@
       ],
       "hollow": false,
       "id": "s0",
+      "label": "Sound effect, from Bob: KRAK.",
       "order": 0,
       "source": "bob",
       "stroke": "#ffffff",
@@ -934,6 +938,7 @@
       ],
       "hollow": false,
       "id": "s1",
+      "label": "Sound effect: tok tok tok.",
       "order": 2,
       "source": null,
       "stroke": "#ffffff",
@@ -1065,6 +1070,7 @@
       ],
       "hollow": true,
       "id": "s2",
+      "label": "Sound effect, from Alice: WHOOSH.",
       "order": 3,
       "source": "alice",
       "stroke": "#111111",

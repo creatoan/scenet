@@ -1425,6 +1425,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: Is everyone here?",
       "line_height": 30.63,
       "lines": [
         "Is everyone",
@@ -1455,6 +1456,7 @@
       "font_size": 24.5,
       "id": "b1",
       "kind": "speech",
+      "label": "Dave: Looks like it.",
       "line_height": 30.63,
       "lines": [
         "Looks like",
@@ -1477,6 +1479,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. Alice, left; Bob, left, arms crossed; Carol, centre, hands on hips; Dave, right, pointing.",
   "format_version": 1,
   "height": 700.0,
   "width": 1400.0

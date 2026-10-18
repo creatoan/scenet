@@ -97,7 +97,7 @@ A sound effect is lettering treated as art, so three decisions follow from treat
   effects listed in it too, but a sound sits where the sound is, and holding it to above-and-left
   would make many panels impossible to letter. Of the three options in #73 — in the sequence under
   the rule, in it but exempt from the geometry, or outside it — the second shipped: an effect takes
-  its `order`, which a reader of the text and #76's accessible output follow, and is placed with no
+  its `order`, which a reader of the text and accessible output follow, and is placed with no
   geometric constraint against any box.
 - **When it is placed.** Before every balloon and caption, as the art is: lettering is placed over
   the picture, knowing where it is. An effect is placed after staging and the camera, from the
@@ -112,6 +112,37 @@ Its own hard rules are a box's — never a face, never out of the frame, never u
 never over another effect. It is set in a display face, bent and turned as transforms of the glyph
 outlines Scenet already draws, so an arc comes out the same in every renderer; SVG's `<textPath>`
 would have handed the layout back to the renderer and to installed fonts.
+
+## A panel is one image, read whole, in reading order
+
+Accessible output (#76) makes each panel `role="img"`, named by one `<title>`: the description,
+then every balloon, caption and sound effect's label, in `order`. The sources behind it are in
+{ref}`prior art <accessible-svg>`, and the screen-reader results in
+[the how-to](../howto/make_accessible_output.md#recorded-results).
+
+- **One image, not a document of named parts.** The issue held up Vega-Lite's per-mark labels as
+  the precedent, and Vega's own output is a `graphics-document` with `graphics-symbol` marks. That
+  was examined and not taken. No published test says what NVDA, JAWS or VoiceOver do with
+  those roles, the ACT rule calls their support inconsistent, and Firefox reduces the document
+  to a plain one. With a group of named parts, document order would be reading order — and a
+  sound effect is painted under every balloon, so it cannot be in its place in that order
+  without changing the picture. As one image, the panel is read in the one order Core keeps,
+  whatever the paint order. Its children are presentational, so nothing inside it is named.
+- **The words are in the name, and in nothing else.** A description is often not spoken —
+  Lembree's NVDA and JAWS results, NVDA's own guide — so `aria-describedby` alone would leave the
+  dialogue unread. The first version named the panel through `aria-labelledby` by a `<title>`
+  and a `<desc>`, the most-tested pattern in the published results. NVDA 2026.2 with Edge 155 read
+  it in full, once, in browse mode — and a second time, the `<desc>` as the description, every
+  time it moved to the panel by graphic. Of six ways of naming it tried in the same session, one
+  `<title>` holding everything read once both ways, and needs no id, so a page that inlines
+  several panels cannot name one with another's words. The cost is a long tooltip.
+- **Strips and pages are groups of panels.** `role="group"` is what every engine computes; the
+  panels are its images, in reading order — which is why a page now writes its panels in reading
+  order and cuts each inset's parent around it rather than painting the inset last.
+- **The words are resolved in the pipeline**, in `solve/describe.py`, and carried in Panel Core;
+  the emitter copies them. Generated text is templated English, and says so.
+- **`aria=False` is exactly the SVG written before.** A golden variant holds every gallery
+  document built `--no-aria`, and its digests are those the default build had before.
 
 ## Text metrics are a hard dependency, not a detail
 

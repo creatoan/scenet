@@ -1071,6 +1071,7 @@
       "font_size": 28.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Far: Move.",
       "line_height": 35.0,
       "lines": [
         "Move."
@@ -1092,6 +1093,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Back, left, hands on hips, behind Near; Near, centre, arms crossed, in front of Far; Far, right, pointing.",
   "format_version": 1,
   "height": 800.0,
   "width": 1200.0

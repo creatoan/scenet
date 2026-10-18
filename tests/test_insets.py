@@ -186,13 +186,46 @@ class TestPageCore:
 
 
 class TestThePageSvg:
-    def test_insets_are_painted_over_their_parent_whatever_their_order(
+    def test_panels_are_written_in_reading_order_whatever_their_insets(
         self, svg: ElementTree.Element
     ):
+        """Document order is the order a screen reader follows, so it is reading order:
+        the clock, read before the street; the street; the face, read after it."""
         groups = [
             g.get("id") for g in svg.findall(f"{SVG}g") if (g.get("id") or "").startswith("panel-")
         ]
-        assert groups == ["panel-street", "panel-clock", "panel-face"]
+        assert groups == ["panel-clock", "panel-street", "panel-face"]
+
+    def test_the_parent_is_cut_around_each_inset(self, svg: ElementTree.Element):
+        """So an inset written before its parent is still on top of it: the parent's art
+        stops at the ring, which is what painting the inset last used to achieve."""
+        street = next(g for g in svg.findall(f"{SVG}g") if g.get("id") == "panel-street")
+        holes = {
+            clip.get("id", ""): clip[0]
+            for clip in street.findall(f"{SVG}clipPath")
+            if "hole" in clip.get("id", "")
+        }
+        assert sorted(holes) == ["p2-hole-1", "p2-hole-2"]
+        # The street's box, then the inset's ring in the street's own units: the clock at
+        # (60, 60, 276, 396) on the page is (0, 0, 276, 396) in the street, which starts at
+        # (60, 60); the face's ring is (756, 1176, 384, 564) on the page.
+        assert holes["p2-hole-1"].get("d") == "M0 0 H1080 V1680 H0 Z M0 0 H276 V396 H0 Z"
+        assert holes["p2-hole-2"].get("d") == "M0 0 H1080 V1680 H0 Z M696 1116 H1080 V1680 H696 Z"
+        assert {path.get("clip-rule") for path in holes.values()} == {"evenodd"}
+        # Nested, so the clips intersect: frame, then each hole, then the art.
+        frame = street.find(f"{SVG}g")
+        assert frame is not None
+        assert frame.get("clip-path") == "url(#p2-frame)"
+        first = frame.find(f"{SVG}g")
+        assert first is not None
+        assert first.get("clip-path") == "url(#p2-hole-1)"
+        second = first.find(f"{SVG}g")
+        assert second is not None
+        assert second.get("clip-path") == "url(#p2-hole-2)"
+
+    def test_an_inset_is_not_cut_around_anything(self, svg: ElementTree.Element):
+        clock = next(g for g in svg.findall(f"{SVG}g") if g.get("id") == "panel-clock")
+        assert not [c for c in clock.iter(f"{SVG}clipPath") if "hole" in (c.get("id") or "")]
 
     def test_each_inset_is_ringed_in_white(self, svg: ElementTree.Element):
         children = list(svg)

@@ -1427,6 +1427,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: December.",
       "line_height": 23.25,
       "lines": [
         "December."
@@ -1435,6 +1436,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. The docks at dusk, in the snow. Alice, centre, arms crossed, looking at Bob; Bob, centre.",
   "format_version": 1,
   "height": 620.0,
   "width": 1100.0

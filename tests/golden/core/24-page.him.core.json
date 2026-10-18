@@ -1106,6 +1106,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "whisper",
+      "label": "Bob, whispering: Shall we?",
       "line_height": 30.63,
       "lines": [
         "Shall we?"
@@ -1127,6 +1128,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. A street at night, in the rain. Bob, centre, happy.",
   "format_version": 1,
   "height": 628.12,
   "width": 660.0

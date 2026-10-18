@@ -1166,6 +1166,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Six hours later.",
       "line_height": 23.25,
       "lines": [
         "Six hours",
@@ -1175,6 +1176,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. The docks at dawn, in fog. Alice, centre, arms crossed, looking at Bob; Bob, centre.",
   "format_version": 1,
   "height": 620.0,
   "width": 1100.0

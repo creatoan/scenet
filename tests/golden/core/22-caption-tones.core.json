@@ -897,6 +897,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Noon. Nothing for miles.",
       "line_height": 33.75,
       "lines": [
         "Noon. Nothing",
@@ -918,6 +919,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "monologue",
+      "label": "Caption, inner voice: She had walked since dawn.",
       "line_height": 33.75,
       "lines": [
         "She had walked",
@@ -939,6 +941,7 @@
       "ink": "#ffffff",
       "italic": true,
       "kind": "editorial",
+      "label": "Editor's note: Continued next issue.",
       "line_height": 33.75,
       "lines": [
         "Continued",
@@ -948,6 +951,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. A field by day. Alice, centre.",
   "format_version": 1,
   "height": 900.0,
   "width": 1400.0

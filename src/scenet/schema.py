@@ -27,6 +27,7 @@ Example:
 import inspect
 from typing import Any
 
+from scenet.compose import DESCRIPTION_KEY
 from scenet.ir import PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
@@ -70,6 +71,9 @@ def scene_schema() -> dict[str, Any]:
     properties = {
         key: _inheritable(value, definitions) for key, value in panel["properties"].items()
     }
+    # A description says what one picture shows, so a panel may have one but the scene
+    # may not offer one to every panel: `compose.NOT_A_DEFAULT`.
+    defaults = {key: value for key, value in properties.items() if key != DESCRIPTION_KEY}
 
     member = {key: value for key, value in panel.items() if key not in ("title", "$schema")}
     member["properties"] = {
@@ -95,7 +99,7 @@ def scene_schema() -> dict[str, Any]:
         "$defs": definitions,
         "type": "object",
         "properties": {
-            **properties,
+            **defaults,
             "page": layout["properties"]["page"],
             "pages": layout["properties"]["pages"],
             "panels": {

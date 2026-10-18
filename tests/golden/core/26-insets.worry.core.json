@@ -642,6 +642,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "whisper",
+      "label": "Alice, whispering: Oops.",
       "line_height": 30.63,
       "lines": [
         "Oops."
@@ -663,6 +664,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. A street by day. Alice, centre, scared.",
   "format_version": 1,
   "height": 479.5,
   "width": 472.5

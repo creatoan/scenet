@@ -897,6 +897,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "speech",
+      "label": "LÉA: Tom ? La lampe est éteinte !",
       "line_height": 40.83,
       "lines": [
         "Tom ? La lampe",
@@ -927,6 +928,7 @@
       "font_size": 32.67,
       "id": "b1",
       "kind": "speech",
+      "label": "GARDIEN, off panel: Qui est là-haut ?",
       "line_height": 40.83,
       "lines": [
         "Qui est",
@@ -963,6 +965,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Port-Ellis, le soir où la lampe s'est éteinte.",
       "line_height": 35.0,
       "lines": [
         "Port-Ellis, le soir où",
@@ -973,6 +976,7 @@
       "speaker": null
     }
   ],
+  "description": "La falaise, le soir. Léa arrive en haut des marches ; Tom l'attend près de la porte.",
   "format_version": 1,
   "height": 1370.0,
   "width": 880.0

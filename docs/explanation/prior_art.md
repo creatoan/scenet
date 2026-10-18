@@ -69,7 +69,10 @@ The closest structural precedent that exists: a declarative high-level grammar c
 *lower-level grammar*, which then emits SVG — with the compiler deriving components (scales, axes,
 legends) by rule rather than making the author specify them.
 
-Taken: the two-tier pipeline. Source compiles to [Panel Core](../reference/panel_core.md), which is
+Taken: the two-tier pipeline, and later its accessibility model: ARIA on by default, with a
+[`description`](https://vega.github.io/vega-lite/docs/mark.html) the compiler writes and an
+`aria: false` to opt out — see {ref}`accessible SVG <accessible-svg>`.
+The two-tier pipeline: Source compiles to [Panel Core](../reference/panel_core.md), which is
 then emitted. Scenet's automatically derived components are figure scale, balloon geometry and tail
 routing. Leland Wilkinson's *Grammar of Graphics* is the ancestor idea; Vega-Lite is the proof it
 survives contact with a real implementation.
@@ -327,7 +330,9 @@ the language takes typographic parameters — size, rotation, arc, hollow — ra
   into that range; split and per-letter effects are left until something needs them.
 - **AccessComics2** (Lee, Joh, Yoo & Oh, ACM TACCESS 2022) found blind readers wanted textual sound
   effects, which is why an effect keeps its text and its place in the reading order in Panel Core,
-  ready for accessible output (#76), though it is drawn as outlines.
+  and accessible output reads it there, though it is drawn as outlines. Its narrator's account of a
+  panel — the background, where each character is, their faces — is what a generated
+  [description](../reference/panel_core.md#the-words) says.
 
 The display face is Bangers, by Vernon Adams, under the SIL Open Font License, chosen because it is
 drawn in the manner of comic cover lettering and can be shipped.
@@ -400,6 +405,73 @@ Paint's frame-border tools keep the gap between divided frames at the gutter set
 angle of the cut ([its guide to frame borders](https://tips.clip-studio.com/en-us/articles/611)),
 so a slanted tier does the same rather than keeping the horizontal gap, which would narrow the
 gutter as it leaned.
+
+(accessible-svg)=
+### Accessible SVG — SVG-AAM, Graphics ARIA, and what screen readers do
+
+[SVG-AAM](https://www.w3.org/TR/svg-aam-1.0/) ·
+[WAI-ARIA 1.2](https://www.w3.org/TR/wai-aria-1.2/) ·
+[Graphics ARIA](https://www.w3.org/TR/graphics-aria-1.0/) and
+[Graphics-AAM](https://www.w3.org/TR/graphics-aam-1.0/) ·
+[accname 1.2](https://www.w3.org/TR/accname-1.2/) ·
+[ACT rule 7d6734](https://www.w3.org/WAI/standards-guidelines/act/rules/7d6734/proposed/)
+
+Accessible output (#76) is built from what the specifications say and what screen readers have
+been tested to do, which are not the same thing.
+
+- **The vocabulary.** SVG-AAM makes `<title>` an element's name and `<desc>` its description.
+  WAI-ARIA's `img` role is one image made of parts whose children are presentational
+  ([`#img`](https://www.w3.org/TR/wai-aria-1.2/#img),
+  [MDN](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/img_role)),
+  so a name on anything inside it is never reached. In accname, `aria-labelledby` comes before
+  every other source of a name, and may join several elements' text in the order it lists them.
+- **What screen readers do.** An explicit `role="img"` named through `aria-labelledby` by its
+  `<title>` and `<desc>` is the pattern that has been tested most and passes most: Watson and
+  Faulkner for TPGi ([Using ARIA to enhance SVG accessibility](https://vispero.com/resources/using-aria-enhance-svg-accessibility/)),
+  Lembree's matrix of NVDA, JAWS, VoiceOver and TalkBack ([weboverhauls](https://weboverhauls.github.io/demos/svg/)),
+  [Deque](https://www.deque.com/blog/creating-accessible-svgs/), and O'Hara's
+  [contextual images and SVGs](https://www.scottohara.me/blog/2019/05/22/contextual-images-svgs-and-a11y.html).
+  `aria-describedby` alone failed with NVDA and JAWS in Chrome and Firefox in Lembree's results and
+  Deque's, [Orange](https://a11y-guidelines.orange.com/en/articles/accessible-svg/) still advises
+  against it, and [NVDA's user guide](https://download.nvaccess.org/documentation/userGuide.html)
+  says object descriptions have often gone unspoken. So the words go in the name. Without an
+  explicit role, an SVG with only a `<title>` is missed by NVDA with Firefox and by VoiceOver on iOS
+  ([a11ysupport.io, 2025](https://a11ysupport.io/)).
+- **What browsers compute.** The [web-platform tests for SVG-AAM](https://wpt.fyi/results/svg-aam)
+  show `g` with a `<title>`, and `g[aria-label]`, named as groups in all three engines, and none of
+  them giving the root `<svg>` the implicit `graphics-document` role SVG-AAM asks for. The
+  [graphics roles](https://wpt.fyi/results/graphics-aria) are computed by Chrome and Safari and
+  reduced to their fallbacks by Firefox, and ACT rule 7d6734 calls their support inconsistent and
+  recommends `role="img"`. Blink reuses an SVG's `<title>` as its description when the name came
+  from `aria-labelledby` and there is no `<desc>` (SVG-AAM's description rules), and WebKit exposes
+  an unnamed shape under a named ancestor as an unnamed image.
+- **Reading order** is document order: `aria-flowto` is supported by JAWS alone
+  ([a11ysupport.io](https://a11ysupport.io/tech/aria/aria-flowto_attribute)), and the
+  [DAISY Knowledge Base](https://kb.daisy.org/publishing/docs/fxl/svg.html) asks that the text
+  order of an SVG in fixed layout match its reading order.
+- **An `<img src>` exposes only its `alt`** ([HTML-AAM](https://www.w3.org/TR/html-aam-1.0/#el-img)),
+  which is why the how-to says how to write one from Panel Core.
+- **Why it matters for e-books.** [EPUB Accessibility 1.1](https://www.w3.org/TR/epub-a11y-11/)
+  asks for [WCAG 2.2](https://www.w3.org/TR/WCAG22/), whose 1.1.1 wants a text alternative for every
+  image and 1.3.2 a correct reading sequence; the W3C note on
+  [fixed-layout accessibility](https://www.w3.org/TR/2025/NOTE-epub-fxl-a11y-20250925/) says comics are often images
+  alone, and fail for it.
+
+**Vega's own output** was read in its source
+([vega-view `aria.js`](https://github.com/vega/vega/blob/main/packages/vega-view/src/aria.js),
+[vega-scenegraph `aria.js`](https://github.com/vega/vega/blob/main/packages/vega-scenegraph/src/util/aria.js)):
+the view is a `graphics-document` with an `aria-roledescription` and a label, each mark with a
+description a `graphics-symbol` labelled by it, and `aria: false` hides an item instead.
+
+Taken: an explicit `role="img"` per panel, its name the dialogue as well as the description; strips and pages as `role="group"`, their panels in reading
+order and their own shapes hidden; Vega-Lite's model of words resolved by the compiler, on by
+default with an opt-out. Not taken: `graphics-document` and per-balloon names, for want of any
+published screen-reader result and because a named part's place in document order is its paint
+order, which a sound effect does not share; `aria-describedby` for anything a reader must hear; and in the end the most-tested pattern
+itself, `aria-labelledby` by `<title>` and `<desc>`, which NVDA 2026.2 with Edge 155 read a
+second time as the description when moving by graphic — one `<title>` holding everything
+is read once ([recorded results](../howto/make_accessible_output.md#recorded-results));
+`aria-flowto`. See [design decisions](design_decisions.md#a-panel-is-one-image-read-whole-in-reading-order).
 
 ## Future
 

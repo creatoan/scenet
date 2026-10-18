@@ -195,6 +195,35 @@ A panel with no effects has no `sfx` key, so no `format_version` bump.
 `seed` is kept so that a Core document explains itself: two panels with the same masses and
 different skylines differ here, and here is where to look.
 
+### The words
+
+A panel is also read, by somebody who cannot see it, and the words it is read in are resolved here
+like everything else, so the emitter copies them and decides nothing:
+
+```json
+"description": "Medium shot. A street at night, in the rain. Alice, left, pointing, angry, looking at Bob; Bob, right, arms crossed, sweating.",
+"balloons": [{ "id": "b0", "order": 1, "label": "Alice: You forgot your umbrella!", "...": "..." }],
+"captions": [{ "id": "c0", "order": 0, "label": "Caption: Midnight.", "...": "..." }],
+"sfx": [{ "id": "s0", "order": 2, "label": "Sound effect, from Bob: BLAM.", "...": "..." }]
+```
+
+- **`description`** is the panel's [`description`](language.md#description) when it has one —
+  written, or a comic script's prose — and otherwise generated from what it holds: the shot and
+  angle, the place, the hour and the weather, then each figure left to right, by thirds of the panel
+  at the centre of its face, with its pose, expression and marks, whom it looks at, and whom it
+  stands in front of or behind. A panel with nothing in it is `An empty panel.`
+- **`label`**, on every balloon, caption and sound effect, is who says it, how, and the words:
+  `Bob, whispering, quietly: I know.`, `Caption, inner voice: …`, `Carol, off panel: …`. The words
+  are the author's with emphasis markers off — never `lines`, which are broken to fit and, on a
+  spoken caption, carry quotation marks that are lettering, not speech. Each is a sentence: a line
+  that does not end gets a full stop, so two lines are heard as two.
+
+Read in `order`, the labels are the panel's text in the order its reader takes it, sound effects
+included. Generated text is **templated English**; a French script's prose stays French, but the
+words round its dialogue do not. Both are left out of a document that has none, so a Core written
+before them is still valid and writes back byte for byte — no `format_version` bump — and neither
+may hold a character an SVG cannot, since Core is hand-edited and both go into the SVG.
+
 ### Determinism is on this text, and on the SVG text — not on pixels
 
 The atmosphere's `veil` is a set of `feTurbulence` parameters rather than an image, and the filter
