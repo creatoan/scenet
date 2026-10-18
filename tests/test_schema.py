@@ -216,7 +216,10 @@ class TestSceneSchema:
     def test_both_schemas_describe_the_same_language(self):
         panel = panel_schema()["properties"]
         scene = scene_schema()["properties"]
-        assert set(panel) <= set(scene)
+        member = scene["panels"]["additionalProperties"]["properties"]
+        assert set(panel) <= set(member)
+        # A description says what one panel shows: a panel's, never a scene's default.
+        assert set(panel) - set(scene) == {"description"}
 
 
 class TestShippedSchemasAreCurrent:

@@ -61,9 +61,8 @@ class TestInYaml:
 
     @pytest.mark.parametrize("blank", ['""', '"   "', "|\n  \n"])
     def test_a_blank_one_is_refused(self, blank: str):
-        with pytest.raises(PanelSyntaxError) as raised:
+        with pytest.raises(PanelSyntaxError, match="leave it out to have one generated"):
             parse_panel(f"{CAST}description: {blank}")
-        assert raised.value.rule == "invalid-field"
 
     def test_a_blank_one_is_one_finding_at_the_key(self):
         finding = _only(diagnose_source(f'{CAST}description: "  "\n'))
