@@ -26,9 +26,8 @@ jobs:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
+      # No `actions: read`: CodeQL needs it in private repositories only.
       contents: read
-      # Read by the analysis to describe the run it belongs to.
-      actions: read
       # The upload of the results, and nothing else, which is why it is here alone.
       security-events: write
     strategy:

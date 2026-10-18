@@ -399,9 +399,9 @@ class TestCodeQL:
             if "write" in (job.get("permissions") or {}).values()
         ]
         assert writers == ["analyze"]
+        # `actions: read` is for private repositories only; this one is public.
         assert codeql["jobs"]["analyze"]["permissions"] == {
             "contents": "read",
-            "actions": "read",
             "security-events": "write",
         }
 
