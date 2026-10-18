@@ -308,6 +308,17 @@ their tags on GitHub.
 playground opens in another's, where a construct from `/dev/` may not compile. A shared link
 carries its document in the URL and is not affected.
 
+**A playground learns its version from its address.** The page is the same in every version
+and its build is not told which it is, but `switcher.json` names each version's address, and a
+version's playground is `playground/` under it. Matching the address against the file needs no
+label baked into the build, and shows nothing — rather than something wrong — wherever the page
+is served without the file, as under `npm run dev`.
+
+**Links to the playground are written absolute and built relative.** The Markdown links it by
+its full address, the only kind that works where GitHub renders these pages. A transform in
+`docs/conf.py` makes each such link relative in the built site, so every version's
+documentation opens its own version's playground.
+
 Sources:
 
 - pydata-sphinx-theme, [version switcher](https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html)

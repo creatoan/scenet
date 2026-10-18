@@ -31,6 +31,9 @@ The Scenet compiler running in a browser, published to GitHub Pages.
   in-memory file system, so `lettering: {font: fonts/Name.ttf}` letters in them. They last
   as long as the tab: neither a reload nor a share link keeps them.
 - **Your edits survive a reload**, saved in the browser. *Reset to example* discards them.
+- **Every version of Scenet has its own playground** on the site: the latest release's,
+  `main`'s under `/dev/`, each minor version's under `/vX.Y/`. The switcher beside the title
+  moves between them, keeping a shared document, and `main`'s and an old release's say so.
 - The divider between editor and output can be dragged, or moved with the arrow keys;
   the output can go full screen.
 

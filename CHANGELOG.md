@@ -25,6 +25,14 @@ below 1.0 means.
 - **Each release attaches its built site** as `scenet-X.Y.Z-site.zip`, built from the wheel
   it publishes, before PyPI. The site serves every version from these, unchanged. Releases
   0.8.0 to 0.11.0 have theirs backfilled.
+- **The playground says which version it runs**, with the same version switcher as the
+  documentation, keeping a shared document across the switch. On `main`'s and on an old
+  release's it says so, with a link to the latest. Playgrounds built before this change,
+  those of 0.11 and earlier, carry no switcher.
+- **The documentation's home page shows its example compiled** — the file `scenet build`
+  writes for it, kept current with the golden files — and a button opens that example in the
+  playground. The navbar names the playground beside the sections, and every link to it
+  opens the playground of the version being read.
 
 ### Changed
 
