@@ -7,6 +7,7 @@ command -- because the commonest way to ship a broken stdio server is for someth
 print to stdout, and only the real transport shows that.
 """
 
+import base64
 import importlib
 import json
 import shutil
@@ -16,6 +17,7 @@ from pathlib import Path
 from typing import Any, get_args
 
 import anyio
+import fonts.ttf
 import pytest
 from mcp import Client, StdioServerParameters
 from mcp.types import (
@@ -40,6 +42,7 @@ from scenet.mcp import (
     validate,
 )
 from scenet.spec_pack import SPEC_PARTS, part
+from tests.images import tiny_png
 
 TOOLS = {"get_spec", "list_puppets", "validate", "compile", "render"}
 
@@ -570,3 +573,61 @@ class TestRegistryManifest:
 
     def test_the_description_fits_the_registry(self, manifest: dict[str, Any]):
         assert 0 < len(manifest["description"]) <= 100
+
+
+class TestFilesBesideTheDocument:
+    """A server never reads a folder of its own, so the files a document names come with it.
+
+    `files` maps the path the document writes to the file's bytes in base64. It stands in
+    for the document's folder, for a picture behind the cast and for a font alike, and is
+    read in memory: nothing is written to the server's disk.
+    """
+
+    PAINTED = "cast: {alice: {reference: alice}}\nsetting: {image: art/street.png}\n"
+
+    def test_with_no_files_a_named_picture_is_a_finding(self):
+        report = json.loads(text_of(call("validate", {"source": self.PAINTED})))
+        assert [finding["rule"] for finding in report["findings"]] == ["scenet/image-file"]
+
+    def test_with_its_files_it_is_valid(self):
+        files = {"./art/street.png": base64.b64encode(tiny_png()).decode("ascii")}
+        report = json.loads(text_of(call("validate", {"source": self.PAINTED, "files": files})))
+        assert report["valid"] is True
+
+    def test_compile_records_the_picture(self):
+        files = {"art/street.png": base64.b64encode(tiny_png()).decode("ascii")}
+        result = call("compile", {"source": self.PAINTED, "files": files})
+        assert not result.is_error
+        core = json.loads(text_of(result))["panels"][0]["core"]
+        assert core["backdrop"]["image"]["href"] == "art/street.png"
+
+    def test_render_embeds_it_as_build_does_with_embed_images(self):
+        files = {"art/street.png": base64.b64encode(tiny_png()).decode("ascii")}
+        result = call("render", {"source": self.PAINTED, "files": files})
+        assert not result.is_error
+        (svg,) = TestRender.resources(result)
+        compiled = compile_source(self.PAINTED, base={"art/street.png": tiny_png()})
+        assert svg.text == render(compiled.core, embed=compiled.images)
+        assert "data:image/png;base64," in svg.text
+
+    def test_a_font_comes_the_same_way(self):
+        face = Path(fonts.ttf.SourceSansProSemibold).read_bytes()  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+        source = (
+            "cast: {alice: {reference: alice}}\nlettering: {font: fonts/Comic.ttf}\n"
+            "script: [{say: {by: alice, text: Hi}}]\n"
+        )
+        files = {"fonts/Comic.ttf": base64.b64encode(face).decode("ascii")}
+        assert not call("render", {"source": source, "files": files}).is_error
+
+    @pytest.mark.parametrize(
+        "files",
+        [
+            {"art/street.png": "not base64!"},
+            {"/srv/art/street.png": "AAAA"},
+            {"art\\street.png": "AAAA"},
+        ],
+    )
+    def test_a_file_that_cannot_be_taken_is_a_tool_error(self, files: dict[str, str]):
+        result = call("validate", {"source": self.PAINTED, "files": files})
+        assert result.is_error
+        assert "files" in text_of(result)
