@@ -67,9 +67,16 @@ describe("buildInvocation", () => {
     // `uv run scenet` finds no project and fails with "program not found".
     assert.deepEqual(buildInvocation({ executable: "uv run scenet", file, output, workspaceFolder: folder }), {
       command: "uv",
-      args: ["run", "scenet", "build", file, "-o", output],
+      args: ["run", "scenet", "build", file, "-o", output, "--embed-images"],
       cwd: folder,
     });
+  });
+
+  test("a picture the document names is embedded, since the preview is not beside it", () => {
+    // The SVG is written to a scratch folder and inlined into a webview, where a picture
+    // linked by the path the document wrote would resolve against neither.
+    const { args } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: folder });
+    assert.equal(args.at(-1), "--embed-images");
   });
 
   test("a file outside any workspace folder builds from its own directory", () => {
