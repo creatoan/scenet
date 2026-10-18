@@ -96,6 +96,9 @@ class TestAHostileLineIsReadQuickly:
             # and out of one alike.
             pytest.param("SFX" + "\t" * 1500 + "!", id="sfx-tabs-then-a-sound"),
             pytest.param("SFX" + " " * 1000 + "(x)" + " " * 1000 + "!", id="sfx-around-a-note"),
+            # The SFX line with its sound, read first, had two runs in a row: quadratic,
+            # so it takes a longer line to show.
+            pytest.param("SFX" + "\t" * 30_000 + "!", id="sfx-a-very-long-line"),
         ],
     )
     def test_it_is_read_in_well_under_a_second(self, line: str):
