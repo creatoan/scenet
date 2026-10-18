@@ -151,7 +151,8 @@ class TestThePanelsIds:
 
     def test_a_strip_prefixes_them_as_it_does_every_id(self, core: PanelCore):
         strip = render_strip([("one", core), ("two", core)])
-        assert_svg_is_sound(strip)
+        sizes = [item.font_size for item in (*core.balloons, *core.captions, *core.sfx)]
+        assert_svg_is_sound(strip, font_sizes=sizes)
 
 
 class TestAPanelWithNoWords:
