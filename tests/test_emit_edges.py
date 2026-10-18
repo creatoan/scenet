@@ -17,7 +17,7 @@ from scenet import compile_book, compile_source
 from scenet.core import PanelCore
 from scenet.emit.debug_svg import GAZE, render_debug
 from scenet.emit.page import PAGE_SPACING_FRACTION, render_page, render_pages
-from scenet.emit.strip import render_strip
+from scenet.emit.strip import placed_panel, render_strip
 from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, render
 from scenet.pipeline import Book
 
@@ -34,6 +34,16 @@ pages:
   - tiers: [{panels: [three]}]
   - tiers: [{panels: [four]}]
 panels: {one: {}, two: {}, three: {}, four: {}}
+"""
+
+
+#: A page with one inset, read after its parent.
+INSETS = """
+cast: {a: {reference: alice}}
+page: {size: [1000, 1500]}
+pages:
+  - tiers: [{panels: [{use: one, insets: [{use: two, at: top_left, size: 0.3}]}]}]
+panels: {one: {}, two: {}}
 """
 
 
@@ -92,6 +102,48 @@ class TestAStrip:
     def test_by_default_lettering_is_outlined(self):
         core = compile_source(SPEECH).core
         assert "<text" not in render_strip([("one", core), ("two", core)])
+
+
+def _cut(document: str) -> str:
+    """A panel's body as `placed_panel` used to take it: the document, cut as text."""
+    return document.split("\n", 2)[2].rsplit("</svg>", 1)[0].rstrip()
+
+
+class TestAPanelPlacedInADocument:
+    """`placed_panel` draws a panel's body, not a cut of its serialised document.
+
+    Cutting text after the second line made the document's first two lines -- and every
+    attribute of its root -- something the strip and the page silently depended on. The
+    body is now built, and these pin it byte for byte to what the cut produced, including
+    the overlay's blank line where a panel with no setting draws no backdrop.
+    """
+
+    SETTING = SPEECH + "setting: {place: docks, weather: fog}\n"
+
+    @pytest.mark.parametrize("source", [SPEECH, SETTING], ids=["bare", "with a setting"])
+    def test_a_panel(self, source: str):
+        core = compile_source(source).core
+        placed = placed_panel("one", core, 3, 10.0, 20.0)
+        assert placed[3] == _cut(render(core, id_prefix="p3-"))
+
+    @pytest.mark.parametrize("source", [SPEECH, SETTING], ids=["bare", "with a setting"])
+    def test_an_overlay(self, source: str):
+        core = compile_source(source).core
+        placed = placed_panel("one", core, 3, 10.0, 20.0, debug=True)
+        assert placed[3] == _cut(render_debug(core, id_prefix="p3-"))
+        if source == SPEECH:
+            assert "\n\n" in placed[3]
+
+    def test_in_live_text(self):
+        core = compile_source(SPEECH).core
+        placed = placed_panel("one", core, 1, 0.0, 0.0, live_text=True)
+        assert placed[3] == _cut(render(core, id_prefix="p1-", live_text=True))
+
+    def test_a_strip_cuts_no_holes(self):
+        """Only a page draws an inset over its parent; a strip lays them side by side."""
+        book = compile_book(INSETS)
+        strip = render_strip([(name, result.core) for name, result in book.panels.items()])
+        assert "hole" not in strip
 
 
 @pytest.fixture(scope="module")
