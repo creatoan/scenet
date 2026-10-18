@@ -164,6 +164,12 @@ scenet mcp --transport streamable-http --port 8765
 It binds to `127.0.0.1` and has no authentication. Put it behind something that provides both
 before exposing it further.
 
+A document that names a file — a [picture to letter over](letter_over_your_own_art.md), a
+lettering face — goes with it: the tools take `files`, the file's bytes in base64 by the path the
+document writes, and never read a folder of the server's. A client with file access, such as an
+agent in your project, reads the picture and sends it; a model that only sees an image in a chat
+cannot, since it cannot reproduce the file's bytes.
+
 ## An API with structured output
 
 APIs that constrain a model's output to a JSON Schema — Gemini's `responseSchema`, for one —

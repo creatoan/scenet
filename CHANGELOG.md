@@ -52,6 +52,10 @@ below 1.0 means.
   as a `data:` URI instead, and `build` says so in a note when a link will not resolve. The
   debug overlay shows where it was placed. A new how-to, *Letter over your own art*, and a
   gallery example drawn over a picture the repository paints itself, under its own licence.
+- **The MCP server's `validate`, `compile` and `render` take `files`**: the files a document
+  names, by the path it writes, as base64. They stand in for the document's folder, read in
+  memory, so a model can letter over a picture — or in a font — it sends; `render` embeds
+  the picture. Still five tools.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

@@ -841,7 +841,8 @@ lettering:
   documents it is sent cannot be pointed at its own files. Folders are separated by `/`, never `\`,
   which only Windows reads as a separator: a backslash is refused, so a document finds its files
   on every system or on none. Text compiled with no file behind it — by
-  the MCP server, say — has no folder, and so can name no font.
+  the MCP server, say — has no folder, so it can name a font only when its caller says which
+  folder it belongs to, or sends the file with it.
 - **A face you do not name stands in from one you do.** Italic captions are set in `regular`;
   emphasis in `italic`, or in `regular` when there is no italic. A family from one file stays one
   family, rather than mixing your face with the shipped one. When a stand-in is actually used, the

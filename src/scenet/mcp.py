@@ -36,12 +36,17 @@ documentation one chapter at a time, checks a snippet, and renders one;
 - `list_puppets` -- the characters it may cast, with their poses and expressions
 - `validate` -- every finding at once, shaped rather than dumped as raw SARIF
 - `compile` -- the Panel Core: where the compiler put everything, and why
-- `render` -- the SVG, byte-identical to what `scenet build` writes
+- `render` -- the SVG, byte-identical to what `scenet build --embed-images` writes
 
 Each takes the document as **text**, not a path. A remote client shares no file
 system with the server, and one calling convention for both transports is one less
 thing to get wrong. Every tool is read-only and closed-world, and says so in its
 annotations: nothing here writes a file or reaches the network.
+
+A document that names a file -- a picture behind the cast, a lettering face -- is sent
+with it: `files` maps the path the document writes to the file's bytes, in base64. They
+stand in for the document's folder and are read in memory; the server never reads a
+folder of its own, and never writes one.
 
 ## Keeping stdout clean
 
@@ -53,6 +58,8 @@ catches a stray `print` from a dependency; the test suite drives a real stdio se
 against the installed command to make sure neither ever matters.
 """
 
+import base64
+import binascii
 import inspect
 import json
 import re
@@ -71,6 +78,7 @@ from scenet.emit.page import render_page
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.frontends.positions import DOCUMENT_START
+from scenet.paths import check_relative
 from scenet.pipeline import Book, compile_book, compile_script
 from scenet.spec_pack import part
 
@@ -106,7 +114,8 @@ format or worked examples. list_puppets names the characters you can cast.
 
 Then validate the document, fix every finding -- each names its rule, line and fix -- \
 and validate again until it is clean. compile shows where everything was placed; \
-render returns the SVG. Pass the document's text, not a path."""
+render returns the SVG. Pass the document's text, not a path; if it names a picture or \
+a font, pass that file's bytes in files, by the path the document writes."""
 
 #: Every tool here is a pure function of its arguments.
 READ_ONLY = ToolAnnotations(
@@ -139,6 +148,17 @@ Syntax = Literal["yaml", "script"]
 SourceArg = Annotated[
     str,
     Field(description="The whole document as text: a YAML panel or scene, or a comic script"),
+]
+FilesArg = Annotated[
+    dict[str, str] | None,
+    Field(
+        description=(
+            "The files the document names -- a picture behind the cast, a font -- by the "
+            "path it writes, such as `art/p01.png`, each as base64. They stand in for the "
+            "document's folder, which a server never reads; left out, a document that names "
+            "a file is refused"
+        )
+    ),
 ]
 SyntaxArg = Annotated[
     Syntax,
@@ -284,6 +304,7 @@ def validate(
             )
         ),
     ] = False,
+    files: FilesArg = None,
 ) -> ValidationReport:
     """Check a document and report everything wrong with it, without compiling it.
 
@@ -295,14 +316,16 @@ def validate(
     Returns:
         Whether the document is valid, and every finding in source order.
     """
-    found = _diagnose(source, syntax, deep=deep)
+    found = _diagnose(source, syntax, deep=deep, files=_files(files))
     return ValidationReport(
         valid=not any(item.level == "error" for item in found),
         findings=[_finding(item) for item in found],
     )
 
 
-def compile_panel(source: SourceArg, syntax: SyntaxArg = "yaml") -> CompileReport:
+def compile_panel(
+    source: SourceArg, syntax: SyntaxArg = "yaml", files: FilesArg = None
+) -> CompileReport:
     """Compile a document and return where the compiler put everything.
 
     The result is the Panel Core for each panel: every figure's position and scale,
@@ -320,7 +343,7 @@ def compile_panel(source: SourceArg, syntax: SyntaxArg = "yaml") -> CompileRepor
     Raises:
         ToolError: The document does not compile. The message lists every finding.
     """
-    book = _compile(source, syntax)
+    book = _compile(source, syntax, _files(files))
     return CompileReport(
         panels=[
             CompiledPanel(
@@ -357,11 +380,14 @@ def render_panel(
             )
         ),
     ] = True,
+    files: FilesArg = None,
 ) -> list[TextContent | EmbeddedResource]:
     """Compile a document and return each panel as SVG.
 
-    The SVG is exactly what `scenet build` writes, one embedded `image/svg+xml`
-    resource per panel, after a short text summary with the compiler's notes. A
+    The SVG is exactly what `scenet build --embed-images` writes, one embedded
+    `image/svg+xml` resource per panel, after a short text summary with the compiler's
+    notes. A picture the document is drawn over is written into it, since whoever reads
+    the SVG has no folder to find a linked one in. A
     document that does not compile is an error carrying the same findings `validate`
     reports.
 
@@ -374,7 +400,7 @@ def render_panel(
     Raises:
         ToolError: The document does not compile. The message lists every finding.
     """
-    book = _compile(source, syntax)
+    book = _compile(source, syntax, _files(files))
     results = book.panels
     count = f"{len(results)} panel{'' if len(results) == 1 else 's'}"
     pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
@@ -392,7 +418,13 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://panels/{name}.svg",
                 mime_type="image/svg+xml",
-                text=render(result.core, fonts=result.fonts, live_text=live_text, aria=aria),
+                text=render(
+                    result.core,
+                    fonts=result.fonts,
+                    live_text=live_text,
+                    aria=aria,
+                    embed=book.images,
+                ),
             ),
         )
         for name, result in results.items()
@@ -404,7 +436,14 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://pages/{number}.svg",
                 mime_type="image/svg+xml",
-                text=render_page(page, cores, live_text=live_text, fonts=book.fonts, aria=aria),
+                text=render_page(
+                    page,
+                    cores,
+                    live_text=live_text,
+                    fonts=book.fonts,
+                    aria=aria,
+                    embed=book.images,
+                ),
             ),
         )
         for number, page in enumerate(book.pages, start=1)
@@ -468,10 +507,30 @@ def _describe(function: Callable[..., Any]) -> str:
     return (doc[: match.start()] if match else doc).strip()
 
 
-def _diagnose(source: str, syntax: Syntax, *, deep: bool) -> list[Diagnostic]:
+def _files(sent: dict[str, str] | None) -> dict[str, bytes] | None:
+    """The files sent beside a document, decoded, or a tool error saying which one is bad.
+
+    A path is held to the rules a document's own paths are -- relative, `/` between
+    folders -- so a file sent is one a document could have named.
+    """
+    if not sent:
+        return None
+    decoded: dict[str, bytes] = {}
+    for name, encoded in sent.items():
+        try:
+            check_relative(name, what="file", rule="image-file")
+            decoded[name] = base64.b64decode(encoded, validate=True)
+        except (ScenetError, binascii.Error, ValueError) as exc:
+            raise ToolError(f"files: {name!r} cannot be taken: {exc}") from exc
+    return decoded
+
+
+def _diagnose(
+    source: str, syntax: Syntax, *, deep: bool, files: dict[str, bytes] | None = None
+) -> list[Diagnostic]:
     if syntax == "script":
-        return diagnose_script(source, deep=deep)
-    return diagnose_source(source, deep=deep)
+        return diagnose_script(source, deep=deep, base=files)
+    return diagnose_source(source, deep=deep, base=files)
 
 
 def _finding(item: Diagnostic) -> Finding:
@@ -489,7 +548,7 @@ def _finding(item: Diagnostic) -> Finding:
     )
 
 
-def _compile(source: str, syntax: Syntax) -> Book:
+def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None) -> Book:
     """Compile every panel and page, or raise a tool error that lists every finding.
 
     The success path compiles once. Only a failure pays for the deep check, which is
@@ -498,11 +557,15 @@ def _compile(source: str, syntax: Syntax) -> Book:
     try:
         library = default_library()
         if syntax == "yaml":
-            return compile_book(source, library=library)
-        return compile_script(source, library=library)
+            return compile_book(source, library=library, base=files)
+        return compile_script(source, library=library, base=files)
     except ScenetError as exc:
         # Only errors explain a failure: a note is a house limit the document can exceed.
-        found = [item for item in _diagnose(source, syntax, deep=True) if item.level == "error"]
+        found = [
+            item
+            for item in _diagnose(source, syntax, deep=True, files=files)
+            if item.level == "error"
+        ]
         if not found:
             # A clean deep check means a successful build -- the diagnostics tests hold
             # the two to that -- so this is a disagreement between them, and is reported

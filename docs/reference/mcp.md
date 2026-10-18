@@ -18,9 +18,9 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 |---|---|---|
 | `get_spec` | `section` (optional) | The spec pack, one part at a time, as Markdown |
 | `list_puppets` | — | Every character, with each pose and expression it declares |
-| `validate` | `source`, `syntax`, `deep` | `{valid, findings}`, every finding at once; `valid` when none is an error |
-| `compile` | `source`, `syntax` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
-| `render` | `source`, `syntax`, `live_text`, `aria` | A summary, then one SVG per panel, then one per page |
+| `validate` | `source`, `syntax`, `deep`, `files` | `{valid, findings}`, every finding at once; `valid` when none is an error |
+| `compile` | `source`, `syntax`, `files` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
+| `render` | `source`, `syntax`, `live_text`, `aria`, `files` | A summary, then one SVG per panel, then one per page |
 
 Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
@@ -30,6 +30,15 @@ the network, or answers differently on a second call. A client can run them with
 `source`
 : The whole document, **as text**. Not a path: a remote client shares no file system with the
   server, and one calling convention for both transports is one less thing to get wrong.
+
+`files`
+: The files the document names — a [picture behind the cast](language.md#an-image-behind-the-cast),
+  a [lettering face](language.md#lettering) — by the path it writes, each as base64:
+  `{"art/p01.png": "iVBORw0KGgo…"}`. They stand in for the document's folder, which the server
+  never reads, and are read in memory, so nothing is written to the server's disk. A path is held
+  to a document's own rules — relative, `/` between folders — and a value that is not base64 is a
+  tool error naming it. Left out, a document that names a file gets `image-file` or `font-file`,
+  as text with no folder does anywhere.
 
 `syntax`
 : `yaml` (default) for a `*.panel.yaml` or `*.scene.yaml` document — a top-level `panels:` key
@@ -83,7 +92,9 @@ for the many hosts that show a model only a result's text.
 `render` returns a short text summary — how many panels, and the compiler's notes — then one
 embedded resource per panel, `scenet://panels/NAME.svg`, of type `image/svg+xml`. A document
 with `pages:` gets one more per page after them, `scenet://pages/N.svg`. The SVG is
-**byte-identical** to what `scenet build` writes for the same document.
+**byte-identical** to what `scenet build --embed-images` writes for the same document: a picture
+it is drawn over is written into it as a `data:` URI, since whoever reads the SVG has no folder to
+find a linked one in. A document with no picture is byte-identical to plain `scenet build`.
 
 It is never sent as an image content block. Hosts forward image blocks to the model, and model
 APIs that accept images do not accept SVG, so an image block would fail the whole turn instead
@@ -94,7 +105,8 @@ dependencies for one tool.
 
 On connecting, the server sends instructions that many hosts hand straight to the model. They
 say what to do rather than what the server is: read `get_spec` first, cast only what
-`list_puppets` lists, validate until clean, and pass text rather than paths.
+`list_puppets` lists, validate until clean, and pass text rather than paths — with the bytes
+of any picture or font the document names in `files`.
 
 ## Keeping stdout clean
 
