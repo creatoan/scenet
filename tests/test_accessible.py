@@ -26,6 +26,7 @@ from scenet.emit.debug_svg import render_debug
 from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
+from scenet.pipeline import Book
 from tests.invariants import (
     accessible_name,
     assert_accessible,
@@ -204,13 +205,20 @@ class TestTheOptOut:
         assert without == without_access(with_access)
 
 
-class TestAStrip:
-    @pytest.fixture(scope="class")
-    def root(self) -> ElementTree.Element:
-        one = compile_source(SPOKEN).core
-        two = compile_source(SILENT).core
-        return _root(render_strip([("one", one), ("two", two)]))
+@pytest.fixture(scope="module")
+def root() -> ElementTree.Element:
+    """A strip of a spoken panel and a silent one."""
+    one = compile_source(SPOKEN).core
+    two = compile_source(SILENT).core
+    return _root(render_strip([("one", one), ("two", two)]))
 
+
+@pytest.fixture(scope="module")
+def book() -> Book:
+    return compile_book(TWO_PAGES)
+
+
+class TestAStrip:
     def test_it_is_a_named_group(self, root: ElementTree.Element):
         assert root.get("role") == "group"
         assert accessible_name(root) == "A strip of 2 panels."
@@ -233,11 +241,7 @@ class TestAStrip:
 
 
 class TestAPage:
-    @pytest.fixture(scope="class")
-    def book(self):
-        return compile_book(TWO_PAGES)
-
-    def test_it_is_a_named_group_of_images(self, book):
+    def test_it_is_a_named_group_of_images(self, book: Book):
         cores = {name: result.core for name, result in book.panels.items()}
         root = _root(render_page(book.pages[0], cores))
         assert root.get("role") == "group"
@@ -248,7 +252,7 @@ class TestAPage:
             ("panel-two", "img"),
         ]
 
-    def test_pages_side_by_side_are_each_a_group(self, book):
+    def test_pages_side_by_side_are_each_a_group(self, book: Book):
         cores = {name: result.core for name, result in book.panels.items()}
         root = _root(render_pages(book.pages, cores))
         assert root.get("role") == "group"
