@@ -32,6 +32,19 @@ __all__ = ["OVER_KEY", "Dropped", "merge", "names", "relation_text", "resolve_ov
 # deliberately the same.
 OVER_KEY = "over"
 
+#: The one key a panel does not take from the panel it is over. A description says what
+#: one picture shows, and a panel drawn over another is a different picture: inherited,
+#: its parent's words would be wrong to exactly the reader who cannot see that they are.
+DESCRIPTION_KEY = "description"
+
+#: Why a description written where every panel would inherit it -- beside `panels:`, or in
+#: a comic script's front matter -- is refused. The rule is `unknown-key`, whose help says
+#: to check the spelling, so the message carries the fix.
+NOT_A_DEFAULT = (
+    "'description' describes one panel, so it is not a default every panel inherits; "
+    "write it on the panel it describes"
+)
+
 
 def merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep-merge `override` onto `base`, with `override` winning.
@@ -92,7 +105,12 @@ def resolve_overrides(panels: dict[str, dict[str, Any]]) -> dict[str, dict[str, 
         if parent_name in seen or parent_name == name:
             chain = " -> ".join([*seen, name, parent_name])
             raise CompositionError(f"'over' chain is cyclic: {chain}", loc=at)
-        composed = merge(resolve(parent_name, (*seen, name)), document)
+        inherited = {
+            key: value
+            for key, value in resolve(parent_name, (*seen, name)).items()
+            if key != DESCRIPTION_KEY
+        }
+        composed = merge(inherited, document)
         resolved[name] = composed
         return composed
 

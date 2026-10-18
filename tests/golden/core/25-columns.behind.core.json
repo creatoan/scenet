@@ -642,6 +642,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "shout",
+      "label": "Alice, shouting: Right behind you!",
       "line_height": 30.63,
       "lines": [
         "Right",
@@ -664,6 +665,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. A street at dusk. Alice, left, pointing, shouting.",
   "format_version": 1,
   "height": 576.0,
   "width": 792.0

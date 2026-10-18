@@ -28,7 +28,7 @@ import pytest
 
 from scenet.core import CoreFont, PanelCore
 from scenet.diagnostics import diagnose_file, diagnose_source
-from scenet.emit.page import render_page
+from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import PanelSyntaxError
@@ -375,9 +375,16 @@ class TestRenderingNeedsTheFont:
         book = compile_book_file(_write(folder, body, "story.scene.yaml"))
         cores = {name: result.core for name, result in book.panels.items()}
         assert render_page(book.pages[0], cores, fonts=book.fonts)
+        assert render_pages(book.pages, cores, fonts=book.fonts)
         assert render_strip(list(cores.items()), fonts=book.fonts)
         with pytest.raises(ValueError, match="Semibold"):
             render_page(book.pages[0], cores)
+
+    def test_the_refusal_names_the_font_by_the_start_of_its_digest(self, folder: Path):
+        path = _write(folder, f"lettering: {{font: fonts/Lettering-Regular.ttf}}\n{CAST}{SAY}")
+        digest = _digest(folder / "fonts" / "Lettering-Regular.ttf")
+        with pytest.raises(ValueError, match=rf"\(sha256 {digest[:12]}\), and that font"):
+            render(compile_file(path).core)
 
     def test_a_library_caller_can_still_replace_the_regular_face(self):
         semibold = FontMetrics(SEMIBOLD)

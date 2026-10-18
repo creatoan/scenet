@@ -1175,6 +1175,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: I spun it round. Very fast. Then it was gone.",
       "line_height": 30.63,
       "lines": [
         "I spun it round.",
@@ -1198,6 +1199,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Alice, left, sad, dizzy, looking at Bob; Bob, right, arms crossed, bored, looking at Alice.",
   "format_version": 1,
   "height": 700.0,
   "width": 1000.0

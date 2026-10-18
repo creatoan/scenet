@@ -45,11 +45,14 @@ COMMAND = "uv run python scripts/update_golden.py"
 HOME_PICTURE = ROOT / "docs" / "images" / "two-characters.svg"
 HOME_SOURCE = "01-two-characters.svg"
 
-#: Two builds of every document: one with every output, one with live text, whose SVG
-#: differs and whose Core does not.
+#: Three builds of every document: one with every output; one with live text, whose SVG
+#: differs and whose Core does not; and one without accessibility markup.
 VARIANTS = {
     "": ["--core", "--debug", "--strip"],
     "live-text/": ["--live-text", "--strip"],
+    # Without accessibility markup: what a post-processing pipeline gets, which must be
+    # exactly what was written before there was any, file for file.
+    "no-aria/": ["--no-aria", "--strip"],
 }
 
 

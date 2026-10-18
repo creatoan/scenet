@@ -10,6 +10,66 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.11.1.**
+
+- **A comic script's prose is now read**, as its panel's description. A line of it holding a
+  control character an SVG cannot hold, which used to pass unnoticed, is reported at that
+  line as `invalid-field`. `description` in a script's front matter is refused.
+- **Every Panel Core gains `description`, and each balloon, caption and sound effect a
+  `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
+  still valid and writes back byte for byte, but golden Core files of your own will need
+  regenerating once. 0.11 refuses the new keys.
+- **Every SVG's bytes change once**, to carry what a screen reader reads: a `role` and a `<title>`
+  per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
+  differently and lettering stays outlines. `--no-aria` (`aria=False`) gives back exactly the
+  SVG written before, for a pipeline that post-processes it; debug overlays are unchanged.
+
+### Added
+
+- **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
+  Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
+  one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept
+  exactly as written, says something else. It is carried and never interpreted, for
+  accessible output to read (#76). It describes one panel, so it is never inherited: beside
+  `panels:` or in a script's front matter it is refused as `unknown-key`, and a panel drawn
+  `over:` another does not take its parent's.
+- **Panel Core carries the words a panel is read in**, built in the pipeline so the emitter
+  copies them. `description` is the panel's own, or generated from what it holds — `Medium
+  shot. A street at night, in the rain. Alice, left, pointing, angry, looking at Bob; Bob,
+  right, arms crossed, sweating.` — and every balloon, caption and sound effect has a
+  `label`: who says it, how, and the words, `Bob, whispering: I know.` Read in `order`, they
+  are the panel's text as its reader takes it. Generated text is templated English.
+- **A screen reader can read the panel** (#76). Each panel is one image, `role="img"`, named
+  by one `<title>`: the description, then every balloon, caption and sound effect in reading
+  order — in the name, since a description alone is often not spoken, and nowhere else, since
+  NVDA read a `<desc>` a second time. It needs no id, so panels inlined together in one page
+  cannot name each other. A strip or a page is a named `role="group"` of its panels, in reading order.
+  `scenet build --no-aria`, `aria=False` on every renderer and `aria: false` on the MCP server's
+  `render` leave it all out. Checked with NVDA 2026.2 and Edge 155, and against Edge's UI Automation
+  tree; results, and how to check with VoiceOver, are in the new how-to, *Make a panel a
+  screen reader can read*.
+
+### Changed
+
+- **A page's SVG writes its panels in reading order**, insets included, since document order is
+  what a screen reader follows. An inset used to be painted after every other panel to stay on
+  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
+  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
+  the rings; only a page with insets changes, and only its bytes.
+- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
+  the panel's serialised SVG, which made the panel's first two lines something they silently
+  depended on. Byte for byte the same.
+
+### Fixed
+
+- **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
+  documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
+  It now installs every group, as CI's test jobs do.
+- **The VS Code preview draws each figure with its own clip.** It inlines every SVG a build
+  wrote into one page, and a page has one set of ids, so a second panel in a slanted tier was
+  clipped by the first one's outline, and page 2's panels by page 1's frames. Each figure's
+  ids, and every reference to one, now carry a prefix of their own.
+
 ## [0.11.1] - 2026-10-18
 
 **The documentation site documents the release you install, and shows off its playground;

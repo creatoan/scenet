@@ -347,6 +347,16 @@ def render_panel(
             )
         ),
     ] = False,
+    aria: Annotated[
+        bool,
+        Field(
+            description=(
+                "Make each panel an image a screen reader can read: named with what it shows, "
+                "then everything said in it, in reading order. False writes none of it, for "
+                "a pipeline that post-processes the SVG"
+            )
+        ),
+    ] = True,
 ) -> list[TextContent | EmbeddedResource]:
     """Compile a document and return each panel as SVG.
 
@@ -382,7 +392,7 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://panels/{name}.svg",
                 mime_type="image/svg+xml",
-                text=render(result.core, fonts=result.fonts, live_text=live_text),
+                text=render(result.core, fonts=result.fonts, live_text=live_text, aria=aria),
             ),
         )
         for name, result in results.items()
@@ -394,7 +404,7 @@ def render_panel(
             resource=TextResourceContents(
                 uri=f"scenet://pages/{number}.svg",
                 mime_type="image/svg+xml",
-                text=render_page(page, cores, live_text=live_text, fonts=book.fonts),
+                text=render_page(page, cores, live_text=live_text, fonts=book.fonts, aria=aria),
             ),
         )
         for number, page in enumerate(book.pages, start=1)

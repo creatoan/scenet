@@ -552,6 +552,7 @@
       "font_size": 21.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Upstairs, off panel: Is everything all right?",
       "line_height": 26.25,
       "lines": [
         "Is everything",
@@ -583,6 +584,7 @@
       "font_size": 15.75,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob, quietly: Fine. Go back to sleep.",
       "line_height": 19.69,
       "lines": [
         "Fine. Go back",
@@ -613,6 +615,7 @@
       "font_size": 21.0,
       "id": "b2",
       "kind": "speech",
+      "label": "Caller, off panel: Then open the door.",
       "line_height": 26.25,
       "lines": [
         "Then open",
@@ -644,6 +647,7 @@
       "font_size": 21.0,
       "id": "b3",
       "kind": "speech",
+      "label": "Caller, off panel: I know you're there.",
       "line_height": 26.25,
       "lines": [
         "I know",
@@ -667,6 +671,7 @@
     }
   ],
   "captions": [],
+  "description": "Close-up. A room at night. Bob, centre, arms crossed.",
   "format_version": 1,
   "height": 600.0,
   "width": 900.0

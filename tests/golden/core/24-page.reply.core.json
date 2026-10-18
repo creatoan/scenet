@@ -946,6 +946,7 @@
       "font_size": 24.5,
       "id": "b0",
       "kind": "whisper",
+      "label": "Bob, whispering: I know.",
       "line_height": 30.63,
       "lines": [
         "I know."
@@ -967,6 +968,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium close-up. A street at night, in the rain. Bob, centre, arms crossed.",
   "format_version": 1,
   "height": 628.12,
   "width": 440.0

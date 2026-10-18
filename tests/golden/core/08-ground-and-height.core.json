@@ -721,6 +721,7 @@
       "font_size": 28.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You have grown.",
       "line_height": 35.0,
       "lines": [
         "You have",
@@ -743,6 +744,7 @@
     }
   ],
   "captions": [],
+  "description": "Full shot. Alice, centre; Bob, centre.",
   "format_version": 1,
   "height": 800.0,
   "width": 1100.0

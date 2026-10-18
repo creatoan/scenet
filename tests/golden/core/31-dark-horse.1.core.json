@@ -897,6 +897,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "speech",
+      "label": "MAYA: Theo? The lamp is out --",
       "line_height": 40.83,
       "lines": [
         "Theo? The",
@@ -927,6 +928,7 @@
       "font_size": 32.67,
       "id": "b1",
       "kind": "speech",
+      "label": "THEO: -- because somebody forgot the oil.",
       "line_height": 40.83,
       "lines": [
         "-- because",
@@ -958,6 +960,7 @@
       "font_size": 32.67,
       "id": "b2",
       "kind": "speech",
+      "label": "KEEPER, off panel: Who's up there?",
       "line_height": 40.83,
       "lines": [
         "Who's up",
@@ -994,6 +997,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Port Ellis. The night the lamp went out.",
       "line_height": 35.0,
       "lines": [
         "Port Ellis. The",
@@ -1004,6 +1008,7 @@
       "speaker": null
     }
   ],
+  "description": "Dusk on the cliff path. Maya has climbed the last of the steps; Theo waits by the door.",
   "format_version": 1,
   "height": 893.33,
   "width": 1800.0

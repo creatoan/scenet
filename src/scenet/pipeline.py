@@ -61,6 +61,7 @@ from scenet.lettering import Lettering, typeface_for
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
+from scenet.solve.describe import describe, labels
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
 from scenet.solve.staging import Placement, solve_staging
@@ -502,8 +503,16 @@ def compile_ir(
     )
 
     declared = _declared_faces(family)
+    # The words it is read in, built here so the emitter copies them. Where a figure is
+    # comes from its face, rounded as Panel Core records it; each label is indexed by
+    # `order`, which is the script index, sound effects included.
+    width = rounded(panel.panel.width)
+    where = {
+        placement.actor_id: rounded(posed[placement.actor_id].face.cx) for placement in placements
+    }
+    said = labels(script)
     core = PanelCore(
-        width=rounded(panel.panel.width),
+        width=width,
         height=rounded(panel.panel.height),
         actors=tuple(
             CoreActor(
@@ -566,6 +575,7 @@ def compile_ir(
                 ),
                 runs=_core_runs(balloon.block, Face.REGULAR),
                 off_panel=balloon.off_panel,
+                label=said[balloon.order],
             )
             for balloon in layout.balloons
         ),
@@ -585,17 +595,22 @@ def compile_ir(
                 runs=_core_runs(
                     caption.block, Face.ITALIC if caption.kind.is_italic else Face.REGULAR
                 ),
+                label=said[caption.order],
             )
             for caption in layout.captions
         ),
         backdrop=_core_backdrop(backdrop),
         exclusions=tuple(Box.of(area) for area in exclusions),
         outline=tuple(outline) if outline is not None else None,
-        sfx=tuple(_core_sfx(effect) for effect in layout.effects),
+        sfx=tuple(
+            _core_sfx(effect).model_copy(update={"label": said[effect.order]})
+            for effect in layout.effects
+        ),
         fonts={
             face: CoreFont(family=font.family, style=font.style, sha256=font.sha256)
             for face, font in declared.items()
         },
+        description=describe(panel, where, width),
     )
     return CompileResult(
         core=core,

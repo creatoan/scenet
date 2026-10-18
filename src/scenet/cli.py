@@ -80,6 +80,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     build.add_argument(
+        "--no-aria",
+        dest="aria",
+        action="store_false",
+        help=(
+            "write no accessibility markup -- no role, title, desc or aria attributes -- "
+            "for a pipeline that post-processes the SVG; it is otherwise byte-identical"
+        ),
+    )
+    build.add_argument(
         "--strip",
         action="store_true",
         help="for a multi-panel document, also lay the panels out as a strip",
@@ -284,7 +293,12 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
     for name, result in book.panels.items():
         core = result.core
         target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
-        outputs.append((target, partial(render, core, fonts=book.fonts, live_text=args.live_text)))
+        outputs.append(
+            (
+                target,
+                partial(render, core, fonts=book.fonts, live_text=args.live_text, aria=args.aria),
+            )
+        )
         if args.core:
             outputs.append((target.with_suffix(".core.json"), core.to_json))
         if args.debug:
@@ -297,7 +311,9 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
         outputs.append(
             (
                 base.with_name(f"{base.stem}.strip.svg"),
-                partial(render_strip, strip, live_text=args.live_text, fonts=book.fonts),
+                partial(
+                    render_strip, strip, live_text=args.live_text, fonts=book.fonts, aria=args.aria
+                ),
             )
         )
 
@@ -307,7 +323,14 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
         outputs.append(
             (
                 target,
-                partial(render_page, page, cores, live_text=args.live_text, fonts=book.fonts),
+                partial(
+                    render_page,
+                    page,
+                    cores,
+                    live_text=args.live_text,
+                    fonts=book.fonts,
+                    aria=args.aria,
+                ),
             )
         )
         if args.core:

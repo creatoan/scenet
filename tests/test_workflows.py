@@ -174,6 +174,19 @@ def test_the_python_floor_is_really_tested():
     assert "uv run pytest" in script
 
 
+def test_the_mutation_run_installs_what_the_tests_import():
+    """mutmut's clean run is the whole suite, so it needs every group the suite does.
+
+    It synced `mutation` alone, with the default `dev`. `tests/test_site.py` reads the
+    documentation's configuration, which needs `docs`, so the clean run failed and no
+    mutant was tried: run 39116267418. CI's test jobs sync every group; so must this.
+    """
+    job = _load("mutation.yml")["jobs"]["mutmut"]
+    syncs = [line for line in _script(job).splitlines() if "uv sync" in line]
+    assert syncs
+    assert all("--all-groups" in line for line in syncs), syncs
+
+
 def _script(job: dict[Any, Any]) -> str:
     return "\n".join(str(step.get("run", "")) for step in job["steps"])
 

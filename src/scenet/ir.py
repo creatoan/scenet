@@ -17,6 +17,7 @@ from typing import Annotated, Literal, Self
 from pydantic import (
     AfterValidator,
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Discriminator,
     Field,
@@ -130,6 +131,52 @@ def _balanced(value: str) -> str:
 #: A line that is lettered -- dialogue or a caption -- and so may stress a word by writing
 #: it between underscores: `I _told_ you`. See :mod:`scenet.emphasis`.
 LetteredText = Annotated[SvgText, AfterValidator(_balanced)]
+
+
+def unholdable(value: str) -> str | None:
+    r"""Why an SVG cannot hold a string, or None when it can.
+
+    For a frontend that checks text before it reaches a model, and wants the finding at
+    the line it was written on rather than wherever validation would put it.
+
+    Example:
+        >>> from scenet.ir import unholdable
+        >>> unholdable("Alice waits.") is None
+        True
+        >>> unholdable("Alice \x07 waits.")
+        'contains U+0007, a control character an SVG cannot hold; delete it'
+    """
+    try:
+        _holdable(value)
+    except ValueError as exc:
+        return str(exc)
+    return None
+
+
+def as_one_line(value: object) -> object:
+    """Prose as it is read: every run of whitespace one space, and none at either end.
+
+    Line breaks in a description are how it was typed, not part of what it says. Python's
+    idea of whitespace includes U+000B and U+000C, which is how Word writes a manual line
+    break and a page break, so text pasted from it reads as it looks. Anything else passes
+    unchanged, for validation to refuse.
+    """
+    return " ".join(value.split()) if isinstance(value, str) else value
+
+
+def _said(value: str) -> str:
+    """Refuse a description with nothing in it, which would name the panel with nothing."""
+    if not value:
+        raise RuleViolationError(
+            "a description says what the panel shows; leave it out to have one generated",
+            rule="invalid-field",
+        )
+    return value
+
+
+#: What a panel shows, in words, for a reader who cannot see it -- one line of prose,
+#: carried and never interpreted.
+Description = Annotated[SvgText, BeforeValidator(as_one_line), AfterValidator(_said)]
 
 
 class ShotType(StrEnum):
@@ -1123,6 +1170,9 @@ class PanelIR(Strict):
         staging: Spatial and attentional relations between actors.
         script: Dialogue and captions, in reading order.
         lettering: How the lettering is set: its type size, when the author chooses one.
+        description: What the panel shows, in words, for a reader who cannot see it: the
+            author's, or a comic script's prose. Carried and never interpreted -- nothing
+            is drawn from it. Without one, accessible output says what the panel holds.
 
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
@@ -1147,6 +1197,15 @@ class PanelIR(Strict):
     cast: dict[SvgText, CastMember] = Field(default_factory=dict)
     staging: tuple[Relation, ...] = ()
     script: tuple[ScriptEvent, ...] = ()
+    description: Description | None = Field(
+        default=None,
+        description=(
+            "What the panel shows, in words, for a reader who cannot see it. Carried into "
+            "the SVG as its accessible name and never interpreted. Not inherited: a panel "
+            "drawn `over:` another is a different picture. Left out, one is generated from "
+            "the shot, the setting and the cast."
+        ),
+    )
 
     @model_validator(mode="after")
     def check_references_resolve(self) -> Self:
