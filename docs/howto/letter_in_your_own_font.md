@@ -15,7 +15,8 @@ comic/
 ```
 
 Paths are read relative to the folder the document is in, so `fonts/Comic-Regular.ttf` is found
-wherever you run `scenet` from, and the folder can move as a whole. An absolute path is refused.
+wherever you run `scenet` from, and the folder can move as a whole. An absolute path is refused,
+and so is a backslash: write `/` between folders, on Windows too.
 
 ## Name the faces
 

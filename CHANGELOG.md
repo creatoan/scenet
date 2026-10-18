@@ -12,6 +12,8 @@ below 1.0 means.
 
 **Upgrading from 0.11.1.**
 
+- **A font path written with `\` between folders is refused**, on Windows as everywhere else:
+  write `/`.
 - **A comic script's prose is now read**, as its panel's description. A line of it holding a
   control character an SVG cannot hold, which used to pass unnoticed, is reported at that
   line as `invalid-field`. `description` in a script's front matter is refused.
@@ -62,6 +64,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A font path with a backslash is refused on every system**, as `font-file`. Windows read
+  `fonts\Comic.ttf` as a folder and a file, and every other system as one file name, so the same
+  document lettered in its font on one machine and was refused on the next. Write `/` between
+  folders.
 - **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
   documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
   It now installs every group, as CI's test jobs do.

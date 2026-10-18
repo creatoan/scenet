@@ -690,7 +690,9 @@ lettering:
 - **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
   `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out of
   it. An absolute path is refused, so a document and its fonts move together, and a server compiling
-  documents it is sent cannot be pointed at its own files. Text compiled with no file behind it — by
+  documents it is sent cannot be pointed at its own files. Folders are separated by `/`, never `\`,
+  which only Windows reads as a separator: a backslash is refused, so a document finds its files
+  on every system or on none. Text compiled with no file behind it — by
   the MCP server, say — has no folder, and so can name no font.
 - **A face you do not name stands in from one you do.** Italic captions are set in `regular`;
   emphasis in `italic`, or in `regular` when there is no italic. A family from one file stays one

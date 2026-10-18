@@ -44,8 +44,8 @@ def resolve_relative(
         The file's path. Not checked to exist: whoever opens it says what it found.
 
     Raises:
-        PanelSyntaxError: The path is empty or absolute, or there is no folder to read
-            it from.
+        PanelSyntaxError: The path is empty or absolute, has a backslash in it, or there
+            is no folder to read it from.
 
     Example:
         >>> from pathlib import Path
@@ -60,6 +60,15 @@ def resolve_relative(
         raise PanelSyntaxError(
             f"the {what} path {declared!r} is absolute; write it relative to the folder the "
             "document is in, so the document and its files compile the same anywhere",
+            rule=rule,
+            loc=loc,
+        )
+    # Windows reads a backslash as a separator and every other system as part of a name,
+    # so a path written with one opened its file on one machine and not on the next.
+    if "\\" in declared:
+        raise PanelSyntaxError(
+            f"the {what} path {declared!r} has a backslash in it; write / between folders, "
+            "which every system reads the same way",
             rule=rule,
             loc=loc,
         )
