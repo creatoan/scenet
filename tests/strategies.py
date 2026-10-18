@@ -747,6 +747,23 @@ def _conflicting_setting(document: dict[str, Any], actor: str, _: st.DrawFn) -> 
     return Mistake("conflicting-setting", _dump(document), "conflicting-setting", path, "place")
 
 
+def _image_beside(key: str, value: object) -> _Breaker:
+    """A picture written beside another backdrop, reported at the other one."""
+
+    def breaker(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+        document["setting"] = {"image": "art/street.png", key: value}
+        path = ("setting", key)
+        return Mistake(f"image-beside-{key}", _dump(document), "conflicting-setting", path, key)
+
+    return breaker
+
+
+def _fit_without_image(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document["setting"] = {"fit": "contain"}
+    path = ("setting", "fit")
+    return Mistake("fit-without-image", _dump(document), "invalid-field", path, "fit")
+
+
 def _font_file(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
     """A font path written with Windows' separator, which only Windows reads as one."""
     document["lettering"] = {"font": "fonts\\Comic.ttf"}
@@ -800,6 +817,10 @@ MISTAKES: dict[str, _Breaker] = {
     "unknown-expression": _unknown_expression,
     "unknown-place": _unknown_place,
     "conflicting-setting": _conflicting_setting,
+    "image-beside-place": _image_beside("place", "street"),
+    "image-beside-masses": _image_beside("masses", [{"kind": "sky"}]),
+    "image-beside-horizon": _image_beside("horizon", "low"),
+    "fit-without-image": _fit_without_image,
     "font-file": _font_file,
     "duplicate-key": _duplicate_key,
     "panel-geometry": _panel_geometry,

@@ -12,12 +12,15 @@ from enum import StrEnum
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from scenet import compile_source, parse_panel
 from scenet.errors import PanelSyntaxError
 from scenet.frontends.common import normalise
+from scenet.frontends.yaml_front import parse_scene
 from scenet.ir import (
     CaptionTone,
+    Fit,
     Horizon,
     Mass,
     MassKind,
@@ -76,6 +79,7 @@ class TestTheVocabulariesAreClosed:
             (Horizon, {"high", "mid", "low"}),
             (TimeOfDay, {"dawn", "day", "dusk", "night"}),
             (Weather, {"clear", "rain", "fog", "snow"}),
+            (Fit, {"cover", "contain"}),
         ],
     )
     def test_the_small_vocabularies(self, enum: type[StrEnum], expected: set[str]):
@@ -219,6 +223,101 @@ class TestPlaceIsAPresetNotASecondFormat:
         source = {"setting": {"place": "docks"}}
         normalise(source)
         assert source == {"setting": {"place": "docks"}}
+
+
+class TestAnImageIsABackdropOfItsOwn:
+    """`setting: {image: ...}`: a picture drawn elsewhere, behind the cast (#70).
+
+    A picture is a third way of saying what is behind the figures, so it is written
+    instead of a place or masses, never beside them. A horizon only places masses, and
+    there are none to place. Time and weather keep their meaning: the air is drawn over
+    the picture as it is over masses.
+    """
+
+    def test_an_image_is_a_path_with_no_fit_until_one_is_written(self):
+        setting = parse_panel("setting: {image: art/street.png}").setting
+        assert (setting.image, setting.fit, setting.masses) == ("art/street.png", None, ())
+
+    @pytest.mark.parametrize("fit", list(Fit))
+    def test_each_fit_can_be_written(self, fit: Fit):
+        setting = parse_panel(f"setting: {{image: art/a.png, fit: {fit.value}}}").setting
+        assert setting.fit is fit
+
+    def test_time_and_weather_are_kept_over_an_image(self):
+        setting = parse_panel("setting: {image: art/a.png, time: night, weather: rain}").setting
+        assert (setting.time, setting.weather) == (TimeOfDay.NIGHT, Weather.RAIN)
+
+    @pytest.mark.parametrize(
+        ("beside", "key"),
+        [
+            ("place: docks", "place"),
+            ("masses: [{kind: sky}]", "masses"),
+            ("horizon: low", "horizon"),
+        ],
+    )
+    def test_an_image_stands_alone(self, beside: str, key: str):
+        """Reported at the other key, as a place beside masses is reported at the place."""
+        with pytest.raises(PanelSyntaxError, match="image") as raised:
+            parse_panel(f"setting: {{image: art/a.png, {beside}}}")
+        assert (raised.value.rule, raised.value.loc) == ("conflicting-setting", ("setting", key))
+
+    def test_a_place_beside_an_image_says_how_to_drop_an_inherited_one(self):
+        with pytest.raises(PanelSyntaxError, match="place: null"):
+            parse_panel("setting: {image: art/a.png, place: docks}")
+
+    def test_a_place_and_masses_are_still_reported_as_before(self):
+        with pytest.raises(PanelSyntaxError, match="a place \\*is\\* a mass list") as raised:
+            parse_panel("setting: {place: docks, masses: [{kind: sky}]}")
+        assert raised.value.loc == ("setting", "place")
+
+    def test_a_fit_needs_an_image(self):
+        with pytest.raises(PanelSyntaxError, match="fit") as raised:
+            parse_panel("setting: {fit: contain}")
+        assert raised.value.rule == "invalid-field"
+
+    def test_an_unknown_fit_is_refused(self):
+        with pytest.raises(PanelSyntaxError, match="cover"):
+            parse_panel("setting: {image: art/a.png, fit: stretch}")
+
+    def test_the_ir_refuses_an_image_beside_masses(self):
+        """The IR is the language's definition, so it holds the rule for a caller that
+        builds one in Python and never passes through the frontend."""
+        with pytest.raises(ValidationError, match="image"):
+            SettingSpec(image="art/a.png", masses=(Mass(kind=MassKind.SKY),))
+
+    def test_the_ir_refuses_a_fit_with_no_image(self):
+        with pytest.raises(ValidationError, match="fit"):
+            SettingSpec(fit=Fit.COVER)
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            SettingSpec(),
+            SettingSpec(image="art/a.png"),
+            SettingSpec(image="art/a.png", fit=Fit.CONTAIN, horizon=Horizon.LOW),
+        ],
+    )
+    def test_a_setting_survives_a_round_trip(self, setting: SettingSpec):
+        """A horizon cannot be refused in the IR, whose default is indistinguishable from
+        one written: a dumped setting holds every field, and must read back."""
+        assert SettingSpec.model_validate(setting.model_dump()) == setting
+
+    def test_a_panel_over_one_in_a_place_drops_it_with_null(self):
+        panels = parse_scene(
+            "setting: {place: street, time: dusk}\n"
+            "panels:\n"
+            "  wide: {}\n"
+            "  painted: {setting: {place: null, image: art/a.png}}\n"
+        )
+        assert panels["wide"].setting.masses == PLACES[Place.STREET]
+        painted = panels["painted"].setting
+        assert (painted.masses, painted.image, painted.time) == ((), "art/a.png", TimeOfDay.DUSK)
+
+    def test_an_inherited_place_beside_an_image_is_refused(self):
+        with pytest.raises(PanelSyntaxError, match="place: null"):
+            parse_scene(
+                "setting: {place: street}\npanels:\n  painted: {setting: {image: art/a.png}}\n"
+            )
 
 
 class TestEveryPlaceIsUsable:

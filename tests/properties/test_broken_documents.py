@@ -213,6 +213,8 @@ _KEYS = st.sampled_from(
         "use",
         "place",
         "masses",
+        "image",
+        "fit",
         "lettering",
         "font",
     ]

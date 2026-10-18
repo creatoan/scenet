@@ -22,6 +22,7 @@ from scenet.ir import (
     AnchorX,
     BalloonKind,
     CaptionTone,
+    Fit,
     Horizon,
     Mark,
     MassKind,
@@ -99,6 +100,7 @@ class TestPanelSchema:
             Horizon,
             TimeOfDay,
             Weather,
+            Fit,
             SfxSize,
         ],
     )
@@ -152,6 +154,9 @@ class TestTheSchemaDescribesWhatIsWritten:
             "staging: [{subject: alice, predicate: left_of, object: bob}]",
             "script: [{say: {by: alice, text: Hi}}, {caption: {text: Later.}}]",
             "setting: {place: docks, time: night}",
+            "setting: {image: art/a.png, fit: contain, time: night, weather: rain}",
+            # Merge Patch: a null takes away what a panel would otherwise inherit.
+            "setting: {place: null, image: art/a.png}",
         ],
     )
     def test_panel_conveniences_are_accepted(self, source: str):
@@ -168,10 +173,31 @@ class TestTheSchemaDescribesWhatIsWritten:
             "script: [{say: {by: alice}}]",
             "setting: {place: nowhere}",
             "setting: {place: docks, masses: []}",
+            "setting: {image: art/a.png, place: docks}",
+            "setting: {image: art/a.png, masses: []}",
+            "setting: {image: art/a.png, horizon: low}",
+            "setting: {fit: cover}",
+            "setting: {image: art/a.png, fit: stretch}",
         ],
     )
     def test_panel_mistakes_are_still_rejected(self, source: str):
         assert problems(panel_schema(), source) != []
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            "setting: {place: street}\n"
+            "panels:\n  painted: {setting: {place: null, image: art/a.png}}\n",
+            # The image may be the scene's, and a panel only say how it fits.
+            "setting: {image: art/a.png}\npanels:\n  close: {setting: {fit: contain}}\n",
+        ],
+    )
+    def test_a_scene_panel_may_change_its_backdrop(self, source: str):
+        assert problems(scene_schema(), source) == []
+
+    def test_a_scene_panel_still_cannot_write_two_backdrops(self):
+        source = "panels:\n  one: {setting: {image: art/a.png, place: docks}}\n"
+        assert problems(scene_schema(), source) != []
 
     def test_a_scene_panel_may_override_part_of_an_inherited_actor(self):
         source = (
