@@ -606,6 +606,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Indoors, at dusk.",
       "line_height": 23.25,
       "lines": [
         "Indoors, at",
@@ -615,6 +616,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. A room at dusk. Bob, right.",
   "format_version": 1,
   "height": 620.0,
   "width": 1000.0

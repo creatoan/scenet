@@ -369,6 +369,15 @@ class TestRender:
         result = call("render", {"source": VALID})
         assert not any(isinstance(block, ImageContent) for block in result.content)
 
+    def test_it_can_be_read_by_a_screen_reader(self):
+        (svg,) = self.resources(call("render", {"source": VALID}))
+        assert 'role="img"' in svg.text
+
+    def test_without_aria_it_is_what_build_writes_with_no_aria(self):
+        (svg,) = self.resources(call("render", {"source": VALID, "aria": False}))
+        assert svg.text == render(compile_source(VALID).core, aria=False)
+        assert "role=" not in svg.text
+
     def test_live_text_is_smaller(self):
         outlines = self.resources(call("render", {"source": VALID}))[0].text
         live = self.resources(call("render", {"source": VALID, "live_text": True}))[0].text

@@ -10,6 +10,74 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.11.1.**
+
+- **A comic script's prose is now read**, as its panel's description. A line of it holding a
+  control character an SVG cannot hold, which used to pass unnoticed, is reported at that
+  line as `invalid-field`. `description` in a script's front matter is refused.
+- **Every Panel Core gains `description`, and each balloon, caption and sound effect a
+  `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
+  still valid and writes back byte for byte, but golden Core files of your own will need
+  regenerating once. 0.11 refuses the new keys.
+- **Every SVG's bytes change once**, to carry what a screen reader reads: a `role` and a `<title>`
+  per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
+  differently and lettering stays outlines. `--no-aria` (`aria=False`) gives back exactly the
+  SVG written before, for a pipeline that post-processes it; debug overlays are unchanged.
+
+### Added
+
+- **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
+  Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
+  one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept
+  exactly as written, says something else. It is carried and never interpreted, for
+  accessible output to read (#76). It describes one panel, so it is never inherited: beside
+  `panels:` or in a script's front matter it is refused as `unknown-key`, and a panel drawn
+  `over:` another does not take its parent's.
+- **Panel Core carries the words a panel is read in**, built in the pipeline so the emitter
+  copies them. `description` is the panel's own, or generated from what it holds — `Medium
+  shot. A street at night, in the rain. Alice, left, pointing, angry, looking at Bob; Bob,
+  right, arms crossed, sweating.` — and every balloon, caption and sound effect has a
+  `label`: who says it, how, and the words, `Bob, whispering: I know.` Read in `order`, they
+  are the panel's text as its reader takes it. Generated text is templated English.
+- **A screen reader can read the panel** (#76). Each panel is one image, `role="img"`, named
+  by one `<title>`: the description, then every balloon, caption and sound effect in reading
+  order — in the name, since a description alone is often not spoken, and nowhere else, since
+  NVDA read a `<desc>` a second time. It needs no id, so panels inlined together in one page
+  cannot name each other. A strip or a page is a named `role="group"` of its panels, in reading order.
+  `scenet build --no-aria`, `aria=False` on every renderer and `aria: false` on the MCP server's
+  `render` leave it all out. Checked with NVDA 2026.2 and Edge 155, and against Edge's UI Automation
+  tree; results, and how to check with VoiceOver, are in the new how-to, *Make a panel a
+  screen reader can read*.
+
+### Changed
+
+- **A page's SVG writes its panels in reading order**, insets included, since document order is
+  what a screen reader follows. An inset used to be painted after every other panel to stay on
+  top; now its parent is cut around the inset's ring instead, so an inset `read: before` its
+  parent comes first and is still on top. The page looks the same, to within anti-aliasing along
+  the rings; only a page with insets changes, and only its bytes.
+- **The strip and the page place a panel's body**, built for them, instead of cutting it out of
+  the panel's serialised SVG, which made the panel's first two lines something they silently
+  depended on. Byte for byte the same.
+
+### Fixed
+
+- **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
+  documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
+  It now installs every group, as CI's test jobs do.
+
+## [0.11.1] - 2026-10-18
+
+**The documentation site documents the release you install, and shows off its playground;
+and two comic-script fixes.** The site's root now serves the latest release, `main` moves under
+`/dev/`, and each minor version keeps its own path; the playground says which version it runs,
+and the home page shows its example compiled, with a button to open it there. A full stop
+now ends a PAGE heading, and no line of a comic script can stall the compiler.
+
+**Upgrading from 0.11.0.** The language, the command line and the Python API are unchanged,
+and so is every YAML document's output. A comic script changes only where a PAGE heading
+ends in a full stop, as in `PAGE 7.` or `PAGE TWENTY ONE.`: see Fixed.
+
 ### Added
 
 - **The documentation site documents what you install.** Its root, and every address
@@ -28,7 +96,7 @@ below 1.0 means.
 - **The playground says which version it runs**, with the same version switcher as the
   documentation, keeping a shared document across the switch. On `main`'s and on an old
   release's it says so, with a link to the latest. Playgrounds built before this change,
-  those of 0.11 and earlier, carry no switcher.
+  those of 0.11.0 and earlier, carry no switcher.
 - **The documentation's home page shows its example compiled** — the file `scenet build`
   writes for it, kept current with the golden files — and a button opens that example in the
   playground. The navbar names the playground beside the sections, and every link to it
@@ -50,9 +118,11 @@ below 1.0 means.
 
 ### Fixed
 
-- **Mutation testing runs again.** `mutation.yml` installed only the `mutation` group, and the
-  documentation site's tests need `docs`, so mutmut's clean run failed and no mutant was tried.
-  It now installs every group, as CI's test jobs do.
+- **A full stop ends a PAGE heading, as it ends a PANEL one.** `Page 4B.` named its page
+  `4B.` and `PAGE 7.` a page called `7.`; `PAGE TWENTY ONE.` and `PLANCHE 3.` were not
+  read as headings at all, since `ONE.` and `3.` are not numbers, so their panels ran on
+  into the page before. They are pages `4B`, `7`, `21` and `3` now. A full stop inside a
+  label, as in `PAGE 3.5`, stays.
 
 ### Security
 

@@ -106,6 +106,9 @@ rendering — is emitted.
 | Cast and staging | `cast`, `staging` | Who is present, and how they relate |
 | Narrative | `script` | What is said, and in what order |
 
+A panel may also carry a [`description`](#description): what it shows, in words, for a reader who
+cannot see it. It is not a layer: nothing is drawn from it.
+
 Layers are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
 
@@ -682,6 +685,41 @@ A sound effect takes its number in the same sequence — which is the order a re
 screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
 holding it to above-and-left would make many panels impossible to letter.
 
+That sequence is what a screen reader hears. Every SVG names each panel with its
+[description](#description) and then every balloon, caption and sound effect in this order —
+`Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` — whatever order
+they are painted in; see [accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html).
+
+## `description`
+
+What the panel shows, in words, for a reader who cannot see it.
+
+```yaml
+description: Alice and Bob face each other on a rainy street corner. She is exasperated.
+```
+
+| Key | Type | Meaning |
+|---|---|---|
+| `description` | text | One paragraph of prose. Runs of whitespace, line breaks included, are read as one space |
+
+**It is carried, never interpreted.** Nothing is drawn from it — the rain comes from `setting`, the
+exasperation from `expression` — exactly as a comic script's prose is never read by the compiler.
+What it is for is accessible output: it is the first thing a screen reader says about the panel,
+before what is said in it.
+
+In a [comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#prose-is-never-interpreted) a panel's prose is
+its description, unless an `@description:` directive says something else. Left out, accessible
+output says what the panel holds — the shot, the setting, and who is where, doing what.
+
+**It describes one panel**, so it is never inherited:
+
+- written beside `panels:`, where every panel would inherit it, it is refused as `unknown-key`;
+- a panel drawn `over:` another does not take its parent's. It is a different picture, and the
+  parent's words would be wrong to exactly the reader who cannot see that they are.
+
+An empty one is refused, since it would describe the panel with nothing; leave it out instead. Like
+dialogue, it may not hold a character an SVG cannot hold.
+
 ## `lettering`
 
 How the lettering is set: its size, and the face it is set in.
@@ -834,7 +872,9 @@ An **inset** is a small panel set into a corner of another and drawn over it:
 It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
 split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
 2013), so it is never guessed: an inset is read right after its parent unless it says
-`read: before`. Here that is `clock`, `street`, `face`.
+`read: before`. Here that is `clock`, `street`, `face` — and that is the order the page's SVG writes
+them in, which is the order a screen reader follows. The parent is cut around each inset's ring
+rather than painted under it, so an inset read first is still on top.
 
 The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
 words under an inset could not be read. When an inset covers a character's face, the compiler
@@ -1353,7 +1393,24 @@ a script is a document people read, and stripping the description would make the
 worse for its primary audience.
 
 If you want the rain, say so with a directive: `@setting: {weather: rain}` draws it. The
-description beside it is never read.
+description beside it is never read by the compiler.
+
+It is read by people, though, and not only the artist: a panel's prose is its
+[`description`](https://creatoan.github.io/scenet/reference/language.html#description), what accessible output reads to somebody
+who cannot see the panel. Its lines become one paragraph, and Markdown's markers round a word
+(`**Alice**`, `_up_`) are taken off. **Everything** the prose says is read — a note to the artist,
+`NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
+directive, which is kept exactly as written and wins over the prose:
+
+```text
+PANEL 1
+@description: Alice waits on a corner in the rain.
+NOTE: redraw the rain, heavier.
+```
+
+A panel drawn `@over:` another does not inherit its prose: it is a different picture. A description
+in the front matter is refused, since every panel would inherit it. A line of prose holding a
+character an SVG cannot hold is reported at that line.
 
 ## Front matter
 
@@ -1381,7 +1438,8 @@ PANEL 1
 ```
 
 Everything in the front matter is a default every panel inherits — exactly the same
-mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults).
+mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults) — and so a
+`description`, which says what one panel shows, is refused there.
 
 Note the actor ids are written in caps here, to match the speaker cues. That is a
 convention, not a requirement; the ids simply have to agree.
@@ -1413,7 +1471,7 @@ assert list(panels) == ["1", "2"]
 assert panels["1"].camera.shot.value == "close_up"
 assert panels["1"].script[0].text == "Is anyone there?"
 
-# The prose line is preserved in the source and interpreted nowhere.
+# The prose line is interpreted nowhere: it is the panel's description, as written.
 assert panels["2"].script[0].kind.value == "whisper"
 ```
 
@@ -2333,7 +2391,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
+  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
   "properties": {
     "camera": {
       "$ref": "#/$defs/CameraSpec",
@@ -2356,6 +2414,19 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       },
       "title": "Cast",
       "type": "object"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the panel shows, in words, for a reader who cannot see it. Carried into the SVG as its accessible name and never interpreted. Not inherited: a panel drawn `over:` another is a different picture. Left out, one is generated from the shot, the setting and the cast.",
+      "title": "Description"
     },
     "lettering": {
       "$ref": "#/$defs/LetteringSpec",
@@ -3511,7 +3582,9 @@ panels:
 #
 # Readers split about evenly over whether an inset comes before the panel it sits in
 # or after it (Cohn, 2013), so it never guesses: it is read after its parent unless it
-# says `read: before`. Here the clock is read first, then the street, then the face.
+# says `read: before`. Here the clock is read first, then the street, then the face,
+# and the page is written in that order; the street is cut around the clock, which is
+# how the clock stays on top though it comes first.
 #
 # The street's art is drawn as if the insets were not there. Only its lettering moves:
 # the caption would have sat where the clock is.

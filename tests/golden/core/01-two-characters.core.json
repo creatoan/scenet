@@ -724,6 +724,7 @@
       "font_size": 28.0,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You forgot your umbrella!",
       "line_height": 35.0,
       "lines": [
         "You forgot",
@@ -754,6 +755,7 @@
       "font_size": 28.0,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: I know.",
       "line_height": 35.0,
       "lines": [
         "I know."
@@ -775,6 +777,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium shot. Alice, left, pointing, looking at Bob; Bob, right, arms crossed.",
   "format_version": 1,
   "height": 800.0,
   "width": 1000.0

@@ -12,9 +12,10 @@ around any of it. So is a French script: `PLANCHE 1`, `CASE 2`, `RÉCITATIF :`, 
 **The honest limitation.** A prose description like "Alice and Bob face each other on
 a rainy street corner" cannot be compiled. Turning that into staging needs natural
 language understanding, and guessing would produce panels that are confidently wrong
--- far worse than refusing. So descriptions are preserved but not interpreted, and
-anything the compiler must know is declared explicitly: cast and staging in a
-front-matter block, per-panel settings as `@` directives.
+-- far worse than refusing. So descriptions are preserved but not interpreted -- each one
+is its panel's `description`, read out as written by accessible output -- and anything the
+compiler must know is declared explicitly: cast and staging in a front-matter block,
+per-panel settings as `@` directives.
 
     ---
     cast:
@@ -46,7 +47,16 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import OVER_KEY, merge, names, relation_text, resolve_overrides, settle
+from scenet.compose import (
+    DESCRIPTION_KEY,
+    NOT_A_DEFAULT,
+    OVER_KEY,
+    merge,
+    names,
+    relation_text,
+    resolve_overrides,
+    settle,
+)
 from scenet.errors import CompositionError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import (
     errors_of,
@@ -65,6 +75,7 @@ from scenet.ir import (
     SfxSize,
     ShotType,
     Side,
+    unholdable,
 )
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
@@ -95,8 +106,13 @@ NUMBER_LIKE = re.compile(r"\d+[^\W\d_]?|[^\W\d_]")
 # words, `PAGE !-!-!-…(` split in exponentially many ways before failing (CodeQL
 # py/redos). The tail takes trailing space once, after whatever it follows, where three
 # optional runs of it in a row made a long blank line cubic.
+#
+# Each word is as short as the line allows, as PANEL_HEADING's label is, so a closing full
+# stop ends the heading rather than the label: `Page 4B.` is page `4B`, and
+# `PAGE TWENTY ONE.` is twenty-one rather than a sentence. A full stop the line needs
+# inside a word stays there, as in `PAGE 3.5`.
 PAGE_HEADING = re.compile(
-    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+(?:\s+[^\s:()]+)*?)\s*(?:\((?P<note>[^)]*)\)\s*)?(?:[.:]\s*)?$",
+    r"^(?P<keyword>PAGE|PLANCHE)\s+(?P<label>[^\s:()]+?(?:\s+[^\s:()]+?)*?)\s*(?:\((?P<note>[^)]*)\)\s*)?(?:[.:]\s*)?$",
     re.IGNORECASE,
 )
 # The count in a PAGE heading's parenthetical: `five panels`, `1 panel`, `six cases`.
@@ -371,7 +387,8 @@ class _PanelDraft:
 
     A typed accumulator rather than a bare dict: the script body contributes several
     kinds of thing -- dialogue, captions, directives, prose -- and keeping them apart
-    until the end makes it obvious that prose never reaches the compiler.
+    until the end makes it obvious that prose is never interpreted: it reaches the
+    compiler only as the panel's `description`, which nothing is drawn from.
     """
 
     #: The file line of the PANEL heading, which is where a fault found only once the
@@ -424,15 +441,19 @@ class _PanelDraft:
         return self.line
 
     def as_document(self) -> dict[str, Any]:
-        """The parts a panel can actually be compiled from.
+        """The panel as a document, its prose as its `description`.
 
-        `description` is authorial prose the compiler cannot act on, so it is left out
-        rather than being passed along and rejected as an unknown key.
+        The prose is never interpreted -- nothing is drawn from it -- but it is already a
+        text rendering of the panel, which is what a reader who cannot see it needs. Its
+        lines are one paragraph, with the Markdown markers a writer may have put round a
+        word taken off. A `@description:` directive says something else, and wins.
         """
         document: dict[str, Any] = dict(self.settings)
         if self.camera:
             document["camera"] = {**document.get("camera", {}), **self.camera}
         document["script"] = self.events
+        if self.description and DESCRIPTION_KEY not in document:
+            document[DESCRIPTION_KEY] = _without_markdown(" ".join(self.description))
         return document
 
 
@@ -529,6 +550,47 @@ def _number_label(token: str) -> str:
 
 #: The name the highlighting tests have always read page labels with.
 _page_label = _number_label
+
+
+#: Markdown's markers round a word: `**bold**` and `__bold__`, then `*italic*` and
+#: `_italic_`. Only round a word, so `snake_case` and `2*3*4` keep theirs.
+_MARKDOWN_EMPHASIS = (
+    re.compile(r"(?<![\w*])\*\*(?=\S)(.+?)(?<=\S)\*\*(?![\w*])"),
+    re.compile(r"(?<!\w)__(?=\S)(.+?)(?<=\S)__(?!\w)"),
+    re.compile(r"(?<![\w*])\*(?=\S)(.+?)(?<=\S)\*(?![\w*])"),
+    re.compile(r"(?<!\w)_(?=\S)(.+?)(?<=\S)_(?!\w)"),
+)
+
+
+def _without_markdown(prose: str) -> str:
+    """Prose with the emphasis markers taken off, which a screen reader would read out.
+
+    Example:
+        >>> _without_markdown("**Alice** looks _up_ at *Bob*, past snake_case and 2*3*4.")
+        'Alice looks up at Bob, past snake_case and 2*3*4.'
+    """
+    for pattern in _MARKDOWN_EMPHASIS:
+        prose = pattern.sub(r"\1", prose)
+    return prose
+
+
+def _check_prose(prose: str, number: int, source: Path | None) -> str:
+    """A line of prose, refused at its own line if an SVG cannot hold it.
+
+    Prose was never written anywhere, so a stray control character in it was harmless. It
+    is the panel's description now, which goes into the SVG; reported here, the finding
+    names the line it is on rather than the panel's heading.
+    """
+    # Whitespace first, as the description itself is read: Word's U+000B is a space.
+    problem = unholdable(" ".join(prose.split()))
+    if problem is not None:
+        raise ScriptSyntaxError(
+            f"line {number}: this panel's description {problem}",
+            source=source,
+            line=number,
+            rule="invalid-field",
+        )
+    return prose
 
 
 def _recognisable(line: str) -> str:
@@ -778,6 +840,8 @@ class _Reader:
         draft = _read_panel_heading(line, number, self.page)
         if draft is None:
             return False
+        for prose in draft.description:
+            _check_prose(prose, number, self.source)
         self.end_of_item()
         self.current = draft
         self.drafts.append(draft)
@@ -857,8 +921,8 @@ class _Reader:
         self.writing = None
         if self.cue_alone(labelled, number):
             return
-        # Prose. Kept for tooling and round-tripping, never interpreted.
-        current.description.append(written)
+        # Prose. Never interpreted: it is the panel's description, read out as it is.
+        current.description.append(_check_prose(written, number, self.source))
 
     def tiers(self, line: str, number: int) -> bool:
         """`@tiers: 2 1 2` between a PAGE heading and its first panel: that page's tiers."""
@@ -1496,8 +1560,9 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
     if key in CAMERA_DIRECTIVES:
         draft.camera[key] = _camera_word(key, value, number, source, draft.label)
         return True
-    if key == OVER_KEY:
-        # A panel's name, kept as written: YAML would read `07` as the number 7.
+    if key in (OVER_KEY, DESCRIPTION_KEY):
+        # Kept as written. YAML would read the panel name `07` as the number 7, and a
+        # description `9:14, and Alice waves` as a mapping -- or `9:14` as 554.
         draft.settings[key] = value
         return True
     try:
@@ -1696,6 +1761,23 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
             "`pages:`; `page:` sets their format",
             source=source,
             rule="page-layout",
+        )
+    if DESCRIPTION_KEY in front_matter:
+        # The front matter is merged under every panel, and a description says what one
+        # picture shows. It is a top-level key, so it starts a line of the front matter.
+        line = next(
+            (
+                number
+                for number, written in enumerate(text.split("\n")[:offset], start=1)
+                if re.match(rf"{DESCRIPTION_KEY}\s*:", written)
+            ),
+            None,
+        )
+        raise ScriptSyntaxError(
+            f"{f'line {line}: ' if line else ''}{NOT_A_DEFAULT}",
+            source=source,
+            line=line,
+            rule="unknown-key",
         )
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")

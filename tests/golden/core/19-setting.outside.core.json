@@ -1080,6 +1080,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "editorial",
+      "label": "Editor's note: Seven kinds of stuff, four planes deep.",
       "line_height": 23.25,
       "lines": [
         "Seven kinds of",
@@ -1090,6 +1091,7 @@
       "speaker": null
     }
   ],
+  "description": "Long shot. Outdoors by day. Alice, centre.",
   "format_version": 1,
   "height": 620.0,
   "width": 1000.0

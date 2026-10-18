@@ -133,6 +133,25 @@ panels:
 assert all(result.core.width == 1200.0 for result in panels.values())
 ```
 
+One key is never inherited: a [`description`](../reference/language.md#description) says what
+one picture shows, to a reader who cannot see it. Beside `panels:` it is refused, and a panel
+drawn `over:` another does not take its parent's, since it is a different picture — it writes
+its own, or has one generated:
+
+```python
+from scenet import parse_scene
+
+panels = parse_scene("""
+cast: {a: {reference: alice}}
+panels:
+  first:  {description: Alice waits in the rain.}
+  second: {over: first}
+""")
+
+assert panels["first"].description == "Alice waits in the rain."
+assert panels["second"].description is None
+```
+
 ## Chains and cycles
 
 `over:` chains as deep as you like. A cycle is a compile error rather than a hang:

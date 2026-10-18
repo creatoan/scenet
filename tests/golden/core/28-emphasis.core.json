@@ -843,6 +843,7 @@
       "font_size": 29.75,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: I told you it would rain.",
       "line_height": 37.19,
       "lines": [
         "I told you it",
@@ -895,6 +896,7 @@
       "font_size": 29.75,
       "id": "b1",
       "kind": "speech",
+      "label": "Bob: You said it might.",
       "line_height": 37.19,
       "lines": [
         "You said it",
@@ -948,6 +950,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Later. The same corner.",
       "line_height": 31.88,
       "lines": [
         "Later. The",
@@ -975,6 +978,7 @@
       "speaker": null
     }
   ],
+  "description": "Cowboy shot. Alice, centre, angry; Bob, centre.",
   "format_version": 1,
   "height": 850.0,
   "width": 1100.0

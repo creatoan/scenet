@@ -725,6 +725,7 @@
       "font_size": 33.25,
       "id": "b0",
       "kind": "speech",
+      "label": "Alice: You said he would be here.",
       "line_height": 41.56,
       "lines": [
         "You said he",
@@ -760,6 +761,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "locale",
+      "label": "Caption: Midnight. The docks.",
       "line_height": 35.62,
       "lines": [
         "Midnight.",
@@ -781,6 +783,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "monologue",
+      "label": "Caption, inner voice: He had said a great many things.",
       "line_height": 35.62,
       "lines": [
         "He had said a",
@@ -802,6 +805,7 @@
       "ink": "#111111",
       "italic": false,
       "kind": "spoken",
+      "label": "Harbourmaster, off panel: Put that down!",
       "line_height": 35.62,
       "lines": [
         "“Put that",
@@ -823,6 +827,7 @@
       "ink": "#111111",
       "italic": true,
       "kind": "editorial",
+      "label": "Editor's note: Continued next issue.",
       "line_height": 35.62,
       "lines": [
         "Continued",
@@ -832,6 +837,7 @@
       "speaker": null
     }
   ],
+  "description": "Medium full shot. Alice, centre, arms crossed; Bob, right, pointing.",
   "format_version": 1,
   "height": 950.0,
   "width": 1400.0

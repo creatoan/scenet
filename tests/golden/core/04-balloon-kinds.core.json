@@ -721,6 +721,7 @@
       "font_size": 31.5,
       "id": "b0",
       "kind": "whisper",
+      "label": "Alice, whispering: Did you take the last one?",
       "line_height": 39.38,
       "lines": [
         "Did you take",
@@ -751,6 +752,7 @@
       "font_size": 31.5,
       "id": "b1",
       "kind": "shout",
+      "label": "Bob, shouting: I did not!",
       "line_height": 39.38,
       "lines": [
         "I did not!"
@@ -780,6 +782,7 @@
       "font_size": 31.5,
       "id": "b2",
       "kind": "speech",
+      "label": "Alice: Then where is it?",
       "line_height": 39.38,
       "lines": [
         "Then where",
@@ -810,6 +813,7 @@
       "font_size": 31.5,
       "id": "b3",
       "kind": "thought",
+      "label": "Bob, thinking: She is going to notice.",
       "line_height": 39.38,
       "lines": [
         "She is going",
@@ -832,6 +836,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium full shot. Alice, left, pointing; Bob, right, arms crossed.",
   "format_version": 1,
   "height": 900.0,
   "width": 1300.0

@@ -240,6 +240,9 @@ def panels(draw: st.DrawFn) -> Drawn:
     script = draw(st.lists(_event(ids), min_size=min(1, lines), max_size=lines))
     if script:
         document["script"] = script
+    # Drawn last, so every panel drawn before descriptions existed is drawn as it was.
+    if draw(st.booleans()):
+        document["description"] = draw(words(max_words=30))
     return Drawn(document)
 
 

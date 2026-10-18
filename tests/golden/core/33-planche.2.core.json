@@ -724,6 +724,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "speech",
+      "label": "TOM: Quelqu'un a oublié l'huile.",
       "line_height": 40.83,
       "lines": [
         "Quelqu'un a",
@@ -746,6 +747,7 @@
     }
   ],
   "captions": [],
+  "description": "Plus près. Tom hausse les épaules.",
   "format_version": 1,
   "height": 1370.0,
   "width": 880.0

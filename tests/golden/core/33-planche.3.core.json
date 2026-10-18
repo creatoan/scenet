@@ -724,6 +724,7 @@
       "font_size": 32.67,
       "id": "b0",
       "kind": "thought",
+      "label": "TOM, thinking: Ce n'était pas moi.",
       "line_height": 40.83,
       "lines": [
         "Ce n'était",
@@ -746,6 +747,7 @@
     }
   ],
   "captions": [],
+  "description": "Medium close-up. LÉA, left, pointing, looking at TOM; TOM, right, arms crossed.",
   "format_version": 1,
   "height": 1370.0,
   "sfx": [
@@ -788,6 +790,7 @@
       ],
       "hollow": false,
       "id": "s0",
+      "label": "Sound effect: FLOP.",
       "order": 1,
       "source": null,
       "stroke": "#ffffff",
