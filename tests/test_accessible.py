@@ -98,7 +98,8 @@ class TestAPanel:
     def test_it_keeps_every_promise(self, core: PanelCore):
         svg = render(core)
         assert_accessible(svg, core)
-        assert_svg_is_sound(svg, size=(core.width, core.height))
+        sizes = [item.font_size for item in (*core.balloons, *core.captions, *core.sfx)]
+        assert_svg_is_sound(svg, size=(core.width, core.height), font_sizes=sizes)
 
     def test_the_lettering_is_still_outlines(self, core: PanelCore):
         svg = render(core)
