@@ -135,8 +135,8 @@ def assert_words_are_carried(core: PanelCore, *, description: str | None = None)
         assert effect.text in effect.label
     for item in (*items, *core.sfx):
         assert item.label is not None
-        closed = item.label.rstrip("\"'”’»)]")
-        assert closed[-1:] in tuple(".!?…—–-"), item.label
+        closed = item.label.rstrip("\"'”\u2019»)]")
+        assert closed[-1:] in tuple(".!?…—\u2013-"), item.label
 
 
 def _on_the_frame(core: PanelCore, point: tuple[float, float]) -> bool:

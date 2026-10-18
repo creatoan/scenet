@@ -150,10 +150,10 @@ _CAPTIONS: dict[CaptionKind, str] = {
 
 #: What a line may end with and already be a sentence: full stop, question, exclamation,
 #: ellipsis, and the dashes a line broken off ends with: em, en, and a hyphen.
-_ENDS = ".!?…—–-"
+_ENDS = ".!?…—\u2013-"
 #: What may close a line after its last mark: quotation marks and brackets -- straight,
 #: curly (U+201D, U+2019) and guillemet.
-_CLOSERS = "\"'”’»)]"
+_CLOSERS = "\"'”\u2019»)]"
 
 
 def name(actor: str) -> str:
