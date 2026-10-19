@@ -217,6 +217,11 @@
   "34-supplied-art.framed.debug.svg": "4346e70aaa731c103a937f93f05b5a89448ce101ef8fa81d791b8792c5550ffa",
   "34-supplied-art.framed.svg": "cb5e94727c79d941cf0e234ac6d7361eb9ed246f225a34e1ca240cf186e5ad64",
   "34-supplied-art.strip.svg": "07b4f6fa3b83e4f3e944ed6ce5857c1ab9a9ed72073efbd45d114dec04b6a1eb",
+  "35-figures.platform.debug.svg": "b2a287aaf0cf00b34623d18a5e9d54eb57e7cffddaa947cfa50ebe3f4e649242",
+  "35-figures.platform.svg": "06cef6b3de7bf07bbce2739bc3021aa74d12c4fcf83462247420de07a6587fa4",
+  "35-figures.strip.svg": "01b2148f9063e38e3713c9ab8a6972038b133085d963aec3d8a13da7daee0e81",
+  "35-figures.waiting.debug.svg": "73c9379ec3ac8f8ee313e87141df00842d6e06a3010c8ef7b5141be1dad3e5ca",
+  "35-figures.waiting.svg": "2ebbcee993c0c0e43f81ef3d1495946556843e8cced2e6ed1f9d08bc88897420",
   "live-text/01-two-characters.svg": "31f8510d4b62b5659daa41e87875dfc886301b92381ec3ebb8dd3d6bf33b1b96",
   "live-text/02-shot-ladder.big_close_up.svg": "90f12a88cadbf48964134ed7b33876da1dfa794e97a59af9898e0c1d8491e8d8",
   "live-text/02-shot-ladder.close_up.svg": "19ce00ea1f67a38ee4222a9f98524c8161006856acafdaa811ca7b3f53da7b52",
@@ -335,6 +340,9 @@
   "live-text/34-supplied-art.arrival.svg": "9385e7b98b65822a82de1ad3a181515afca711a76573d957c4273af9ca92d838",
   "live-text/34-supplied-art.framed.svg": "eeba9c8c897d56d79073f1f0e6dc8b11ccbe409414af6995b3863dfe736e05e1",
   "live-text/34-supplied-art.strip.svg": "254f6b7fc1870fa91d95c6b518402286183dabfc0615f0fb7c868bdd5fa144bf",
+  "live-text/35-figures.platform.svg": "1a70019cec51725ef497724514e4587ea1b567b2eb08ccc07daa07400d7a029c",
+  "live-text/35-figures.strip.svg": "ea2dcb9bc8e3dc475ff2fa290976f28e7bd15d8ba0d3d71ce0b0fc7d44491ceb",
+  "live-text/35-figures.waiting.svg": "a15bd8fa1bda15c065b10201f92125b789d50250a76140dee8e442eae6c1c4da",
   "no-aria/01-two-characters.svg": "1ed5c1772f0260bb95e4a47ecb91f47330015193305662b69b820a18cfe4606c",
   "no-aria/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "no-aria/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -452,5 +460,8 @@
   "no-aria/33-planche.strip.svg": "7756807be20ebc1b5adb3946cc42100de917298159b8d75b124e3272a568e1bf",
   "no-aria/34-supplied-art.arrival.svg": "cce83cde4685a7ad1d6666191034fef16e82650b1a32d708937dfbcfc6754914",
   "no-aria/34-supplied-art.framed.svg": "2b76bda15a82873407bfb7a3fd1de6d35a60fc90c2a091b6b46532fb16e468d3",
-  "no-aria/34-supplied-art.strip.svg": "f663b75992dc5743eb67767508ba04b5f7c3e7028beada6f22a2770308e51eda"
+  "no-aria/34-supplied-art.strip.svg": "f663b75992dc5743eb67767508ba04b5f7c3e7028beada6f22a2770308e51eda",
+  "no-aria/35-figures.platform.svg": "7885f2792004154a1d3775361c79d898764b24f3b09d781a42b46bd8c69ceafe",
+  "no-aria/35-figures.strip.svg": "b60ebb9339cbd9f334a7c2b0bff0283ad887cd17ba15e8189c67c12b84251db0",
+  "no-aria/35-figures.waiting.svg": "4ee30881292da290e8d6769b7045827be7e2f1c499f4d3fb0a469537ca9181d1"
 }

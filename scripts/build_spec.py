@@ -33,6 +33,7 @@ from typing import Any
 import yaml
 
 from scenet import CastMember, default_library
+from scenet.assets.artwork import CONTRACT_SUFFIX
 from scenet.diagnostics import RULE_NAMESPACE, RULES
 from scenet.schema import panel_schema
 from scenet.spec_pack import MARKER, RESOURCE, SPEC_PARTS
@@ -277,9 +278,19 @@ def _gallery() -> str:
             f"\n\nIt names `{name}`, which is beside it in the gallery: a picture, not text, "
             "so not printed here."
             for name in _named_files(entry)
+            if not name.endswith(CONTRACT_SUFFIX)
+        )
+        # A picture's artwork contract is text, and what a model has to learn to write
+        # beside a picture of its own, so it is printed after the example that reads it.
+        contracts = "".join(
+            f"\nIts picture's artwork contract, `{name}`, beside the picture:\n\n"
+            f"{_fence((GALLERY / name).read_text(encoding='utf-8'), 'yaml')}"
+            for name in _named_files(entry)
+            if name.endswith(CONTRACT_SUFFIX)
         )
         sections.append(
-            f"## {entry['title']}\n\n`{entry['file']}`{beside}\n\n{_fence(source, language)}"
+            f"## {entry['title']}\n\n`{entry['file']}`{beside}\n\n"
+            f"{_fence(source, language)}{contracts}"
         )
     return (
         "# Gallery\n\n"

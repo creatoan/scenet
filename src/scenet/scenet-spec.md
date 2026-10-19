@@ -4433,3 +4433,71 @@ panels:
     script:
       - say: {by: alice, text: "It looks smaller from here."}
 ```
+
+## Figures a picture draws: an artwork contract, cover and contain
+
+`35-figures.scene.yaml`
+
+It names `art/figures.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+
+```yaml
+# Figures a picture draws, lettered over (#71).
+#
+# The people are in the picture -- art/figures.png, painted by
+# scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of
+# posing puppets. Where each face, mouth and body is lives in the picture's artwork
+# contract, art/figures.art.yaml, beside it and named after it; this document writes no
+# coordinate. Balloons keep off every declared face, Carl's too though nobody cast him,
+# tails aim at each speaker's mouth, and the timetable board is a keep-out: lettering
+# pays to cover it, and does not.
+#
+# Nobody is posed, placed or framed: the artist did all of that, so there is no camera
+# and no staging. `fit` maps the contract through the same transform as the picture.
+
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+
+setting: {image: art/figures.png, time: night}
+
+panels:
+  platform:
+    panel: {size: [1200, 600]}
+    setting: {fit: cover}
+    script:
+      - caption: {text: "The last train. Again.", kind: locale}
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  waiting:
+    over: platform
+    panel: {size: [600, 700]}
+    setting: {fit: contain}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}
+```
+
+Its picture's artwork contract, `art/figures.art.yaml`, beside the picture:
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
+```

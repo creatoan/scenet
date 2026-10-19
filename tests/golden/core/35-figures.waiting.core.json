@@ -1,0 +1,206 @@
+{
+  "actors": [],
+  "backdrop": {
+    "atmosphere": null,
+    "image": {
+      "box": {
+        "height": 400.0,
+        "width": 600.0,
+        "x": 0.0,
+        "y": 150.0
+      },
+      "fit": "contain",
+      "href": "art/figures.png",
+      "keep_out": [
+        [
+          [
+            373.33,
+            190.0
+          ],
+          [
+            573.33,
+            190.0
+          ],
+          [
+            573.33,
+            283.33
+          ],
+          [
+            373.33,
+            283.33
+          ]
+        ]
+      ],
+      "media_type": "image/png",
+      "pixels": [
+        900,
+        600
+      ],
+      "preserve_aspect_ratio": "xMidYMid meet",
+      "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
+    },
+    "masses": [],
+    "seed": 3072030335
+  },
+  "balloons": [
+    {
+      "box": {
+        "height": 57.58,
+        "width": 150.77,
+        "x": 173.93,
+        "y": 191.9
+      },
+      "font_size": 24.5,
+      "id": "b0",
+      "kind": "speech",
+      "label": "Ana: Is that ours?",
+      "line_height": 30.63,
+      "lines": [
+        "Is that ours?"
+      ],
+      "order": 0,
+      "speaker": "ana",
+      "tail": {
+        "control": null,
+        "end": [
+          184.4,
+          295.97
+        ],
+        "start": [
+          224.49,
+          249.48
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 57.58,
+        "width": 61.94,
+        "x": 329.79,
+        "y": 314.76
+      },
+      "font_size": 24.5,
+      "id": "b1",
+      "kind": "speech",
+      "label": "Ben: No.",
+      "line_height": 30.63,
+      "lines": [
+        "No."
+      ],
+      "order": 1,
+      "speaker": "ben",
+      "tail": {
+        "control": null,
+        "end": [
+          305.45,
+          331.18
+        ],
+        "start": [
+          329.79,
+          336.62
+        ],
+        "width": 14.0
+      }
+    }
+  ],
+  "captions": [],
+  "description": "Ana, left; Ben, centre.",
+  "figures": [
+    {
+      "actor": "ana",
+      "body": [
+        [
+          112.0,
+          347.33
+        ],
+        [
+          194.67,
+          347.33
+        ],
+        [
+          210.67,
+          550.0
+        ],
+        [
+          96.0,
+          550.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 153.33,
+        "cy": 316.67,
+        "r": 37.33
+      },
+      "figure": "ana",
+      "mouth": [
+        153.33,
+        332.0
+      ]
+    },
+    {
+      "actor": "ben",
+      "body": [
+        [
+          226.67,
+          340.67
+        ],
+        [
+          320.0,
+          340.67
+        ],
+        [
+          334.67,
+          550.0
+        ],
+        [
+          212.0,
+          550.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 273.33,
+        "cy": 307.33,
+        "r": 40.0
+      },
+      "figure": "ben",
+      "mouth": [
+        273.33,
+        324.0
+      ]
+    },
+    {
+      "body": [
+        [
+          445.33,
+          375.33
+        ],
+        [
+          514.67,
+          375.33
+        ],
+        [
+          524.0,
+          550.0
+        ],
+        [
+          436.0,
+          550.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 480.0,
+        "cy": 350.0,
+        "r": 30.67
+      },
+      "figure": "carl",
+      "mouth": [
+        480.0,
+        362.67
+      ]
+    }
+  ],
+  "format_version": 1,
+  "height": 700.0,
+  "width": 600.0
+}

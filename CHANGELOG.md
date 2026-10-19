@@ -94,6 +94,10 @@ below 1.0 means.
   speaking figure's mouth out of the panel ends its tail on the frame, with a note. `scenet check`
   and `build` refuse a `*.art.yaml` given as a document. The panel and scene schemas accept
   `figure`.
+- **A gallery example of figures a picture draws**, `35-figures.scene.yaml`: a station
+  platform painted by `scripts/make_gallery_figures.py`, with its artwork contract written from
+  the same constants, lettered under `cover` and `contain`. Two of its three people are cast,
+  the third is kept clear of all the same, and its timetable board is a keep-out.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept
