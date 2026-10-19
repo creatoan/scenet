@@ -28,10 +28,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from shapely.geometry import LineString, Polygon, box
+from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
-from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import BalloonPlacementError
 from scenet.geom import BBox, Circle, Point, segment_intersects_circle
 from scenet.ir import (
@@ -51,6 +51,7 @@ from scenet.ir import (
 )
 from scenet.solve.backdrop import LADDER, ResolvedBackdrop, contrast_ratio
 from scenet.solve.sfx import PlacedEffect, place_effects
+from scenet.solve.speakers import NOBODY, Bystanders, Speaker
 from scenet.solve.text import (
     PADDING_FACTOR,
     FontMetrics,
@@ -260,13 +261,11 @@ class ScriptLayout:
     effects: tuple[PlacedEffect, ...] = ()
 
 
-def _hull_polygon(actor: ResolvedPuppet) -> Polygon:
-    return Polygon([(point.x, point.y) for point in actor.hull])
+def _hull_polygon(actor: Speaker) -> Polygon:
+    return Polygon([(point.x, point.y) for point in actor.body])
 
 
-def _candidate_positions(
-    speaker: ResolvedPuppet, size: tuple[float, float], panel: BBox
-) -> list[BBox]:
+def _candidate_positions(speaker: Speaker, size: tuple[float, float], panel: BBox) -> list[BBox]:
     """Positions worth evaluating for a balloon of this size.
 
     A ring around the speaker's head, plus the four panel corners. The corners matter
@@ -327,15 +326,16 @@ def _caption_positions(size: tuple[float, float], panel: BBox) -> list[BBox]:
     return candidates
 
 
-def _blocks_gaze(candidate: BBox, actor: ResolvedPuppet, reach: float) -> bool:
+def _blocks_gaze(candidate: BBox, actor: Speaker, reach: float) -> bool:
     """Whether a balloon stands in the line of sight.
 
     Kress and van Leeuwen's "vectors": a character's gaze is a real compositional line
-    that carries the reader's eye. Covering it reads as an obstruction.
+    that carries the reader's eye. Covering it reads as an obstruction. A figure a
+    picture draws declares no gaze, so it has none to block.
     """
     if actor.gaze.length == 0:
         return False
-    origin = actor.anchors.get("eyes")
+    origin = actor.eyes
     if origin is None:
         return False
     end = origin.translated(actor.gaze.dx * reach, actor.gaze.dy * reach)
@@ -403,33 +403,44 @@ _NO_LIMITS = _Limits()
 
 def _is_legal(
     candidate: BBox,
-    actors: dict[str, ResolvedPuppet],
+    actors: Mapping[str, Speaker],
     panel: BBox,
     placed: list[BBox],
     limits: _Limits = _NO_LIMITS,
+    *,
+    bystanders: Bystanders = NOBODY,
 ) -> bool:
     """The hard rules, which apply to anything carrying words.
 
-    A box over a face is never acceptable whatever else it has going for it, a box
-    outside the panel is not a box, two overlapping boxes make both unreadable, and a box
-    under something drawn over the panel -- an inset -- cannot be read at all, and nor can
-    one cut off by a slanted edge.
+    A box over a face is never acceptable whatever else it has going for it -- a cast
+    member's or a bystander's -- a box outside the panel is not a box, two overlapping
+    boxes make both unreadable, and a box under something drawn over the panel -- an
+    inset -- cannot be read at all, and nor can one cut off by a slanted edge.
     """
     if not panel.contains(candidate):
         return False
     if any(candidate.intersects_circle(actor.face) for actor in actors.values()):
+        return False
+    if any(candidate.intersects_circle(face) for face in bystanders.faces):
         return False
     if not limits.allow(candidate):
         return False
     return all(candidate.overlap_area(existing) == 0 for existing in placed)
 
 
-def _occlusion_cost(candidate: BBox, hulls: dict[str, Polygon], forgive: str | None) -> float:
+def _occlusion_cost(
+    candidate: BBox,
+    hulls: Mapping[str, Polygon],
+    forgive: str | None,
+    bystanders: Sequence[Polygon] = (),
+) -> float:
     """How much silhouette this box covers, normalised by its own area.
 
     `forgive` names an actor whose silhouette is half-weighted -- a balloon resting on
     its own speaker's shoulder reads naturally in a way that covering a bystander does
-    not. A caption has no speaker, so it forgives nobody.
+    not. A caption has no speaker, so it forgives nobody. `bystanders` are the bodies of
+    figures a picture draws and nobody cast: nobody speaks from them, so covering them is
+    never forgiven.
     """
     area = max(candidate.area, 1.0)
     shape = box(candidate.x, candidate.y, candidate.right, candidate.bottom)
@@ -439,6 +450,10 @@ def _occlusion_cost(candidate: BBox, hulls: dict[str, Polygon], forgive: str | N
         if overlap:
             weight = 0.5 if actor_id == forgive else 1.0
             cost += W_OCCLUSION * weight * overlap / area
+    for body in bystanders:
+        overlap = shape.intersection(body).area
+        if overlap:
+            cost += W_OCCLUSION * overlap / area
     return cost
 
 
@@ -490,6 +505,15 @@ def _emanata_shapes(zones: Mapping[str, Sequence[Sequence[Point]]]) -> list[Base
     return shapes
 
 
+def _keep_out_shape(regions: Sequence[Sequence[Point]]) -> BaseGeometry:
+    """A picture's keep-out regions as one shape, so ground two of them share is paid once.
+
+    Built once per panel. Each region is a simple polygon -- the artwork contract refuses
+    any other -- in panel units.
+    """
+    return unary_union([Polygon([(point.x, point.y) for point in region]) for region in regions])
+
+
 def _emanata_cost(candidate: BBox, shapes: Sequence[BaseGeometry]) -> float:
     """How much of anyone's emanata this box covers, normalised by its own area.
 
@@ -523,31 +547,33 @@ def _edge_slack(candidate: BBox, panel: BBox) -> float:
 def _score(
     candidate: BBox,
     *,
-    speaker: ResolvedPuppet,
+    speaker: Speaker,
     speaker_id: str,
-    actors: dict[str, ResolvedPuppet],
-    hulls: dict[str, Polygon],
+    actors: Mapping[str, Speaker],
+    hulls: Mapping[str, Polygon],
     panel: BBox,
     prefer: PlacementZone | None,
     placed: list[BBox],
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry] = (),
     limits: _Limits = _NO_LIMITS,
+    bystanders: Bystanders = NOBODY,
 ) -> float:
     """Cost of putting a balloon here. Lower is better; infinity means illegal.
 
     `speaker_id` is the actor id the cast and `hulls` are keyed by -- never the puppet's
     name, which is another namespace: `ALICE: {reference: alice}` is spoken by `ALICE`.
     """
-    if not _is_legal(candidate, actors, panel, placed, limits):
+    if not _is_legal(candidate, actors, panel, placed, limits, bystanders=bystanders):
         return math.inf
 
-    cost = _occlusion_cost(candidate, hulls, speaker_id) + _mass_cost(candidate, masses)
+    cost = _occlusion_cost(candidate, hulls, speaker_id, bystanders.bodies) + _mass_cost(
+        candidate, masses
+    )
     cost += _emanata_cost(candidate, emanata)
 
     diagonal = math.hypot(panel.width, panel.height)
-    mouth = speaker.anchors.get("mouth", speaker.face.centre)
-    cost += W_MOUTH_DISTANCE * (candidate.centre.distance_to(mouth) / diagonal)
+    cost += W_MOUTH_DISTANCE * (candidate.centre.distance_to(speaker.mouth) / diagonal)
 
     if prefer is not None:
         across, down = prefer.fractions
@@ -567,14 +593,15 @@ def _score(
 def _score_caption(
     candidate: BBox,
     *,
-    actors: dict[str, ResolvedPuppet],
-    hulls: dict[str, Polygon],
+    actors: Mapping[str, Speaker],
+    hulls: Mapping[str, Polygon],
     panel: BBox,
     prefer: PlacementZone,
     placed: list[BBox],
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry] = (),
     limits: _Limits = _NO_LIMITS,
+    bystanders: Bystanders = NOBODY,
 ) -> float:
     """Cost of putting a caption here. Lower is better; infinity means illegal.
 
@@ -583,10 +610,12 @@ def _score_caption(
     term is reversed: a balloon floating against the frame looks stranded, while a
     caption tucked into the corner is doing what a caption is for.
     """
-    if not _is_legal(candidate, actors, panel, placed, limits):
+    if not _is_legal(candidate, actors, panel, placed, limits, bystanders=bystanders):
         return math.inf
 
-    cost = _occlusion_cost(candidate, hulls, None) + _mass_cost(candidate, masses)
+    cost = _occlusion_cost(candidate, hulls, None, bystanders.bodies) + _mass_cost(
+        candidate, masses
+    )
     cost += _emanata_cost(candidate, emanata)
 
     diagonal = math.hypot(panel.width, panel.height)
@@ -777,9 +806,11 @@ def caption_text(events: Sequence[ScriptEvent], index: int) -> str:
 
 def place_script(
     events: Sequence[ScriptEvent],
-    actors: dict[str, ResolvedPuppet],
+    speakers: Mapping[str, Speaker],
     panel: BBox,
     *,
+    bystanders: Sequence[Speaker] = (),
+    keep_out: Sequence[Sequence[Point]] = (),
     metrics: FontMetrics | None = None,
     italic_metrics: FontMetrics | None = None,
     typeface: Typeface | None = None,
@@ -806,8 +837,13 @@ def place_script(
 
     Args:
         events: The panel's script, in reading order.
-        actors: Resolved puppets, keyed by actor id.
+        speakers: Everybody in the cast who is drawn, keyed by actor id, as lettering
+            sees them: posed puppets, or figures a picture draws.
         panel: The rectangle to compose within, margins already applied.
+        bystanders: Figures a picture draws that nobody cast. Their faces are as
+            forbidden as a speaker's, and their bodies cost as much, never forgiven.
+        keep_out: Regions of a picture lettering should stay off. A soft cost, at the
+            weight of emanata, and never an exclusion.
         metrics: Font to measure roman lettering against, in place of the family's.
         italic_metrics: Font to measure italic captions against, in place of the
             family's.
@@ -859,10 +895,17 @@ def place_script(
         family = replace(family, regular=metrics)
     if italic_metrics is not None:
         family = replace(family, italic=italic_metrics)
-    hulls = {actor_id: _hull_polygon(actor) for actor_id, actor in actors.items()}
-    faces = [actor.face for actor in actors.values()]
+    hulls = {
+        actor_id: _hull_polygon(speaker) for actor_id, speaker in speakers.items() if speaker.body
+    }
+    others = Bystanders.of(bystanders)
+    faces = [speaker.face for speaker in speakers.values()] + list(others.faces)
     masses = _mass_polygons(backdrop)
     marks = _emanata_shapes(emanata or {})
+    # A keep-out is ground as emanata are, and paid for at their weight: a picture's
+    # region a balloon may still cover when nothing else is free.
+    if keep_out:
+        marks.append(_keep_out_shape(keep_out))
 
     placed: list[BBox] = []
     limits = _Limits(
@@ -879,7 +922,7 @@ def place_script(
     # is never forbidden to; with no effects the list is exactly the emanata it was.
     effects = place_effects(
         [(order, event) for order, event in enumerate(events) if isinstance(event, SfxEvent)],
-        actors=actors,
+        actors=speakers,
         hulls=hulls,
         panel=panel,
         dialogue_size=size,
@@ -887,6 +930,7 @@ def place_script(
         marks=marks,
         blocked=exclusions,
         inside=limits.inside,
+        bystanders=others,
     )
     marks = [*marks, *(effect.zone for effect in effects)]
 
@@ -900,7 +944,7 @@ def place_script(
                     text=caption_text(events, order),
                     identifier=f"c{len(captions)}",
                     order=order,
-                    actors=actors,
+                    actors=speakers,
                     hulls=hulls,
                     panel=panel,
                     placed=placed,
@@ -909,29 +953,32 @@ def place_script(
                     masses=masses,
                     emanata=marks,
                     limits=limits,
+                    bystanders=others,
                 )
             )
             placed.append(captions[-1].box)
             continue
 
         lettering = _Lettering.of(event, size)
+        frame = _Frame(bounds or panel, outline)
         if event.off_panel is not False:
             balloons.append(
                 _place_off_panel(
                     event,
                     identifier=f"b{len(balloons)}",
                     order=order,
-                    actors=actors,
+                    actors=speakers,
                     hulls=hulls,
                     faces=faces,
                     panel=panel,
-                    frame=_Frame(bounds or panel, outline),
+                    frame=frame,
                     placed=placed,
                     lettering=lettering,
                     typeface=family,
                     masses=masses,
                     emanata=marks,
                     limits=limits,
+                    bystanders=others,
                 )
             )
             placed.append(balloons[-1].box)
@@ -942,16 +989,17 @@ def place_script(
                 event,
                 identifier=f"b{len(balloons)}",
                 order=order,
-                actors=actors,
+                actors=speakers,
                 hulls=hulls,
-                faces=faces,
                 panel=panel,
+                frame=frame,
                 placed=placed,
                 lettering=lettering,
                 typeface=family,
                 masses=masses,
                 emanata=marks,
                 limits=limits,
+                bystanders=others,
             )
         )
         placed.append(balloons[-1].box)
@@ -964,16 +1012,17 @@ def _place_balloon(
     *,
     identifier: str,
     order: int,
-    actors: dict[str, ResolvedPuppet],
-    hulls: dict[str, Polygon],
-    faces: list[Circle],
+    actors: Mapping[str, Speaker],
+    hulls: Mapping[str, Polygon],
     panel: BBox,
+    frame: "_Frame",
     placed: list[BBox],
     lettering: "_Lettering",
     typeface: Typeface,
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
     limits: _Limits = _NO_LIMITS,
+    bystanders: Bystanders = NOBODY,
 ) -> PlacedBalloon:
     """Choose a position for one balloon and route its tail."""
     speaker = actors[event.by]
@@ -997,6 +1046,7 @@ def _place_balloon(
             masses=masses,
             emanata=emanata,
             limits=limits,
+            bystanders=bystanders,
         )
         if cost < best_cost:
             best, best_cost = candidate, cost
@@ -1008,10 +1058,12 @@ def _place_balloon(
             "balloon, lay under an inset, or broke reading order"
         )
 
-    mouth = speaker.anchors.get("mouth", speaker.face.centre)
     # A speaker's own face does not obstruct their own tail -- the tail is
     # supposed to arrive there.
-    obstacles = [face for face in faces if face is not speaker.face]
+    obstacles = [
+        *(other.face for actor_id, other in actors.items() if actor_id != event.by),
+        *bystanders.faces,
+    ]
     return PlacedBalloon(
         id=identifier,
         speaker=event.by,
@@ -1019,8 +1071,44 @@ def _place_balloon(
         kind=event.kind,
         box=best,
         block=block,
-        tail=route_tail(best, mouth, obstacles, speaker_face=speaker.face),
+        tail=route_tail(
+            best,
+            _within_frame(best.centre, speaker.mouth, frame),
+            obstacles,
+            speaker_face=speaker.face,
+        ),
     )
+
+
+def _within_frame(origin: Point, target: Point, frame: "_Frame") -> Point:
+    """Where a tail aimed from `origin` at `target` ends: there, or on the frame first.
+
+    A figure a picture draws can have its mouth cropped out of the panel -- a `cover` fit
+    overhangs -- and a tail drawn to it would leave the panel. It ends where it crosses the
+    frame instead, as a tail to somebody off panel does, aimed the same way. Every other
+    tail reaches its mouth, which lies inside.
+
+    Example:
+        >>> _within_frame(Point(50, 50), Point(150, 50), _Frame(BBox(0, 0, 100, 100)))
+        Point(x=100.0, y=50.0)
+    """
+    bounds = frame.bounds
+    shape = (
+        Polygon(frame.outline)
+        if frame.outline is not None
+        else box(bounds.x, bounds.y, bounds.right, bounds.bottom)
+    )
+    if shape.covers(ShapelyPoint(target.x, target.y)):
+        return target
+    crossing = LineString([(origin.x, origin.y), (target.x, target.y)]).intersection(shape.exterior)
+    points = [
+        Point(float(x), float(y))
+        for geometry in getattr(crossing, "geoms", [crossing])
+        for x, y in getattr(geometry, "coords", [])
+    ]
+    if not points:  # pragma: no cover -- the line runs from inside the frame to beyond it
+        return target
+    return min(points, key=origin.distance_to)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1065,8 +1153,8 @@ def _place_off_panel(
     *,
     identifier: str,
     order: int,
-    actors: dict[str, ResolvedPuppet],
-    hulls: dict[str, Polygon],
+    actors: Mapping[str, Speaker],
+    hulls: Mapping[str, Polygon],
     faces: list[Circle],
     panel: BBox,
     frame: _Frame,
@@ -1076,6 +1164,7 @@ def _place_off_panel(
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
     limits: _Limits = _NO_LIMITS,
+    bystanders: Bystanders = NOBODY,
 ) -> PlacedBalloon:
     """Choose a position for a balloon whose speaker is not drawn, and route its tail.
 
@@ -1106,6 +1195,7 @@ def _place_off_panel(
             masses=masses,
             emanata=emanata,
             limits=limits,
+            bystanders=bystanders,
         )
         if cost < best_cost:
             best, best_cost = candidate, cost
@@ -1184,8 +1274,8 @@ def _place_caption(
     text: str,
     identifier: str,
     order: int,
-    actors: dict[str, ResolvedPuppet],
-    hulls: dict[str, Polygon],
+    actors: Mapping[str, Speaker],
+    hulls: Mapping[str, Polygon],
     panel: BBox,
     placed: list[BBox],
     font_size: float,
@@ -1193,6 +1283,7 @@ def _place_caption(
     masses: Sequence[tuple[Polygon, float]],
     emanata: Sequence[BaseGeometry],
     limits: _Limits = _NO_LIMITS,
+    bystanders: Bystanders = NOBODY,
 ) -> PlacedCaption:
     """Choose a position for one caption.
 
@@ -1220,6 +1311,7 @@ def _place_caption(
             masses=masses,
             emanata=emanata,
             limits=limits,
+            bystanders=bystanders,
         )
         if cost < best_cost:
             best, best_cost = candidate, cost

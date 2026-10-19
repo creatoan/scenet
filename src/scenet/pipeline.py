@@ -68,6 +68,7 @@ from scenet.solve.camera import CameraSolution
 from scenet.solve.describe import describe, labels
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
+from scenet.solve.speakers import speaker_of
 from scenet.solve.staging import Placement, solve_staging
 from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
@@ -524,7 +525,7 @@ def compile_ir(
     )
     layout = place_script(
         script,
-        posed,
+        {actor: speaker_of(puppet) for actor, puppet in posed.items()},
         frame,
         typeface=family,
         type_size=panel.lettering.size,

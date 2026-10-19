@@ -29,10 +29,10 @@ from shapely.geometry import MultiPoint, Polygon, box
 from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry.base import BaseGeometry
 
-from scenet.assets.kinematics import ResolvedPuppet
 from scenet.errors import SfxPlacementError
 from scenet.geom import BBox, Point
 from scenet.ir import Face, PlacementZone, SfxEvent, SfxSize
+from scenet.solve.speakers import NOBODY, Bystanders, Speaker
 from scenet.solve.text import FontMetrics, Typeface
 
 __all__ = [
@@ -233,10 +233,14 @@ def layout_effect(event: SfxEvent, *, dialogue_size: float, typeface: Typeface) 
     )
 
 
-def _source_point(actor: ResolvedPuppet) -> tuple[Point, float]:
-    """Where a sound from this actor comes from, and how far around it to look."""
-    xs = [point.x for point in actor.hull]
-    ys = [point.y for point in actor.hull]
+def _source_point(actor: Speaker) -> tuple[Point, float]:
+    """Where a sound from this actor comes from, and how far around it to look.
+
+    From the middle of their silhouette, or of their face for a figure a picture draws
+    with no body declared.
+    """
+    xs = [point.x for point in actor.outline]
+    ys = [point.y for point in actor.outline]
     centre = Point((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)
     return centre, math.hypot(max(xs) - min(xs), max(ys) - min(ys)) / 2
 
@@ -246,7 +250,7 @@ def _zone_point(zone: PlacementZone, panel: BBox) -> Point:
     return Point(panel.x + panel.width * across, panel.y + panel.height * down)
 
 
-def _candidates(event: SfxEvent, actors: Mapping[str, ResolvedPuppet], panel: BBox) -> list[Point]:
+def _candidates(event: SfxEvent, actors: Mapping[str, Speaker], panel: BBox) -> list[Point]:
     """Where an effect's centre is worth trying, in a fixed order.
 
     Around the source first, then around the point it prefers -- or the panel's middle --
@@ -284,10 +288,11 @@ def _cost(
     zone: Polygon,
     event: SfxEvent,
     *,
-    actors: Mapping[str, ResolvedPuppet],
+    actors: Mapping[str, Speaker],
     hulls: Mapping[str, Polygon],
     panel: BBox,
     marks: Sequence[BaseGeometry],
+    bystanders: Bystanders = NOBODY,
 ) -> float:
     """How poor a position is. Lower is better; legality is decided elsewhere."""
     diagonal = math.hypot(panel.width, panel.height)
@@ -304,6 +309,8 @@ def _cost(
     for actor_id in sorted(hulls):
         if actor_id != event.source:
             cost += W_COVER * zone.intersection(hulls[actor_id]).area / area
+    for body in bystanders.bodies:
+        cost += W_COVER * zone.intersection(body).area / area
     for shape in marks:
         cost += W_MARKS * zone.intersection(shape).area / area
     return cost
@@ -312,7 +319,7 @@ def _cost(
 def place_effects(
     events: Sequence[tuple[int, SfxEvent]],
     *,
-    actors: Mapping[str, ResolvedPuppet],
+    actors: Mapping[str, Speaker],
     hulls: Mapping[str, Polygon],
     panel: BBox,
     dialogue_size: float,
@@ -320,12 +327,13 @@ def place_effects(
     marks: Sequence[BaseGeometry] = (),
     blocked: Sequence[BBox] = (),
     inside: Polygon | None = None,
+    bystanders: Bystanders = NOBODY,
 ) -> tuple[PlacedEffect, ...]:
     """Place every sound effect, in script order, before any balloon is placed.
 
     Args:
         events: Each effect with its index in the script, which is its reading order.
-        actors: Resolved figures, by actor id.
+        actors: The cast, as lettering sees them, by actor id.
         hulls: Their silhouettes, by actor id.
         panel: The rectangle effects stay inside, margins applied.
         dialogue_size: The dialogue type size, which effect sizes are multiples of.
@@ -334,6 +342,8 @@ def place_effects(
         blocked: Areas drawn over the panel, such as insets.
         inside: The shape every effect must lie within, for a panel that is not a
             rectangle.
+        bystanders: Figures a picture draws that nobody cast: their faces are as
+            forbidden as a cast member's, and their bodies cost as much.
 
     Returns:
         The effects, placed.
@@ -343,7 +353,8 @@ def place_effects(
     """
     frame = box(panel.x, panel.y, panel.right, panel.bottom)
     faces = [
-        (ShapelyPoint(actor.face.cx, actor.face.cy), actor.face.r) for actor in actors.values()
+        (ShapelyPoint(face.cx, face.cy), face.r)
+        for face in (*(actor.face for actor in actors.values()), *bystanders.faces)
     ]
     covers = [box(area.x, area.y, area.right, area.bottom) for area in blocked]
 
@@ -365,7 +376,15 @@ def place_effects(
             zone = affinity.translate(shape.footprint, point.x, point.y)
             if not legal(zone):
                 continue
-            cost = _cost(zone, event, actors=actors, hulls=hulls, panel=panel, marks=marks)
+            cost = _cost(
+                zone,
+                event,
+                actors=actors,
+                hulls=hulls,
+                panel=panel,
+                marks=marks,
+                bystanders=bystanders,
+            )
             if best is None or cost < best[0]:
                 best = (cost, point, zone)
         if best is None:
