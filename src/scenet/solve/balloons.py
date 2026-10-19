@@ -524,6 +524,7 @@ def _score(
     candidate: BBox,
     *,
     speaker: ResolvedPuppet,
+    speaker_id: str,
     actors: dict[str, ResolvedPuppet],
     hulls: dict[str, Polygon],
     panel: BBox,
@@ -533,11 +534,15 @@ def _score(
     emanata: Sequence[BaseGeometry] = (),
     limits: _Limits = _NO_LIMITS,
 ) -> float:
-    """Cost of putting a balloon here. Lower is better; infinity means illegal."""
+    """Cost of putting a balloon here. Lower is better; infinity means illegal.
+
+    `speaker_id` is the actor id the cast and `hulls` are keyed by -- never the puppet's
+    name, which is another namespace: `ALICE: {reference: alice}` is spoken by `ALICE`.
+    """
     if not _is_legal(candidate, actors, panel, placed, limits):
         return math.inf
 
-    cost = _occlusion_cost(candidate, hulls, speaker.name) + _mass_cost(candidate, masses)
+    cost = _occlusion_cost(candidate, hulls, speaker_id) + _mass_cost(candidate, masses)
     cost += _emanata_cost(candidate, emanata)
 
     diagonal = math.hypot(panel.width, panel.height)
@@ -983,6 +988,7 @@ def _place_balloon(
         cost = _score(
             candidate,
             speaker=speaker,
+            speaker_id=event.by,
             actors=actors,
             hulls=hulls,
             panel=panel,

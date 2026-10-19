@@ -25,6 +25,11 @@ below 1.0 means.
   `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
   still valid and writes back byte for byte, but golden Core files of your own will need
   regenerating once. 0.11 refuses the new keys.
+- **A balloon over its own speaker's body costs what it always should have** when the actor id
+  is not the puppet's name (`ALICE: {reference: alice}`, `carol: {reference: alice}`). Such a
+  speaker was charged as a bystander, so balloons drifted away from them. Three gallery
+  panels letter differently, each balloon now beside its speaker: regenerate golden Cores of
+  your own that cast an actor under another name.
 - **Every SVG's bytes change once**, to carry what a screen reader reads: a `role` and a `<title>`
   per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
   differently and lettering stays outlines. `--no-aria` (`aria=False`) gives back exactly the
@@ -99,6 +104,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A speaker is forgiven a balloon over their own body whatever the actor is called.** The
+  placer half-weights the speaker's silhouette, and looked the speaker up by the puppet's name
+  while the silhouettes are keyed by actor id. An actor called anything but its puppet, which
+  every comic script's capitals are, was charged as a bystander: in the gallery's comic script
+  a line moved to the far corner of the panel behind a tail bent outside it.
 - **A font path with a backslash is refused on every system**, as `font-file`. Windows read
   `fonts\Comic.ttf` as a folder and a file, and every other system as one file name, so the same
   document lettered in its font on one machine and was refused on the next. Write `/` between
