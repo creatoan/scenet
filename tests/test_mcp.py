@@ -42,7 +42,7 @@ from scenet.mcp import (
     validate,
 )
 from scenet.spec_pack import SPEC_PARTS, part
-from tests.images import tiny_png
+from tests.images import contract, tiny_png
 
 TOOLS = {"get_spec", "list_puppets", "validate", "compile", "render"}
 
@@ -631,3 +631,48 @@ class TestFilesBesideTheDocument:
         result = call("validate", {"source": self.PAINTED, "files": files})
         assert result.is_error
         assert "files" in text_of(result)
+
+
+class TestFiguresAPictureDraws:
+    """A cast of figures needs its picture's artwork contract, which comes in `files` (#71)."""
+
+    SOURCE = (
+        "cast: {ana: {figure: ana}}\nsetting: {image: art/p.png}\n"
+        "script: [{say: {by: ana, text: Hello.}}]\n"
+    )
+
+    def _files(self, size: tuple[int, int] = (3, 2)) -> dict[str, str]:
+        ana = {"face": {"center": [1, 1], "radius": 0.5}, "mouth": [1, 1.5]}
+        return {
+            "art/p.png": base64.b64encode(tiny_png()).decode("ascii"),
+            "art/p.art.yaml": base64.b64encode(contract(size, {"ana": ana})).decode("ascii"),
+        }
+
+    def test_with_the_contract_it_is_valid_and_compiles(self):
+        files = self._files()
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE, "files": files})))
+        assert report["valid"] is True
+        result = call("compile", {"source": self.SOURCE, "files": files})
+        core = json.loads(text_of(result))["panels"][0]["core"]
+        assert core["figures"][0]["actor"] == "ana"
+
+    def test_without_it_the_finding_is_at_the_line_naming_the_picture(self):
+        files = self._files()
+        del files["art/p.art.yaml"]
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE, "files": files})))
+        (finding,) = report["findings"]
+        assert finding["rule"] == "scenet/artwork-contract"
+        assert finding["line"] == 2
+        assert "art/p.art.yaml" in finding["message"]
+
+    def test_a_fault_inside_it_names_its_line_in_the_message(self):
+        files = self._files(size=(6, 4))
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE, "files": files})))
+        (finding,) = report["findings"]
+        assert finding["line"] == 2
+        assert "'art/p.art.yaml', line 1" in finding["message"]
+
+    def test_the_spec_pack_says_where_figures_come_from(self):
+        characters = text_of(call("get_spec", {"section": "characters"}))
+        assert "figure: <name>" in characters
+        assert "art/p01.art.yaml" in characters

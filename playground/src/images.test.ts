@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { IMAGE_FOLDER, declaredImagePath, imageFileName } from "./images.ts";
+import { CONTRACT_SUFFIX, IMAGE_FOLDER, declaredImagePath, imageFileName, isContract } from "./images.ts";
 
 test("a picture keeps its own name, so the document can name it as the author sees it", () => {
   assert.equal(imageFileName("p01-street.png"), "p01-street.png");
@@ -24,6 +24,22 @@ test("anything that is not a PNG or a JPEG is refused", () => {
   assert.equal(imageFileName("street.svg"), null);
   assert.equal(imageFileName(".png"), null);
   assert.equal(imageFileName(""), null);
+});
+
+test("an artwork contract is added beside its picture, and pairs with it by name", () => {
+  assert.equal(imageFileName("p01-street.art.yaml"), "p01-street.art.yaml");
+  assert.equal(imageFileName("P01.ART.YAML"), `P01${CONTRACT_SUFFIX}`);
+  // Cleaned exactly as its picture is, so the two still pair.
+  assert.equal(imageFileName("My street.art.yaml"), "My-street.art.yaml");
+  assert.equal(imageFileName("My street.png"), "My-street.png");
+  assert.ok(isContract("art/p01.art.yaml"));
+  assert.ok(!isContract("art/p01.png"));
+});
+
+test("a YAML file that is not a contract is refused", () => {
+  assert.equal(imageFileName("street.yaml"), null);
+  assert.equal(imageFileName("street.panel.yaml"), null);
+  assert.equal(imageFileName(".art.yaml"), null);
 });
 
 test("an added picture is named relative to the document, as one beside it would be", () => {
