@@ -168,7 +168,9 @@ A document that names a file — a [picture to letter over](letter_over_your_own
 lettering face — goes with it: the tools take `files`, the file's bytes in base64 by the path the
 document writes, and never read a folder of the server's. A client with file access, such as an
 agent in your project, reads the picture and sends it; a model that only sees an image in a chat
-cannot, since it cannot reproduce the file's bytes.
+cannot, since it cannot reproduce the file's bytes. To letter the people a picture already draws,
+the client sends the picture's artwork contract too — see
+[Letter the people in your own art](letter_the_figures_in_your_art.md#over-mcp).
 
 ## An API with structured output
 

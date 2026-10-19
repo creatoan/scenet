@@ -34,6 +34,10 @@ from a scene's defaults leaves it out with `place: null` beside its image.
 
 The compiler reads the picture's size and nothing else. It does not know there is a doorway in
 it, so it will happily put a balloon there — the panel's own figures are what balloons avoid.
+When the people are in the picture, see
+[Letter the people in your own art](letter_the_figures_in_your_art.md): a contract beside the
+picture says where each face and mouth is, and keep-out regions mark what lettering should stay
+off.
 
 ## Build it
 

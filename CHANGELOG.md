@@ -98,6 +98,10 @@ below 1.0 means.
   platform painted by `scripts/make_gallery_figures.py`, with its artwork contract written from
   the same constants, lettered under `cover` and `contain`. Two of its three people are cast,
   the third is kept clear of all the same, and its timetable board is a keep-out.
+- **Contracts travel with their picture.** The playground's Image… button adds a picture's
+  `.art.yaml` beside it, cleaned to the same name so the two pair; the MCP server takes it in
+  `files`, its instructions and `get_spec`'s characters part say so, and the spec pack prints
+  the gallery's contract. Still five tools. A how-to, *Letter the people in your own art*.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

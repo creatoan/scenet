@@ -1666,6 +1666,10 @@ The puppets shipped with Scenet. A cast member's `reference` names one of these,
 
 One puppet may appear several times in a panel under different actor ids. Your own puppets are described in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html).
 
+## Figures a picture draws
+
+A cast member may instead be `figure: <name>`: somebody a supplied picture (`setting.image`) already draws. No tool lists them, because they are not Scenet's: the names are those the picture's artwork contract declares, in the `*.art.yaml` beside it and named after it (`art/p01.png` has `art/p01.art.yaml`). Over MCP, send the contract in `files` with the picture. A figure takes no `pose`, `expression`, `marks`, `at` or `facing`, no staging names it, and a panel whose cast is all figures has no `camera`; a cast does not mix figures and puppets. See [the artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) and the gallery's `35-figures.scene.yaml`.
+
 <!-- scenet-spec:part=diagnostics -->
 # Diagnostics
 

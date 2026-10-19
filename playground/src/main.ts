@@ -25,7 +25,7 @@ import {
 import { exampleFiles } from "./examples";
 import { download, sourceFilename, stemFor, svgBlob, svgToPng, textBlob } from "./export";
 import { declaredPath, fontFileName } from "./fonts";
-import { declaredImagePath, imageFileName } from "./images";
+import { declaredImagePath, imageFileName, isContract } from "./images";
 import {
   browserStore,
   clearDraft,
@@ -653,13 +653,20 @@ async function main(): Promise<void> {
     }
     imageInput.value = "";
     if (added.length === 0) {
-      setStatus("A picture must be a .png or .jpg file.");
+      setStatus("A picture must be a .png or .jpg file, and its artwork contract a .art.yaml.");
       return;
     }
     await compileNow();
+    const picture = added.find((path) => !isContract(path));
+    const contract = added.find((path) => isContract(path));
+    const how =
+      picture !== undefined
+        ? `Letter over it with setting: {image: ${picture}}.`
+        : `Its picture goes beside it, named after it; cast its figures with figure:.`;
     setStatus(
-      `Added ${added.join(", ")}. Letter over it with setting: {image: ${added[0]}}. ` +
-        "Pictures stay in this tab only: a reload or a share link does not keep them.",
+      `Added ${added.join(", ")}. ${how}` +
+        (picture !== undefined && contract !== undefined ? " Cast its figures with figure:." : "") +
+        " Pictures stay in this tab only: a reload or a share link does not keep them.",
     );
   };
   addImageButton.addEventListener("click", () => imageInput.click());

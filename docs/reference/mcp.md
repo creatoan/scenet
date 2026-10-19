@@ -38,7 +38,10 @@ the network, or answers differently on a second call. A client can run them with
   never reads, and are read in memory, so nothing is written to the server's disk. A path is held
   to a document's own rules — relative, `/` between folders — and a value that is not base64 is a
   tool error naming it. Left out, a document that names a file gets `image-file` or `font-file`,
-  as text with no folder does anywhere.
+  as text with no folder does anywhere. A cast of [figures a picture draws](language.md#figures-the-picture-draws)
+  also needs the picture's artwork contract, beside it and named after it —
+  `{"art/p01.png": "…", "art/p01.art.yaml": "…"}`; without it the finding is `artwork-contract`,
+  at the line naming the picture.
 
 `syntax`
 : `yaml` (default) for a `*.panel.yaml` or `*.scene.yaml` document — a top-level `panels:` key
@@ -106,7 +109,9 @@ dependencies for one tool.
 On connecting, the server sends instructions that many hosts hand straight to the model. They
 say what to do rather than what the server is: read `get_spec` first, cast only what
 `list_puppets` lists, validate until clean, and pass text rather than paths — with the bytes
-of any picture or font the document names in `files`.
+of any picture or font the document names in `files`, and of the artwork contract beside a
+picture whose figures the cast names. Figures have no tool of their own, which keeps the server at
+five: their names are the contract's, and `get_spec`'s characters part says where they come from.
 
 ## Keeping stdout clean
 
