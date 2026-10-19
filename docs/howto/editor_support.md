@@ -20,7 +20,9 @@ cast:
   alice: {reference: alice}
 ```
 
-For a multi-panel document use `scene.schema.json` instead.
+For a multi-panel document use `scene.schema.json` instead, and for an
+[artwork contract](../reference/asset_contract.md#artwork-contracts) — the `*.art.yaml` beside a
+picture, declaring the figures it draws — `artwork.schema.json`.
 
 That URL always serves the schema of the **latest release**. To validate against the release
 you have installed instead, put its minor version in the path — each release's schemas stay
@@ -52,8 +54,8 @@ A small extension bundles the same schemas plus a side-by-side preview:
 
 It contributes:
 
-- Schema association for `*.panel.yaml` and `*.scene.yaml`, so no `$schema` comment is
-  needed.
+- Schema association for `*.panel.yaml`, `*.scene.yaml` and `*.art.yaml`, so no `$schema`
+  comment is needed.
 - **Highlighting for `.script` comic scripts**, the same as the playground's: page and
   panel headings in Dark Horse's layout and in French, `@` directives, captions and
   `CAP/NAME`, sound effects, cues and their parentheticals, balloon numbers, dialogue

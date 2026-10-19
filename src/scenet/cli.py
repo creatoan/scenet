@@ -17,7 +17,7 @@ from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.pipeline import FRONTENDS, Book, compile_book_file
-from scenet.schema import panel_schema, scene_schema
+from scenet.schema import artwork_schema, panel_schema, scene_schema
 
 DESCRIPTION = "Compile a semantic comic-panel description into SVG."
 
@@ -164,10 +164,16 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     schema.add_argument("-o", "--output", type=Path, help="write to a file instead of stdout")
-    schema.add_argument(
+    which = schema.add_mutually_exclusive_group()
+    which.add_argument(
         "--scene",
         action="store_true",
         help="emit the multi-panel scene schema instead of the single-panel one",
+    )
+    which.add_argument(
+        "--artwork",
+        action="store_true",
+        help="emit the schema for an artwork contract, the *.art.yaml beside a picture",
     )
 
     mcp = subcommands.add_parser(
@@ -567,7 +573,8 @@ def run_schema(args: argparse.Namespace) -> int:
     """
     if _refuse_directory(args.output):
         return 2
-    schema = scene_schema() if args.scene else panel_schema()
+    which = "artwork" if args.artwork else "scene" if args.scene else "panel"
+    schema = {"panel": panel_schema, "scene": scene_schema, "artwork": artwork_schema}[which]()
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if args.output is None:
         _print_document(document)

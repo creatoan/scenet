@@ -138,7 +138,7 @@ def compose(out: Path, *, dev: bool) -> None:
 
     schemas = out / "schemas"
     schemas.mkdir(parents=True, exist_ok=True)
-    for name in ("panel.schema.json", "scene.schema.json"):
+    for name in ("panel.schema.json", "scene.schema.json", "artwork.schema.json"):
         shutil.copyfile(SCHEMAS / name, schemas / name)
 
     # Generated fresh from the sources rather than copied from the committed spec pack,

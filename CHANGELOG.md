@@ -68,6 +68,16 @@ below 1.0 means.
 - **The playground's Image… button** adds a `.png` or `.jpg` to the document's `art/` folder,
   for as long as the tab is open, and the preview and every download embed it. The VS Code
   preview embeds pictures too, since it is not drawn beside the document.
+- **An artwork contract** declares the figures a supplied picture draws (#71): beside
+  `art/p01.png`, `art/p01.art.yaml` gives each figure's `face` (a disc lettering may not
+  cover), `mouth` (where a tail ends) and `body`, and `keep_out` regions lettering should stay
+  off, all in the picture's own pixels, with the `size` they were measured on.
+  `scenet schema --artwork` emits its JSON Schema, which the VS Code extension associates with
+  `*.art.yaml` and the documentation site publishes beside the others. Panel Core records what a
+  contract declares, mapped into the panel through the picture's fit: `figures`, beside
+  `actors`, and the picture's `keep_out`. Both are left out when empty, so every Core reads and
+  writes as before and `format_version` stays 1; the debug overlay draws each figure's face,
+  mouth and body, and each keep-out.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

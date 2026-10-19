@@ -10,7 +10,7 @@ different path-rounding convention produces a huge diff that means nothing.
 """
 
 import json
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, Literal, NamedTuple, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, Tag, model_validator
 from pydantic.json_schema import SkipJsonSchema
@@ -340,6 +340,9 @@ class CoreImage(CoreModel):
         box: Where the picture is drawn, in panel units: centred, larger than the panel
             under `cover` and cropped by it, inside it under `contain`. Change it and
             the picture moves.
+        keep_out: The regions of the picture its artwork contract asks lettering to stay
+            off (#71), in panel units: what balloons, captions and sound effects paid to
+            cover, and were never forbidden to. Left out of the JSON when there are none.
     """
 
     href: Annotated[str, AfterValidator(_relative)]
@@ -349,6 +352,7 @@ class CoreImage(CoreModel):
     fit: Fit
     preserve_aspect_ratio: Literal["xMidYMid slice", "xMidYMid meet"]
     box: Box
+    keep_out: tuple[tuple[tuple[float, float], ...], ...] = ()
 
 
 class CoreBackdrop(CoreModel):
@@ -445,6 +449,39 @@ class CoreActor(CoreModel):
         xs = [x for x, _ in self.hull]
         ys = [y for _, y in self.hull]
         return BBox(min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys))
+
+
+class CoreFigure(CoreModel):
+    """A figure a supplied picture draws, as its artwork contract declares it (#71).
+
+    Not a :class:`CoreActor <scenet.core.CoreActor>`: nobody posed it, so it has no
+    transform, no skeleton and nothing to draw -- the picture draws it. What is here is
+    what lettering worked around, in panel units, mapped from the picture's pixels through
+    the same fit as the picture's `box`.
+
+    Attributes:
+        figure: Its name in the contract.
+        actor: The cast member it plays, or None for a figure nobody cast -- whose face
+            lettering kept clear of just the same. Left out of the JSON when None.
+        face_exclusion: The disc no balloon, caption or sound effect may overlap.
+        mouth: Where a tail it speaks aims, if the contract declares one; otherwise the
+            face's centre. Left out of the JSON when None.
+        body: Its silhouette, which lettering paid to cover. Left out of the JSON when
+            the contract declares none.
+    """
+
+    figure: SvgText
+    face_exclusion: Disc
+    actor: SvgText | None = None
+    mouth: tuple[float, float] | None = None
+    body: tuple[tuple[float, float], ...] = ()
+
+
+class Speaking(NamedTuple):
+    """Somebody a balloon points at, in a Core: the face, and where its tail aims."""
+
+    face: Disc
+    mouth: tuple[float, float]
 
 
 class Tail(CoreModel):
@@ -726,6 +763,9 @@ class PanelCore(CoreModel):
         description: What the panel shows, in words, for a reader who cannot see it: the
             author's, or generated from what it holds. With the labels in `order`, it is
             what accessible output reads. Left out of the JSON when unset.
+        figures: The figures a supplied picture draws, as its artwork contract declares
+            them (#71), whether cast or not. Left out of the JSON when there are none, so
+            every panel without them reads and writes as it always did.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -754,11 +794,48 @@ class PanelCore(CoreModel):
     fonts: dict[Face, CoreFont] = Field(default_factory=dict)
     sfx: tuple[CoreSfx, ...] = ()
     description: SvgText | None = None
+    figures: tuple[CoreFigure, ...] = ()
 
     @property
     def bounds(self) -> BBox:
         """The panel rectangle, origin at `(0, 0)`."""
         return BBox(0.0, 0.0, self.width, self.height)
+
+    def face_exclusions(self) -> tuple[Disc, ...]:
+        """Every face lettering kept clear of: the actors', then the figures'.
+
+        Example:
+            >>> from scenet import compile_source
+            >>> len(compile_source("{cast: {a: {reference: alice}}}").core.face_exclusions())
+            1
+        """
+        return (
+            *(actor.face_exclusion for actor in self.actors),
+            *(figure.face_exclusion for figure in self.figures),
+        )
+
+    def speaker(self, actor_id: str) -> Speaking:
+        """Who speaks a balloon, wherever they are drawn: a puppet, or a figure a picture draws.
+
+        Args:
+            actor_id: The id a balloon names as its `speaker`.
+
+        Returns:
+            Their face, and where a tail to them aims: the mouth, or the face's centre
+            when there is none.
+
+        Raises:
+            KeyError: Nobody in this panel plays that part.
+        """
+        for actor in self.actors:
+            if actor.id == actor_id:
+                face = actor.face_exclusion
+                return Speaking(face, actor.anchors.get("mouth", (face.cx, face.cy)))
+        for figure in self.figures:
+            if figure.actor == actor_id:
+                face = figure.face_exclusion
+                return Speaking(face, figure.mouth or (face.cx, face.cy))
+        raise KeyError(f"nobody in panel plays '{actor_id}'")
 
     def actor(self, actor_id: str) -> CoreActor:
         """Look up one actor by id.
@@ -785,11 +862,23 @@ class PanelCore(CoreModel):
         file well-formed for line-oriented tools like git diff.
         """
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, exclusions=(), outline=None, fonts={}, sfx=(), description=None)
+        _drop_unused(
+            payload,
+            exclusions=(),
+            outline=None,
+            fonts={},
+            sfx=(),
+            description=None,
+            figures=(),
+        )
+        for figure in payload.get("figures", []):
+            _drop_unused(figure, actor=None, mouth=None, body=())
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=(), label=None)
         if payload.get("backdrop") is not None:
             _drop_unused(payload["backdrop"], horizon=None, image=None)
+            if payload["backdrop"].get("image") is not None:
+                _drop_unused(payload["backdrop"]["image"], keep_out=())
         for effect in payload.get("sfx", []):
             _drop_unused(effect, label=None)
         for balloon in payload["balloons"]:
@@ -943,6 +1032,7 @@ __all__ = [
     "CoreBackdrop",
     "CoreBalloon",
     "CoreCaption",
+    "CoreFigure",
     "CoreFont",
     "CoreFrame",
     "CoreGlyph",
@@ -957,6 +1047,7 @@ __all__ = [
     "FaceStroke",
     "PageCore",
     "PanelCore",
+    "Speaking",
     "Tail",
     "Transform",
     "point_pair",

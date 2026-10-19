@@ -190,6 +190,44 @@ words, recorded so the emitter copies it. A backdrop of masses has no `image` ke
 written before pictures existed reads and writes byte for byte as it did, so neither `image` nor a
 missing `horizon` needed a `format_version` bump.
 
+A picture that draws its own people has an [artwork contract](asset_contract.md#artwork-contracts)
+beside it, and what the contract declares is recorded here in the panel's units, mapped from the
+picture's pixels through the same fit as `box`. The people are `figures`, beside `actors`; the
+regions to stay off are the picture's `keep_out`.
+
+```json
+"figures": [
+  {
+    "figure": "ana",
+    "actor": "ana",
+    "face_exclusion": { "cx": 413.33, "cy": 103.33, "r": 50.0 },
+    "mouth": [423.33, 133.33],
+    "body": [[350.0, 73.33], [483.33, 73.33], [500.0, 566.67], [333.33, 566.67]]
+  },
+  { "figure": "ben", "face_exclusion": { "cx": 736.67, "cy": 93.33, "r": 46.67 } }
+],
+"backdrop": {
+  "image": {
+    "...": "...",
+    "keep_out": [[[133.33, 300.0], [300.0, 300.0], [300.0, 466.67], [133.33, 466.67]]]
+  }
+}
+```
+
+A figure is not an actor: nobody posed it, so it has no transform, no skeleton and nothing to
+draw — the picture draws it, and an emitter draws nothing for it. What it has is what lettering
+worked around. `figure` is its name in the contract; `actor` is the cast member it plays, which a
+balloon's `speaker` and a sound effect's `source` name, and is left out for a figure nobody cast,
+whose face lettering kept clear of just the same. `mouth` is where a tail to it aims, left out when
+the contract declares none, so a tail aims at the face's centre; `body` is left out when it declares
+none. `keep_out` holds what balloons, captions and sound effects paid to cover and were never
+forbidden to. They are resolved numbers, like everything here: change `box` by hand and the picture
+moves, and the figures stay where they were resolved.
+
+A panel with no figures has no `figures` key, and a picture with no keep-out regions no `keep_out`,
+so every Core written before them reads and writes byte for byte as it did, and neither needed a
+`format_version` bump.
+
 An actor with `marks` carries three more fields. `marks` names what was asked for; `emanata` is the
 drawing, in the same `stroke` and `disc` primitives as `face_marks`, with ids numbered per mark
 (`plewd_0`, `plewd_1`, ...); and `emanata_zones` holds one polygon per mark, which is what balloon and

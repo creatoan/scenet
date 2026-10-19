@@ -486,9 +486,30 @@ rules first, then a cost.
 
 Taken: the problem as it states it — the picture is given, and lettering is what is placed — and the
 confirmation that a placer needs to know where the speakers are, not what the picture shows. With a
-supplied picture behind Scenet's own figures (#70), the figures carry that geometry already; a
-contract declaring it for figures the artwork draws is #71. Not taken: finding the actors in the
-frame. Positions here come from the document, never from looking at pixels.
+supplied picture behind Scenet's own figures (#70), the figures carry that geometry already. For
+figures the artwork draws (#71), an [artwork contract](../reference/asset_contract.md#artwork-contracts)
+beside the picture declares it: each face, mouth and body, measured once, committed and reviewed,
+and read by the same placer as a puppet's. Not taken: finding the actors in the frame. Chun et al.
+take positions from the film; here they come from a file the author commits, never from looking at
+pixels — which is what keeps a compile deterministic and a layout explicable.
+
+### Manga109, the vocabulary of the artwork contract
+
+[*Building a Manga Dataset "Manga109" with Annotations for Multimedia Applications*](https://arxiv.org/abs/2005.04425)
+— Aizawa, Fujimoto, Otsubo, Ogawa, Matsui, Tsubota & Ikuta, IEEE MultiMedia 27(2), 2020
+
+Over 500,000 annotations on 21,142 pages of 109 volumes: for each page, boxes for frames, text,
+character **faces** and character **bodies**, each character with an identity: a record, at
+scale, of what is drawn where on a comic page.
+
+Taken: the vocabulary. What an [artwork contract](../reference/asset_contract.md#artwork-contracts)
+declares about each figure is what Manga109 annotates — a face and a body, under a name — because
+those are exactly the two things a balloon placer must avoid, and a field-tested split beats an
+invented one. Added: the **mouth**, which Manga109 does not record and a letterer needs, since a tail
+"should point to the mouth (or whatever the source of the sound is)" (Comicraft's glossary). Not
+taken: boxes. A face is a disc here, as a puppet's is, because a tail stops on its edge and a disc
+has one; a body may be any simple polygon. Not taken either: the text boxes, which are what Scenet
+places rather than what it is given.
 
 ### `<image>` in SVG renderers and editors
 
@@ -525,6 +546,24 @@ canopy silhouette, foliage with individual limbs. Nothing in the current backdro
 are read as values, and a mass has no branches. It becomes interesting if props ever want to be
 drawn rather than massed.
 
+### Magi, a helper that could propose a contract
+
+[*The Manga Whisperer: Automatically Generating Transcriptions for Comics*](https://arxiv.org/abs/2401.10224)
+— Sachdeva & Zisserman, CVPR 2024
+
+A single model that detects panels, text and characters on a manga page, clusters the characters by
+identity, links each line of text to whoever speaks it, and orders the text — to make manga
+readable to people who cannot see it.
+
+What it would be here: a **helper** that proposes an artwork contract from a picture — faces, bodies,
+and who is who — for an author to correct and commit. Never a compiler pass: a detector inside the
+compiler would make output depend on a model's version and a platform, could not run in the
+playground, and would put a large dependency through the licence gate. The contract on disk stays
+the source of truth, reviewed like any other file, and the compile stays deterministic. Not built:
+a contract is a handful of numbers, the debug overlay is its check, and a detector trained on
+manga pages, or MediaPipe's trained on photographs, would still need every one of them checked by
+eye.
+
 ## Examined and not reusable
 
 | Source | Why not |
@@ -533,7 +572,7 @@ drawn rather than massed.
 | **Graphviz / DOT** | Useful only as a debug dump of the scene graph. Graph layout optimises for edge crossings and hierarchy, which has nothing to do with pictorial composition. A dead end as a layout engine. |
 | **POV-Ray SDL** | A CSG raytracer scene language. Historically interesting as an early declarative scene description, but nothing transfers. |
 | **D3.js** | A DOM data-binding library rather than a layout engine, and this project is Python. Its underlying idea is already covered by Vega-Lite. |
-| **[MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)** | 478 3-D landmarks. A *detection output*, not a notation: 478 points is a measurement of a face, and a drawn face has nothing like that much detail to place. Its landmark indices are useful as a **mapping target**, and are recorded as one in the asset contract. |
+| **[MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)** | 478 3-D landmarks. A *detection output*, not a notation: 478 points is a measurement of a face, and a drawn face has nothing like that much detail to place. Its landmark indices are useful as a **mapping target**, and are recorded as one in the asset contract. Its face *detector* could propose the faces of an artwork contract, from a helper outside the compiler and never as a dependency of it; see [Magi](#magi-a-helper-that-could-propose-a-contract). |
 | **ARKit / MediaPipe blendshapes** | 52 continuous coefficients that "loosely correspond to FACS Action Units". Continuous blending is the wrong model for comics, which use a small set of conventionalised glyphs rather than interpolations between them. |
 | **[FACS](https://www.sciencedirect.com/topics/computer-science/facial-action-coding-system)** | Codes anatomical muscle actions for *observation*, is continuous, and is documented as weak on the lower face. Wrong direction, wrong granularity. |
 | **A-star pathfinding for balloon tails** | Frequently suggested, and wrong. A tail is a short tapered stroke from balloon rim to mouth; grid-based A-star produces jagged paths that look nothing like drawn tails. A straight tail with a collision test, bending to a single-control-point Bézier only when obstructed, is both simpler and better. |

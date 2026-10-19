@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "ArtworkFace": {
+      "additionalProperties": false,
+      "description": "A face, as a disc no lettering may cover.\n\nAttributes:\n    center: Its centre, in the picture's pixels.\n    radius: How far it reaches, in pixels. Generous is safer than tight: a balloon may\n        not overlap this disc at all, and a tail stops on its edge.",
+      "properties": {
+        "center": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        },
+        "radius": {
+          "exclusiveMinimum": 0,
+          "title": "Radius",
+          "type": "number"
+        }
+      },
+      "required": [
+        "center",
+        "radius"
+      ],
+      "title": "ArtworkFace",
+      "type": "object"
+    },
+    "ArtworkFigure": {
+      "additionalProperties": false,
+      "description": "One figure the picture draws.\n\nAttributes:\n    face: The disc no balloon, caption or sound effect may cover.\n    mouth: Where the tail of a line they speak ends -- or whatever the sound comes\n        from. Without one, a tail aims at the face's centre, and stops on its edge.\n    body: The silhouette a balloon pays to cover, as a polygon, or `None`. Covering a\n        speaker's own body costs half, as covering a puppet's does.",
+      "properties": {
+        "body": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              "minItems": 3,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body"
+        },
+        "face": {
+          "$ref": "#/$defs/ArtworkFace"
+        },
+        "mouth": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mouth"
+        }
+      },
+      "required": [
+        "face"
+      ],
+      "title": "ArtworkFigure",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Everything the solver may know about a supplied picture's content.\n\nAttributes:\n    size: The picture's size in pixels, `[width, height]`, as it was measured. It must\n        be the picture's own.\n    figures: Each figure the picture draws, by name. Every face here is kept clear of\n        lettering, whether or not the panel casts that figure.\n    keep_out: Regions lettering should stay off -- a sign, a hand, something the\n        panel is about. A cost, not a rule: a balloon covers one before it fails.",
+  "properties": {
+    "figures": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ArtworkFigure"
+      },
+      "propertyNames": {
+        "minLength": 1
+      },
+      "title": "Figures",
+      "type": "object"
+    },
+    "keep_out": {
+      "default": [],
+      "items": {
+        "items": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        "minItems": 3,
+        "type": "array"
+      },
+      "title": "Keep Out",
+      "type": "array"
+    },
+    "size": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        }
+      ],
+      "title": "Size",
+      "type": "array"
+    }
+  },
+  "required": [
+    "size"
+  ],
+  "title": "Scenet artwork contract",
+  "type": "object"
+}

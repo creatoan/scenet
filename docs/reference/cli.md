@@ -349,7 +349,7 @@ close an import cycle.
 ## `scenet schema`
 
 ```
-scenet schema [-o OUTPUT] [--scene]
+scenet schema [-o OUTPUT] [--scene | --artwork]
 ```
 
 Emits the JSON Schema for a panel document, derived from the same pydantic models the
@@ -365,9 +365,16 @@ the editor suggests cannot drift from what compiles — see
   same keys as a panel — where they act as defaults every panel inherits — plus `panels:`,
   whose members may additionally carry `over:`.
 
+`--artwork`
+: Emit the schema for an [artwork contract](asset_contract.md#artwork-contracts), the
+  `*.art.yaml` file beside a supplied picture that declares the figures it draws. What a
+  schema cannot say — every point on the picture, every region a simple polygon, the size
+  the picture's own — `scenet check` does.
+
 ```bash
 scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
+scenet schema --artwork -o artwork.schema.json
 ```
 
 The output is sorted and indented, so it is stable under version control.

@@ -27,11 +27,12 @@ Example:
 import inspect
 from typing import Any
 
+from scenet.assets.artwork import ArtworkContract
 from scenet.compose import DESCRIPTION_KEY
 from scenet.ir import PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
-__all__ = ["panel_schema", "scene_schema"]
+__all__ = ["artwork_schema", "panel_schema", "scene_schema"]
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -52,6 +53,27 @@ def panel_schema() -> dict[str, Any]:
     _accept_cast_removal(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
+    return schema
+
+
+def artwork_schema() -> dict[str, Any]:
+    """The schema for an artwork contract, a `*.art.yaml` file beside its picture (#71).
+
+    A contract is written as the model reads it, with no conveniences to put back, so
+    this is the model's own schema. What it cannot say -- every point on the picture,
+    every region a simple polygon, the size the picture's own -- `scenet check` does.
+
+    Returns:
+        A JSON Schema (draft 2020-12) for an artwork contract.
+
+    Example:
+        >>> from scenet.schema import artwork_schema
+        >>> sorted(artwork_schema()["properties"])
+        ['figures', 'keep_out', 'size']
+    """
+    schema = ArtworkContract.model_json_schema()
+    schema["$schema"] = DIALECT
+    schema["title"] = "Scenet artwork contract"
     return schema
 
 

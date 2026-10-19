@@ -29,6 +29,16 @@ because their signatures are promised to stay put.
 ```{automodule} scenet.solve.sfx
 ```
 
+## `scenet.solve.speakers`
+
+```{automodule} scenet.solve.speakers
+```
+
+## `scenet.solve.figures`
+
+```{automodule} scenet.solve.figures
+```
+
 ## `scenet.solve.balloons`
 
 ```{automodule} scenet.solve.balloons

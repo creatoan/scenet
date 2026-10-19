@@ -194,6 +194,71 @@ strokes, which are dropped. Below the face's own threshold nothing is drawn: a c
 have a face is too small to be sweating. `scripts/contact_sheet.py --marks` renders every mark across
 the shot ladder, which is where the first threshold was set.
 
+## Artwork contracts
+
+A puppet is drawn by Scenet, so everything the solver needs about it comes from its skeleton. A
+[supplied picture](language.md#an-image-behind-the-cast) may draw its own people, and then the
+solver needs the same things about them — where each face is, where each mouth is, what each body
+covers — without looking at the picture any more than it looks at a puppet. An **artwork contract**
+declares them, once, beside the picture.
+
+```yaml
+# art/p01-street.art.yaml, beside art/p01-street.png
+size: [3000, 2000]            # the picture's own size, in pixels
+figures:
+  ana:
+    face: {center: [1240, 610], radius: 150}   # no lettering may cover this disc
+    mouth: [1270, 700]                         # where a tail ends
+    body: [[1050, 520], [1450, 520], [1500, 2000], [1000, 2000]]   # costly to cover
+  ben:
+    face: {center: [2210, 580], radius: 140}
+keep_out:                     # regions lettering should stay off; a cost, not a rule
+  - [[400, 1200], [900, 1200], [900, 1700], [400, 1700]]
+```
+
+**It sits beside its picture, named after it.** `art/p01-street.png` has its contract at
+`art/p01-street.art.yaml`: the picture's name with its extension replaced. Nothing in a panel names
+the contract, so a panel cannot pair a picture with another picture's measurements, and the two
+travel together. It is read as the picture is — relative to the document's folder, or from the
+files sent with a document — and is read only for a panel whose cast names one of its figures.
+
+**Coordinates are the picture's own pixels**, `x` rightward and `y` downward from its top left
+corner, and `size` says what the contract was measured on. It must be the picture's size, as its
+header gives it, exactly: a contract measured on another export of the same picture would put every
+face somewhere else, so it is refused rather than scaled. Every point lies on the picture, and every
+region — a body, a keep-out — is a simple polygon of three or more corners.
+
+| Key | Meaning |
+|---|---|
+| `size` | `[width, height]` of the picture it was measured on |
+| `figures.<name>.face` | `{center: [x, y], radius: r}`: the disc no balloon, caption or sound effect may cover |
+| `figures.<name>.mouth` | `[x, y]`: where the tail of a line it speaks ends — or whatever the sound comes from. Optional: without it a tail aims at the face's centre |
+| `figures.<name>.body` | A polygon: the silhouette lettering pays to cover. Optional |
+| `keep_out` | Polygons lettering should stay off — a sign, a hand, what the panel is about |
+
+How each one reaches the solver, and the puppet part it stands in for:
+
+| Declared | Treated as | As a puppet's |
+|---|---|---|
+| `face` | A hard exclusion: no box may overlap it, and a tail stops on its edge | face circle |
+| `mouth` | The tail's target | `mouth` anchor |
+| `body` | A cost per area covered, halved for the figure's own balloon | hull |
+| `keep_out` | A cost per area covered, at the weight of emanata, never forbidden | emanata zones |
+
+**Every figure in the contract is in the picture**, whether or not a panel casts it: its face is as
+forbidden as a speaker's, and its body costs as much, never forgiven since nobody speaks from it. A
+crowd of five can be declared and two of them cast.
+
+**What it does not declare** is anything a puppet's contract has for the solver to *choose*: no
+skeleton, no poses, no expressions, no landmarks for the camera to frame by, and no gaze. The artist
+already framed, posed and staged everyone in the picture. The vocabulary is Manga109's — a face and a
+body for each character, with an identity — plus the one thing a letterer needs that Manga109 does
+not record: the mouth. See [prior art](../explanation/prior_art.md#manga109-the-vocabulary-of-the-artwork-contract).
+
+Its schema is `scenet schema --artwork` ([editor support](../howto/editor_support.md) associates it
+with `*.art.yaml`). The geometry goes through the picture's fit, and Panel Core records it in the
+panel's units ([Panel Core](panel_core.md)).
+
 ## Derived at compile time
 
 Forward kinematics resolves the skeleton into, per actor:
@@ -209,6 +274,11 @@ Forward kinematics resolves the skeleton into, per actor:
 | Emanata | Rendering |
 | Emanata zones | Balloon and caption placement (soft cost). Never staging, never the camera |
 | Bounding polygon (hull) | Occlusion cost, inter-actor spacing |
+
+A figure a picture draws is derived from its [artwork contract](#artwork-contracts) instead: each
+point mapped from the picture's pixels into the panel through the picture's fit, the same transform
+that places the picture, so a face lands exactly where the picture draws it under `cover` and
+`contain` alike. Nothing about it is solved for.
 
 Face marks are **not** in the hull. The head blob already is, and the features sit inside it, so a
 drawn face pushing balloons further away would be a bug rather than a refinement.

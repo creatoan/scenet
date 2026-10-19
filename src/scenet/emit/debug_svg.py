@@ -27,6 +27,7 @@ HORIZON = "#c2451f"
 IMAGE = "#2d7d4f"
 INSET = "#5a5a5a"
 SFX = "#d0451b"
+KEEP_OUT = "#8c6d1f"
 
 
 def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
@@ -143,6 +144,8 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
         )
         parts.append("  </g>")
 
+    parts.extend(_picture(core, id_prefix))
+
     for balloon in sorted(core.balloons, key=lambda b: b.order):
         box = balloon.box
         parts.append(
@@ -205,6 +208,58 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         'fill="none" stroke="#111111" stroke-width="4"/>'
     )
+    return parts
+
+
+def _picture(core: PanelCore, id_prefix: str) -> list[str]:
+    """What a picture's artwork contract declares, as the solver saw it (#71).
+
+    Each figure in the actors' colours -- its body as a hull, its face as the dashed disc
+    lettering kept off, its mouth as an anchor -- because to lettering they are the same
+    things. Keep-outs dashed in a colour of their own: a cost, like emanata, never a rule.
+    The picture itself is never drawn here, so these are what is left to see.
+    """
+    parts: list[str] = []
+    image = core.backdrop.image if core.backdrop is not None else None
+    for index, region in enumerate(image.keep_out if image is not None else ()):
+        parts.append(
+            f'  <polygon class="keep-out" points="{_hull_points(region)}" fill="{KEEP_OUT}" '
+            f'fill-opacity="0.12" stroke="{KEEP_OUT}" stroke-width="2" '
+            'stroke-dasharray="4 4"/>'
+        )
+        left = min(x for x, _ in region)
+        top = min(y for _, y in region)
+        parts.append(
+            f'  <text x="{fmt(left + 4)}" y="{fmt(top + 18)}" font-size="15" '
+            f'font-family="monospace" fill="{KEEP_OUT}">keep out {index}</text>'
+        )
+    for figure in core.figures:
+        parts.append(f"  <g id={attr(id_prefix + 'debug-figure-' + figure.figure)}>")
+        if figure.body:
+            parts.append(
+                f'    <polygon points="{_hull_points(figure.body)}" fill="{HULL}" '
+                f'fill-opacity="0.10" stroke="{HULL}" stroke-width="2"/>'
+            )
+        face = figure.face_exclusion
+        parts.append(
+            f'    <circle cx="{fmt(face.cx)}" cy="{fmt(face.cy)}" r="{fmt(face.r)}" '
+            f'fill="{FACE}" fill-opacity="0.12" stroke="{FACE}" stroke-width="2" '
+            'stroke-dasharray="8 6"/>'
+        )
+        if figure.mouth is not None:
+            x, y = figure.mouth
+            parts.append(
+                f'    <circle cx="{fmt(x)}" cy="{fmt(y)}" r="5" fill="{ANCHOR}"/>'
+                f'<text x="{fmt(x + 9)}" y="{fmt(y - 6)}" font-size="15" '
+                f'font-family="monospace" fill="{ANCHOR}">mouth</text>'
+            )
+        cast = f" as {escape(figure.actor)}" if figure.actor is not None else " (not cast)"
+        parts.append(
+            f'    <text x="{fmt(face.cx - face.r)}" y="{fmt(face.cy - face.r - 8)}" '
+            f'font-size="18" font-family="monospace" fill="{HULL}">'
+            f"figure {escape(figure.figure)}{cast}</text>"
+        )
+        parts.append("  </g>")
     return parts
 
 
