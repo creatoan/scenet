@@ -4,6 +4,12 @@
 
 Every rule `scenet check` can report. Each finding carries one of these ids, a message naming the offending construct, and a line and column. The ids are stable across releases.
 
+### `scenet/artwork-contract`
+
+A picture's artwork contract cannot be read. A panel that casts a figure a supplied picture draws reads the picture's artwork contract, beside it and named after it: `art/p01.png` has its contract at `art/p01.art.yaml`. It must be there, and be YAML holding the picture's `size`, its `figures` and its `keep_out` regions, in the picture's own pixels. The size must be the picture's, every point must lie on the picture, and every region must be a simple polygon. A fault inside the contract is reported in it, when the document was checked as a file.
+
+**Fix:** Put the contract beside its picture with the picture's name, measure it on this picture, and check it against `scenet schema --artwork`. The debug overlay (`scenet build --debug`) draws what it declares over the panel.
+
 ### `scenet/balloon-placement`
 
 A balloon or caption has no legal position. Every candidate position covered a face, left the panel, overlapped a box already placed, or would have broken reading order.
@@ -21,6 +27,12 @@ A caption that is not `spoken` names a speaker. `by` names who says an off-panel
 An `over:` chain cannot be resolved. A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
 
 **Fix:** Check the panel name in `over:` and that the chain terminates.
+
+### `scenet/conflicting-cast`
+
+A cast member is a puppet and a figure, or a cast mixes the two. A cast member is a puppet Scenet poses (`reference`) or a figure a supplied picture draws (`figure`), never both. Nobody poses or places a figure, so a puppet's `pose`, `expression`, `marks`, `at` and `facing` do not apply to one. A cast is all puppets or all figures, since staging and the camera would place a puppet over a painted face they cannot see; and one figure is one person, played by one cast member.
+
+**Fix:** Keep `reference` or `figure`. On a member inherited from a scene's defaults, write the other as `null`, and the same for a puppet's keys.
 
 ### `scenet/conflicting-setting`
 
@@ -45,6 +57,12 @@ A key is written twice in one mapping. YAML requires every key in a mapping to b
 Two panels in a comic script have the same name. Panels are named by their PANEL heading, and by their PAGE heading as well when panel numbers start again on each page. Two panels that still share a name -- PANEL 1 twice on one page, or twice with no PAGE heading between them -- cannot both be kept, and dropping one without a word would lose whatever it held.
 
 **Fix:** Number the panels straight through, or put a PAGE heading before each page whose numbering starts again.
+
+### `scenet/figure-staging`
+
+Staging or a camera for figures a picture draws. The artist already framed, placed and staged everybody a picture draws, so a staging relation naming a figure has nothing to place, and a `camera` on a panel whose cast is all figures has nothing to frame: the shot is whatever the picture shows. Either would be a key with no effect, and this language reports slips.
+
+**Fix:** Remove the relation, or the `camera`. On a panel that inherits a camera, write `camera: null`.
 
 ### `scenet/font-file`
 
@@ -159,6 +177,12 @@ Reference to an actor that is not in the cast. Every actor id named in `staging`
 Reference to an expression the character does not have. A cast member's `expression` names one its puppet does not declare. The counterpart of `unknown-pose`: an expression is selected by name exactly as a pose is.
 
 **Fix:** Check the name against the puppet's declared expressions.
+
+### `scenet/unknown-figure`
+
+A figure the panel's picture does not draw. A cast member's `figure` names a figure in the artwork contract of the panel's picture. A panel with no picture has nobody for a figure to be. A figure its picture does not declare is simply not in that panel, as a member written `(OP)` is not; a line spoken by it there, or a sound made by it, is reported, with the figures the picture does draw.
+
+**Fix:** Check the name against the contract's `figures`, name the picture with `setting.image`, or say the line from off panel, leaving the member out of this panel's cast.
 
 ### `scenet/unknown-key`
 

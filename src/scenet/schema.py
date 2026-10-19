@@ -29,7 +29,7 @@ from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
 from scenet.compose import DESCRIPTION_KEY
-from scenet.ir import PageLayout, PanelIR, Predicate
+from scenet.ir import PUPPET_KEYS, PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
 __all__ = ["artwork_schema", "panel_schema", "scene_schema"]
@@ -51,6 +51,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_named_places(definitions)
     _accept_one_font_file(definitions)
     _accept_cast_removal(schema)
+    _puppet_or_figure(definitions)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
     return schema
@@ -134,6 +135,30 @@ def scene_schema() -> dict[str, Any]:
         },
         "additionalProperties": False,
     }
+
+
+def _puppet_or_figure(definitions: dict[str, Any]) -> None:
+    """Mirror `CastMember`'s validators and `_figures_stand_alone`: one of the two, alone.
+
+    The model makes both `reference` and `figure` optional and requires one in a
+    validator, which no schema is generated from. A member names one; never both as
+    values -- `reference: null` beside a figure is how a panel overrides an inherited
+    puppet, as `settle` removes it -- and nothing that poses or places a puppet beside a
+    figure.
+    """
+    member: dict[str, Any] = definitions["CastMember"]
+    member["anyOf"] = [{"required": ["reference"]}, {"required": ["figure"]}]
+    member["not"] = {
+        "required": ["reference", "figure"],
+        "properties": {"reference": {"type": "string"}, "figure": {"type": "string"}},
+    }
+    member["if"] = {"required": ["figure"], "properties": {"figure": {"type": "string"}}}
+    member["then"] = {"properties": {key: {"type": "null"} for key in PUPPET_KEYS}}
+    # `settle` removes a null before anything reads it, so a puppet's key written as null
+    # -- over an inherited puppet that becomes a figure -- is accepted, as it compiles.
+    properties: dict[str, Any] = member["properties"]
+    for key in PUPPET_KEYS:
+        properties[key] = {"anyOf": [properties[key], {"type": "null"}]}
 
 
 def _accept_cast_removal(schema: dict[str, Any]) -> None:

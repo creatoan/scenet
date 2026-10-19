@@ -48,6 +48,13 @@ from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from scenet import __version__
+from scenet.assets.artwork import (
+    CONTRACT_RULE,
+    ContractError,
+    load_contract,
+    pictureless,
+    undrawn,
+)
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.compose import (
     DESCRIPTION_KEY,
@@ -370,6 +377,67 @@ RULES: dict[str, Rule] = {
         help=(
             "Check the path against the document's folder, write it relative to that "
             "folder, or save the picture as a PNG or JPEG with its pixels upright."
+        ),
+    ),
+    "artwork-contract": Rule(
+        summary="A picture's artwork contract cannot be read",
+        description=(
+            "A panel that casts a figure a supplied picture draws reads the picture's "
+            "artwork contract, beside it and named after it: `art/p01.png` has its "
+            "contract at `art/p01.art.yaml`. It must be there, and be YAML holding the "
+            "picture's `size`, its `figures` and its `keep_out` regions, in the picture's "
+            "own pixels. The size must be the picture's, every point must lie on the "
+            "picture, and every region must be a simple polygon. A fault inside the "
+            "contract is reported in it, when the document was checked as a file."
+        ),
+        help=(
+            "Put the contract beside its picture with the picture's name, measure it on "
+            "this picture, and check it against `scenet schema --artwork`. The debug "
+            "overlay (`scenet build --debug`) draws what it declares over the panel."
+        ),
+    ),
+    "unknown-figure": Rule(
+        summary="A figure the panel's picture does not draw",
+        description=(
+            "A cast member's `figure` names a figure in the artwork contract of the "
+            "panel's picture. A panel with no picture has nobody for a figure to be. A "
+            "figure its picture does not declare is simply not in that panel, as a "
+            "member written `(OP)` is not; a line spoken by it there, or a sound made by "
+            "it, is reported, with the figures the picture does draw."
+        ),
+        help=(
+            "Check the name against the contract's `figures`, name the picture with "
+            "`setting.image`, or say the line from off panel, leaving the member out of "
+            "this panel's cast."
+        ),
+    ),
+    "conflicting-cast": Rule(
+        summary="A cast member is a puppet and a figure, or a cast mixes the two",
+        description=(
+            "A cast member is a puppet Scenet poses (`reference`) or a figure a supplied "
+            "picture draws (`figure`), never both. Nobody poses or places a figure, so a "
+            "puppet's `pose`, `expression`, `marks`, `at` and `facing` do not apply to "
+            "one. A cast is all puppets or all figures, since staging and the camera would "
+            "place a puppet over a painted face they cannot see; and one figure is one "
+            "person, played by one cast member."
+        ),
+        help=(
+            "Keep `reference` or `figure`. On a member inherited from a scene's defaults, "
+            "write the other as `null`, and the same for a puppet's keys."
+        ),
+    ),
+    "figure-staging": Rule(
+        summary="Staging or a camera for figures a picture draws",
+        description=(
+            "The artist already framed, placed and staged everybody a picture draws, so a "
+            "staging relation naming a figure has nothing to place, and a `camera` on a "
+            "panel whose cast is all figures has nothing to frame: the shot is whatever "
+            "the picture shows. Either would be a key with no effect, and this language "
+            "reports slips."
+        ),
+        help=(
+            "Remove the relation, or the `camera`. On a panel that inherits a camera, "
+            "write `camera: null`."
         ),
     ),
     "font-file": Rule(
@@ -784,6 +852,77 @@ def _diagnose_setting(
     return []
 
 
+def _diagnose_figures(
+    panel: PanelIR,
+    text: str,
+    source: Path | None,
+    *,
+    prefix: tuple[str | int, ...],
+    base: Folder | None,
+) -> list[Diagnostic]:
+    """Read the contract of the picture a cast of figures is drawn by, and hold it to the cast.
+
+    Part of the cheap pass, as the picture is: reading a contract is not solving a panel.
+    Nothing is reported when the picture itself cannot be read -- `image-file` already
+    says so, and one fault is one finding.
+
+    A fault inside the contract is reported in it when the document was checked as a
+    file, since the file it is in is then one the author can open beside it; checked as
+    text -- the playground, a model over MCP -- it is reported where the picture is named,
+    the line the author can see, with the contract's own line in the message.
+    """
+    if not panel.figures():
+        return []
+    if panel.setting.image is None:
+        return [_located(pictureless(panel), text, source, prefix=prefix)]
+    try:
+        image = load_image(panel.setting.image, base, loc=("setting", "image"))
+    except ScenetError:
+        return []
+    try:
+        loaded = load_contract(image, base, loc=("setting", "image"))
+    except ScenetError as exc:
+        return [_contract_fault(exc, text, source, prefix=prefix, base=base)]
+    return [
+        _located(fault, text, source, prefix=prefix)
+        for fault in undrawn(panel, loaded.contract, image.href)
+    ]
+
+
+def _contract_fault(
+    exc: ScenetError,
+    text: str,
+    source: Path | None,
+    *,
+    prefix: tuple[str | int, ...],
+    base: Folder | None,
+) -> Diagnostic:
+    """A contract that cannot be read: in it, for a document checked as a file."""
+    if isinstance(exc, ContractError) and source is not None and isinstance(base, Path):
+        return Diagnostic(
+            rule=exc.rule or CONTRACT_RULE,
+            message=_message_of(exc),
+            path=exc.inner,
+            source=base / exc.contract,
+            region=exc.region or DOCUMENT_START,
+        )
+    return _located(exc, text, source, prefix=prefix)
+
+
+def _located(
+    exc: ScenetError, text: str, source: Path | None, *, prefix: tuple[str | int, ...]
+) -> Diagnostic:
+    """A finding for an error that knows where in the panel it is."""
+    path = _path_for_scenet_error(exc, prefix)
+    return Diagnostic(
+        rule=_rule_for_scenet_error(exc),
+        message=_message_of(exc),
+        path=path,
+        source=source,
+        region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+    )
+
+
 def _diagnose_cast(
     panel: PanelIR,
     text: str,
@@ -804,15 +943,17 @@ def _diagnose_cast(
     Every actor is checked, not just the first, mirroring `_diagnose_scene`'s reasoning:
     a panel with three bad references should report three findings.
     """
-    if not panel.cast:
+    puppets = panel.puppets()
+    if not puppets:
         return []
     library = library or default_library()
 
     found: list[Diagnostic] = []
-    for actor_id, member in panel.cast.items():
+    for actor_id, reference in puppets.items():
+        member = panel.cast[actor_id]
         actor_path = (*prefix, "cast", actor_id)
         try:
-            spec = library.get(member.reference)
+            spec = library.get(reference)
         except UnknownPuppetError as exc:
             found.append(
                 _asset_diagnostic("unknown-puppet", exc, text, source, (*actor_path, "reference"))
@@ -1023,6 +1164,7 @@ def _diagnose_panel(
     found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
     found += _diagnose_setting(panel, text, source, prefix=prefix, base=base)
+    found += _diagnose_figures(panel, text, source, prefix=prefix, base=base)
     if _errors(found):
         # A cast that does not resolve is not a document `--deep` can usefully
         # compile -- it would fail on the same reference with a worse location.
@@ -1173,7 +1315,9 @@ def _diagnose_scene(
             # A fault in a default is inherited by every panel that does not override
             # it, so checking panel by panel finds it once per panel, located at the
             # panel. It is one fault, written once: report it there, once.
-            rest = item.path[len(prefix) :]
+            # A finding located in another file -- an artwork contract -- has a path
+            # inside that file, and is one fault however many panels read it.
+            rest = item.path[len(prefix) :] if item.source == source else ()
             if rest and not _has_path(document, rest) and _has_path(defaults, rest):
                 item = Diagnostic(  # noqa: PLW2901 -- replaced, deliberately
                     rule=item.rule,
@@ -1417,6 +1561,7 @@ def diagnose_script(
     found = _diagnose_script_cast(text, panels, source, library=library)
     found += _diagnose_script_lettering(text, panels, source, base=base)
     found += _diagnose_script_setting(text, document, source, base=base)
+    found += _diagnose_script_figures(text, document, source, base=base)
     if _errors(found):
         return _in_source_order(found)
 
@@ -1528,6 +1673,48 @@ def _diagnose_script_setting(
                     region=_script_line(
                         lines, written.directives.get(("setting",), written.heading)
                     ),
+                )
+            )
+    return found
+
+
+def _diagnose_script_figures(
+    text: str,
+    document: ScriptDocument,
+    source: Path | None,
+    *,
+    base: Folder | None,
+) -> list[Diagnostic]:
+    """Check a script's figures against its pictures' contracts, each fault once, where it is.
+
+    A finding inside a contract stays there. One about the front matter -- its picture,
+    or a figure it casts -- is reported once, against the front matter; one about a panel
+    at the line that gives it, an `@setting:` directive or the line spoken.
+    """
+    front, declared = _script_front_matter(text)
+    lines = normalise_text(text).split("\n")
+    found: list[Diagnostic] = []
+    for name, panel in document.panels.items():
+        written = document.lines[name]
+        for item in _diagnose_figures(panel, front, source, prefix=(), base=base):
+            if item.source != source or _has_path(declared, item.path):
+                if item not in found:
+                    found.append(item)
+                continue
+            head = item.path[0] if item.path else None
+            if head == "script" and isinstance(item.path[1], int):
+                line = written.events[item.path[1]]
+            elif head == "setting":
+                line = written.directives.get(("setting",), written.heading)
+            else:
+                line = written.directives.get(("cast",), written.heading)
+            found.append(
+                Diagnostic(
+                    rule=item.rule,
+                    message=item.message,
+                    path=(name, *item.path),
+                    source=source,
+                    region=_script_line(lines, line),
                 )
             )
     return found

@@ -113,6 +113,48 @@ never over another effect. It is set in a display face, bent and turned as trans
 outlines Scenet already draws, so an arc comes out the same in every renderer; SVG's `<textPath>`
 would have handed the layout back to the renderer and to installed fonts.
 
+## Figures a picture draws come with a contract, beside the picture
+
+When the people are in a supplied picture (#71), the solver still needs each face, mouth and body,
+and still may not look at the picture. An [artwork contract](../reference/asset_contract.md#artwork-contracts)
+declares them, as a puppet's contract declares its skeleton. What #71 left open was decided this way:
+
+- **The contract is found beside its picture, by name.** `art/p01.png` has `art/p01.art.yaml`. The
+  issue sketched `setting.image` naming the contract, and the contract naming its picture; that
+  overloads `image`, joins two paths into Core's `href`, and breaks when a picture is renamed. A
+  `contract:` key beside `image` lets the two name different pictures. By name, the pairing cannot
+  drift, and the playground's renaming of uploads treats both alike. It is read only for a panel
+  whose cast names a figure, so a file beside a picture never changes output by being there.
+- **The size is the picture's, exactly.** A contract measured on another export would put every face
+  elsewhere, and scaling it to fit would need a tolerance that hides a re-export. It is refused, and
+  says to measure again or to scale the coordinates.
+- **Every declared face is in the panel, cast or not**, because a painted face is a face. A cast
+  figure the panel's picture does not draw is simply not in that panel, so a script's front matter
+  can cast a chapter's figures over many pictures; a line it speaks there is the finding, and is
+  where a misspelt name surfaces.
+- **The camera and staging do not run, and are refused when written.** The artist framed and staged
+  the picture; a `camera:` or a relation naming a figure would be a key with no effect, which this
+  language reports, as it reports a horizon beside a picture. Gaze is not declared — a detector
+  could not propose it reliably, and nothing else needs it — so the gaze term costs a figure
+  nothing; an optional key could add it later without a format change.
+- **Casts are not mixed.** A puppet staged in front of painted people would be placed by a solver
+  that cannot see them, and could stand on a face. That is the hard half of a mixed cast, so it is
+  refused rather than half-supported.
+- **A cropped mouth is not a finding.** Under `cover` a mouth can fall outside the panel; whether it
+  does depends on a frame size a page imposes, which the cheap pass does not know. Lettering stays
+  inside the panel as it always does, the tail ends on the frame aimed at the mouth, and the build
+  notes it.
+- **Core gets a figure of its own**, `figures` beside `actors`, not optional `CoreActor` fields that
+  would let a puppet Core with no transform validate. Empty, it is left out, so `format_version`
+  stays 1.
+- **A fault in a contract is reported in it** when the document is checked as a file — the editor
+  and SARIF already file a result by its uri — and at the line naming the picture when it is checked
+  as text, where the author can only see the document.
+- **Detection is a helper, and not built.** A contract is a handful of numbers, and the debug overlay
+  checks them against the picture. A detector inside the compiler would make output depend on a
+  model and a platform, and could not run in the playground; see
+  [prior art](prior_art.md#magi-a-helper-that-could-propose-a-contract).
+
 ## A panel is one image, read whole, in reading order
 
 Accessible output (#76) makes each panel `role="img"`, named by one `<title>`: the description,

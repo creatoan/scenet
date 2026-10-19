@@ -30,6 +30,10 @@ below 1.0 means.
   speaker was charged as a bystander, so balloons drifted away from them. Three gallery
   panels letter differently, each balloon now beside its speaker: regenerate golden Cores of
   your own that cast an actor under another name.
+- **`CastMember.reference` may be `None`**, for a member that is a figure a picture draws, and
+  `CompileResult.camera` is `None` for a panel whose cast is all figures. Code reading either
+  from the Python API narrows them first; `PanelIR.puppets()` gives every puppet's reference.
+  A member that names neither a puppet nor a figure is reported exactly as before.
 - **Every SVG's bytes change once**, to carry what a screen reader reads: a `role` and a `<title>`
   per panel, and `aria-hidden` on a page's own shapes. Nothing is drawn
   differently and lettering stays outlines. `--no-aria` (`aria=False`) gives back exactly the
@@ -78,6 +82,18 @@ below 1.0 means.
   `actors`, and the picture's `keep_out`. Both are left out when empty, so every Core reads and
   writes as before and `format_version` stays 1; the debug overlay draws each figure's face,
   mouth and body, and each keep-out.
+- **Figures a picture draws, in the cast** (#71): `cast: {ana: {figure: ana}}` in place of
+  `reference:`. The panel's picture's artwork contract says where each face, mouth and body is,
+  and lettering is placed by the same rules as around a puppet: never over a declared face —
+  anybody's in the picture, cast or not — tails aimed at the mouth, bodies and keep-out regions a
+  cost. The camera and staging do not run. A cast figure a panel's picture does not draw is not in
+  that panel. Four new rules, each from the cheap pass: `unknown-figure`, `artwork-contract`
+  (reported in the contract when the document is checked as a file), `conflicting-cast` (a puppet
+  and a figure at once, a puppet's key on a figure, a mixed cast, one figure played twice) and
+  `figure-staging` (staging naming a figure, a camera over figures). A `cover` crop that cuts a
+  speaking figure's mouth out of the panel ends its tail on the frame, with a note. `scenet check`
+  and `build` refuse a `*.art.yaml` given as a document. The panel and scene schemas accept
+  `figure`.
 - **A panel's `description`**: what it shows, in words, for a reader who cannot see it.
   Written as `description:` in YAML; in a comic script, the panel's prose is it — its lines
   one paragraph, Markdown's markers taken off — unless an `@description:` directive, kept

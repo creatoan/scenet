@@ -19,7 +19,7 @@ from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.ir import Predicate, Relation
+from scenet.ir import PUPPET_KEYS, Predicate, Relation
 from scenet.places import PLACES, Place
 
 __all__ = [
@@ -192,6 +192,51 @@ def _image_stands_alone(setting: dict[Any, Any]) -> None:
             )
 
 
+def _figures_stand_alone(document: dict[str, Any]) -> None:
+    """Refuse what a figure a picture draws cannot have: a puppet's keys, and a camera.
+
+    Checked here, as a horizon beside a picture is, because in the IR a key written with
+    its default value and a key not written look the same, and `facing: right` beside a
+    figure is as much a slip as `facing: left`. Each is reported at the key that does not
+    apply -- on a member inherited from a scene's defaults, that is where it was written.
+    """
+    cast = document.get("cast")
+    if not isinstance(cast, dict):
+        return
+    members = [(actor, member) for actor, member in cast.items() if isinstance(member, dict)]
+    for actor, member in members:
+        if member.get("figure") is None:
+            continue
+        for key in ("reference", *PUPPET_KEYS):
+            if member.get(key) is not None:
+                why = (
+                    "names a puppet and a figure the picture draws; it is one or the other"
+                    if key == "reference"
+                    else f"is a figure the picture draws, which nobody poses or places, so "
+                    f"{key!r} does not apply to it"
+                )
+                raise PanelSyntaxError(
+                    f"cast member {actor!r} {why}. Over an inherited member, write `{key}: null`",
+                    rule="conflicting-cast",
+                    loc=("cast", str(actor), key),
+                )
+    if not members or len(members) != len(cast):
+        return
+    if any(member.get("figure") is None for _, member in members):
+        return
+    camera = document.get("camera")
+    if camera is None or camera == {}:
+        return
+    written = next(iter(camera), None) if isinstance(camera, dict) else None
+    raise PanelSyntaxError(
+        "'camera' frames a cast that a picture draws, and the artist already framed it: "
+        "the shot is whatever the picture shows. Remove it; on a panel that inherits one, "
+        "write `camera: null`",
+        rule="figure-staging",
+        loc=("camera",) if written is None else ("camera", str(written)),
+    )
+
+
 def _known_places() -> str:
     return ", ".join(sorted(place.value for place in Place))
 
@@ -220,6 +265,7 @@ def normalise(data: dict[str, Any]) -> dict[str, Any]:
     result = dict(data)
 
     _rewrite_blocks(result)
+    _figures_stand_alone(result)
 
     # Every fault below carries `loc`, the entry it is about. Pydantic has not seen the
     # document yet, so there is no other path to report -- and without one an editor
