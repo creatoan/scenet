@@ -435,3 +435,34 @@ class TestIdentifiersCannotInjectMarkup:
         assert not list(root.iter("{http://www.w3.org/2000/svg}script"))
         texts = [t.text for t in root.iter("{http://www.w3.org/2000/svg}text")]
         assert "</text><script/>" in texts
+
+
+class TestAnActorIsNotItsPuppet:
+    """An actor id and the puppet that draws it are two namespaces."""
+
+    SOURCE = """
+panel: {size: [1000, 800]}
+camera: {shot: medium_shot}
+cast:
+  %(a)s: {reference: alice, pose: pointing,     at: left_third}
+  %(b)s: {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - %(a)s left_of %(b)s
+  - %(a)s looking_at %(b)s
+  - %(a)s ground_shared_with %(b)s
+script:
+  - say: {by: %(a)s, text: "You forgot your umbrella!", prefer: top_left}
+  - say: {by: %(b)s, text: "I know."}
+"""
+
+    def test_renaming_the_cast_moves_no_balloon(self):
+        """`ALICE: {reference: alice}` is lettered as `alice: {reference: alice}` is.
+
+        The ids keep their order, so nothing that sorts by id can tell them apart; only a
+        lookup that mixed the two namespaces could.
+        """
+        named = compile_source(self.SOURCE % {"a": "alice", "b": "bob"}).core
+        renamed = compile_source(self.SOURCE % {"a": "ALICE", "b": "BOB"}).core
+        assert [(b.box, b.tail) for b in renamed.balloons] == [
+            (b.box, b.tail) for b in named.balloons
+        ]

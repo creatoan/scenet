@@ -409,12 +409,23 @@ class TestCaptionText:
 class TestBalloonScore:
     PANEL = BBox(0.0, 0.0, 400.0, 400.0)
 
-    def _score(self, speaker: ResolvedPuppet, candidate: BBox, limits: _Limits | None = None):
+    def _score(
+        self,
+        speaker: ResolvedPuppet,
+        candidate: BBox,
+        limits: _Limits | None = None,
+        *,
+        actor_id: str = "speaker",
+        hulls: dict[str, Polygon] | None = None,
+    ):
+        # Keyed by an actor id that is not the puppet's name, as `ALICE: {reference:
+        # alice}` is: the two are different namespaces, and only the id keys the cast.
         return _score(
             candidate,
             speaker=speaker,
-            actors={speaker.name: speaker},
-            hulls={},
+            speaker_id=actor_id,
+            actors={actor_id: speaker},
+            hulls=hulls or {},
             panel=self.PANEL,
             prefer=None,
             placed=[],
@@ -427,6 +438,19 @@ class TestBalloonScore:
         limits = _Limits(blocked=(BBox(0.0, 0.0, 50.0, 50.0),))
         assert self._score(_actor(), candidate) < float("inf")
         assert self._score(_actor(), candidate, limits) == float("inf")
+
+    def test_the_speaker_is_forgiven_by_actor_id_not_puppet_name(self):
+        """A balloon on its own speaker's body costs half, whatever the actor is called.
+
+        The cast is keyed by actor id; the puppet's name is another namespace. An actor
+        `ALICE` drawn by the puppet `alice` is still the one speaking.
+        """
+        speaker = _actor(name="bob", face=Circle(300.0, 300.0, 20.0))
+        candidate = BBox(20.0, 20.0, 60.0, 30.0)
+        body = _square(0.0, 0.0, 100.0, 100.0)
+        bare = self._score(speaker, candidate, actor_id="guard")
+        covered = self._score(speaker, candidate, actor_id="guard", hulls={"guard": body})
+        assert covered - bare == pytest.approx(0.5 * W_OCCLUSION)
 
     def test_a_speaker_without_a_mouth_is_spoken_from_the_face(self):
         face = Circle(200.0, 200.0, 20.0)
