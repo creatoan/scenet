@@ -37,12 +37,13 @@ from scenet.ir import (
     Weather,
 )
 from scenet.places import Place
-from scenet.schema import panel_schema, scene_schema
+from scenet.schema import artwork_schema, panel_schema, scene_schema
 
 REPO = Path(__file__).resolve().parents[1]
 SHIPPED = {
     "panel": REPO / "editor" / "schemas" / "panel.schema.json",
     "scene": REPO / "editor" / "schemas" / "scene.schema.json",
+    "artwork": REPO / "editor" / "schemas" / "artwork.schema.json",
 }
 
 EXAMPLES = sorted(
@@ -53,7 +54,7 @@ EXAMPLES = sorted(
 
 
 def generated(kind: str) -> str:
-    schema = scene_schema() if kind == "scene" else panel_schema()
+    schema = {"panel": panel_schema, "scene": scene_schema, "artwork": artwork_schema}[kind]()
     return json.dumps(schema, indent=2, sort_keys=True) + "\n"
 
 
@@ -255,13 +256,58 @@ class TestShippedSchemasAreCurrent:
     completions that no longer compile. CI runs these, so that cannot ship.
     """
 
-    @pytest.mark.parametrize("kind", ["panel", "scene"])
+    @pytest.mark.parametrize("kind", ["panel", "scene", "artwork"])
     def test_shipped_schema_is_up_to_date(self, kind: str):
         path = SHIPPED[kind]
         assert path.exists(), f"{path} is missing; run `npm run schemas` in editor/"
         assert path.read_text(encoding="utf-8") == generated(kind), (
             f"{path} is stale; run `npm run schemas` in editor/"
         )
+
+
+class TestArtworkSchema:
+    """The schema an editor checks a `*.art.yaml` against, beside its picture (#71)."""
+
+    CONTRACT = """
+size: [3000, 2000]
+figures:
+  ana:
+    face: {center: [1240, 610], radius: 150}
+    mouth: [1270, 700]
+    body: [[1050, 520], [1450, 520], [1500, 2000], [1000, 2000]]
+  ben:
+    face: {center: [2210, 580], radius: 140}
+keep_out:
+  - [[400, 1200], [900, 1200], [900, 1700], [400, 1700]]
+"""
+
+    def test_a_contract_as_the_issue_writes_it_is_valid(self):
+        assert problems(artwork_schema(), self.CONTRACT) == []
+
+    @pytest.mark.parametrize(
+        ("broken", "where"),
+        [
+            ("mouth: [1270, 700]", "mouht: [1270, 700]"),
+            ("radius: 150", "radius: 0"),
+            ("size: [3000, 2000]", "size: [3000]"),
+            ("  - [[400, 1200], [900, 1200], [900, 1700], [400, 1700]]", "  - [[400, 1200]]"),
+        ],
+    )
+    def test_a_slip_is_flagged(self, broken: str, where: str):
+        assert problems(artwork_schema(), self.CONTRACT.replace(broken, where))
+
+    def test_the_command_writes_it(self, tmp_path: Path):
+        target = tmp_path / "artwork.schema.json"
+        assert main(["schema", "--artwork", "-o", str(target)]) == 0
+        assert target.read_text(encoding="utf-8") == generated("artwork")
+
+    def test_the_editor_checks_contracts_against_it(self):
+        manifest = json.loads((REPO / "editor" / "package.json").read_text(encoding="utf-8"))
+        associations = {
+            entry["fileMatch"]: entry["url"] for entry in manifest["contributes"]["yamlValidation"]
+        }
+        assert associations["*.art.yaml"] == "./schemas/artwork.schema.json"
+        assert "--artwork -o editor/schemas/artwork.schema.json" in manifest["scripts"]["schemas"]
 
 
 class TestSchemaCommand:

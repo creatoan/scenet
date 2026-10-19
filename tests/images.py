@@ -11,6 +11,7 @@ imaging library to make its fixtures would be testing that library's writer too.
 
 import struct
 import zlib
+from collections.abc import Mapping, Sequence
 
 PNG_SIGNATURE = bytes.fromhex("89504e470d0a1a0a")
 SOI = bytes([0xFF, 0xD8])
@@ -82,3 +83,37 @@ def jpeg(
     app1 = b"" if orientation is None else segment(0xE1, b"Exif" + bytes(2) + exif(orientation))
     sof = segment(frame, struct.pack(">BHHB", 8, height, width, 1) + bytes([1, 0x11, 0]))
     return SOI + app0 + app1 + before + sof + EOI
+
+
+def contract(
+    size: tuple[int, int],
+    figures: Mapping[str, Mapping[str, object]] | None = None,
+    keep_out: Sequence[Sequence[tuple[float, float]]] | None = None,
+) -> bytes:
+    """An artwork contract's bytes (#71), as an author would write one: flow-style YAML.
+
+    Args:
+        size: The picture's size it was measured on.
+        figures: Each figure's `face`, `mouth` and `body`, by name, as the contract writes
+            them.
+        keep_out: Regions lettering should stay off.
+    """
+    lines = [f"size: [{size[0]}, {size[1]}]"]
+    if figures:
+        lines.append("figures:")
+        for name, figure in figures.items():
+            lines.append(f"  {name}:")
+            lines.extend(f"    {key}: {_flow(value)}" for key, value in figure.items())
+    if keep_out:
+        lines.append("keep_out:")
+        lines.extend(f"  - {_flow(region)}" for region in keep_out)
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def _flow(value: object) -> str:
+    """A value in YAML's flow style: `[x, y]`, `{center: [x, y], radius: r}`."""
+    if isinstance(value, dict):
+        return "{" + ", ".join(f"{key}: {_flow(item)}" for key, item in value.items()) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_flow(item) for item in value) + "]"
+    return repr(value)
