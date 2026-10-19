@@ -72,7 +72,9 @@ def _assert_one(
 def test_one_mistake_is_one_finding_at_the_right_place(kind: str, data: st.DataObject):
     """Every entry of the catalogue, each against its own generated panels."""
     mistake = data.draw(mistakes(kind))
-    found = diagnose_source(mistake.text, source=Path("x.panel.yaml"), library=LIBRARY)
+    found = diagnose_source(
+        mistake.text, source=Path("x.panel.yaml"), library=LIBRARY, base=mistake.files or None
+    )
     _assert_one(
         found,
         mistake.text,

@@ -34,6 +34,9 @@ from scenet.pipeline import FRONTENDS
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = (ROOT / "docs" / "reference" / "cli.md").read_text(encoding="utf-8")
 CORPUS = Path(__file__).resolve().parent / "rule_corpus"
+#: The corpus documents, without the files beside them that one of them names: a picture
+#: and its artwork contract, in a folder of their own as a document's would be.
+DOCUMENTS = sorted(path for path in CORPUS.iterdir() if path.is_file())
 COMMANDS = ("build", "check", "schema", "mcp")
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
@@ -257,21 +260,17 @@ class TestRules:
         assert dict(rows) == {name: rule.level for name, rule in RULES.items()}
 
     def test_every_rule_but_internal_has_a_corpus_document(self):
-        covered = {path.name.split(".")[0] for path in CORPUS.iterdir()}
+        covered = {path.name.split(".")[0] for path in DOCUMENTS}
         assert covered == set(RULES) - {"internal"}
 
-    @pytest.mark.parametrize("path", sorted(CORPUS.iterdir()), ids=lambda path: path.name)
+    @pytest.mark.parametrize("path", DOCUMENTS, ids=lambda path: path.name)
     def test_a_corpus_document_gets_exactly_its_rule(self, path: Path):
         rule = path.name.split(".")[0]
         found = diagnose_file(path, deep=rule in {"layout", "balloon-placement", "sfx-placement"})
         assert [item.rule for item in found] == [rule], [item.message for item in found]
 
     def test_sarif_describes_each_rule_as_the_catalogue_does(self):
-        found = [
-            finding
-            for path in sorted(CORPUS.iterdir())
-            for finding in diagnose_file(path, deep=True)
-        ]
+        found = [finding for path in DOCUMENTS for finding in diagnose_file(path, deep=True)]
         driver = to_sarif(found)["runs"][0]["tool"]["driver"]
         described = {entry["id"]: entry for entry in driver["rules"]}
         assert set(described) == {f"scenet/{rule}" for rule in RULES} - {"scenet/internal"}

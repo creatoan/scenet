@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from scenet.cli import main
+from tests.images import contract, png
 
 VALID = """\
 panel: {size: [420, 560]}
@@ -299,3 +300,49 @@ Hello there.
             "endLine": 1,
             "endColumn": len("@shot: close_up") + 1,
         }
+
+
+class TestAFaultInAnArtworkContract:
+    """Reported in the contract (#71): the file the author must open to fix it."""
+
+    @pytest.fixture
+    def panel(self, tmp_path: Path) -> Path:
+        art = tmp_path / "art"
+        art.mkdir()
+        (art / "p.png").write_bytes(png(300, 200))
+        (art / "p.art.yaml").write_bytes(
+            contract((600, 400), {"ana": {"face": {"center": [10, 10], "radius": 5}}})
+        )
+        document = tmp_path / "p.panel.yaml"
+        document.write_text(
+            "cast: {ana: {figure: ana}}\nsetting: {image: art/p.png}\n", encoding="utf-8"
+        )
+        return document
+
+    def test_sarif_names_the_contract_relative_to_where_check_ran(
+        self, panel: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        monkeypatch.chdir(panel.parent)
+        assert main(["check", "--format", "sarif", panel.name]) == 1
+        document = json.loads(capsys.readouterr().out)
+        (result,) = document["runs"][0]["results"]
+        location = result["locations"][0]["physicalLocation"]
+        assert result["ruleId"] == "scenet/artwork-contract"
+        assert location["artifactLocation"]["uri"] == "art/p.art.yaml"
+        assert location["region"]["startLine"] == 1
+
+    def test_prose_names_the_contract_and_its_line(
+        self, panel: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        monkeypatch.chdir(panel.parent)
+        assert main(["check", panel.name]) == 1
+        err = capsys.readouterr().err
+        assert str(Path("art") / "p.art.yaml") + ":1:7: artwork-contract:" in err
+
+    def test_a_contract_is_not_itself_a_document(
+        self, panel: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        contract_file = panel.parent / "art" / "p.art.yaml"
+        assert main(["check", str(contract_file)]) == 2
+        assert "an artwork contract is not a document" in capsys.readouterr().err
+        assert main(["build", str(contract_file)]) == 2

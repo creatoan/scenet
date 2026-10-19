@@ -356,9 +356,10 @@ staging: [alice left_of bob]
 
     def test_the_solution_still_records_which_actor_framed_it(self):
         """The reference is genuinely useful; it was only the wrong thing to print."""
-        result = compile_source(self.SOURCE)
-        assert result.camera.reference == "alice"
-        assert result.camera.shot is ShotType.CLOSE_UP
+        camera = compile_source(self.SOURCE).camera
+        assert camera is not None
+        assert camera.reference == "alice"
+        assert camera.shot is ShotType.CLOSE_UP
 
 
 class TestShotsThatShowFeetActuallyShowThem:

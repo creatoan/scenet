@@ -471,7 +471,7 @@ def _two_across(width: float, margin: float) -> str:
 
 def _fitted(source: str, library: PuppetLibrary) -> tuple[CameraSolution, CameraSolution]:
     panel = parse_panel(source)
-    puppets = {actor: library.get(member.reference) for actor, member in panel.cast.items()}
+    puppets = {actor: library.get(reference) for actor, reference in panel.puppets().items()}
     camera = solve_camera(
         puppets["a"],
         shot=panel.camera.shot,

@@ -1,0 +1,3 @@
+# Its contract, art/figures.art.yaml, was measured on a picture of another size.
+cast: {ana: {figure: ana}}
+setting: {image: art/figures.png}

@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from scenet.core import PanelCore
 from scenet.diagnostics import diagnose_source
-from scenet.errors import PanelSyntaxError
+from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.yaml_front import parse_panel, parse_scene_document
 from scenet.ir import (
     AnchorX,
@@ -406,3 +406,66 @@ class TestNonFiniteNumbers:
         payload["width"] = float("nan")
         with pytest.raises(ValidationError):
             PanelCore.from_json(json.dumps(payload))
+
+
+class TestAFigureInTheCast:
+    """`figure:` in place of `reference:` (#71), and what a member that names neither says."""
+
+    def test_a_figure_needs_no_puppet(self):
+        member = CastMember(figure="ana")
+        assert member.is_figure
+        assert member.reference is None
+
+    def test_a_puppet_is_not_a_figure(self):
+        assert not CastMember(reference="alice").is_figure
+
+    def test_naming_neither_is_reference_missing_as_it_always_was(self):
+        with pytest.raises(ValidationError) as caught:
+            CastMember.model_validate({"pose": "pointing"})
+        assert [(e["type"], e["loc"]) for e in caught.value.errors()] == [
+            ("missing", ("reference",))
+        ]
+
+    def test_with_another_fault_reference_missing_comes_first(self):
+        with pytest.raises(ValidationError) as caught:
+            CastMember.model_validate({"marks": ["plewds", "plewds"]})
+        assert [e["loc"] for e in caught.value.errors()] == [("reference",), ("marks",)]
+
+    def test_a_misspelt_reference_is_still_folded_into_did_you_mean(self):
+        (found,) = diagnose_source("cast: {a: {referecne: alice}}")
+        assert found.rule == "unknown-key"
+        assert "did you mean 'reference'?" in found.message
+
+    def test_the_panel_says_who_is_which(self):
+        panel = parse_panel("cast: {ana: {figure: ana_in_red}, ben: {figure: ben}}")
+        assert panel.figures() == {"ana": "ana_in_red", "ben": "ben"}
+        assert panel.puppets() == {}
+        assert panel.drawn_by_its_picture
+
+    def test_a_panel_of_puppets_is_not_drawn_by_its_picture(self):
+        panel = parse_panel("cast: {a: {reference: alice}}")
+        assert panel.puppets() == {"a": "alice"}
+        assert not panel.drawn_by_its_picture
+        assert not parse_panel("{}").drawn_by_its_picture
+
+    @pytest.mark.parametrize(
+        ("member", "rule", "loc"),
+        [
+            ({"figure": "f", "reference": "alice"}, "conflicting-cast", ("cast", "a", "reference")),
+            ({"figure": "f", "pose": "pointing"}, "conflicting-cast", ("cast", "a", "pose")),
+            ({"figure": "f", "marks": ["plewds"]}, "conflicting-cast", ("cast", "a", "marks")),
+        ],
+    )
+    def test_built_in_python_the_model_backstops_the_frontend(
+        self, member: dict[str, object], rule: str, loc: tuple[str, ...]
+    ):
+        with pytest.raises(ValidationError) as caught:
+            PanelIR.model_validate({"cast": {"a": member}})
+        error = caught.value.errors()[0].get("ctx", {}).get("error")
+        assert isinstance(error, RuleViolationError)
+        assert (error.rule, error.loc) == (rule, loc)
+
+    def test_a_figure_in_python_written_with_puppet_defaults_is_fine(self):
+        """The frontend refuses a written default; built in Python, a default is no key."""
+        panel = PanelIR.model_validate({"cast": {"a": {"figure": "f", "facing": "right"}}})
+        assert panel.figures() == {"a": "f"}
