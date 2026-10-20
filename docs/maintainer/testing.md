@@ -510,11 +510,18 @@ in one process; every property test is a module function now, as the rest of the
   - The other 16, in `layout_effect` (9), `_ring` (6) and `_candidates` (1), are in code #71 did
     not change. They are still to be triaged.
 
+Both files were run again from the triage branch, after the tests and the change to
+`_within_frame`: `solve/balloons.py`,
+[`39491758453`](https://github.com/creatoan/scenet/actions/runs/39491758453), 1317 mutants and 29
+survivors -- the 27 accepted above and the two below; `solve/sfx.py`,
+[`39491774024`](https://github.com/creatoan/scenet/actions/runs/39491774024), 489 mutants and 19
+survivors -- the three below and the 16 still to triage. The numbers below are those runs'.
+
 Each mutant killed was applied by hand to see its test fail.
 
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
-| `solve/balloons.py` `_within_frame` 47, 49 | `min(points, key=...)` without the key | A convex frame is crossed at most once, so there is never a second point to choose between: the same argument as `_edge_point` 47 and the rest. |
+| `solve/balloons.py` `_within_frame` 29, 31 | `min(points, key=...)` without the key | A convex frame is crossed at most once, so there is never a second point to choose between: the same argument as `_edge_point` 47 and the rest. |
 | `solve/sfx.py` `_cost` 12 | the source term `+=` to `=` | It is the first term, added to the `0.0` the cost starts at. |
 | `solve/sfx.py` `place_effects` 87 | `cost < best[0]` to `<=` | Differs only on an exact tie, which a later candidate would then win. Candidates are placed by trigonometry, so two that look equally good differ in their last bits -- and which way depends on the platform: a test pinning one, with an inset over the middle and its two mirror points left, passed on Windows and failed on Linux. No test can hold a tie that the arithmetic never makes exact. |
 | `solve/sfx.py` `place_effects` 42 | `distance < radius` to `<=` | Differs only for a footprint exactly tangent to a face. Footprints are glyph outlines placed at candidate centres a ring step apart, which never land at a face's radius exactly; a balloon's own face test is strict for the same reason. |
