@@ -46,55 +46,51 @@ def _cases(draw: st.DrawFn) -> tuple[ResolvedImage, tuple[float, float]]:
     return image, pixel
 
 
-class TestEveryPointLandsWhereThePictureIsDrawn:
-    @given(_cases())
-    def test_a_face_a_mouth_a_body_and_a_keep_out(
-        self, case: tuple[ResolvedImage, tuple[float, float]]
-    ):
-        image, pixel = case
-        width, height = image.pixels
-        contract = ArtworkContract.model_validate(
-            {
-                "size": [width, height],
-                "figures": {
-                    "ana": {
-                        "face": {"center": list(pixel), "radius": 1},
-                        "mouth": list(pixel),
-                        "body": [[0, 0], [width, 0], list(pixel)] if pixel[1] > 0 else None,
-                    }
-                },
-                "keep_out": [[[0, 0], [width, 0], [width, height]]],
-            }
-        )
-        placed = place_figures(contract, image)
-        (ana,) = placed.figures
-        expected = _drawn_at(image, pixel)
-        tolerance = 1e-9 * max(
-            1.0, abs(image.box.width), abs(image.box.height), *map(abs, expected)
-        )
-        assert ana.face.cx == pytest.approx(expected[0], abs=tolerance)
-        assert ana.face.cy == pytest.approx(expected[1], abs=tolerance)
-        assert ana.mouth is not None
-        assert (ana.mouth.x, ana.mouth.y) == (ana.face.cx, ana.face.cy)
-        corner = placed.keep_out[0][2]
-        far = _drawn_at(image, (width, height))
-        assert corner.x == pytest.approx(far[0], abs=tolerance)
-        assert corner.y == pytest.approx(far[1], abs=tolerance)
+@given(_cases())
+def test_every_point_lands_where_the_picture_is_drawn(
+    case: tuple[ResolvedImage, tuple[float, float]],
+):
+    image, pixel = case
+    width, height = image.pixels
+    contract = ArtworkContract.model_validate(
+        {
+            "size": [width, height],
+            "figures": {
+                "ana": {
+                    "face": {"center": list(pixel), "radius": 1},
+                    "mouth": list(pixel),
+                    "body": [[0, 0], [width, 0], list(pixel)] if pixel[1] > 0 else None,
+                }
+            },
+            "keep_out": [[[0, 0], [width, 0], [width, height]]],
+        }
+    )
+    placed = place_figures(contract, image)
+    (ana,) = placed.figures
+    expected = _drawn_at(image, pixel)
+    tolerance = 1e-9 * max(1.0, abs(image.box.width), abs(image.box.height), *map(abs, expected))
+    assert ana.face.cx == pytest.approx(expected[0], abs=tolerance)
+    assert ana.face.cy == pytest.approx(expected[1], abs=tolerance)
+    assert ana.mouth is not None
+    assert (ana.mouth.x, ana.mouth.y) == (ana.face.cx, ana.face.cy)
+    corner = placed.keep_out[0][2]
+    far = _drawn_at(image, (width, height))
+    assert corner.x == pytest.approx(far[0], abs=tolerance)
+    assert corner.y == pytest.approx(far[1], abs=tolerance)
 
-    @given(_cases())
-    def test_a_radius_scales_as_the_picture_does(
-        self, case: tuple[ResolvedImage, tuple[float, float]]
-    ):
-        image, pixel = case
-        contract = ArtworkContract.model_validate(
-            {
-                "size": list(image.pixels),
-                "figures": {"ana": {"face": {"center": list(pixel), "radius": 7}}},
-            }
-        )
-        (ana,) = place_figures(contract, image).figures
-        assert ana.face.r == pytest.approx(7 * image.box.width / image.pixels[0])
-        assert ana.face.r == pytest.approx(7 * image.box.height / image.pixels[1])
+
+@given(_cases())
+def test_a_radius_scales_as_the_picture_does(case: tuple[ResolvedImage, tuple[float, float]]):
+    image, pixel = case
+    contract = ArtworkContract.model_validate(
+        {
+            "size": list(image.pixels),
+            "figures": {"ana": {"face": {"center": list(pixel), "radius": 7}}},
+        }
+    )
+    (ana,) = place_figures(contract, image).figures
+    assert ana.face.r == pytest.approx(7 * image.box.width / image.pixels[0])
+    assert ana.face.r == pytest.approx(7 * image.box.height / image.pixels[1])
 
 
 class TestCoverAndContain:
