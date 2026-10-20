@@ -41,12 +41,17 @@ from scenet.ir import Face, PlacementZone, ScriptEvent, SfxEvent, SfxSize
 from scenet.pipeline import compile_file, compile_ir, compile_source
 from scenet.schema import panel_schema
 from scenet.solve.sfx import (
+    DIRECTIONS,
     SIZE_FACTORS,
+    SOURCE_RINGS,
     W_COVER,
     W_MARKS,
     W_PREFERRED,
     W_SOURCE,
+    _candidates,
     _cost,
+    _ring,
+    _source_point,
     layout_effect,
     place_effects,
 )
@@ -489,3 +494,73 @@ class TestWhereAnEffectMayGo:
         inside = Polygon([(0.0, 0.0), (left + 1.0, 0.0), (left + 1.0, 400.0), (0.0, 400.0)])
         moved = self._zone(inside=inside)
         assert inside.buffer(1e-6).contains(moved)
+
+
+class TestTheShapeOfAnEffect:
+    """`layout_effect`'s kerning and its arc's direction (sound-effect mutation triage)."""
+
+    #: Pairs a display face commonly kerns; the first the shipped one kerns is used.
+    PAIRS = ("AV", "VA", "AT", "TA", "AY", "YA", "LT", "To", "Ty", "WA", "Yo", "Va")
+
+    def _kerned_pair(self) -> str:
+        metrics = Typeface().face(Face.DISPLAY)
+        for pair in self.PAIRS:
+            if metrics.step(pair[0], pair[1]) != metrics.step(pair[0], None):
+                return pair
+        pytest.fail("the display face kerns none of the usual pairs")
+
+    def test_the_last_pair_is_kerned_as_every_other_is(self):
+        pair = self._kerned_pair()
+        size = 20.0
+        shape = layout_effect(SfxEvent(text=pair), dialogue_size=size, typeface=Typeface())
+        metrics = shape.metrics
+        first, second = shape.glyphs
+        expected = metrics.step(pair[0], pair[1]) * shape.font_size
+        assert second.origin.x - first.origin.x == pytest.approx(expected)
+
+    @pytest.mark.parametrize("arc", [1, 30])
+    def test_a_positive_arc_turns_its_letters_from_left_to_right(self, arc: int):
+        """However slight: an arc of one degree bows the same way as one of thirty."""
+        shape = layout_effect(
+            SfxEvent(text="KRAK", arc=arc), dialogue_size=20.0, typeface=Typeface()
+        )
+        angles = [glyph.angle for glyph in shape.glyphs]
+        assert angles == sorted(angles)
+        assert angles[0] < 0 < angles[-1]
+
+    def test_a_negative_arc_turns_them_the_other_way(self):
+        shape = layout_effect(
+            SfxEvent(text="KRAK", arc=-1), dialogue_size=20.0, typeface=Typeface()
+        )
+        angles = [glyph.angle for glyph in shape.glyphs]
+        assert angles[0] > 0 > angles[-1]
+
+
+class TestWhereAnEffectIsLookedFor:
+    """The candidates `place_effects` tries, in order (sound-effect mutation triage)."""
+
+    def test_a_ring_starts_straight_up_and_goes_clockwise(self):
+        points = _ring(GeomPoint(100.0, 100.0), [10.0])
+        assert len(points) == DIRECTIONS
+        step = 2 * math.pi / DIRECTIONS
+        for index, point in enumerate(points):
+            angle = -math.pi / 2 + step * index
+            assert point.x == pytest.approx(100.0 + 10.0 * math.cos(angle))
+            assert point.y == pytest.approx(100.0 + 10.0 * math.sin(angle))
+        # Up first, then to the right of up: clockwise on a page whose y runs down.
+        assert points[0].y < 100.0
+        assert points[1].x > 100.0
+
+    def test_the_rings_around_a_source_are_its_reach_times_each_factor(self):
+        source = Speaker(
+            face=Circle(200.0, 150.0, 10.0),
+            mouth=GeomPoint(200.0, 150.0),
+            body=(GeomPoint(170.0, 120.0), GeomPoint(230.0, 120.0), GeomPoint(230.0, 180.0)),
+        )
+        event = SfxEvent.model_validate({"text": "X", "from": "a"})
+        points = _candidates(event, {"a": source}, BBox(0.0, 0.0, 600.0, 400.0))
+        centre, reach = _source_point(source)
+        assert points[0] == centre
+        rings = [points[1 + DIRECTIONS * index] for index in range(len(SOURCE_RINGS))]
+        for point, factor in zip(rings, SOURCE_RINGS, strict=True):
+            assert point.distance_to(centre) == pytest.approx(reach * factor)
