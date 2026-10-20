@@ -508,7 +508,12 @@ in one process; every property test is a module function now, as the rest of the
     `place_effects` to an inset elsewhere, a sliver of one, and a shaped panel.
   - **3 accepted**, below.
   - The other 16, in `layout_effect` (9), `_ring` (6) and `_candidates` (1), are in code #71 did
-    not change. They are still to be triaged.
+    not change, and were triaged after it. `TestTheShapeOfAnEffect` and
+    `TestWhereAnEffectIsLookedFor` in `tests/test_sfx.py` kill 9: the last pair of letters
+    kerned as every other is (`layout_effect` 10), an arc of one degree bowing the same way as
+    one of thirty (41), the rings round a source at its reach times each factor (`_candidates`
+    16), and every ring starting straight up and going clockwise (`_ring` 5, 8, 10, 16, 21). The
+    other 7 are accepted, below. `solve/sfx.py` is triaged.
 
 Both files were run again from the triage branch, after the tests and the change to
 `_within_frame`: `solve/balloons.py`,
@@ -524,6 +529,11 @@ Each mutant killed was applied by hand to see its test fail.
 | `solve/balloons.py` `_within_frame` 29, 31 | `min(points, key=...)` without the key | A convex frame is crossed at most once, so there is never a second point to choose between: the same argument as `_edge_point` 47 and the rest. |
 | `solve/sfx.py` `_cost` 12 | the source term `+=` to `=` | It is the first term, added to the `0.0` the cost starts at. |
 | `solve/sfx.py` `place_effects` 87 | `cost < best[0]` to `<=` | Differs only on an exact tie, which a later candidate would then win. Candidates are placed by trigonometry, so two that look equally good differ in their last bits -- and which way depends on the platform: a test pinning one, with an inset over the middle and its two mirror points left, passed on Windows and failed on Linux. No test can hold a tie that the arithmetic never makes exact. |
+| `solve/sfx.py` `layout_effect` 40 | `arc > 0` to `arc >= 0` for the bow | The bow is read only when the arc is not zero. |
+| `solve/sfx.py` `layout_effect` 52, 55, 56 | `zip(..., strict=True)` loosened or dropped | The steps are built one per character of the same text, so the two are always the same length. |
+| `solve/sfx.py` `layout_effect` 63, 74 | every glyph's height shifted by 1, or by the arc's radius | The shift is the same for every glyph and corner, and the footprint is re-centred on its hull afterwards, which takes it back out: below what the format can show. |
+| `solve/sfx.py` `layout_effect` 153 | the rotation about the hull's centre instead of `(0, 0)` | The hull has just been centred on `(0, 0)`, so the two are the same point. |
+| `solve/sfx.py` `_ring` 19 | `sin(-pi / 2 + a)` to `sin(-pi / 2 - a)` | Both are `-cos(a)`. |
 | `solve/sfx.py` `place_effects` 42 | `distance < radius` to `<=` | Differs only for a footprint exactly tangent to a face. Footprints are glyph outlines placed at candidate centres a ring step apart, which never land at a face's radius exactly; a balloon's own face test is strict for the same reason. |
 
 ### Exploring with fresh seeds
