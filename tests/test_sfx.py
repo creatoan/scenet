@@ -19,6 +19,7 @@ issue asked of it:
 
 import math
 from pathlib import Path
+from typing import Any
 
 import fonts.ttf
 import pytest
@@ -34,10 +35,22 @@ from scenet.emit.svg import render
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError, SfxPlacementError
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
-from scenet.ir import Face, ScriptEvent, SfxEvent, SfxSize
+from scenet.geom import BBox, Circle
+from scenet.geom import Point as GeomPoint
+from scenet.ir import Face, PlacementZone, ScriptEvent, SfxEvent, SfxSize
 from scenet.pipeline import compile_file, compile_ir, compile_source
 from scenet.schema import panel_schema
-from scenet.solve.sfx import SIZE_FACTORS, layout_effect
+from scenet.solve.sfx import (
+    SIZE_FACTORS,
+    W_COVER,
+    W_MARKS,
+    W_PREFERRED,
+    W_SOURCE,
+    _cost,
+    layout_effect,
+    place_effects,
+)
+from scenet.solve.speakers import NOBODY, Bystanders, Speaker
 from scenet.solve.text import DISPLAY_FONT_PATH, Typeface
 from tests.invariants import assert_effects_are_placed, assert_svg_is_sound
 
@@ -369,3 +382,110 @@ class TestInAComicScript:
         script = self.FRONT + "SFX (BOB, large): KRAK\n\nALICE\nWhat was that?\n"
         panels = parse_script(script)
         assert compile_ir(panels["1"]).core.sfx[0].text == "KRAK"
+
+
+class TestTheCostOfAPosition:
+    """What `_cost` charges, term by term (#71 mutation triage).
+
+    A footprint of 1.5 square units, under the 2.0 a mutant floors the area at, so the
+    normalisation shows; and every term is checked as an addition to the others.
+    """
+
+    PANEL = BBox(0.0, 0.0, 300.0, 400.0)  # a 500-unit diagonal
+    ZONE = box(0.0, 0.0, 1.5, 1.0)
+    SOURCE = Speaker(
+        face=Circle(100.0, 100.0, 10.0),
+        mouth=GeomPoint(100.0, 100.0),
+        body=(GeomPoint(80.0, 80.0), GeomPoint(120.0, 80.0), GeomPoint(120.0, 120.0)),
+    )
+
+    def _cost(self, event: SfxEvent, **extra: Any) -> float:
+        return _cost(
+            self.ZONE,
+            event,
+            actors={"a": self.SOURCE},
+            hulls=extra.pop("hulls", {}),
+            panel=self.PANEL,
+            marks=extra.pop("marks", ()),
+            bystanders=extra.pop("bystanders", NOBODY),
+        )
+
+    def _from_source(self) -> float:
+        centre = self.ZONE.centroid
+        return W_SOURCE * centre.distance(ShapelyPoint(100.0, 100.0)) / 500.0
+
+    def _from(self, zone: PlacementZone) -> float:
+        across, down = zone.fractions
+        return (
+            W_PREFERRED
+            * self.ZONE.centroid.distance(ShapelyPoint(300.0 * across, 400.0 * down))
+            / 500.0
+        )
+
+    def test_a_sound_from_somebody_pays_for_its_distance_from_them(self):
+        assert self._cost(SfxEvent.model_validate({"text": "X", "from": "a"})) == pytest.approx(
+            self._from_source()
+        )
+
+    def test_a_preferred_place_is_paid_for_beside_the_source(self):
+        event = SfxEvent.model_validate({"text": "X", "from": "a", "prefer": "bottom_right"})
+        expected = self._from_source() + self._from(PlacementZone.BOTTOM_RIGHT)
+        assert self._cost(event) == pytest.approx(expected)
+
+    def test_with_neither_a_sound_is_drawn_to_the_middle(self):
+        expected = self._from(PlacementZone.MIDDLE_CENTRE)
+        assert self._cost(SfxEvent(text="X")) == pytest.approx(expected)
+
+    def test_covering_a_body_costs_its_share_of_the_footprint(self):
+        body = box(-10.0, -10.0, 10.0, 10.0)
+        bare = self._cost(SfxEvent(text="X"))
+        covered = self._cost(SfxEvent(text="X"), hulls={"b": body})
+        assert covered - bare == pytest.approx(W_COVER)
+
+    def test_covering_two_bystanders_costs_both(self):
+        body = box(-10.0, -10.0, 10.0, 10.0)
+        bare = self._cost(SfxEvent(text="X"))
+        covered = self._cost(SfxEvent(text="X"), bystanders=Bystanders(bodies=(body, body)))
+        assert covered - bare == pytest.approx(2 * W_COVER)
+
+    def test_covering_two_marks_costs_both(self):
+        mark = box(-10.0, -10.0, 10.0, 10.0)
+        bare = self._cost(SfxEvent(text="X"))
+        covered = self._cost(SfxEvent(text="X"), marks=[mark, mark])
+        assert covered - bare == pytest.approx(2 * W_MARKS)
+
+
+class TestWhereAnEffectMayGo:
+    """The limits `place_effects` holds an effect to (#71 mutation triage)."""
+
+    PANEL = BBox(0.0, 0.0, 600.0, 400.0)
+
+    def _zone(self, **limits: Any) -> Polygon:
+        (effect,) = place_effects(
+            [(0, SfxEvent(text="KRAK"))],
+            actors={},
+            hulls={},
+            panel=self.PANEL,
+            dialogue_size=20.0,
+            typeface=Typeface(),
+            **limits,
+        )
+        return effect.zone
+
+    def test_an_inset_elsewhere_changes_nothing(self):
+        assert self._zone(blocked=[BBox(0.0, 0.0, 5.0, 5.0)]).equals(self._zone())
+
+    def test_even_a_sliver_of_an_inset_is_kept_clear(self):
+        natural = self._zone()
+        centre = natural.centroid
+        sliver = BBox(centre.x - 0.25, centre.y - 0.25, 0.5, 0.5)
+        assert natural.intersection(box(sliver.x, sliver.y, sliver.right, sliver.bottom)).area > 0
+        moved = self._zone(blocked=[sliver])
+        assert moved.intersection(box(sliver.x, sliver.y, sliver.right, sliver.bottom)).area == 0
+
+    def test_it_stays_inside_a_shaped_panel(self):
+        natural = self._zone()
+        left = natural.bounds[0]
+        inside = Polygon([(0.0, 0.0), (left + 1.0, 0.0), (left + 1.0, 400.0), (0.0, 400.0)])
+        moved = self._zone(inside=inside)
+        assert inside.buffer(1e-6).contains(moved)
