@@ -513,7 +513,9 @@ in one process; every property test is a module function now, as the rest of the
     kerned as every other is (`layout_effect` 10), an arc of one degree bowing the same way as
     one of thirty (41), the rings round a source at its reach times each factor (`_candidates`
     16), and every ring starting straight up and going clockwise (`_ring` 5, 8, 10, 16, 21). The
-    other 7 are accepted, below. `solve/sfx.py` is triaged.
+    other 7 are accepted, below. `solve/sfx.py` is triaged: run
+    [`39497617662`](https://github.com/creatoan/scenet/actions/runs/39497617662), from that
+    branch, left 11 survivors of 489 mutants, exactly the 11 accepted below.
 
 Both files were run again from the triage branch, after the tests and the change to
 `_within_frame`: `solve/balloons.py`,
