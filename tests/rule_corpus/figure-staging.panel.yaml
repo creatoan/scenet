@@ -1,0 +1,4 @@
+# The artist framed the picture; a camera has nothing to frame.
+camera: {shot: close_up}
+cast: {ana: {figure: ana}}
+setting: {image: art/figures.png}

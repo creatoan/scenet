@@ -330,3 +330,40 @@ class TestSchemaCommand:
         first = capsys.readouterr().out
         main(["schema"])
         assert capsys.readouterr().out == first
+
+
+class TestAFigureInTheCast:
+    """`figure:` in place of `reference:` (#71), as the frontend and the model hold it."""
+
+    @pytest.mark.parametrize(
+        "member",
+        [
+            "{figure: ana}",
+            "{reference: alice}",
+            "{figure: ana, reference: null}",
+            "{figure: ana, pose: null, facing: null}",
+        ],
+    )
+    def test_accepted(self, member: str):
+        assert problems(panel_schema(), f"cast: {{a: {member}}}") == []
+
+    @pytest.mark.parametrize(
+        "member",
+        [
+            "{figure: ana, reference: alice}",
+            "{figure: ana, pose: pointing}",
+            "{figure: ana, marks: [plewds]}",
+            "{figure: ana, at: center}",
+            "{pose: pointing}",
+        ],
+    )
+    def test_refused(self, member: str):
+        assert problems(panel_schema(), f"cast: {{a: {member}}}")
+
+    def test_a_scene_panel_may_override_one_key_of_an_inherited_figure(self):
+        scene = "cast: {a: {figure: ana}}\npanels: {one: {cast: {a: {figure: ben}}}}\n"
+        assert problems(scene_schema(), scene) == []
+
+    def test_a_scene_panel_may_not_pose_a_figure(self):
+        scene = "panels: {one: {cast: {a: {figure: ben, pose: pointing}}}}\n"
+        assert problems(scene_schema(), scene)

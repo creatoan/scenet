@@ -52,9 +52,17 @@ That writes `duel.debug.svg`, drawing what the solver was actually working again
 | Named anchors | `mouth`, `eyes`, and anything else the puppet declares |
 | Gaze vectors | Where each character is looking, and how far that reaches |
 | Tail routes | Including the control point, when a tail had to bend |
+| Figures a picture draws | Each figure's face disc, mouth and body, from its [artwork contract](../reference/asset_contract.md#artwork-contracts), labelled with the part it plays or `(not cast)` |
+| Keep-out regions | Dashed: what the picture's contract asks lettering to stay off, at a cost |
 
 Most "why is the balloon *there*?" questions answer themselves the moment you see the face
 discs and the gaze vectors drawn.
+
+The overlay never draws a supplied picture, only the rectangle it was placed in. To check an
+artwork contract against its picture, lay the overlay over the panel's SVG: every face disc
+should ring a face, and every mouth sit on one. `examples/gallery/35-figures.scene.yaml` is
+lettered that way, over a contract written from the same numbers its picture was painted
+from.
 
 From Python it is {func}`render_debug <scenet.emit.debug_svg.render_debug>`:
 

@@ -13,6 +13,7 @@ from typing import Literal
 from pydantic import ValidationError
 from shapely.geometry import Point, Polygon
 
+from scenet.assets.artwork import LoadedContract, load_contract, pictureless, undrawn
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.assets.emanata import SINGULAR, build_emanata
 from scenet.assets.face import ResolvedDisc, ResolvedStroke, build_face
@@ -26,6 +27,7 @@ from scenet.core import (
     CoreBackdrop,
     CoreBalloon,
     CoreCaption,
+    CoreFigure,
     CoreFont,
     CoreFrame,
     CoreGlyph,
@@ -58,6 +60,7 @@ from scenet.frontends.yaml_front import (
     parse_scene_document,
 )
 from scenet.geom import BBox, Vector, rounded
+from scenet.geom import Point as GeomPoint
 from scenet.images import SuppliedImage, load_image
 from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, Side
 from scenet.lettering import Lettering, typeface_for
@@ -66,6 +69,7 @@ from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.describe import describe, labels
+from scenet.solve.figures import PlacedPicture, place_figures
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
 from scenet.solve.speakers import speaker_of
@@ -82,7 +86,9 @@ class CompileResult:
     """
 
     core: PanelCore
-    camera: CameraSolution
+    #: The framing the camera chose, or None for a panel whose cast a supplied picture
+    #: draws (#71): the artist framed it, and the camera does not run.
+    camera: CameraSolution | None
     placements: tuple[Placement, ...]
     posed: dict[str, ResolvedPuppet]
     #: The fonts the lettering was measured in, other than the shipped family's, by the
@@ -121,7 +127,7 @@ class CompileResult:
             True
         """
         notes: list[str] = []
-        if self.camera.was_pulled_back:
+        if self.camera is not None and self.camera.was_pulled_back:
             notes.append(
                 f"camera retreated to {self.camera.pullback:.0%} of the requested "
                 f"'{self.camera.shot.value}' framing so the cast would fit across the panel"
@@ -129,6 +135,7 @@ class CompileResult:
         for balloon in self.core.balloons:
             if balloon.tail.is_curved:
                 notes.append(f"balloon {balloon.id} needed a curved tail to clear a face")
+        notes.extend(_cropped_mouths(self.core))
         # The camera frames by body landmarks and makes no room for emanata, which is
         # what keeps them from ever moving anybody. The cost is that a tight shot can
         # crop them, so say so: a mark that silently vanished is the same complaint as
@@ -142,26 +149,52 @@ class CompileResult:
                     )
         # An inset is drawn over the art, which does not move for it, so it can cover a
         # face as easily as a sky. The lettering keeps clear; the face cannot.
-        for actor in self.core.actors:
-            face = actor.face_exclusion.as_circle()
+        for who, disc in _named_faces(self.core):
+            face = disc.as_circle()
             if any(area.as_bbox().intersects_circle(face) for area in self.core.exclusions):
                 notes.append(
-                    f"an inset covers {actor.id}'s face; it is drawn over the art, which does "
+                    f"an inset covers {who}'s face; it is drawn over the art, which does "
                     "not move for it, so put the inset in another corner or reframe the panel"
                 )
         # A slanted edge crops the art like a margin, and the camera does not know it is
         # there. Say so when it runs through a face.
         if self.core.outline is not None:
             edge = Polygon(self.core.outline)
-            for actor in self.core.actors:
-                face = actor.face_exclusion
+            for who, face in _named_faces(self.core):
                 if not edge.contains(Point(face.cx, face.cy).buffer(face.r)):
                     notes.append(
-                        f"the slanted edge of this panel cuts across {actor.id}'s face; "
+                        f"the slanted edge of this panel cuts across {who}'s face; "
                         "lean the tier less, or frame the shot so the face is clear of it"
                     )
         notes.extend(self.lettering_notes)
         return tuple(notes)
+
+
+def _cropped_mouths(core: PanelCore) -> list[str]:
+    """A note for each balloon whose speaker's mouth a picture's fit cropped out of the panel.
+
+    A `cover` fit overhangs, and can crop a figure's mouth away. The tail then stops on the
+    frame, aimed at it: correct, and worth knowing about.
+    """
+    notes: list[str] = []
+    mouths = {figure.actor: figure.mouth for figure in core.figures if figure.actor}
+    for balloon in core.balloons:
+        mouth = mouths.get(balloon.speaker)
+        if mouth is not None and not (0 <= mouth[0] <= core.width and 0 <= mouth[1] <= core.height):
+            notes.append(
+                f"{balloon.speaker}'s mouth is outside the panel, cropped by the picture's "
+                f"fit, so balloon {balloon.id}'s tail stops on the frame; `fit: contain` "
+                "shows the whole picture"
+            )
+    return notes
+
+
+def _named_faces(core: PanelCore) -> list[tuple[str, Disc]]:
+    """Every face in a panel, with whose it is: actors by id, figures by part or name."""
+    return [
+        *((actor.id, actor.face_exclusion) for actor in core.actors),
+        *((figure.actor or figure.figure, figure.face_exclusion) for figure in core.figures),
+    ]
 
 
 def _cropped(core: PanelCore, actor: CoreActor, mark: Mark) -> bool:
@@ -348,7 +381,9 @@ PRESERVE_ASPECT_RATIO: dict[Fit, Literal["xMidYMid slice", "xMidYMid meet"]] = {
 
 
 def _core_backdrop(
-    backdrop: ResolvedBackdrop | None, image: SuppliedImage | None
+    backdrop: ResolvedBackdrop | None,
+    image: SuppliedImage | None,
+    keep_out: Sequence[Sequence[GeomPoint]] = (),
 ) -> CoreBackdrop | None:
     """Reduce a resolved backdrop to its serialisable Core twin.
 
@@ -374,6 +409,7 @@ def _core_backdrop(
             fit=placed.fit,
             preserve_aspect_ratio=PRESERVE_ASPECT_RATIO[placed.fit],
             box=Box.of(placed.box),
+            keep_out=tuple(round_pairs(tuple(region)) for region in keep_out),
         ),
         seed=backdrop.seed,
         masses=tuple(
@@ -448,8 +484,10 @@ def compile_ir(
         The compiled panel, with the fonts it was lettered in.
 
     Raises:
-        PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read, or
-            `image-file`, for a picture.
+        PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read,
+            `image-file`, for a picture, `artwork-contract`, for the contract beside a
+            picture whose figures the panel casts, or `unknown-figure`, for a figure the
+            picture does not draw.
     """
     library = library or default_library()
     # Read first: a font that cannot be read is the author's to fix, and is better said
@@ -460,10 +498,17 @@ def compile_ir(
         if panel.setting.image is not None
         else None
     )
+    contract = _contract_for(panel, image, base)
     family = lettering.typeface
     if metrics is not None:
         family = replace(family, regular=metrics)
-    placements, camera = solve_staging(panel, library)
+    # A cast the picture draws was framed and staged by the artist: the camera and staging
+    # do not run, and nobody is posed.
+    camera: CameraSolution | None
+    if panel.drawn_by_its_picture:
+        placements, camera = (), None
+    else:
+        placements, camera = solve_staging(panel, library)
 
     posed = {
         placement.actor_id: resolve(
@@ -509,6 +554,19 @@ def compile_ir(
         pixels=None if image is None else (image.width, image.height),
     )
 
+    picture = (
+        place_figures(contract.contract, backdrop.image)
+        if contract is not None and backdrop is not None and backdrop.image is not None
+        else PlacedPicture()
+    )
+    playing = {figure: actor for actor, figure in panel.figures().items()}
+    speakers = {actor: speaker_of(puppet) for actor, puppet in posed.items()}
+    speakers.update(
+        (playing[figure.name], figure.speaker)
+        for figure in picture.figures
+        if figure.name in playing
+    )
+
     frame = BBox(
         panel.panel.margin,
         panel.panel.margin,
@@ -525,8 +583,10 @@ def compile_ir(
     )
     layout = place_script(
         script,
-        {actor: speaker_of(puppet) for actor, puppet in posed.items()},
+        speakers,
         frame,
+        bystanders=[figure.speaker for figure in picture.figures if figure.name not in playing],
+        keep_out=picture.keep_out,
         typeface=family,
         type_size=panel.lettering.size,
         lettering_height=lettering_height,
@@ -548,6 +608,11 @@ def compile_ir(
     where = {
         placement.actor_id: rounded(posed[placement.actor_id].face.cx) for placement in placements
     }
+    where.update(
+        (playing[figure.name], rounded(figure.face.cx))
+        for figure in picture.figures
+        if figure.name in playing
+    )
     said = labels(script)
     core = PanelCore(
         width=width,
@@ -637,7 +702,17 @@ def compile_ir(
             )
             for caption in layout.captions
         ),
-        backdrop=_core_backdrop(backdrop, image),
+        backdrop=_core_backdrop(backdrop, image, picture.keep_out),
+        figures=tuple(
+            CoreFigure(
+                figure=figure.name,
+                actor=playing.get(figure.name),
+                face_exclusion=Disc.of(figure.face),
+                mouth=point_pair(figure.mouth) if figure.mouth is not None else None,
+                body=round_pairs(figure.body),
+            )
+            for figure in picture.figures
+        ),
         exclusions=tuple(Box.of(area) for area in exclusions),
         outline=tuple(outline) if outline is not None else None,
         sfx=tuple(
@@ -659,6 +734,30 @@ def compile_ir(
         images={image.sha256: image.data} if image is not None else {},
         lettering_notes=_stand_in_notes(core, lettering, family),
     )
+
+
+def _contract_for(
+    panel: PanelIR, image: SuppliedImage | None, base: Folder | None
+) -> LoadedContract | None:
+    """The artwork contract of the picture a cast of figures is drawn by, held to the cast.
+
+    Read only when the cast names a figure, so a file beside a picture changes nothing
+    on its own. Faults are raised exactly as `scenet check` reports them.
+
+    Raises:
+        PanelSyntaxError: Rule `unknown-figure`, for figures with no picture or a line
+            spoken by one the picture does not draw; `artwork-contract`, for a contract
+            that cannot be read.
+    """
+    if not panel.figures():
+        return None
+    if image is None:
+        raise pictureless(panel)
+    loaded = load_contract(image, base, loc=("setting", "image"))
+    faults = undrawn(panel, loaded.contract, image.href)
+    if faults:
+        raise faults[0]
+    return loaded
 
 
 def compile_source(

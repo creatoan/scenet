@@ -269,7 +269,8 @@ def solve_staging(
     if not panel.cast:
         raise LayoutError("panel has no cast; there is nothing to place")
 
-    puppets = {actor: library.get(member.reference) for actor, member in panel.cast.items()}
+    references = panel.puppets()
+    puppets = {actor: library.get(references[actor]) for actor in panel.cast}
 
     if camera is None:
         # The reference is the first actor the author wrote, which is the one the
@@ -337,7 +338,7 @@ def solve_staging(
     placements = tuple(
         Placement(
             actor_id=actor,
-            reference=panel.cast[actor].reference,
+            reference=references[actor],
             pose=panel.cast[actor].pose,
             expression=panel.cast[actor].expression,
             x=round(variables[actor].value(), SOLVED_PLACES),

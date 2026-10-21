@@ -27,8 +27,8 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
+from shapely import get_coordinates
 from shapely.geometry import LineString, Polygon, box
-from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
@@ -1098,17 +1098,11 @@ def _within_frame(origin: Point, target: Point, frame: "_Frame") -> Point:
         if frame.outline is not None
         else box(bounds.x, bounds.y, bounds.right, bounds.bottom)
     )
-    if shape.covers(ShapelyPoint(target.x, target.y)):
-        return target
+    # The balloon is inside the frame, and a frame is convex: the line to a mouth inside it
+    # crosses nothing, and to one beyond it crosses the frame exactly once.
     crossing = LineString([(origin.x, origin.y), (target.x, target.y)]).intersection(shape.exterior)
-    points = [
-        Point(float(x), float(y))
-        for geometry in getattr(crossing, "geoms", [crossing])
-        for x, y in getattr(geometry, "coords", [])
-    ]
-    if not points:  # pragma: no cover -- the line runs from inside the frame to beyond it
-        return target
-    return min(points, key=origin.distance_to)
+    points = [Point(float(x), float(y)) for x, y in get_coordinates(crossing)]
+    return min(points, key=origin.distance_to) if points else target
 
 
 @dataclass(frozen=True, slots=True)

@@ -21,12 +21,15 @@ from pydantic import (
     ConfigDict,
     Discriminator,
     Field,
+    ModelWrapValidatorHandler,
     Tag,
+    ValidationError,
     ValidationInfo,
     field_validator,
     model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
+from pydantic_core import InitErrorDetails
 
 from scenet.emphasis import EmphasisError, parse
 from scenet.errors import RuleViolationError
@@ -896,11 +899,12 @@ class SettingSpec(Strict):
 
 
 class CastMember(Strict):
-    """One character present in the panel.
+    """One character present in the panel: a puppet Scenet poses, or a figure a picture draws.
 
     Attributes:
         reference: Name of a puppet in the library. This is what gets drawn; the key
             this member is filed under in `cast` is the actor id used everywhere else.
+            None for a figure.
         pose: Named pose from that puppet's declared set.
         expression: Named expression from that puppet's declared set. Selected by name
             exactly as a pose is, because a face is the same kind of thing as a body:
@@ -911,6 +915,10 @@ class CastMember(Strict):
             changes the output.
         at: Preferred horizontal anchor.
         facing: Which way the figure is turned.
+        figure: Instead of `reference`: a figure the panel's supplied picture draws, by
+            the name its artwork contract gives it (#71). Nobody poses or places it --
+            the artist did -- so none of the keys above applies to it, and every one
+            is refused beside it.
 
     The split between actor id and `reference` is what lets one puppet appear twice in
     a panel as two different people:
@@ -920,12 +928,44 @@ class CastMember(Strict):
           guard_right: {reference: bob, pose: standing_neutral, facing: left}
     """
 
-    reference: str
+    reference: str | None = None
     pose: str = "standing_neutral"
     expression: str = "neutral"
     marks: tuple[Mark, ...] = ()
     at: AnchorX = AnchorX.CENTRE
     facing: Facing = Facing.RIGHT
+    figure: SvgText | None = None
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def names_a_puppet_or_a_figure(
+        cls, data: object, handler: ModelWrapValidatorHandler["CastMember"]
+    ) -> "CastMember":
+        """Require one of `reference` and `figure`, reported as `reference` missing.
+
+        Both are optional to the model, so pydantic alone would accept a member that
+        names neither. Saying so as `reference` being missing -- pydantic's own error, at
+        the place it always was -- keeps every finding a puppet's member gave before
+        figures existed exactly as it was, and lets a misspelt `referecne` still be
+        folded into "did you mean 'reference'?".
+        """
+        if not isinstance(data, dict) or any(
+            data.get(key) is not None for key in ("reference", "figure")
+        ):
+            return handler(data)
+        missing: InitErrorDetails = {"type": "missing", "loc": ("reference",), "input": data}
+        try:
+            handler(data)
+        except ValidationError as exc:
+            raise ValidationError.from_exception_data(
+                cls.__name__, [missing, *_init_details(exc)]
+            ) from None
+        raise ValidationError.from_exception_data(cls.__name__, [missing])
+
+    @property
+    def is_figure(self) -> bool:
+        """Whether this member is a figure a picture draws, rather than a puppet."""
+        return self.figure is not None
 
     @field_validator("marks")
     @classmethod
@@ -943,6 +983,25 @@ class CastMember(Strict):
         if repeated:
             raise ValueError(f"mark listed more than once: {', '.join(repeated)}")
         return tuple(sorted(marks))
+
+
+def _init_details(error: ValidationError) -> list[InitErrorDetails]:
+    """A validation error's details, in the form a new one is built from."""
+    details: list[InitErrorDetails] = []
+    for item in error.errors():
+        detail: InitErrorDetails = {
+            "type": item["type"],
+            "loc": item["loc"],
+            "input": item["input"],
+        }
+        if "ctx" in item:
+            detail["ctx"] = item["ctx"]
+        details.append(detail)
+    return details
+
+
+#: What a puppet's member may say that a figure's may not: posing and placing it.
+PUPPET_KEYS: tuple[str, ...] = ("pose", "expression", "marks", "at", "facing")
 
 
 class Relation(Strict):
@@ -1380,6 +1439,102 @@ class PanelIR(Strict):
                     if colour[neighbour] == _UNVISITED:
                         stack.append((neighbour, False))
         return self
+
+    @model_validator(mode="after")
+    def check_figures(self) -> Self:
+        """A figure a picture draws is not posed, placed or staged, and plays one part.
+
+        The frontend refuses a puppet's key written beside `figure`, since a written
+        default and an absent key look the same here; this is the backstop for an IR
+        built in Python, and the place the rest is decided:
+
+        - a cast is all puppets or all figures (`conflicting-cast`): staging and the
+          camera place puppets, and would place them over painted faces they cannot see;
+        - one figure plays one part (`conflicting-cast`);
+        - no staging relation names a figure (`figure-staging`): the artist staged them.
+        """
+        figures = self.figures()
+        if not figures:
+            return self
+        for actor, member in self.cast.items():
+            if not member.is_figure:
+                continue
+            if member.reference is not None:
+                raise RuleViolationError(
+                    f"cast member {actor!r} names a puppet and a figure the picture draws; it "
+                    "is one or the other. Over an inherited member, write `reference: null`",
+                    rule="conflicting-cast",
+                    loc=("cast", actor, "reference"),
+                )
+            for key in PUPPET_KEYS:
+                if getattr(member, key) != CastMember.model_fields[key].default:
+                    raise RuleViolationError(
+                        f"cast member {actor!r} is a figure the picture draws, which nobody "
+                        f"poses or places, so {key!r} does not apply to it",
+                        rule="conflicting-cast",
+                        loc=("cast", actor, key),
+                    )
+        puppets = [actor for actor, member in self.cast.items() if not member.is_figure]
+        if puppets:
+            raise RuleViolationError(
+                f"the cast mixes puppets ({', '.join(puppets)}) with figures the picture draws "
+                f"({', '.join(figures)}); a panel's cast is all one or all the other, since "
+                "staging would place a puppet over a painted face it cannot see",
+                rule="conflicting-cast",
+                loc=("cast", puppets[0], "reference"),
+            )
+        played: dict[str, str] = {}
+        for actor, figure in figures.items():
+            if figure in played:
+                raise RuleViolationError(
+                    f"figure {figure!r} is played by {played[figure]!r} already; one figure "
+                    "the picture draws is one person",
+                    rule="conflicting-cast",
+                    loc=("cast", actor, "figure"),
+                )
+            played[figure] = actor
+        for index, relation in enumerate(self.staging):
+            named = next(
+                (actor for actor in (relation.subject, relation.object) if actor in figures),
+                None,
+            )
+            if named is not None:
+                raise RuleViolationError(
+                    f"staging relation '{relation.predicate}' names {named!r}, a figure the "
+                    "picture draws: the artist already placed and staged everyone in it",
+                    rule="figure-staging",
+                    loc=("staging", index),
+                )
+        return self
+
+    def figures(self) -> dict[str, str]:
+        """The cast members a supplied picture draws, and the figure each plays.
+
+        Example:
+            >>> from scenet import parse_panel
+            >>> parse_panel("cast: {ana: {figure: ana_in_red}}").figures()
+            {'ana': 'ana_in_red'}
+        """
+        return {
+            actor: member.figure for actor, member in self.cast.items() if member.figure is not None
+        }
+
+    def puppets(self) -> dict[str, str]:
+        """The cast members Scenet poses, and the puppet each is drawn by."""
+        return {
+            actor: member.reference
+            for actor, member in self.cast.items()
+            if member.reference is not None
+        }
+
+    @property
+    def drawn_by_its_picture(self) -> bool:
+        """Whether everybody in the cast is a figure the panel's picture draws.
+
+        Then nothing is staged, the camera does not run, and the shot is whatever the
+        artist drew.
+        """
+        return bool(self.cast) and all(member.is_figure for member in self.cast.values())
 
     def ordering_constraints(self) -> tuple[tuple[str, str], ...]:
         """Normalised (left, right) pairs from both left_of and right_of relations."""

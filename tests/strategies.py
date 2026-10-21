@@ -46,7 +46,7 @@ from scenet import (
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.places import Place
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
-from tests.images import jpeg, png
+from tests.images import contract, jpeg, png
 
 __all__ = ["LIBRARY", "Drawn", "panels", "words"]
 
@@ -281,6 +281,98 @@ def panels(draw: st.DrawFn, *, images: bool = True) -> Drawn:
             setting["fit"] = draw(st.sampled_from(list(Fit))).value
         document["setting"] = setting
         files[name] = picture
+    return Drawn(document, files)
+
+
+@st.composite
+def _figure(draw: st.DrawFn, *, cell: tuple[float, float, float], down: int) -> dict[str, Any]:
+    """One figure of an artwork contract, in its cell of the picture: a face, maybe a
+    mouth, maybe a body -- every point on the picture, every region a simple polygon."""
+    left, width, across = cell
+    radius = round(max(1.0, min(width, down) * draw(st.floats(0.04, 0.18))), 1)
+    cx = round(left + width * draw(st.floats(0.3, 0.7)), 1)
+    cy = round(down * draw(st.floats(0.15, 0.6)), 1)
+    figure: dict[str, Any] = {"face": {"center": [cx, cy], "radius": radius}}
+    if draw(st.booleans()):
+        # Inside the face, as a mouth usually is, or a little below it.
+        below = draw(st.floats(0.2, 1.6))
+        figure["mouth"] = [cx, round(min(float(down), cy + radius * below), 1)]
+    if draw(st.booleans()) and cy + radius < down:
+        top = round(cy + radius, 1)
+        near = round(max(0.0, cx - radius), 1), round(min(across, cx + radius), 1)
+        far = round(max(0.0, cx - radius * 1.3), 1), round(min(across, cx + radius * 1.3), 1)
+        if near[1] > near[0] and far[1] > far[0] and down > top:
+            figure["body"] = [[near[0], top], [near[1], top], [far[1], down], [far[0], down]]
+    return figure
+
+
+@st.composite
+def figure_panels(draw: st.DrawFn) -> Drawn:
+    """A single panel whose people a supplied picture draws (#71), and the files it names.
+
+    The picture and its artwork contract are in `Drawn.files`. One to four figures sit in
+    cells across the picture, so their faces never overlap; some are cast, under their
+    own name or another, and one may be left uncast to stand in the way. A keep-out may
+    lie anywhere. There is no camera and no staging -- neither applies -- and the script
+    is spoken by the cast, from off panel, or by nobody.
+    """
+    width = draw(st.integers(min_value=360, max_value=1400))
+    height = draw(
+        st.integers(min_value=max(360, int(width / 2.5)), max_value=min(1400, int(width * 2.5)))
+    )
+    panel: dict[str, Any] = {"size": [width, height]}
+    if draw(st.booleans()):
+        panel["margin"] = draw(st.integers(min_value=0, max_value=min(width, height) // 10))
+
+    across = draw(st.integers(min_value=60, max_value=4000))
+    down = draw(st.integers(min_value=60, max_value=4000))
+    names = draw(st.lists(_actor_ids(), min_size=1, max_size=4, unique=True))
+    cell = across / len(names)
+    figures = {
+        name: draw(_figure(cell=(cell * index, cell, float(across)), down=down))
+        for index, name in enumerate(names)
+    }
+    keep_out: list[list[tuple[float, float]]] = []
+    if draw(st.booleans()):
+        x, y = draw(st.floats(0, 0.7)) * across, draw(st.floats(0, 0.7)) * down
+        w, h = draw(st.floats(0.05, 0.3)) * across, draw(st.floats(0.05, 0.3)) * down
+        keep_out.append(
+            [
+                (round(x, 1), round(y, 1)),
+                (round(x + w, 1), round(y, 1)),
+                (round(x + w, 1), round(y + h, 1)),
+                (round(x, 1), round(y + h, 1)),
+            ]
+        )
+
+    cast_names = draw(st.lists(st.sampled_from(names), min_size=1, unique=True))
+    # An actor is often called by its figure's name, and sometimes not: the two are
+    # different namespaces, which is what the speaker discount once got wrong.
+    cast = {
+        (name.upper() if draw(st.booleans()) else name): {"figure": name} for name in cast_names
+    }
+    ids = list(cast)
+    picture, data = draw(
+        st.sampled_from(
+            [("art/drawn.png", png(across, down)), ("art/drawn.jpg", jpeg(across, down))]
+        )
+    )
+    setting: dict[str, Any] = {
+        "image": picture,
+        "time": draw(st.sampled_from(list(TimeOfDay))).value,
+        "weather": draw(st.sampled_from(list(Weather))).value,
+    }
+    if draw(st.booleans()):
+        setting["fit"] = draw(st.sampled_from(list(Fit))).value
+
+    document: dict[str, Any] = {"panel": panel, "cast": cast, "setting": setting}
+    script = draw(st.lists(_event(ids), max_size=3))
+    if script:
+        document["script"] = script
+    if draw(st.booleans()):
+        document["description"] = draw(words(max_words=30))
+    contract_name = picture.rsplit(".", 1)[0] + ".art.yaml"
+    files = {picture: data, contract_name: contract((across, down), figures, keep_out)}
     return Drawn(document, files)
 
 
@@ -638,6 +730,8 @@ class Mistake:
             leaves nothing to point at -- a key that is missing, say.
         exact: Whether `path` is the whole path or only the start of it. A cycle is
             reported at whichever of its relations closes it, so only `staging` is fixed.
+        files: The files the document names, by the path it writes, for a mistake made
+            in a picture's artwork contract.
     """
 
     name: str
@@ -646,6 +740,7 @@ class Mistake:
     path: tuple[str | int, ...]
     needle: str | None
     exact: bool = True
+    files: dict[str, bytes] = field(default_factory=dict[str, bytes])
 
 
 def _dump(document: object) -> str:
@@ -809,6 +904,79 @@ def _font_file(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
     return Mistake("font-file", _dump(document), "font-file", path, "Comic")
 
 
+def _figures_only(document: dict[str, Any], cast: dict[str, Any]) -> dict[str, Any]:
+    """The document with a cast of figures, and nothing a figure cannot have: no camera,
+    no staging, and no script naming the puppets it had."""
+    kept = {
+        key: value for key, value in document.items() if key not in ("camera", "staging", "script")
+    }
+    return {**kept, "cast": cast}
+
+
+def _reference_beside_figure(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document["cast"][actor]["figure"] = "ana"
+    path = ("cast", actor, "reference")
+    return Mistake(
+        "reference-beside-figure", _dump(document), "conflicting-cast", path, "reference"
+    )
+
+
+def _pose_on_figure(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document = _figures_only(document, {actor: {"figure": "ana", "pose": "pointing"}})
+    path = ("cast", actor, "pose")
+    return Mistake("pose-on-figure", _dump(document), "conflicting-cast", path, "pose")
+
+
+def _figure_without_picture(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document = _figures_only(document, {actor: {"figure": "ana"}})
+    document.pop("setting", None)
+    path = ("cast", actor, "figure")
+    return Mistake("figure-without-picture", _dump(document), "unknown-figure", path, "figure")
+
+
+def _staging_on_figure(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    other = "zed" if actor != "zed" else "yan"
+    document = _figures_only(document, {actor: {"figure": "ana"}, other: {"figure": "ben"}})
+    document["staging"] = [f"{actor} left_of {other}"]
+    return Mistake(
+        "staging-on-figure", _dump(document), "figure-staging", ("staging", 0), "left_of"
+    )
+
+
+def _camera_on_figures(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    camera = document["camera"]
+    document = _figures_only(document, {actor: {"figure": "ana"}})
+    document["camera"] = camera
+    first = next(iter(camera))
+    return Mistake("camera-on-figures", _dump(document), "figure-staging", ("camera", first), first)
+
+
+#: A picture and its contract, for the mistakes made in one.
+_PICTURE = "art/p.png"
+_ANA = {"face": {"center": [100, 100], "radius": 20}, "mouth": [100, 110]}
+
+
+def _contract_of_another_size(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    """A contract measured on another export: reported where the picture is named, since
+    a document checked as text has only its own lines to point at."""
+    document = _figures_only(document, {actor: {"figure": "ana"}})
+    document["setting"] = {"image": _PICTURE}
+    files = {_PICTURE: png(300, 200), "art/p.art.yaml": contract((600, 400), {"ana": _ANA})}
+    path = ("setting", "image")
+    return Mistake(
+        "artwork-contract", _dump(document), "artwork-contract", path, "image", files=files
+    )
+
+
+def _line_by_an_undrawn_figure(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
+    document = _figures_only(document, {actor: {"figure": "anna"}})
+    document["setting"] = {"image": _PICTURE}
+    document["script"] = [{"say": {"by": actor, "text": "Here."}}]
+    files = {_PICTURE: png(300, 200), "art/p.art.yaml": contract((300, 200), {"ana": _ANA})}
+    path = ("script", 0, "say", "by")
+    return Mistake("undrawn-figure", _dump(document), "unknown-figure", path, "by", files=files)
+
+
 def _duplicate_key(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
     text = _dump(document) + "camera: {shot: wide}\n"
     return Mistake("duplicate-key", text, "duplicate-key", (), "camera")
@@ -860,6 +1028,13 @@ MISTAKES: dict[str, _Breaker] = {
     "image-beside-horizon": _image_beside("horizon", "low"),
     "fit-without-image": _fit_without_image,
     "font-file": _font_file,
+    "reference-beside-figure": _reference_beside_figure,
+    "pose-on-figure": _pose_on_figure,
+    "figure-without-picture": _figure_without_picture,
+    "staging-on-figure": _staging_on_figure,
+    "camera-on-figures": _camera_on_figures,
+    "artwork-contract": _contract_of_another_size,
+    "undrawn-figure": _line_by_an_undrawn_figure,
     "duplicate-key": _duplicate_key,
     "panel-geometry": _panel_geometry,
     "not-a-mapping": _not_a_mapping,

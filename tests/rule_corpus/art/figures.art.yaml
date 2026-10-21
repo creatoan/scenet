@@ -1,0 +1,5 @@
+# Measured on a 6x4 export; art/figures.png is 3x2.
+size: [6, 4]
+figures:
+  ana:
+    face: {center: [3, 2], radius: 1}

@@ -46,13 +46,14 @@ from shapely.geometry import Polygon
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.positions import Position, Region, locate
 from scenet.images import SuppliedImage
-from scenet.ir import SvgText
+from scenet.ir import PanelIR, SayEvent, SfxEvent, SvgText
 from scenet.paths import Folder, read_relative
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 __all__ = [
     "CONTRACT_RULE",
     "CONTRACT_SUFFIX",
+    "FIGURE_RULE",
     "ArtworkContract",
     "ArtworkFace",
     "ArtworkFigure",
@@ -60,10 +61,15 @@ __all__ = [
     "LoadedContract",
     "contract_path",
     "load_contract",
+    "pictureless",
+    "undrawn",
 ]
 
 #: The rule every fault in a contract is reported under.
 CONTRACT_RULE = "artwork-contract"
+
+#: The rule a figure its panel's picture does not draw is reported under.
+FIGURE_RULE = "unknown-figure"
 
 #: What a contract's name ends in, in place of its picture's extension.
 CONTRACT_SUFFIX = ".art.yaml"
@@ -300,6 +306,65 @@ def load_contract(
             loc=loc,
         )
     return LoadedContract(path=path, contract=contract, sha256=hashlib.sha256(data).hexdigest())
+
+
+def pictureless(panel: PanelIR) -> PanelSyntaxError:
+    """A cast of figures with no picture to be drawn by, reported once, at the first.
+
+    Args:
+        panel: A validated panel that casts a figure and names no picture.
+
+    Returns:
+        The fault.
+    """
+    actor = next(iter(panel.figures()))
+    return PanelSyntaxError(
+        f"cast member {actor!r} is a figure a picture draws, and this panel names no "
+        "picture to draw it: name one with `setting.image`, beside its artwork contract",
+        rule=FIGURE_RULE,
+        loc=("cast", actor, "figure"),
+    )
+
+
+def undrawn(panel: PanelIR, contract: ArtworkContract, image: str) -> list[PanelSyntaxError]:
+    """Every line spoken, or sound made, by a cast figure this panel's picture does not draw.
+
+    A figure is in a panel when the panel's picture draws it, so a script's front matter
+    or a scene's defaults can cast every figure of a chapter and each panel holds those
+    its picture draws. One that is not drawn is not there, which is a fault only when the
+    panel has it say something -- and that is where a misspelt name is caught.
+
+    Args:
+        panel: The validated panel.
+        contract: Its picture's contract.
+        image: The picture's path, as the document writes it.
+
+    Returns:
+        One fault per such line, in script order, at the key naming the figure.
+    """
+    figures = panel.figures()
+    drawn = ", ".join(contract.figures) or "nobody"
+    found: list[PanelSyntaxError] = []
+    for index, event in enumerate(panel.script):
+        if isinstance(event, SayEvent) and event.off_panel is False:
+            actor, key, does = event.by, "by", "speaks"
+        elif isinstance(event, SfxEvent) and event.source is not None:
+            actor, key, does = event.source, "from", "makes a sound"
+        else:
+            continue
+        figure = figures.get(actor)
+        if figure is None or figure in contract.figures:
+            continue
+        found.append(
+            PanelSyntaxError(
+                f"{actor!r} {does} in script entry {index}, as figure {figure!r}, which "
+                f"{image!r} does not draw: its contract declares {drawn}. Check the name, or "
+                "say the line from off panel, leaving the member out of this panel's cast",
+                rule=FIGURE_RULE,
+                loc=("script", index, event.verb, key),
+            )
+        )
+    return found
 
 
 def _validated(

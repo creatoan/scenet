@@ -1,0 +1,3 @@
+# A cast member is a puppet Scenet poses or a figure a picture draws, not both.
+cast: {ana: {figure: ana, reference: alice}}
+setting: {image: art/figures.png}

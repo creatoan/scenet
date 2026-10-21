@@ -107,3 +107,7 @@ examples:
     title: "A picture drawn elsewhere, behind the cast: cover and contain"
     kind: scene
     files: [art/street.png]
+  - file: 35-figures.scene.yaml
+    title: "Figures a picture draws: an artwork contract, cover and contain"
+    kind: scene
+    files: [art/figures.png, art/figures.art.yaml]

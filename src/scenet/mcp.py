@@ -115,7 +115,9 @@ format or worked examples. list_puppets names the characters you can cast.
 Then validate the document, fix every finding -- each names its rule, line and fix -- \
 and validate again until it is clean. compile shows where everything was placed; \
 render returns the SVG. Pass the document's text, not a path; if it names a picture or \
-a font, pass that file's bytes in files, by the path the document writes."""
+a font, pass that file's bytes in files, by the path the document writes. A cast of \
+figure: members is drawn by its picture, whose artwork contract sits beside it, named \
+after it (art/p01.png, art/p01.art.yaml): pass that file too."""
 
 #: Every tool here is a pure function of its arguments.
 READ_ONLY = ToolAnnotations(
@@ -154,9 +156,10 @@ FilesArg = Annotated[
     Field(
         description=(
             "The files the document names -- a picture behind the cast, a font -- by the "
-            "path it writes, such as `art/p01.png`, each as base64. They stand in for the "
-            "document's folder, which a server never reads; left out, a document that names "
-            "a file is refused"
+            "path it writes, such as `art/p01.png`, each as base64, and the artwork contract "
+            "beside a picture whose figures the cast names, such as `art/p01.art.yaml`. They "
+            "stand in for the document's folder, which a server never reads; left out, a "
+            "document that names a file is refused"
         )
     ),
 ]

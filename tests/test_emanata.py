@@ -25,6 +25,7 @@ from shapely.geometry import Polygon, box
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
+from scenet.assets.artwork import CONTRACT_SUFFIX
 from scenet.assets.contract import Landmark, PuppetLibrary, default_library
 from scenet.assets.emanata import MIN_EMANATA_DETAIL, ResolvedEmanata, build_emanata
 from scenet.assets.face import MIN_FEATURE_RADIUS, FaceMark, ResolvedDisc, ResolvedStroke
@@ -46,10 +47,14 @@ from scenet.solve.balloons import (
 )
 
 REPO = Path(__file__).parent.parent
+# Documents only: not the manifest, and not a picture's artwork contract, which is YAML
+# beside the picture it describes rather than a document of its own.
 DOCUMENTS = sorted(
     path
     for path in (REPO / "examples").rglob("*")
-    if path.suffix in {".yaml", ".script"} and path.name != "manifest.yaml"
+    if path.suffix in {".yaml", ".script"}
+    and path.name != "manifest.yaml"
+    and not path.name.endswith(CONTRACT_SUFFIX)
 )
 EVERY_MARK = "[plewds, squeans, grawlixes, briffits]"
 SAYS = ", script: [{say: {by: a, text: 'What the--'}}]"
@@ -416,8 +421,10 @@ def _points(marks: Sequence[FaceMark]) -> list[Point]:
 
 
 def _with_marks(panel: PanelIR, marks: tuple[Mark, ...]) -> PanelIR:
+    """Every puppet in the panel marked. A figure a picture draws takes no marks (#71)."""
     cast = {
-        actor: member.model_copy(update={"marks": marks}) for actor, member in panel.cast.items()
+        actor: member if member.is_figure else member.model_copy(update={"marks": marks})
+        for actor, member in panel.cast.items()
     }
     return panel.model_copy(update={"cast": cast})
 

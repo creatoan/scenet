@@ -31,6 +31,7 @@ attribution. A notation is only worth having if it is not owned.
 | 12 | Lettering: emphasis, kerning, type size, an author's own face; sound effects in the display face | **Done** |
 | 13 | Comic scripts as publishers write them, and in French; off-panel speech; small type; a script's pages; notes in `scenet check` | **Done** |
 | 14 | Accessible output: every panel an image a screen reader reads whole, in reading order; descriptions written, kept from a script or generated | **Done** |
+| 15 | Supplied artwork: a picture behind the cast, linked or embedded; figures the picture draws, declared in an artwork contract and lettered around | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
@@ -43,7 +44,6 @@ dependency between them is stated in the tickets rather than implied by this tab
 | Scope | Ticket |
 |---|---|
 | Right-to-left reading, for manga | [#68](https://github.com/creatoan/scenet/issues/68) |
-| Supplied artwork: lettering over an image, in two parts | [#69](https://github.com/creatoan/scenet/issues/69) |
 | Export a panel's staging for image models: pose, boxes, depth, masks | [#72](https://github.com/creatoan/scenet/issues/72) |
 | VS Code: `scenet check` findings, and highlighting for comic scripts | [#77](https://github.com/creatoan/scenet/issues/77) |
 | `scenet build --watch` | [#78](https://github.com/creatoan/scenet/issues/78) |

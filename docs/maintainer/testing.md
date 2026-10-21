@@ -462,6 +462,82 @@ Each mutant killed was applied by hand to see its test fail.
 | `emit/svg.py` `image_href` 6 | `safe="/"` to `safe="XX/XX"` | `quote` never escapes a letter, so adding `X` to what it leaves alone changes nothing. |
 | `emit/svg.py` `image_href` 15 | `decode("ascii")` to `decode("ASCII")` | The same codec; Python's codec names are case-insensitive. |
 
+Figures a picture draws (#71) changed `solve/balloons.py` and `solve/sfx.py` -- the speaker
+interface, bystanders, keep-outs, a tail to a cropped mouth -- added `solve/speakers.py` and
+`solve/figures.py`, and drew figures in the debug overlay. Fresh runs from the stack's top
+branch. The first batch never tried a mutant: two `@given` tests written as methods failed
+Hypothesis's `differing_executors` health check in mutmut's clean run, which runs the suite twice
+in one process; every property test is a module function now, as the rest of the suite's are.
+
+- `solve/speakers.py`,
+  [`39483572899`](https://github.com/creatoan/scenet/actions/runs/39483572899): 26 mutants, all
+  killed.
+- `solve/figures.py`,
+  [`39483587638`](https://github.com/creatoan/scenet/actions/runs/39483587638): 52 mutants, all
+  killed.
+- `solve/describe.py`,
+  [`39483600321`](https://github.com/creatoan/scenet/actions/runs/39483600321): 195 mutants, all
+  killed.
+- `emit/*`, [`39483612696`](https://github.com/creatoan/scenet/actions/runs/39483612696): 1589
+  mutants and 11 survivors, exactly the 11 accepted above under the same numbers. The figures in
+  the debug overlay left none.
+- `solve/balloons.py`,
+  [`39483547250`](https://github.com/creatoan/scenet/actions/runs/39483547250): 1335 mutants and
+  51 survivors.
+  - 27 are the 27 accepted above. Two are renumbered: `_score_caption` 55 is now 59, and
+    `_place_off_panel` 87 is now 89.
+  - **Killed in `tests/test_balloons.py`** (`TestTriageForFigures`, `TestASoundInAPanelOfFigures`):
+    - bystanders' bodies dropped from `_score` (23) and `_score_caption` (21, 22), or overwritten
+      rather than summed in `_occlusion_cost` (33);
+    - bystanders not handed to an off-panel balloon (`_place_off_panel` 54, `place_script` 163) or
+      to the sound effects (`place_script` 78);
+    - the sound effects' `inside`, `marks` -- which hold the keep-outs -- and `blocked` dropped
+      (`place_script` 67, 75, 76, 77);
+    - the bottom-right corner candidate (`_candidate_positions` 62-65) and the fallback tail's
+      start (`route_tail` 83). These two had been killed only by golden panels whose balloons sat
+      there before #71's speaker fix moved them.
+  - **Removed:** `_within_frame` 15, 30, 36, 37, 40 and 43 checked whether a mouth was inside the
+    frame first, and walked shapely's result by hand. A convex frame is crossed once by a line to
+    a mouth beyond it and never by one to a mouth inside, so the function now only intersects, and
+    reads the crossing with `shapely.get_coordinates`. Every golden is unchanged.
+- `solve/sfx.py`, [`39483560230`](https://github.com/creatoan/scenet/actions/runs/39483560230):
+  489 mutants and 37 survivors. `solve/sfx.py` arrived after the baseline above and had not been
+  triaged. #71 changed `_cost` and `place_effects`, and their 21 survivors are triaged here:
+  - **18 killed** in `tests/test_sfx.py`: `TestTheCostOfAPosition` pins each term of `_cost`
+    exactly, on a footprint smaller than a mutant's area floor; `TestWhereAnEffectMayGo` holds
+    `place_effects` to an inset elsewhere, a sliver of one, and a shaped panel.
+  - **3 accepted**, below.
+  - The other 16, in `layout_effect` (9), `_ring` (6) and `_candidates` (1), are in code #71 did
+    not change, and were triaged after it. `TestTheShapeOfAnEffect` and
+    `TestWhereAnEffectIsLookedFor` in `tests/test_sfx.py` kill 9: the last pair of letters
+    kerned as every other is (`layout_effect` 10), an arc of one degree bowing the same way as
+    one of thirty (41), the rings round a source at its reach times each factor (`_candidates`
+    16), and every ring starting straight up and going clockwise (`_ring` 5, 8, 10, 16, 21). The
+    other 7 are accepted, below. `solve/sfx.py` is triaged: run
+    [`39497617662`](https://github.com/creatoan/scenet/actions/runs/39497617662), from that
+    branch, left 11 survivors of 489 mutants, exactly the 11 accepted below.
+
+Both files were run again from the triage branch, after the tests and the change to
+`_within_frame`: `solve/balloons.py`,
+[`39491758453`](https://github.com/creatoan/scenet/actions/runs/39491758453), 1317 mutants and 29
+survivors -- the 27 accepted above and the two below; `solve/sfx.py`,
+[`39491774024`](https://github.com/creatoan/scenet/actions/runs/39491774024), 489 mutants and 19
+survivors -- the three below and the 16 still to triage. The numbers below are those runs'.
+
+Each mutant killed was applied by hand to see its test fail.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `solve/balloons.py` `_within_frame` 29, 31 | `min(points, key=...)` without the key | A convex frame is crossed at most once, so there is never a second point to choose between: the same argument as `_edge_point` 47 and the rest. |
+| `solve/sfx.py` `_cost` 12 | the source term `+=` to `=` | It is the first term, added to the `0.0` the cost starts at. |
+| `solve/sfx.py` `place_effects` 87 | `cost < best[0]` to `<=` | Differs only on an exact tie, which a later candidate would then win. Candidates are placed by trigonometry, so two that look equally good differ in their last bits -- and which way depends on the platform: a test pinning one, with an inset over the middle and its two mirror points left, passed on Windows and failed on Linux. No test can hold a tie that the arithmetic never makes exact. |
+| `solve/sfx.py` `layout_effect` 40 | `arc > 0` to `arc >= 0` for the bow | The bow is read only when the arc is not zero. |
+| `solve/sfx.py` `layout_effect` 52, 55, 56 | `zip(..., strict=True)` loosened or dropped | The steps are built one per character of the same text, so the two are always the same length. |
+| `solve/sfx.py` `layout_effect` 63, 74 | every glyph's height shifted by 1, or by the arc's radius | The shift is the same for every glyph and corner, and the footprint is re-centred on its hull afterwards, which takes it back out: below what the format can show. |
+| `solve/sfx.py` `layout_effect` 153 | the rotation about the hull's centre instead of `(0, 0)` | The hull has just been centred on `(0, 0)`, so the two are the same point. |
+| `solve/sfx.py` `_ring` 19 | `sin(-pi / 2 + a)` to `sin(-pi / 2 - a)` | Both are `-cos(a)`. |
+| `solve/sfx.py` `place_effects` 42 | `distance < radius` to `<=` | Differs only for a footprint exactly tangent to a face. Footprints are glyph outlines placed at candidate centres a ring step apart, which never land at a face's radius exactly; a balloon's own face test is strict for the same reason. |
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random

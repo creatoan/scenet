@@ -80,7 +80,7 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         margin: The panel's margin, as authored.
     """
     inner = BBox(margin, margin, core.width - 2 * margin, core.height - 2 * margin)
-    faces = [actor.face_exclusion.as_circle() for actor in core.actors]
+    faces = [face.as_circle() for face in core.face_exclusions()]
     exclusions = [box.as_bbox() for box in core.exclusions]
     boxes = lettered_boxes(core)
 
@@ -109,9 +109,14 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
             # Nobody drawn to point at: the tail ends on the frame, on the speaker's side.
             assert _on_the_frame(core, end), f"tail of {balloon.id} stops short of the frame"
             continue
-        face = core.actor(balloon.speaker).face_exclusion.as_circle()
+        disc, mouth = core.speaker(balloon.speaker)
+        face = disc.as_circle()
         distance = math.hypot(end[0] - face.cx, end[1] - face.cy)
-        assert distance <= face.r * TAIL_REACH, f"tail of {balloon.id} misses its speaker"
+        # At the face, or at a mouth declared off it -- a figure's may be anywhere the sound
+        # comes from -- or on the frame, for a mouth a picture's fit cropped away.
+        at_mouth = math.hypot(end[0] - mouth[0], end[1] - mouth[1]) <= TOLERANCE
+        reaches = distance <= face.r * TAIL_REACH or at_mouth or _on_the_frame(core, end)
+        assert reaches, f"tail of {balloon.id} misses its speaker"
 
 
 def assert_words_are_carried(core: PanelCore, *, description: str | None = None) -> None:
@@ -169,10 +174,9 @@ def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:
     for effect, (identifier, zone) in zip(core.sfx, zones, strict=True):
         assert inner.contains(zone), f"{identifier} leaves the margin"
         assert outline is None or outline.contains(zone), f"{identifier} leaves the outline"
-        for actor in core.actors:
-            face = actor.face_exclusion
+        for face in core.face_exclusions():
             reach = zone.distance(ShapelyPoint(face.cx, face.cy))
-            assert reach >= face.r - TOLERANCE, f"{identifier} covers {actor.id}'s face"
+            assert reach >= face.r - TOLERANCE, f"{identifier} covers a face"
         for area in core.exclusions:
             covered = zone.intersection(rectangle(area.x, area.y, area.right, area.bottom)).area
             assert covered <= TOLERANCE, f"{identifier} is under an exclusion"

@@ -378,7 +378,8 @@ to: a picture's values are the artist's.
 
 **Nothing else moves.** The picture costs a balloon nothing. The compiler does not know what is in
 it, so a balloon may sit anywhere on it; the cast's faces are what lettering keeps clear of. The
-camera frames the cast exactly as it would in front of masses.
+camera frames the cast exactly as it would in front of masses. When the people are in the picture,
+its artwork contract says where — see [Figures the picture draws](#figures-the-picture-draws).
 
 **Linked or embedded.** The SVG names the picture by the path exactly as written, percent-encoded,
 so it is found when the SVG sits beside the document — which is where `scenet build` writes it.
@@ -393,6 +394,66 @@ accessible name and has no title of its own. A generated description names neith
 the hour over a picture — the compiler has not seen it — only the weather it drew. Write
 `description:` to say what the picture shows.
 
+### Figures the picture draws
+
+A picture can draw its own people. Cast them with `figure:` in place of `reference:`, and Scenet
+letters them as it letters puppets — balloons in reading order, never over a face, tails to the
+mouth — while drawing nothing of them: the picture already has.
+
+```yaml
+setting: {image: art/p01-street.png}
+cast:
+  ana: {figure: ana}          # in place of reference:
+  ben: {figure: ben}
+script:
+  - say: {by: ana, text: "Where are we?"}
+  - say: {by: ben, text: "Somewhere they won't look."}
+```
+
+Where each face, mouth and body is, the panel does not say — it never writes a coordinate. The
+picture's [artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) does: a file beside the picture,
+named after it, `art/p01-street.art.yaml`, measured once in the picture's own pixels and
+committed with it. `figure:` names a figure it declares. The contract is read only for a panel
+whose cast names a figure, and its geometry goes through the picture's `fit`, so a face is
+excluded exactly where the picture draws it, under `cover` and `contain` alike.
+
+**Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
+lettering as a speaker's, and a body as costly to cover: a crowd of five can be declared and two of
+them cast. The other way round, a cast figure the panel's picture does not draw is simply not in
+that panel — as a member written `(OP)` is not — so a script's front matter or a scene's defaults
+can cast every figure of a chapter, and each panel holds those its own picture draws. A line spoken
+there by one it does not draw is `unknown-figure`, listing who the picture does draw; that is where
+a misspelt name is caught. A figure in a panel with no picture is `unknown-figure` too.
+
+**What does not apply.** The artist already framed, posed and staged everybody in the picture:
+
+- **No camera.** The shot is whatever the picture shows. `camera:` on a panel whose cast is all
+  figures is refused, as `figure-staging`, a key with no effect; a panel that inherits one writes
+  `camera: null`. A generated description says no shot.
+- **No staging.** A relation naming a figure — `left_of`, `looking_at` and the rest — is refused,
+  as `figure-staging`.
+- **No posing.** `pose`, `expression`, `marks`, `at` and `facing` are a puppet's, and refused beside
+  `figure`, as is `reference`: a member is one or the other (`conflicting-cast`). A member inherited
+  as a puppet becomes a figure with `reference: null` beside its `figure`.
+- **No gaze.** A contract declares none, so nothing keeps a balloon out of a figure's line of sight.
+- **No mixed casts.** A cast is all puppets or all figures (`conflicting-cast`): staging and the
+  camera would place a puppet over a painted face they cannot see. One figure is one person, played
+  by one member.
+
+**Keep-out regions** in the contract are ground lettering pays to cover, weighted as emanata are —
+a sign, a hand, what the panel is about — and never forbidden: a crowded panel covers one before it
+fails.
+
+**A `cover` crop** can push a face or a mouth out of the panel. Lettering stays inside the panel as
+always, and a face is kept clear for whatever part of it is in view. A tail to a mouth cropped
+away ends on the frame, aimed at it, and `scenet build` says so in a note; `fit: contain` shows the
+whole picture.
+
+`scenet check` reads the contract without running the solver, and reports a missing or malformed one
+as `artwork-contract`: in the contract itself, at the line of the fault, when the document is checked
+as a file; at the line naming the picture when it is checked as text, as in the playground or over
+MCP. The debug overlay (`scenet build --debug`) draws every face, mouth, body and keep-out over the
+panel, which is how a contract is checked against its picture.
 
 ## `cast`
 
@@ -401,6 +462,7 @@ A mapping of actor id to properties. Ids are chosen by the author and referenced
 | Key | Type | Meaning |
 |---|---|---|
 | `reference` | asset name | Which puppet to pull from the library |
+| `figure` | figure name | Instead of `reference`: a figure the panel's picture draws, as its [artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) names it. See [Figures the picture draws](#figures-the-picture-draws) |
 | `pose` | pose name | A named joint configuration declared by that puppet |
 | `expression` | expression name | A named face declared by that puppet |
 | `marks` | list of marks | Emanata drawn around the character: `plewds`, `squeans`, `grawlixes`, `briffits` |
@@ -463,6 +525,9 @@ have been drawn, and a character too small to have a face has no marks at all. S
 
 An oath written in a balloon — `"@#$%!"` — is dialogue, and already works. `grawlixes` is the other
 convention, the symbols over a head.
+
+A cast member may instead be a figure the panel's picture draws, written `figure:`; see
+[Figures the picture draws](#figures-the-picture-draws) for what applies to it and what does not.
 
 `reference`, `pose` and `expression` are validated against the puppet library, not just against the
 language's own grammar — a misspelled pose is a perfectly good string as far as the grammar is
@@ -1601,10 +1666,20 @@ The puppets shipped with Scenet. A cast member's `reference` names one of these,
 
 One puppet may appear several times in a panel under different actor ids. Your own puppets are described in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html).
 
+## Figures a picture draws
+
+A cast member may instead be `figure: <name>`: somebody a supplied picture (`setting.image`) already draws. No tool lists them, because they are not Scenet's: the names are those the picture's artwork contract declares, in the `*.art.yaml` beside it and named after it (`art/p01.png` has `art/p01.art.yaml`). Over MCP, send the contract in `files` with the picture. A figure takes no `pose`, `expression`, `marks`, `at` or `facing`, no staging names it, and a panel whose cast is all figures has no `camera`; a cast does not mix figures and puppets. See [the artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) and the gallery's `35-figures.scene.yaml`.
+
 <!-- scenet-spec:part=diagnostics -->
 # Diagnostics
 
 Every rule `scenet check` can report. Each finding carries one of these ids, a message naming the offending construct, and a line and column. The ids are stable across releases.
+
+### `scenet/artwork-contract`
+
+A picture's artwork contract cannot be read. A panel that casts a figure a supplied picture draws reads the picture's artwork contract, beside it and named after it: `art/p01.png` has its contract at `art/p01.art.yaml`. It must be there, and be YAML holding the picture's `size`, its `figures` and its `keep_out` regions, in the picture's own pixels. The size must be the picture's, every point must lie on the picture, and every region must be a simple polygon. A fault inside the contract is reported in it, when the document was checked as a file.
+
+**Fix:** Put the contract beside its picture with the picture's name, measure it on this picture, and check it against `scenet schema --artwork`. The debug overlay (`scenet build --debug`) draws what it declares over the panel.
 
 ### `scenet/balloon-placement`
 
@@ -1623,6 +1698,12 @@ A caption that is not `spoken` names a speaker. `by` names who says an off-panel
 An `over:` chain cannot be resolved. A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
 
 **Fix:** Check the panel name in `over:` and that the chain terminates.
+
+### `scenet/conflicting-cast`
+
+A cast member is a puppet and a figure, or a cast mixes the two. A cast member is a puppet Scenet poses (`reference`) or a figure a supplied picture draws (`figure`), never both. Nobody poses or places a figure, so a puppet's `pose`, `expression`, `marks`, `at` and `facing` do not apply to one. A cast is all puppets or all figures, since staging and the camera would place a puppet over a painted face they cannot see; and one figure is one person, played by one cast member.
+
+**Fix:** Keep `reference` or `figure`. On a member inherited from a scene's defaults, write the other as `null`, and the same for a puppet's keys.
 
 ### `scenet/conflicting-setting`
 
@@ -1647,6 +1728,12 @@ A key is written twice in one mapping. YAML requires every key in a mapping to b
 Two panels in a comic script have the same name. Panels are named by their PANEL heading, and by their PAGE heading as well when panel numbers start again on each page. Two panels that still share a name -- PANEL 1 twice on one page, or twice with no PAGE heading between them -- cannot both be kept, and dropping one without a word would lose whatever it held.
 
 **Fix:** Number the panels straight through, or put a PAGE heading before each page whose numbering starts again.
+
+### `scenet/figure-staging`
+
+Staging or a camera for figures a picture draws. The artist already framed, placed and staged everybody a picture draws, so a staging relation naming a figure has nothing to place, and a `camera` on a panel whose cast is all figures has nothing to frame: the shot is whatever the picture shows. Either would be a key with no effect, and this language reports slips.
+
+**Fix:** Remove the relation, or the `camera`. On a panel that inherits a camera, write `camera: null`.
 
 ### `scenet/font-file`
 
@@ -1761,6 +1848,12 @@ Reference to an actor that is not in the cast. Every actor id named in `staging`
 Reference to an expression the character does not have. A cast member's `expression` names one its puppet does not declare. The counterpart of `unknown-pose`: an expression is selected by name exactly as a pose is.
 
 **Fix:** Check the name against the puppet's declared expressions.
+
+### `scenet/unknown-figure`
+
+A figure the panel's picture does not draw. A cast member's `figure` names a figure in the artwork contract of the panel's picture. A panel with no picture has nobody for a figure to be. A figure its picture does not declare is simply not in that panel, as a member written `(OP)` is not; a line spoken by it there, or a sound made by it, is reported, with the figures the picture does draw.
+
+**Fix:** Check the name against the contract's `figures`, name the picture with `setting.image`, or say the line from off panel, leaving the member out of this panel's cast.
 
 ### `scenet/unknown-key`
 
@@ -1914,42 +2007,149 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CastMember": {
       "additionalProperties": false,
-      "description": "One character present in the panel.\n\nAttributes:\n    reference: Name of a puppet in the library. This is what gets drawn; the key\n        this member is filed under in `cast` is the actor id used everywhere else.\n    pose: Named pose from that puppet's declared set.\n    expression: Named expression from that puppet's declared set. Selected by name\n        exactly as a pose is, because a face is the same kind of thing as a body:\n        a small closed set of arrangements the character can be in.\n    marks: Emanata drawn around the character -- sweat, dizziness, swearing, a\n        hasty exit. A list, because they compose with each other and with the\n        expression. Kept sorted, so the order they were written in never\n        changes the output.\n    at: Preferred horizontal anchor.\n    facing: Which way the figure is turned.\n\nThe split between actor id and `reference` is what lets one puppet appear twice in\na panel as two different people:\n\n    cast:\n      guard_left:  {reference: bob, pose: arms_crossed}\n      guard_right: {reference: bob, pose: standing_neutral, facing: left}",
+      "anyOf": [
+        {
+          "required": [
+            "reference"
+          ]
+        },
+        {
+          "required": [
+            "figure"
+          ]
+        }
+      ],
+      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.\n\nAttributes:\n    reference: Name of a puppet in the library. This is what gets drawn; the key\n        this member is filed under in `cast` is the actor id used everywhere else.\n        None for a figure.\n    pose: Named pose from that puppet's declared set.\n    expression: Named expression from that puppet's declared set. Selected by name\n        exactly as a pose is, because a face is the same kind of thing as a body:\n        a small closed set of arrangements the character can be in.\n    marks: Emanata drawn around the character -- sweat, dizziness, swearing, a\n        hasty exit. A list, because they compose with each other and with the\n        expression. Kept sorted, so the order they were written in never\n        changes the output.\n    at: Preferred horizontal anchor.\n    facing: Which way the figure is turned.\n    figure: Instead of `reference`: a figure the panel's supplied picture draws, by\n        the name its artwork contract gives it (#71). Nobody poses or places it --\n        the artist did -- so none of the keys above applies to it, and every one\n        is refused beside it.\n\nThe split between actor id and `reference` is what lets one puppet appear twice in\na panel as two different people:\n\n    cast:\n      guard_left:  {reference: bob, pose: arms_crossed}\n      guard_right: {reference: bob, pose: standing_neutral, facing: left}",
+      "if": {
+        "properties": {
+          "figure": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "figure"
+        ]
+      },
+      "not": {
+        "properties": {
+          "figure": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "figure"
+        ]
+      },
       "properties": {
         "at": {
-          "$ref": "#/$defs/AnchorX",
-          "default": "center"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnchorX",
+              "default": "center"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "expression": {
-          "default": "neutral",
-          "title": "Expression",
-          "type": "string"
+          "anyOf": [
+            {
+              "default": "neutral",
+              "title": "Expression",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "facing": {
-          "$ref": "#/$defs/Facing",
-          "default": "right"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Facing",
+              "default": "right"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Figure"
         },
         "marks": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Mark"
-          },
-          "title": "Marks",
-          "type": "array"
+          "anyOf": [
+            {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Mark"
+              },
+              "title": "Marks",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "pose": {
-          "default": "standing_neutral",
-          "title": "Pose",
-          "type": "string"
+          "anyOf": [
+            {
+              "default": "standing_neutral",
+              "title": "Pose",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "reference": {
-          "title": "Reference",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference"
         }
       },
-      "required": [
-        "reference"
-      ],
+      "then": {
+        "properties": {
+          "at": {
+            "type": "null"
+          },
+          "expression": {
+            "type": "null"
+          },
+          "facing": {
+            "type": "null"
+          },
+          "marks": {
+            "type": "null"
+          },
+          "pose": {
+            "type": "null"
+          }
+        }
+      },
       "title": "CastMember",
       "type": "object"
     },
@@ -4236,4 +4436,72 @@ panels:
     setting: {fit: contain, weather: clear}
     script:
       - say: {by: alice, text: "It looks smaller from here."}
+```
+
+## Figures a picture draws: an artwork contract, cover and contain
+
+`35-figures.scene.yaml`
+
+It names `art/figures.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+
+```yaml
+# Figures a picture draws, lettered over (#71).
+#
+# The people are in the picture -- art/figures.png, painted by
+# scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of
+# posing puppets. Where each face, mouth and body is lives in the picture's artwork
+# contract, art/figures.art.yaml, beside it and named after it; this document writes no
+# coordinate. Balloons keep off every declared face, Carl's too though nobody cast him,
+# tails aim at each speaker's mouth, and the timetable board is a keep-out: lettering
+# pays to cover it, and does not.
+#
+# Nobody is posed, placed or framed: the artist did all of that, so there is no camera
+# and no staging. `fit` maps the contract through the same transform as the picture.
+
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+
+setting: {image: art/figures.png, time: night}
+
+panels:
+  platform:
+    panel: {size: [1200, 600]}
+    setting: {fit: cover}
+    script:
+      - caption: {text: "The last train. Again.", kind: locale}
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  waiting:
+    over: platform
+    panel: {size: [600, 700]}
+    setting: {fit: contain}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}
+```
+
+Its picture's artwork contract, `art/figures.art.yaml`, beside the picture:
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
 ```
