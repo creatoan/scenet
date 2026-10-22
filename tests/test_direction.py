@@ -30,6 +30,7 @@ from scenet.frontends.script_front import ScriptSyntaxError, parse_script_docume
 from scenet.frontends.yaml_front import parse_scene_document
 from scenet.geom import BBox, Circle, Point
 from scenet.ir import CaptionEvent, Side
+from scenet.solve import balloons
 from scenet.solve.balloons import (
     READING_EPSILON,
     _candidate_positions,
@@ -527,3 +528,56 @@ class TestTheDescription:
             parse_panel("direction: rtl\n" + self.TWO), {"alice": 500.0, "bob": 500.0}, 1000.0
         )
         assert said.index("Alice, centre") < said.index("Bob, centre")
+
+
+class TestEveryReadingDecisionIsAskedTheWayThePanelReads:
+    """Mutation testing (#68): where the order is decided only on an exact tie, a dropped
+    direction changes nothing a test can see without pinning that tie -- which falls
+    differently on another platform. So the decisions are watched instead: in a panel read
+    right to left, every one is asked right to left."""
+
+    def test_captions_and_off_panel_voices(self, monkeypatch: pytest.MonkeyPatch):
+        asked: list[tuple[str, object]] = []
+
+        def watch(name: str) -> None:
+            original = getattr(balloons, name)
+
+            def watched(*args: object) -> object:
+                asked.append((name, args[-1]))
+                return original(*args)
+
+            monkeypatch.setattr(balloons, name, watched)
+
+        for name in ("_caption_positions", "_reading_order_allows", "_nearer_side"):
+            watch(name)
+        _rtl(
+            "  - caption: {text: Midnight.}\n"
+            "  - say: {by: bob, text: 'Who is there?'}\n"
+            "  - say: {by: carol, text: Only me., off_panel: true}\n"
+        )
+        assert {name for name, _ in asked} == {
+            "_caption_positions",
+            "_reading_order_allows",
+            "_nearer_side",
+        }
+        assert {direction for _, direction in asked} == {Direction.RTL}
+
+
+class TestTheRuleItself:
+    @pytest.mark.parametrize("rise", [READING_EPSILON, READING_EPSILON / 2])
+    def test_level_within_the_tolerance_counts_as_below(self, rise: float):
+        """Mirrored like the rest: side by side, a hair higher, is still one row."""
+        assert _reading_order_allows([FIRST], BBox(300, FIRST.y - rise, 40, 40), RTL)
+
+    def test_just_beyond_the_tolerance_it_is_above(self):
+        rise = READING_EPSILON + 0.5
+        assert not _reading_order_allows([FIRST], BBox(300, FIRST.y - rise, 40, 40), RTL)
+
+    def test_the_first_caption_zone_is_where_reading_starts(self):
+        """Not only mirrored against each other: left to right starts top left, right to left
+        top right."""
+        size = (200.0, 50.0)
+        ltr, rtl = _caption_positions(size, PANEL)[0], _caption_positions(size, PANEL, RTL)[0]
+        assert ltr.x < PANEL.x + 50
+        assert rtl.right > PANEL.right - 50
+        assert ltr.y == rtl.y < PANEL.y + 50

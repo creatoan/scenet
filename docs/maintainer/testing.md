@@ -538,6 +538,57 @@ Each mutant killed was applied by hand to see its test fail.
 | `solve/sfx.py` `_ring` 19 | `sin(-pi / 2 + a)` to `sin(-pi / 2 - a)` | Both are `-cos(a)`. |
 | `solve/sfx.py` `place_effects` 42 | `distance < radius` to `<=` | Differs only for a footprint exactly tangent to a face. Footprints are glyph outlines placed at candidate centres a ring step apart, which never land at a face's radius exactly; a balloon's own face test is strict for the same reason. |
 
+Right-to-left reading (#68) changed `solve/balloons.py`, `solve/page.py`, `solve/describe.py`,
+`emit/strip.py`, `emit/page.py` and `emit/debug_svg.py`. Fresh runs from the stack's top branch:
+
+- `solve/balloons.py`,
+  [`39836238615`](https://github.com/creatoan/scenet/actions/runs/39836238615): 1356 mutants and
+  40 survivors.
+  - 29 are the 29 accepted above. One more is renumbered: `_place_off_panel` 89 is now 96.
+  - **11 killed** in `tests/test_direction.py`:
+    - which way caption zones are tried (`_caption_positions` 41). The mirror test alone could
+      not tell the two directions apart, since flipping both still mirrors, so
+      `TestTheRuleItself` pins the first zone to where reading starts;
+    - the tolerance of the right-to-left rule (`_reading_order_allows` 4, 5), mirrored from the
+      left-to-right tests;
+    - the direction dropped from the zones, the order and the nearer side of an off-panel balloon
+      (`_place_off_panel` 27, 30, 34, 37, 70, 73) and from a caption's zones (`_place_caption`
+      24, 27). Most of these change a layout only on an exact tie between mirrored candidates,
+      which falls differently by platform and so is never pinned.
+      `TestEveryReadingDecisionIsAskedTheWayThePanelReads` watches every reading decision in a
+      panel read right to left, and requires each to be asked right to left.
+- `solve/page.py`,
+  [`39836251923`](https://github.com/creatoan/scenet/actions/runs/39836251923): 542 mutants and
+  26 survivors, all accepted above:
+  - `_frame` 1, `_fmt` 5 and 6, and `_slanted` 30, 33, 35, 41, 87, 92, 142 and 157, under the
+    same numbers;
+  - the `zip(..., strict=True)` mutants, renumbered to `resolve_frames` 28, 32, 36, 90, 93, 98,
+    137, 140, 145, 159, 163 and 167;
+  - three new ones of the same kind in `_across` (5, 8, 12), which pairs the starts and sizes of
+    one `_split`.
+- `solve/describe.py`,
+  [`39836265688`](https://github.com/creatoan/scenet/actions/runs/39836265688): 203 mutants and
+  2 survivors, accepted below.
+- `emit/*`, [`39836278068`](https://github.com/creatoan/scenet/actions/runs/39836278068): 1643
+  mutants and 20 survivors.
+  - 11 are the 11 accepted above, under the same numbers.
+  - **9 killed** in `tests/test_reading_pages.py` (`TestTwoDirectionsAreRefusedByName`): the
+    refusal of panels or pages read two ways, word for word (`reading_direction` 8, 9;
+    `render_strip` 7, 10, 11; `render_pages` 7, 10, 11), and the default for nothing to lay out
+    (`reading_direction` 11).
+
+Each mutant killed was applied by hand to see its test fail.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `solve/describe.py` `describe` 8, 10 | the sort key scaled by -2 instead of -1, or 2 instead of 1 | Scaling every face's x by one factor of the same sign keeps their order, and keeps a tie a tie for the id to break. |
+
+The second job of each of those runs, exploring with fresh seeds, found the right-to-left page
+property compiling the reversed scene in full to compare its frames. That scene's lettering is
+read the other way and can find no room where the original did. The property now lays the
+reversed pages out without compiling a panel, since frames cannot depend on lettering, and passes
+300 examples.
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random

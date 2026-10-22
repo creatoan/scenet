@@ -16,7 +16,7 @@ import pytest
 from scenet import Direction
 from scenet.core import PageCore, PanelCore
 from scenet.emit.page import render_page, render_pages
-from scenet.emit.strip import render_strip
+from scenet.emit.strip import reading_direction, render_strip
 from scenet.pipeline import Book, compile_book
 
 SVG = "{http://www.w3.org/2000/svg}"
@@ -254,3 +254,28 @@ class TestTheDocuments:
         assert _first(_rtl(PAGE)).direction is Direction.RTL
         assert _first(PAGE).direction is Direction.LTR
         assert math.isclose(_first(_rtl(PAGE)).width, _first(PAGE).width)
+
+
+class TestTwoDirectionsAreRefusedByName:
+    """Laying out panels or pages read two ways has no answer, so the refusal says which
+    two -- every word of it, since an author reads it to find the panel at fault."""
+
+    def test_a_strip(self):
+        ltr = compile_book(PAGE).panels["wide"].core
+        rtl = compile_book(_rtl(PAGE)).panels["wide"].core
+        with pytest.raises(ValueError, match="one direction") as raised:
+            render_strip([("a", ltr), ("b", rtl)])
+        assert str(raised.value) == (
+            "a strip's panels are read in one direction, and these are read ltr and rtl"
+        )
+
+    def test_pages(self):
+        ltr, rtl = compile_book(PAGE), compile_book(_rtl(PAGE))
+        with pytest.raises(ValueError, match="one direction") as raised:
+            render_pages([ltr.pages[0], rtl.pages[0]], _cores(ltr))
+        assert (
+            str(raised.value) == "pages are read in one direction, and these are read ltr and rtl"
+        )
+
+    def test_nothing_to_lay_out_reads_the_default_way(self):
+        assert reading_direction([], "nothing") is Direction.LTR
