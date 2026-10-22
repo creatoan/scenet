@@ -1,0 +1,7 @@
+# A panel of a right-to-left scene that would read left to right. The direction is the
+# whole document's, written once beside `panels:`.
+direction: rtl
+cast: {alice: {reference: alice}}
+panels:
+  first: {}
+  second: {direction: ltr}

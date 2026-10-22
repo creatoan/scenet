@@ -96,7 +96,9 @@ def test_two_field_mistakes_are_two_findings(drawn: Drawn):
     assert {item.rule for item in found} == {"invalid-field"}
 
 
-@pytest.mark.parametrize("kind", ["missing-panel", "placed-twice", "missing-parent", "two-stacks"])
+@pytest.mark.parametrize(
+    "kind", ["missing-panel", "placed-twice", "missing-parent", "two-stacks", "panel-direction"]
+)
 @given(drawn=scenes())
 def test_one_mistake_in_a_scene_is_one_finding(kind: str, drawn: DrawnScene):
     document = json.loads(json.dumps(drawn.document))
@@ -135,6 +137,11 @@ def test_one_mistake_in_a_scene_is_one_finding(kind: str, drawn: DrawnScene):
         document["pages"][0]["tiers"].append({"panels": [slots[0]["use"]]})
         last = len(document["pages"][0]["tiers"]) - 1
         rule, path, needle = "page-layout", ("pages", 0, "tiers", last, "panels", 0), None
+    elif kind == "panel-direction":
+        # A direction is the whole document's, so a panel's own is the one thing wrong.
+        name = next(iter(document["panels"]))
+        document["panels"][name]["direction"] = "rtl"
+        rule, path, needle = "panel-direction", ("panels", name, "direction"), "rtl"
     else:
         name = next(iter(document["panels"]))
         document["panels"][name]["over"] = "ghost"
@@ -184,6 +191,25 @@ def test_a_speaker_outside_the_cast_is_one_finding_at_the_cue(
     )
 
 
+@given(scripts(), st.data())
+def test_a_panel_s_own_direction_is_one_finding_at_its_line(
+    drawn: DrawnScript, data: st.DataObject
+):
+    """`@direction:` under any PANEL heading: the direction is the whole script's (#68)."""
+    lines = drawn.text.split("\n")
+    headings = [index for index, line in enumerate(lines) if _is_a_panel_heading(line)]
+    after = data.draw(st.sampled_from(headings), label="panel")
+    lines.insert(after + 1, "@direction: rtl")
+    text = "\n".join(lines)
+    _assert_one(
+        diagnose_script(text, library=LIBRARY),
+        text,
+        rule="panel-direction",
+        path=(),
+        needle="@direction: rtl",
+    )
+
+
 # ---------------------------------------------------------------- robustness
 
 #: Keys the language uses, mixed with ones it does not, so arbitrary documents reach
@@ -198,6 +224,7 @@ _KEYS = st.sampled_from(
         "setting",
         "panels",
         "pages",
+        "direction",
         "page",
         "size",
         "margin",

@@ -22,6 +22,7 @@ from scenet.ir import (
     AnchorX,
     BalloonKind,
     CaptionTone,
+    Direction,
     Fit,
     Horizon,
     Mark,
@@ -79,6 +80,7 @@ class TestPanelSchema:
             "script",
             "lettering",
             "description",
+            "direction",
         }
 
     def test_it_is_a_valid_schema(self):
@@ -103,6 +105,7 @@ class TestPanelSchema:
             Weather,
             Fit,
             SfxSize,
+            Direction,
         ],
     )
     def test_every_enum_member_reaches_the_schema(self, enum: type[StrEnum]):
@@ -244,9 +247,18 @@ class TestSceneSchema:
         panel = panel_schema()["properties"]
         scene = scene_schema()["properties"]
         member = scene["panels"]["additionalProperties"]["properties"]
-        assert set(panel) <= set(member)
+        # A direction is the whole document's: a scene's, never one panel's (#68).
+        assert set(panel) - set(member) == {"direction"}
         # A description says what one panel shows: a panel's, never a scene's default.
         assert set(panel) - set(scene) == {"description"}
+
+    def test_a_panel_of_a_scene_is_offered_no_direction(self):
+        member = scene_schema()["properties"]["panels"]["additionalProperties"]
+        assert member["additionalProperties"] is False
+        errors = Draft202012Validator(scene_schema()).iter_errors(
+            {"direction": "rtl", "panels": {"one": {"direction": "ltr"}}}
+        )
+        assert [list(error.absolute_path) for error in errors] == [["panels", "one"]]
 
 
 class TestShippedSchemasAreCurrent:
