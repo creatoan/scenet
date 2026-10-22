@@ -18,7 +18,8 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
 
 - **It starts with the panel's description**: yours, when you write one, or a comic script's
   prose; otherwise generated from the shot, the place, the hour and the weather, and each figure
-  left to right with its pose, expression and marks and whom it looks at.
+  in reading order — left to right, or from the right in a comic read right to left — with its
+  pose, expression and marks and whom it looks at.
 - **Then everything said, in reading order**: every balloon, caption and sound effect, each
   saying who and how — `Bob, whispering: I know.` — in the one order
   [Panel Core](../reference/panel_core.md#the-words) keeps. A sound effect is in its place in that

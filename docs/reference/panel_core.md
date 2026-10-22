@@ -281,7 +281,8 @@ like everything else, so the emitter copies them and decides nothing:
 
 - **`description`** is the panel's [`description`](language.md#description) when it has one —
   written, or a comic script's prose — and otherwise generated from what it holds: the shot and
-  angle, the place, the hour and the weather, then each figure left to right, by thirds of the panel
+  angle, the place, the hour and the weather, then each figure in reading order (from the right in
+  a panel read right to left), by thirds of the panel
   at the centre of its face, with its pose, expression and marks, whom it looks at, and whom it
   stands in front of or behind. A panel with nothing in it is `An empty panel.`
 - **`label`**, on every balloon, caption and sound effect, is who says it, how, and the words:

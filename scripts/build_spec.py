@@ -203,7 +203,8 @@ so always check.
 - **Two figures need a left-to-right order**, from `at:` or from an explicit
   `a left_of b`. There is no unordered "beside".
 - **Script order is reading order.** A balloon may never sit above-and-left of the one
-  before it, so write the lines in the order they are read.
+  before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
+  they are read.
 - **Shots are named** — `medium_shot`, `close_up` — never a percentage of the panel.
 - **Prose in a comic script is kept and never interpreted.** Staging that matters goes
   in the front matter.

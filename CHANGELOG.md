@@ -30,6 +30,10 @@ below 1.0 means.
   speaker was charged as a bystander, so balloons drifted away from them. Three gallery
   panels letter differently, each balloon now beside its speaker: regenerate golden Cores of
   your own that cast an actor under another name.
+- **`CaptionEvent.prefer` is `None` when it was not written**, where it used to read `top_left`:
+  an unwritten zone is where reading starts, which the solver decides from `direction`. A caption
+  is placed exactly where it was. Code reading it from the Python API takes `None` as `top_left`
+  for a left-to-right panel.
 - **`CastMember.reference` may be `None`**, for a member that is a figure a picture draws, and
   `CompileResult.camera` is `None` for a panel whose cast is all figures. Code reading either
   from the Python API narrows them first; `PanelIR.puppets()` gives every puppet's reference.
@@ -47,6 +51,13 @@ below 1.0 means.
   matter — and inherited by every panel; a panel's own, and a script's `@direction:`, are the new
   rule `panel-direction`. The editor's schema offers it. Panel Core and Page Core record it when it
   is `rtl`; a left-to-right Core is byte-identical and `format_version` stays 1.
+- **A panel read right to left is lettered from the top right.** A balloon or caption may never sit
+  above and right of one before it; a caption with no `prefer`, and a voice from off panel with no
+  side named, start top right; every tiebreak between equal placements is mirrored, so the mirror
+  image of a panel is lettered as the exact mirror of the original; and a generated description
+  names the cast from the right. Nothing in the picture moves: figures, gaze, tails and sound
+  effects are byte-identical, and `prefer:`, `at:` and named sides keep meaning places on the panel.
+  The debug overlay says "read right to left".
 - **`setting: {image: ..., fit: cover | contain}`**: a picture drawn elsewhere, behind the
   cast (#70). It is a backdrop of its own, so it is written instead of a `place` or
   `masses`, never beside them or beside a `horizon` (`conflicting-setting`); a `fit` with

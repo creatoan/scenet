@@ -598,6 +598,7 @@ def compile_ir(
         # inside the margin, a pointer to somebody outside the panel does not.
         bounds=BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
         outline=outline,
+        direction=panel.direction,
     )
 
     declared = _declared_faces(family)

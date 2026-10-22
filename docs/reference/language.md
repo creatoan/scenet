@@ -533,7 +533,8 @@ script:
 A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
 on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
 the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
-put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+put the balloon — which it puts high on the side reading starts from, top left, or top right in a
+comic read right to left. A side you name is a side of the panel, whichever way it is read. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
 aim most tails at the top border, which reads as a speaker above.
 
 An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
@@ -572,7 +573,7 @@ to do. Comics solved this long before they had reliable backgrounds.
 | `text` | string | What the box says. Line breaking is computed, as for dialogue |
 | `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
 | `tone` | `paper`, `pale`, `ink` | What the box is filled with. Defaults to `paper` |
-| `prefer` | zone | Where it would like to sit. Defaults to `top_left` |
+| `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
 | `by` | any name | Who is speaking, for a `spoken` caption only |
 
 The four kinds are the letterers' own vocabulary, taken from Blambot's *Comic Book Grammar &
@@ -639,7 +640,8 @@ the first non-neutral value in the codebase, and there is no colour policy to pu
 **Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
 lettering references describe left alignment as the norm while calling it a house preference. It is
 the default because it is what letterers do, and it is recorded here as a choice rather than a law —
-unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text.
+unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text. Both hold
+in a comic read right to left: its text still reads left to right.
 
 Captions are placed by the same machinery as balloons — the same face avoidance, the same silhouette
 occlusion cost, the same hard reading-order rule — because the placement principles for floating
@@ -730,7 +732,8 @@ exclamations, and no emphasis — an underscore here is just an underscore.
 ### Reading order is enforced, not suggested
 
 Balloons and captions are placed in script order, in one pass, and a box may never sit
-above-and-left of the one before it. Violating this is not a cosmetic flaw: it makes the panel read
+above-and-left of the one before it — above-and-*right*, in a comic read right to left (see
+[`direction`](#direction)). Violating this is not a cosmetic flaw: it makes the panel read
 in the wrong order, which is a correctness bug in a comic. The constraint is therefore hard, and a
 panel whose boxes cannot be placed without breaking it is rejected rather than rendered wrongly.
 
@@ -739,7 +742,8 @@ written between two lines of dialogue is read between them; one written last is 
 
 A sound effect takes its number in the same sequence — which is the order a reader of the text, or a
 screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
-holding it to above-and-left would make many panels impossible to letter.
+holding it to above-and-left would make many panels impossible to letter. Read right to left, it
+stays exempt, and stays where it was: a sound is part of the picture, which is not mirrored.
 
 That sequence is what a screen reader hears. Every SVG names each panel with its
 [description](#description) and then every balloon, caption and sound effect in this order —
@@ -888,6 +892,18 @@ Only what reading decides follows it. **The scene is never mirrored**: figures, 
 camera, tails and sound effects stay exactly as staged, and every word that names a place on the
 panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`, a side for
 `off_panel`, an inset's corner. Panel Core and Page Core record `direction` when it is `rtl`.
+
+What follows it, in a panel:
+
+- **[Reading order](#reading-order-is-enforced-not-suggested)**: a box may never sit above and
+  *right* of one before it.
+- **Where an unplaced box would rather start**: a caption with no `prefer`, and a voice from
+  [off panel](#off-panel-speech) with no side named, go top right — where reading starts.
+- **Every tiebreak reading decides.** When two places cost exactly the same, the one tried first
+  wins, and right to left they are tried in the mirrored order. So the mirror image of a panel,
+  read right to left, is lettered as the exact mirror of the original read left to right.
+- **The description** names the cast in reading order, from the right; "left" and "right" still
+  say where each one stands.
 
 ## `page` and `pages`
 

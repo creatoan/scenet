@@ -131,7 +131,8 @@ figure bleed past the edge is ordinary comics practice and much better than refu
 compile a crowded panel. Widen the panel or loosen the shot.
 
 **"Reading order looks wrong."** It cannot be, in the sense the compiler means: a balloon
-is never allowed above *and* left of one that precedes it. If it reads wrong anyway, the
+is never allowed above *and* left of one that precedes it — above and *right*, in a panel
+written `direction: rtl`, whose overlay says "read right to left". If it reads wrong anyway, the
 script order is probably not what you intended — script order *is* reading order.
 
 ## When it will not compile at all

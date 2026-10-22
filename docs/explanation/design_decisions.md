@@ -186,6 +186,37 @@ then every balloon, caption and sound effect's label, in `order`. The sources be
 - **`aria=False` is exactly the SVG written before.** A golden variant holds every gallery
   document built `--no-aria`, and its digests are those the default build had before.
 
+## Right to left mirrors the reading, never the picture
+
+`direction: rtl` (#68) is decided by one test: compile the mirror image of a panel right to left,
+and every balloon and caption lands at the mirror of where left to right puts it in the original.
+Everything reading decides is mirrored to pass it, and nothing the picture decides is touched.
+
+- **The document's, not a panel's.** EPUB and ComicInfo say it once per book, and a page read one
+  way holding a panel read the other has no order a reader could follow. So a panel's own
+  `direction` is `panel-direction`, and a scene's or script's panels inherit the document's.
+- **The order.** Never above-and-right of a predecessor, the exact mirror of the left-to-right
+  test, still checked against every predecessor.
+- **Tiebreaks are mirrored, not just the rule.** The first candidate wins an exact tie. The ring
+  around a head used to try up-right first and the corners top-left first, so with the rule alone
+  flipped, a right-to-left panel would have been a mirrored-but-different layout. Each candidate
+  list is now built so that, read right to left, candidate *i* is the mirror of candidate *i* read
+  left to right. The tests check the order, never a tie, since a near-tie can fall differently on
+  another platform.
+- **A written zone is a place; an unwritten one is where reading starts.** `prefer:` names a
+  region of the panel and means it either way. A caption with none sat top left because that is
+  where a locale caption conventionally sits, which is where reading starts. So `CaptionEvent.prefer`
+  is `None` until the solver reads the direction. An off-panel voice with no side named starts
+  there too, and a balloon dead centre goes to that side.
+- **Sound effects stay put.** They are picture, placed first and exempt from the order. They keep
+  their number in the one sequence, and their own tiebreaks, because the scene is not mirrored.
+- **Tails and staging stay put.** A tail bends toward the side of its own line first, which has
+  nothing to do with the page. Staging breaks a tie by anchor and id, never by "given to new" (see
+  [prior art](prior_art.md)).
+- **Text is not progression.** Lettering stays Latin, left to right, and captions stay flush left.
+- **No disjunction comes back.** Reading order is a filter over candidates, not a Cassowary
+  constraint, and the direction is known when the document is read.
+
 ## Text metrics are a hard dependency, not a detail
 
 A balloon's size is a function of its text, wrapped at some measure, in a specific font. Nothing

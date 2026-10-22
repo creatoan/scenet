@@ -66,7 +66,8 @@ If `scenet` is not installed: `pip install scenet`, or run it once with
   `right_third`, `left_edge`, `right_edge`) or `a left_of b` in `staging`. There is no
   "beside".
 - **Script order is reading order.** A balloon can never sit above-and-left of the one
-  before it, so write lines in the order they are read.
+  before it (above-and-right in a manga, `direction: rtl`), so write lines in the order they
+  are read.
 - **Shots are named, never percentages**: `references/shot-types.md`.
 - **Unknown keys are errors**, not ignored.
 - **In a comic script, prose lines are kept and never interpreted.** Who stands where,

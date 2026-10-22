@@ -7,9 +7,16 @@ cheaper than scanning cells and produces more natural results. This is the appro
 used in the cartographic label-placement literature, which is the same problem.
 
 The constraint that naive implementations miss is **reading order**. A box may never
-sit above-and-left of the one before it in the script, because that makes the panel
-read in the wrong order. That is a correctness bug in a comic, not a cosmetic one, so
-it is enforced as a hard filter rather than scored.
+sit above-and-left of the one before it in the script -- above-and-right, in a panel read
+right to left -- because that makes the panel read in the wrong order. That is a
+correctness bug in a comic, not a cosmetic one, so it is enforced as a hard filter rather
+than scored.
+
+**Read right to left, the lettering is the mirror image, and nothing else is** (#68). Every
+rule and tiebreak reading decides -- the order itself, which candidate is tried first, where
+an unplaced box would rather start -- is mirrored, so a mirrored panel read right to left is
+lettered as the mirror of the original. The scene is not mirrored: the figures, their gaze,
+sound effects and every tail stay as staged.
 
 Captions go through this machinery rather than a parallel one. The placement
 principles the lettering references give for floating text -- keep off the important
@@ -39,6 +46,7 @@ from scenet.ir import (
     CaptionEvent,
     CaptionKind,
     CaptionTone,
+    Direction,
     Face,
     PlacementZone,
     Plane,
@@ -124,6 +132,18 @@ SMALL_TYPE_FRACTION = 0.75
 # How strongly a caption is drawn to the panel edge. The opposite sign to `W_EDGE`:
 # tucking into a corner is where a caption belongs, not a compromise it settles for.
 W_CAPTION_EDGE = 1.1
+
+#: Where a box with no zone of its own would rather start: where reading starts. A locale
+#: caption sits there by convention, and an off-panel voice with no side named is heard
+#: from there. A zone the author writes is a place on the panel, and does not follow.
+READING_STARTS: dict[Direction, PlacementZone] = {
+    Direction.LTR: PlacementZone.TOP_LEFT,
+    Direction.RTL: PlacementZone.TOP_RIGHT,
+}
+
+#: Each horizontal third of the panel and its mirror, for laying candidates out the other
+#: way round.
+_MIRRORED = {"left": "right", "center": "center", "right": "left"}
 
 # Quotation marks for a `spoken` caption. Applied here rather than in the emitter --
 # characters added after measurement would not fit the box drawn for them.
@@ -265,47 +285,63 @@ def _hull_polygon(actor: Speaker) -> Polygon:
     return Polygon([(point.x, point.y) for point in actor.body])
 
 
-def _candidate_positions(speaker: Speaker, size: tuple[float, float], panel: BBox) -> list[BBox]:
+def _candidate_positions(
+    speaker: Speaker,
+    size: tuple[float, float],
+    panel: BBox,
+    direction: Direction = Direction.LTR,
+) -> list[BBox]:
     """Positions worth evaluating for a balloon of this size.
 
     A ring around the speaker's head, plus the four panel corners. The corners matter
     because a crowded panel often has room nowhere else, and a corner balloon with a
     long tail is a perfectly ordinary comics solution.
+
+    The first candidate wins a tie, so their order is a tiebreak, and read right to left
+    it is mirrored: candidate *i* is the mirror of candidate *i* read left to right.
     """
     width, height = size
     head = speaker.face
     reach = head.r + math.hypot(width, height) / 2
+    rtl = direction is Direction.RTL
     candidates: list[BBox] = []
 
     for step in range(RING_DIRECTIONS):
-        # Start at straight up and go clockwise; balloons above the speaker are the
-        # commonest and should be tried first so that ties resolve upward.
+        # Start at straight up and go clockwise -- anticlockwise, read right to left;
+        # balloons above the speaker are the commonest and should be tried first so that
+        # ties resolve upward.
         angle = -math.pi / 2 + 2 * math.pi * step / RING_DIRECTIONS
         for factor in RING_RADII:
             distance = reach * factor
-            centre_x = head.cx + math.cos(angle) * distance
+            across = math.cos(angle) * distance
+            centre_x = head.cx - across if rtl else head.cx + across
             centre_y = head.cy + math.sin(angle) * distance
             candidates.append(BBox(centre_x - width / 2, centre_y - height / 2, width, height))
 
     inset = min(panel.width, panel.height) * 0.02
+    near, far = panel.x + inset, panel.right - inset - width
+    first, second = (far, near) if rtl else (near, far)
     for corner_x, corner_y in (
-        (panel.x + inset, panel.y + inset),
-        (panel.right - inset - width, panel.y + inset),
-        (panel.x + inset, panel.bottom - inset - height),
-        (panel.right - inset - width, panel.bottom - inset - height),
+        (first, panel.y + inset),
+        (second, panel.y + inset),
+        (first, panel.bottom - inset - height),
+        (second, panel.bottom - inset - height),
     ):
         candidates.append(BBox(corner_x, corner_y, width, height))
 
     return candidates
 
 
-def _caption_positions(size: tuple[float, float], panel: BBox) -> list[BBox]:
+def _caption_positions(
+    size: tuple[float, float], panel: BBox, direction: Direction = Direction.LTR
+) -> list[BBox]:
     """Positions worth evaluating for a caption of this size.
 
     One per :class:`PlacementZone <scenet.ir.PlacementZone>`, with the outer zones
     snapped flat against the panel edge rather than floated at the zone's centre.
     Derived from the enum rather than hand-listed, so a zone that becomes expressible
-    in the language is a zone a caption can actually reach.
+    in the language is a zone a caption can actually reach. Read right to left, each
+    zone's place is tried in its mirror's turn, as the balloons' candidates are.
     """
     width, height = size
     inset = min(panel.width, panel.height) * 0.02
@@ -322,6 +358,8 @@ def _caption_positions(size: tuple[float, float], panel: BBox) -> list[BBox]:
     candidates: list[BBox] = []
     for zone in PlacementZone:
         vertical, horizontal = zone.value.split("_")
+        if direction is Direction.RTL:
+            horizontal = _MIRRORED[horizontal]
         candidates.append(BBox(across[horizontal], down[vertical], width, height))
     return candidates
 
@@ -359,17 +397,26 @@ def _segment_hits_box(start: Point, end: Point, target: BBox) -> bool:
     return False
 
 
-def _reading_order_allows(placed: Sequence[BBox], candidate: BBox) -> bool:
+def _reading_order_allows(
+    placed: Sequence[BBox], candidate: BBox, direction: Direction = Direction.LTR
+) -> bool:
     """Whether `candidate` may be read after everything in `placed`.
 
-    Western reading is left to right, top to bottom, so a balloon may sit below an
-    earlier one, or to its right, but never both above *and* left of it.
+    Read left to right, top to bottom, a balloon may sit below an earlier one, or to its
+    right, but never both above *and* left of it. Read right to left, as manga are, it is
+    the mirror: below, or to its left, but never above and right.
 
     Checked against **every** predecessor rather than only the immediately preceding
     balloon. The relation is not transitive: with balloons 0, 1, 2, it is entirely
     possible for 2 to be legal after 1 while sitting above and left of 0, and a reader
     following the page would then take them in the wrong order.
     """
+    if direction is Direction.RTL:
+        return all(
+            candidate.y >= previous.y - READING_EPSILON
+            or candidate.right <= previous.x + READING_EPSILON
+            for previous in placed
+        )
     return all(
         candidate.y >= previous.y - READING_EPSILON
         or candidate.x >= previous.right - READING_EPSILON
@@ -384,10 +431,12 @@ class _Limits:
     Attributes:
         blocked: Areas drawn over the panel, such as insets.
         inside: The shape a box must lie within, for a panel that is not a rectangle.
+        direction: Which way the panel is read, which every box is placed in order for.
     """
 
     blocked: tuple[BBox, ...] = ()
     inside: Polygon | None = None
+    direction: Direction = Direction.LTR
 
     def allow(self, candidate: BBox) -> bool:
         """Whether a box clears every blocked area and lies inside the shape."""
@@ -823,6 +872,7 @@ def place_script(
     inside: Sequence[tuple[float, float]] | None = None,
     bounds: BBox | None = None,
     outline: Sequence[tuple[float, float]] | None = None,
+    direction: Direction = Direction.LTR,
 ) -> ScriptLayout:
     """Place every sound effect, then every balloon and caption in script order.
 
@@ -870,6 +920,8 @@ def place_script(
             speaker's tail ends on. Defaults to `panel`.
         outline: The panel's own outline when it is not a rectangle, margins not
             applied, which that tail ends on instead.
+        direction: Which way the panel is read. It decides the reading order and every
+            tiebreak reading decides, and nothing about the picture.
 
     Returns:
         Everything that carries words, placed.
@@ -911,6 +963,7 @@ def place_script(
     limits = _Limits(
         blocked=tuple(exclusions),
         inside=Polygon(inside) if inside is not None else None,
+        direction=direction,
     )
     captions: list[PlacedCaption] = []
     balloons: list[PlacedBalloon] = []
@@ -1031,8 +1084,8 @@ def _place_balloon(
 
     best: BBox | None = None
     best_cost = math.inf
-    for candidate in _candidate_positions(speaker, balloon_box, panel):
-        if not _reading_order_allows(placed, candidate):
+    for candidate in _candidate_positions(speaker, balloon_box, panel, limits.direction):
+        if not _reading_order_allows(placed, candidate, limits.direction):
             continue
         cost = _score(
             candidate,
@@ -1163,21 +1216,23 @@ def _place_off_panel(
     """Choose a position for a balloon whose speaker is not drawn, and route its tail.
 
     There is no mouth to stay near, so it is placed as a caption is -- the same zones, the
-    same hard rules, reading order included -- drawn toward the side named, if one is.
-    With none named, the side is the nearer of left and right to where it went: a
-    balloon sits high, so "nearest edge" would aim most tails at the top border, which
-    reads as a speaker above. Its tail then ends on the frame on that side -- Blambot:
-    "the tail of the balloon generally butts against the panel border".
+    same hard rules, reading order included -- drawn toward the side named, if one is, and
+    otherwise toward where reading starts. With none named, the side is the nearer of left
+    and right to where it went: a balloon sits high, so "nearest edge" would aim most tails
+    at the top border, which reads as a speaker above. Its tail then ends on the frame on
+    that side -- Blambot: "the tail of the balloon generally butts against the panel
+    border".
     """
     named = event.off_panel if isinstance(event.off_panel, Side) else None
     block = layout_text(styled(event.text), font_size=lettering.font_size, typeface=typeface)
     balloon_box = balloon_size(block, lettering.padding_factor)
-    prefer = event.prefer or (_SIDE_ZONES[named] if named is not None else PlacementZone.TOP_LEFT)
+    start = READING_STARTS[limits.direction]
+    prefer = event.prefer or (_SIDE_ZONES[named] if named is not None else start)
 
     best: BBox | None = None
     best_cost = math.inf
-    for candidate in _caption_positions(balloon_box, panel):
-        if not _reading_order_allows(placed, candidate):
+    for candidate in _caption_positions(balloon_box, panel, limits.direction):
+        if not _reading_order_allows(placed, candidate, limits.direction):
             continue
         cost = _score_caption(
             candidate,
@@ -1201,7 +1256,7 @@ def _place_off_panel(
             "balloon, lay under an inset, or broke reading order"
         )
 
-    side = named if named is not None else _nearer_side(best, panel)
+    side = named if named is not None else _nearer_side(best, panel, limits.direction)
     return PlacedBalloon(
         id=identifier,
         speaker=event.by,
@@ -1214,14 +1269,21 @@ def _place_off_panel(
     )
 
 
-def _nearer_side(balloon: BBox, panel: BBox) -> Side:
-    """The nearer of the panel's left and right to a balloon's centre: left on a tie.
+def _nearer_side(balloon: BBox, panel: BBox, direction: Direction = Direction.LTR) -> Side:
+    """The nearer of the panel's left and right to a balloon's centre.
+
+    On a tie, the side reading starts from: left, or right for a panel read right to left.
 
     Example:
         >>> _nearer_side(BBox(100, 50, 40, 20), BBox(0, 0, 300, 200))
         <Side.LEFT: 'left'>
+        >>> _nearer_side(BBox(130, 50, 40, 20), BBox(0, 0, 300, 200), Direction.RTL)
+        <Side.RIGHT: 'right'>
     """
-    return Side.LEFT if balloon.centre.x <= panel.x + panel.width / 2 else Side.RIGHT
+    middle = panel.x + panel.width / 2
+    if direction is Direction.RTL:
+        return Side.RIGHT if balloon.centre.x >= middle else Side.LEFT
+    return Side.LEFT if balloon.centre.x <= middle else Side.RIGHT
 
 
 def _edge_point(balloon: BBox, side: Side, frame: _Frame) -> Point:
@@ -1292,15 +1354,16 @@ def _place_caption(
 
     best: BBox | None = None
     best_cost = math.inf
-    for candidate in _caption_positions(caption_box, panel):
-        if not _reading_order_allows(placed, candidate):
+    for candidate in _caption_positions(caption_box, panel, limits.direction):
+        if not _reading_order_allows(placed, candidate, limits.direction):
             continue
         cost = _score_caption(
             candidate,
             actors=actors,
             hulls=hulls,
             panel=panel,
-            prefer=event.prefer,
+            # Unwritten, where a locale caption conventionally sits: where reading starts.
+            prefer=event.prefer or READING_STARTS[limits.direction],
             placed=placed,
             masses=masses,
             emanata=emanata,

@@ -17,7 +17,9 @@ Generated text is **templated English**, and that is its limit: a French script'
 read in French, but the words round its dialogue are English. Every phrase is in a table
 below, keyed by the enum it reads, so a value with no phrase is a test failure rather
 than a gap a reader hears. Nothing depends on a locale, or on the order a set or a dict
-happens to iterate in: the cast is read left to right, ties broken by id.
+happens to iterate in: the cast is read in reading order -- left to right, or right to left
+for a comic read that way -- ties broken by id. Where each stands, "left" or "right", is
+said as it is on the panel either way.
 
 This sees no artwork. Where a figure is comes in as one number, its face's x, the same
 rounded value Panel Core records.
@@ -31,6 +33,7 @@ from scenet.ir import (
     CameraAngle,
     CaptionEvent,
     CaptionKind,
+    Direction,
     Mark,
     MassKind,
     PanelIR,
@@ -312,7 +315,11 @@ def describe(panel: PanelIR, faces: Mapping[str, float], width: float) -> str:
         return panel.description
     setting = _setting(panel.setting)
     # Only who is drawn: a figure the panel's picture does not draw is not in it (#71).
-    cast = sorted((actor for actor in panel.cast if actor in faces), key=lambda a: (faces[a], a))
+    # In reading order: the panel is not mirrored, so right to left is from the far side.
+    sign = -1.0 if panel.direction is Direction.RTL else 1.0
+    cast = sorted(
+        (actor for actor in panel.cast if actor in faces), key=lambda a: (sign * faces[a], a)
+    )
     if not cast:
         # A picture is not nothing, though nothing can be said of what it shows.
         empty = "A panel with no figures." if panel.setting.image else "An empty panel."

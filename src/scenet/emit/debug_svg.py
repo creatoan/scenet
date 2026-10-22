@@ -11,6 +11,7 @@ from xml.sax.saxutils import escape
 
 from scenet.core import FaceDisc, PanelCore
 from scenet.emit.svg import attr, fmt
+from scenet.ir import Direction
 
 HULL = "#2f7fd0"
 FACE = "#d94f4f"
@@ -208,6 +209,13 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
         'fill="none" stroke="#111111" stroke-width="4"/>'
     )
+    # Which way the `#order` labels are read, said only when it is not the usual way: the
+    # rule each box was placed by depends on it (#68).
+    if core.direction is Direction.RTL:
+        parts.append(
+            f'  <text x="{fmt(core.width - 12)}" y="30" font-size="20" text-anchor="end" '
+            f'font-family="monospace" fill="{GRID}">read right to left</text>'
+        )
     return parts
 
 

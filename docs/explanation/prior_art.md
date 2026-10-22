@@ -111,9 +111,15 @@ and immediately usable: **vectors** — the lines of sight and action along whic
 travels.
 
 Taken: gaze is a real geometric quantity, so it becomes a term in the balloon cost function.
-Balloons are drawn toward the gaze direction and penalised for blocking it. The left-to-right
-"given to new" reading also serves as a tiebreaker when a script does not specify staging order. The
-rest — ideal/real verticality, modality — belongs to the deferred style layer.
+Balloons are drawn toward the gaze direction and penalised for blocking it. The rest — ideal/real
+verticality, modality — belongs to the deferred style layer.
+
+Not taken: **"given to new"** as a staging tiebreaker. This page used to say it broke ties when a
+script does not say who stands where, but no code ever did. Staging breaks a tie by the `at:`
+anchor and then by actor id, a fact about the picture. "Given to new" is a left-to-right reading,
+stated for Western layouts, and a right-to-left reading would put the given on the right. So it
+cannot be a rule about the picture, which `direction: rtl` never mirrors, and Scenet uses it in
+neither direction.
 
 ### Cassowary constraint solving
 
@@ -407,6 +413,51 @@ so a slanted tier does the same rather than keeping the horizontal gap, which wo
 gutter as it leaned.
 
 (accessible-svg)=
+### Right-to-left reading — manga, EPUB and the mirror
+
+[Cohn, *Navigating Comics*](https://doi.org/10.3389/fpsyg.2013.00186) (2013) ·
+[Cohn, Hacımusaoğlu & Klomberg, *Fluency modulates ordering of visual narrative layouts*](https://escholarship.org/uc/item/7fk966br)
+(CogSci 2022) ·
+[Cohn, Atilla, Lichtenberg & Cardoso, *The influence of writing systems on comics layouts*](https://doi.org/10.1016/j.cognition.2025.106136)
+(*Cognition* 260, 2025) ·
+[EPUB 3.3 §5.7.1, `page-progression-direction`](https://www.w3.org/TR/epub-33/#sec-spine-elem) ·
+[Kavita's notes on ComicInfo's `Manga`](https://wiki.kavitareader.com/guides/metadata/comics/)
+
+Manga are read from the top right: the pages, the panels on a page and the balloons in a panel all
+run right to left, then down. Cohn ties the convention to writing systems. Japanese text runs in
+vertical columns, read top to bottom and right to left. A corpus of 1,030 comics from 144 countries
+found that a writing system's direction shapes how its comics' pages are read. Manga go further
+than writing direction alone predicts, with more right-to-left, downward paths and more vertical
+columns. And readers of manga prefer to order panels downward, across every layout tested.
+
+Taken: **progression, not text.** EPUB's `page-progression-direction` and Kavita's notes both
+separate the direction a book is read in from the direction its text runs in. A manga translated
+into English still progresses right to left while each balloon's words read left to right.
+`direction: ltr | rtl` is EPUB's word and EPUB's values, and like EPUB's it is the book's, said
+once. Vertical Japanese lettering would need a Japanese face, vertical metrics and other line
+breaking, and is not part of it.
+
+Taken: **the mirror, for reading only.** What reading decides is mirrored, and what the picture
+decides is not:
+- the order rule, every tiebreak between equal placements, where an unplaced box starts, and panel
+  and page order are mirrored;
+- figures, gaze, tails, sound effects and the lean of a slanted gutter are not.
+
+The test is exact. The mirror image of a panel, read right to left, is lettered as the mirror of
+the original. Compiling and then mirroring the output was rejected: it would turn a character
+facing right to face left.
+
+An assumption, stated as one: the column rule mirrored. Cohn's *blockage* result, that a tall
+panel beside a stack sends readers down the stack first, was measured on left-to-right layouts.
+Scenet reads a stack beside a tall panel down first in a manga too, with the tall panel on the
+left. The two later studies point the same way, toward downward orders in manga, but neither
+measures that layout mirrored.
+
+Future: **export.** A page export would write `page-progression-direction="rtl"` into an EPUB's
+spine, and `Manga: YesAndRightToLeft` into a CBZ's `ComicInfo.xml` (ComicInfo v2.0: `Unknown`,
+`No`, `Yes`, `YesAndRightToLeft`). Both come from the `direction` Panel Core and Page Core
+already record.
+
 ### Accessible SVG — SVG-AAM, Graphics ARIA, and what screen readers do
 
 [SVG-AAM](https://www.w3.org/TR/svg-aam-1.0/) ·

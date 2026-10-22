@@ -54,7 +54,8 @@ uv run ty check
   supplied as a declared dependency, never a system lookup. Measurement and rendering must agree
   exactly, which is why lettering is emitted as glyph outlines by default.
 - **Reading order is a hard constraint**, not a preference: a balloon may never sit above-and-left
-  of the one that precedes it in the script.
+  of the one that precedes it in the script — above-and-right under `direction: rtl`. Right to
+  left mirrors what reading decides and nothing else: the scene is never mirrored.
 
 ## Reference
 

@@ -61,7 +61,8 @@ so always check.
 - **Two figures need a left-to-right order**, from `at:` or from an explicit
   `a left_of b`. There is no unordered "beside".
 - **Script order is reading order.** A balloon may never sit above-and-left of the one
-  before it, so write the lines in the order they are read.
+  before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
+  they are read.
 - **Shots are named** — `medium_shot`, `close_up` — never a percentage of the panel.
 - **Prose in a comic script is kept and never interpreted.** Staging that matters goes
   in the front matter.
@@ -613,7 +614,8 @@ script:
 A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
 on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
 the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
-put the balloon. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
+put the balloon — which it puts high on the side reading starts from, top left, or top right in a
+comic read right to left. A side you name is a side of the panel, whichever way it is read. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
 aim most tails at the top border, which reads as a speaker above.
 
 An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
@@ -652,7 +654,7 @@ to do. Comics solved this long before they had reliable backgrounds.
 | `text` | string | What the box says. Line breaking is computed, as for dialogue |
 | `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
 | `tone` | `paper`, `pale`, `ink` | What the box is filled with. Defaults to `paper` |
-| `prefer` | zone | Where it would like to sit. Defaults to `top_left` |
+| `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
 | `by` | any name | Who is speaking, for a `spoken` caption only |
 
 The four kinds are the letterers' own vocabulary, taken from Blambot's *Comic Book Grammar &
@@ -719,7 +721,8 @@ the first non-neutral value in the codebase, and there is no colour policy to pu
 **Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
 lettering references describe left alignment as the norm while calling it a house preference. It is
 the default because it is what letterers do, and it is recorded here as a choice rather than a law —
-unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text.
+unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text. Both hold
+in a comic read right to left: its text still reads left to right.
 
 Captions are placed by the same machinery as balloons — the same face avoidance, the same silhouette
 occlusion cost, the same hard reading-order rule — because the placement principles for floating
@@ -810,7 +813,8 @@ exclamations, and no emphasis — an underscore here is just an underscore.
 ### Reading order is enforced, not suggested
 
 Balloons and captions are placed in script order, in one pass, and a box may never sit
-above-and-left of the one before it. Violating this is not a cosmetic flaw: it makes the panel read
+above-and-left of the one before it — above-and-*right*, in a comic read right to left (see
+[`direction`](#direction)). Violating this is not a cosmetic flaw: it makes the panel read
 in the wrong order, which is a correctness bug in a comic. The constraint is therefore hard, and a
 panel whose boxes cannot be placed without breaking it is rejected rather than rendered wrongly.
 
@@ -819,7 +823,8 @@ written between two lines of dialogue is read between them; one written last is 
 
 A sound effect takes its number in the same sequence — which is the order a reader of the text, or a
 screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
-holding it to above-and-left would make many panels impossible to letter.
+holding it to above-and-left would make many panels impossible to letter. Read right to left, it
+stays exempt, and stays where it was: a sound is part of the picture, which is not mirrored.
 
 That sequence is what a screen reader hears. Every SVG names each panel with its
 [description](#description) and then every balloon, caption and sound effect in this order —
@@ -968,6 +973,18 @@ Only what reading decides follows it. **The scene is never mirrored**: figures, 
 camera, tails and sound effects stay exactly as staged, and every word that names a place on the
 panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`, a side for
 `off_panel`, an inset's corner. Panel Core and Page Core record `direction` when it is `rtl`.
+
+What follows it, in a panel:
+
+- **[Reading order](#reading-order-is-enforced-not-suggested)**: a box may never sit above and
+  *right* of one before it.
+- **Where an unplaced box would rather start**: a caption with no `prefer`, and a voice from
+  [off panel](#off-panel-speech) with no side named, go top right — where reading starts.
+- **Every tiebreak reading decides.** When two places cost exactly the same, the one tried first
+  wins, and right to left they are tried in the mirrored order. So the mirror image of a panel,
+  read right to left, is lettered as the exact mirror of the original read left to right.
+- **The description** names the cast in reading order, from the right; "left" and "right" still
+  say where each one stands.
 
 ## `page` and `pages`
 
@@ -1989,7 +2006,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CaptionEvent": {
       "additionalProperties": false,
-      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit. Defaults to `top_left`, which is where a\n        `locale` caption conventionally goes.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet.ir import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
+      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit, a place on the panel. Unwritten, it is\n        `None`, and the caption sits where a `locale` caption conventionally goes:\n        where reading starts, `top_left`, or `top_right` in a comic read right to left.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet.ir import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
       "properties": {
         "by": {
           "anyOf": [
@@ -2008,8 +2025,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           "default": "locale"
         },
         "prefer": {
-          "$ref": "#/$defs/PlacementZone",
-          "default": "top_left"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlacementZone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "text": {
           "minLength": 1,

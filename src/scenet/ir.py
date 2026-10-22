@@ -1128,8 +1128,9 @@ class CaptionEvent(Strict):
         kind: What the box is doing, which decides how it is set.
         tone: What the box is filled with. Defaults to `paper`, the white every caption
             has been since captions shipped, so no existing panel moves.
-        prefer: Where it would like to sit. Defaults to `top_left`, which is where a
-            `locale` caption conventionally goes.
+        prefer: Where it would like to sit, a place on the panel. Unwritten, it is
+            `None`, and the caption sits where a `locale` caption conventionally goes:
+            where reading starts, `top_left`, or `top_right` in a comic read right to left.
         by: Who is speaking, for a `spoken` caption only.
 
     **A caption is not a fifth balloon kind.** It has no speaker to point at and no
@@ -1150,7 +1151,7 @@ class CaptionEvent(Strict):
     text: LetteredText = Field(min_length=1)
     kind: CaptionKind = CaptionKind.LOCALE
     tone: CaptionTone = CaptionTone.PAPER
-    prefer: PlacementZone = PlacementZone.TOP_LEFT
+    prefer: PlacementZone | None = None
     by: SvgText | None = None
 
     @field_validator("by")
