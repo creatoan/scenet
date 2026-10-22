@@ -6,17 +6,21 @@ replaced the panels before them. Each was an input nobody had written. These pro
 write them by the hundred.
 """
 
+import copy
 import unicodedata
+from typing import Any
 
 from hypothesis import event, given
 
-from scenet.core import PageCore, PanelCore
+from scenet.core import CoreFrame, PageCore, PanelCore
 from scenet.emit.page import render_page, render_pages
 from scenet.emit.strip import render_strip
 from scenet.errors import BalloonPlacementError, SfxPlacementError
-from scenet.frontends.script_front import parse_script
-from scenet.ir import SayEvent
+from scenet.frontends.script_front import parse_script, parse_script_document
+from scenet.frontends.yaml_front import parse_scene_document
+from scenet.ir import Direction, SayEvent
 from scenet.pipeline import Book, compile_book
+from scenet.solve.page import resolve_frames
 from tests.invariants import assert_frames_are_placed, assert_svg_is_sound
 from tests.strategies import LIBRARY, DrawnScene, DrawnScript, scenes, scripts
 
@@ -126,3 +130,62 @@ def test_a_comic_script_loses_nothing(drawn: DrawnScript):
         for panel in panels.values()
     )
     assert said == drawn.said
+
+
+def _placed(frame: CoreFrame) -> tuple[object, ...]:
+    """Where a frame is, as `solve.page.Frame` says it."""
+    return (frame.x, frame.y, frame.width, frame.height, frame.outline)
+
+
+def _reversed_tiers(document: dict[str, Any]) -> dict[str, Any]:
+    """The same scene read left to right, with every tier's panels or columns reversed."""
+    flipped = copy.deepcopy(document)
+    flipped["direction"] = "ltr"
+    for page in flipped["pages"]:
+        for tier in page["tiers"]:
+            for key in ("panels", "columns"):
+                if key in tier:
+                    tier[key] = tier[key][::-1]
+    return flipped
+
+
+@given(scenes(direction="rtl"))
+def test_read_right_to_left_a_tier_is_laid_out_reversed(drawn: DrawnScene):
+    """Every frame is the one a left-to-right page gives that panel with each tier written
+    the other way round, exactly: the same arithmetic, so a slanted gutter leans as it was
+    written. The frames still come in the order the page was written in, and every page
+    property holds (#68)."""
+    book = _compile(drawn)
+    if book is None:
+        return
+    assert tuple(tuple(frame.panel for frame in page.frames) for page in book.pages) == (
+        drawn.order
+    )
+    # Laid out, not compiled: the reversed scene's lettering is read the other way, and may
+    # find no room where this one did, but its frames cannot depend on it.
+    layout = parse_scene_document(DrawnScene(_reversed_tiers(drawn.document), drawn.order).text)
+    for index, (page, spec) in enumerate(zip(book.pages, layout.layout.pages, strict=True)):
+        assert page.direction is Direction.RTL
+        reversed_frames = resolve_frames(layout.layout.page, spec, index=index)
+        assert {frame.panel: _placed(frame) for frame in page.frames} == {
+            frame.panel: (frame.x, frame.y, frame.width, frame.height, frame.outline)
+            for frame in reversed_frames
+        }
+        assert_frames_are_placed(page, margin=drawn.page_margin)
+        restored = PageCore.from_json(page.to_json())
+        assert restored == page
+        assert restored.to_json() == page.to_json()
+    cores = _cores(book)
+    sizes = _font_sizes(cores)
+    assert_svg_is_sound(render_pages(book.pages, cores), font_sizes=sizes)
+    assert_svg_is_sound(render_strip(list(cores.items())), font_sizes=sizes)
+    again = compile_book(drawn.text, library=LIBRARY)
+    assert render_pages(again.pages, _cores(again)) == render_pages(book.pages, cores)
+
+
+@given(scripts(direction="rtl"))
+def test_a_comic_script_read_right_to_left_says_so_everywhere(drawn: DrawnScript):
+    """Front matter `direction: rtl` reaches every panel, and the panels are all there."""
+    document = parse_script_document(drawn.text)
+    assert {panel.direction for panel in document.panels.values()} == {Direction.RTL}
+    assert tuple(len(panel.script) for panel in document.panels.values()) == drawn.lines

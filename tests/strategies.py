@@ -507,7 +507,7 @@ def _tier(draw: st.DrawFn, names: list[str]) -> tuple[dict[str, Any], list[str]]
 
 
 @st.composite
-def scenes(draw: st.DrawFn) -> DrawnScene:
+def scenes(draw: st.DrawFn, *, direction: str | None = None) -> DrawnScene:
     """A scene of one to five panels laid out on one or two pages.
 
     Every panel is placed exactly once, insets included. Tiers hold panels or columns,
@@ -548,6 +548,9 @@ def scenes(draw: st.DrawFn) -> DrawnScene:
         pages.append({"tiers": tiers})
         order.append(tuple(read))
     document["pages"] = pages
+    # Given, never drawn, as for `panels` (#68): the order is the order written either way.
+    if direction is not None:
+        document["direction"] = direction
     return DrawnScene(document, tuple(order))
 
 
@@ -584,7 +587,7 @@ def _spoken() -> st.SearchStrategy[str]:
 
 
 @st.composite
-def scripts(draw: st.DrawFn) -> DrawnScript:
+def scripts(draw: st.DrawFn, *, direction: str | None = None) -> DrawnScript:
     """A comic script of one to three pages, each with one to three panels.
 
     Panel numbers either run straight through or start again on each page, the case
@@ -613,6 +616,7 @@ def scripts(draw: st.DrawFn) -> DrawnScript:
         "  ALICE: {reference: alice, at: left_third}",
         f"  {second}: {{reference: bob, at: right_third}}",
         f"staging: [ALICE left_of {second}]",
+        *([f"direction: {direction}"] if direction is not None else []),
         "---",
         "",
     ]

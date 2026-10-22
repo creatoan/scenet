@@ -20,6 +20,7 @@ from scenet import (
     CameraAngle,
     CaptionKind,
     CaptionTone,
+    Direction,
     Fit,
     Horizon,
     Mark,
@@ -162,6 +163,12 @@ class TestTheGalleryCoversTheLanguage:
         text = self._all_text()
         names = sorted(default_library().get("alice").expressions)
         missing = [name for name in names if name not in text]
+        assert missing == []
+
+    def test_every_direction_appears(self):
+        """A page read right to left has been looked at beside its left-to-right twin."""
+        text = self._all_text()
+        missing = [value.value for value in Direction if f"direction: {value.value}" not in text]
         assert missing == []
 
     def test_every_type_size_appears(self):
