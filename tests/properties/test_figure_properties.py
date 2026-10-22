@@ -21,7 +21,7 @@ from tests.invariants import (
     assert_svg_is_sound,
     assert_words_are_carried,
 )
-from tests.properties.test_panel_properties import EXPECTED_FAILURES, _font_sizes
+from tests.properties.test_panel_properties import EXPECTED_FAILURES, ONE_FAILURE, _font_sizes
 from tests.strategies import LIBRARY, Drawn, figure_panels
 
 
@@ -95,3 +95,25 @@ def test_check_agrees_with_the_compiler(drawn: Drawn):
         assert [finding.rule for finding in findings] == ["sfx-placement"]
     else:
         assert findings == []
+
+
+@given(figure_panels(direction="rtl"))
+def test_read_right_to_left_every_property_still_holds(drawn: Drawn):
+    """The four kinds again, for figure panels read right to left (#68): nothing in the
+    figure path may assume a reader starts at the left."""
+    findings = diagnose_source(drawn.text, library=LIBRARY, deep=True, base=drawn.base)
+    compiled = _core(drawn)
+    if compiled is None:
+        assert [item.rule for item in findings] in ONE_FAILURE
+        return
+    assert findings == []
+    core, _ = compiled
+    again = compile_source(drawn.text, library=LIBRARY, base=drawn.base).core
+    assert core.to_json() == again.to_json()
+    assert_lettering_is_placed(core, margin=drawn.margin)
+    assert_effects_are_placed(core, margin=drawn.margin)
+    assert_accessible(render(core), core)
+    text = core.to_json()
+    restored = PanelCore.from_json(text)
+    assert restored == core
+    assert restored.to_json() == text

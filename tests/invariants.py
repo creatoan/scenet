@@ -22,6 +22,7 @@ from shapely.geometry import box as rectangle
 
 from scenet.core import CoreFrame, PageCore, PanelCore
 from scenet.geom import BBox
+from scenet.ir import Direction
 from scenet.solve.balloons import READING_EPSILON
 from scenet.solve.text import SHIPPED_FACES, load_metrics
 
@@ -72,7 +73,8 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
       from the authored document;
     - over no face, and under no exclusion such as an inset's clearance;
     - overlapping no other balloon or caption;
-    - in reading order against **every** box read before it, not only the previous one;
+    - in reading order against **every** box read before it, not only the previous one --
+      never above and left of it, or above and right for a panel read right to left;
     - and, for a balloon, with a tail that starts on it and ends at its speaker.
 
     Args:
@@ -92,12 +94,18 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         for exclusion in exclusions:
             assert _overlap(box, exclusion) == 0, f"{identifier} is under an exclusion"
 
+    rtl = core.direction is Direction.RTL
     for index, (identifier, _, box) in enumerate(boxes):
         for earlier_id, _, earlier in boxes[:index]:
             assert _overlap(box, earlier) == 0, f"{identifier} overlaps {earlier_id}"
             below = box.y >= earlier.y - READING_EPSILON - TOLERANCE
-            right_of = box.x >= earlier.right - READING_EPSILON - TOLERANCE
-            assert below or right_of, f"{identifier} reads before {earlier_id}"
+            # Further along the line: to its right, or to its left read right to left.
+            along = (
+                box.right <= earlier.x + READING_EPSILON + TOLERANCE
+                if rtl
+                else box.x >= earlier.right - READING_EPSILON - TOLERANCE
+            )
+            assert below or along, f"{identifier} reads before {earlier_id}"
 
     for balloon in core.balloons:
         start = balloon.tail.start

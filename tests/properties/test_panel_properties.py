@@ -32,6 +32,9 @@ from tests.strategies import LIBRARY, Drawn, panels
 #: lettering. Anything else escaping the compiler is a bug.
 EXPECTED_FAILURES = (BalloonPlacementError, LayoutError, SfxPlacementError)
 
+#: What `scenet check --deep` reports for each of them: one finding, its rule.
+ONE_FAILURE = (["balloon-placement"], ["layout"], ["sfx-placement"])
+
 
 def _result(drawn: Drawn) -> CompileResult | None:
     """The compiled panel, or `None` when it fails in one of the expected ways."""
@@ -157,3 +160,33 @@ def test_the_invariants_hold_for_a_pinned_example(document: dict[str, object]):
     core = compile_source(drawn.text, library=LIBRARY).core
     assert_lettering_is_placed(core, margin=drawn.margin)
     assert_svg_is_sound(render(core), size=drawn.size, font_sizes=_font_sizes(core))
+
+
+@given(panels(direction="rtl"))
+def test_read_right_to_left_every_property_still_holds(drawn: Drawn):
+    """Determinism, the invariants, the round trip and the oracle, for panels read right to
+    left (#68), the reading-order invariant among them read the other way.
+
+    A property of its own rather than a direction drawn into `panels`: every example the
+    properties above draw stays the one they drew before directions existed.
+    """
+    findings = diagnose_source(drawn.text, library=LIBRARY, deep=True, base=drawn.base)
+    core = _compile(drawn)
+    if core is None:
+        assert [item.rule for item in findings] in ONE_FAILURE
+        return
+    assert findings == []
+    assert (
+        core.to_json()
+        == compile_source(drawn.text, library=LIBRARY, base=drawn.base).core.to_json()
+    )
+    assert_lettering_is_placed(core, margin=drawn.margin)
+    assert_effects_are_placed(core, margin=drawn.margin)
+    assert_words_are_carried(core, description=drawn.document.get("description"))
+    assert_svg_is_sound(render(core), size=drawn.size, font_sizes=_font_sizes(core))
+    assert_accessible(render(core), core)
+    text = core.to_json()
+    assert '"direction": "rtl"' in text
+    restored = PanelCore.from_json(text)
+    assert restored == core
+    assert restored.to_json() == text

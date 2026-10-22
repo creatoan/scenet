@@ -205,8 +205,14 @@ class TestCaptionEvent:
     def test_locale_is_the_default_kind(self):
         assert CaptionEvent(text="Midnight. The docks.").kind is CaptionKind.LOCALE
 
-    def test_top_left_is_the_default_placement(self):
-        assert CaptionEvent(text="Midnight.").prefer is PlacementZone.TOP_LEFT
+    def test_an_unwritten_placement_is_left_to_the_direction(self):
+        """Where reading starts: top left, or top right for a comic read right to left (#68).
+        Only a written zone is a place on the panel."""
+        assert CaptionEvent(text="Midnight.").prefer is None
+        assert (
+            CaptionEvent(text="Midnight.", prefer=PlacementZone.TOP_LEFT).prefer
+            is PlacementZone.TOP_LEFT
+        )
 
     @pytest.mark.parametrize(
         ("kind", "italic"),

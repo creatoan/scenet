@@ -204,7 +204,7 @@ def _event(draw: st.DrawFn, cast: list[str]) -> dict[str, Any]:
 
 
 @st.composite
-def panels(draw: st.DrawFn, *, images: bool = True) -> Drawn:
+def panels(draw: st.DrawFn, *, images: bool = True, direction: str | None = None) -> Drawn:
     """A single-panel document the compiler should accept.
 
     With `images`, sometimes set in front of a supplied picture of a drawn size, which the
@@ -281,6 +281,11 @@ def panels(draw: st.DrawFn, *, images: bool = True) -> Drawn:
             setting["fit"] = draw(st.sampled_from(list(Fit))).value
         document["setting"] = setting
         files[name] = picture
+    # Given, never drawn: Hypothesis shares one random stream across a run's examples, so
+    # even a draw made last changes every example after the first few. As a parameter, a
+    # property that does not ask for a direction draws exactly what it always did (#68).
+    if direction is not None:
+        document["direction"] = direction
     return Drawn(document, files)
 
 
@@ -307,7 +312,7 @@ def _figure(draw: st.DrawFn, *, cell: tuple[float, float, float], down: int) -> 
 
 
 @st.composite
-def figure_panels(draw: st.DrawFn) -> Drawn:
+def figure_panels(draw: st.DrawFn, *, direction: str | None = None) -> Drawn:
     """A single panel whose people a supplied picture draws (#71), and the files it names.
 
     The picture and its artwork contract are in `Drawn.files`. One to four figures sit in
@@ -373,6 +378,11 @@ def figure_panels(draw: st.DrawFn) -> Drawn:
         document["description"] = draw(words(max_words=30))
     contract_name = picture.rsplit(".", 1)[0] + ".art.yaml"
     files = {picture: data, contract_name: contract((across, down), figures, keep_out)}
+    # Given, never drawn: Hypothesis shares one random stream across a run's examples, so
+    # even a draw made last changes every example after the first few. As a parameter, a
+    # property that does not ask for a direction draws exactly what it always did (#68).
+    if direction is not None:
+        document["direction"] = direction
     return Drawn(document, files)
 
 
