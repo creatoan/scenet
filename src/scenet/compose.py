@@ -46,6 +46,26 @@ NOT_A_DEFAULT = (
 )
 
 
+#: The key a whole document's reading direction is written under (#68). Every panel takes
+#: it from the document -- beside `panels:`, or in a comic script's front matter -- and
+#: none writes its own.
+DIRECTION_KEY = "direction"
+
+
+def own_direction(where: str) -> str:
+    """Why a panel's own `direction` is refused, and where to write it instead.
+
+    Example:
+        >>> own_direction("beside `panels:`").endswith("once, beside `panels:`")
+        True
+    """
+    return (
+        "'direction' says which way the whole comic is read, so a panel cannot have one of "
+        "its own: a page read one way holding a panel read the other has no order a reader "
+        f"could follow. Write it once, {where}"
+    )
+
+
 def merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep-merge `override` onto `base`, with `override` winning.
 

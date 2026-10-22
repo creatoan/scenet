@@ -152,6 +152,24 @@ assert panels["first"].description == "Alice waits in the rain."
 assert panels["second"].description is None
 ```
 
+And one key is only ever the document's: [`direction`](../reference/language.md#direction), which
+way the comic is read. Written beside `panels:`, every panel reads that way; written on a panel,
+it is refused as `panel-direction`, since a sequence is read one way throughout:
+
+```python
+from scenet import Direction, parse_scene
+
+panels = parse_scene("""
+direction: rtl
+cast: {a: {reference: alice}}
+panels:
+  first: {}
+  second: {over: first}
+""")
+
+assert {panel.direction for panel in panels.values()} == {Direction.RTL}
+```
+
 ## Chains and cycles
 
 `over:` chains as deep as you like. A cycle is a compile error rather than a hang:

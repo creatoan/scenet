@@ -231,6 +231,7 @@ note as information rather than a red squiggle.
 | `scenet/caption-speaker` | error | `by` on a caption whose `kind` is not `spoken` |
 | `scenet/ordering-cycle` | error | `left_of`/`right_of` relations that form a cycle |
 | `scenet/composition` | error | An `over:` chain that is missing or cyclic |
+| `scenet/panel-direction` | error | A panel of a scene that writes `direction`, or a comic script's `@direction:`: the reading direction is the whole document's |
 | `scenet/duplicate-panel` | error | Two panels in a comic script with the same name, even counting pages |
 | `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, or no room for its tiers |
 | `scenet/unknown-puppet` | error | A `reference` naming a character the library lacks |

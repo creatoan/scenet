@@ -45,6 +45,7 @@ __all__ = [
     "CastMember",
     "Column",
     "Corner",
+    "Direction",
     "Face",
     "Facing",
     "Fit",
@@ -308,6 +309,25 @@ class PlacementZone(StrEnum):
         across = {"left": 0.25, "center": 0.5, "right": 0.75}[horizontal]
         down = {"top": 0.2, "middle": 0.5, "bottom": 0.8}[vertical]
         return across, down
+
+
+class Direction(StrEnum):
+    """Which way a comic is read: its progression, not the direction of its text.
+
+    `ltr` reads from the top left, as Western comics do; `rtl` from the top right, as manga
+    do -- the panels on a page and in a strip, the pages side by side, and the balloons and
+    captions in a panel. The words in a balloon are not touched: a manga translated into
+    English still reads right to left while each line reads left to right.
+
+    It is the whole document's, written once, as EPUB's `page-progression-direction` is per
+    book, whose words these are. Only what reading decides follows it. The scene is never
+    mirrored: figures, gaze, staging, tails and sound effects stay as staged, and every
+    word that names a place on the panel -- `at:`, `left_of`, `facing:`, `prefer:`, a side
+    for `off_panel`, an inset's corner -- means the same place either way.
+    """
+
+    LTR = "ltr"
+    RTL = "rtl"
 
 
 class Facing(StrEnum):
@@ -1286,6 +1306,8 @@ class PanelIR(Strict):
         description: What the panel shows, in words, for a reader who cannot see it: the
             author's, or a comic script's prose. Carried and never interpreted -- nothing
             is drawn from it. Without one, accessible output says what the panel holds.
+        direction: Which way the comic is read. The whole document's: a scene's panels and
+            a comic script's take it from the document, and none may write its own.
 
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
@@ -1317,6 +1339,15 @@ class PanelIR(Strict):
             "the SVG as its accessible name and never interpreted. Not inherited: a panel "
             "drawn `over:` another is a different picture. Left out, one is generated from "
             "the shot, the setting and the cast."
+        ),
+    )
+    direction: Direction = Field(
+        default=Direction.LTR,
+        description=(
+            "Which way the comic is read: `ltr` from the top left, `rtl` from the top right, "
+            "as manga are -- panels, pages and the balloons in a panel. Its progression, not "
+            "its text: the words in a balloon still read left to right. Written once for the "
+            "whole document; the scene is never mirrored."
         ),
     )
 

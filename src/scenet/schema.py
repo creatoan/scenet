@@ -28,7 +28,7 @@ import inspect
 from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
-from scenet.compose import DESCRIPTION_KEY
+from scenet.compose import DESCRIPTION_KEY, DIRECTION_KEY
 from scenet.ir import PUPPET_KEYS, PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
@@ -99,8 +99,9 @@ def scene_schema() -> dict[str, Any]:
     defaults = {key: value for key, value in properties.items() if key != DESCRIPTION_KEY}
 
     member = {key: value for key, value in panel.items() if key not in ("title", "$schema")}
+    # A direction is the whole document's, never one panel's: `panel-direction` (#68).
     member["properties"] = {
-        **properties,
+        **{key: value for key, value in properties.items() if key != DIRECTION_KEY},
         "over": {
             "type": "string",
             "description": (

@@ -724,6 +724,7 @@ def compile_ir(
             for face, font in declared.items()
         },
         description=describe(panel, where, width),
+        direction=panel.direction,
     )
     return CompileResult(
         core=core,
@@ -951,6 +952,7 @@ def _compile_document(
                 height=rounded(layout.page.height),
                 lettering_height=type_height,
                 frames=tuple(_core_frame(frame) for frame in resolved),
+                direction=document.direction,
             )
         )
     exclusions = _inset_clearances(frames)

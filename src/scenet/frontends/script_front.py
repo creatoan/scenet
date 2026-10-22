@@ -49,10 +49,12 @@ from pydantic import ValidationError
 
 from scenet.compose import (
     DESCRIPTION_KEY,
+    DIRECTION_KEY,
     NOT_A_DEFAULT,
     OVER_KEY,
     merge,
     names,
+    own_direction,
     relation_text,
     resolve_overrides,
     settle,
@@ -69,6 +71,7 @@ from scenet.ir import (
     BalloonKind,
     CameraAngle,
     CaptionKind,
+    Direction,
     PageLayout,
     PanelIR,
     Predicate,
@@ -1544,6 +1547,13 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             line=number,
             rule="duplicate-key",
         )
+    if key == DIRECTION_KEY:
+        raise ScriptSyntaxError(
+            f"line {number}: {own_direction('in the front matter')}",
+            source=source,
+            line=number,
+            rule="panel-direction",
+        )
     path = ("camera", key) if key in CAMERA_DIRECTIVES else (key,)
     first = draft.directive_lines.get(path)
     if first is not None:
@@ -1740,6 +1750,47 @@ class ScriptDocument:
     page_notes: dict[str, tuple[str, ...]] = field(default_factory=dict)
     layout: PageLayout = field(default_factory=PageLayout)
 
+    @property
+    def direction(self) -> Direction:
+        """Which way the script is read: its front matter's, which every panel takes."""
+        return next((panel.direction for panel in self.panels.values()), Direction.LTR)
+
+
+def _front_matter_line(text: str, offset: int, key: str) -> int | None:
+    """The line a top-level key of the front matter is written on, if it is there.
+
+    A top-level key starts a line of the front matter, which is the first `offset` lines.
+    """
+    return next(
+        (
+            number
+            for number, written in enumerate(text.split("\n")[:offset], start=1)
+            if re.match(rf"{key}\s*:", written)
+        ),
+        None,
+    )
+
+
+def _check_direction(value: object, text: str, offset: int, source: Path | None) -> None:
+    """Refuse a front matter `direction` that is neither `ltr` nor `rtl`, at its own line.
+
+    Checked here rather than left to each panel's validation, which would report it at the
+    first PANEL heading -- a line that does not hold it. `null` asks for the default.
+
+    Raises:
+        ScriptSyntaxError: Rule `invalid-field`.
+    """
+    if value is None or value in {direction.value for direction in Direction}:
+        return
+    line = _front_matter_line(text, offset, DIRECTION_KEY)
+    allowed = " or ".join(f"'{direction.value}'" for direction in Direction)
+    raise ScriptSyntaxError(
+        f"{f'line {line}: ' if line else ''}'direction' is {allowed}, not {value!r}",
+        source=source,
+        line=line,
+        rule="invalid-field",
+    )
+
 
 def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDocument:
     r"""Parse comic script, keeping the line each panel and each of its events is on.
@@ -1767,21 +1818,15 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         )
     if DESCRIPTION_KEY in front_matter:
         # The front matter is merged under every panel, and a description says what one
-        # picture shows. It is a top-level key, so it starts a line of the front matter.
-        line = next(
-            (
-                number
-                for number, written in enumerate(text.split("\n")[:offset], start=1)
-                if re.match(rf"{DESCRIPTION_KEY}\s*:", written)
-            ),
-            None,
-        )
+        # picture shows.
+        line = _front_matter_line(text, offset, DESCRIPTION_KEY)
         raise ScriptSyntaxError(
             f"{f'line {line}: ' if line else ''}{NOT_A_DEFAULT}",
             source=source,
             line=line,
             rule="unknown-key",
         )
+    _check_direction(front_matter.get(DIRECTION_KEY), text, offset, source)
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     reserved = _reserved_name(cast)

@@ -262,6 +262,11 @@ A panel with no effects has no `sfx` key, so no `format_version` bump.
 `seed` is kept so that a Core document explains itself: two panels with the same masses and
 different skylines differ here, and here is where to look.
 
+A panel read right to left carries `"direction": "rtl"`, the reason its lettering is where it
+is: see [`direction`](language.md#direction). A panel read left to right has no `direction` key,
+so every Core written before it reads, and is written, byte for byte as before — no
+`format_version` bump.
+
 ### The words
 
 A panel is also read, by somebody who cannot see it, and the words it is read in are resolved here
@@ -333,6 +338,9 @@ frame in page units and in its own Core in panel units; the frame is the outline
 The panel is drawn clipped to it, and bordered by it. A rectangle has no `outline` key. Each panel's own Core was compiled at
 exactly its frame's `width` and `height`, so a panel's Core reads the same on a page as it would
 alone at that size, and a page adds no layout decision to a panel.
+
+A page read right to left carries `"direction": "rtl"` as its panels do; one read left to right
+has no `direction` key.
 
 `lettering_height` is the one thing every panel on the page shares: the height their type sizes are
 a fraction of, in place of each panel's own. It is recorded so that a Page Core says why two panels

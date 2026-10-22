@@ -361,6 +361,10 @@ Everything in the front matter is a default every panel inherits — exactly the
 mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults) — and so a
 `description`, which says what one panel shows, is refused there.
 
+`direction: rtl` there makes the whole script read from the top right, as a manga does; see
+[`direction`](https://creatoan.github.io/scenet/reference/language.html#direction). It is the script's, never one panel's, so
+`@direction:` under a PANEL heading is refused.
+
 Note the actor ids are written in caps here, to match the speaker cues. That is a
 convention, not a requirement; the ids simply have to agree.
 

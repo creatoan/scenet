@@ -858,6 +858,39 @@ forms and the contextual substitution that picks one, which only a full text sha
 Scenet applies no glyph substitution at all, so a face that picks its crossbar "I" contextually will
 not pick it here either. Write in capitals if you want them.
 
+## `direction`
+
+Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the
+top right, as manga are. It is the comic's **progression**, not the direction of its text: a manga
+translated into English still reads right to left, while the words in each balloon read left to
+right. Vertical Japanese lettering is not part of it.
+
+```yaml
+direction: rtl
+cast:
+  hana: {reference: alice, at: right_third, facing: left}
+  ken: {reference: bob, at: left_third}
+script:
+  - say: {by: hana, text: You came.}
+  - say: {by: ken, text: You called.}
+```
+
+| Key | Means | Default |
+|---|---|---|
+| `direction` | `ltr` or `rtl` | `ltr` |
+
+The words are EPUB's, whose `page-progression-direction` says the same thing about a book. Like
+EPUB's, it is said **once, for the whole document**: at the top of a single panel, beside
+`panels:` in a scene, where every panel inherits it, or in a comic script's front matter. A panel
+may not have one of its own — a page read one way holding a panel read the other has no order a
+reader could follow — so a panel under `panels:` that writes `direction`, even the document's
+own, and a script's `@direction:` are reported as `panel-direction`.
+
+Only what reading decides follows it. **The scene is never mirrored**: figures, gaze, staging, the
+camera, tails and sound effects stay exactly as staged, and every word that names a place on the
+panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`, a side for
+`off_panel`, an inset's corner. Panel Core and Page Core record `direction` when it is `rtl`.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of

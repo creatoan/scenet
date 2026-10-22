@@ -58,8 +58,10 @@ from scenet.assets.artwork import (
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.compose import (
     DESCRIPTION_KEY,
+    DIRECTION_KEY,
     NOT_A_DEFAULT,
     merge,
+    own_direction,
     relation_text,
     resolve_overrides,
     settle,
@@ -301,6 +303,18 @@ RULES: dict[str, Rule] = {
             "spans the tier between two stacks, move or shrink an inset, lean a slant "
             "less, or shrink the margin and gutters in `page:`."
         ),
+    ),
+    "panel-direction": Rule(
+        summary="A panel names a reading direction of its own",
+        description=(
+            "`direction` says which way the whole comic is read -- `ltr` from the top left, "
+            "`rtl` from the top right, as manga are -- so it is written once for the "
+            "document: beside `panels:` in a scene, in a comic script's front matter. A "
+            "page read one way holding a panel read the other has no order a reader could "
+            "follow, so a panel under `panels:` that writes `direction`, even the document's "
+            "own, and a script's `@direction:`, are refused."
+        ),
+        help="Delete it from the panel, and write `direction` once for the whole document.",
     ),
     "duplicate-panel": Rule(
         summary="Two panels in a comic script have the same name",
@@ -1271,6 +1285,26 @@ def _diagnose_scene(
             )
     if found:
         return found
+
+    # A panel's own direction is one finding where it is written, and the panel is then
+    # checked as the document's, so a fault elsewhere in it is still found.
+    own = [name for name, document in panels.items() if DIRECTION_KEY in document]
+    found.extend(
+        Diagnostic(
+            rule="panel-direction",
+            message=own_direction("beside `panels:`"),
+            path=("panels", name, DIRECTION_KEY),
+            source=source,
+            region=locate(text, ("panels", name, DIRECTION_KEY)) or DOCUMENT_START,
+        )
+        for name in own
+    )
+    panels = {
+        name: {key: value for key, value in document.items() if key != DIRECTION_KEY}
+        if name in own
+        else document
+        for name, document in panels.items()
+    }
 
     try:
         composed = resolve_overrides(panels)

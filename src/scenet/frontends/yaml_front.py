@@ -12,7 +12,15 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from scenet.compose import DESCRIPTION_KEY, NOT_A_DEFAULT, merge, resolve_overrides, settle
+from scenet.compose import (
+    DESCRIPTION_KEY,
+    DIRECTION_KEY,
+    NOT_A_DEFAULT,
+    merge,
+    own_direction,
+    resolve_overrides,
+    settle,
+)
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
     LAYOUT_KEYS,
@@ -22,7 +30,7 @@ from scenet.frontends.common import (
     panel_name_problem,
     summarise,
 )
-from scenet.ir import PageLayout, PanelIR, check_placements
+from scenet.ir import Direction, PageLayout, PanelIR, check_placements
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 
@@ -123,6 +131,15 @@ class SceneDocument:
     layout: PageLayout
     notes: tuple[str, ...] = ()
 
+    @property
+    def direction(self) -> Direction:
+        """Which way the document is read: the one direction every panel in it shares.
+
+        Every panel takes it from the document and none may write its own, so the first
+        panel's is everyone's; a document with no panels reads the default way.
+        """
+        return next((panel.direction for panel in self.panels.values()), Direction.LTR)
+
 
 def parse_scene(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
     """Parse a multi-panel document, resolving `over` inheritance.
@@ -207,6 +224,15 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
             )
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)
+        if DIRECTION_KEY in document:
+            # Looked for before `over:` is resolved, so it is found in the panel that wrote
+            # it, `null` included: no panel can write one, so no panel can pass one on.
+            raise PanelSyntaxError(
+                own_direction("beside `panels:`"),
+                source=source,
+                rule="panel-direction",
+                loc=("panels", name, DIRECTION_KEY),
+            )
 
     # Anything alongside `panels` is a default every panel inherits, which saves
     # restating the panel size and camera on each one -- except a description, which

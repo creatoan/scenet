@@ -936,6 +936,39 @@ forms and the contextual substitution that picks one, which only a full text sha
 Scenet applies no glyph substitution at all, so a face that picks its crossbar "I" contextually will
 not pick it here either. Write in capitals if you want them.
 
+## `direction`
+
+Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the
+top right, as manga are. It is the comic's **progression**, not the direction of its text: a manga
+translated into English still reads right to left, while the words in each balloon read left to
+right. Vertical Japanese lettering is not part of it.
+
+```yaml
+direction: rtl
+cast:
+  hana: {reference: alice, at: right_third, facing: left}
+  ken: {reference: bob, at: left_third}
+script:
+  - say: {by: hana, text: You came.}
+  - say: {by: ken, text: You called.}
+```
+
+| Key | Means | Default |
+|---|---|---|
+| `direction` | `ltr` or `rtl` | `ltr` |
+
+The words are EPUB's, whose `page-progression-direction` says the same thing about a book. Like
+EPUB's, it is said **once, for the whole document**: at the top of a single panel, beside
+`panels:` in a scene, where every panel inherits it, or in a comic script's front matter. A panel
+may not have one of its own — a page read one way holding a panel read the other has no order a
+reader could follow — so a panel under `panels:` that writes `direction`, even the document's
+own, and a script's `@direction:` are reported as `panel-direction`.
+
+Only what reading decides follows it. **The scene is never mirrored**: figures, gaze, staging, the
+camera, tails and sound effects stay exactly as staged, and every word that names a place on the
+panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`, a side for
+`off_panel`, an inset's corner. Panel Core and Page Core record `direction` when it is `rtl`.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
@@ -1582,6 +1615,10 @@ Everything in the front matter is a default every panel inherits — exactly the
 mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults) — and so a
 `description`, which says what one panel shows, is refused there.
 
+`direction: rtl` there makes the whole script read from the top right, as a manga does; see
+[`direction`](https://creatoan.github.io/scenet/reference/language.html#direction). It is the script's, never one panel's, so
+`@direction:` under a PANEL heading is refused.
+
 Note the actor ids are written in caps here, to match the speaker cues. That is a
 convention, not a requirement; the ids simply have to agree.
 
@@ -1806,6 +1843,12 @@ A page cannot lay out what it says. `pages:` lays the panels of a scene out in t
 A comic script's PAGE heading states a count its panels do not match. Dark Horse's script format labels each page with how many panels it has, `PAGE ONE (five panels)`. When the panels under it number something else, a panel heading has often been missed, or written so that it reads as prose -- and nothing else would say so. A note, not an error: the panels that are there still compile.
 
 **Fix:** Correct the count, or the panel heading that was not read as one.
+
+### `scenet/panel-direction`
+
+A panel names a reading direction of its own. `direction` says which way the whole comic is read -- `ltr` from the top left, `rtl` from the top right, as manga are -- so it is written once for the document: beside `panels:` in a scene, in a comic script's front matter. A page read one way holding a panel read the other has no order a reader could follow, so a panel under `panels:` that writes `direction`, even the document's own, and a script's `@direction:`, are refused.
+
+**Fix:** Delete it from the panel, and write `direction` once for the whole document.
 
 ### `scenet/panel-geometry`
 
@@ -2152,6 +2195,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       },
       "title": "CastMember",
       "type": "object"
+    },
+    "Direction": {
+      "description": "Which way a comic is read: its progression, not the direction of its text.\n\n`ltr` reads from the top left, as Western comics do; `rtl` from the top right, as manga\ndo -- the panels on a page and in a strip, the pages side by side, and the balloons and\ncaptions in a panel. The words in a balloon are not touched: a manga translated into\nEnglish still reads right to left while each line reads left to right.\n\nIt is the whole document's, written once, as EPUB's `page-progression-direction` is per\nbook, whose words these are. Only what reading decides follows it. The scene is never\nmirrored: figures, gaze, staging, tails and sound effects stay as staged, and every\nword that names a place on the panel -- `at:`, `left_of`, `facing:`, `prefer:`, a side\nfor `off_panel`, an inset's corner -- means the same place either way.",
+      "enum": [
+        "ltr",
+        "rtl"
+      ],
+      "title": "Direction",
+      "type": "string"
     },
     "Facing": {
       "description": "Which way an actor is turned.\n\nMirroring the whole puppet, gaze vector included. Defaults to `right`, so a cast\nwritten left to right ends up looking into the panel rather than out of it.",
@@ -2801,7 +2853,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
+  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n    direction: Which way the comic is read. The whole document's: a scene's panels and\n        a comic script's take it from the document, and none may write its own.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
   "properties": {
     "camera": {
       "$ref": "#/$defs/CameraSpec",
@@ -2837,6 +2889,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "default": null,
       "description": "What the panel shows, in words, for a reader who cannot see it. Carried into the SVG as its accessible name and never interpreted. Not inherited: a panel drawn `over:` another is a different picture. Left out, one is generated from the shot, the setting and the cast.",
       "title": "Description"
+    },
+    "direction": {
+      "$ref": "#/$defs/Direction",
+      "default": "ltr",
+      "description": "Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored."
     },
     "lettering": {
       "$ref": "#/$defs/LetteringSpec",

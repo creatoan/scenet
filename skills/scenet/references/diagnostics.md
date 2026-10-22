@@ -136,6 +136,12 @@ A comic script's PAGE heading states a count its panels do not match. Dark Horse
 
 **Fix:** Correct the count, or the panel heading that was not read as one.
 
+### `scenet/panel-direction`
+
+A panel names a reading direction of its own. `direction` says which way the whole comic is read -- `ltr` from the top left, `rtl` from the top right, as manga are -- so it is written once for the document: beside `panels:` in a scene, in a comic script's front matter. A page read one way holding a panel read the other has no order a reader could follow, so a panel under `panels:` that writes `direction`, even the document's own, and a script's `@direction:`, are refused.
+
+**Fix:** Delete it from the panel, and write `direction` once for the whole document.
+
 ### `scenet/panel-geometry`
 
 The panel has no usable area. Panel dimensions must be positive, and the margins must leave something between them. A panel with no interior has nothing to compose in.

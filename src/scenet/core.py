@@ -21,6 +21,7 @@ from scenet.ir import (
     UNTAGGED,
     BalloonKind,
     CaptionKind,
+    Direction,
     Face,
     Fit,
     Mark,
@@ -766,6 +767,9 @@ class PanelCore(CoreModel):
         figures: The figures a supplied picture draws, as its artwork contract declares
             them (#71), whether cast or not. Left out of the JSON when there are none, so
             every panel without them reads and writes as it always did.
+        direction: Which way the panel is read, which is why its lettering is where it is
+            (#68). Left out of the JSON for `ltr`, so every panel written before it reads
+            and writes as it always did.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -795,6 +799,7 @@ class PanelCore(CoreModel):
     sfx: tuple[CoreSfx, ...] = ()
     description: SvgText | None = None
     figures: tuple[CoreFigure, ...] = ()
+    direction: Direction = Direction.LTR
 
     @property
     def bounds(self) -> BBox:
@@ -870,6 +875,7 @@ class PanelCore(CoreModel):
             sfx=(),
             description=None,
             figures=(),
+            direction=Direction.LTR,
         )
         for figure in payload.get("figures", []):
             _drop_unused(figure, actor=None, mouth=None, body=())
@@ -965,6 +971,8 @@ class PageCore(CoreModel):
         lettering_height: The height every panel on the page took its type size from, in
             place of its own -- so that a short panel and a tall one letter alike.
         frames: One per panel, in reading order: tier by tier, left to right.
+        direction: Which way the page is read (#68). Left out of the JSON for `ltr`, so every
+            page written before it reads and writes as it always did.
 
     Example:
         >>> from scenet import compile_book
@@ -981,10 +989,12 @@ class PageCore(CoreModel):
     height: float
     lettering_height: float
     frames: tuple[CoreFrame, ...] = ()
+    direction: Direction = Direction.LTR
 
     def to_json(self) -> str:
         """Serialise deterministically, exactly as a Panel Core is."""
         payload: Any = self.model_dump(mode="json")
+        _drop_unused(payload, direction=Direction.LTR)
         for frame in payload["frames"]:
             _drop_unused(frame, inset_of=None, clearance=None, outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"

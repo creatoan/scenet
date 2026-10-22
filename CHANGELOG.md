@@ -41,6 +41,12 @@ below 1.0 means.
 
 ### Added
 
+- **`direction: ltr | rtl`, which way a comic is read** (#68): `rtl` for manga, read from the
+  top right. It is the comic's progression, not its text's, and EPUB's word for it. Written once
+  for the whole document — at the top of a panel, beside `panels:`, or in a comic script's front
+  matter — and inherited by every panel; a panel's own, and a script's `@direction:`, are the new
+  rule `panel-direction`. The editor's schema offers it. Panel Core and Page Core record it when it
+  is `rtl`; a left-to-right Core is byte-identical and `format_version` stays 1.
 - **`setting: {image: ..., fit: cover | contain}`**: a picture drawn elsewhere, behind the
   cast (#70). It is a backdrop of its own, so it is written instead of a `place` or
   `masses`, never beside them or beside a `horizon` (`conflicting-setting`); a `fit` with
