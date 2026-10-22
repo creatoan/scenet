@@ -322,7 +322,8 @@ where each panel's frame is, and nothing drawn:
 }
 ```
 
-`frames` are in reading order: tier by tier, left to right, and down each column of a tier of
+`frames` are in reading order: tier by tier, left to right — right to left, for a page whose
+`direction` is `rtl` — and down each column of a tier of
 columns, with an inset right after the panel it is set into or, for `read: before`, right before
 it. An inset's frame also carries `inset_of`, the panel it sits in, and `clearance`, the area it
 covers with its ring of white; the page paints that white under it. Neither field is written for

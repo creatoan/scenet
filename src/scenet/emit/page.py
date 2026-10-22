@@ -13,8 +13,9 @@ order; the page's own shapes -- its sheet, an inset's ring -- are hidden.
 from collections.abc import Mapping, Sequence
 
 from scenet.core import PageCore, PanelCore
-from scenet.emit.strip import GROUP, HIDDEN, counted, placed_panel
+from scenet.emit.strip import GROUP, HIDDEN, counted, placed_panel, reading_direction
 from scenet.emit.svg import fmt
+from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
 __all__ = ["render_page", "render_pages"]
@@ -123,13 +124,16 @@ def render_pages(
             SVG. Left out, each picture is linked by the path its document wrote.
 
     Returns:
-        Every page, left to right, as SVG.
+        Every page, side by side, as SVG: left to right, or for pages read right to left
+        (#68), from the right, as a manga's spread opens. They are written in reading order.
 
     Raises:
-        ValueError: There are no pages, or a frame names a panel `panels` does not hold.
+        ValueError: There are no pages, a frame names a panel `panels` does not hold, or
+            the pages are not all read the same way.
     """
     if not pages:
         raise ValueError("there are no pages to render")
+    rtl = reading_direction([page.direction for page in pages], "pages") is Direction.RTL
     spacing = max(page.width for page in pages) * PAGE_SPACING_FRACTION
     width = sum(page.width for page in pages) + spacing * (len(pages) - 1)
     height = max(page.height for page in pages)
@@ -144,7 +148,7 @@ def render_pages(
         f'  <rect x="0" y="0" width="{fmt(width)}" height="{fmt(height)}" '
         f'fill="{BACKGROUND}"{hidden}/>',
     ]
-    cursor = 0.0
+    cursor = width - pages[0].width if rtl else 0.0
     position = 1
     for number, page in enumerate(pages, start=1):
         parts.append(
@@ -174,7 +178,10 @@ def render_pages(
         )
         parts.append("  </g>")
         position += len(page.frames)
-        cursor += page.width + spacing
+        if rtl and number < len(pages):
+            cursor -= spacing + pages[number].width
+        else:
+            cursor += page.width + spacing
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 

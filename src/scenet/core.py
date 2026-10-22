@@ -970,7 +970,8 @@ class PageCore(CoreModel):
         height: Page height.
         lettering_height: The height every panel on the page took its type size from, in
             place of its own -- so that a short panel and a tall one letter alike.
-        frames: One per panel, in reading order: tier by tier, left to right.
+        frames: One per panel, in reading order: tier by tier, left to right, or right to
+            left for a page read that way.
         direction: Which way the page is read (#68). Left out of the JSON for `ltr`, so every
             page written before it reads and writes as it always did.
 

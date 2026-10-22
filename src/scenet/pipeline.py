@@ -943,7 +943,7 @@ def _compile_document(
     frames: dict[str, Frame] = {}
     for index, page in enumerate(layout.pages):
         try:
-            resolved = resolve_frames(layout.page, page, index=index)
+            resolved = resolve_frames(layout.page, page, index=index, direction=document.direction)
         except RuleViolationError as exc:
             raise PanelSyntaxError(str(exc), rule=exc.rule, loc=exc.loc) from exc
         frames.update((frame.panel, frame) for frame in resolved)

@@ -1,0 +1,72 @@
+{
+  "direction": "rtl",
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 591.18,
+      "panel": "arrival",
+      "width": 880.0,
+      "x": 545.0,
+      "y": 75.0
+    },
+    {
+      "height": 591.18,
+      "panel": "door",
+      "width": 440.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "height": 391.32,
+      "panel": "asks",
+      "width": 600.0,
+      "x": 825.0,
+      "y": 711.18
+    },
+    {
+      "height": 391.32,
+      "panel": "answers",
+      "width": 600.0,
+      "x": 825.0,
+      "y": 1147.5
+    },
+    {
+      "height": 827.65,
+      "panel": "street",
+      "width": 720.0,
+      "x": 75.0,
+      "y": 711.18
+    },
+    {
+      "clearance": {
+        "height": 391.06,
+        "width": 348.0,
+        "x": 75.0,
+        "y": 1147.76
+      },
+      "height": 331.06,
+      "inset_of": "street",
+      "panel": "clock",
+      "width": 288.0,
+      "x": 105.0,
+      "y": 1177.76
+    },
+    {
+      "height": 591.18,
+      "panel": "phone",
+      "width": 660.0,
+      "x": 765.0,
+      "y": 1583.82
+    },
+    {
+      "height": 591.18,
+      "panel": "wait",
+      "width": 660.0,
+      "x": 75.0,
+      "y": 1583.82
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}

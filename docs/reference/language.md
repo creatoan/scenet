@@ -905,11 +905,16 @@ What follows it, in a panel:
 - **The description** names the cast in reading order, from the right; "left" and "right" still
   say where each one stands.
 
+And on a [page](#page-and-pages): each tier's panels from the right, the pages of a document side
+by side from the right, and a strip from the right — each still written in reading order, the
+order a screen reader follows.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
-**tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
-share.
+**tiers**, top to bottom; each tier is a list of panels, in reading order — left to right, or right
+to left for a comic read that way. `page:` is the
+format they share.
 
 A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
 not `pages:`. See [Write a panel as a comic script](../howto/write_a_comic_script.md#pages).
@@ -1021,8 +1026,18 @@ both `panels` and `columns` or neither, two stacks side by side, two insets that
 too big for its panel, a slant that cannot apply or is too steep, or margins and gutters that leave
 no room are reported as `page-layout`.
 
-Not yet: frames of any other shape, such as round panels or ones without borders; right-to-left
-reading ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
+**Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
+right. Panels are still written in reading order, so the first panel of a tier is at its right and
+the last at its left; the first column of a tier of columns is at the right, and each column is
+still read top to bottom — a stack beside a tall panel is read down before across, on the right.
+Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
+way round, so every panel keeps its size, and its art is the art it has read left to right. What
+names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
+positive `slant` leans the top of each gutter right, as written. A layout one direction refuses, the
+other refuses too.
+
+Not yet: frames of any other shape, such as round panels or ones without borders; comic-script
+`PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
 ([#80](https://github.com/creatoan/scenet/issues/80)).
 

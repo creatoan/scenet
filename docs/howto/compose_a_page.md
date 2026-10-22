@@ -23,7 +23,7 @@ panels:
   him: {...}
 ```
 
-A page is a list of tiers, top to bottom; a tier is a list of panels, left to right. Write a
+A page is a list of tiers, top to bottom; a tier is a list of panels, in reading order. Write a
 panel by its name, or as `{use: name, width: 2}` to give it a bigger share. A tier's
 `height` is its share of the page the same way. The margin and the gutters come off first,
 and what is left is shared out by weight, the way CSS Grid shares a row between `fr` tracks.
@@ -31,6 +31,26 @@ and what is left is shared out by weight, the way CSS Grid shares a row between 
 The order you write panels in is the order they are read in: tier by tier, left to right.
 That is the reading path readers follow on a grid, so a page built from tiers cannot be read
 in the wrong order.
+
+## A page read right to left
+
+A manga is read from the top right. Say so once, beside `panels:`, and write the page exactly as
+before, in reading order:
+
+```yaml
+direction: rtl
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - panels: [phone, wait]
+```
+
+`arrival` now takes the right two thirds of the first tier and `door` the left third; `phone` is
+bottom right. Columns go the same way, and each column is still read top to bottom. Nothing in a
+panel is mirrored: every panel is compiled at the size it had, its figures stand where their `at:`
+puts them, an inset sits in the corner its `at:` names, and a slanted gutter leans the way its
+`slant` says. Only the lettering in each panel follows the direction too, read from the top right.
+The gallery's *Read right to left* page and its left-to-right twin show the difference side by side.
 
 ## A tall panel beside a stack
 
@@ -193,6 +213,5 @@ to be inherited from with `over:`.
 
 ## Not yet
 
-Frames of other shapes; right-to-left reading for manga; and print sizes with trim and
-bleed. See
+Frames of other shapes; and print sizes with trim and bleed. See
 [the plan](../explanation/status.md).

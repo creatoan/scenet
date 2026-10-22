@@ -58,6 +58,12 @@ below 1.0 means.
   names the cast from the right. Nothing in the picture moves: figures, gaze, tails and sound
   effects are byte-identical, and `prefer:`, `at:` and named sides keep meaning places on the panel.
   The debug overlay says "read right to left".
+- **Pages and strips read right to left.** Under `direction: rtl` a tier's first panel, or first
+  column, is at its right; each frame is the one the tier reversed would have, so every panel
+  keeps its size and its art, an inset keeps its corner and a slant leans as written. The pages of
+  a document side by side (`render_pages`, the playground) and a strip start at the right, and every
+  one is still written in reading order. A strip or a row of pages read two ways is refused.
+- **Two gallery pages**, the same manga page read right to left and left to right.
 - **`setting: {image: ..., fit: cover | contain}`**: a picture drawn elsewhere, behind the
   cast (#70). It is a backdrop of its own, so it is written instead of a `place` or
   `masses`, never beside them or beside a `horizon` (`conflicting-setting`); a `fit` with

@@ -566,7 +566,7 @@
     },
     "PageSpec": {
       "additionalProperties": false,
-      "description": "One page: tiers, top to bottom.\n\nA page is read tier by tier, left to right within a tier and down each column of a\ntier of columns, so the order panels are written in is the order they are read in.\nThat is the page's version of the rule a balloon obeys, and it holds by construction:\ncolumns that readers would not read down are refused by\n:class:`PageLayout <scenet.ir.PageLayout>`.\n\nAttributes:\n    tiers: The tiers, top to bottom.",
+      "description": "One page: tiers, top to bottom.\n\nA page is read tier by tier, left to right within a tier -- right to left, for a\ndocument whose `direction` is `rtl` -- and down each column of a tier of columns, so the\norder panels are written in is the order they are read in.\nThat is the page's version of the rule a balloon obeys, and it holds by construction:\ncolumns that readers would not read down are refused by\n:class:`PageLayout <scenet.ir.PageLayout>`.\n\nAttributes:\n    tiers: The tiers, top to bottom.",
       "properties": {
         "tiers": {
           "items": {
@@ -1482,7 +1482,7 @@
     },
     "Tier": {
       "additionalProperties": false,
-      "description": "A row of panels read left to right, or of columns each read top to bottom.\n\nColumns are how a tall panel beside a stack of short ones is written. The stack is\nread down before the page is read across, which is what readers do when a panel\nspanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).\n\nA tier of panels can lean the gutters between them by `slant` degrees, for a beat that\nshould not sit square: each gutter tilts about its centre at the tier's mid-height,\nneighbours share the cut, and the tier's outer edges stay upright.\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order.\n    columns: The columns in it, left to right. A tier has `panels` or `columns`.\n    slant: How far the gutters between its panels lean from upright, in degrees,\n        from -30 to 30. Positive leans the top of each gutter to the right.",
+      "description": "A row of panels read in turn, or of columns each read top to bottom.\n\nColumns are how a tall panel beside a stack of short ones is written. The stack is\nread down before the page is read across, which is what readers do when a panel\nspanning the tier blocks the way across (Cohn, *Navigating Comics*, 2013).\n\nA tier of panels can lean the gutters between them by `slant` degrees, for a beat that\nshould not sit square: each gutter tilts about its centre at the tier's mid-height,\nneighbours share the cut, and the tier's outer edges stay upright.\n\nAttributes:\n    height: Its share of the page's height, relative to the other tiers.\n    panels: The panels in it, in reading order: left to right, or right to left for a\n        document read that way.\n    columns: The columns in it, in reading order, as `panels` are. A tier has `panels`\n        or `columns`.\n    slant: How far the gutters between its panels lean from upright, in degrees,\n        from -30 to 30. Positive leans the top of each gutter to the right.",
       "properties": {
         "columns": {
           "default": [],

@@ -196,7 +196,7 @@ scenet build sequence.scene.yaml --strip
 ```
 
 `--strip` writes one extra file laying every panel out side by side in reading order, on
-top of the individual SVGs. From Python that is
+top of the individual SVGs — from the right, for a sequence read right to left. From Python that is
 {func}`render_strip <scenet.emit.strip.render_strip>`:
 
 ```python

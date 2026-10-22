@@ -986,11 +986,16 @@ What follows it, in a panel:
 - **The description** names the cast in reading order, from the right; "left" and "right" still
   say where each one stands.
 
+And on a [page](#page-and-pages): each tier's panels from the right, the pages of a document side
+by side from the right, and a strip from the right — each still written in reading order, the
+order a screen reader follows.
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
-**tiers**, top to bottom; each tier is a list of panels, left to right. `page:` is the format they
-share.
+**tiers**, top to bottom; each tier is a list of panels, in reading order — left to right, or right
+to left for a comic read that way. `page:` is the
+format they share.
 
 A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
 not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
@@ -1102,8 +1107,18 @@ both `panels` and `columns` or neither, two stacks side by side, two insets that
 too big for its panel, a slant that cannot apply or is too steep, or margins and gutters that leave
 no room are reported as `page-layout`.
 
-Not yet: frames of any other shape, such as round panels or ones without borders; right-to-left
-reading ([#68](https://github.com/creatoan/scenet/issues/68)), comic-script `PAGE` headings as pages
+**Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
+right. Panels are still written in reading order, so the first panel of a tier is at its right and
+the last at its left; the first column of a tier of columns is at the right, and each column is
+still read top to bottom — a stack beside a tall panel is read down before across, on the right.
+Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
+way round, so every panel keeps its size, and its art is the art it has read left to right. What
+names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
+positive `slant` leans the top of each gutter right, as written. A layout one direction refuses, the
+other refuses too.
+
+Not yet: frames of any other shape, such as round panels or ones without borders; comic-script
+`PAGE` headings as pages
 ([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
 ([#80](https://github.com/creatoan/scenet/issues/80)).
 
@@ -4585,4 +4600,199 @@ figures:
 keep_out:
   # The timetable board.
   - [[560, 60], [860, 60], [860, 200], [560, 200]]
+```
+
+## Read right to left, as manga are: a page from the top right
+
+`36-right-to-left.scene.yaml`
+
+```yaml
+# A manga page, read from the top right.
+#
+# `direction: rtl` is the whole document's, written once beside `panels:`. The panels are
+# written in reading order, as on any page, and read right to left: `arrival` is top right,
+# the stack beside the tall street is read down before across, and the last tier ends at
+# the bottom left. In each panel the balloons are read the same way -- never above and right
+# of one before -- and the caption, given no zone, sits where reading starts.
+#
+# Nothing in the picture is mirrored: Hana stands where `at:` puts her and faces the way
+# `facing:` says, the clock is in the corner its `at:` names, and the sound sits where the
+# sound is. 37-left-to-right.scene.yaml is this page read left to right, figure for figure.
+
+direction: rtl
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - height: 1.4
+        columns:
+          - {panels: [asks, answers]}
+          - width: 1.2
+            panels:
+              - use: street
+                insets: [{use: clock, at: bottom_left, size: 0.4}]
+      - panels: [phone, wait]
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    cast:
+      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana, hana looking_at ken]
+    script:
+      - caption: {text: "Shinjuku. Ten past midnight."}
+      - say: {by: hana, text: "You came."}
+      - say: {by: ken, text: "You called."}
+
+  door:
+    camera: {shot: medium_close_up}
+    cast:
+      ken: {reference: bob, at: center}
+    script:
+      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
+
+  asks:
+    camera: {shot: close_up}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: hana, text: "Only us."}
+
+  answers:
+    camera: {shot: close_up}
+    cast:
+      ken: {reference: bob, expression: surprise, at: center}
+    script:
+      - say: {by: ken, text: "Then why the umbrella?"}
+
+  street:
+    camera: {shot: full_shot}
+    cast:
+      hana: {reference: alice, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana]
+    script:
+      - sfx: {text: KRAK, size: medium, prefer: top_center}
+      - say: {by: hana, text: "Because it is raining."}
+      - say: {by: ken, text: "It always is, here."}
+
+  clock:
+    camera: {shot: long_shot}
+    cast:
+      ken: {reference: bob, expression: sad, at: right_third}
+    script:
+      - caption: {text: "00:10"}
+
+  phone:
+    camera: {shot: medium_shot}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
+      - say: {by: hana, text: "Nearly home."}
+
+  wait:
+    camera: {shot: medium_shot}
+    cast:
+      ken: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: ken, text: "Go. I will wait."}
+```
+
+## The same page read left to right, figure for figure
+
+`37-left-to-right.scene.yaml`
+
+```yaml
+# The manga page of 36-right-to-left.scene.yaml, read left to right.
+#
+# The same document with `direction: ltr`, which is also what a page with no `direction`
+# reads as. Put the two side by side: every panel draws the same figures, staged the same
+# way, at the same size -- only where each panel sits on the page, and where its lettering
+# sits in it, follows the direction.
+
+direction: ltr
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - height: 1.4
+        columns:
+          - {panels: [asks, answers]}
+          - width: 1.2
+            panels:
+              - use: street
+                insets: [{use: clock, at: bottom_left, size: 0.4}]
+      - panels: [phone, wait]
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    cast:
+      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana, hana looking_at ken]
+    script:
+      - caption: {text: "Shinjuku. Ten past midnight."}
+      - say: {by: hana, text: "You came."}
+      - say: {by: ken, text: "You called."}
+
+  door:
+    camera: {shot: medium_close_up}
+    cast:
+      ken: {reference: bob, at: center}
+    script:
+      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
+
+  asks:
+    camera: {shot: close_up}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: hana, text: "Only us."}
+
+  answers:
+    camera: {shot: close_up}
+    cast:
+      ken: {reference: bob, expression: surprise, at: center}
+    script:
+      - say: {by: ken, text: "Then why the umbrella?"}
+
+  street:
+    camera: {shot: full_shot}
+    cast:
+      hana: {reference: alice, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana]
+    script:
+      - sfx: {text: KRAK, size: medium, prefer: top_center}
+      - say: {by: hana, text: "Because it is raining."}
+      - say: {by: ken, text: "It always is, here."}
+
+  clock:
+    camera: {shot: long_shot}
+    cast:
+      ken: {reference: bob, expression: sad, at: right_third}
+    script:
+      - caption: {text: "00:10"}
+
+  phone:
+    camera: {shot: medium_shot}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
+      - say: {by: hana, text: "Nearly home."}
+
+  wait:
+    camera: {shot: medium_shot}
+    cast:
+      ken: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: ken, text: "Go. I will wait."}
 ```

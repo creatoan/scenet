@@ -41,7 +41,10 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
 A [strip](compile_a_sequence.md#rendering-the-whole-thing) or a [page](compose_a_page.md) is a named
 group, `role="group"`, holding one such image per panel in reading order — insets included, read
 first when they say `read: before` — and its own shapes, the sheet and the rings round insets, are
-hidden. Debug overlays carry none of this: they are diagnostics, and their labels are live text.
+hidden. A page or strip read right to left is drawn from the right and still written in reading
+order, so a screen reader takes it in the order a reader of the page does. The screen-reader
+results below were recorded on pages read left to right; nothing a screen reader is given depends
+on which way the page is drawn. Debug overlays carry none of this: they are diagnostics, and their labels are live text.
 
 ```python
 from xml.etree import ElementTree

@@ -14,6 +14,14 @@ do when a panel spanning the tier blocks the way across (Cohn, *Navigating Comic
 :class:`PageLayout <scenet.ir.PageLayout>` refuses columns where nothing blocks it. An
 inset is where readers agree least, splitting about evenly between it and the panel it
 sits in, so it is read after its parent unless it says otherwise.
+
+**Read right to left** (#68), as manga are, a tier's first panel or column is at the right.
+The tier is laid out by the same arithmetic over its panels in the other order, so each
+frame is exactly the one a left-to-right page gives that panel with the tier written the
+other way round. Nothing is mirrored: a slanted gutter leans the way its `slant` says, an
+inset sits in the corner its `at` names, and a column is still read top to bottom. An end
+panel stays an end panel and keeps its width, so a layout one direction refuses, the other
+refuses too.
 """
 
 import math
@@ -24,6 +32,7 @@ from scenet.errors import RuleViolationError
 from scenet.geom import BBox, rounded
 from scenet.ir import (
     Corner,
+    Direction,
     InsetOrder,
     PageFormat,
     PageSpec,
@@ -223,19 +232,37 @@ def _slanted(
     return frames
 
 
-def resolve_frames(page_format: PageFormat, page: PageSpec, *, index: int = 0) -> tuple[Frame, ...]:
+def _across(spans: list[float], rtl: bool) -> list[tuple[float, float]]:
+    """Each thing's start and size across a tier, in reading order.
+
+    `spans` were shared out over the things in the order they are laid out in, which read
+    right to left is the reverse of the order they are read in.
+    """
+    pairs = list(zip(spans[::2], spans[1::2], strict=True))
+    return pairs[::-1] if rtl else pairs
+
+
+def resolve_frames(
+    page_format: PageFormat,
+    page: PageSpec,
+    *,
+    index: int = 0,
+    direction: Direction = Direction.LTR,
+) -> tuple[Frame, ...]:
     """Lay out one page.
 
     Args:
         page_format: Size, margin and gutters.
         page: The tiers, already validated to have room for what they hold.
         index: The page's position among the pages, from 0, to locate a mistake.
+        direction: Which way the page is read. Right to left, each tier's first panel or
+            column is at the right.
 
     Returns:
         One frame per panel, in reading order: tier by tier, and within a tier left to
-        right -- or, for a tier of columns, column by column and top to bottom in each.
-        An inset comes right after the panel it is set into, or right before it when it
-        says `read: before`.
+        right -- right to left, for a page read that way -- or, for a tier of columns,
+        column by column and top to bottom in each. An inset comes right after the panel
+        it is set into, or right before it when it says `read: before`.
 
     Raises:
         RuleViolationError: Rule `page-layout`, for two insets in one panel that overlap.
@@ -255,6 +282,7 @@ def resolve_frames(page_format: PageFormat, page: PageSpec, *, index: int = 0) -
     usable_width = page_format.width - 2 * margin
     usable_height = page_format.height - 2 * margin
 
+    rtl = direction is Direction.RTL
     frames: list[Frame] = []
     rows = _split(
         margin, usable_height, page_format.tier_gutter, [tier.height for tier in page.tiers]
@@ -264,22 +292,31 @@ def resolve_frames(page_format: PageFormat, page: PageSpec, *, index: int = 0) -
     ):
         loc: tuple[str | int, ...] = ("pages", index, "tiers", tier_index)
         if tier.panels and tier.slant:
-            frames += _slanted(
-                tier.panels, tier.slant, BBox(margin, y, usable_width, height), gutter, loc
+            # Laid out in the order they stand, left to right, and handed back in the order
+            # they are read: the gutters are the ones the tier written that way has.
+            laid = _slanted(
+                tier.panels[::-1] if rtl else tier.panels,
+                tier.slant,
+                BBox(margin, y, usable_width, height),
+                gutter,
+                loc,
             )
+            frames += laid[::-1] if rtl else laid
             continue
         if tier.panels:
-            spans = _split(margin, usable_width, gutter, [p.width for p in tier.panels])
-            for panel_index, (placement, x, width) in enumerate(
-                zip(tier.panels, spans[::2], spans[1::2], strict=True)
+            weights = [p.width for p in tier.panels]
+            spans = _split(margin, usable_width, gutter, weights[::-1] if rtl else weights)
+            for panel_index, (placement, (x, width)) in enumerate(
+                zip(tier.panels, _across(spans, rtl), strict=True)
             ):
                 frames += _with_insets(
                     placement, BBox(x, y, width, height), gutter, (*loc, "panels", panel_index)
                 )
             continue
-        spans = _split(margin, usable_width, gutter, [c.width for c in tier.columns])
-        for column_index, (column, x, width) in enumerate(
-            zip(tier.columns, spans[::2], spans[1::2], strict=True)
+        weights = [c.width for c in tier.columns]
+        spans = _split(margin, usable_width, gutter, weights[::-1] if rtl else weights)
+        for column_index, (column, (x, width)) in enumerate(
+            zip(tier.columns, _across(spans, rtl), strict=True)
         ):
             stack = _split(y, height, page_format.tier_gutter, [p.height for p in column.panels])
             for panel_index, (stacked, top, size) in enumerate(

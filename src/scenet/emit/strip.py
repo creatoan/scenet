@@ -31,6 +31,7 @@ from collections.abc import Mapping, Sequence
 from scenet.core import Box, PanelCore
 from scenet.emit.debug_svg import debug_body
 from scenet.emit.svg import accessible_name, attr, fmt, panel_body, typeface_of
+from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
 #: A document of panels, for a screen reader: a group, each panel in it an image. `group`
@@ -46,6 +47,21 @@ HIDDEN = ' aria-hidden="true"'
 
 # Space between panels, as a fraction of the tallest panel.
 GUTTER_FRACTION = 0.04
+
+
+def reading_direction(directions: Sequence[Direction], what: str) -> Direction:
+    """The one way a set of panels or pages is read, which laying them out side by side needs.
+
+    Raises:
+        ValueError: They are not all read the same way. Every panel and page of one
+            document is, so this is panels gathered from documents read differently.
+    """
+    distinct = sorted(set(directions))
+    if len(distinct) > 1:
+        raise ValueError(
+            f"{what} are read in one direction, and these are read {' and '.join(distinct)}"
+        )
+    return distinct[0] if distinct else Direction.LTR
 
 
 def counted(number: int, noun: str) -> str:
@@ -70,11 +86,13 @@ def render_strip(
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
 ) -> str:
-    """Lay panels left to right in reading order.
+    """Lay panels side by side in reading order: left to right, or right to left.
 
     Each panel is rendered independently and then placed, rather than being
     re-solved: a panel's composition must not depend on what sits beside it, or the
-    same source would compile differently in isolation.
+    same source would compile differently in isolation. Panels read right to left (#68)
+    are laid from the right; they are still written in reading order, which is the order
+    a screen reader follows.
 
     Args:
         panels: Panel name and compiled core, in reading order.
@@ -93,9 +111,15 @@ def render_strip(
 
     Returns:
         One SVG document holding every panel.
+
+    Raises:
+        ValueError: There are no panels, or they are not all read the same way.
     """
     if not panels:
         raise ValueError("a strip needs at least one panel")
+    rtl = reading_direction([core.direction for _, core in panels], "a strip's panels") is (
+        Direction.RTL
+    )
 
     tallest = max(core.height for _name, core in panels)
     gutter = tallest * GUTTER_FRACTION
@@ -115,7 +139,8 @@ def render_strip(
         f"{HIDDEN if access else ''}/>",
     ]
 
-    cursor = margin
+    # Read right to left, the first panel's left edge is a panel's width short of the end.
+    cursor = width - margin - panels[0][1].width if rtl else margin
     for position, (name, core) in enumerate(panels, start=1):
         # Panels of differing height sit on a common top edge, which is how a tier of
         # unequal panels is conventionally aligned.
@@ -133,7 +158,10 @@ def render_strip(
                 aria=aria,
             )
         )
-        cursor += core.width + gutter
+        if rtl and position < len(panels):
+            cursor -= gutter + panels[position][1].width
+        else:
+            cursor += core.width + gutter
 
     parts.append("</svg>")
     return "\n".join(parts) + "\n"

@@ -1,0 +1,88 @@
+# The manga page of 36-right-to-left.scene.yaml, read left to right.
+#
+# The same document with `direction: ltr`, which is also what a page with no `direction`
+# reads as. Put the two side by side: every panel draws the same figures, staged the same
+# way, at the same size -- only where each panel sits on the page, and where its lettering
+# sits in it, follows the direction.
+
+direction: ltr
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - height: 1.4
+        columns:
+          - {panels: [asks, answers]}
+          - width: 1.2
+            panels:
+              - use: street
+                insets: [{use: clock, at: bottom_left, size: 0.4}]
+      - panels: [phone, wait]
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    cast:
+      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana, hana looking_at ken]
+    script:
+      - caption: {text: "Shinjuku. Ten past midnight."}
+      - say: {by: hana, text: "You came."}
+      - say: {by: ken, text: "You called."}
+
+  door:
+    camera: {shot: medium_close_up}
+    cast:
+      ken: {reference: bob, at: center}
+    script:
+      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
+
+  asks:
+    camera: {shot: close_up}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: hana, text: "Only us."}
+
+  answers:
+    camera: {shot: close_up}
+    cast:
+      ken: {reference: bob, expression: surprise, at: center}
+    script:
+      - say: {by: ken, text: "Then why the umbrella?"}
+
+  street:
+    camera: {shot: full_shot}
+    cast:
+      hana: {reference: alice, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana]
+    script:
+      - sfx: {text: KRAK, size: medium, prefer: top_center}
+      - say: {by: hana, text: "Because it is raining."}
+      - say: {by: ken, text: "It always is, here."}
+
+  clock:
+    camera: {shot: long_shot}
+    cast:
+      ken: {reference: bob, expression: sad, at: right_third}
+    script:
+      - caption: {text: "00:10"}
+
+  phone:
+    camera: {shot: medium_shot}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
+      - say: {by: hana, text: "Nearly home."}
+
+  wait:
+    camera: {shot: medium_shot}
+    cast:
+      ken: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: ken, text: "Go. I will wait."}

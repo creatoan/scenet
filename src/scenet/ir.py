@@ -1797,7 +1797,7 @@ class Column(Strict):
 
 
 class Tier(Strict):
-    """A row of panels read left to right, or of columns each read top to bottom.
+    """A row of panels read in turn, or of columns each read top to bottom.
 
     Columns are how a tall panel beside a stack of short ones is written. The stack is
     read down before the page is read across, which is what readers do when a panel
@@ -1809,8 +1809,10 @@ class Tier(Strict):
 
     Attributes:
         height: Its share of the page's height, relative to the other tiers.
-        panels: The panels in it, in reading order.
-        columns: The columns in it, left to right. A tier has `panels` or `columns`.
+        panels: The panels in it, in reading order: left to right, or right to left for a
+            document read that way.
+        columns: The columns in it, in reading order, as `panels` are. A tier has `panels`
+            or `columns`.
         slant: How far the gutters between its panels lean from upright, in degrees,
             from -30 to 30. Positive leans the top of each gutter to the right.
     """
@@ -1872,8 +1874,9 @@ class Tier(Strict):
 class PageSpec(Strict):
     """One page: tiers, top to bottom.
 
-    A page is read tier by tier, left to right within a tier and down each column of a
-    tier of columns, so the order panels are written in is the order they are read in.
+    A page is read tier by tier, left to right within a tier -- right to left, for a
+    document whose `direction` is `rtl` -- and down each column of a tier of columns, so the
+    order panels are written in is the order they are read in.
     That is the page's version of the rule a balloon obeys, and it holds by construction:
     columns that readers would not read down are refused by
     :class:`PageLayout <scenet.ir.PageLayout>`.
