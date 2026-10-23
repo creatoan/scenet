@@ -161,6 +161,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **A backdrop of more than ten masses is drawn back to front.** Mass ids are numbered back
+  to front, and the painter's sort compared them as text, so `m10` was drawn before `m2`: ten
+  walls and a window in one plane painted the window, one rung paler, out under the walls. Masses
+  in one plane are now drawn in the order Panel Core lists them. No gallery panel has more than
+  ten, and none changes.
 - **A speaker is forgiven a balloon over their own body whatever the actor is called.** The
   placer half-weights the speaker's silhouette, and looked the speaker up by the puppet's name
   while the silhouettes are keyed by actor id. An actor called anything but its puppet, which

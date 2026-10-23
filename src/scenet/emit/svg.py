@@ -225,18 +225,17 @@ def panel_body(
     if backdrop is not None and backdrop.image is not None:
         parts.append(_render_image(backdrop.image, id_prefix, embed))
 
-    # Masses and actors share one painter's order, which is the whole point of `plane`
-    # mapping onto `depth`: a far mass, the cast, and a foreground mass fall into place
-    # in a single sort with no layering code of their own. Ties break on id, exactly as
-    # they did when actors sorted alone.
-    drawn: list[tuple[int, str, str]] = [
-        (actor.depth, actor.id, _render_actor(actor, id_prefix)) for actor in core.actors
+    drawn = [
+        (
+            item.depth,
+            _render_mass(item, id_prefix)
+            if isinstance(item, CoreMass)
+            else _render_actor(item, id_prefix),
+        )
+        for item in in_painters_order(core)
     ]
-    if backdrop is not None:
-        drawn += [(mass.depth, mass.id, _render_mass(mass, id_prefix)) for mass in backdrop.masses]
-    drawn.sort(key=lambda item: (item[0], item[1]))
 
-    parts.extend(body for depth, _, body in drawn if depth < 0)
+    parts.extend(body for depth, body in drawn if depth < 0)
 
     # The veil sits over the backdrop and under the cast. Fog between the reader and the
     # figures would be the more literal reading and would bury them; comics put it behind.
@@ -244,7 +243,7 @@ def panel_body(
         parts.append(_render_veil(core, air, id_prefix))
 
     parts.append(f'  <g stroke="{STROKE}" stroke-linecap="round" stroke-linejoin="round">')
-    parts.extend(body for depth, _, body in drawn if depth >= 0)
+    parts.extend(body for depth, body in drawn if depth >= 0)
 
     # Balloons and captions sit above the figures and share one reading order, so they
     # are emitted as one sequence rather than one layer stacked on the other.
@@ -279,6 +278,28 @@ def panel_body(
             f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
         )
     return [part for part in parts if part]
+
+
+def in_painters_order(core: PanelCore) -> list[CoreActor | CoreMass]:
+    """The actors and masses of a panel, in the order they are drawn: back to front.
+
+    Masses and actors share one painter's order, which is the whole point of `plane`
+    mapping onto `depth`: a far mass, the cast, and a foreground mass fall into place in a
+    single sort with no layering code of their own. Within one depth, masses keep the
+    order Panel Core lists them in, which is back to front -- their ids are numbered that
+    way, but `m10` sorted as text would come before `m2` -- and actors break ties on id.
+    No mass shares a depth with an actor: the backdrop is behind every actor, and the
+    foreground in front of all of them.
+
+    Args:
+        core: The compiled panel.
+
+    Returns:
+        Every actor and mass, farthest first.
+    """
+    masses = core.backdrop.masses if core.backdrop is not None else ()
+    actors = sorted(core.actors, key=lambda actor: actor.id)
+    return sorted([*masses, *actors], key=lambda item: item.depth)
 
 
 def _render_image(image: CoreImage, id_prefix: str, embed: Mapping[str, bytes] | None) -> str:
