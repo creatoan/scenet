@@ -1,0 +1,137 @@
+"""The boxes export: each figure's extent with a phrase, GLIGEN style (#72).
+
+"This entity, here": a phrase and a box per actor and per figure a picture draws, the box as
+`[xmin, ymin, xmax, ymax]` fractions of the panel -- what diffusers' GLIGEN pipeline takes.
+The phrase is templated from Panel Core with the description's own words, so a figure is never
+said one way to a reader and another way to a model.
+"""
+
+import json
+from typing import Any
+
+from scenet.core import PanelCore
+from scenet.emit.boxes import render_boxes
+from scenet.pipeline import compile_source
+from tests.images import contract, png
+
+DUEL = """\
+panel: {size: [1000, 800]}
+camera: {shot: full_shot}
+cast:
+  alice: {reference: alice, pose: pointing, expression: angry, marks: [plewds]}
+  bob: {reference: bob, facing: left}
+staging: [alice left_of bob]
+"""
+
+
+def _boxes(core: PanelCore) -> list[dict[str, Any]]:
+    return json.loads(render_boxes(core))["boxes"]
+
+
+def _fractions(core: PanelCore, points: tuple[tuple[float, float], ...]) -> list[float]:
+    xs = [min(max(x, 0.0), core.width) / core.width for x, _ in points]
+    ys = [min(max(y, 0.0), core.height) / core.height for _, y in points]
+    return [round(value, 4) for value in (min(xs), min(ys), max(xs), max(ys))]
+
+
+class TestActors:
+    def test_one_box_per_actor_in_panel_core_s_order(self):
+        core = compile_source(DUEL).core
+        assert [box["id"] for box in _boxes(core)] == [actor.id for actor in core.actors]
+
+    def test_the_box_is_the_hull_s_bounds_as_fractions_of_the_panel(self):
+        core = compile_source(DUEL).core
+        for actor, box in zip(core.actors, _boxes(core), strict=True):
+            assert box["box"] == _fractions(core, actor.hull)
+
+    def test_the_phrase_says_what_the_description_says(self):
+        """Name, pose, expression and marks, in the description's words; left and right are
+        the box's to say."""
+        core = compile_source(DUEL).core
+        phrases = {box["id"]: box["phrase"] for box in _boxes(core)}
+        assert phrases == {"alice": "Alice, pointing, angry, sweating", "bob": "Bob"}
+        assert core.description is not None
+        assert "Alice, left, pointing, angry, sweating" in core.description
+
+    def test_a_box_is_clipped_to_the_panel(self):
+        """A close-up's body runs off the bottom; the box stops at the frame."""
+        core = compile_source(DUEL.replace("full_shot", "close_up")).core
+        assert max(y for _, y in core.actors[0].hull) > core.height
+        for box in _boxes(core):
+            xmin, ymin, xmax, ymax = box["box"]
+            assert 0.0 <= xmin < xmax <= 1.0
+            assert 0.0 <= ymin < ymax <= 1.0
+        assert _boxes(core)[0]["box"][3] == 1.0
+
+    def test_an_actor_wholly_outside_the_panel_has_no_box(self):
+        core = compile_source(DUEL).core
+        alice = core.actor("alice")
+        gone = alice.model_copy(update={"hull": tuple((x, y + 2000.0) for x, y in alice.hull)})
+        core = core.model_copy(update={"actors": (gone, *core.actors[1:])})
+        assert [box["id"] for box in _boxes(core)] == ["bob"]
+
+    def test_marks_and_sound_effects_are_not_in_the_box(self):
+        """The hull leaves emanata out so a sweating figure never moves; the box follows it."""
+        plain = compile_source(DUEL.replace(", marks: [plewds]", "")).core
+        sweating = compile_source(DUEL).core
+        assert [box["box"] for box in _boxes(plain)] == [box["box"] for box in _boxes(sweating)]
+
+
+FIGURES = {
+    "ana": {
+        "face": {"center": [250, 180], "radius": 50},
+        "body": [[180, 140], [320, 140], [340, 600], [160, 600]],
+    },
+    "ben": {"face": {"center": [650, 170], "radius": 45}},
+}
+
+
+def _figures() -> PanelCore:
+    return compile_source(
+        "panel: {size: [900, 600]}\nsetting: {image: art/p.png, fit: contain}\n"
+        "cast: {ANA: {figure: ana}}\n",
+        base={"art/p.png": png(900, 600), "art/p.art.yaml": contract((900, 600), FIGURES)},
+    ).core
+
+
+class TestFiguresAPictureDraws:
+    def test_every_figure_has_a_box_cast_or_not(self):
+        core = _figures()
+        assert [box["id"] for box in _boxes(core)] == ["ana", "ben"]
+
+    def test_the_box_holds_its_body_and_its_face(self):
+        core = _figures()
+        ana, ben = core.figures
+        face = ana.face_exclusion
+        corners = (
+            *ana.body,
+            (face.cx - face.r, face.cy - face.r),
+            (face.cx + face.r, face.cy + face.r),
+        )
+        assert _boxes(core)[0]["box"] == _fractions(core, corners)
+        disc = ben.face_exclusion
+        assert _boxes(core)[1]["box"] == _fractions(
+            core, ((disc.cx - disc.r, disc.cy - disc.r), (disc.cx + disc.r, disc.cy + disc.r))
+        )
+
+    def test_a_figure_is_called_by_its_part_or_its_own_name(self):
+        phrases = [box["phrase"] for box in _boxes(_figures())]
+        assert phrases == ["ANA", "Ben"]
+
+
+class TestTheDocument:
+    def test_it_names_the_canvas_and_nothing_but_boxes(self):
+        payload = json.loads(render_boxes(compile_source(DUEL).core))
+        assert sorted(payload) == ["boxes", "canvas_height", "canvas_width"]
+        assert (payload["canvas_width"], payload["canvas_height"]) == (1000, 800)
+        assert all(sorted(box) == ["box", "id", "phrase"] for box in payload["boxes"])
+
+    def test_it_is_written_as_panel_core_is(self):
+        text = render_boxes(compile_source(DUEL).core)
+        assert text == json.dumps(json.loads(text), indent=2, sort_keys=True) + "\n"
+
+    def test_a_panel_read_right_to_left_has_the_same_boxes(self):
+        source = DUEL + "script:\n  - say: {by: alice, text: Hi.}\n  - say: {by: bob, text: Yes.}\n"
+        ltr = compile_source(source).core
+        rtl = compile_source("direction: rtl\n" + source).core
+        assert render_boxes(rtl) == render_boxes(ltr)
