@@ -800,8 +800,9 @@ class PanelCore(CoreModel):
         format_version: Bumped when the shape of this document changes incompatibly.
         width: Panel width in panel units.
         height: Panel height in panel units.
-        actors: Resolved characters, in the order they are drawn: back to front, those at
-            one depth left to right as staged.
+        actors: Resolved characters, back to front by `depth`, and at one depth left to
+            right as staged. The SVG draws them back to front too, but breaks a tie at one
+            depth by id (:func:`in_painters_order <scenet.emit.svg.in_painters_order>`).
         balloons: Resolved balloons, in reading order.
         captions: Resolved caption boxes, in reading order. Balloons and captions
             share one `order` sequence, since the reader takes them in one sequence.
