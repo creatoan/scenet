@@ -33,6 +33,7 @@ attribution. A notation is only worth having if it is not owned.
 | 14 | Accessible output: every panel an image a screen reader reads whole, in reading order; descriptions written, kept from a script or generated | **Done** |
 | 15 | Supplied artwork: a picture behind the cast, linked or embedded; figures the picture draws, declared in an artwork contract and lettered around | **Done** |
 | 16 | Right-to-left reading, for manga: panels, pages, strips and lettering read from the top right, the scene never mirrored | **Done** |
+| 17 | Exports for image models: an OpenPose pose, boxes with phrases, a depth map, a mask and the semantics, from Panel Core | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
@@ -44,7 +45,6 @@ dependency between them is stated in the tickets rather than implied by this tab
 
 | Scope | Ticket |
 |---|---|
-| Export a panel's staging for image models: pose, boxes, depth, masks | [#72](https://github.com/creatoan/scenet/issues/72) |
 | VS Code: `scenet check` findings, and highlighting for comic scripts | [#77](https://github.com/creatoan/scenet/issues/77) |
 | `scenet build --watch` | [#78](https://github.com/creatoan/scenet/issues/78) |
 | Print: a PDF emitter with trim, bleed and a black plate | [#80](https://github.com/creatoan/scenet/issues/80) |

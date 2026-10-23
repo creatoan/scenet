@@ -217,6 +217,45 @@ Everything reading decides is mirrored to pass it, and nothing the picture decid
 - **No disjunction comes back.** Reading order is a filter over candidates, not a Cassowary
   constraint, and the direction is known when the document is read.
 
+## Staging leaves as text, never as a picture or a prompt
+
+`--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by
+what the consumer already reads, and by one rule: an export reads Panel Core and nothing else, so
+it can make no layout decision and no model ever runs inside Scenet.
+
+- **Core grew what the exports needed**, rather than the exports reaching past it: every joint
+  and face feature point, the camera's verdict, whom each actor looks at, and a backdrop's place
+  and hour. Each is left out of the JSON when unused, so an older Core still writes back byte for
+  byte.
+- **Left and right are the subject's.** Scenet names a joint by its side of the screen in the
+  rest pose; OpenPose by the subject's side. Every Scenet body faces the reader, so the subject's
+  right is the reader's left: `_l` facing right, `_r` facing left. A test pins both.
+- **A point the reader cannot see is missing.** Outside the frame or a slanted outline, an ear,
+  a joint the puppet does not name: `0, 0, 0`, as a detector run on the panel would report it.
+- **Regions are the geometric contract, not the mannequin.** Boxes, depth and masks use an
+  actor's hull, a mass's polygon and a figure's body and face: where a character is, never
+  Scenet's stand-in drawing of it, which a model would copy. Marks and sound effects are drawn
+  around a figure and are in none of them.
+- **Depth is a painter's order, said as one.** Even grey steps by rank, white nearest, black for
+  the paper, the sky and a supplied picture: there is no metric depth to give, and the backdrop's
+  own ladder runs the other way.
+- **Figures a picture draws** get boxes, mask regions and one depth plane in front of their
+  picture, but no pose and no camera: nobody posed or framed them.
+- **The semantics is structure, not a prompt.** Prompt dialects change with every model, and
+  prose is the language step prior art leaves to whatever is in the loop. Where Core already has
+  words — the description and labels accessible output reads — they are copied, never rephrased.
+- **Per panel, not per page.** A panel's Core is compiled at its frame's exact size, so its units
+  are the page's shifted by the frame, which Page Core records; DiffSensei, the one consumer that
+  takes a layout, generates panel by panel. A page-level depth map would have to decide what a
+  gutter is in depth — a composition decision the page emitter owns.
+- **A flag and a parameter, not a command or a tool.** `build` already grows sibling outputs with
+  `--core` and `--debug`; MCP `render` takes `conditioning` and stays one of five tools. The file
+  is `.semantics.json`, not `.scene.json` as first sketched: "scene" already names the
+  multi-panel document.
+- **Nothing is rasterised.** A renderer in the runtime dependencies is what MCP `render` already
+  declines for PNG; the playground's own rasteriser, and every SVG tool, turn the maps into
+  pictures.
+
 ## Text metrics are a hard dependency, not a detail
 
 A balloon's size is a function of its text, wrapped at some measure, in a specific font. Nothing

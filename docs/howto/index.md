@@ -20,6 +20,7 @@ letter_in_your_own_font
 make_accessible_output
 letter_over_your_own_art
 letter_the_figures_in_your_art
+export_for_image_models
 add_your_own_character
 debug_a_layout
 editor_support

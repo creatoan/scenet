@@ -1,5 +1,6 @@
 /**
- * Downloads: the compiled SVG, the overlay, a PNG, the Panel Core, and the source.
+ * Downloads: the compiled SVG, the overlay, a PNG, the Panel Core, the source, and a
+ * panel's exports for image models.
  *
  * Filenames follow `scenet build`, so a file saved here and one written by the command
  * line for the same document have the same name: `foo.panel.yaml` becomes `foo.svg`,
@@ -17,6 +18,34 @@ export const MAX_CANVAS_SIDE = 8192;
 export const MAX_CANVAS_AREA = 16_777_216;
 
 export type DocumentKind = "panel" | "scene" | "script";
+
+/** One export for image models, as `scenet build --conditioning` names and writes it. */
+export interface Exported {
+  /** Put after the stem: `duel` gives `duel.pose.json`. */
+  readonly suffix: string;
+  /** What the download menu calls it. */
+  readonly label: string;
+}
+
+/** The exports for image models, in the order `scenet build --conditioning` writes them. */
+export const CONDITIONING: readonly Exported[] = [
+  { suffix: ".pose.json", label: "Pose" },
+  { suffix: ".boxes.json", label: "Boxes" },
+  { suffix: ".depth.svg", label: "Depth" },
+  { suffix: ".mask.svg", label: "Mask" },
+  { suffix: ".semantics.json", label: "Semantics" },
+];
+
+/** An export's filename, and the type its download is labelled with. */
+export function conditioningFile(
+  stem: string,
+  suffix: string,
+): { readonly filename: string; readonly type: string } {
+  return {
+    filename: `${stem}${suffix}`,
+    type: suffix.endsWith(".json") ? "application/json" : "image/svg+xml",
+  };
+}
 
 /** The base name for downloads: the gallery file minus its kind suffix, or `scenet`. */
 export function stemFor(file: string | undefined): string {

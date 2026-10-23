@@ -49,6 +49,12 @@ export interface CompileSuccess {
   readonly core: string;
   readonly notes: readonly string[];
   readonly panels: readonly string[];
+  /**
+   * A one-panel document's exports for image models, by the suffix `scenet build
+   * --conditioning` gives each file; null for a document of several panels, whose files
+   * are one set per panel.
+   */
+  readonly conditioning: Readonly<Record<string, string>> | null;
   /** What `scenet check` says of a document that compiles: notes only, if anything. */
   readonly findings: readonly Finding[];
 }
@@ -145,7 +151,7 @@ def _scenet_findings(source, kind, exc):
 
 def _scenet_compile(source, kind):
     try:
-        from scenet import compile_book, compile_script
+        from scenet import compile_book, compile_script, render_conditioning
         from scenet.emit.debug_svg import render_debug
         from scenet.emit.page import render_pages
         from scenet.emit.strip import render_strip
@@ -159,6 +165,9 @@ def _scenet_compile(source, kind):
 
         names = list(results)
         single = len(names) == 1
+        conditioning = (
+            dict(render_conditioning(results[names[0]].core).files()) if single else None
+        )
         # Every declared font the panels were measured in, which is what they are drawn in.
         fonts = {
             digest: font for result in results.values() for digest, font in result.fonts.items()
@@ -209,6 +218,7 @@ def _scenet_compile(source, kind):
             "core": core,
             "notes": notes,
             "panels": names,
+            "conditioning": conditioning,
             # A document that compiles has no error, but may have notes -- a balloon over
             # the words a publisher asks for -- which the editor shows as information.
             "findings": _scenet_check(source, kind, deep=False),

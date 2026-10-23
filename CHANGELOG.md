@@ -51,6 +51,19 @@ below 1.0 means.
 
 ### Added
 
+- **Export a panel's staging for image models** (#72): `scenet build --conditioning` writes five
+  files beside each panel's SVG — the pose as OpenPose COCO-18 JSON, a phrase and a box per
+  figure as GLIGEN takes them, a depth map (stepped grey planes in painter's order, white near),
+  an instance mask under the panel's own ids, and the semantics: camera, setting, cast and
+  lettering, as structure and never as a prompt. No model runs in Scenet: each is one more
+  emitter reading Panel Core, text, JSON or SVG, byte-identical like the rest, and nothing is
+  rasterised. The pose names left and right as OpenPose does, by the subject's side; a point
+  outside the panel, an ear, or a joint a puppet does not name is `0, 0, 0`. Figures a picture
+  draws have boxes and masks and no pose; a picture is the far plane; a panel read right to left
+  exports the same pose, boxes, depth and mask. `render_conditioning` and `Conditioning` join
+  `scenet.__all__`; MCP `render` takes `conditioning` (still five tools); the playground offers
+  the five downloads for a one-panel document. See the how-to, "Export a panel's staging for
+  image models".
 - **`direction: ltr | rtl`, which way a comic is read** (#68): `rtl` for manga, read from the
   top right. It is the comic's progression, not its text's, and EPUB's word for it. Written once
   for the whole document — at the top of a panel, beside `panels:`, or in a comic script's front

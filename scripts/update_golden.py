@@ -40,15 +40,23 @@ CORES = GOLDEN / "core"
 DIGESTS = GOLDEN / "digests.json"
 COMMAND = "uv run python scripts/update_golden.py"
 
-#: The documentation's home page shows the gallery's first panel, as `scenet build` draws
-#: it -- so the picture is a golden too, kept whole, and rewritten with the others.
-HOME_PICTURE = ROOT / "docs" / "images" / "two-characters.svg"
-HOME_SOURCE = "01-two-characters.svg"
+#: Pictures the documentation shows, each exactly as `scenet build` writes it -- so each is a
+#: golden too, kept whole, and rewritten with the others: the home page's first panel, and a
+#: panel beside its depth map and mask in the how-to on exporting for image models.
+PICTURES = {
+    ROOT / "docs" / "images" / "two-characters.svg": "01-two-characters.svg",
+    ROOT / "docs" / "images" / "conditioning" / "panel.svg": "21-atmosphere.noon.svg",
+    ROOT / "docs" / "images" / "conditioning" / "depth.svg": "21-atmosphere.noon.depth.svg",
+    ROOT / "docs" / "images" / "conditioning" / "mask.svg": "21-atmosphere.noon.mask.svg",
+}
+
+#: The exports for image models that are JSON, which are digested as the SVGs are.
+EXPORTED_JSON = (".pose.json", ".boxes.json", ".semantics.json")
 
 #: Three builds of every document: one with every output; one with live text, whose SVG
 #: differs and whose Core does not; and one without accessibility markup.
 VARIANTS = {
-    "": ["--core", "--debug", "--strip"],
+    "": ["--core", "--debug", "--strip", "--conditioning"],
     "live-text/": ["--live-text", "--strip"],
     # Without accessibility markup: what a post-processing pipeline gets, which must be
     # exactly what was written before there was any, file for file.
@@ -95,16 +103,16 @@ def build(sources: list[Path], directory: Path) -> dict[str, bytes]:
 
 
 def goldens(written: dict[str, bytes]) -> tuple[dict[str, bytes], dict[str, str]]:
-    """Split a build into the Core files kept whole and the SVG digests.
+    """Split a build into the Core files kept whole and the digests of everything else.
 
     Returns:
-        Core file name to bytes, and SVG path to its SHA-256.
+        Core file name to bytes, and each SVG or exported JSON path to its SHA-256.
     """
     cores = {name: data for name, data in written.items() if name.endswith(".core.json")}
     digests = {
         name: hashlib.sha256(data).hexdigest()
         for name, data in sorted(written.items())
-        if name.endswith(".svg")
+        if name.endswith((".svg", *EXPORTED_JSON))
     }
     return cores, digests
 
@@ -126,8 +134,9 @@ def differences(written: dict[str, bytes]) -> list[str]:
     names += sorted(
         name for name in {*digests, *kept_digests} if digests.get(name) != kept_digests.get(name)
     )
-    if not HOME_PICTURE.is_file() or HOME_PICTURE.read_bytes() != written[HOME_SOURCE]:
-        names.append(str(HOME_PICTURE.relative_to(ROOT).as_posix()))
+    for picture, source in PICTURES.items():
+        if not picture.is_file() or picture.read_bytes() != written[source]:
+            names.append(str(picture.relative_to(ROOT).as_posix()))
     return names
 
 
@@ -142,8 +151,9 @@ def write(written: dict[str, bytes]) -> None:
     DIGESTS.write_text(
         json.dumps(digests, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
     )
-    HOME_PICTURE.parent.mkdir(parents=True, exist_ok=True)
-    HOME_PICTURE.write_bytes(written[HOME_SOURCE])
+    for picture, source in PICTURES.items():
+        picture.parent.mkdir(parents=True, exist_ok=True)
+        picture.write_bytes(written[source])
 
 
 def run(argv: list[str] | None = None) -> int:

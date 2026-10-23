@@ -13,6 +13,7 @@ from scenet import __version__
 from scenet.assets.artwork import CONTRACT_SUFFIX
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
+from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
@@ -71,6 +72,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--debug",
         action="store_true",
         help="also write a diagnostic overlay showing hulls, face zones, anchors and gaze",
+    )
+    build.add_argument(
+        "--conditioning",
+        action="store_true",
+        help=(
+            "also export each panel's staging for image models: an OpenPose pose, boxes "
+            "with phrases, a depth map, a mask and the semantics, beside its SVG"
+        ),
     )
     build.add_argument(
         "--live-text",
@@ -338,7 +347,9 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
 
     A single-panel document writes to the requested name; a sequence suffixes each panel
     with its own name, so the mapping back to source is obvious. A strip needs more than
-    one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels.
+    one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels. The
+    exports for image models are per panel only: a page adds no layout to a panel, and its
+    Page Core says where every frame is.
     """
     outputs: list[_Output] = []
     embed = book.images if args.embed_images else None
@@ -363,6 +374,11 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
         if args.debug:
             outputs.append(
                 (target.with_name(f"{target.stem}.debug.svg"), partial(render_debug, core))
+            )
+        if args.conditioning:
+            outputs.extend(
+                (target.with_name(f"{target.stem}{suffix}"), partial(export, core))
+                for suffix, export in EXPORTS
             )
 
     if args.strip and len(book.panels) > 1:

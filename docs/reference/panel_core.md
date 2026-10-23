@@ -270,8 +270,9 @@ so every Core written before it reads, and is written, byte for byte as before â
 
 ### The staging
 
-What the solver used and once threw away is recorded too, so that an export reading only this
-tier can say how the panel is staged (#72). From `examples/duel.panel.yaml`, and a backdrop
+What the solver used and once threw away is recorded too, so that an
+[export for image models](../howto/export_for_image_models.md), reading only this tier, can say
+how the panel is staged (#72). From `examples/duel.panel.yaml`, and a backdrop
 set in a street at night:
 
 ```json

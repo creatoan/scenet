@@ -162,6 +162,15 @@
               <button type="button" data-download="png">Panel <span>PNG, 2×</span></button>
               <button type="button" data-download="debug">Overlay <span>SVG</span></button>
               <button type="button" data-download="core">Panel Core <span>JSON</span></button>
+              <!--
+                A panel's staging for image models, as `scenet build --conditioning` writes it.
+                One set per panel, so offered for a one-panel document only.
+              -->
+              <button type="button" data-download=".pose.json">Pose <span>JSON</span></button>
+              <button type="button" data-download=".boxes.json">Boxes <span>JSON</span></button>
+              <button type="button" data-download=".depth.svg">Depth <span>SVG</span></button>
+              <button type="button" data-download=".mask.svg">Mask <span>SVG</span></button>
+              <button type="button" data-download=".semantics.json">Semantics <span>JSON</span></button>
               <button type="button" data-download="source">Source <span>Ctrl+S</span></button>
             </div>
           </details>

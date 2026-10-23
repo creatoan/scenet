@@ -41,7 +41,10 @@ a real, writable format rather than a hidden data structure, which buys three th
 ## What is deliberately not here
 
 - **No generative image model**, anywhere in the pipeline. Not as a fallback, not for
-  "polish". The whole claim of the project is that the output is explicable.
+  "polish". The whole claim of the project is that the output is explicable. The
+  [exports for image models](../howto/export_for_image_models.md) keep that true: each is one
+  more emitter reading Panel Core, as deterministic as the SVG, and what a reader feeds them to
+  afterwards is outside Scenet, as a tracing over the SVG would be.
 - **No A\* for balloon tails.** A tail is a short tapered stroke; grid pathfinding produces
   a jointed path that looks nothing like one drawn by hand.
 - **No natural-language interpretation of prose.** A comic script's descriptions are

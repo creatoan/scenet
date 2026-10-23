@@ -74,6 +74,7 @@ from pydantic import BaseModel, Field
 from scenet import __version__
 from scenet.assets.contract import default_library
 from scenet.diagnostics import RULE_NAMESPACE, RULES, Diagnostic, diagnose_script, diagnose_source
+from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
@@ -384,6 +385,17 @@ def render_panel(
         ),
     ] = True,
     files: FilesArg = None,
+    *,
+    conditioning: Annotated[
+        bool,
+        Field(
+            description=(
+                "Also export each panel's staging for image models, as `scenet build "
+                "--conditioning` does: an OpenPose pose, boxes with phrases, a depth map, a "
+                "mask and the semantics, five more resources per panel after the pages"
+            )
+        ),
+    ] = False,
 ) -> list[TextContent | EmbeddedResource]:
     """Compile a document and return each panel as SVG.
 
@@ -397,8 +409,13 @@ def render_panel(
     A document with `pages:` gets one more resource per page, `scenet://pages/<n>.svg`,
     after the panels: each panel at its frame, exactly as `scenet build` writes the page.
 
+    With `conditioning`, each panel's exports for image models follow, five per panel:
+    `scenet://panels/<name>.pose.json`, `.boxes.json`, `.depth.svg`, `.mask.svg` and
+    `.semantics.json`, exactly as `scenet build --conditioning` writes them.
+
     Returns:
-        A summary, then one SVG resource per panel in reading order, then one per page.
+        A summary, then one SVG resource per panel in reading order, then one per page,
+        then, when asked, each panel's exports for image models.
 
     Raises:
         ToolError: The document does not compile. The message lists every finding.
@@ -408,6 +425,8 @@ def render_panel(
     count = f"{len(results)} panel{'' if len(results) == 1 else 's'}"
     pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
     lines = [f"Rendered {count}{pages if book.pages else ''}: {', '.join(results)}."]
+    if conditioning:
+        lines.append("Each panel's staging is exported for image models after the SVG.")
     lines.extend(
         f"note ({name}): {note}" for name, result in results.items() for note in result.notes
     )
@@ -451,6 +470,19 @@ def render_panel(
         )
         for number, page in enumerate(book.pages, start=1)
     )
+    if conditioning:
+        blocks.extend(
+            EmbeddedResource(
+                type="resource",
+                resource=TextResourceContents(
+                    uri=f"scenet://panels/{name}{suffix}",
+                    mime_type="application/json" if suffix.endswith(".json") else "image/svg+xml",
+                    text=export(result.core),
+                ),
+            )
+            for name, result in results.items()
+            for suffix, export in EXPORTS
+        )
     return blocks
 
 

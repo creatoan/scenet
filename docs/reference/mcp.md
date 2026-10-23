@@ -20,7 +20,7 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 | `list_puppets` | — | Every character, with each pose and expression it declares |
 | `validate` | `source`, `syntax`, `deep`, `files` | `{valid, findings}`, every finding at once; `valid` when none is an error |
 | `compile` | `source`, `syntax`, `files` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
-| `render` | `source`, `syntax`, `live_text`, `aria`, `files` | A summary, then one SVG per panel, then one per page |
+| `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `conditioning` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
 
 Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
@@ -98,6 +98,12 @@ with `pages:` gets one more per page after them, `scenet://pages/N.svg`. The SVG
 **byte-identical** to what `scenet build --embed-images` writes for the same document: a picture
 it is drawn over is written into it as a `data:` URI, since whoever reads the SVG has no folder to
 find a linked one in. A document with no picture is byte-identical to plain `scenet build`.
+
+With `conditioning: true`, each panel's [exports for image
+models](../howto/export_for_image_models.md) follow the pages, five per panel and exactly as
+`scenet build --conditioning` writes them: `scenet://panels/NAME.pose.json`, `.boxes.json` and
+`.semantics.json` as `application/json`, `.depth.svg` and `.mask.svg` as `image/svg+xml`. A
+parameter rather than a sixth tool, which keeps the server at five.
 
 It is never sent as an image content block. Hosts forward image blocks to the model, and model
 APIs that accept images do not accept SVG, so an image block would fail the whole turn instead

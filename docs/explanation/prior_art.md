@@ -587,6 +587,27 @@ asks and what renderers and editors do, which differ.
 | Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
 | EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
 
+### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
+
+**Load-bearing** for `--conditioning` (#72), as formats and consumers rather than as code.
+
+| Source | What it takes | What Scenet writes for it |
+|---|---|---|
+| OpenPose's [output format](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md) | `people[].pose_keypoints_2d`, flat `x, y, confidence` triplets in the COCO-18 order, on a canvas | The pose, from Panel Core's joints and feature points |
+| ControlNet: Zhang, Rao & Agrawala, ICCV 2023 ([arXiv 2302.05543](https://arxiv.org/abs/2302.05543)) | Condition images: a skeleton, a depth map, a segmentation | The pose, the depth map and the mask |
+| GLIGEN: Li et al., CVPR 2023 ([arXiv 2301.07093](https://arxiv.org/abs/2301.07093)) | Boxes paired with phrases | The boxes, as fractions of the panel |
+| DiffSensei: Wu et al., CVPR 2025 ([arXiv 2412.07589](https://arxiv.org/abs/2412.07589)) | Manga panels conditioned on character and dialog boxes, laid out on a page | The boxes, the semantics' lettering boxes, and Page Core's frames |
+
+Two conventions were taken as they are. OpenPose's left and right are the subject's, which for a
+body facing the reader is the reader's other side. ControlNet's depth maps run white near and black
+far ([ComfyUI's depth tutorial](https://docs.comfy.org/tutorials/controlnet/depth-controlnet)),
+the reverse of the backdrop's aerial-perspective ladder above, so the depth export has its own.
+
+Deliberately not taken: a prompt. Two drafts behind #72 proposed a `scenet prompt` turning a
+panel into positive and negative prompt strings. Dialects differ per model and change every few
+months, and turning structure into prose is the step WordsEye, above, leaves to the language
+side, not the compiler; the semantics export hands over the structure instead.
+
 ## Future
 
 ### L-systems
