@@ -178,6 +178,11 @@ def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
     never saw. A panel in a slanted tier is clipped to its outline; an inset over it is not
     there, since the panel's art is drawn under it as usual.
 
+    Edges are crisp, `shape-rendering="crispEdges"`: an antialiased edge would blend two
+    regions into a colour, or a grey, that belongs to neither. The map is exactly the panel's
+    size, as its SVG is; the JSON exports' canvas is that size rounded up to whole pixels,
+    which a rasteriser asked for whole pixels makes it too.
+
     Args:
         core: The panel.
         fills: Each region and what it is filled with, in drawing order.
@@ -189,7 +194,7 @@ def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-        f'viewBox="0 0 {width} {height}">',
+        f'viewBox="0 0 {width} {height}" shape-rendering="crispEdges">',
         f'  <rect x="0" y="0" width="{width}" height="{height}" fill="#000000"/>',
     ]
     if core.outline is not None:
