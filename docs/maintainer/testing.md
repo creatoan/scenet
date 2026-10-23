@@ -434,7 +434,6 @@ mutants as before, one renumbered, one new.
 |---|---|---|
 | `emit/svg.py` `fmt` 7, 8 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
 | `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
-| `emit/svg.py` `panel_body` 39 (was `render` 48) | the painter's sort keyed on the whole tuple | `(depth, id)` is already unique: ids are unique among actors and among masses, and no mass shares a depth with an actor -- the backdrop is behind every actor, the foreground in front of all of them -- so the body is never compared. |
 | `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
 | `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
 | `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
@@ -588,6 +587,38 @@ property compiling the reversed scene in full to compare its frames. That scene'
 read the other way and can find no room where the original did. The property now lays the
 reversed pages out without compiling a panel, since frames cannot depend on lettering, and passes
 300 examples.
+
+The exports for image models (#72) added `emit/conditioning.py`, `emit/pose.py`,
+`emit/boxes.py`, `emit/semantics.py`, `emit/depth.py`, `emit/mask.py` and `emit/export.py`, moved
+the painter's order of `emit/svg.py` into `in_painters_order` (#221: masses past the tenth were
+drawn out of order), and took `traits` out of `solve/describe.py`. Fresh runs from the stack's top
+branch, after a first pair (40007306722, 40007311191) whose clean run failed on a golden-test bug
+fixed in #225 and so checked nothing:
+
+- `emit/*`, [`40008532976`](https://github.com/creatoan/scenet/actions/runs/40008532976): 2177
+  mutants and 17 survivors.
+  - 10 are the `emit/svg.py` survivors accepted above, under the same numbers. `panel_body` 39,
+    the painter's sort keyed on the whole tuple, is gone with the sort it mutated, and its row
+    with it: `in_painters_order` sorts on depth alone.
+  - **3 killed**: `emit/depth.py` `_plane` 2 and 3, a figure's plane merged with an actor's, by
+    `test_a_hand_edited_core_with_figures_and_actors_puts_the_figures_in_front` (no document
+    compiles to both, but a hand-edited Core may hold both); `emit/conditioning.py` `_fraction`
+    1, `+ 0.0` to `- 0.0`, by `test_a_negative_zero_is_written_as_zero`.
+  - 4 accepted below.
+- `solve/describe.py`,
+  [`40008537043`](https://github.com/creatoan/scenet/actions/runs/40008537043): 210 mutants and
+  2 survivors, `describe` 8 and 10, accepted above under the same numbers.
+
+Each mutant killed was applied by hand to see its test fail.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `emit/conditioning.py` `to_json` 5 | `ensure_ascii=False` to `ensure_ascii=None` | `json.dumps` only asks whether it is true, and `None` is not. |
+| `emit/mask.py` `colour` 2, 4 | `% 1.0` to `/ 1.0`, or to `% 2.0` | `colorsys.hsv_to_rgb` takes the hue's sixth modulo 6, so a hue and the same hue plus a whole turn give one colour. |
+| `emit/mask.py` `colour` 3 | `index * GOLDEN` to `index / GOLDEN` | `1 / 0.618…` is `1.618…`, one more than `0.618…`, so the two hues differ by `index` whole turns -- the same colour, the golden ratio's own identity. |
+
+The second job of both runs, exploring with fresh seeds, passed every property, the new ones for
+the exports included, at 300 examples.
 
 ### Exploring with fresh seeds
 

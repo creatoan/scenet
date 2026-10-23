@@ -202,3 +202,18 @@ class TestTheCanvas:
         wider = core.model_copy(update={"width": 999.5, "height": 799.25})
         shapes = [line for line in render_depth(core).splitlines() if "points=" in line]
         assert shapes == [line for line in render_depth(wider).splitlines() if "points=" in line]
+
+
+def test_a_hand_edited_core_with_figures_and_actors_puts_the_figures_in_front():
+    """Panel Core is hand-editable, and a Core may hold both, though no document compiles to
+    one: the figures' plane is in front of every actor, and the actors keep their steps."""
+    actors = _street()
+    figures = _picture("{ANA: {figure: ana}}")
+    core = actors.model_copy(update={"figures": figures.figures, "backdrop": None})
+    fills = _fills(render_depth(core))
+    assert fills["figure-ana"] == fills["figure-ben"] == "#ffffff"
+    assert all(_grey(fills[f"actor-{actor.id}"]) < 255 for actor in core.actors)
+    depths = sorted({actor.depth for actor in core.actors})
+    assert {_grey(fills[f"actor-{a.id}"]) for a in core.actors} == {
+        round(255 * (rank + 1) / (len(depths) + 1)) for rank in range(len(depths))
+    }
