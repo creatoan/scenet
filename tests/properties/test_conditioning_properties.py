@@ -7,12 +7,15 @@ document with `direction` changed, which needs no draw.
 """
 
 import json
+import re
 from typing import Any
 
 from hypothesis import given
 
 from scenet.core import PanelCore
 from scenet.emit.boxes import render_boxes
+from scenet.emit.depth import render_depth
+from scenet.emit.mask import render_mask
 from scenet.emit.pose import COCO_18, render_pose
 from scenet.emit.semantics import render_semantics
 from scenet.pipeline import compile_book, compile_script, compile_source
@@ -162,3 +165,60 @@ def test_every_panel_of_a_comic_script_exports(drawn: DrawnScript):
     for result in book.panels.values():
         people = json.loads(render_pose(result.core))["people"]
         assert len(people) == len(result.core.actors)
+
+
+FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(#[0-9a-f]{6})"')
+
+
+@given(panels())
+def test_the_depth_map_runs_white_near_and_black_far(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    fills = dict(FILL.findall(render_depth(core)))
+    grey = {name: int(fill[1:3], 16) for name, fill in fills.items()}
+    depth = {f"actor-{actor.id}": actor.depth for actor in core.actors}
+    if core.backdrop is not None:
+        depth |= {
+            f"mass-{mass.id}": mass.depth for mass in core.backdrop.masses if mass.kind != "sky"
+        }
+    assert max(grey[name] for name in depth) == 255
+    for one in depth:
+        for other in depth:
+            if depth[one] < depth[other]:
+                assert grey[one] < grey[other]
+
+
+@given(panels())
+def test_the_mask_has_a_colour_per_region_in_the_panel_s_order(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    fills = dict(FILL.findall(render_mask(core)))
+    masses = core.backdrop.masses if core.backdrop is not None else ()
+    assert len(fills) == len(core.actors) + len(masses)
+    assert len(set(fills.values())) == len(fills)
+    assert "#000000" not in fills.values()
+    assert list(fills) == list(dict(FILL.findall(render_depth(core))))
+
+
+@given(panels(direction="rtl"))
+def test_read_right_to_left_the_depth_and_mask_are_the_same(drawn: Drawn):
+    rtl = _compiled(drawn)
+    ltr = _compiled(Drawn({**drawn.document, "direction": "ltr"}, drawn.files))
+    if rtl is None or ltr is None:
+        return
+    assert render_depth(rtl) == render_depth(ltr)
+    assert render_mask(rtl) == render_mask(ltr)
+
+
+@given(figure_panels())
+def test_figures_are_one_plane_and_each_its_own_colour(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    depth = dict(FILL.findall(render_depth(core)))
+    assert set(depth.values()) <= {"#ffffff"}
+    mask = dict(FILL.findall(render_mask(core)))
+    assert list(mask) == [f"figure-{figure.figure}" for figure in core.figures]
+    assert len(set(mask.values())) == len(mask)
