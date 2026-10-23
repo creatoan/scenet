@@ -176,3 +176,12 @@ class TestDeterminism:
         again = compile_book(SCENE)
         for name, result in book.panels.items():
             assert render_conditioning(result.core) == render_conditioning(again.panels[name].core)
+
+
+def test_a_one_panel_scene_names_its_panel_and_a_panel_document_does_not(tmp_path: Path):
+    """What the playground follows for a document of one panel."""
+    source = _write(
+        tmp_path, "story.scene.yaml", "cast: {a: {reference: alice}}\npanels:\n  one: {}\n"
+    )
+    assert main(["build", str(source), "--conditioning", "--quiet"]) == 0
+    assert "story.one.pose.json" in _files(tmp_path)

@@ -67,4 +67,9 @@ describe("exports for image models", () => {
       type: "image/svg+xml",
     });
   });
+
+  test("a scene or script of one panel names it, as `scenet build` does", () => {
+    assert.equal(conditioningFile("story", ".pose.json", "one").filename, "story.one.pose.json");
+    assert.equal(conditioningFile("duel", ".pose.json", undefined).filename, "duel.pose.json");
+  });
 });
