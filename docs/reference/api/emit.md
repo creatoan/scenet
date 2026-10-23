@@ -42,3 +42,13 @@ decision: everything it draws or says was already decided.
 
 ```{automodule} scenet.emit.semantics
 ```
+
+## `scenet.emit.depth`
+
+```{automodule} scenet.emit.depth
+```
+
+## `scenet.emit.mask`
+
+```{automodule} scenet.emit.mask
+```

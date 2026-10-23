@@ -10,11 +10,14 @@ pixels. A box is said as fractions of the panel, which is what box-conditioned m
 
 import json
 import math
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 
 from shapely.geometry import MultiPoint, Point, Polygon, box
 
-from scenet.core import CoreFigure, PanelCore
+from scenet.core import CoreFigure, CoreMass, Disc, PanelCore
+from scenet.emit.svg import attr, fmt, in_painters_order
+from scenet.ir import MassKind
 
 #: Decimal places of a fraction of the panel: a tenth of a unit on a panel 1000 wide.
 FRACTION_PLACES = 4
@@ -103,4 +106,112 @@ def drawn_at(core: PanelCore, point: tuple[float, float]) -> bool:
     return core.outline is None or Polygon(core.outline).covers(Point(x, y))
 
 
-__all__ = ["FRACTION_PLACES", "canvas", "drawn_at", "figure_extent", "fraction_box", "to_json"]
+@dataclass(frozen=True, slots=True)
+class Region:
+    """One region a map export fills: what the panel's geometric contract names.
+
+    An actor's hull -- where staging put it, not the mannequin Scenet draws it as, so a
+    model is told where a character is and the pose how it stands -- a mass's polygon, or
+    a figure's body and face as its picture's contract declares them.
+
+    Attributes:
+        id: The id the panel's SVG gives it: `actor-alice`, `mass-m0`, `figure-ana`.
+        polygon: The outline. Empty for a figure whose contract declares no body.
+        disc: A figure's face, which joins its body. None for anything else.
+        depth: Painter's order, as Panel Core records it. None for a figure, which has
+            none of its own.
+        sky: Whether it is sky, which is at infinity whatever plane it was filed under.
+    """
+
+    id: str
+    polygon: tuple[tuple[float, float], ...]
+    disc: Disc | None = None
+    depth: int | None = None
+    sky: bool = False
+
+
+def regions(core: PanelCore) -> list[Region]:
+    """Every region of the panel, in the order the panel draws them: back to front.
+
+    Masses and actors in the panel's own painter's order, then the figures a picture draws,
+    which are over the picture and under nothing, in the order their contract declares them.
+    Marks and sound effects are none of them: they are drawn around a figure, not part of
+    it.
+    """
+    drawn = [
+        Region(
+            id=f"mass-{item.id}",
+            polygon=item.polygon,
+            depth=item.depth,
+            sky=item.kind is MassKind.SKY,
+        )
+        if isinstance(item, CoreMass)
+        else Region(id=f"actor-{item.id}", polygon=item.hull, depth=item.depth)
+        for item in in_painters_order(core)
+    ]
+    drawn += [
+        Region(id=f"figure-{figure.figure}", polygon=figure.body, disc=figure.face_exclusion)
+        for figure in core.figures
+    ]
+    return drawn
+
+
+def _points(points: Sequence[tuple[float, float]]) -> str:
+    return " ".join(f"{fmt(x)},{fmt(y)}" for x, y in points)
+
+
+def _shape(region: Region, fill: str) -> str:
+    if region.disc is None:
+        return f'  <polygon id={attr(region.id)} points="{_points(region.polygon)}" fill="{fill}"/>'
+    body = f'<polygon points="{_points(region.polygon)}"/>' if region.polygon else ""
+    face = region.disc
+    return (
+        f'  <g id={attr(region.id)} fill="{fill}">{body}'
+        f'<circle cx="{fmt(face.cx)}" cy="{fmt(face.cy)}" r="{fmt(face.r)}"/></g>'
+    )
+
+
+def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
+    """An SVG of flat fills on black, the panel's size, clipped as the panel is.
+
+    Black is nothing: the paper, the sky, a supplied picture whose content the compiler
+    never saw. A panel in a slanted tier is clipped to its outline; an inset over it is not
+    there, since the panel's art is drawn under it as usual.
+
+    Args:
+        core: The panel.
+        fills: Each region and what it is filled with, in drawing order.
+
+    Returns:
+        The document.
+    """
+    width, height = fmt(core.width), fmt(core.height)
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}">',
+        f'  <rect x="0" y="0" width="{width}" height="{height}" fill="#000000"/>',
+    ]
+    if core.outline is not None:
+        lines.append(
+            f'  <clipPath id="outline"><polygon points="{_points(core.outline)}"/></clipPath>'
+        )
+        lines.append('  <g clip-path="url(#outline)">')
+    lines.extend(_shape(region, fill) for region, fill in fills)
+    if core.outline is not None:
+        lines.append("  </g>")
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"
+
+
+__all__ = [
+    "FRACTION_PLACES",
+    "Region",
+    "canvas",
+    "drawn_at",
+    "figure_extent",
+    "flat_map",
+    "fraction_box",
+    "regions",
+    "to_json",
+]
