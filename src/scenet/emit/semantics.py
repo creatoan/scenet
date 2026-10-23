@@ -8,12 +8,18 @@ draws, and every balloon, caption and sound effect in reading order with its box
 
 Where Panel Core already has words, they are copied, never phrased again: the panel's
 `description` and each entry's `label`, which accessible output reads (#76).
+
+Each actor and figure also carries its `mask` colour: the mask export's own, taken from its code
+rather than worked out again, so a tool can map a colour of the mask to a character without
+parsing the SVG. The two cannot disagree -- and so a change to how the mask is coloured changes
+this export too.
 """
 
 from typing import Any
 
 from scenet.core import CoreBackdrop, PanelCore
-from scenet.emit.conditioning import canvas, corners, fraction_box, to_json
+from scenet.emit.conditioning import canvas, corners, fraction_box, regions, to_json
+from scenet.emit.mask import colours
 from scenet.ir import Weather
 
 
@@ -86,7 +92,8 @@ def render_semantics(core: PanelCore) -> str:
     """What the panel holds, as JSON.
 
     Actors are listed in Panel Core's order, the order the pose export lists people in.
-    Facing is read from the mirror: a mirrored puppet faces left.
+    Facing is read from the mirror: a mirrored puppet faces left. Each actor and figure has
+    its mask colour.
 
     Args:
         core: The compiled panel.
@@ -96,6 +103,8 @@ def render_semantics(core: PanelCore) -> str:
     """
     camera = core.camera
     width, height = canvas(core)
+    drawn = regions(core)
+    mask = {region.id: fill for region, fill in zip(drawn, colours(drawn), strict=True)}
     payload: dict[str, Any] = {
         "canvas_width": width,
         "canvas_height": height,
@@ -115,10 +124,18 @@ def render_semantics(core: PanelCore) -> str:
                 "facing": "left" if actor.transform.mirrored else "right",
                 "looking_at": actor.looking_at,
                 "depth": actor.depth,
+                "mask": mask[f"actor-{actor.id}"],
             }
             for actor in core.actors
         ],
-        "figures": [{"figure": figure.figure, "actor": figure.actor} for figure in core.figures],
+        "figures": [
+            {
+                "figure": figure.figure,
+                "actor": figure.actor,
+                "mask": mask[f"figure-{figure.figure}"],
+            }
+            for figure in core.figures
+        ],
         "lettering": _lettering(core),
     }
     return to_json(payload)
