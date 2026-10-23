@@ -9,6 +9,7 @@ a picture, and `scripts/setting_sheet.py` is the instrument for it.
 
 import json
 import math
+import re
 import subprocess
 import sys
 import textwrap
@@ -19,7 +20,7 @@ from random import Random
 
 import pytest
 
-from scenet import compile_source
+from scenet import compile_source, render
 from scenet.geom import BBox, Point
 from scenet.ir import (
     Horizon,
@@ -171,6 +172,24 @@ class TestPlanesMapOntoTheExistingDepth:
         backdrop = result.core.backdrop
         assert backdrop is not None
         assert backdrop.masses[0].depth > max(actor.depth for actor in result.core.actors)
+
+    def test_masses_in_one_plane_are_drawn_back_to_front_past_the_tenth(self):
+        """Ids are numbered back to front, and `m10` sorted as text comes before `m2`.
+
+        Ten walls then a window, all in one plane: the window is paler than its plane, so
+        drawn under the walls it would be painted out.
+        """
+        walls = "".join("  - {kind: wall, plane: mid}\n" for _ in range(10))
+        core = compile_source(
+            "cast: {a: {reference: alice}}\nsetting:\n masses:\n"
+            + walls
+            + "  - {kind: window, plane: mid}\n"
+        ).core
+        backdrop = core.backdrop
+        assert backdrop is not None
+        assert len(backdrop.masses) > 10
+        drawn = re.findall(r'id="mass-(m\d+)"', render(core))
+        assert drawn == [mass.id for mass in backdrop.masses]
 
     def test_a_nearer_plane_is_drawn_larger(self):
         """Size perspective alongside aerial perspective: the same mass nearer the
