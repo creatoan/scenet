@@ -121,6 +121,8 @@ class Region:
         depth: Painter's order, as Panel Core records it. None for a figure, which has
             none of its own.
         sky: Whether it is sky, which is at infinity whatever plane it was filed under.
+        who: The character it is, for an actor or a figure: the actor's id, or the part a
+            figure plays -- or, uncast, its own name. None for a mass.
     """
 
     id: str
@@ -128,6 +130,7 @@ class Region:
     disc: Disc | None = None
     depth: int | None = None
     sky: bool = False
+    who: str | None = None
 
 
 def regions(core: PanelCore) -> list[Region]:
@@ -146,11 +149,16 @@ def regions(core: PanelCore) -> list[Region]:
             sky=item.kind is MassKind.SKY,
         )
         if isinstance(item, CoreMass)
-        else Region(id=f"actor-{item.id}", polygon=item.hull, depth=item.depth)
+        else Region(id=f"actor-{item.id}", polygon=item.hull, depth=item.depth, who=item.id)
         for item in in_painters_order(core)
     ]
     drawn += [
-        Region(id=f"figure-{figure.figure}", polygon=figure.body, disc=figure.face_exclusion)
+        Region(
+            id=f"figure-{figure.figure}",
+            polygon=figure.body,
+            disc=figure.face_exclusion,
+            who=figure.actor or figure.figure,
+        )
         for figure in core.figures
     ]
     return drawn
@@ -172,16 +180,17 @@ def _shape(region: Region, fill: str) -> str:
 
 
 def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
-    """An SVG of flat fills on black, the panel's size, clipped as the panel is.
+    """An SVG of flat fills on black, on the panel's canvas, clipped as the panel is.
 
     Black is nothing: the paper, the sky, a supplied picture whose content the compiler
     never saw. A panel in a slanted tier is clipped to its outline; an inset over it is not
     there, since the panel's art is drawn under it as usual.
 
     Edges are crisp, `shape-rendering="crispEdges"`: an antialiased edge would blend two
-    regions into a colour, or a grey, that belongs to neither. The map is exactly the panel's
-    size, as its SVG is; the JSON exports' canvas is that size rounded up to whole pixels,
-    which a rasteriser asked for whole pixels makes it too.
+    regions into a colour, or a grey, that belongs to neither. The map is the pose's and the
+    boxes' canvas -- the panel rounded up to whole pixels, one unit to a pixel -- so every
+    export is on one pixel grid. Nothing is stretched: what lies past the panel's own edge,
+    under a pixel wide, is black, which is nothing.
 
     Args:
         core: The panel.
@@ -190,7 +199,7 @@ def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
     Returns:
         The document.
     """
-    width, height = fmt(core.width), fmt(core.height)
+    width, height = canvas(core)
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
