@@ -125,11 +125,11 @@ belongs to neither.
 
 The mask fills each region in its own colour under the id the panel's SVG gives it —
 `actor-alice`, `mass-m0`, `figure-ana` — so the colour of each is read from the SVG itself. **A
-character keeps its colour** from panel to panel, since it comes from the character's name, and a
-figure a picture draws takes the colour of the part it plays: a regional prompt or an identity
-follows a character down the page. Two characters of one panel whose names land on one colour
-are settled by name, the later stepping to the next free one. Masses take paler, less saturated
-colours, which no character's can be. What each region is, a puppet or a kind of mass, is in the
+character keeps its colour across panels, unless another character in the same panel has the same
+hue, in which case the later id (in sorted order) takes the next free one.** The hue is one of 64,
+from the id, so with four characters in a panel that happens about one time in ten: read the
+colour from the SVG rather than assuming it. A figure a picture draws takes the colour of the part
+it plays. Masses take paler, less saturated colours, which no character's can be. What each region is, a puppet or a kind of mass, is in the
 semantics under the same id.
 
 Both use the regions the solver used: an actor's hull, a mass's polygon, a figure's body and

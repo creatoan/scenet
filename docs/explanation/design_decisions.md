@@ -241,8 +241,9 @@ it can make no layout decision and no model ever runs inside Scenet.
 - **Depth is a painter's order, said as one.** Even grey steps by rank, white nearest, black for
   the paper, the sky and a supplied picture: there is no metric depth to give, and the backdrop's
   own ladder runs the other way.
-- **A character keeps its mask colour**, from a digest of its name, so a regional prompt follows
-  it across panels; masses take a less saturated band, so a wall is never a character. Every map
+- **A character keeps its mask colour across panels**, from a digest of its id, unless another
+  character in the same panel has the same hue, in which case the later id (in sorted order)
+  takes the next free one. Masses take a less saturated band, so a wall is never a character. Every map
   is on the pose's canvas, one unit to a pixel, with crisp edges, so no pixel holds a colour or
   grey that belongs to no region.
 - **Figures a picture draws** get boxes, mask regions and one depth plane in front of their
