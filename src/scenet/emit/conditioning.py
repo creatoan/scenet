@@ -12,7 +12,7 @@ import json
 import math
 from collections.abc import Iterable, Mapping
 
-from shapely.geometry import Point, Polygon
+from shapely.geometry import MultiPoint, Point, Polygon, box
 
 from scenet.core import CoreFigure, PanelCore
 
@@ -39,26 +39,33 @@ def to_json(payload: Mapping[str, object]) -> str:
 
 
 def fraction_box(core: PanelCore, points: Iterable[tuple[float, float]]) -> list[float] | None:
-    """The bounds of some points as `[xmin, ymin, xmax, ymax]` fractions of the panel.
+    """The bounds of what the panel draws of a shape, as `[xmin, ymin, xmax, ymax]` fractions.
 
-    Clipped to the panel, since what lies outside it is not in the picture.
+    The shape is the convex hull of the points -- a hull, a body, a box -- cut to what the
+    panel draws: its frame, or a slanted tier's outline. What lies outside is not in the
+    picture, so a body wider below the frame is bounded where the frame cuts it.
 
     Args:
         core: The panel the fractions are of.
         points: What to bound.
 
     Returns:
-        The box, or None when nothing of it is inside the panel.
+        The box, or None when nothing of it with any area is inside the panel.
     """
-    xs = [min(max(x, 0.0), core.width) for x, _ in points]
-    ys = [min(max(y, 0.0), core.height) for _, y in points]
-    if not xs or max(xs) <= min(xs) or max(ys) <= min(ys):
+    drawn = (
+        Polygon(core.outline)
+        if core.outline is not None
+        else box(0.0, 0.0, core.width, core.height)
+    )
+    inside = MultiPoint(list(points)).convex_hull.intersection(drawn)
+    if inside.area <= 0.0:
         return None
+    xmin, ymin, xmax, ymax = inside.bounds
     return [
-        _fraction(min(xs), core.width),
-        _fraction(min(ys), core.height),
-        _fraction(max(xs), core.width),
-        _fraction(max(ys), core.height),
+        _fraction(xmin, core.width),
+        _fraction(ymin, core.height),
+        _fraction(xmax, core.width),
+        _fraction(ymax, core.height),
     ]
 
 
@@ -73,11 +80,15 @@ def figure_extent(figure: CoreFigure) -> tuple[tuple[float, float], ...]:
     always there: its bounding square joins whatever body there is.
     """
     face = figure.face_exclusion
-    return (
-        *figure.body,
-        (face.cx - face.r, face.cy - face.r),
-        (face.cx + face.r, face.cy + face.r),
-    )
+    return (*figure.body, *corners(face.cx - face.r, face.cy - face.r, 2 * face.r, 2 * face.r))
+
+
+def corners(x: float, y: float, width: float, height: float) -> tuple[tuple[float, float], ...]:
+    """A rectangle's four corners, clockwise from the top left.
+
+    A shape to clip, where two corners would be a line.
+    """
+    return ((x, y), (x + width, y), (x + width, y + height), (x, y + height))
 
 
 def drawn_at(core: PanelCore, point: tuple[float, float]) -> bool:

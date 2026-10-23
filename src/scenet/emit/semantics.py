@@ -13,7 +13,7 @@ Where Panel Core already has words, they are copied, never phrased again: the pa
 from typing import Any
 
 from scenet.core import CoreBackdrop, PanelCore
-from scenet.emit.conditioning import canvas, fraction_box, to_json
+from scenet.emit.conditioning import canvas, corners, fraction_box, to_json
 from scenet.ir import Weather
 
 
@@ -48,8 +48,7 @@ def _lettering(core: PanelCore) -> list[dict[str, Any]]:
             "by": balloon.speaker,
             "label": balloon.label,
             "box": fraction_box(
-                core,
-                ((balloon.box.x, balloon.box.y), (balloon.box.right, balloon.box.bottom)),
+                core, corners(balloon.box.x, balloon.box.y, balloon.box.width, balloon.box.height)
             ),
         }
         for balloon in core.balloons
@@ -63,8 +62,7 @@ def _lettering(core: PanelCore) -> list[dict[str, Any]]:
             "by": caption.speaker,
             "label": caption.label,
             "box": fraction_box(
-                core,
-                ((caption.box.x, caption.box.y), (caption.box.right, caption.box.bottom)),
+                core, corners(caption.box.x, caption.box.y, caption.box.width, caption.box.height)
             ),
         }
         for caption in core.captions
