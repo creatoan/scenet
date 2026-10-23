@@ -135,3 +135,35 @@ class TestTheDocument:
         ltr = compile_source(source).core
         rtl = compile_source("direction: rtl\n" + source).core
         assert render_boxes(rtl) == render_boxes(ltr)
+
+
+class TestWhatIsDrawn:
+    """A box bounds what of the figure the panel draws: inside its frame, or its outline."""
+
+    def test_a_slanted_edge_crops_the_box(self):
+        core = compile_source(DUEL).core
+        alice = core.actor("alice")
+        xs = [x for x, _ in alice.hull]
+        cut = (min(xs) + max(xs)) / 2
+        outline = ((0.0, 0.0), (cut, 0.0), (cut, core.height), (0.0, core.height))
+        box = _boxes(core.model_copy(update={"outline": outline}))[0]["box"]
+        assert box[2] == round(cut / core.width, 4)
+        assert box[0] == _boxes(core)[0]["box"][0]
+
+    def test_a_figure_round_a_corner_outside_the_panel_has_no_box(self):
+        """Its bounds overlap the frame; nothing of it is inside."""
+        core = compile_source(DUEL).core
+        alice = core.actor("alice")
+        corner = alice.model_copy(update={"hull": ((-10.0, 5.0), (5.0, -10.0), (-10.0, -10.0))})
+        core = core.model_copy(update={"actors": (corner, *core.actors[1:])})
+        assert [box["id"] for box in _boxes(core)] == ["bob"]
+
+    def test_a_body_wider_below_the_frame_is_bounded_where_it_is_cut(self):
+        core = compile_source(DUEL).core
+        alice = core.actor("alice")
+        flared = ((400.0, 700.0), (500.0, 700.0), (900.0, 1200.0), (0.0, 1200.0))
+        core = core.model_copy(
+            update={"actors": (alice.model_copy(update={"hull": flared}), *core.actors[1:])}
+        )
+        # At the frame's bottom edge, y = 800, the sides are at x = 320 and 580.
+        assert _boxes(core)[0]["box"] == [0.32, 0.875, 0.58, 1.0]
