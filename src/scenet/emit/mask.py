@@ -5,12 +5,12 @@ One flat fill per actor, figure and mass, under the id the panel's SVG gives it 
 is read from the SVG itself. Regions are drawn in the panel's own painter's order, so what covers
 what is what the panel draws, and black is nothing.
 
-**A character keeps its colour.** Its colour comes from its name, so Alice is the same colour in
-every panel, and a regional prompt or an identity follows her down the page; a figure a picture
-draws takes the colour of the part it plays. Two characters of one panel whose names land on one
-colour are settled by name: the later steps to the next free one. Masses take theirs in drawing
-order from a band of their own -- paler, less saturated -- so a wall is never mistaken for a
-character.
+**A character keeps its colour across panels**, unless another character in the same panel has
+the same hue, in which case the later id (in sorted order) takes the next free one. The hue comes
+from the id's digest, one of 64, so a regional prompt or an identity follows a character down the
+page; a figure a picture draws takes the colour of the part it plays. With 64 hues, two of four
+characters share one about one panel in ten. Masses take theirs in drawing order from a band of
+their own -- paler, less saturated -- so a wall is never mistaken for a character.
 
 This is an instance map, not a class map: two actors are two colours. What each region is --
 an actor's puppet, a mass's kind and plane -- is in the semantics export, by the same id.
