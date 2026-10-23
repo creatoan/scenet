@@ -10,7 +10,13 @@ import re
 
 from scenet.core import PanelCore
 from scenet.emit.depth import render_depth
-from scenet.emit.mask import colour, render_mask
+from scenet.emit.mask import (
+    CHARACTER_SLOTS,
+    character_colour,
+    mass_colour,
+    render_mask,
+    slot_of,
+)
 from scenet.emit.svg import render
 from scenet.pipeline import compile_source
 from tests.images import contract, png
@@ -30,6 +36,10 @@ FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(#[0-9a-f]{6})"')
 
 def _fills(svg: str) -> dict[str, str]:
     return dict(FILL.findall(svg))
+
+
+def _channels(colour: str) -> tuple[int, int, int]:
+    return int(colour[1:3], 16), int(colour[3:5], 16), int(colour[5:7], 16)
 
 
 def _street() -> PanelCore:
@@ -84,16 +94,88 @@ class TestColours:
     def test_nothing_is_black(self):
         assert re.search(r'<rect [^>]*fill="#000000"/>', render_mask(_street()))
 
-    def test_the_first_two_hundred_and_fifty_six_are_distinct_and_never_dark(self):
-        colours = [colour(index) for index in range(256)]
+    def test_masses_are_distinct_and_never_dark(self):
+        colours = [mass_colour(index) for index in range(256)]
         assert len(set(colours)) == 256
         for each in colours:
             assert re.fullmatch(r"#[0-9a-f]{6}", each)
-            assert max(int(each[i : i + 2], 16) for i in (1, 3, 5)) >= 150
+            assert max(_channels(each)) >= 150
 
-    def test_colours_go_in_drawing_order(self):
-        fills = _fills(render_mask(_street()))
-        assert list(fills.values()) == [colour(index) for index in range(len(fills))]
+    def test_every_character_slot_is_distinct(self):
+        colours = [character_colour(slot) for slot in range(CHARACTER_SLOTS)]
+        assert len(set(colours)) == CHARACTER_SLOTS
+
+    def test_a_mass_never_takes_a_character_s_colour(self):
+        """Two bands: a character is saturated, a mass is not, so a wall is never Alice."""
+        characters = {character_colour(slot) for slot in range(CHARACTER_SLOTS)}
+        masses = {mass_colour(index) for index in range(1024)}
+        assert not characters & masses
+        assert all(min(_channels(each)) < 60 for each in characters)
+        assert all(min(_channels(each)) > 80 for each in masses)
+
+    def test_masses_are_coloured_in_drawing_order(self):
+        core = _street()
+        assert core.backdrop is not None
+        fills = _fills(render_mask(core))
+        masses = [name for name in fills if name.startswith("mass-")]
+        assert [fills[name] for name in masses] == [
+            mass_colour(index) for index in range(len(masses))
+        ]
+
+
+class TestACharacterKeepsItsColour:
+    """A character is the same colour in every panel, so regional prompts follow them."""
+
+    def test_from_panel_to_panel(self):
+        alone = compile_source("cast: {alice: {reference: alice}}\n").core
+        crowded = _street()
+        assert (
+            _fills(render_mask(alone))["actor-alice"] == _fills(render_mask(crowded))["actor-alice"]
+        )
+        assert _fills(render_mask(alone))["actor-alice"] == character_colour(slot_of("alice"))
+
+    def test_a_figure_takes_the_colour_of_the_part_it_plays(self):
+        figures = compile_source(
+            "panel: {size: [800, 600]}\nsetting: {image: art/p.png}\n"
+            "cast: {alice: {figure: ana}}\n",
+            base={
+                "art/p.png": png(800, 600),
+                "art/p.art.yaml": contract(
+                    (800, 600),
+                    {
+                        "ana": {"face": {"center": [300, 200], "radius": 50}},
+                        "ben": {"face": {"center": [600, 220], "radius": 40}},
+                    },
+                ),
+            },
+        ).core
+        fills = _fills(render_mask(figures))
+        assert fills["figure-ana"] == character_colour(slot_of("alice"))
+        assert fills["figure-ben"] == character_colour(slot_of("ben"))
+
+    def test_two_characters_on_one_slot_the_later_name_steps_to_the_next_free_one(self):
+        names = [f"x{index}" for index in range(400)]
+        first = names[0]
+        second = next(name for name in names[1:] if slot_of(name) == slot_of(first))
+        a, b = sorted((first, second))
+        core = compile_source(
+            f"cast: {{{a}: {{reference: alice}}, {b}: {{reference: bob}}}}\n"
+            f"staging: [{a} left_of {b}]\n"
+        ).core
+        fills = _fills(render_mask(core))
+        assert fills[f"actor-{a}"] == character_colour(slot_of(a))
+        assert fills[f"actor-{b}"] == character_colour((slot_of(a) + 1) % CHARACTER_SLOTS)
+
+    def test_whatever_order_they_are_drawn_in(self):
+        """Which one steps aside is decided by name, never by who is in front."""
+        names = [f"x{index}" for index in range(400)]
+        first = names[0]
+        second = next(name for name in names[1:] if slot_of(name) == slot_of(first))
+        a, b = sorted((first, second))
+        source = f"cast: {{{a}: {{reference: alice}}, {b}: {{reference: bob}}}}\n"
+        front = compile_source(source + f"staging: [{a} left_of {b}, {a} in_front_of {b}]\n").core
+        back = compile_source(source + f"staging: [{a} left_of {b}, {b} in_front_of {a}]\n").core
+        assert _fills(render_mask(front))[f"actor-{a}"] == _fills(render_mask(back))[f"actor-{a}"]
 
 
 class TestTheDocument:

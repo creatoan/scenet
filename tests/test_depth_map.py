@@ -12,6 +12,7 @@ import pytest
 
 from scenet.core import PanelCore
 from scenet.emit.depth import render_depth
+from scenet.emit.mask import render_mask
 from scenet.emit.svg import fmt, render
 from scenet.pipeline import compile_source
 from tests.images import contract, png
@@ -181,3 +182,23 @@ def test_read_right_to_left_the_depth_is_the_same(source: str):
 
 def test_the_same_bytes_every_time():
     assert render_depth(_street()) == render_depth(_street())
+
+
+class TestTheCanvas:
+    """The maps are on the same pixel grid as the pose and the boxes: one unit, one pixel."""
+
+    def test_a_panel_of_whole_units_is_its_own_size(self):
+        svg = render_depth(_street())
+        assert 'width="1000" height="800" viewBox="0 0 1000 800"' in svg
+
+    def test_a_panel_of_part_units_is_drawn_on_the_canvas_rounded_up(self):
+        core = _street().model_copy(update={"width": 999.5, "height": 799.25})
+        for svg in (render_depth(core), render_mask(core)):
+            assert 'width="1000" height="800" viewBox="0 0 1000 800"' in svg
+            assert '<rect x="0" y="0" width="1000" height="800" fill="#000000"/>' in svg
+
+    def test_nothing_moves_on_the_wider_canvas(self):
+        core = _street()
+        wider = core.model_copy(update={"width": 999.5, "height": 799.25})
+        shapes = [line for line in render_depth(core).splitlines() if "points=" in line]
+        assert shapes == [line for line in render_depth(wider).splitlines() if "points=" in line]
