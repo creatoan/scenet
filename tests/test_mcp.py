@@ -28,7 +28,7 @@ from mcp.types import (
     TextResourceContents,
 )
 
-from scenet import compile_source, render
+from scenet import compile_source, render, render_conditioning
 from scenet import mcp as scenet_mcp
 from scenet.cli import main
 from scenet.diagnostics import RULES
@@ -676,3 +676,45 @@ class TestFiguresAPictureDraws:
         characters = text_of(call("get_spec", {"section": "characters"}))
         assert "figure: <name>" in characters
         assert "art/p01.art.yaml" in characters
+
+
+class TestRenderForImageModels:
+    """`render` with `conditioning`: five more resources per panel, still five tools (#72)."""
+
+    def test_none_unless_asked(self):
+        uris = [svg.uri for svg in TestRender.resources(call("render", {"source": PAGED}))]
+        assert not any(uri.endswith((".json", ".depth.svg", ".mask.svg")) for uri in uris)
+
+    def test_five_per_panel_after_the_pages(self):
+        result = call("render", {"source": PAGED, "conditioning": True})
+        found = TestRender.resources(result)
+        assert [item.uri for item in found] == [
+            "scenet://panels/first.svg",
+            "scenet://panels/second.svg",
+            "scenet://pages/1.svg",
+            *(
+                f"scenet://panels/{name}{suffix}"
+                for name in ("first", "second")
+                for suffix in (
+                    ".pose.json",
+                    ".boxes.json",
+                    ".depth.svg",
+                    ".mask.svg",
+                    ".semantics.json",
+                )
+            ),
+        ]
+        types = {item.uri.rsplit(".", 1)[-1]: item.mime_type for item in found}
+        assert types == {"svg": "image/svg+xml", "json": "application/json"}
+
+    def test_each_is_what_build_writes(self):
+        found = TestRender.resources(call("render", {"source": VALID, "conditioning": True}))
+        exports = render_conditioning(compile_source(VALID).core)
+        texts = {item.uri.rsplit("/", 1)[-1]: item.text for item in found}
+        for suffix, text in exports.files():
+            assert next(value for key, value in texts.items() if key.endswith(suffix)) == text
+
+    def test_the_summary_says_so(self):
+        result = call("render", {"source": SCENE, "conditioning": True})
+        assert isinstance(result.content[0], TextContent)
+        assert "image models" in result.content[0].text

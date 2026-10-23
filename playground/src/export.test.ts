@@ -7,7 +7,15 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { MAX_CANVAS_AREA, MAX_CANVAS_SIDE, pngScale, sourceFilename, stemFor } from "./export.ts";
+import {
+  CONDITIONING,
+  conditioningFile,
+  MAX_CANVAS_AREA,
+  MAX_CANVAS_SIDE,
+  pngScale,
+  sourceFilename,
+  stemFor,
+} from "./export.ts";
 
 describe("pngScale", () => {
   test("an ordinary panel gets the requested scale", () => {
@@ -38,5 +46,25 @@ describe("filenames", () => {
     assert.equal(sourceFilename("x", "panel"), "x.panel.yaml");
     assert.equal(sourceFilename("x", "scene"), "x.scene.yaml");
     assert.equal(sourceFilename("x", "script"), "x.script");
+  });
+});
+
+describe("exports for image models", () => {
+  test("the five files are named and ordered as `scenet build --conditioning` writes them", () => {
+    assert.deepEqual(
+      CONDITIONING.map((exported) => exported.suffix),
+      [".pose.json", ".boxes.json", ".depth.svg", ".mask.svg", ".semantics.json"],
+    );
+  });
+
+  test("each is named after the stem and typed by its extension", () => {
+    assert.deepEqual(conditioningFile("duel", ".pose.json"), {
+      filename: "duel.pose.json",
+      type: "application/json",
+    });
+    assert.deepEqual(conditioningFile("duel", ".depth.svg"), {
+      filename: "duel.depth.svg",
+      type: "image/svg+xml",
+    });
   });
 });
