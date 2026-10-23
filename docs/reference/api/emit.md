@@ -1,7 +1,7 @@
 # Emitting
 
-Panel Core to SVG. The emitter makes no layout decisions: everything it draws was
-already decided.
+Panel Core to SVG, and to the exports for image models (#72). No emitter makes a layout
+decision: everything it draws or says was already decided.
 
 ## `scenet.emit.svg`
 
@@ -21,4 +21,24 @@ already decided.
 ## `scenet.emit.page`
 
 ```{automodule} scenet.emit.page
+```
+
+## `scenet.emit.conditioning`
+
+```{automodule} scenet.emit.conditioning
+```
+
+## `scenet.emit.pose`
+
+```{automodule} scenet.emit.pose
+```
+
+## `scenet.emit.boxes`
+
+```{automodule} scenet.emit.boxes
+```
+
+## `scenet.emit.semantics`
+
+```{automodule} scenet.emit.semantics
 ```
