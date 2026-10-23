@@ -9,6 +9,7 @@ what is what the panel draws.
 import re
 
 from scenet.core import PanelCore
+from scenet.emit.depth import render_depth
 from scenet.emit.mask import colour, render_mask
 from scenet.emit.svg import render
 from scenet.pipeline import compile_source
@@ -118,3 +119,12 @@ class TestTheDocument:
     def test_the_same_bytes_every_time(self):
         assert render_mask(_street()) == render_mask(_street())
         assert render_mask(_street()).endswith("</svg>\n")
+
+
+def test_both_maps_are_rasterised_without_antialiasing():
+    """An antialiased edge blends two regions' colours into one that belongs to neither id,
+    and two planes' greys into a depth no plane has."""
+    core = _street()
+    for svg in (render_mask(core), render_depth(core)):
+        root = next(line for line in svg.splitlines() if line.startswith("<svg "))
+        assert 'shape-rendering="crispEdges"' in root
