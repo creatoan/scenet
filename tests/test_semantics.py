@@ -8,9 +8,11 @@ twice.
 """
 
 import json
+import re
 from typing import Any
 
 from scenet.core import PanelCore
+from scenet.emit.mask import character_colour, render_mask, slot_of
 from scenet.emit.semantics import render_semantics
 from scenet.pipeline import compile_source
 from tests.images import contract, png
@@ -118,6 +120,7 @@ class TestTheCast:
             "facing": "right",
             "id": "alice",
             "looking_at": "bob",
+            "mask": TestTheMaskColours._fills(core)["actor-alice"],
             "marks": ["plewds"],
             "pose": "pointing",
             "reference": "alice",
@@ -131,7 +134,9 @@ class TestTheCast:
     def test_figures_a_picture_draws(self):
         payload = _semantics(_figures())
         assert payload["actors"] == []
-        assert payload["figures"] == [{"actor": "ANA", "figure": "ana"}]
+        assert payload["figures"] == [
+            {"actor": "ANA", "figure": "ana", "mask": character_colour(slot_of("ANA"))}
+        ]
 
 
 class TestTheLettering:
@@ -211,3 +216,44 @@ def _figures() -> PanelCore:
             ),
         },
     ).core
+
+
+class TestTheMaskColours:
+    """Each character's mask colour, so a tool maps colour to character without the SVG."""
+
+    @staticmethod
+    def _fills(core: PanelCore) -> dict[str, str]:
+        return dict(re.findall(r'id="([^"]+)"[^>]*? fill="(#[0-9a-f]{6})"', render_mask(core)))
+
+    def test_each_actor_s_is_the_mask_s(self):
+        core = _street()
+        fills = self._fills(core)
+        for actor in _semantics(core)["actors"]:
+            assert actor["mask"] == fills[f"actor-{actor['id']}"]
+
+    def test_each_figure_s_is_the_mask_s(self):
+        core = _figures()
+        fills = self._fills(core)
+        figures = _semantics(core)["figures"]
+        assert figures
+        for figure in figures:
+            assert figure["mask"] == fills[f"figure-{figure['figure']}"]
+
+    def test_a_figure_cast_as_an_actor_has_that_actor_s_colour(self):
+        puppet = compile_source("cast: {ANA: {reference: alice}}\n").core
+        figure = _figures()
+        assert _semantics(figure)["figures"][0]["mask"] == _semantics(puppet)["actors"][0]["mask"]
+
+    def test_a_character_keeps_it_from_panel_to_panel(self):
+        """The street has masses; a bare panel has none."""
+        bare = compile_source(
+            "cast: {alice: {reference: alice}, bob: {reference: bob}}\n"
+            "staging: [alice left_of bob]\n"
+        ).core
+        street = {actor["id"]: actor["mask"] for actor in _semantics(_street())["actors"]}
+        alone = {actor["id"]: actor["mask"] for actor in _semantics(bare)["actors"]}
+        assert street == alone
+
+    def test_masses_have_none(self):
+        setting = _semantics(_street())["setting"]
+        assert all("mask" not in mass for mass in setting["masses"])

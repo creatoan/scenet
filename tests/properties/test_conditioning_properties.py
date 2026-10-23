@@ -222,3 +222,27 @@ def test_figures_are_one_plane_and_each_its_own_colour(drawn: Drawn):
     mask = dict(FILL.findall(render_mask(core)))
     assert list(mask) == [f"figure-{figure.figure}" for figure in core.figures]
     assert len(set(mask.values())) == len(mask)
+
+
+@given(panels())
+def test_the_semantics_gives_each_actor_its_mask_colour(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    fills = dict(FILL.findall(render_mask(core)))
+    payload: Any = json.loads(render_semantics(core))
+    assert [actor["mask"] for actor in payload["actors"]] == [
+        fills[f"actor-{actor.id}"] for actor in core.actors
+    ]
+
+
+@given(figure_panels())
+def test_the_semantics_gives_each_figure_its_mask_colour(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    fills = dict(FILL.findall(render_mask(core)))
+    payload: Any = json.loads(render_semantics(core))
+    assert [figure["mask"] for figure in payload["figures"]] == [
+        fills[f"figure-{figure.figure}"] for figure in core.figures
+    ]
