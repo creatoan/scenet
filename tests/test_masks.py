@@ -210,3 +210,27 @@ def test_both_maps_are_rasterised_without_antialiasing():
     for svg in (render_mask(core), render_depth(core)):
         root = next(line for line in svg.splitlines() if line.startswith("<svg "))
         assert 'shape-rendering="crispEdges"' in root
+
+
+def test_a_character_stepping_aside_never_lands_on_a_colour_already_taken():
+    """Three names: `a` and `c` on one slot, and `b`, between them by name, on the next. `c`
+    steps past both, to the slot after."""
+    names = sorted(f"x{index}" for index in range(2000))
+    found = None
+    for a in names:
+        b = next(
+            (n for n in names if n > a and slot_of(n) == (slot_of(a) + 1) % CHARACTER_SLOTS), None
+        )
+        c = next((n for n in names if b is not None and n > b and slot_of(n) == slot_of(a)), None)
+        if b is not None and c is not None:
+            found = (a, b, c)
+            break
+    assert found is not None
+    a, b, c = found
+    core = compile_source(
+        f"cast: {{{a}: {{reference: alice}}, {b}: {{reference: bob}}, {c}: {{reference: alice}}}}\n"
+        f"staging: [{a} left_of {b}, {b} left_of {c}]\n"
+    ).core
+    fills = _fills(render_mask(core))
+    assert fills[f"actor-{c}"] == character_colour((slot_of(a) + 2) % CHARACTER_SLOTS)
+    assert len({fills[f"actor-{name}"] for name in (a, b, c)}) == 3

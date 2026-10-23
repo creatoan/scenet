@@ -180,3 +180,12 @@ def test_a_negative_zero_is_written_as_zero():
     text = render_boxes(core)
     assert "-0.0" not in text
     assert _boxes(core)[0]["box"][0] == 0.0
+
+
+def test_a_box_smaller_than_a_unit_is_still_a_box():
+    """Area, not size, decides: half a square unit inside the panel is something there."""
+    core = compile_source(DUEL).core
+    alice = core.actor("alice")
+    tiny = alice.model_copy(update={"hull": ((0.0, 0.0), (1.0, 0.0), (0.0, 1.0))})
+    core = core.model_copy(update={"actors": (tiny, *core.actors[1:])})
+    assert [box["id"] for box in _boxes(core)] == ["alice", "bob"]

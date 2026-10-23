@@ -591,33 +591,49 @@ reversed pages out without compiling a panel, since frames cannot depend on lett
 The exports for image models (#72) added `emit/conditioning.py`, `emit/pose.py`,
 `emit/boxes.py`, `emit/semantics.py`, `emit/depth.py`, `emit/mask.py` and `emit/export.py`, moved
 the painter's order of `emit/svg.py` into `in_painters_order` (#221: masses past the tenth were
-drawn out of order), and took `traits` out of `solve/describe.py`. Fresh runs from the stack's top
-branch, after a first pair (40007306722, 40007311191) whose clean run failed on a golden-test bug
-fixed in #225 and so checked nothing:
+drawn out of order), and took `traits` out of `solve/describe.py`.
 
-- `emit/*`, [`40008532976`](https://github.com/creatoan/scenet/actions/runs/40008532976): 2177
-  mutants and 17 survivors.
+A first triage ran before the stack's review: `emit/*`
+[`40008532976`](https://github.com/creatoan/scenet/actions/runs/40008532976), 2177 mutants and 17
+survivors, which killed `emit/depth.py` `_plane` 2 and 3 (a figure's plane merged with an
+actor's, by `test_a_hand_edited_core_with_figures_and_actors_puts_the_figures_in_front`) and
+`emit/conditioning.py` `_fraction` 1 (`+ 0.0` to `- 0.0`, by
+`test_a_negative_zero_is_written_as_zero`). The review then changed the box clipping, the maps'
+canvas and edges, the mask colours, and the semantics, so `emit/*` was run again from the top of
+the stack. A cached run of it (40031036460) reported 46 mutants and was discarded; the branch's
+`mutants/` caches were deleted and it ran again from nothing:
+
+- `emit/*`, [`40032456101`](https://github.com/creatoan/scenet/actions/runs/40032456101): 2263
+  mutants and 27 survivors.
   - 10 are the `emit/svg.py` survivors accepted above, under the same numbers. `panel_body` 39,
     the painter's sort keyed on the whole tuple, is gone with the sort it mutated, and its row
     with it: `in_painters_order` sorts on depth alone.
-  - **3 killed**: `emit/depth.py` `_plane` 2 and 3, a figure's plane merged with an actor's, by
-    `test_a_hand_edited_core_with_figures_and_actors_puts_the_figures_in_front` (no document
-    compiles to both, but a hand-edited Core may hold both); `emit/conditioning.py` `_fraction`
-    1, `+ 0.0` to `- 0.0`, by `test_a_negative_zero_is_written_as_zero`.
-  - 4 accepted below.
+  - **2 killed**:
+    - `emit/mask.py` `colours` 9, a character stepping aside tested at `slot - step` but placed
+      at `slot + step`. The two agree unless a third character holds the slot ahead, so
+      `test_a_character_stepping_aside_never_lands_on_a_colour_already_taken` builds that
+      case: under the mutant two characters share a colour;
+    - `emit/conditioning.py` `fraction_box` 21, `area <= 0.0` to `<= 1.0`, by
+      `test_a_box_smaller_than_a_unit_is_still_a_box`.
+  - 15 accepted below.
 - `solve/describe.py`,
   [`40008537043`](https://github.com/creatoan/scenet/actions/runs/40008537043): 210 mutants and
-  2 survivors, `describe` 8 and 10, accepted above under the same numbers.
+  2 survivors, `describe` 8 and 10, accepted above under the same numbers. The review changed
+  nothing in it.
 
 Each mutant killed was applied by hand to see its test fail.
 
 | Mutant | Change | Why it cannot change an output |
 |---|---|---|
 | `emit/conditioning.py` `to_json` 5 | `ensure_ascii=False` to `ensure_ascii=None` | `json.dumps` only asks whether it is true, and `None` is not. |
-| `emit/mask.py` `colour` 2, 4 | `% 1.0` to `/ 1.0`, or to `% 2.0` | `colorsys.hsv_to_rgb` takes the hue's sixth modulo 6, so a hue and the same hue plus a whole turn give one colour. |
-| `emit/mask.py` `colour` 3 | `index * GOLDEN` to `index / GOLDEN` | `1 / 0.618…` is `1.618…`, one more than `0.618…`, so the two hues differ by `index` whole turns -- the same colour, the golden ratio's own identity. |
+| `emit/mask.py` `mass_colour` 16, 18 | `% 1.0` to `/ 1.0`, or to `% 2.0` | `colorsys.hsv_to_rgb` takes the hue's sixth modulo 6, so a hue and the same hue plus a whole turn give one colour. |
+| `emit/mask.py` `mass_colour` 17 | `index * GOLDEN` to `index / GOLDEN` | `1 / 0.618…` is `1.618…`, one more than `0.618…`, so the two hues differ by `index` whole turns -- the same colour, the golden ratio's own identity. |
+| `emit/mask.py` `slot_of` 5 | `encode("utf-8")` to `encode("UTF-8")` | The same codec; Python's codec names are case-insensitive. |
+| `emit/mask.py` `slot_of` 10 | `int.from_bytes(digest[:8], "big")` without `"big"` | `"big"` is the default since Python 3.11, and the package needs 3.12. |
+| `emit/mask.py` `render_mask` 10, 13, 15; `emit/semantics.py` `render_semantics` 9, 12, 14 | `zip(regions, colours(regions), strict=True)` with `strict` dropped, `None` or `False` | `colours` returns one colour per region it is given, so the two always have one length. |
+| `emit/export.py` `Conditioning.files` 6, 9, 10 | `zip(suffixes, astuple(self), strict=True)` with `strict` dropped, `None` or `False` | `EXPORTS` and `Conditioning` both have five entries, in one order: a test compares every file with its own export. |
 
-The second job of both runs, exploring with fresh seeds, passed every property, the new ones for
+The second job of every run, exploring with fresh seeds, passed every property, the new ones for
 the exports included, at 300 examples.
 
 ### Exploring with fresh seeds
