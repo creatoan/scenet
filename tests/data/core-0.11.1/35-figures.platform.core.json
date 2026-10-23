@@ -1,0 +1,232 @@
+{
+  "actors": [],
+  "backdrop": {
+    "atmosphere": null,
+    "image": {
+      "box": {
+        "height": 800.0,
+        "width": 1200.0,
+        "x": 0.0,
+        "y": -100.0
+      },
+      "fit": "cover",
+      "href": "art/figures.png",
+      "keep_out": [
+        [
+          [
+            746.67,
+            -20.0
+          ],
+          [
+            1146.67,
+            -20.0
+          ],
+          [
+            1146.67,
+            166.67
+          ],
+          [
+            746.67,
+            166.67
+          ]
+        ]
+      ],
+      "media_type": "image/png",
+      "pixels": [
+        900,
+        600
+      ],
+      "preserve_aspect_ratio": "xMidYMid slice",
+      "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
+    },
+    "masses": [],
+    "seed": 2275449072
+  },
+  "balloons": [
+    {
+      "box": {
+        "height": 75.6,
+        "width": 118.08,
+        "x": 93.81,
+        "y": 259.25
+      },
+      "font_size": 21.0,
+      "id": "b0",
+      "kind": "speech",
+      "label": "Ana: Is it always this late?",
+      "line_height": 26.25,
+      "lines": [
+        "Is it always",
+        "this late?"
+      ],
+      "order": 1,
+      "speaker": "ana",
+      "tail": {
+        "control": null,
+        "end": [
+          246.11,
+          277.01
+        ],
+        "start": [
+          211.89,
+          284.36
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 101.85,
+        "width": 172.64,
+        "x": 651.83,
+        "y": 243.06
+      },
+      "font_size": 21.0,
+      "id": "b1",
+      "kind": "speech",
+      "label": "Ben: Only when it rains somewhere else.",
+      "line_height": 26.25,
+      "lines": [
+        "Only when it",
+        "rains somewhere",
+        "else."
+      ],
+      "order": 2,
+      "speaker": "ben",
+      "tail": {
+        "control": null,
+        "end": [
+          610.22,
+          263.26
+        ],
+        "start": [
+          651.83,
+          273.25
+        ],
+        "width": 14.0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "box": {
+        "height": 60.12,
+        "width": 104.62,
+        "x": 12.0,
+        "y": 12.0
+      },
+      "fill": "#ffffff",
+      "font_size": 18.0,
+      "id": "c0",
+      "ink": "#111111",
+      "italic": true,
+      "kind": "locale",
+      "label": "Caption: The last train. Again.",
+      "line_height": 22.5,
+      "lines": [
+        "The last",
+        "train. Again."
+      ],
+      "order": 0,
+      "speaker": null
+    }
+  ],
+  "description": "Ana, left; Ben, centre.",
+  "figures": [
+    {
+      "actor": "ana",
+      "body": [
+        [
+          224.0,
+          294.67
+        ],
+        [
+          389.33,
+          294.67
+        ],
+        [
+          421.33,
+          700.0
+        ],
+        [
+          192.0,
+          700.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 306.67,
+        "cy": 233.33,
+        "r": 74.67
+      },
+      "figure": "ana",
+      "mouth": [
+        306.67,
+        264.0
+      ]
+    },
+    {
+      "actor": "ben",
+      "body": [
+        [
+          453.33,
+          281.33
+        ],
+        [
+          640.0,
+          281.33
+        ],
+        [
+          669.33,
+          700.0
+        ],
+        [
+          424.0,
+          700.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 546.67,
+        "cy": 214.67,
+        "r": 80.0
+      },
+      "figure": "ben",
+      "mouth": [
+        546.67,
+        248.0
+      ]
+    },
+    {
+      "body": [
+        [
+          890.67,
+          350.67
+        ],
+        [
+          1029.33,
+          350.67
+        ],
+        [
+          1048.0,
+          700.0
+        ],
+        [
+          872.0,
+          700.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 960.0,
+        "cy": 300.0,
+        "r": 61.33
+      },
+      "figure": "carl",
+      "mouth": [
+        960.0,
+        325.33
+      ]
+    }
+  ],
+  "format_version": 1,
+  "height": 600.0,
+  "width": 1200.0
+}
