@@ -20,6 +20,7 @@ from scenet.images import MediaType
 from scenet.ir import (
     UNTAGGED,
     BalloonKind,
+    CameraAngle,
     CaptionKind,
     Direction,
     Face,
@@ -27,6 +28,7 @@ from scenet.ir import (
     Mark,
     MassKind,
     Plane,
+    ShotType,
     Side,
     SvgText,
     TimeOfDay,
@@ -34,6 +36,7 @@ from scenet.ir import (
     tag_by,
 )
 from scenet.paths import check_relative
+from scenet.places import Place
 
 CORE_FORMAT_VERSION = 1
 
@@ -369,6 +372,13 @@ class CoreBackdrop(CoreModel):
         atmosphere: The air, or None when the weather is clear.
         image: The supplied picture behind everything, or None. Left out of the JSON
             when unset.
+        place: The named place these masses are -- `street`, `docks` -- whether `place:`
+            wrote them or an author wrote the same list out (#72). None for masses no place
+            expands into, and over a picture. A name for what is here, never read to draw
+            it. Left out of the JSON when None.
+        time: The hour the values were chosen for (#72), which `atmosphere` records too
+            but only when something is in the air. None over a picture, whose hour is in
+            the picture. Left out of the JSON when None.
 
     Optional on :class:`PanelCore <scenet.core.PanelCore>`, so every document written
     before this existed is still a valid one -- which is why adding it did not need a
@@ -382,6 +392,8 @@ class CoreBackdrop(CoreModel):
     masses: tuple[CoreMass, ...] = ()
     atmosphere: CoreAtmosphere | None = None
     image: CoreImage | None = None
+    place: Place | None = None
+    time: TimeOfDay | None = None
 
 
 class CoreActor(CoreModel):
@@ -423,6 +435,19 @@ class CoreActor(CoreModel):
         capsules: Limb segments, as thick rounded lines.
         blobs: Rounded masses such as the head.
         depth: Painter's order. Lower is drawn first, so higher sits in front.
+        joints: Where every joint of the skeleton landed, by the puppet's name for it, in
+            panel coordinates (#72). `_l` and `_r` are the sides of the screen in the
+            puppet's rest pose, so on a figure facing left `shoulder_l` is on the right.
+            Nothing here draws from them; they are the posed skeleton, for an export.
+        features: Where each face feature point sits -- `eye_l`, `nose`, `mouth` and the
+            rest the puppet declares -- in panel coordinates (#72). The anatomy, not the
+            marks: the same whatever the expression, and recorded when the face is too
+            small to draw.
+        looking_at: Whom this character looks at (#72): an actor id, or the name of
+            somebody heard from off panel. `gaze_aim` is the direction; this is who.
+
+    The last three are left out of the JSON when empty, so an actor written before them
+    reads and writes as it did.
     """
 
     id: str
@@ -443,6 +468,9 @@ class CoreActor(CoreModel):
     blobs: tuple[Blob, ...] = ()
     # Painter's order: lower values are drawn first, so higher values sit in front.
     depth: int = 0
+    joints: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    features: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    looking_at: SvgText | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -729,6 +757,34 @@ class CoreSfx(CoreModel):
     label: SvgText | None = None
 
 
+class CoreCamera(CoreModel):
+    """The camera's verdict for a panel, recorded (#72).
+
+    Every position in a Core already follows from it, so nothing here is read to draw the
+    panel; it says what framed it. The shot asked for and the angle are what a reader of
+    the panel would name; the numbers are what the solver made of them.
+
+    Attributes:
+        shot: The shot asked for -- the tightest the camera would go.
+        angle: The camera's height, which changed the headroom and nothing else.
+        reference: The puppet the shot was composed on, by its name.
+        scale: The one scale every actor is drawn at.
+        headroom: The air above the reference actor's head, as a fraction of the panel's
+            height.
+        footroom: The room below the crop line, as a fraction of the panel's height.
+        pullback: How far the camera retreated to fit the cast across the panel: 1.0 for
+            the shot as asked, less when it was loosened.
+    """
+
+    shot: ShotType
+    angle: CameraAngle
+    reference: str
+    scale: float
+    headroom: float
+    footroom: float
+    pullback: float = 1.0
+
+
 class PanelCore(CoreModel):
     """A fully resolved panel: numeric, named, and ready to emit.
 
@@ -744,7 +800,8 @@ class PanelCore(CoreModel):
         format_version: Bumped when the shape of this document changes incompatibly.
         width: Panel width in panel units.
         height: Panel height in panel units.
-        actors: Resolved characters, in declaration order.
+        actors: Resolved characters, in the order they are drawn: back to front, those at
+            one depth left to right as staged.
         balloons: Resolved balloons, in reading order.
         captions: Resolved caption boxes, in reading order. Balloons and captions
             share one `order` sequence, since the reader takes them in one sequence.
@@ -770,6 +827,9 @@ class PanelCore(CoreModel):
         direction: Which way the panel is read, which is why its lettering is where it is
             (#68). Left out of the JSON for `ltr`, so every panel written before it reads
             and writes as it always did.
+        camera: What framed the panel (#72), or None when a supplied picture draws the
+            cast: the artist framed it, and the camera did not run. Left out of the JSON
+            when None.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -800,6 +860,7 @@ class PanelCore(CoreModel):
     description: SvgText | None = None
     figures: tuple[CoreFigure, ...] = ()
     direction: Direction = Direction.LTR
+    camera: CoreCamera | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -876,13 +937,16 @@ class PanelCore(CoreModel):
             description=None,
             figures=(),
             direction=Direction.LTR,
+            camera=None,
         )
+        for actor in payload["actors"]:
+            _drop_unused(actor, joints={}, features={}, looking_at=None)
         for figure in payload.get("figures", []):
             _drop_unused(figure, actor=None, mouth=None, body=())
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=(), label=None)
         if payload.get("backdrop") is not None:
-            _drop_unused(payload["backdrop"], horizon=None, image=None)
+            _drop_unused(payload["backdrop"], horizon=None, image=None, place=None, time=None)
             if payload["backdrop"].get("image") is not None:
                 _drop_unused(payload["backdrop"]["image"], keep_out=())
         for effect in payload.get("sfx", []):
@@ -1042,6 +1106,7 @@ __all__ = [
     "CoreAtmosphere",
     "CoreBackdrop",
     "CoreBalloon",
+    "CoreCamera",
     "CoreCaption",
     "CoreFigure",
     "CoreFont",

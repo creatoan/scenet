@@ -316,6 +316,32 @@
           "width": 9.33
         }
       ],
+      "features": {
+        "brow_l": [
+          245.22,
+          93.92
+        ],
+        "brow_r": [
+          354.78,
+          93.92
+        ],
+        "eye_l": [
+          245.22,
+          135.66
+        ],
+        "eye_r": [
+          354.78,
+          135.66
+        ],
+        "mouth": [
+          300.0,
+          234.79
+        ],
+        "nose": [
+          300.0,
+          177.4
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -368,6 +394,72 @@
         ]
       ],
       "id": "ken",
+      "joints": {
+        "ankle_l": [
+          216.52,
+          2071.39
+        ],
+        "ankle_r": [
+          383.48,
+          2071.39
+        ],
+        "elbow_l": [
+          212.94,
+          664.26
+        ],
+        "elbow_r": [
+          387.06,
+          664.26
+        ],
+        "head": [
+          300.0,
+          166.96
+        ],
+        "hip_l": [
+          216.52,
+          954.82
+        ],
+        "hip_r": [
+          383.48,
+          954.82
+        ],
+        "knee_l": [
+          216.52,
+          1554.84
+        ],
+        "knee_r": [
+          383.48,
+          1554.84
+        ],
+        "neck": [
+          300.0,
+          391.32
+        ],
+        "root": [
+          300.0,
+          928.73
+        ],
+        "shoulder_l": [
+          190.43,
+          406.97
+        ],
+        "shoulder_r": [
+          409.57,
+          406.97
+        ],
+        "spine": [
+          300.0,
+          573.94
+        ],
+        "wrist_l": [
+          233.86,
+          903.36
+        ],
+        "wrist_r": [
+          366.14,
+          903.36
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
@@ -913,7 +1005,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 3258705236
+    "place": "street",
+    "seed": 3258705236,
+    "time": "night"
   },
   "balloons": [
     {
@@ -948,6 +1042,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 2.61,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street at night, in the rain. Ken, centre, surprised.",
   "direction": "rtl",

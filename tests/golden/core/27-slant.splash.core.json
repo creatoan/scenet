@@ -360,6 +360,32 @@
           "width": 2.61
         }
       ],
+      "features": {
+        "brow_l": [
+          324.93,
+          48.95
+        ],
+        "brow_r": [
+          294.23,
+          48.95
+        ],
+        "eye_l": [
+          324.93,
+          60.64
+        ],
+        "eye_r": [
+          294.23,
+          60.64
+        ],
+        "mouth": [
+          309.58,
+          88.42
+        ],
+        "nose": [
+          309.58,
+          72.34
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -404,6 +430,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          332.97,
+          603.0
+        ],
+        "ankle_r": [
+          286.19,
+          603.0
+        ],
+        "elbow_l": [
+          365.03,
+          204.66
+        ],
+        "elbow_r": [
+          254.13,
+          204.66
+        ],
+        "head": [
+          309.58,
+          69.41
+        ],
+        "hip_l": [
+          332.97,
+          290.16
+        ],
+        "hip_r": [
+          286.19,
+          290.16
+        ],
+        "knee_l": [
+          332.97,
+          458.27
+        ],
+        "knee_r": [
+          286.19,
+          458.27
+        ],
+        "neck": [
+          309.58,
+          132.27
+        ],
+        "root": [
+          309.58,
+          282.85
+        ],
+        "shoulder_l": [
+          340.28,
+          136.66
+        ],
+        "shoulder_r": [
+          278.88,
+          136.66
+        ],
+        "spine": [
+          309.58,
+          183.44
+        ],
+        "wrist_l": [
+          297.78,
+          204.66
+        ],
+        "wrist_r": [
+          321.38,
+          204.66
+        ]
+      },
       "marks": [],
       "pose": "hands_on_hips",
       "reference": "bob",
@@ -673,7 +765,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 2626221099
+    "place": "street",
+    "seed": 2626221099,
+    "time": "night"
   },
   "balloons": [
     {
@@ -707,6 +801,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.04,
+    "headroom": 0.05,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 0.73,
+    "shot": "full_shot"
+  },
   "captions": [],
   "description": "Full shot. A street at night. Bob, centre, hands on hips, laughing.",
   "format_version": 1,

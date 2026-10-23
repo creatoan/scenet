@@ -296,6 +296,32 @@
           "width": 9.3
         }
       ],
+      "features": {
+        "brow_l": [
+          354.55,
+          94.04
+        ],
+        "brow_r": [
+          245.45,
+          94.04
+        ],
+        "eye_l": [
+          354.55,
+          134.95
+        ],
+        "eye_r": [
+          245.45,
+          134.95
+        ],
+        "mouth": [
+          300.0,
+          235.86
+        ],
+        "nose": [
+          300.0,
+          178.58
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -340,6 +366,72 @@
         ]
       ],
       "id": "hana",
+      "joints": {
+        "ankle_l": [
+          381.82,
+          2076.84
+        ],
+        "ankle_r": [
+          218.18,
+          2076.84
+        ],
+        "elbow_l": [
+          370.15,
+          665.8
+        ],
+        "elbow_r": [
+          229.85,
+          665.8
+        ],
+        "head": [
+          300.0,
+          167.67
+        ],
+        "hip_l": [
+          381.82,
+          958.62
+        ],
+        "hip_r": [
+          218.18,
+          958.62
+        ],
+        "knee_l": [
+          381.82,
+          1558.64
+        ],
+        "knee_r": [
+          218.18,
+          1558.64
+        ],
+        "neck": [
+          300.0,
+          391.32
+        ],
+        "root": [
+          300.0,
+          931.34
+        ],
+        "shoulder_l": [
+          392.73,
+          407.68
+        ],
+        "shoulder_r": [
+          207.27,
+          407.68
+        ],
+        "spine": [
+          300.0,
+          576.78
+        ],
+        "wrist_l": [
+          349.23,
+          904.9
+        ],
+        "wrist_r": [
+          250.77,
+          904.9
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "alice",
@@ -885,7 +977,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 3258705236
+    "place": "street",
+    "seed": 3258705236,
+    "time": "night"
   },
   "balloons": [
     {
@@ -919,6 +1013,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 2.73,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street at night, in the rain. Hana, centre.",
   "direction": "rtl",

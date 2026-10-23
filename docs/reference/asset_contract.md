@@ -265,7 +265,8 @@ Forward kinematics resolves the skeleton into, per actor:
 
 | Output | Used by |
 |---|---|
-| World position of every joint | Rendering |
+| World position of every joint | Rendering; Panel Core `joints`, which the pose export reads |
+| Face feature points | Face marks; Panel Core `features`, which the pose export reads |
 | `mouth` anchor | Balloon tail termination |
 | Face exclusion circle | Balloon placement (infinite cost) |
 | Gaze vector | Balloon placement bias, `looking_at` resolution |

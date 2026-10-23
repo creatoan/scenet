@@ -25,6 +25,12 @@ below 1.0 means.
   `label`.** Nothing else in it moves, and `format_version` stays 1: a Core without them is
   still valid and writes back byte for byte, but golden Core files of your own will need
   regenerating once. 0.11 refuses the new keys.
+- **Every Panel Core gains `camera`; each actor `joints`, `features` and, when it looks at
+  somebody, `looking_at`; a backdrop of masses `time` and, for a named place, `place`** (#72).
+  Nothing else in it moves, no SVG changes, and `format_version` stays 1: a Core without them is
+  still valid and writes back byte for byte, but golden Core files of your own will need
+  regenerating once. Every gallery Core was compared with its 0.11.1 golden and differs by these
+  keys alone. A panel whose cast a picture draws has no `camera`, and 0.11 refuses the new keys.
 - **A balloon over its own speaker's body costs what it always should have** when the actor id
   is not the puppet's name (`ALICE: {reference: alice}`, `carol: {reference: alice}`). Such a
   speaker was charged as a bystander, so balloons drifted away from them. Three gallery

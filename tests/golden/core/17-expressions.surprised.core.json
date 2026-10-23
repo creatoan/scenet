@@ -296,6 +296,32 @@
           "width": 8.04
         }
       ],
+      "features": {
+        "brow_l": [
+          201.61,
+          154.2
+        ],
+        "brow_r": [
+          295.86,
+          154.2
+        ],
+        "eye_l": [
+          201.61,
+          189.55
+        ],
+        "eye_r": [
+          295.86,
+          189.55
+        ],
+        "mouth": [
+          248.74,
+          276.73
+        ],
+        "nose": [
+          248.74,
+          227.25
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -351,6 +377,73 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          178.04,
+          1867.34
+        ],
+        "ankle_r": [
+          319.43,
+          1867.34
+        ],
+        "elbow_l": [
+          263.22,
+          628.08
+        ],
+        "elbow_r": [
+          234.25,
+          628.08
+        ],
+        "head": [
+          248.74,
+          217.82
+        ],
+        "hip_l": [
+          178.04,
+          901.19
+        ],
+        "hip_r": [
+          319.43,
+          901.19
+        ],
+        "knee_l": [
+          178.04,
+          1419.61
+        ],
+        "knee_r": [
+          319.43,
+          1419.61
+        ],
+        "neck": [
+          248.74,
+          411.05
+        ],
+        "root": [
+          248.74,
+          877.63
+        ],
+        "shoulder_l": [
+          168.62,
+          425.19
+        ],
+        "shoulder_r": [
+          328.85,
+          425.19
+        ],
+        "spine": [
+          248.74,
+          571.29
+        ],
+        "wrist_l": [
+          467.44,
+          592.07
+        ],
+        "wrist_r": [
+          30.03,
+          592.07
+        ]
+      },
+      "looking_at": "bob",
       "marks": [],
       "pose": "arms_crossed",
       "reference": "alice",
@@ -677,6 +770,32 @@
           "width": 8.42
         }
       ],
+      "features": {
+        "brow_l": [
+          786.02,
+          81.15
+        ],
+        "brow_r": [
+          687.05,
+          81.15
+        ],
+        "eye_l": [
+          786.02,
+          118.85
+        ],
+        "eye_r": [
+          687.05,
+          118.85
+        ],
+        "mouth": [
+          736.54,
+          208.4
+        ],
+        "nose": [
+          736.54,
+          156.55
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -724,6 +843,73 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          811.94,
+          1867.34
+        ],
+        "ankle_r": [
+          661.13,
+          1867.34
+        ],
+        "elbow_l": [
+          915.3,
+          583.14
+        ],
+        "elbow_r": [
+          557.77,
+          583.14
+        ],
+        "head": [
+          736.54,
+          147.13
+        ],
+        "hip_l": [
+          811.94,
+          858.78
+        ],
+        "hip_r": [
+          661.13,
+          858.78
+        ],
+        "knee_l": [
+          811.94,
+          1400.76
+        ],
+        "knee_r": [
+          661.13,
+          1400.76
+        ],
+        "neck": [
+          736.54,
+          349.78
+        ],
+        "root": [
+          736.54,
+          835.21
+        ],
+        "shoulder_l": [
+          835.51,
+          363.92
+        ],
+        "shoulder_r": [
+          637.56,
+          363.92
+        ],
+        "spine": [
+          736.54,
+          514.74
+        ],
+        "wrist_l": [
+          698.5,
+          583.14
+        ],
+        "wrist_r": [
+          774.57,
+          583.14
+        ]
+      },
+      "looking_at": "alice",
       "marks": [],
       "pose": "hands_on_hips",
       "reference": "bob",
@@ -737,6 +923,15 @@
   ],
   "backdrop": null,
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.1,
+    "pullback": 0.86,
+    "reference": "alice",
+    "scale": 2.36,
+    "shot": "medium_shot"
+  },
   "captions": [],
   "description": "Medium shot. Alice, left, arms crossed, looking at Bob; Bob, right, hands on hips, surprised, looking at Alice.",
   "format_version": 1,

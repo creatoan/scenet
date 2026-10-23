@@ -316,6 +316,32 @@
           "width": 9.15
         }
       ],
+      "features": {
+        "brow_l": [
+          449.76,
+          92.16
+        ],
+        "brow_r": [
+          342.24,
+          92.16
+        ],
+        "eye_l": [
+          449.76,
+          133.12
+        ],
+        "eye_r": [
+          342.24,
+          133.12
+        ],
+        "mouth": [
+          396.0,
+          230.4
+        ],
+        "nose": [
+          396.0,
+          174.08
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -368,6 +394,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          477.92,
+          2032.64
+        ],
+        "ankle_r": [
+          314.08,
+          2032.64
+        ],
+        "elbow_l": [
+          481.43,
+          651.84
+        ],
+        "elbow_r": [
+          310.57,
+          651.84
+        ],
+        "head": [
+          396.0,
+          163.84
+        ],
+        "hip_l": [
+          477.92,
+          936.96
+        ],
+        "hip_r": [
+          314.08,
+          936.96
+        ],
+        "knee_l": [
+          477.92,
+          1525.76
+        ],
+        "knee_r": [
+          314.08,
+          1525.76
+        ],
+        "neck": [
+          396.0,
+          384.0
+        ],
+        "root": [
+          396.0,
+          911.36
+        ],
+        "shoulder_l": [
+          503.52,
+          399.36
+        ],
+        "shoulder_r": [
+          288.48,
+          399.36
+        ],
+        "spine": [
+          396.0,
+          563.2
+        ],
+        "wrist_l": [
+          460.9,
+          886.46
+        ],
+        "wrist_r": [
+          331.1,
+          886.46
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
@@ -637,7 +729,9 @@
         "tone": "#202020"
       }
     ],
-    "seed": 998632754
+    "place": "street",
+    "seed": 998632754,
+    "time": "dusk"
   },
   "balloons": [
     {
@@ -672,6 +766,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 2.56,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street at dusk. Bob, centre, scared.",
   "format_version": 1,

@@ -316,6 +316,32 @@
           "width": 5.84
         }
       ],
+      "features": {
+        "brow_l": [
+          177.44,
+          102.21
+        ],
+        "brow_r": [
+          245.96,
+          102.21
+        ],
+        "eye_l": [
+          177.44,
+          127.91
+        ],
+        "eye_r": [
+          245.96,
+          127.91
+        ],
+        "mouth": [
+          211.7,
+          191.29
+        ],
+        "nose": [
+          211.7,
+          155.32
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -360,6 +386,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          160.31,
+          1347.6
+        ],
+        "ankle_r": [
+          263.09,
+          1347.6
+        ],
+        "elbow_l": [
+          167.64,
+          461.33
+        ],
+        "elbow_r": [
+          255.76,
+          461.33
+        ],
+        "head": [
+          211.7,
+          148.46
+        ],
+        "hip_l": [
+          160.31,
+          645.25
+        ],
+        "hip_r": [
+          263.09,
+          645.25
+        ],
+        "knee_l": [
+          160.31,
+          1022.12
+        ],
+        "knee_r": [
+          263.09,
+          1022.12
+        ],
+        "neck": [
+          211.7,
+          288.94
+        ],
+        "root": [
+          211.7,
+          628.12
+        ],
+        "shoulder_l": [
+          153.46,
+          299.21
+        ],
+        "shoulder_r": [
+          269.94,
+          299.21
+        ],
+        "spine": [
+          211.7,
+          405.42
+        ],
+        "wrist_l": [
+          180.78,
+          611.51
+        ],
+        "wrist_r": [
+          242.62,
+          611.51
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "alice",
@@ -629,9 +721,20 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 983463020
+    "place": "street",
+    "seed": 983463020,
+    "time": "night"
   },
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.1,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 1.71,
+    "shot": "medium_shot"
+  },
   "captions": [],
   "description": "Medium shot. A street at night. Alice, centre, surprised.",
   "format_version": 1,

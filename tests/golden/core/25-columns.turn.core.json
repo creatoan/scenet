@@ -316,6 +316,32 @@
           "width": 4.18
         }
       ],
+      "features": {
+        "brow_l": [
+          239.44,
+          78.32
+        ],
+        "brow_r": [
+          288.56,
+          78.32
+        ],
+        "eye_l": [
+          239.44,
+          97.03
+        ],
+        "eye_r": [
+          288.56,
+          97.03
+        ],
+        "mouth": [
+          264.0,
+          141.47
+        ],
+        "nose": [
+          264.0,
+          115.74
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -360,6 +386,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          226.58,
+          964.8
+        ],
+        "ankle_r": [
+          301.42,
+          964.8
+        ],
+        "elbow_l": [
+          175.28,
+          327.46
+        ],
+        "elbow_r": [
+          352.72,
+          327.46
+        ],
+        "head": [
+          264.0,
+          111.06
+        ],
+        "hip_l": [
+          226.58,
+          464.25
+        ],
+        "hip_r": [
+          301.42,
+          464.25
+        ],
+        "knee_l": [
+          226.58,
+          733.24
+        ],
+        "knee_r": [
+          301.42,
+          733.24
+        ],
+        "neck": [
+          264.0,
+          211.64
+        ],
+        "root": [
+          264.0,
+          452.56
+        ],
+        "shoulder_l": [
+          214.88,
+          218.66
+        ],
+        "shoulder_r": [
+          313.12,
+          218.66
+        ],
+        "spine": [
+          264.0,
+          293.51
+        ],
+        "wrist_l": [
+          282.88,
+          327.46
+        ],
+        "wrist_r": [
+          245.12,
+          327.46
+        ]
+      },
       "marks": [],
       "pose": "hands_on_hips",
       "reference": "bob",
@@ -629,7 +721,9 @@
         "tone": "#202020"
       }
     ],
-    "seed": 2350649282
+    "place": "street",
+    "seed": 2350649282,
+    "time": "dusk"
   },
   "balloons": [
     {
@@ -664,6 +758,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.04,
+    "headroom": 0.05,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 1.17,
+    "shot": "full_shot"
+  },
   "captions": [],
   "description": "Full shot. A street at dusk. Bob, centre, hands on hips, surprised.",
   "format_version": 1,

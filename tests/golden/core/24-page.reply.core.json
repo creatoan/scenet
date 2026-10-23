@@ -296,6 +296,32 @@
           "width": 9.72
         }
       ],
+      "features": {
+        "brow_l": [
+          277.07,
+          128.04
+        ],
+        "brow_r": [
+          162.93,
+          128.04
+        ],
+        "eye_l": [
+          277.07,
+          171.53
+        ],
+        "eye_r": [
+          162.93,
+          171.53
+        ],
+        "mouth": [
+          220.0,
+          274.8
+        ],
+        "nose": [
+          220.0,
+          215.01
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -348,6 +374,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          306.97,
+          2188.15
+        ],
+        "ankle_r": [
+          133.03,
+          2188.15
+        ],
+        "elbow_l": [
+          220.44,
+          698.03
+        ],
+        "elbow_r": [
+          219.56,
+          698.03
+        ],
+        "head": [
+          220.0,
+          204.14
+        ],
+        "hip_l": [
+          306.97,
+          1024.92
+        ],
+        "hip_r": [
+          133.03,
+          1024.92
+        ],
+        "knee_l": [
+          306.97,
+          1650.02
+        ],
+        "knee_r": [
+          133.03,
+          1650.02
+        ],
+        "neck": [
+          220.0,
+          437.87
+        ],
+        "root": [
+          220.0,
+          997.74
+        ],
+        "shoulder_l": [
+          334.15,
+          454.18
+        ],
+        "shoulder_r": [
+          105.85,
+          454.18
+        ],
+        "spine": [
+          220.0,
+          628.12
+        ],
+        "wrist_l": [
+          -25.8,
+          654.62
+        ],
+        "wrist_r": [
+          465.8,
+          654.62
+        ]
+      },
       "marks": [],
       "pose": "arms_crossed",
       "reference": "bob",
@@ -933,7 +1025,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 792959499
+    "place": "street",
+    "seed": 792959499,
+    "time": "night"
   },
   "balloons": [
     {
@@ -967,6 +1061,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.1,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 2.72,
+    "shot": "medium_close_up"
+  },
   "captions": [],
   "description": "Medium close-up. A street at night, in the rain. Bob, centre, arms crossed.",
   "format_version": 1,

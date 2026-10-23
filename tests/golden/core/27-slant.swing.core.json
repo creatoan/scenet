@@ -316,6 +316,32 @@
           "width": 3.14
         }
       ],
+      "features": {
+        "brow_l": [
+          431.35,
+          58.74
+        ],
+        "brow_r": [
+          394.51,
+          58.74
+        ],
+        "eye_l": [
+          431.35,
+          72.77
+        ],
+        "eye_r": [
+          394.51,
+          72.77
+        ],
+        "mouth": [
+          412.93,
+          106.1
+        ],
+        "nose": [
+          412.93,
+          86.81
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -368,6 +394,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          441.0,
+          723.61
+        ],
+        "ankle_r": [
+          384.86,
+          723.61
+        ],
+        "elbow_l": [
+          413.07,
+          242.7
+        ],
+        "elbow_r": [
+          412.79,
+          242.7
+        ],
+        "head": [
+          412.93,
+          83.3
+        ],
+        "hip_l": [
+          441.0,
+          348.19
+        ],
+        "hip_r": [
+          384.86,
+          348.19
+        ],
+        "knee_l": [
+          441.0,
+          549.94
+        ],
+        "knee_r": [
+          384.86,
+          549.94
+        ],
+        "neck": [
+          412.93,
+          158.73
+        ],
+        "root": [
+          412.93,
+          339.42
+        ],
+        "shoulder_l": [
+          449.77,
+          164.0
+        ],
+        "shoulder_r": [
+          376.09,
+          164.0
+        ],
+        "spine": [
+          412.93,
+          220.13
+        ],
+        "wrist_l": [
+          333.6,
+          228.68
+        ],
+        "wrist_r": [
+          492.26,
+          228.68
+        ]
+      },
       "marks": [],
       "pose": "arms_crossed",
       "reference": "bob",
@@ -637,9 +729,20 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 2159662720
+    "place": "street",
+    "seed": 2159662720,
+    "time": "night"
   },
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.04,
+    "headroom": 0.05,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 0.88,
+    "shot": "full_shot"
+  },
   "captions": [],
   "description": "Full shot. A street at night. Bob, centre, arms crossed, surprised.",
   "format_version": 1,

@@ -26,6 +26,7 @@ from scenet.core import (
     CoreAtmosphere,
     CoreBackdrop,
     CoreBalloon,
+    CoreCamera,
     CoreCaption,
     CoreFigure,
     CoreFont,
@@ -62,9 +63,10 @@ from scenet.frontends.yaml_front import (
 from scenet.geom import BBox, Vector, rounded
 from scenet.geom import Point as GeomPoint
 from scenet.images import SuppliedImage, load_image
-from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, Side
+from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, SettingSpec, Side
 from scenet.lettering import Lettering, typeface_for
 from scenet.paths import Folder
+from scenet.places import place_of
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
@@ -383,6 +385,7 @@ PRESERVE_ASPECT_RATIO: dict[Fit, Literal["xMidYMid slice", "xMidYMid meet"]] = {
 def _core_backdrop(
     backdrop: ResolvedBackdrop | None,
     image: SuppliedImage | None,
+    setting: SettingSpec,
     keep_out: Sequence[Sequence[GeomPoint]] = (),
 ) -> CoreBackdrop | None:
     """Reduce a resolved backdrop to its serialisable Core twin.
@@ -390,7 +393,8 @@ def _core_backdrop(
     Rounding happens here, as it does for every other tier boundary, so that a Core
     document is byte-identical across platforms whose float formatting differs in the
     last digit. The picture's facts -- its path, type and digest -- join the rectangle
-    the solver placed it in here, since the solver was told nothing but its size.
+    the solver placed it in here, since the solver was told nothing but its size. The
+    place and the hour are the setting's, except over a picture, which holds its own.
     """
     if backdrop is None:
         return None
@@ -412,6 +416,8 @@ def _core_backdrop(
             keep_out=tuple(round_pairs(tuple(region)) for region in keep_out),
         ),
         seed=backdrop.seed,
+        place=None if image is not None else place_of(setting.masses),
+        time=None if image is not None else setting.time,
         masses=tuple(
             CoreMass(
                 id=mass.id,
@@ -615,6 +621,7 @@ def compile_ir(
         if figure.name in playing
     )
     said = labels(script)
+    looked_at = panel.gaze_targets()
     core = PanelCore(
         width=width,
         height=rounded(panel.panel.height),
@@ -659,6 +666,15 @@ def compile_ir(
                     for blob in posed[placement.actor_id].blobs
                 ),
                 depth=placement.depth,
+                joints={
+                    name: point_pair(point)
+                    for name, point in sorted(posed[placement.actor_id].joints.items())
+                },
+                features={
+                    feature.value: point_pair(resolved.centre)
+                    for feature, resolved in sorted(posed[placement.actor_id].features.items())
+                },
+                looking_at=looked_at.get(placement.actor_id),
             )
             for placement in placements
         ),
@@ -703,7 +719,7 @@ def compile_ir(
             )
             for caption in layout.captions
         ),
-        backdrop=_core_backdrop(backdrop, image, picture.keep_out),
+        backdrop=_core_backdrop(backdrop, image, panel.setting, picture.keep_out),
         figures=tuple(
             CoreFigure(
                 figure=figure.name,
@@ -726,6 +742,17 @@ def compile_ir(
         },
         description=describe(panel, where, width),
         direction=panel.direction,
+        camera=None
+        if camera is None
+        else CoreCamera(
+            shot=camera.shot,
+            angle=panel.camera.angle,
+            reference=camera.reference,
+            scale=rounded(camera.scale),
+            headroom=rounded(camera.headroom),
+            footroom=rounded(camera.footroom),
+            pullback=rounded(camera.pullback),
+        ),
     )
     return CompileResult(
         core=core,

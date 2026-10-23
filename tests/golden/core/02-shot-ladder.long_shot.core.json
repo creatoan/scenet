@@ -296,6 +296,32 @@
           "width": 1.58
         }
       ],
+      "features": {
+        "brow_l": [
+          159.49,
+          167.45
+        ],
+        "brow_r": [
+          178.01,
+          167.45
+        ],
+        "eye_l": [
+          159.49,
+          174.39
+        ],
+        "eye_r": [
+          178.01,
+          174.39
+        ],
+        "mouth": [
+          168.75,
+          191.52
+        ],
+        "nose": [
+          168.75,
+          181.8
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -340,6 +366,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          154.86,
+          504.0
+        ],
+        "ankle_r": [
+          182.64,
+          504.0
+        ],
+        "elbow_l": [
+          159.13,
+          264.24
+        ],
+        "elbow_r": [
+          228.3,
+          224.52
+        ],
+        "head": [
+          168.75,
+          179.95
+        ],
+        "hip_l": [
+          154.86,
+          314.2
+        ],
+        "hip_r": [
+          182.64,
+          314.2
+        ],
+        "knee_l": [
+          154.86,
+          416.04
+        ],
+        "knee_r": [
+          182.64,
+          416.04
+        ],
+        "neck": [
+          168.75,
+          217.91
+        ],
+        "root": [
+          168.75,
+          309.57
+        ],
+        "shoulder_l": [
+          153.01,
+          220.68
+        ],
+        "shoulder_r": [
+          184.49,
+          220.68
+        ],
+        "spine": [
+          168.75,
+          249.39
+        ],
+        "wrist_l": [
+          164.8,
+          304.58
+        ],
+        "wrist_r": [
+          268.88,
+          228.07
+        ]
+      },
       "marks": [],
       "pose": "pointing",
       "reference": "alice",
@@ -353,6 +445,15 @@
   ],
   "backdrop": null,
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.1,
+    "headroom": 0.28,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 0.46,
+    "shot": "long_shot"
+  },
   "captions": [],
   "description": "Long shot. Alice, centre, pointing.",
   "format_version": 1,

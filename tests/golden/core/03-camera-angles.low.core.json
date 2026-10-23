@@ -296,6 +296,32 @@
           "width": 10.12
         }
       ],
+      "features": {
+        "brow_l": [
+          190.53,
+          98.96
+        ],
+        "brow_r": [
+          309.47,
+          98.96
+        ],
+        "eye_l": [
+          190.53,
+          144.27
+        ],
+        "eye_r": [
+          309.47,
+          144.27
+        ],
+        "mouth": [
+          250.0,
+          251.88
+        ],
+        "nose": [
+          250.0,
+          189.58
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -340,6 +366,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          159.38,
+          2245.41
+        ],
+        "ankle_r": [
+          340.62,
+          2245.41
+        ],
+        "elbow_l": [
+          35.18,
+          702.2
+        ],
+        "elbow_r": [
+          464.82,
+          702.2
+        ],
+        "head": [
+          250.0,
+          178.25
+        ],
+        "hip_l": [
+          159.38,
+          1033.43
+        ],
+        "hip_r": [
+          340.62,
+          1033.43
+        ],
+        "knee_l": [
+          159.38,
+          1684.73
+        ],
+        "knee_r": [
+          340.62,
+          1684.73
+        ],
+        "neck": [
+          250.0,
+          421.78
+        ],
+        "root": [
+          250.0,
+          1005.12
+        ],
+        "shoulder_l": [
+          131.07,
+          438.77
+        ],
+        "shoulder_r": [
+          368.93,
+          438.77
+        ],
+        "spine": [
+          250.0,
+          620.0
+        ],
+        "wrist_l": [
+          295.7,
+          702.2
+        ],
+        "wrist_r": [
+          204.3,
+          702.2
+        ]
+      },
       "marks": [],
       "pose": "hands_on_hips",
       "reference": "bob",
@@ -353,6 +445,15 @@
   ],
   "backdrop": null,
   "balloons": [],
+  "camera": {
+    "angle": "low",
+    "footroom": 0.0,
+    "headroom": 0.05,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 2.83,
+    "shot": "medium_close_up"
+  },
   "captions": [],
   "description": "Medium close-up, from a low angle. Bob, centre, hands on hips.",
   "format_version": 1,

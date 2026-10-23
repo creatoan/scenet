@@ -316,6 +316,32 @@
           "width": 14.93
         }
       ],
+      "features": {
+        "brow_l": [
+          242.44,
+          150.94
+        ],
+        "brow_r": [
+          417.56,
+          150.94
+        ],
+        "eye_l": [
+          242.44,
+          216.61
+        ],
+        "eye_r": [
+          417.56,
+          216.61
+        ],
+        "mouth": [
+          330.0,
+          378.59
+        ],
+        "nose": [
+          330.0,
+          286.65
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -360,6 +386,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          198.67,
+          3333.6
+        ],
+        "ankle_r": [
+          461.33,
+          3333.6
+        ],
+        "elbow_l": [
+          217.4,
+          1068.7
+        ],
+        "elbow_r": [
+          442.6,
+          1068.7
+        ],
+        "head": [
+          330.0,
+          269.14
+        ],
+        "hip_l": [
+          198.67,
+          1538.7
+        ],
+        "hip_r": [
+          461.33,
+          1538.7
+        ],
+        "knee_l": [
+          198.67,
+          2501.82
+        ],
+        "knee_r": [
+          461.33,
+          2501.82
+        ],
+        "neck": [
+          330.0,
+          628.12
+        ],
+        "root": [
+          330.0,
+          1494.93
+        ],
+        "shoulder_l": [
+          181.15,
+          654.39
+        ],
+        "shoulder_r": [
+          478.85,
+          654.39
+        ],
+        "spine": [
+          330.0,
+          925.81
+        ],
+        "wrist_l": [
+          250.98,
+          1452.48
+        ],
+        "wrist_r": [
+          409.02,
+          1452.48
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "alice",
@@ -1105,7 +1197,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 357199600
+    "place": "street",
+    "seed": 357199600,
+    "time": "night"
   },
   "balloons": [
     {
@@ -1139,6 +1233,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 4.38,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street at night, in the rain. Alice, centre, surprised.",
   "format_version": 1,

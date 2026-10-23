@@ -46,7 +46,7 @@ from scenet.ir import (
     TypeSize,
     Weather,
 )
-from scenet.places import PLACES, Place
+from scenet.places import Place, place_of
 
 __all__ = [
     "ANGLES",
@@ -241,11 +241,10 @@ def _shot(panel: PanelIR) -> str:
 
 def _place(setting: SettingSpec) -> str:
     """Where, from the masses: a named place's, or indoors or out."""
-    masses = tuple(setting.masses)
-    for place in Place:
-        if PLACES[place] == masses:
-            return PLACE_NAMES[place]
-    return "Indoors" if any(mass.kind in INDOOR for mass in masses) else "Outdoors"
+    place = place_of(setting.masses)
+    if place is not None:
+        return PLACE_NAMES[place]
+    return "Indoors" if any(mass.kind in INDOOR for mass in setting.masses) else "Outdoors"
 
 
 def _setting(setting: SettingSpec) -> str:

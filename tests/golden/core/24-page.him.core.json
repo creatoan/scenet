@@ -296,6 +296,32 @@
           "width": 14.97
         }
       ],
+      "features": {
+        "brow_l": [
+          417.94,
+          150.75
+        ],
+        "brow_r": [
+          242.06,
+          150.75
+        ],
+        "eye_l": [
+          417.94,
+          217.75
+        ],
+        "eye_r": [
+          242.06,
+          217.75
+        ],
+        "mouth": [
+          330.0,
+          376.87
+        ],
+        "nose": [
+          330.0,
+          284.75
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -348,6 +374,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          464.0,
+          3324.85
+        ],
+        "ankle_r": [
+          196.0,
+          3324.85
+        ],
+        "elbow_l": [
+          469.74,
+          1066.23
+        ],
+        "elbow_r": [
+          190.26,
+          1066.23
+        ],
+        "head": [
+          330.0,
+          268.0
+        ],
+        "hip_l": [
+          464.0,
+          1532.61
+        ],
+        "hip_r": [
+          196.0,
+          1532.61
+        ],
+        "knee_l": [
+          464.0,
+          2495.73
+        ],
+        "knee_r": [
+          196.0,
+          2495.73
+        ],
+        "neck": [
+          330.0,
+          628.12
+        ],
+        "root": [
+          330.0,
+          1490.74
+        ],
+        "shoulder_l": [
+          505.87,
+          653.24
+        ],
+        "shoulder_r": [
+          154.13,
+          653.24
+        ],
+        "spine": [
+          330.0,
+          921.24
+        ],
+        "wrist_l": [
+          436.17,
+          1450.01
+        ],
+        "wrist_r": [
+          223.83,
+          1450.01
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
@@ -1093,7 +1185,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 357199600
+    "place": "street",
+    "seed": 357199600,
+    "time": "night"
   },
   "balloons": [
     {
@@ -1127,6 +1221,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 4.19,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street at night, in the rain. Bob, centre, happy.",
   "format_version": 1,

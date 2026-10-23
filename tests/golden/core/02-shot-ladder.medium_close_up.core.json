@@ -296,6 +296,32 @@
           "width": 8.59
         }
       ],
+      "features": {
+        "brow_l": [
+          -64.96,
+          113.96
+        ],
+        "brow_r": [
+          35.84,
+          113.96
+        ],
+        "eye_l": [
+          -64.96,
+          151.76
+        ],
+        "eye_r": [
+          35.84,
+          151.76
+        ],
+        "mouth": [
+          -14.56,
+          245.0
+        ],
+        "nose": [
+          -14.56,
+          192.08
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -340,6 +366,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          -90.16,
+          1946.0
+        ],
+        "ankle_r": [
+          61.04,
+          1946.0
+        ],
+        "elbow_l": [
+          -66.92,
+          640.83
+        ],
+        "elbow_r": [
+          309.61,
+          424.63
+        ],
+        "head": [
+          -14.56,
+          182.0
+        ],
+        "hip_l": [
+          -90.16,
+          912.8
+        ],
+        "hip_r": [
+          61.04,
+          912.8
+        ],
+        "knee_l": [
+          -90.16,
+          1467.2
+        ],
+        "knee_r": [
+          61.04,
+          1467.2
+        ],
+        "neck": [
+          -14.56,
+          388.64
+        ],
+        "root": [
+          -14.56,
+          887.6
+        ],
+        "shoulder_l": [
+          -100.24,
+          403.76
+        ],
+        "shoulder_r": [
+          71.12,
+          403.76
+        ],
+        "spine": [
+          -14.56,
+          560.0
+        ],
+        "wrist_l": [
+          -36.06,
+          860.43
+        ],
+        "wrist_r": [
+          530.53,
+          443.95
+        ]
+      },
       "marks": [],
       "pose": "pointing",
       "reference": "alice",
@@ -353,6 +445,15 @@
   ],
   "backdrop": null,
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.1,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 2.52,
+    "shot": "medium_close_up"
+  },
   "captions": [],
   "description": "Medium close-up. Alice, left, pointing.",
   "format_version": 1,

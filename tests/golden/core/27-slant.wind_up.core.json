@@ -316,6 +316,32 @@
           "width": 7.01
         }
       ],
+      "features": {
+        "brow_l": [
+          102.55,
+          122.66
+        ],
+        "brow_r": [
+          184.77,
+          122.66
+        ],
+        "eye_l": [
+          102.55,
+          153.49
+        ],
+        "eye_r": [
+          184.77,
+          153.49
+        ],
+        "mouth": [
+          143.66,
+          229.55
+        ],
+        "nose": [
+          143.66,
+          186.38
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -360,6 +386,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          81.99,
+          1617.16
+        ],
+        "ankle_r": [
+          205.33,
+          1617.16
+        ],
+        "elbow_l": [
+          100.95,
+          552.46
+        ],
+        "elbow_r": [
+          408.1,
+          376.08
+        ],
+        "head": [
+          143.66,
+          178.16
+        ],
+        "hip_l": [
+          81.99,
+          774.32
+        ],
+        "hip_r": [
+          205.33,
+          774.32
+        ],
+        "knee_l": [
+          81.99,
+          1226.57
+        ],
+        "knee_r": [
+          205.33,
+          1226.57
+        ],
+        "neck": [
+          143.66,
+          346.73
+        ],
+        "root": [
+          143.66,
+          753.76
+        ],
+        "shoulder_l": [
+          73.77,
+          359.06
+        ],
+        "shoulder_r": [
+          213.55,
+          359.06
+        ],
+        "spine": [
+          143.66,
+          486.52
+        ],
+        "wrist_l": [
+          126.12,
+          731.6
+        ],
+        "wrist_r": [
+          588.32,
+          391.85
+        ]
+      },
       "marks": [],
       "pose": "pointing",
       "reference": "alice",
@@ -629,7 +721,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 3489993227
+    "place": "street",
+    "seed": 3489993227,
+    "time": "night"
   },
   "balloons": [
     {
@@ -663,6 +757,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.1,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 2.06,
+    "shot": "medium_shot"
+  },
   "captions": [],
   "description": "Medium shot. A street at night. Alice, left, pointing, shouting.",
   "format_version": 1,

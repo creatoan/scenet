@@ -24,11 +24,12 @@ the listing order only decides ties within one plane -- but reading the list in 
 order it will be painted is what makes a preset reviewable.
 """
 
+from collections.abc import Sequence
 from enum import StrEnum
 
 from scenet.ir import Mass, MassKind, Plane, Spans
 
-__all__ = ["PLACES", "Place"]
+__all__ = ["PLACES", "Place", "place_of"]
 
 
 class Place(StrEnum):
@@ -143,3 +144,23 @@ PLACES: dict[Place, tuple[Mass, ...]] = {
         _mass(MassKind.GROUND, Plane.NEAR),
     ),
 }
+
+
+def place_of(masses: Sequence[Mass]) -> Place | None:
+    """The named place a list of masses is, or None for a list no place expands into.
+
+    A place reaches the IR as its masses and nothing else, so this is how a place is named
+    again afterwards: by its masses, whether `place:` wrote them or an author wrote the same
+    list out by hand. The description reads it, and Panel Core records it.
+
+    Example:
+        >>> place_of(PLACES[Place.DOCKS])
+        <Place.DOCKS: 'docks'>
+        >>> place_of(()) is None
+        True
+    """
+    written = tuple(masses)
+    for place in Place:
+        if PLACES[place] == written:
+            return place
+    return None

@@ -296,6 +296,32 @@
           "width": 1.58
         }
       ],
+      "features": {
+        "brow_l": [
+          440.74,
+          167.45
+        ],
+        "brow_r": [
+          459.26,
+          167.45
+        ],
+        "eye_l": [
+          440.74,
+          174.39
+        ],
+        "eye_r": [
+          459.26,
+          174.39
+        ],
+        "mouth": [
+          450.0,
+          191.52
+        ],
+        "nose": [
+          450.0,
+          181.8
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -340,6 +366,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          436.11,
+          504.0
+        ],
+        "ankle_r": [
+          463.89,
+          504.0
+        ],
+        "elbow_l": [
+          438.09,
+          264.5
+        ],
+        "elbow_r": [
+          461.91,
+          264.5
+        ],
+        "head": [
+          450.0,
+          179.95
+        ],
+        "hip_l": [
+          436.11,
+          314.2
+        ],
+        "hip_r": [
+          463.89,
+          314.2
+        ],
+        "knee_l": [
+          436.11,
+          416.04
+        ],
+        "knee_r": [
+          463.89,
+          416.04
+        ],
+        "neck": [
+          450.0,
+          217.91
+        ],
+        "root": [
+          450.0,
+          309.57
+        ],
+        "shoulder_l": [
+          434.26,
+          220.68
+        ],
+        "shoulder_r": [
+          465.74,
+          220.68
+        ],
+        "spine": [
+          450.0,
+          249.39
+        ],
+        "wrist_l": [
+          441.64,
+          305.08
+        ],
+        "wrist_r": [
+          458.36,
+          305.08
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "alice",
@@ -880,9 +972,20 @@
         "tone": "#383838"
       }
     ],
-    "seed": 3447943460
+    "place": "field",
+    "seed": 3447943460,
+    "time": "day"
   },
   "balloons": [],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.1,
+    "headroom": 0.28,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 0.46,
+    "shot": "long_shot"
+  },
   "captions": [],
   "description": "Long shot. A field by day. Alice, centre.",
   "format_version": 1,

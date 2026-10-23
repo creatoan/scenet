@@ -316,6 +316,32 @@
           "width": 11.4
         }
       ],
+      "features": {
+        "brow_l": [
+          303.09,
+          115.23
+        ],
+        "brow_r": [
+          169.41,
+          115.23
+        ],
+        "eye_l": [
+          303.09,
+          165.35
+        ],
+        "eye_r": [
+          169.41,
+          165.35
+        ],
+        "mouth": [
+          236.25,
+          289.01
+        ],
+        "nose": [
+          236.25,
+          218.83
+        ]
+      },
       "gaze": [
         -1.0,
         0.0
@@ -360,6 +386,72 @@
         ]
       ],
       "id": "alice",
+      "joints": {
+        "ankle_l": [
+          336.51,
+          2544.84
+        ],
+        "ankle_r": [
+          135.99,
+          2544.84
+        ],
+        "elbow_l": [
+          322.21,
+          815.83
+        ],
+        "elbow_r": [
+          150.29,
+          815.83
+        ],
+        "head": [
+          236.25,
+          205.46
+        ],
+        "hip_l": [
+          336.51,
+          1174.63
+        ],
+        "hip_r": [
+          135.99,
+          1174.63
+        ],
+        "knee_l": [
+          336.51,
+          1909.86
+        ],
+        "knee_r": [
+          135.99,
+          1909.86
+        ],
+        "neck": [
+          236.25,
+          479.5
+        ],
+        "root": [
+          236.25,
+          1141.21
+        ],
+        "shoulder_l": [
+          349.88,
+          499.55
+        ],
+        "shoulder_r": [
+          122.62,
+          499.55
+        ],
+        "spine": [
+          236.25,
+          706.75
+        ],
+        "wrist_l": [
+          296.57,
+          1108.81
+        ],
+        "wrist_r": [
+          175.93,
+          1108.81
+        ]
+      },
       "marks": [],
       "pose": "standing_neutral",
       "reference": "alice",
@@ -629,7 +721,9 @@
         "tone": "#383838"
       }
     ],
-    "seed": 3919619386
+    "place": "street",
+    "seed": 3919619386,
+    "time": "day"
   },
   "balloons": [
     {
@@ -663,6 +757,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 3.34,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A street by day. Alice, centre, scared.",
   "format_version": 1,

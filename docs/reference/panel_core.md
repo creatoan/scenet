@@ -25,7 +25,8 @@ going straight to pixels. The same split pays for itself here, in four ways:
 ## Properties
 
 - **Fully numeric.** Every position, size and scale is an absolute number in panel units. No
-  `left_third`, no `medium_shot` — those are resolved away.
+  `left_third`, no `medium_shot` — those are resolved away. The camera records the shot it was
+  asked for beside what it made of it, but nothing is drawn from the name.
 - **Still named.** Actors, balloons, captions and anchors keep their source identifiers, so a Core
   file is readable and diffable. This is what separates it from SVG.
 - **Deterministic.** Floats are rounded to a fixed precision on emission, so identical input yields
@@ -266,6 +267,43 @@ A panel read right to left carries `"direction": "rtl"`, the reason its letterin
 is: see [`direction`](language.md#direction). A panel read left to right has no `direction` key,
 so every Core written before it reads, and is written, byte for byte as before — no
 `format_version` bump.
+
+### The staging
+
+What the solver used and once threw away is recorded too, so that an export reading only this
+tier can say how the panel is staged (#72). From `examples/duel.panel.yaml`, and a backdrop
+set in a street at night:
+
+```json
+"camera": { "shot": "medium_shot", "angle": "eye_level", "reference": "alice", "scale": 1.94,
+            "headroom": 0.1, "footroom": 0.0, "pullback": 0.71 },
+"actors": [{
+  "id": "alice",
+  "joints": { "neck": [96.87, 355.74], "shoulder_l": [31.0, 367.37], "...": "..." },
+  "features": { "eye_l": [58.12, 173.62], "eye_r": [135.62, 173.62], "nose": [96.87, 204.62], "...": "..." },
+  "looking_at": "bob",
+  "...": "..."
+}],
+"backdrop": { "place": "street", "time": "night", "...": "..." }
+```
+
+- **`camera`** is the camera's verdict: the shot asked for and the angle, the puppet it was
+  composed on, the one scale every actor shares, the headroom and footroom as fractions of the
+  panel's height, and `pullback`, below 1 when the camera retreated to fit the cast. A panel whose
+  cast a picture draws has none: the artist framed it.
+- **`joints`** is where every joint of the skeleton landed, by the puppet's name for it. `_l` and
+  `_r` are the sides of the screen in the puppet's rest pose, so on a figure facing left
+  `shoulder_l` is on the right.
+- **`features`** is where each face feature point sits: the anatomy, not the marks, so the same
+  whatever the expression and present when the face is too small to draw.
+- **`looking_at`** is whom the actor looks at — an actor id, or somebody heard from off panel —
+  where `gaze_aim` is the direction.
+- **`place`** names the place the masses are, whether `place:` wrote them or an author wrote the
+  same list out; **`time`** is the hour the values were chosen for, which `atmosphere` records too
+  but only when something is in the air. Over a picture neither is known, and both are left out.
+
+None is read to draw the panel. Each is left out of a document that does not use it, so a Core
+written before them reads and writes back byte for byte — no `format_version` bump.
 
 ### The words
 

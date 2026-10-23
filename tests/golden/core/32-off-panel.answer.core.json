@@ -296,6 +296,32 @@
           "width": 14.3
         }
       ],
+      "features": {
+        "brow_l": [
+          366.0,
+          144.0
+        ],
+        "brow_r": [
+          534.0,
+          144.0
+        ],
+        "eye_l": [
+          366.0,
+          208.0
+        ],
+        "eye_r": [
+          534.0,
+          208.0
+        ],
+        "mouth": [
+          450.0,
+          360.0
+        ],
+        "nose": [
+          450.0,
+          272.0
+        ]
+      },
       "gaze": [
         1.0,
         0.0
@@ -348,6 +374,72 @@
         ]
       ],
       "id": "bob",
+      "joints": {
+        "ankle_l": [
+          322.0,
+          3176.0
+        ],
+        "ankle_r": [
+          578.0,
+          3176.0
+        ],
+        "elbow_l": [
+          449.36,
+          982.9
+        ],
+        "elbow_r": [
+          450.64,
+          982.9
+        ],
+        "head": [
+          450.0,
+          256.0
+        ],
+        "hip_l": [
+          322.0,
+          1464.0
+        ],
+        "hip_r": [
+          578.0,
+          1464.0
+        ],
+        "knee_l": [
+          322.0,
+          2384.0
+        ],
+        "knee_r": [
+          578.0,
+          2384.0
+        ],
+        "neck": [
+          450.0,
+          600.0
+        ],
+        "root": [
+          450.0,
+          1424.0
+        ],
+        "shoulder_l": [
+          282.0,
+          624.0
+        ],
+        "shoulder_r": [
+          618.0,
+          624.0
+        ],
+        "spine": [
+          450.0,
+          880.0
+        ],
+        "wrist_l": [
+          811.77,
+          919.0
+        ],
+        "wrist_r": [
+          88.23,
+          919.0
+        ]
+      },
       "marks": [],
       "pose": "arms_crossed",
       "reference": "bob",
@@ -539,7 +631,9 @@
         "tone": "#0e0e0e"
       }
     ],
-    "seed": 1830811023
+    "place": "room",
+    "seed": 1830811023,
+    "time": "night"
   },
   "balloons": [
     {
@@ -670,6 +764,15 @@
       }
     }
   ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.0,
+    "headroom": 0.08,
+    "pullback": 1.0,
+    "reference": "bob",
+    "scale": 4.0,
+    "shot": "close_up"
+  },
   "captions": [],
   "description": "Close-up. A room at night. Bob, centre, arms crossed.",
   "format_version": 1,
