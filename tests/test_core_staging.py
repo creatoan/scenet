@@ -252,3 +252,19 @@ class TestTheGallery:
         result = compile_file(ROOT / "examples" / "duel.panel.yaml")
         assert result.core.camera is not None
         assert all(actor.joints for actor in result.core.actors)
+
+
+class TestTheOrderOfActors:
+    def test_back_to_front_and_at_one_depth_left_to_right_as_staged(self):
+        """Not by id: `zed` is staged left of `amy` and comes first. The SVG breaks a tie at one
+        depth by id instead, which is the painter's order, not this list's."""
+        core = compile_source(
+            "panel: {size: [1000, 600]}\n"
+            "cast: {zed: {reference: alice}, amy: {reference: bob}, bea: {reference: alice}}\n"
+            "staging: [zed left_of amy, bea in_front_of amy]\n"
+        ).core
+        assert [(actor.id, actor.depth) for actor in core.actors] == [
+            ("zed", 0),
+            ("amy", 0),
+            ("bea", 1),
+        ]
