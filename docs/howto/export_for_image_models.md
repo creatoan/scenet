@@ -118,14 +118,19 @@ the frontmost white. Black is nothing nearer than infinity: the paper, the sky, 
 picture, whose content Scenet never saw. This runs the opposite way to Scenet's own backdrop
 tones, where far planes are paler, because a depth map is read white near.
 
-Both maps are the panel's exact size, as its SVG is, and drawn with crisp edges, so a
-rasteriser blends no two regions into a colour or grey that belongs to neither. A panel of
-whole units — the usual — is the pose's canvas exactly; one that is not, such as a panel on a
-page, is rounded up to whole pixels by the rasteriser, as the canvas is.
+Both maps are drawn on the pose's canvas, one unit to a pixel, so every export is on one pixel
+grid: a panel of part units, such as one on a page, is not stretched, and what lies past its
+edge is black. Edges are crisp, so a rasteriser blends no two regions into a colour or grey that
+belongs to neither.
 
 The mask fills each region in its own colour under the id the panel's SVG gives it —
-`actor-alice`, `mass-m0`, `figure-ana` — so the colour of each is read from the SVG itself. What
-each region is, a puppet or a kind of mass, is in the semantics under the same id.
+`actor-alice`, `mass-m0`, `figure-ana` — so the colour of each is read from the SVG itself. **A
+character keeps its colour** from panel to panel, since it comes from the character's name, and a
+figure a picture draws takes the colour of the part it plays: a regional prompt or an identity
+follows a character down the page. Two characters of one panel whose names land on one colour
+are settled by name, the later stepping to the next free one. Masses take paler, less saturated
+colours, which no character's can be. What each region is, a puppet or a kind of mass, is in the
+semantics under the same id.
 
 Both use the regions the solver used: an actor's hull, a mass's polygon, a figure's body and
 face. Not the mannequin's limbs: the export says *where* a character is, and the pose says how it
