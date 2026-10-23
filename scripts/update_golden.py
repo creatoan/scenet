@@ -135,7 +135,7 @@ def differences(written: dict[str, bytes]) -> list[str]:
         name for name in {*digests, *kept_digests} if digests.get(name) != kept_digests.get(name)
     )
     for picture, source in PICTURES.items():
-        if not picture.is_file() or picture.read_bytes() != written[source]:
+        if not picture.is_file() or picture.read_bytes() != written.get(source):
             names.append(str(picture.relative_to(ROOT).as_posix()))
     return names
 
