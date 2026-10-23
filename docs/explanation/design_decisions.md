@@ -243,7 +243,9 @@ it can make no layout decision and no model ever runs inside Scenet.
   own ladder runs the other way.
 - **A character keeps its mask colour across panels**, from a digest of its id, unless another
   character in the same panel has the same hue, in which case the later id (in sorted order)
-  takes the next free one. Masses take a less saturated band, so a wall is never a character. Every map
+  takes the next free one. Masses take a less saturated band, so a wall is never a character.
+  The semantics repeats each actor's and figure's colour, taken from the mask's own code, so a
+  tool maps colour to character without the SVG, and the two cannot disagree. Every map
   is on the pose's canvas, one unit to a pixel, with crisp edges, so no pixel holds a colour or
   grey that belongs to no region.
 - **Figures a picture draws** get boxes, mask regions and one depth plane in front of their

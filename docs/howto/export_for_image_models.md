@@ -128,7 +128,8 @@ The mask fills each region in its own colour under the id the panel's SVG gives 
 character keeps its colour across panels, unless another character in the same panel has the same
 hue, in which case the later id (in sorted order) takes the next free one.** The hue is one of 64,
 from the id, so with four characters in a panel that happens about one time in ten: read the
-colour from the SVG rather than assuming it. A figure a picture draws takes the colour of the part
+colour from the semantics, whose `actors` and `figures` each carry their `mask`, or from the
+SVG, rather than assuming it. A figure a picture draws takes the colour of the part
 it plays. Masses take paler, less saturated colours, which no character's can be. What each region is, a puppet or a kind of mass, is in the
 semantics under the same id.
 
@@ -141,10 +142,10 @@ the semantics lists them.
 
 Prompt dialects differ per model and change every few months, so Scenet hands over structure and
 leaves the prose to you: the shot and angle, the place, hour and weather, each actor's puppet,
-pose, expression, marks, facing, whom they look at and their depth, every figure a picture draws,
-and every balloon, caption and sound effect in reading order with its box — DiffSensei's dialog
-boxes. The `description` and each entry's `label` are Panel Core's, the words accessible output
-reads; nothing is phrased twice.
+pose, expression, marks, facing, whom they look at, their depth and their mask colour, every
+figure a picture draws with its mask colour, and every balloon, caption and sound effect in
+reading order with its box — DiffSensei's dialog boxes. The `description` and each entry's
+`label` are Panel Core's, the words accessible output reads; nothing is phrased twice.
 
 ## Right to left, figures, pictures
 

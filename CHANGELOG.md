@@ -56,7 +56,7 @@ below 1.0 means.
   figure as GLIGEN takes them, a depth map (stepped grey planes in painter's order, white near),
   an instance mask under the panel's own ids, where a character keeps its colour across panels
   unless another in the same panel has the same hue, and the semantics: camera, setting, cast
-  and lettering, as structure and never as a prompt. No model runs in Scenet: each is one more
+  with each character's mask colour, and lettering, as structure and never as a prompt. No model runs in Scenet: each is one more
   emitter reading Panel Core, text, JSON or SVG, byte-identical like the rest, and nothing is
   rasterised. The pose names left and right as OpenPose does, by the subject's side; a point
   outside the panel, an ear, or a joint a puppet does not name is `0, 0, 0`. Figures a picture
