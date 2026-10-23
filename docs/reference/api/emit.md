@@ -52,3 +52,8 @@ decision: everything it draws or says was already decided.
 
 ```{automodule} scenet.emit.mask
 ```
+
+## `scenet.emit.export`
+
+```{automodule} scenet.emit.export
+```

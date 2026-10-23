@@ -112,8 +112,8 @@ duel.panel.yaml      →  duel.svg
 
 Two outputs that would be the same file are a usage error, exit 2, and nothing is written: a
 panel named `page-1` beside a page, `strip` beside the strip, or `x.debug` or `x.depth` beside
-panel `x`'s overlay or depth map. One file silently replacing the other is the kind of loss Scenet refuses everywhere
-else. Names are compared ignoring case, as Windows and macOS compare them, so a document
+panel `x`'s overlay or depth map. One file silently replacing the other is the kind of loss
+Scenet refuses everywhere else. Names are compared ignoring case, as Windows and macOS compare them, so a document
 writes the same set of files everywhere. A panel name holding `/` or `\` cannot be part of
 a file name and is refused the same way.
 

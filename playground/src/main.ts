@@ -536,9 +536,12 @@ async function main(): Promise<void> {
         // One set of exports per panel: a document of several gets them from the command line.
         const none = lastGood?.conditioning == null;
         button.disabled = none;
-        button.title = none
-          ? "One panel at a time: `scenet build --conditioning` writes every panel's"
-          : "For image models, as `scenet build --conditioning` writes it";
+        button.title =
+          lastGood === undefined
+            ? "Nothing has compiled yet"
+            : none
+              ? "One panel at a time: `scenet build --conditioning` writes every panel's"
+              : "For image models, as `scenet build --conditioning` writes it";
         continue;
       }
       button.disabled = what !== "source" && lastGood === undefined;
@@ -561,7 +564,9 @@ async function main(): Promise<void> {
     if (what === "core") download(`${stem}.core.json`, textBlob(lastGood.core, "application/json"));
     const exported = lastGood.conditioning?.[what];
     if (exported !== undefined) {
-      const { filename, type } = conditioningFile(stem, what);
+      const model = editor.getModel() ?? modelFor("panel");
+      const panel = kindOf(model) === "panel" ? undefined : lastGood.panels[0];
+      const { filename, type } = conditioningFile(stem, what, panel);
       download(filename, textBlob(exported, type));
     }
     if (what === "png") {

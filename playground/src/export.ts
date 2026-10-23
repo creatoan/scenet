@@ -36,13 +36,19 @@ export const CONDITIONING: readonly Exported[] = [
   { suffix: ".semantics.json", label: "Semantics" },
 ];
 
-/** An export's filename, and the type its download is labelled with. */
+/**
+ * An export's filename, and the type its download is labelled with.
+ *
+ * @param panel - The panel's name when the document is a scene or a script: `scenet build`
+ *   names every panel of those, even a lone one, and only a panel document goes without.
+ */
 export function conditioningFile(
   stem: string,
   suffix: string,
+  panel?: string,
 ): { readonly filename: string; readonly type: string } {
   return {
-    filename: `${stem}${suffix}`,
+    filename: `${stem}${panel === undefined ? "" : `.${panel}`}${suffix}`,
     type: suffix.endsWith(".json") ? "application/json" : "image/svg+xml",
   };
 }

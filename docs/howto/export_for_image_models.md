@@ -118,6 +118,11 @@ the frontmost white. Black is nothing nearer than infinity: the paper, the sky, 
 picture, whose content Scenet never saw. This runs the opposite way to Scenet's own backdrop
 tones, where far planes are paler, because a depth map is read white near.
 
+Both maps are the panel's exact size, as its SVG is, and drawn with crisp edges, so a
+rasteriser blends no two regions into a colour or grey that belongs to neither. A panel of
+whole units — the usual — is the pose's canvas exactly; one that is not, such as a panel on a
+page, is rounded up to whole pixels by the rasteriser, as the canvas is.
+
 The mask fills each region in its own colour under the id the panel's SVG gives it —
 `actor-alice`, `mass-m0`, `figure-ana` — so the colour of each is read from the SVG itself. What
 each region is, a puppet or a kind of mass, is in the semantics under the same id.

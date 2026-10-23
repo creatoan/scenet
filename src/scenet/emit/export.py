@@ -8,7 +8,7 @@ runs and platforms.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import astuple, dataclass
 
 from scenet.core import PanelCore
 from scenet.emit.boxes import render_boxes
@@ -18,7 +18,8 @@ from scenet.emit.pose import render_pose
 from scenet.emit.semantics import render_semantics
 
 #: Each export, by the suffix its file takes after the panel's own name, in the order
-#: `scenet build --conditioning` writes them.
+#: `scenet build --conditioning` writes them -- which is also the order of the fields of
+#: :class:`Conditioning <scenet.emit.export.Conditioning>`, the one place it is written.
 EXPORTS: tuple[tuple[str, Callable[[PanelCore], str]], ...] = (
     (".pose.json", render_pose),
     (".boxes.json", render_boxes),
@@ -57,13 +58,8 @@ class Conditioning:
             >>> [suffix for suffix, _ in exports.files()]
             ['.pose.json', '.boxes.json', '.depth.svg', '.mask.svg', '.semantics.json']
         """
-        return (
-            (".pose.json", self.pose),
-            (".boxes.json", self.boxes),
-            (".depth.svg", self.depth),
-            (".mask.svg", self.mask),
-            (".semantics.json", self.semantics),
-        )
+        texts: tuple[str, ...] = astuple(self)
+        return tuple(zip((suffix for suffix, _ in EXPORTS), texts, strict=True))
 
 
 def render_conditioning(core: PanelCore) -> Conditioning:
@@ -81,13 +77,7 @@ def render_conditioning(core: PanelCore) -> Conditioning:
         >>> 'id="actor-a"' in exports.mask, exports.depth.count('fill="#ffffff"')
         (True, 1)
     """
-    return Conditioning(
-        pose=render_pose(core),
-        boxes=render_boxes(core),
-        depth=render_depth(core),
-        mask=render_mask(core),
-        semantics=render_semantics(core),
-    )
+    return Conditioning(*(export(core) for _, export in EXPORTS))
 
 
 __all__ = ["EXPORTS", "Conditioning", "render_conditioning"]

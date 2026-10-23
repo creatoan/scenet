@@ -230,8 +230,10 @@ it can make no layout decision and no model ever runs inside Scenet.
 - **Left and right are the subject's.** Scenet names a joint by its side of the screen in the
   rest pose; OpenPose by the subject's side. Every Scenet body faces the reader, so the subject's
   right is the reader's left: `_l` facing right, `_r` facing left. A test pins both.
-- **A point the reader cannot see is missing.** Outside the frame or a slanted outline, an ear,
-  a joint the puppet does not name: `0, 0, 0`, as a detector run on the panel would report it.
+- **A point outside what the panel draws is missing.** Outside the frame or a slanted outline,
+  an ear, a joint the puppet does not name: `0, 0, 0`, as OpenPose writes a part it did not
+  detect. A joint behind a foreground mass, another actor or an inset is kept: the body is still
+  there, and a pose model is better told where.
 - **Regions are the geometric contract, not the mannequin.** Boxes, depth and masks use an
   actor's hull, a mass's polygon and a figure's body and face: where a character is, never
   Scenet's stand-in drawing of it, which a model would copy. Marks and sound effects are drawn

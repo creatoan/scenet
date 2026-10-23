@@ -426,7 +426,7 @@ def render_panel(
     pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
     lines = [f"Rendered {count}{pages if book.pages else ''}: {', '.join(results)}."]
     if conditioning:
-        lines.append("Each panel's staging is exported for image models after the SVG.")
+        lines.append("Each panel's staging is exported for image models, after the pages.")
     lines.extend(
         f"note ({name}): {note}" for name, result in results.items() for note in result.notes
     )

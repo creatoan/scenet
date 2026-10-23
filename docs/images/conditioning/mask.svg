@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620" shape-rendering="crispEdges">
   <rect x="0" y="0" width="1100" height="620" fill="#000000"/>
   <polygon id="mass-m0" points="0,0 1100,0 1100,341 0,341" fill="#ff4040"/>
   <polygon id="mass-m1" points="0,341 0,209.72 123.2,209.72 123.2,232.22 246.4,232.22 246.4,209.72 369.6,209.72 369.6,254.73 492.8,254.73 492.8,179.71 616,179.71 616,341" fill="#3360cc"/>
