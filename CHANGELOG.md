@@ -51,6 +51,8 @@ below 1.0 means.
 
 ### Added
 
+- **`scenet build --watch`** rebuilds when the source or compilation dependencies change, with debounced saves and recovery after failed builds. The optional `watch` extra installs the file-watching dependency.
+
 - **Export a panel's staging for image models** (#72): `scenet build --conditioning` writes five
   files beside each panel's SVG — the pose as OpenPose COCO-18 JSON, a phrase and a box per
   figure as GLIGEN takes them, a depth map (stepped grey planes in painter's order, white near),
