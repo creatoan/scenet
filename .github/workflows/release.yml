@@ -15,7 +15,7 @@ jobs:
   # burned for good.
   verify:
     name: Verify the tag is releasable
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,7 +50,7 @@ jobs:
   build:
     name: Build distributions
     needs: verify
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -81,7 +81,7 @@ jobs:
   extension:
     name: Package the VS Code extension
     needs: verify
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -115,7 +115,7 @@ jobs:
   site:
     name: Build the documentation site
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -151,7 +151,7 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: [build, extension, site]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Skipped until the repository variable PYPI_TRUSTED_PUBLISHER is "true".
     #
     # A trusted publisher has to be registered on pypi.org through a web form -- there
@@ -202,7 +202,7 @@ jobs:
       && needs.site.result == 'success'
       && needs.publish.result != 'failure'
       && needs.publish.result != 'cancelled'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write # to create the release
     steps:

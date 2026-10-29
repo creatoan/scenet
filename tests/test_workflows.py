@@ -473,3 +473,24 @@ class TestDependencyReview:
     def test_the_queue_compares_the_commit_it_queued(self, step: dict[Any, Any]):
         assert "merge_group.base_sha" in step["with"]["base-ref"]
         assert "merge_group.head_sha" in step["with"]["head-ref"]
+
+
+UBUNTU = "ubuntu-26.04"
+
+
+def test_every_linux_job_runs_on_the_one_pinned_image():
+    """`ubuntu-latest` moves between images over weeks, so a build can land on either.
+
+    Moving to a newer Ubuntu is a decision made here, in this one constant and the files
+    it names, after the workflows have passed on it -- not something that happens to the
+    next release.
+    """
+    runners = {
+        path.name: {
+            str(job["runs-on"])
+            for job in yaml.safe_load(path.read_text(encoding="utf-8"))["jobs"].values()
+            if str(job.get("runs-on", "")).startswith("ubuntu-")
+        }
+        for path in WORKFLOWS.glob("*.yml")
+    }
+    assert {name: images for name, images in runners.items() if images - {UBUNTU}} == {}
