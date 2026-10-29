@@ -232,7 +232,9 @@ class CoreMass(CoreModel):
     Attributes:
         id: Stable identifier, `m0`, `m1`, ... back to front.
         kind: What the mass is made of. Carried so a Core document stays readable -- it
-            is not consulted when drawing, since the tone is already resolved.
+            is not consulted when drawing, since the tone is already resolved. The depth
+            export reads it: the sky is at infinity, and a ground, floor, water or ceiling
+            recedes.
         plane: How far back it sits.
         depth: Painter's order, shared with the actors. Backdrop planes are negative;
             a foreground mass sits above the frontmost actor.

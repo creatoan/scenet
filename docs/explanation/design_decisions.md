@@ -241,6 +241,13 @@ it can make no layout decision and no model ever runs inside Scenet.
 - **Depth is a painter's order, said as one.** Even grey steps by rank, white nearest, black for
   the paper, the sky and a supplied picture: there is no metric depth to give, and the backdrop's
   own ladder runs the other way.
+- **A surface that lies flat recedes** (#227). A ground, floor or water is a straight ramp from its
+  own step at the horizon to the farthest figure's step at the bottom edge, and a ceiling the same
+  ramp upward. Through a pinhole camera, a flat surface's inverse depth is linear in screen height,
+  so the straight ramp is perspective's own shape. This bends "ranks, not distances" a little: the
+  ramp claims that the surface recedes to its horizon, which its kind already says, and still no
+  distance between two regions. Its ends keep the ladder: never darker than its own step, never
+  paler than a figure standing on it.
 - **A character keeps its mask colour across panels**, from a digest of its id, unless another
   character in the same panel has the same hue, in which case the later id (in sorted order)
   takes the next free one. Masses take a less saturated band, so a wall is never a character.

@@ -10,6 +10,24 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.12.0.**
+
+- **The depth map of every panel with a ground, floor, water or ceiling changes once** (#227),
+  and with it the bytes of its `.depth.svg`: regenerate golden depth maps of your own. Nothing
+  else changes, Panel Core included.
+
+### Changed
+
+- **A ground, floor or stretch of water recedes in the depth export** (#227), instead of standing
+  as one flat grey that a depth model reads as a wall. Each is a straight vertical ramp from its own
+  step at the horizon to the farthest figure's step at the bottom edge, white when every figure
+  is; a ceiling is the same ramp running up to the top edge. A flat surface's inverse depth is
+  linear in screen height, so the straight ramp is the shape perspective gives. The ramp is never
+  darker than its plane's step, so the painter's order holds, and never paler than a figure
+  standing on it. A ground in the foreground plane stays flat, and so does every other kind. Each
+  ramped region's paint names its step as the fallback. A hand-edited Core with no horizon has
+  each surface recede from its own far edge.
+
 ## [0.12.0] - 2026-10-29
 
 **Upgrading from 0.11.1.**

@@ -602,6 +602,12 @@ Two conventions were taken as they are. OpenPose's left and right are the subjec
 body facing the reader is the reader's other side. ControlNet's depth maps run white near and black
 far ([ComfyUI's depth tutorial](https://docs.comfy.org/tutorials/controlnet/depth-controlnet)),
 the reverse of the backdrop's aerial-perspective ladder above, so the depth export has its own.
+What white means is MiDaS's relative inverse depth (Ranftl et al., TPAMI 2022,
+[arXiv 1907.01341](https://arxiv.org/abs/1907.01341)), and the depth ControlNet the export was
+checked against, [`control_v11f1p_sd15_depth`](https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth),
+is by its own card not trained on any one estimator's depth. Inverse depth is why a ground recedes
+as a straight vertical ramp (#227): on a flat surface it is proportional to the distance below the
+horizon on screen.
 
 Deliberately not taken: a prompt. Two drafts behind #72 proposed a `scenet prompt` turning a
 panel into positive and negative prompt strings. Dialects differ per model and change every few

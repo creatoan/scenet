@@ -23,7 +23,7 @@ Five files land beside `duel.svg`:
 |---|---|---|
 | `duel.pose.json` | Each actor's skeleton, [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md) COCO-18 | ControlNet's OpenPose tooling: ComfyUI's `POSE_KEYPOINT`, the WebUI pose editor |
 | `duel.boxes.json` | A phrase and a box per figure | GLIGEN, and box-conditioned models after it |
-| `duel.depth.svg` | Stepped grey planes, white near, black far | ControlNet depth, once rasterised |
+| `duel.depth.svg` | Grey planes in painter's order, white near, black far; floors recede | ControlNet depth, once rasterised |
 | `duel.mask.svg` | Each figure and backdrop mass in its own flat colour | Regional prompting, inpainting per figure |
 | `duel.semantics.json` | Camera, setting, cast and lettering, as structure | Whatever writes your prompt |
 
@@ -51,7 +51,7 @@ one-panel document in its Download menu.
 
 ![The docks at noon, Alice and Bob on the quay, as Scenet draws them](../images/conditioning/panel.svg)
 
-![Its depth map: the sky black, the docks' far, middle and near planes stepping paler, the two figures white](../images/conditioning/depth.svg)
+![Its depth map: the sky black, the far warehouses and pilings in flat steps, the water and the quay paling from the horizon toward the bottom edge, the two figures white](../images/conditioning/depth.svg)
 
 ![Its mask: every figure and mass in a colour of its own](../images/conditioning/mask.svg)
 
@@ -117,6 +117,29 @@ flat grey planes in that order, each depth present one even step paler than the 
 the frontmost white. Black is nothing nearer than infinity: the paper, the sky, and a supplied
 picture, whose content Scenet never saw. This runs the opposite way to Scenet's own backdrop
 tones, where far planes are paler, because a depth map is read white near.
+
+A ground, a floor or a stretch of water is different: it runs from the reader's feet to the
+horizon, and one flat grey would tell a model it is a wall at one distance, with the figures
+pasted in front of it. Depth models read relative *inverse* depth, and a flat ground seen through
+a camera has an inverse depth that grows in step with how far below the horizon it is seen. So
+each of those is a straight ramp, from its own step at the horizon down to the panel's bottom
+edge; a ceiling is the same ramp running up to the top edge. The two ends are chosen to keep what
+the steps say:
+
+- **At the horizon, the surface's own step.** It is never darker than its plane, so it is never
+  behind anything the painter's order puts behind it. Scenet stands every wall and building on
+  the horizon line, so true depth there, black, would put the ground behind what stands on it.
+- **At the edge, the step of the farthest figure**, white when every figure is. No figure is ever
+  darker than the floor at its feet. In the alley, where a wall in the foreground is white and
+  Alice one step below it, the ground stops at her grey.
+- **A ramp that would not get paler stays flat**: a ground in the `foreground` plane is drawn over
+  the cast, already a step above every actor.
+
+Everything else keeps its flat step. A ramped region's paint names its step as the fallback,
+`fill="url(#ramp-4) #bfbfbf"`, so a renderer that cannot resolve the gradient draws the step, and
+reading a region's grey from its `fill` reads its step either way. A Panel Core edited by hand to
+set no horizon has its surfaces recede from their own far edge instead: a ground's top, a
+ceiling's bottom.
 
 Both maps are drawn on the pose's canvas, one unit to a pixel, so every export is on one pixel
 grid: a panel of part units, such as one on a page, is not stretched, and what lies past its

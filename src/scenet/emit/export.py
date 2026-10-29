@@ -1,10 +1,10 @@
 """Every export of a panel's staging for image models, at once (#72).
 
 Five files, each another emitter reading Panel Core alone: the pose as OpenPose JSON, boxes
-with phrases, a stepped depth map, an instance mask, and the semantics as structure. **No model
-runs in Scenet** -- what a reader feeds these to is outside the pipeline, as a tracing over the
-SVG would be -- and nothing is rasterised: text, JSON and SVG only, each byte-identical across
-runs and platforms.
+with phrases, a depth map in painter's order, an instance mask, and the semantics as
+structure. **No model runs in Scenet** -- what a reader feeds these to is outside the pipeline,
+as a tracing over the SVG would be -- and nothing is rasterised: text, JSON and SVG only, each
+byte-identical across runs and platforms.
 """
 
 from collections.abc import Callable
