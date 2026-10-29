@@ -10,6 +10,8 @@ below 1.0 means.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-29
+
 **Upgrading from 0.11.1.**
 
 - **A font path written with `\` between folders is refused**, on Windows as everywhere else:
@@ -1477,7 +1479,9 @@ or has drifted out of step with the code fails the build.
 - `long_shot` and `full_shot` crop at the same landmark, so with no environment to show
   they can differ only by headroom.
 
-[Unreleased]: https://github.com/creatoan/scenet/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/creatoan/scenet/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/creatoan/scenet/compare/v0.11.1...v0.12.0
+[0.11.1]: https://github.com/creatoan/scenet/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/creatoan/scenet/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/creatoan/scenet/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/creatoan/scenet/compare/v0.8.0...v0.9.0
