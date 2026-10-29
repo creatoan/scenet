@@ -4,6 +4,11 @@ Scenet is orthographic and has no metric depth. What it has is a painter's order
 is flat grey planes in that order -- and honest about being nothing more. ControlNet's depth
 maps run white near, black far: the reverse of the backdrop's own ladder, where aerial
 perspective makes far planes paler. Reusing those tones would hand a model an inverted map.
+
+A ground, a floor, a stretch of water and a ceiling are not walls: they recede (#227). Each is a
+straight ramp from its own step at the horizon toward the reader, which is what a flat surface's
+inverse depth is through a pinhole camera. Its paint names its step as the fallback, so reading
+a region's fill reads its step, ramp or not.
 """
 
 import re
@@ -31,7 +36,20 @@ staging:
   - bob in_front_of carol
 """
 
-FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(#[0-9a-f]{6})"')
+#: A region's step: its flat fill, or the fallback a ramp's paint names.
+FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(?:url\(#ramp-\d+\) )?(#[0-9a-f]{6})"')
+
+GRADIENT = re.compile(
+    r'<linearGradient id="(ramp-\d+)" gradientUnits="userSpaceOnUse" '
+    r'x1="0" y1="([^"]+)" x2="0" y2="([^"]+)">'
+    r'<stop offset="0" stop-color="(#[0-9a-f]{6})"/>'
+    r'<stop offset="1" stop-color="(#[0-9a-f]{6})"/></linearGradient>'
+)
+
+PAINT = re.compile(r'id="([^"]+)"[^>]*? fill="url\(#(ramp-\d+)\) (#[0-9a-f]{6})"')
+
+#: The kinds that recede: three lie below the horizon, the ceiling above it.
+RECEDING = {"ground", "floor", "water", "ceiling"}
 
 
 def _fills(svg: str) -> dict[str, str]:
@@ -43,8 +61,45 @@ def _grey(fill: str) -> int:
     return int(fill[1:3], 16)
 
 
+def _ramps(svg: str) -> dict[str, tuple[float, float, int, int]]:
+    """Each ramped region's `(y1, y2, grey at y1, grey at y2)`, checking its fallback is y1's."""
+    gradients = {
+        ramp: (float(y1), float(y2), _grey(start), _grey(end))
+        for ramp, y1, y2, start, end in GRADIENT.findall(svg)
+    }
+    painted = PAINT.findall(svg)
+    assert len(gradients) == len(painted) == svg.count("<linearGradient")
+    for _, ramp, fallback in painted:
+        assert gradients[ramp][2] == _grey(fallback)
+    return {region: gradients[ramp] for region, ramp, _ in painted}
+
+
 def _street() -> PanelCore:
     return compile_source(STREET).core
+
+
+def _panel(setting: str) -> PanelCore:
+    """A long shot of Alice, centre, in a 900 by 560 panel: the horizon is at 308."""
+    return compile_source(
+        "panel: {size: [900, 560]}\ncamera: {shot: long_shot}\n"
+        f"setting: {setting}\ncast:\n  alice: {{reference: alice, at: center}}\n"
+    ).core
+
+
+DOCKS = "{place: docks}"
+ROOM = "{place: room}"
+ALLEY = "{place: alley}"
+FOREGROUND_GROUND = (
+    "{masses: [{kind: sky, plane: far}, {kind: ground, plane: near},"
+    " {kind: ground, plane: foreground}]}"
+)
+
+
+def _horizon(core: PanelCore, horizon: float | None) -> PanelCore:
+    assert core.backdrop is not None
+    return core.model_copy(
+        update={"backdrop": core.backdrop.model_copy(update={"horizon": horizon})}
+    )
 
 
 class TestTheLadder:
@@ -172,7 +227,139 @@ class TestOverAPicture:
         )
 
 
-@pytest.mark.parametrize("source", [STREET, "cast: {a: {reference: alice}}\n"])
+class TestARecedingSurface:
+    """A ground, floor or water ramps from the horizon down, a ceiling from it up (#227)."""
+
+    @pytest.mark.parametrize("setting", [DOCKS, ROOM, "{place: street}"])
+    def test_a_ground_floor_or_water_ramps_from_its_step_at_the_horizon_to_the_bottom(
+        self, setting: str
+    ):
+        core = _panel(setting)
+        svg = render_depth(core)
+        ramps, steps = _ramps(svg), _fills(svg)
+        assert core.backdrop is not None
+        lying = [m for m in core.backdrop.masses if m.kind in {"ground", "floor", "water"}]
+        assert lying
+        for mass in lying:
+            region = f"mass-{mass.id}"
+            assert ramps[region] == (308.0, 560.0, _grey(steps[region]), 255)
+            assert ramps[region][2] < 255
+
+    def test_a_ceiling_ramps_up_from_the_horizon_to_the_top_edge(self):
+        core = _panel(ROOM)
+        assert core.backdrop is not None
+        ceiling = next(m for m in core.backdrop.masses if m.kind == "ceiling")
+        assert _ramps(render_depth(core))[f"mass-{ceiling.id}"] == (308.0, 0.0, 128, 255)
+
+    @pytest.mark.parametrize("setting", [DOCKS, ROOM, ALLEY, "{place: street}"])
+    def test_nothing_else_ramps(self, setting: str):
+        core = _panel(setting)
+        svg = render_depth(core)
+        assert core.backdrop is not None
+        receding = {
+            f"mass-{m.id}" for m in core.backdrop.masses if m.kind in RECEDING and m.depth < 0
+        }
+        assert set(_ramps(svg)) == receding
+        flat = re.findall(r'id="([^"]+)"[^>]*? fill="#[0-9a-f]{6}"', svg)
+        assert set(flat) == set(_fills(svg)) - receding
+
+    def test_the_sky_stays_black(self):
+        core = _panel(DOCKS)
+        svg = render_depth(core)
+        assert '<polygon id="mass-m0" ' in svg
+        assert _fills(svg)["mass-m0"] == "#000000"
+        assert "mass-m0" not in _ramps(svg)
+
+    def test_over_a_picture_nothing_ramps(self):
+        assert "linearGradient" not in render_depth(_picture("{ANA: {figure: ana}}"))
+
+    def test_a_ramp_is_said_exactly_and_its_paint_falls_back_to_its_step(self):
+        svg = render_depth(_panel(DOCKS))
+        assert (
+            '  <linearGradient id="ramp-2" gradientUnits="userSpaceOnUse" x1="0" y1="308" x2="0"'
+            ' y2="560"><stop offset="0" stop-color="#808080"/>'
+            '<stop offset="1" stop-color="#ffffff"/></linearGradient>\n'
+        ) in svg
+        assert re.search(
+            r'<polygon id="mass-m2" points="[^"]+" fill="url\(#ramp-2\) #808080"/>', svg
+        )
+
+    def test_every_ramp_is_defined_after_the_paper_and_before_any_shape(self):
+        core = _panel(DOCKS)
+        outline = ((0.0, 0.0), (800.0, 0.0), (900.0, 560.0), (100.0, 560.0))
+        for svg in (render_depth(core), render_depth(core.model_copy(update={"outline": outline}))):
+            lines = svg.splitlines()
+            assert lines[2].startswith("  <rect ")
+            assert [line.startswith("  <linearGradient ") for line in lines[3:5]] == [True, True]
+            assert not any("<linearGradient" in line for line in lines[5:])
+
+    def test_a_ramp_ends_at_the_farthest_actor_s_step(self):
+        """In the alley Alice is a step below the foreground wall: the ground stops at her grey,
+        so it never comes out nearer than the feet standing on it."""
+        svg = render_depth(_panel(ALLEY))
+        steps = _fills(svg)
+        assert _grey(steps["actor-alice"]) == 170
+        assert steps["mass-m4"] == "#ffffff"
+        assert _ramps(svg) == {"mass-m3": (308.0, 560.0, 85, 170)}
+
+    def test_a_ground_in_the_foreground_stays_flat(self):
+        """It is drawn over the cast, a step above every actor: a ramp would only darken."""
+        svg = render_depth(_panel(FOREGROUND_GROUND))
+        assert _fills(svg)["mass-m2"] == "#ffffff"
+        assert _ramps(svg) == {"mass-m1": (308.0, 560.0, 85, 170)}
+
+    def test_with_nobody_in_front_a_ramp_ends_white_and_the_nearest_ground_is_flat(self):
+        core = _panel(DOCKS).model_copy(update={"actors": ()})
+        svg = render_depth(core)
+        assert _fills(svg)["mass-m4"] == "#ffffff"
+        assert _ramps(svg) == {"mass-m2": (308.0, 560.0, 170, 255)}
+
+    def test_without_a_horizon_a_surface_recedes_from_its_own_far_edge(self):
+        """A hand-edited backdrop may set none: a ground starts at its top, a ceiling at its
+        bottom."""
+        docks = _ramps(render_depth(_horizon(_panel(DOCKS), None)))
+        assert docks == {
+            "mass-m2": (300.44, 560.0, 128, 255),
+            "mass-m4": (408.8, 560.0, 191, 255),
+        }
+        room = _ramps(render_depth(_horizon(_panel(ROOM), None)))
+        assert room["mass-m4"] == (64.06, 0.0, 128, 255)
+        assert room["mass-m5"] == (308.0, 560.0, 191, 255)
+
+    @pytest.mark.parametrize("horizon", [560.0, 600.0])
+    def test_a_ground_with_no_room_to_recede_is_flat(self, horizon: float):
+        svg = render_depth(_horizon(_panel(DOCKS), horizon))
+        assert _ramps(svg) == {}
+        assert _fills(svg)["mass-m4"] == "#bfbfbf"
+
+    @pytest.mark.parametrize("horizon", [0.0, -10.0])
+    def test_a_ceiling_with_no_room_to_recede_is_flat(self, horizon: float):
+        svg = render_depth(_horizon(_panel(ROOM), horizon))
+        assert "mass-m4" not in _ramps(svg)
+        assert _fills(svg)["mass-m4"] == "#808080"
+        assert _ramps(svg)["mass-m5"] == (horizon, 560.0, 191, 255)
+
+    def test_a_ramp_is_named_by_its_place_never_by_the_mass(self):
+        """A hand-edited id is escaped in its attribute, but nothing keeps it inside `url()`."""
+        core = _panel(DOCKS)
+        assert core.backdrop is not None
+        masses = list(core.backdrop.masses)
+        masses[2] = masses[2].model_copy(update={"id": "m2) x"})
+        edited = core.model_copy(
+            update={"backdrop": core.backdrop.model_copy(update={"masses": tuple(masses)})}
+        )
+        svg = render_depth(edited)
+        assert re.findall(r"url\(#([^)]*)\)", svg) == ["ramp-2", "ramp-4"]
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        STREET,
+        "cast: {a: {reference: alice}}\n",
+        "panel: {size: [900, 560]}\nsetting: {place: room}\ncast: {alice: {reference: alice}}\n",
+    ],
+)
 def test_read_right_to_left_the_depth_is_the_same(source: str):
     source += "script:\n  - say: {by: alice, text: Hi.}\n" if "alice:" in source else ""
     ltr = compile_source(source).core

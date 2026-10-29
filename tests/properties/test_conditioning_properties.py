@@ -167,7 +167,19 @@ def test_every_panel_of_a_comic_script_exports(drawn: DrawnScript):
         assert len(people) == len(result.core.actors)
 
 
-FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(#[0-9a-f]{6})"')
+#: A region's colour: its flat fill, or, for a depth ramp (#227), the step its paint falls
+#: back to.
+FILL = re.compile(r'id="([^"]+)"[^>]*? fill="(?:url\(#ramp-\d+\) )?(#[0-9a-f]{6})"')
+
+RAMP = re.compile(
+    r'<linearGradient id="(ramp-\d+)" gradientUnits="userSpaceOnUse" x1="0" y1="([^"]+)" '
+    r'x2="0" y2="([^"]+)"><stop offset="0" stop-color="#([0-9a-f]{2})\4\4"/>'
+    r'<stop offset="1" stop-color="#([0-9a-f]{2})\5\5"/></linearGradient>'
+)
+
+PAINTED = re.compile(r'id="([^"]+)"[^>]*? fill="url\(#(ramp-\d+)\) #[0-9a-f]{6}"')
+
+RECEDING = {"ground", "floor", "water", "ceiling"}
 
 
 @given(panels())
@@ -246,3 +258,47 @@ def test_the_semantics_gives_each_figure_its_mask_colour(drawn: Drawn):
     assert [figure["mask"] for figure in payload["figures"]] == [
         fills[f"figure-{figure.figure}"] for figure in core.figures
     ]
+
+
+@given(panels())
+def test_a_surface_that_lies_flat_recedes_and_nothing_else_does(drawn: Drawn):
+    """A ground, floor, water or ceiling behind the cast ramps from its step at the horizon to
+    the farthest actor's step at the panel's edge, so no actor is darker than the floor at its
+    feet (#227). Everything else is flat."""
+    core = _compiled(drawn)
+    if core is None:
+        return
+    svg = render_depth(core)
+    steps = {name: int(fill[1:3], 16) for name, fill in FILL.findall(svg)}
+    ramps = {
+        ramp: (float(y1), float(y2), int(start, 16), int(end, 16))
+        for ramp, y1, y2, start, end in RAMP.findall(svg)
+    }
+    painted = dict(PAINTED.findall(svg))
+    assert len(ramps) == len(painted) == svg.count("<linearGradient")
+    edge = min((grey for name, grey in steps.items() if name.startswith("actor-")), default=255)
+    masses = core.backdrop.masses if core.backdrop is not None else ()
+    for mass in masses:
+        region = f"mass-{mass.id}"
+        if region not in painted:
+            assert mass.kind not in RECEDING or steps[region] >= edge
+            continue
+        assert core.backdrop is not None
+        assert core.backdrop.horizon is not None
+        assert mass.kind in RECEDING
+        y1, y2, start, end = ramps[painted[region]]
+        assert y1 == round(core.backdrop.horizon, 2)
+        assert y2 == (0.0 if mass.kind == "ceiling" else round(core.height, 2))
+        assert start == steps[region] < end == edge
+        assert all(end <= steps[f"actor-{actor.id}"] for actor in core.actors)
+
+
+@given(panels())
+def test_the_maps_are_the_same_bytes_every_time(drawn: Drawn):
+    core = _compiled(drawn)
+    if core is None:
+        return
+    again = compile_source(drawn.text, library=LIBRARY, base=drawn.base).core
+    written = PanelCore.from_json(core.to_json())
+    for export in (render_depth, render_mask):
+        assert export(core) == export(again) == export(written)
