@@ -339,6 +339,11 @@ class TestARecedingSurface:
         assert _fills(svg)["mass-m4"] == "#808080"
         assert _ramps(svg)["mass-m5"] == (horizon, 560.0, 191, 255)
 
+    def test_a_ceiling_with_a_horizon_just_below_the_top_still_recedes(self):
+        """Any room at all is room: the run is checked against the top edge, not a unit."""
+        ramps = _ramps(render_depth(_horizon(_panel(ROOM), 0.5)))
+        assert ramps["mass-m4"] == (0.5, 0.0, 128, 255)
+
     def test_a_ramp_is_named_by_its_place_never_by_the_mass(self):
         """A hand-edited id is escaped in its attribute, but nothing keeps it inside `url()`."""
         core = _panel(DOCKS)

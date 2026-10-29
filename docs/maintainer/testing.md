@@ -636,6 +636,19 @@ Each mutant killed was applied by hand to see its test fail.
 The second job of every run, exploring with fresh seeds, passed every property, the new ones for
 the exports included, at 300 examples.
 
+The depth export's receding surfaces (#227) added `recedes` and a ramped `render_depth` to
+`emit/depth.py`, and taught `flat_map` in `emit/conditioning.py` a `Ramp`. Both modules were run
+from the pull request's branch, each from nothing (the totals are every mutant of the module):
+
+- `emit/depth.py`, [`40952714050`](https://github.com/creatoan/scenet/actions/runs/40952714050):
+  81 mutants and 1 survivor, **killed**: `recedes` 25, a ceiling's run checked against `1.0`
+  instead of the top edge, so a horizon less than a unit below the top left it flat.
+  `test_a_ceiling_with_a_horizon_just_below_the_top_still_recedes` sets one at `0.5`; the mutant,
+  applied by hand, fails it.
+- `emit/conditioning.py`,
+  [`40952725859`](https://github.com/creatoan/scenet/actions/runs/40952725859): 188 mutants and 1
+  survivor, `to_json` 5, accepted above under the same number.
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random
