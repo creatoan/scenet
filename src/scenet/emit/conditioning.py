@@ -120,7 +120,8 @@ class Region:
         disc: A figure's face, which joins its body. None for anything else.
         depth: Painter's order, as Panel Core records it. None for a figure, which has
             none of its own.
-        sky: Whether it is sky, which is at infinity whatever plane it was filed under.
+        kind: What a mass is made of, which the depth map reads: the sky is at infinity,
+            and a ground, floor, water or ceiling recedes. None for an actor or a figure.
         who: The character it is, for an actor or a figure: the actor's id, or the part a
             figure plays -- or, uncast, its own name. None for a mass.
     """
@@ -129,8 +130,36 @@ class Region:
     polygon: tuple[tuple[float, float], ...]
     disc: Disc | None = None
     depth: int | None = None
-    sky: bool = False
+    kind: MassKind | None = None
     who: str | None = None
+
+    @property
+    def sky(self) -> bool:
+        """Whether it is sky, which is at infinity whatever plane it was filed under."""
+        return self.kind is MassKind.SKY
+
+
+@dataclass(frozen=True, slots=True)
+class Ramp:
+    """A fill that runs straight down or up the panel, from one colour to another (#227).
+
+    A linear gradient in the panel's own units with no slant, so everything at one height is
+    one colour; past either end, the colour is that end's. Its paint names `start` as the
+    fallback: a renderer that cannot resolve the gradient draws `start`, and so does a tool
+    reading a region's colour from its `fill`.
+
+    Attributes:
+        start: The colour at `begins`.
+        end: The colour at `ends`.
+        begins: Where it begins, in panel units down from the top edge.
+        ends: Where it ends: below `begins` for a ramp that runs down, above it for one that
+            runs up.
+    """
+
+    start: str
+    end: str
+    begins: float
+    ends: float
 
 
 def regions(core: PanelCore) -> list[Region]:
@@ -146,7 +175,7 @@ def regions(core: PanelCore) -> list[Region]:
             id=f"mass-{item.id}",
             polygon=item.polygon,
             depth=item.depth,
-            sky=item.kind is MassKind.SKY,
+            kind=item.kind,
         )
         if isinstance(item, CoreMass)
         else Region(id=f"actor-{item.id}", polygon=item.hull, depth=item.depth, who=item.id)
@@ -179,18 +208,33 @@ def _shape(region: Region, fill: str) -> str:
     )
 
 
-def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
-    """An SVG of flat fills on black, on the panel's canvas, clipped as the panel is.
+def _gradient(ramp_id: str, ramp: Ramp) -> str:
+    return (
+        f'  <linearGradient id="{ramp_id}" gradientUnits="userSpaceOnUse" '
+        f'x1="0" y1="{fmt(ramp.begins)}" x2="0" y2="{fmt(ramp.ends)}">'
+        f'<stop offset="0" stop-color="{ramp.start}"/>'
+        f'<stop offset="1" stop-color="{ramp.end}"/></linearGradient>'
+    )
+
+
+def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str | Ramp]]) -> str:
+    """An SVG of flat fills and ramps on black, on the panel's canvas, clipped as the panel is.
 
     Black is nothing: the paper, the sky, a supplied picture whose content the compiler
     never saw. A panel in a slanted tier is clipped to its outline; an inset over it is not
     there, since the panel's art is drawn under it as usual.
 
     Edges are crisp, `shape-rendering="crispEdges"`: an antialiased edge would blend two
-    regions into a colour, or a grey, that belongs to neither. The map is the pose's and the
-    boxes' canvas -- the panel rounded up to whole pixels, one unit to a pixel -- so every
-    export is on one pixel grid. Nothing is stretched: what lies past the panel's own edge,
-    under a pixel wide, is black, which is nothing.
+    regions into a colour, or a grey, that belongs to neither. A ramp's greys are all its own
+    region's. The map is the pose's and the boxes' canvas -- the panel rounded up to whole
+    pixels, one unit to a pixel -- so every export is on one pixel grid. Nothing is
+    stretched: what lies past the panel's own edge, under a pixel wide, is black, which is
+    nothing.
+
+    Each ramp is a gradient defined before any shape and named by the position of its
+    region in drawing order, `ramp-2`, never by the region's id: an id is whatever a Core
+    said, and while attribute escaping keeps one inside its quotes, nothing would keep it
+    inside `url(...)`.
 
     Args:
         core: The panel.
@@ -206,12 +250,19 @@ def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
         f'viewBox="0 0 {width} {height}" shape-rendering="crispEdges">',
         f'  <rect x="0" y="0" width="{width}" height="{height}" fill="#000000"/>',
     ]
+    shapes: list[str] = []
+    for index, (region, fill) in enumerate(fills):
+        if isinstance(fill, Ramp):
+            lines.append(_gradient(f"ramp-{index}", fill))
+            shapes.append(_shape(region, f"url(#ramp-{index}) {fill.start}"))
+        else:
+            shapes.append(_shape(region, fill))
     if core.outline is not None:
         lines.append(
             f'  <clipPath id="outline"><polygon points="{_points(core.outline)}"/></clipPath>'
         )
         lines.append('  <g clip-path="url(#outline)">')
-    lines.extend(_shape(region, fill) for region, fill in fills)
+    lines.extend(shapes)
     if core.outline is not None:
         lines.append("  </g>")
     lines.append("</svg>")
@@ -220,6 +271,7 @@ def flat_map(core: PanelCore, fills: Sequence[tuple[Region, str]]) -> str:
 
 __all__ = [
     "FRACTION_PLACES",
+    "Ramp",
     "Region",
     "canvas",
     "drawn_at",
