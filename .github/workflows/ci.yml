@@ -31,7 +31,7 @@ env:
 jobs:
   check:
     name: Lint, types and tests (Python ${{ matrix.python }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +109,7 @@ jobs:
 
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -135,7 +135,7 @@ jobs:
 
   licenses:
     name: Dependency licenses
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -164,7 +164,7 @@ jobs:
 
   typecheck-strict:
     name: Strict type check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # ty is pre-1.0 and is documented to miss some advanced typing patterns that pyright
     # catches, so this job covers the gap. It used to be `continue-on-error: true`, which
     # meant it failed on every single run while the run itself reported green -- 92
@@ -184,7 +184,7 @@ jobs:
 
   examples:
     name: Gallery diagnostics
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The gallery is the language's shop window and the playground's contents. A false
     # positive here would make `scenet check` useless the first time anybody ran it, and
     # a real one means a published example does not compile.
@@ -236,7 +236,7 @@ jobs:
 
   package:
     name: Package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # What `release.yml` checks before it publishes, checked on every pull request
     # instead: a file missing from the wheel or the sdist, or a README PyPI cannot
     # render, would otherwise show only once a tag is pushed. Nothing is published --
@@ -276,7 +276,7 @@ jobs:
 
   typescript:
     name: TypeScript
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The project rule is TypeScript wherever JavaScript would be used, with strict
     # enabled. That is only meaningful if something checks it.
     steps:
@@ -335,7 +335,7 @@ jobs:
 
   editor-e2e:
     name: Editor end to end
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The extension in a real VS Code, the oldest `engines.vscode` admits: activation, a
     # check on open and on save, each finding where it belongs, gone once fixed. The unit
     # tests cover what the extension decides; only an editor covers the glue, and the

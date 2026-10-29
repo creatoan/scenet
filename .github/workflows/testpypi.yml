@@ -22,7 +22,7 @@ permissions:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.value }}
     steps:
@@ -52,7 +52,7 @@ jobs:
   publish:
     name: Publish to TestPyPI
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: testpypi
       url: https://test.pypi.org/p/scenet
@@ -71,7 +71,7 @@ jobs:
   install:
     name: Install it back from TestPyPI
     needs: [build, publish]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 

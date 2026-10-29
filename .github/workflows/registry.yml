@@ -39,7 +39,7 @@ permissions:
 jobs:
   publish:
     name: List ${{ inputs.tag }} in the registry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       # The credential. Set on this job only: every other job in this repository would
