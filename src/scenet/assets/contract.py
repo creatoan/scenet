@@ -18,6 +18,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
 
 from scenet.errors import AssetError, UnknownExpressionError, UnknownPoseError, UnknownPuppetError
+from scenet.paths import record_dependency
 from scenet.safe_yaml import load
 
 __all__ = [
@@ -581,6 +582,7 @@ class PuppetLibrary:
         Files are visited in sorted order so that a duplicate-name collision reports the
         same offender on every platform, whatever order the filesystem hands them back.
         """
+        record_dependency(directory)
         puppets: dict[str, PuppetSpec] = {}
         # Sorted so that a duplicate-name collision reports the same offender on
         # every platform, whatever order the filesystem hands files back in.
@@ -650,6 +652,7 @@ def load_puppet(path: Path) -> PuppetSpec:
         :meth:`PuppetLibrary.from_directory <scenet.assets.contract.PuppetLibrary.from_directory>`,
         to read a whole directory at once.
     """
+    record_dependency(path)
     try:
         # A second `pointing:` used to replace the first without a word.
         data = load(path.read_text(encoding="utf-8"))

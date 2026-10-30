@@ -36,6 +36,7 @@ dependencies = [
 # docs/howto/drive_from_a_model.md.
 [project.optional-dependencies]
 mcp = ["mcp>=2.2"]
+watch = ["watchfiles>=1.1"]
 
 # Deliberately no `author_email`. A published address on PyPI is a well-known spam
 # magnet, and the project has no need for one: bug reports and questions belong in the
