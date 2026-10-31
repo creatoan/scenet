@@ -37,7 +37,7 @@ describe("laying the maps out", () => {
     assert.deepEqual(rows(4), [2, 2]);
     assert.deepEqual(rows(5), [3, 2]);
     assert.deepEqual(rows(9), [3, 3, 3]);
-    const xs = layoutMaps(sized(3)).maps.map((map) => map.x);
+    const xs = layoutMaps(sized(9)).maps.slice(0, 3).map((map) => map.x);
     assert.deepEqual(xs, [...xs].sort((one, other) => one - other), "left to right");
   });
 
