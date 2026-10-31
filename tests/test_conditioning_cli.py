@@ -5,6 +5,8 @@ Five files beside each panel's SVG, named after it: `.pose.json`, `.boxes.json`,
 bytes from any run and any working directory.
 """
 
+import io
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -14,11 +16,11 @@ from scenet import Conditioning, compile_source, render_conditioning
 from scenet.cli import main
 from scenet.emit.boxes import render_boxes
 from scenet.emit.depth import render_depth
-from scenet.emit.export import EXPORTS
+from scenet.emit.export import EXPORTS, conditioning_archive
 from scenet.emit.mask import render_mask
 from scenet.emit.pose import render_pose
 from scenet.emit.semantics import render_semantics
-from scenet.pipeline import compile_book
+from scenet.pipeline import compile_book, compile_book_file
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -185,3 +187,50 @@ def test_a_one_panel_scene_names_its_panel_and_a_panel_document_does_not(tmp_pat
     )
     assert main(["build", str(source), "--conditioning", "--quiet"]) == 0
     assert "story.one.pose.json" in _files(tmp_path)
+
+
+class TestTheArchive:
+    """Every panel's exports in one ZIP, which is how the playground offers a document's (#238).
+
+    Under the names `build --conditioning` writes, holding what it writes, so a ZIP saved from
+    the playground and unpacked is the command line's output.
+    """
+
+    @pytest.mark.parametrize(
+        ("name", "text"),
+        [("duel.panel.yaml", PANEL), ("story.scene.yaml", SCENE), ("talk.script", SCRIPT)],
+    )
+    def test_it_holds_what_build_writes_under_the_same_names(
+        self, tmp_path: Path, name: str, text: str
+    ):
+        source = _write(tmp_path, name, text)
+        assert main(["build", str(source), "-o", f"{tmp_path / 'out'}/", "--conditioning"]) == 0
+        written = {
+            path.name: path.read_bytes()
+            for path in (tmp_path / "out").iterdir()
+            if path.name.endswith(tuple(SUFFIXES))
+        }
+        book = compile_book_file(source)
+        cores = {panel: result.core for panel, result in book.panels.items()}
+        stem = name.split(".")[0]
+        with zipfile.ZipFile(io.BytesIO(conditioning_archive(cores, stem))) as archive:
+            held = {entry: archive.read(entry) for entry in archive.namelist()}
+        assert held == written
+
+    def test_in_build_s_order_panel_by_panel(self):
+        cores = {panel: result.core for panel, result in compile_book(SCENE).panels.items()}
+        with zipfile.ZipFile(io.BytesIO(conditioning_archive(cores, "story"))) as archive:
+            names = archive.namelist()
+        assert names == [f"story.{panel}{suffix}" for panel in ("one", "two") for suffix in SUFFIXES]
+
+    def test_the_same_bytes_every_run_on_every_platform(self):
+        """No clock, no file mode or system of the machine that made it."""
+        cores = {panel: result.core for panel, result in compile_book(SCENE).panels.items()}
+        data = conditioning_archive(cores, "story")
+        assert data == conditioning_archive(cores, "story")
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            for entry in archive.infolist():
+                assert entry.date_time == (1980, 1, 1, 0, 0, 0)
+                assert entry.create_system == 3
+                assert entry.external_attr == 0o100644 << 16
+                assert entry.compress_type == zipfile.ZIP_STORED
