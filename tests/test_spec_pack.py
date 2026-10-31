@@ -147,6 +147,7 @@ class TestSpecPack:
         for entry in _manifest():
             source = (GALLERY / entry["file"]).read_text(encoding="utf-8")
             assert entry["title"] in body
+            assert entry["summary"] in body, entry["file"]
             assert source.strip() in body, entry["file"]
             positions.append(body.index(entry["file"]))
         assert positions == sorted(positions)

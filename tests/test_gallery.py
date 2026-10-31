@@ -10,6 +10,7 @@ zone, every predicate and both frontends. A construct that no example uses is a
 construct nobody has looked at.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -35,18 +36,28 @@ from scenet import (
     Spans,
     TimeOfDay,
     Weather,
+    compile_book_file,
     compile_document,
     default_library,
     render,
     render_debug,
     render_strip,
 )
+from scenet.diagnostics import diagnose_file
 
-GALLERY = Path(__file__).parent.parent / "examples" / "gallery"
+ROOT = Path(__file__).parent.parent
+GALLERY = ROOT / "examples" / "gallery"
+DOCS = ROOT / "docs"
 MANIFEST_PATH = GALLERY / "manifest.yaml"
 MANIFEST = yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8"))
 ENTRIES = MANIFEST["examples"]
 IDS = [entry["file"] for entry in ENTRIES]
+TOUR = "38-tour.scene.yaml"
+
+#: The longest title the gallery's menu shows whole, at a phone's width as at a desk.
+MAX_TITLE = 28
+#: A summary is one sentence under the editor, not a paragraph.
+MAX_SUMMARY = 160
 
 
 class TestManifestMatchesDisk:
@@ -85,6 +96,126 @@ class TestManifestMatchesDisk:
 
     def test_kinds_are_known(self):
         assert {entry["kind"] for entry in ENTRIES} <= {"panel", "scene", "script"}
+
+    def test_no_file_is_listed_twice(self):
+        """A `#example=` link finds an entry by its file, so a file is one entry."""
+        assert len(IDS) == len(set(IDS))
+
+
+def _slug(heading: str) -> str:
+    """A heading's anchor as MyST makes it, by the rule `mdit_py_plugins.anchors` applies.
+
+    Less its range of CJK ideographs, which no page here has.
+    """
+    return re.sub(r"[^\w\- ]", "", heading.strip().lower().replace(" ", "-"))
+
+
+def _anchors(page: Path) -> set[str]:
+    """The anchors a page has: its headings down to `###`, as `myst_heading_anchors` sets.
+
+    A `#` line inside a fenced block is a comment in an example, not a heading.
+    """
+    anchors: set[str] = set()
+    fenced = False
+    for line in page.read_text(encoding="utf-8").splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        elif not fenced and (match := re.match(r"(#{1,3}) (.+)", line)):
+            anchors.add(_slug(match.group(2)))
+    return anchors
+
+
+class TestTheGalleryIsGuided:
+    """The playground walks the gallery as a tutorial (#237): by theme, from a tour, with a
+    sentence on each example and a link to the page that explains it."""
+
+    def test_the_groups_are_named_once_each(self):
+        groups = MANIFEST["groups"]
+        assert groups, "the gallery is offered by theme"
+        assert all(isinstance(group, str) and group.strip() for group in groups)
+        assert len(groups) == len(set(groups))
+
+    def test_every_entry_is_in_a_known_group(self):
+        groups = set(MANIFEST["groups"])
+        assert [entry["file"] for entry in ENTRIES if entry.get("group") not in groups] == []
+
+    def test_every_group_has_an_entry(self):
+        used = {entry["group"] for entry in ENTRIES}
+        assert [group for group in MANIFEST["groups"] if group not in used] == []
+
+    def test_the_gallery_starts_on_the_tour(self):
+        """The playground opens on it and lists it first: first in the first group."""
+        assert MANIFEST["start"] == TOUR
+        (start,) = [entry for entry in ENTRIES if entry["file"] == MANIFEST["start"]]
+        assert start["group"] == MANIFEST["groups"][0]
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=IDS)
+    def test_the_title_is_short(self, entry: dict[str, str]):
+        """The long explanation is the file's leading comment; the title is a name."""
+        assert len(entry["title"]) <= MAX_TITLE, entry["title"]
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=IDS)
+    def test_the_summary_is_one_sentence(self, entry: dict[str, str]):
+        summary = entry["summary"]
+        assert summary == summary.strip()
+        assert 0 < len(summary) <= MAX_SUMMARY, summary
+        assert summary.endswith(".")
+        assert ". " not in summary, "one sentence"
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=IDS)
+    def test_the_doc_target_exists(self, entry: dict[str, str]):
+        """'Read about it' goes to a page of the documentation, and to a heading on it."""
+        page, _, anchor = entry["doc"].partition("#")
+        assert page.endswith(".md")
+        assert not page.startswith(("/", ".")), "relative to docs/"
+        path = DOCS / page
+        assert path.is_file(), page
+        if anchor:
+            assert anchor in _anchors(path), f"{page} has no heading #{anchor}"
+
+    def test_the_slug_is_mysts(self):
+        assert _slug("`page` and `pages`") == "page-and-pages"
+        assert _slug("An image behind the cast") == "an-image-behind-the-cast"
+        assert _slug("Reading order is enforced, not suggested") == (
+            "reading-order-is-enforced-not-suggested"
+        )
+
+
+class TestTheTour:
+    """The example the playground opens on shows, on one page and in colour, what Scenet
+    letters: a picture behind posed puppets, the figures a picture draws, and every kind of
+    thing it letters. And it says nothing it would then have to explain."""
+
+    @staticmethod
+    def _book():
+        return compile_book_file(GALLERY / TOUR)
+
+    def test_it_is_one_page(self):
+        assert len(self._book().pages) == 1
+
+    def test_it_has_nothing_to_note(self):
+        book = self._book()
+        assert book.notes == ()
+        assert {name: result.notes for name, result in book.panels.items() if result.notes} == {}
+        assert diagnose_file(GALLERY / TOUR) == []
+
+    def test_it_letters_over_a_supplied_picture_and_its_figures(self):
+        cores = [result.core for result in self._book().panels.values()]
+        over_a_picture = [
+            core for core in cores if core.backdrop is not None and core.backdrop.image is not None
+        ]
+        assert any(core.actors for core in over_a_picture), "posed puppets before a picture"
+        assert any(figure.actor for core in cores for figure in core.figures), "a cast figure"
+
+    def test_it_letters_everything(self):
+        book = self._book()
+        cores = [result.core for result in book.panels.values()]
+        assert CaptionKind.LOCALE in {caption.kind for core in cores for caption in core.captions}
+        kinds = {balloon.kind for core in cores for balloon in core.balloons}
+        assert {BalloonKind.SPEECH, BalloonKind.THOUGHT} <= kinds
+        assert any(actor.marks for core in cores for actor in core.actors), "emanata"
+        assert any(core.sfx for core in cores), "a sound effect"
+        assert any(frame.inset_of for frame in book.pages[0].frames), "an inset"
 
 
 @pytest.mark.parametrize("entry", ENTRIES, ids=IDS)

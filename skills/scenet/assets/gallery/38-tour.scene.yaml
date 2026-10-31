@@ -1,0 +1,64 @@
+# A tour of Scenet: one page, lettered over pictures in colour.
+#
+# Nothing on this page was drawn by a generative model, and nothing in this file is a
+# coordinate. It says who is in each panel, what they do and what they say, and the
+# compiler works out the rest: where everybody stands, how the camera frames them, and
+# where every balloon, caption and sound goes so that the page reads in order.
+#
+# The pictures were painted elsewhere -- art/street.png and art/figures.png, beside this
+# file. On the street, Alice and Bob are Scenet's own puppets, posed and staged in front
+# of the picture. On the platform, Ana and Ben are people the picture draws: its artwork
+# contract, art/figures.art.yaml, says where their faces and mouths are, and the
+# balloons keep off them. A panel's cast is one or the other, never both.
+#
+# The small panel set into the street is an inset, read after the panel it sits in.
+# Alice's sweat is emanata, drawn round her head; the sound is lettered as part of the
+# picture; her worry is a thought, in a cloud.
+#
+# Pick another example from the menu, or press Next, to see each idea on its own.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+
+pages:
+  - tiers:
+      - height: 1.3
+        panels:
+          - use: street
+            insets:
+              - {use: worry, at: bottom_right, size: 0.33}
+      - panels: [platform]
+
+panels:
+  street:
+    camera: {shot: long_shot}
+    setting: {image: art/street.png, fit: cover, time: dusk, weather: rain}
+    cast:
+      alice: {reference: alice, pose: pointing, at: left_third, marks: [plewds]}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Eight o'clock. Still raining.", kind: locale}
+      - sfx: {text: VROOM, prefer: top_right, size: medium, rotate: -8}
+      - say: {by: alice, text: "That was our bus!"}
+      - say: {by: bob, text: "Then we take the train."}
+
+  worry:
+    camera: {shot: medium_close_up}
+    setting: {image: art/street.png, fit: cover, time: dusk}
+    cast:
+      alice: {reference: alice, expression: scared, facing: left}
+    script:
+      - say: {by: alice, text: "We'll never make it.", kind: thought}
+
+  platform:
+    setting: {image: art/figures.png, fit: cover, time: night}
+    cast:
+      ana: {figure: ana}
+      ben: {figure: ben}
+    script:
+      - caption: {text: "Platform 4. Ten past nine.", kind: locale}
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}

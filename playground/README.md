@@ -15,6 +15,12 @@ The Scenet compiler running in a browser, published to GitHub Pages.
 
 ## What it does
 
+- **A guided gallery.** It opens on a tour, `examples/gallery/38-tour.scene.yaml`, and its
+  menu groups every example by theme. Previous and Next walk the gallery in that order; under
+  the editor, a sentence says what each example shows, with a link to the documentation that
+  explains it. `#example=<file>` opens one by name, and choosing one puts that link in the
+  address bar until the first edit. The groups, the opening example, the summaries and the
+  links come from `examples/gallery/manifest.yaml`.
 - **Live compile** as you type, with the compiler's own findings underlined at the
   line they are about. The list under the output jumps to each one.
 - **Zoom and pan** the output: scroll or pinch to zoom about the pointer, drag to pan,
@@ -57,14 +63,16 @@ transformed for the browser.
 uv build --wheel        # from the repository root
 cd playground
 npm ci
-npm run build           # writes public/
+npm run build           # writes dist/
 ```
 
-Then serve `public/` over HTTP — `file://` will not work, because Pyodide and micropip
-both need real requests.
+`npm run assets` assembles what is not built from source into `public/` — Pyodide, the
+wheels, the schemas, the gallery — and `vite build` writes the site, `public/` included,
+to `dist/`. Serve `dist/` over HTTP — `file://` will not work, because Pyodide and
+micropip both need real requests.
 
 ```bash
-python -m http.server 8123 --directory public
+python -m http.server 8123 --directory dist
 ```
 
 ## Pinned dependencies, and why

@@ -1,8 +1,9 @@
 """The documentation's home page shows its example compiled, and opens it in the playground.
 
-The example is the gallery's first, the one the playground opens by default, so all three
-must stay one document: the YAML on the page, the picture under it, and the share link the
-"Open it in the playground" button carries. Each is checked against the gallery file, and
+The example is the gallery's first entry, the panel from the README, so all three must stay
+one document: the YAML on the page, the picture under it, and the share link the "Open it in
+the playground" button carries. (The playground itself opens on the gallery's tour, which the
+manifest names as its `start:`.) Each is checked against the gallery file, and
 the picture against the golden digest of that file's build -- so it cannot drift from what
 the compiler draws today. `scripts/update_golden.py` rewrites the picture with the goldens.
 """
@@ -41,7 +42,7 @@ def _first_yaml_block() -> str:
 
 
 def test_the_example_is_the_gallerys_first():
-    """The one the playground opens by default, and the gallery compiles in every test run."""
+    """The first entry in the manifest, which the gallery compiles in every test run."""
     assert _first_yaml_block() == _example()
     manifest = (ROOT / "examples" / "gallery" / "manifest.yaml").read_text(encoding="utf-8")
     assert re.search(r"examples:\s*\n\s*- file: 01-two-characters\.panel\.yaml", manifest)
