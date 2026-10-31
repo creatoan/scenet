@@ -27,6 +27,7 @@ from scenet.ir import (
     Fit,
     Mark,
     MassKind,
+    Palette,
     Plane,
     ShotType,
     Side,
@@ -238,8 +239,11 @@ class CoreMass(CoreModel):
         plane: How far back it sits.
         depth: Painter's order, shared with the actors. Backdrop planes are negative;
             a foreground mass sits above the frontmost actor.
-        tone: The `#rrggbb` fill, already chosen from the value ladder.
+        tone: The `#rrggbb` fill, already chosen from the value ladder. Always the grey,
+            whatever the palette: it is the value, and every decision was made on it.
         polygon: The silhouette, in panel coordinates.
+        colour: The tone's twin in the panel's palette (#244), which is what is drawn when
+            there is one. Left out of the JSON in `mono`.
     """
 
     id: str
@@ -248,6 +252,7 @@ class CoreMass(CoreModel):
     depth: int
     tone: str
     polygon: tuple[tuple[float, float], ...]
+    colour: str = ""
 
 
 class CoreVeil(CoreModel):
@@ -265,6 +270,8 @@ class CoreVeil(CoreModel):
         frequency: `baseFrequency`, per panel unit.
         octaves: `numOctaves`.
         seed: `seed`, derived from the declared content and the panel size.
+        colour: The tone's twin in the panel's palette, tinting the veil when there is
+            one. Left out of the JSON in `mono`.
     """
 
     tone: str
@@ -272,6 +279,7 @@ class CoreVeil(CoreModel):
     frequency: float
     octaves: int
     seed: int
+    colour: str = ""
 
 
 class CoreStreak(CoreModel):
@@ -302,6 +310,11 @@ class CoreAtmosphere(CoreModel):
         fall_tone: What rain and snow are drawn in -- ink over a bright sky, paper over
             a dark one. Resolved rather than left to the emitter, because which one
             reads is a fact about this panel.
+        colour: The atmosphere's tone in the panel's palette. Left out of the JSON when
+            there is none.
+        fall_colour: What rain is drawn in, in the panel's palette. Decided on the grey,
+            like `fall_tone`; snow has none, being white by convention. Left out of the
+            JSON when there is none.
     """
 
     time: TimeOfDay
@@ -312,6 +325,8 @@ class CoreAtmosphere(CoreModel):
     flecks: tuple[Disc, ...] = ()
     streak_width: float = 0.0
     fall_tone: str = ""
+    colour: str = ""
+    fall_colour: str = ""
 
 
 def _relative(href: str) -> str:
@@ -833,6 +848,9 @@ class PanelCore(CoreModel):
         camera: What framed the panel (#72), or None when a supplied picture draws the
             cast: the artist framed it, and the camera did not run. Left out of the JSON
             when None.
+        palette: What the panel is drawn in (#244). Each value it tints keeps its grey,
+            and gains its colour beside it. Left out of the JSON for `mono`, so every
+            panel written before it reads and writes as it always did.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -864,6 +882,7 @@ class PanelCore(CoreModel):
     figures: tuple[CoreFigure, ...] = ()
     direction: Direction = Direction.LTR
     camera: CoreCamera | None = None
+    palette: Palette = Palette.MONO
 
     @property
     def bounds(self) -> BBox:
@@ -941,6 +960,7 @@ class PanelCore(CoreModel):
             figures=(),
             direction=Direction.LTR,
             camera=None,
+            palette=Palette.MONO,
         )
         for actor in payload["actors"]:
             _drop_unused(actor, joints={}, features={}, looking_at=None)
@@ -950,6 +970,12 @@ class PanelCore(CoreModel):
             _drop_unused(lettered, runs=(), label=None)
         if payload.get("backdrop") is not None:
             _drop_unused(payload["backdrop"], horizon=None, image=None, place=None, time=None)
+            for mass in payload["backdrop"]["masses"]:
+                _drop_unused(mass, colour="")
+            if (air := payload["backdrop"]["atmosphere"]) is not None:
+                _drop_unused(air, colour="", fall_colour="")
+                if air["veil"] is not None:
+                    _drop_unused(air["veil"], colour="")
             if payload["backdrop"].get("image") is not None:
                 _drop_unused(payload["backdrop"]["image"], keep_out=())
         for effect in payload.get("sfx", []):

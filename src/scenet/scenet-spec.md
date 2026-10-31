@@ -2415,6 +2415,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "title": "MassKind",
       "type": "string"
     },
+    "Palette": {
+      "description": "What a panel is drawn in: the value ladder in grey, or its twin in colour (#244).\n\n| Palette | What it draws |\n|---|---|\n| `mono` | Every value as the grey it is -- **the default**, and what every panel was |\n| `tinted` | Every value on the ladder in its twin colour: same rung, same hour |\n\n**Colour is a twin of value, never a replacement.** A tinted colour has the OKLab\nlightness of the grey it stands for, so in monochrome a tinted panel is the mono one,\nand every decision the compiler makes from a value -- which rung a mass takes, whether\nrain is inked or papered, how a caption is lettered -- is made on the grey. Panel Core\nkeeps the grey where it always did and adds the colour beside it.\n\nOnly the ladder is tinted: the masses of a setting, the veil and the falling rain.\nSnow, the paper, the figures and all lettering stay as they are in every palette.\n\nA closed set of names, not a colour field, for the reason `CaptionTone` is one: an\nopen colour would be the language's one open vocabulary, and would let a value break\nthe ladder. See :func:`colour_for <scenet.solve.backdrop.colour_for>`.",
+      "enum": [
+        "mono",
+        "tinted"
+      ],
+      "title": "Palette",
+      "type": "string"
+    },
     "PanelSpec": {
       "additionalProperties": false,
       "description": "The panel's own dimensions.\n\nAttributes:\n    size: `(width, height)` in panel units. Everything else in the language is\n        expressed relative to these, so they set what a unit means.\n    margin: Inset on all four sides. Balloons are kept inside it; actors may bleed\n        past it, which is ordinary comics practice.\n\nExample:\n    >>> from scenet import PanelSpec\n    >>> PanelSpec(size=(1200.0, 600.0)).width\n    1200.0",
@@ -2892,7 +2901,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n    direction: Which way the comic is read. The whole document's: a scene's panels and\n        a comic script's take it from the document, and none may write its own.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
+  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n    direction: Which way the comic is read. The whole document's: a scene's panels and\n        a comic script's take it from the document, and none may write its own.\n    palette: What the panel is drawn in. A scene's panels inherit it like any default,\n        and unlike `direction` a panel may write its own.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.\n\nExample:\n    >>> from scenet import parse_panel\n    >>> panel = parse_panel(\"panel: {size: [800.0, 600.0]}\")\n    >>> panel.panel.width, panel.camera.shot.value\n    (800.0, 'medium_shot')\n\nSee Also:\n    :func:`compile_ir <scenet.pipeline.compile_ir>`, to turn one of these into geometry.",
   "properties": {
     "camera": {
       "$ref": "#/$defs/CameraSpec",
@@ -2940,6 +2949,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "font": null,
         "size": null
       }
+    },
+    "palette": {
+      "$ref": "#/$defs/Palette",
+      "default": "mono",
+      "description": "What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each value in a colour with the same lightness. Colour never changes a value, so a tinted panel is, in monochrome, the mono one. Inherited like any default; a panel may have its own."
     },
     "panel": {
       "$ref": "#/$defs/PanelSpec",

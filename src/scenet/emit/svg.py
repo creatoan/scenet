@@ -375,10 +375,14 @@ def _render_mass(mass: CoreMass, id_prefix: str) -> str:
     No outline, deliberately. A stroked mass reads as a drawn object, and the argument
     for masses in the first place is that a backdrop is read from the arrangement of
     values rather than from drawn detail.
+
+    Filled with its colour when the palette gave it one, and with its tone otherwise.
+    Nothing is chosen here: both were resolved, and the colour is the tone's twin.
     """
     return (
         f"    <polygon id={attr(id_prefix + 'mass-' + mass.id)} "
-        f'points="{_points(list(mass.polygon))}" fill="{mass.tone}" stroke="none"/>'
+        f'points="{_points(list(mass.polygon))}" fill="{mass.colour or mass.tone}" '
+        'stroke="none"/>'
     )
 
 
@@ -407,7 +411,7 @@ def _atmosphere_filter(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     veil = atmosphere.veil
     if veil is None:
         return ""
-    red, green, blue = _channels(veil.tone)
+    red, green, blue = _channels(veil.colour or veil.tone)
     matrix = (
         f"0 0 0 0 {fmt(red)} 0 0 0 0 {fmt(green)} 0 0 0 0 {fmt(blue)} "
         f"{fmt(veil.opacity)} {fmt(veil.opacity / 2)} 0 0 0"
@@ -433,11 +437,12 @@ def _channels(tone: str) -> tuple[float, float, float]:
 
 def _render_veil(core: PanelCore, atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """The rectangle the turbulence filter is painted through."""
-    if atmosphere.veil is None:
+    veil = atmosphere.veil
+    if veil is None:
         return ""
     return (
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-        f'fill="{atmosphere.veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
+        f'fill="{veil.colour or veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
     )
 
 
@@ -445,9 +450,10 @@ def _render_falling(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """Rain or snow, every mark of which was resolved during compilation."""
     if not atmosphere.streaks and not atmosphere.flecks:
         return ""
+    fall = atmosphere.fall_colour or atmosphere.fall_tone
     marks = [
         f"  <g id={attr(id_prefix + 'weather')} "
-        f'fill="{atmosphere.fall_tone}" stroke="{atmosphere.fall_tone}" '
+        f'fill="{fall}" stroke="{fall}" '
         f'fill-opacity="{fmt(WEATHER_OPACITY)}" stroke-opacity="{fmt(WEATHER_OPACITY)}">'
     ]
     for streak in atmosphere.streaks:

@@ -12,11 +12,9 @@ into the dark end.
     uv run python scripts/setting_sheet.py -o out/setting.svg
     uv run python scripts/setting_sheet.py --palette tinted -o out/tinted.svg
 
-`--palette tinted` draws the same sheets with the tinted ladder (#244), every value in the
+`--palette tinted` draws the same sheets with `palette: tinted` (#244), every value in the
 colour that is its twin, so that the hues `scripts/make_palette.py` produces can be judged
-the same way the greys were: by looking. Until a document can ask for a palette, it does
-that by swapping each ladder value in Panel Core for the colour on the same rung of the
-same hour -- which is the rule the solver will follow.
+the same way the greys were: by looking.
 
 Written as the sibling of `scripts/contact_sheet.py`, which did the same job for faces.
 Each cell is a real panel drawn small, **not** a small panel: the mass profiles are
@@ -28,14 +26,9 @@ import argparse
 import re
 from pathlib import Path
 
-from scenet import ShotType, compile_source, render
-from scenet.core import PanelCore
+from scenet import Palette, ShotType, compile_source, render
 from scenet.ir import TimeOfDay, Weather
 from scenet.places import Place
-from scenet.solve.backdrop import LADDER, TINTED
-
-#: What the sheets can be drawn in: the ladder as it ships, or its twin in colour.
-PALETTES = ("mono", "tinted")
 
 CELL_WIDTH = 300
 CELL_HEIGHT = 200
@@ -50,43 +43,12 @@ SHOT = ShotType.LONG_SHOT
 INNER = re.compile(r"<svg[^>]*>(.*)</svg>", re.DOTALL)
 
 
-def tinted(core: PanelCore) -> PanelCore:
-    """The same panel with every ladder value swapped for its twin in `TINTED`.
-
-    Each grey becomes the colour on the same rung of the same hour, so nothing moves and
-    no decision changes: rain is still inked or papered as the grey decided. Snow, the
-    paper and the figures are not on the ladder and keep their values.
-    """
-    backdrop = core.backdrop
-    if backdrop is None or backdrop.time is None:
-        return core
-    greys, colours = LADDER[backdrop.time], TINTED[backdrop.time]
-
-    def twin(tone: str) -> str:
-        return colours[greys.index(tone)] if tone in greys else tone
-
-    masses = tuple(mass.model_copy(update={"tone": twin(mass.tone)}) for mass in backdrop.masses)
-    air = backdrop.atmosphere
-    if air is not None:
-        veil = air.veil
-        if veil is not None:
-            veil = veil.model_copy(update={"tone": twin(veil.tone)})
-        air = air.model_copy(
-            update={"tone": twin(air.tone), "veil": veil, "fall_tone": twin(air.fall_tone)}
-        )
-    return core.model_copy(
-        update={"backdrop": backdrop.model_copy(update={"masses": masses, "atmosphere": air})}
-    )
-
-
 def cell(setting: str, palette: str = "mono") -> str:
     """One panel's drawable content, without its document wrapper."""
     core = compile_source(
         f"{{panel: {{size: [900, 600]}}, camera: {{shot: {SHOT.value}}}, "
-        f"{CAST}, setting: {{{setting}}}}}"
+        f"{CAST}, setting: {{{setting}}}, palette: {palette}}}"
     ).core
-    if palette == "tinted":
-        core = tinted(core)
     match = INNER.search(render(core))
     return match.group(1) if match else ""
 
@@ -167,7 +129,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-o", "--output", type=Path, default=Path("out/setting.svg"))
     parser.add_argument(
-        "--palette", choices=PALETTES, default="mono", help="draw the ladder in grey or in colour"
+        "--palette",
+        choices=[palette.value for palette in Palette],
+        default=Palette.MONO.value,
+        help="what the panels are drawn in",
     )
     args = parser.parse_args()
 

@@ -42,8 +42,17 @@ below 1.0 means.
   it is, in monochrome, the panel drawn in greys. Each hour has a shadow hue at the foreground and
   an atmosphere hue at the sky, and the rungs move between them. `TINTED` in
   `scenet.solve.backdrop` is generated from those two ends by `scripts/make_palette.py`, and
-  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it. No document can
-  ask for it yet, so nothing a document compiles to changes.
+  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it.
+- **`palette: mono | tinted`** (#244), what a panel is drawn in. `tinted` draws every value on the
+  ladder (the masses of a setting, the veil and the rain) in its twin colour. `mono`, the default,
+  is what every panel already was. It is written where `lettering` is: at the top of a panel, beside
+  `panels:` for every panel, on one panel for that panel alone, or in a comic script's front matter
+  or as `@palette:`. A panel may have its own, for a flashback in grey on a page in colour. Panel Core
+  keeps every grey where it was and adds `colour` beside it (`fall_colour` for rain), with `palette`
+  at the top, all left out in `mono`: no existing Core, SVG or export changes. Every decision is
+  still made on the grey, so a tinted Core with its colours taken out is the mono one. The pose,
+  boxes, depth and mask exports are the same in every palette, and the semantics names the palette
+  when it is not `mono`. `Palette` is exported, and `colour_for` gives a grey's twin.
 
 ### Changed
 

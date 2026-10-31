@@ -60,6 +60,7 @@ __all__ = [
     "PageFormat",
     "PageLayout",
     "PageSpec",
+    "Palette",
     "PanelIR",
     "PanelPlacement",
     "PanelSpec",
@@ -328,6 +329,32 @@ class Direction(StrEnum):
 
     LTR = "ltr"
     RTL = "rtl"
+
+
+class Palette(StrEnum):
+    """What a panel is drawn in: the value ladder in grey, or its twin in colour (#244).
+
+    | Palette | What it draws |
+    |---|---|
+    | `mono` | Every value as the grey it is -- **the default**, and what every panel was |
+    | `tinted` | Every value on the ladder in its twin colour: same rung, same hour |
+
+    **Colour is a twin of value, never a replacement.** A tinted colour has the OKLab
+    lightness of the grey it stands for, so in monochrome a tinted panel is the mono one,
+    and every decision the compiler makes from a value -- which rung a mass takes, whether
+    rain is inked or papered, how a caption is lettered -- is made on the grey. Panel Core
+    keeps the grey where it always did and adds the colour beside it.
+
+    Only the ladder is tinted: the masses of a setting, the veil and the falling rain.
+    Snow, the paper, the figures and all lettering stay as they are in every palette.
+
+    A closed set of names, not a colour field, for the reason `CaptionTone` is one: an
+    open colour would be the language's one open vocabulary, and would let a value break
+    the ladder. See :func:`colour_for <scenet.solve.backdrop.colour_for>`.
+    """
+
+    MONO = "mono"
+    TINTED = "tinted"
 
 
 class Facing(StrEnum):
@@ -1309,6 +1336,8 @@ class PanelIR(Strict):
             is drawn from it. Without one, accessible output says what the panel holds.
         direction: Which way the comic is read. The whole document's: a scene's panels and
             a comic script's take it from the document, and none may write its own.
+        palette: What the panel is drawn in. A scene's panels inherit it like any default,
+            and unlike `direction` a panel may write its own.
 
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
@@ -1349,6 +1378,15 @@ class PanelIR(Strict):
             "as manga are -- panels, pages and the balloons in a panel. Its progression, not "
             "its text: the words in a balloon still read left to right. Written once for the "
             "whole document; the scene is never mirrored."
+        ),
+    )
+    palette: Palette = Field(
+        default=Palette.MONO,
+        description=(
+            "What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each "
+            "value in a colour with the same lightness. Colour never changes a value, so a "
+            "tinted panel is, in monochrome, the mono one. Inherited like any default; a "
+            "panel may have its own."
         ),
     )
 
