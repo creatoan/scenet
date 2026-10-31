@@ -10,6 +10,13 @@ bands, and whether a night panel is still legible once the ladder has been compr
 into the dark end.
 
     uv run python scripts/setting_sheet.py -o out/setting.svg
+    uv run python scripts/setting_sheet.py --palette tinted -o out/tinted.svg
+
+`--palette tinted` draws the same sheets with the tinted ladder (#244), every value in the
+colour that is its twin, so that the hues `scripts/make_palette.py` produces can be judged
+the same way the greys were: by looking. Until a document can ask for a palette, it does
+that by swapping each ladder value in Panel Core for the colour on the same rung of the
+same hour -- which is the rule the solver will follow.
 
 Written as the sibling of `scripts/contact_sheet.py`, which did the same job for faces.
 Each cell is a real panel drawn small, **not** a small panel: the mass profiles are
@@ -22,8 +29,13 @@ import re
 from pathlib import Path
 
 from scenet import ShotType, compile_source, render
+from scenet.core import PanelCore
 from scenet.ir import TimeOfDay, Weather
 from scenet.places import Place
+from scenet.solve.backdrop import LADDER, TINTED
+
+#: What the sheets can be drawn in: the ladder as it ships, or its twin in colour.
+PALETTES = ("mono", "tinted")
 
 CELL_WIDTH = 300
 CELL_HEIGHT = 200
@@ -38,23 +50,60 @@ SHOT = ShotType.LONG_SHOT
 INNER = re.compile(r"<svg[^>]*>(.*)</svg>", re.DOTALL)
 
 
-def cell(setting: str) -> str:
+def tinted(core: PanelCore) -> PanelCore:
+    """The same panel with every ladder value swapped for its twin in `TINTED`.
+
+    Each grey becomes the colour on the same rung of the same hour, so nothing moves and
+    no decision changes: rain is still inked or papered as the grey decided. Snow, the
+    paper and the figures are not on the ladder and keep their values.
+    """
+    backdrop = core.backdrop
+    if backdrop is None or backdrop.time is None:
+        return core
+    greys, colours = LADDER[backdrop.time], TINTED[backdrop.time]
+
+    def twin(tone: str) -> str:
+        return colours[greys.index(tone)] if tone in greys else tone
+
+    masses = tuple(mass.model_copy(update={"tone": twin(mass.tone)}) for mass in backdrop.masses)
+    air = backdrop.atmosphere
+    if air is not None:
+        veil = air.veil
+        if veil is not None:
+            veil = veil.model_copy(update={"tone": twin(veil.tone)})
+        air = air.model_copy(
+            update={"tone": twin(air.tone), "veil": veil, "fall_tone": twin(air.fall_tone)}
+        )
+    return core.model_copy(
+        update={"backdrop": backdrop.model_copy(update={"masses": masses, "atmosphere": air})}
+    )
+
+
+def cell(setting: str, palette: str = "mono") -> str:
     """One panel's drawable content, without its document wrapper."""
     core = compile_source(
         f"{{panel: {{size: [900, 600]}}, camera: {{shot: {SHOT.value}}}, "
         f"{CAST}, setting: {{{setting}}}}}"
     ).core
+    if palette == "tinted":
+        core = tinted(core)
     match = INNER.search(render(core))
     return match.group(1) if match else ""
 
 
-def sheet(title: str, rows: list[tuple[str, str]], columns: list[tuple[str, str]]) -> str:
+def sheet(
+    title: str,
+    rows: list[tuple[str, str]],
+    columns: list[tuple[str, str]],
+    palette: str = "mono",
+) -> str:
     """A grid of panels, one row label and one column label each.
 
     Args:
         title: What the sheet is showing.
         rows: `(label, setting fragment)` down the page.
         columns: `(label, setting fragment)` across it.
+        palette: `mono`, or `tinted` for the ladder in colour.
 
     Returns:
         One standalone SVG document.
@@ -71,7 +120,10 @@ def sheet(title: str, rows: list[tuple[str, str]], columns: list[tuple[str, str]
     ]
     for index, (label, _) in enumerate(columns):
         x = LABEL * 4 + index * (CELL_WIDTH + GUTTER)
-        parts.append(f'<text x="{x}" y="18" font-family="monospace" font-size="12">{label}</text>')
+        parts.append(
+            f'<text x="{x}" y="{LABEL * 2 - 8}" font-family="monospace" '
+            f'font-size="12">{label}</text>'
+        )
 
     for row, (label, row_setting) in enumerate(rows):
         y = LABEL * 2 + row * (CELL_HEIGHT + GUTTER)
@@ -83,28 +135,30 @@ def sheet(title: str, rows: list[tuple[str, str]], columns: list[tuple[str, str]
             x = LABEL * 4 + column * (CELL_WIDTH + GUTTER)
             parts.append(
                 f'<svg x="{x}" y="{y}" width="{CELL_WIDTH}" height="{CELL_HEIGHT}" '
-                f'viewBox="0 0 900 600">{cell(f"{row_setting}, {column_setting}")}</svg>'
+                f'viewBox="0 0 900 600">{cell(f"{row_setting}, {column_setting}", palette)}</svg>'
             )
 
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
 
-def places_sheet() -> str:
+def places_sheet(palette: str = "mono") -> str:
     """Every place, at every hour."""
     return sheet(
-        "places x time",
+        f"places x time, {palette}",
         [(place.value, f"place: {place.value}") for place in Place],
         [(time.value, f"time: {time.value}") for time in TimeOfDay],
+        palette,
     )
 
 
-def weather_sheet() -> str:
+def weather_sheet(palette: str = "mono") -> str:
     """Every weather, at every hour, over one place that shows all four planes."""
     return sheet(
-        "weather x time, on `docks`",
+        f"weather x time, on `docks`, {palette}",
         [(weather.value, f"place: docks, weather: {weather.value}") for weather in Weather],
         [(time.value, f"time: {time.value}") for time in TimeOfDay],
+        palette,
     )
 
 
@@ -112,10 +166,14 @@ def main() -> None:
     """Write both sheets."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-o", "--output", type=Path, default=Path("out/setting.svg"))
+    parser.add_argument(
+        "--palette", choices=PALETTES, default="mono", help="draw the ladder in grey or in colour"
+    )
     args = parser.parse_args()
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    for name, content in (("places", places_sheet()), ("weather", weather_sheet())):
+    sheets = (("places", places_sheet(args.palette)), ("weather", weather_sheet(args.palette)))
+    for name, content in sheets:
         path = args.output.with_name(f"{args.output.stem}-{name}{args.output.suffix}")
         path.write_text(content, encoding="utf-8", newline="\n")
         print(f"wrote {path}")

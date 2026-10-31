@@ -16,8 +16,21 @@ below 1.0 means.
   and with it the bytes of its `.depth.svg`: regenerate golden depth maps of your own. Nothing
   else changes, Panel Core included.
 
+### Added
+
+- **The tinted ladder** (#244), the first step of the colour policy: the value ladder in
+  colour, each value with the OKLab lightness of the grey on its rung, so that a panel drawn in
+  it is, in monochrome, the panel drawn in greys. Each hour has a shadow hue at the foreground and
+  an atmosphere hue at the sky, and the rungs move between them. `TINTED` in
+  `scenet.solve.backdrop` is generated from those two ends by `scripts/make_palette.py`, and
+  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it. No document can
+  ask for it yet, so nothing a document compiles to changes.
+
 ### Changed
 
+- **`lightness` and `contrast_ratio` refuse a colour** (#244) with a `ValueError`, rather than
+  answer for it with a formula that is exact only for a neutral grey. Every decision the compiler
+  makes from a value is made on the grey.
 - **A ground, floor or stretch of water recedes in the depth export** (#227), instead of standing
   as one flat grey that a depth model reads as a wall. Each is a straight vertical ramp from its own
   step at the horizon to the farthest figure's step at the bottom edge, white when every figure
