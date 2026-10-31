@@ -3024,9 +3024,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
 <!-- scenet-spec:part=gallery -->
 # Gallery
 
-Every example the playground offers, in the order it offers them. The test suite compiles each one, so all of them are known to work.
+Every example the playground offers, in the order the gallery's manifest lists them. The test suite compiles each one, so all of them are known to work.
 
 ## Two characters
+
+The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue.
 
 `01-two-characters.panel.yaml`
 
@@ -3055,6 +3057,8 @@ script:
 ```
 
 ## The shot ladder
+
+Every shot type from long shot to extreme close-up, each defined by where it crops the body and how much headroom it leaves.
 
 `02-shot-ladder.scene.yaml`
 
@@ -3099,6 +3103,8 @@ panels:
 
 ## Camera angles
 
+The three camera heights at one shot type, told apart by the air they leave above the head.
+
 `03-camera-angles.scene.yaml`
 
 ```yaml
@@ -3124,6 +3130,8 @@ panels:
 ```
 
 ## Every balloon kind
+
+Speech, whisper, shout and thought, each with the outline a letterer would give it.
 
 `04-balloon-kinds.panel.yaml`
 
@@ -3156,6 +3164,8 @@ script:
 
 ## Placement zones
 
+A balloon may prefer one of nine zones, the weakest rule there is: the compiler overrules it before it covers a face.
+
 `05-placement-zones.panel.yaml`
 
 ```yaml
@@ -3183,7 +3193,9 @@ script:
   - say: {by: alice, text: "Bottom right.", prefer: bottom_right}
 ```
 
-## Reading order is a hard rule
+## Reading order
+
+Balloons are placed so the page reads in script order, as a hard rule rather than a preference.
 
 `06-reading-order.panel.yaml`
 
@@ -3217,7 +3229,9 @@ script:
   - say: {by: bob,   text: "Fourth."}
 ```
 
-## Gaze steers the balloons
+## Gaze steers balloons
+
+Who looks at whom moves nobody, only the balloons: the space in front of the eyes is costly to cover.
 
 `07-gaze.panel.yaml`
 
@@ -3252,6 +3266,8 @@ script:
 
 ## Feet align, heads do not
 
+Characters of different heights share a ground line, so their feet line up and their heads do not.
+
 `08-ground-and-height.panel.yaml`
 
 ```yaml
@@ -3282,6 +3298,8 @@ script:
 ```
 
 ## Depth and overlap
+
+One character drawn in front of another, the depth that lets two figures share space on purpose.
 
 `09-depth.panel.yaml`
 
@@ -3320,6 +3338,8 @@ script:
 
 ## The camera retreats
 
+Four characters too wide for a close-up make the camera step back, and a note says by how much.
+
 `10-crowd-pullback.panel.yaml`
 
 ```yaml
@@ -3356,7 +3376,9 @@ script:
   - say: {by: dave,  text: "Looks like it."}
 ```
 
-## Poses, facing, and one puppet twice
+## Poses and facing
+
+All four shipped poses, facing either way, and one puppet cast as two characters.
 
 `11-poses.panel.yaml`
 
@@ -3389,7 +3411,9 @@ staging:
   - c ground_shared_with d
 ```
 
-## A sequence, by sparse override
+## A sequence
+
+Panels that follow one another, each written as what changes from the panel before.
 
 `12-sequence.scene.yaml`
 
@@ -3432,7 +3456,9 @@ panels:
       - say: {by: bob, text: "Fine. Talk.", kind: shout}
 ```
 
-## Written as a comic script
+## A comic script
+
+The same kind of panel written as a comic script, in the plain-text form writers already use.
 
 `13-comic-script.script`
 
@@ -3472,7 +3498,9 @@ ALICE (shouting)
 You what?!
 ```
 
-## How lines get broken
+## How lines break
+
+Long lines are broken where a letterer would break them, measured against the real font.
 
 `14-lettering.panel.yaml`
 
@@ -3505,7 +3533,9 @@ script:
   - say: {by: alice, text: "It has been raining since six this morning and you knew that."}
 ```
 
-## Margins, and bleeding off the edge
+## Margins and bleed
+
+A margin keeps the lettering in, while the actors may bleed off the edge.
 
 `15-margin.panel.yaml`
 
@@ -3537,7 +3567,9 @@ script:
   - say: {by: bob,   text: "Only just."}
 ```
 
-## Captions: where and when
+## Captions
+
+Locale, monologue, spoken and editorial captions, placed like balloons but drawn to the corners.
 
 `16-captions.panel.yaml`
 
@@ -3576,6 +3608,8 @@ script:
 ```
 
 ## Ten expressions
+
+Every expression the shipped puppets have, one panel each.
 
 `17-expressions.scene.yaml`
 
@@ -3634,7 +3668,9 @@ panels:
       bob:   {expression: scared}
 ```
 
-## A face, at last
+## A face
+
+A big close-up, where the head fills the panel and the face is drawn in full.
 
 `18-a-face.panel.yaml`
 
@@ -3659,7 +3695,9 @@ cast:
 # reaction panel is what a letterer would have drawn here anyway.
 ```
 
-## Masses, planes and the value ladder
+## Masses and planes
+
+The masses a place is made of, written by hand, on planes whose value reads as distance.
 
 `19-setting.scene.yaml`
 
@@ -3716,7 +3754,9 @@ panels:
       - caption: {text: "Indoors, at dusk.", kind: locale}
 ```
 
-## Ten places, by name
+## Ten places
+
+The ten named places, one panel each, each a backdrop composed from masses.
 
 `20-places.scene.yaml`
 
@@ -3755,7 +3795,9 @@ panels:
   mountain: {setting: {place: mountain, time: dawn}}
 ```
 
-## Time of day, and weather
+## Time and weather
+
+One place at different times of day and in different weather.
 
 `21-atmosphere.scene.yaml`
 
@@ -3818,7 +3860,9 @@ panels:
       - caption: {text: "December.", kind: locale, prefer: top_left}
 ```
 
-## Caption tones, and what they read against
+## Caption tones
+
+Three caption tones, over the pale noon sky that shows why a caption box needs one.
 
 `22-caption-tones.panel.yaml`
 
@@ -3858,7 +3902,9 @@ script:
   - caption: {text: "Continued next issue.", kind: editorial, tone: ink, prefer: bottom_right}
 ```
 
-## Emanata: sweat, dizziness, oaths and dust
+## Emanata
+
+Sweat, dizziness, oaths and dust drawn round a character, and the balloons that make room for them.
 
 `23-emanata.scene.yaml`
 
@@ -3933,7 +3979,9 @@ panels:
       - say: {by: alice, text: "Bob?"}
 ```
 
-## A page: panels in tiers
+## A page in tiers
+
+Panels laid out on a page in tiers, each panel compiled at the size of its frame.
 
 `24-page.scene.yaml`
 
@@ -4000,7 +4048,9 @@ panels:
       - say: {by: bob, text: "Shall we?", kind: whisper}
 ```
 
-## A tall panel beside a stack: columns
+## Columns
+
+A tall panel beside a stack of smaller ones.
 
 `25-columns.scene.yaml`
 
@@ -4076,7 +4126,9 @@ panels:
       - say: {by: bob, text: "Very funny."}
 ```
 
-## Insets: a panel set into another
+## Insets
+
+A small panel set into the corner of another, read before it or after it as it says.
 
 `26-insets.scene.yaml`
 
@@ -4153,7 +4205,9 @@ panels:
       - say: {by: bob, text: "Then we watch the next one."}
 ```
 
-## Slanted tiers: gutters that lean
+## Slanted tiers
+
+Tiers whose gutters lean, and the panels cut to fit them.
 
 `27-slant.scene.yaml`
 
@@ -4222,7 +4276,9 @@ panels:
       alice: {reference: alice, expression: angry, facing: left}
 ```
 
-## Emphasis: a stressed word in bold italic
+## Emphasis
+
+A stressed word lettered in bold italic, as letterers mark it.
 
 `28-emphasis.panel.yaml`
 
@@ -4254,7 +4310,9 @@ script:
   - say: {by: bob,   text: "You said it _might_."}
 ```
 
-## Type size: one size, set for the whole page
+## Type size
+
+One type size set for the whole page, so a short tier and a tall one letter alike.
 
 `29-type-size.scene.yaml`
 
@@ -4300,7 +4358,9 @@ panels:
       - say: {by: alice, text: "Then let me in faster."}
 ```
 
-## Sound effects: letters that are part of the picture
+## Sound effects
+
+Sounds lettered as part of the picture, turned, bent and hollow, with the balloons settling round them.
 
 `30-sound-effects.panel.yaml`
 
@@ -4338,7 +4398,9 @@ script:
   - say: {by: bob, text: "Nothing. Go back to sleep."}
 ```
 
-## Written as Dark Horse asks: title page, counts, CAP and CAP/NAME
+## A Dark Horse script
+
+A script in the format Dark Horse asks for: a title page, counts, and captions written CAP and CAP/NAME.
 
 `31-dark-horse.script`
 
@@ -4394,7 +4456,9 @@ CAP/MAYA
 “-- and that was how the harbour got its light back.”
 ```
 
-## Off-panel speech: a tail to the frame, for somebody nobody draws
+## Off-panel speech
+
+Speech from somebody nobody draws, with a tail that runs to the edge of the frame.
 
 `32-off-panel.scene.yaml`
 
@@ -4431,7 +4495,9 @@ panels:
       - say: {by: caller, text: "I know you're there.", off_panel: true}
 ```
 
-## A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans
+## A French script
+
+A script written in French: planche, cases, récitatif, pensée, hors champ and the échelle des plans.
 
 `33-planche.script`
 
@@ -4481,7 +4547,9 @@ Ce n'était pas moi.
 ONOMATOPÉE : FLOP
 ```
 
-## A picture drawn elsewhere, behind the cast: cover and contain
+## A picture behind the cast
+
+A picture painted elsewhere behind the puppets, fitted to cover the panel or contained in it.
 
 `34-supplied-art.scene.yaml`
 
@@ -4534,7 +4602,9 @@ panels:
       - say: {by: alice, text: "It looks smaller from here."}
 ```
 
-## Figures a picture draws: an artwork contract, cover and contain
+## Figures a picture draws
+
+People the picture draws, lettered from its artwork contract: balloons keep off their faces and tails find their mouths.
 
 `35-figures.scene.yaml`
 
@@ -4602,7 +4672,9 @@ keep_out:
   - [[560, 60], [860, 60], [860, 200], [560, 200]]
 ```
 
-## Read right to left, as manga are: a page from the top right
+## Right to left
+
+A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored.
 
 `36-right-to-left.scene.yaml`
 
@@ -4702,7 +4774,9 @@ panels:
       - say: {by: ken, text: "Go. I will wait."}
 ```
 
-## The same page read left to right, figure for figure
+## The same page, left to right
+
+The right-to-left page read the other way, figure for figure, to compare the two.
 
 `37-left-to-right.scene.yaml`
 
@@ -4795,4 +4869,105 @@ panels:
       ken: {reference: bob, pose: arms_crossed, at: center}
     script:
       - say: {by: ken, text: "Go. I will wait."}
+```
+
+## A tour of Scenet
+
+One page lettered over pictures in colour: posed puppets, figures a picture draws, a caption, a thought, a sound and an inset.
+
+`38-tour.scene.yaml`
+
+It names `art/street.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+
+It names `art/figures.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+
+```yaml
+# A tour of Scenet: one page, lettered over pictures in colour.
+#
+# Nothing on this page was drawn by a generative model, and nothing in this file is a
+# coordinate. It says who is in each panel, what they do and what they say, and the
+# compiler works out the rest: where everybody stands, how the camera frames them, and
+# where every balloon, caption and sound goes so that the page reads in order.
+#
+# The pictures were painted elsewhere -- art/street.png and art/figures.png, beside this
+# file. On the street, Alice and Bob are Scenet's own puppets, posed and staged in front
+# of the picture. On the platform, Ana and Ben are people the picture draws: its artwork
+# contract, art/figures.art.yaml, says where their faces and mouths are, and the
+# balloons keep off them. A panel's cast is one or the other, never both.
+#
+# The small panel set into the street is an inset, read after the panel it sits in.
+# Alice's sweat is emanata, drawn round her head; the sound is lettered as part of the
+# picture; her worry is a thought, in a cloud.
+#
+# Pick another example from the menu, or press Next, to see each idea on its own.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+
+pages:
+  - tiers:
+      - height: 1.3
+        panels:
+          - use: street
+            insets:
+              - {use: worry, at: bottom_right, size: 0.33}
+      - panels: [platform]
+
+panels:
+  street:
+    camera: {shot: long_shot}
+    setting: {image: art/street.png, fit: cover, time: dusk, weather: rain}
+    cast:
+      alice: {reference: alice, pose: pointing, at: left_third, marks: [plewds]}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - caption: {text: "Eight o'clock. Still raining.", kind: locale}
+      - sfx: {text: VROOM, prefer: top_right, size: medium, rotate: -8}
+      - say: {by: alice, text: "That was our bus!"}
+      - say: {by: bob, text: "Then we take the train."}
+
+  worry:
+    camera: {shot: medium_close_up}
+    setting: {image: art/street.png, fit: cover, time: dusk}
+    cast:
+      alice: {reference: alice, expression: scared, facing: left}
+    script:
+      - say: {by: alice, text: "We'll never make it.", kind: thought}
+
+  platform:
+    setting: {image: art/figures.png, fit: cover, time: night}
+    cast:
+      ana: {figure: ana}
+      ben: {figure: ben}
+    script:
+      - caption: {text: "Platform 4. Ten past nine.", kind: locale}
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+```
+
+Its picture's artwork contract, `art/figures.art.yaml`, beside the picture:
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
 ```

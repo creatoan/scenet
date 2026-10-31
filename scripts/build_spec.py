@@ -300,13 +300,14 @@ def _gallery() -> str:
             if name.endswith(CONTRACT_SUFFIX)
         )
         sections.append(
-            f"## {entry['title']}\n\n`{entry['file']}`{beside}\n\n"
+            f"## {entry['title']}\n\n{entry['summary']}\n\n`{entry['file']}`{beside}\n\n"
             f"{_fence(source, language)}{contracts}"
         )
     return (
         "# Gallery\n\n"
-        "Every example the playground offers, in the order it offers them. The test suite "
-        "compiles each one, so all of them are known to work.\n\n" + "\n".join(sections)
+        "Every example the playground offers, in the order the gallery's manifest lists "
+        "them. The test suite compiles each one, so all of them are known to work.\n\n"
+        + "\n".join(sections)
     )
 
 

@@ -1,119 +1,263 @@
-# The playground example gallery, in the order it offers them.
+# The playground example gallery.
 #
 # Each entry is a real file in this directory, compiled by the test suite -- so the
 # playground cannot offer an example that does not work.
+#
+# **Entries are only ever appended, never reordered or removed.** A saved draft remembers
+# the example it started from by its position in this list (playground/src/persist.ts),
+# and every version of the playground on the site shares that storage: moving an entry
+# would reopen somebody's draft under another example's name. The order the playground
+# shows is set here instead, by `groups:` and each entry's `group:`.
+#
+# - `groups:` the themes, in the order the menu offers them and Previous and Next walk
+#   them. Within a group, entries keep the order of this list.
+# - `start:` the example the playground opens on, listed first in its group.
+# - `title:` a short name for the menu; the file's leading comment is the explanation.
+# - `summary:` one sentence, shown under the editor.
+# - `doc:` the page of docs/ that explains it, with the heading's anchor if there is one.
+
+groups:
+  - Start here
+  - Staging and camera
+  - Balloons and captions
+  - Lettering and sound
+  - Setting
+  - Pages and sequences
+  - Your own art
+  - Reading direction
+  - Comic scripts
+
+start: 38-tour.scene.yaml
 
 examples:
   - file: 01-two-characters.panel.yaml
     title: "Two characters"
     kind: panel
+    group: Start here
+    summary: "The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue."
+    doc: tutorial/first_panel.md
   - file: 02-shot-ladder.scene.yaml
     title: "The shot ladder"
     kind: scene
+    group: Staging and camera
+    summary: "Every shot type from long shot to extreme close-up, each defined by where it crops the body and how much headroom it leaves."
+    doc: reference/shot_types.md
   - file: 03-camera-angles.scene.yaml
     title: "Camera angles"
     kind: scene
+    group: Staging and camera
+    summary: "The three camera heights at one shot type, told apart by the air they leave above the head."
+    doc: reference/language.md#camera
   - file: 04-balloon-kinds.panel.yaml
     title: "Every balloon kind"
     kind: panel
+    group: Balloons and captions
+    summary: "Speech, whisper, shout and thought, each with the outline a letterer would give it."
+    doc: reference/language.md#say
   - file: 05-placement-zones.panel.yaml
     title: "Placement zones"
     kind: panel
+    group: Balloons and captions
+    summary: "A balloon may prefer one of nine zones, the weakest rule there is: the compiler overrules it before it covers a face."
+    doc: reference/language.md#say
   - file: 06-reading-order.panel.yaml
-    title: "Reading order is a hard rule"
+    title: "Reading order"
     kind: panel
+    group: Balloons and captions
+    summary: "Balloons are placed so the page reads in script order, as a hard rule rather than a preference."
+    doc: reference/language.md#reading-order-is-enforced-not-suggested
   - file: 07-gaze.panel.yaml
-    title: "Gaze steers the balloons"
+    title: "Gaze steers balloons"
     kind: panel
+    group: Staging and camera
+    summary: "Who looks at whom moves nobody, only the balloons: the space in front of the eyes is costly to cover."
+    doc: reference/language.md#staging
   - file: 08-ground-and-height.panel.yaml
     title: "Feet align, heads do not"
     kind: panel
+    group: Staging and camera
+    summary: "Characters of different heights share a ground line, so their feet line up and their heads do not."
+    doc: reference/language.md#staging
   - file: 09-depth.panel.yaml
     title: "Depth and overlap"
     kind: panel
+    group: Staging and camera
+    summary: "One character drawn in front of another, the depth that lets two figures share space on purpose."
+    doc: reference/language.md#staging
   - file: 10-crowd-pullback.panel.yaml
     title: "The camera retreats"
     kind: panel
+    group: Staging and camera
+    summary: "Four characters too wide for a close-up make the camera step back, and a note says by how much."
+    doc: reference/language.md#when-constraints-conflict
   - file: 11-poses.panel.yaml
-    title: "Poses, facing, and one puppet twice"
+    title: "Poses and facing"
     kind: panel
+    group: Staging and camera
+    summary: "All four shipped poses, facing either way, and one puppet cast as two characters."
+    doc: reference/language.md#cast
   - file: 12-sequence.scene.yaml
-    title: "A sequence, by sparse override"
+    title: "A sequence"
     kind: scene
+    group: Pages and sequences
+    summary: "Panels that follow one another, each written as what changes from the panel before."
+    doc: howto/compile_a_sequence.md
   - file: 13-comic-script.script
-    title: "Written as a comic script"
+    title: "A comic script"
     kind: script
+    group: Comic scripts
+    summary: "The same kind of panel written as a comic script, in the plain-text form writers already use."
+    doc: howto/write_a_comic_script.md
   - file: 14-lettering.panel.yaml
-    title: "How lines get broken"
+    title: "How lines break"
     kind: panel
+    group: Lettering and sound
+    summary: "Long lines are broken where a letterer would break them, measured against the real font."
+    doc: reference/language.md#lettering
   - file: 15-margin.panel.yaml
-    title: "Margins, and bleeding off the edge"
+    title: "Margins and bleed"
     kind: panel
+    group: Pages and sequences
+    summary: "A margin keeps the lettering in, while the actors may bleed off the edge."
+    doc: reference/language.md#panel
   - file: 16-captions.panel.yaml
-    title: "Captions: where and when"
+    title: "Captions"
     kind: panel
+    group: Balloons and captions
+    summary: "Locale, monologue, spoken and editorial captions, placed like balloons but drawn to the corners."
+    doc: reference/language.md#caption
   - file: 17-expressions.scene.yaml
     title: "Ten expressions"
     kind: scene
+    group: Staging and camera
+    summary: "Every expression the shipped puppets have, one panel each."
+    doc: reference/language.md#cast
   - file: 18-a-face.panel.yaml
-    title: "A face, at last"
+    title: "A face"
     kind: panel
+    group: Staging and camera
+    summary: "A big close-up, where the head fills the panel and the face is drawn in full."
+    doc: reference/language.md#cast
   - file: 19-setting.scene.yaml
-    title: "Masses, planes and the value ladder"
+    title: "Masses and planes"
     kind: scene
+    group: Setting
+    summary: "The masses a place is made of, written by hand, on planes whose value reads as distance."
+    doc: reference/language.md#masses
   - file: 20-places.scene.yaml
-    title: "Ten places, by name"
+    title: "Ten places"
     kind: scene
+    group: Setting
+    summary: "The ten named places, one panel each, each a backdrop composed from masses."
+    doc: reference/language.md#place
   - file: 21-atmosphere.scene.yaml
-    title: "Time of day, and weather"
+    title: "Time and weather"
     kind: scene
+    group: Setting
+    summary: "One place at different times of day and in different weather."
+    doc: reference/language.md#time-and-weather
   - file: 22-caption-tones.panel.yaml
-    title: "Caption tones, and what they read against"
+    title: "Caption tones"
     kind: panel
+    group: Balloons and captions
+    summary: "Three caption tones, over the pale noon sky that shows why a caption box needs one."
+    doc: reference/language.md#caption
   - file: 23-emanata.scene.yaml
-    title: "Emanata: sweat, dizziness, oaths and dust"
+    title: "Emanata"
     kind: scene
+    group: Staging and camera
+    summary: "Sweat, dizziness, oaths and dust drawn round a character, and the balloons that make room for them."
+    doc: reference/language.md#marks
   - file: 24-page.scene.yaml
-    title: "A page: panels in tiers"
+    title: "A page in tiers"
     kind: scene
+    group: Pages and sequences
+    summary: "Panels laid out on a page in tiers, each panel compiled at the size of its frame."
+    doc: howto/compose_a_page.md#tiers-by-weight
   - file: 25-columns.scene.yaml
-    title: "A tall panel beside a stack: columns"
+    title: "Columns"
     kind: scene
+    group: Pages and sequences
+    summary: "A tall panel beside a stack of smaller ones."
+    doc: howto/compose_a_page.md#a-tall-panel-beside-a-stack
   - file: 26-insets.scene.yaml
-    title: "Insets: a panel set into another"
+    title: "Insets"
     kind: scene
+    group: Pages and sequences
+    summary: "A small panel set into the corner of another, read before it or after it as it says."
+    doc: howto/compose_a_page.md#an-inset
   - file: 27-slant.scene.yaml
-    title: "Slanted tiers: gutters that lean"
+    title: "Slanted tiers"
     kind: scene
+    group: Pages and sequences
+    summary: "Tiers whose gutters lean, and the panels cut to fit them."
+    doc: howto/compose_a_page.md#a-slanted-tier
   - file: 28-emphasis.panel.yaml
-    title: "Emphasis: a stressed word in bold italic"
+    title: "Emphasis"
     kind: panel
+    group: Lettering and sound
+    summary: "A stressed word lettered in bold italic, as letterers mark it."
+    doc: reference/language.md#emphasis
   - file: 29-type-size.scene.yaml
-    title: "Type size: one size, set for the whole page"
+    title: "Type size"
     kind: scene
+    group: Lettering and sound
+    summary: "One type size set for the whole page, so a short tier and a tall one letter alike."
+    doc: reference/language.md#lettering
   - file: 30-sound-effects.panel.yaml
-    title: "Sound effects: letters that are part of the picture"
+    title: "Sound effects"
     kind: panel
+    group: Lettering and sound
+    summary: "Sounds lettered as part of the picture, turned, bent and hollow, with the balloons settling round them."
+    doc: reference/language.md#sfx
   - file: 31-dark-horse.script
-    title: "Written as Dark Horse asks: title page, counts, CAP and CAP/NAME"
+    title: "A Dark Horse script"
     kind: script
+    group: Comic scripts
+    summary: "A script in the format Dark Horse asks for: a title page, counts, and captions written CAP and CAP/NAME."
+    doc: howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it
   - file: 32-off-panel.scene.yaml
-    title: "Off-panel speech: a tail to the frame, for somebody nobody draws"
+    title: "Off-panel speech"
     kind: scene
+    group: Balloons and captions
+    summary: "Speech from somebody nobody draws, with a tail that runs to the edge of the frame."
+    doc: reference/language.md#off-panel-speech
   - file: 33-planche.script
-    title: "A French script: planche, cases, récitatif, pensée, hors champ, the échelle des plans"
+    title: "A French script"
     kind: script
+    group: Comic scripts
+    summary: "A script written in French: planche, cases, récitatif, pensée, hors champ and the échelle des plans."
+    doc: howto/write_a_comic_script.md#french-scripts
   - file: 34-supplied-art.scene.yaml
-    title: "A picture drawn elsewhere, behind the cast: cover and contain"
+    title: "A picture behind the cast"
     kind: scene
+    group: Your own art
+    summary: "A picture painted elsewhere behind the puppets, fitted to cover the panel or contained in it."
+    doc: howto/letter_over_your_own_art.md
     files: [art/street.png]
   - file: 35-figures.scene.yaml
-    title: "Figures a picture draws: an artwork contract, cover and contain"
+    title: "Figures a picture draws"
     kind: scene
+    group: Your own art
+    summary: "People the picture draws, lettered from its artwork contract: balloons keep off their faces and tails find their mouths."
+    doc: howto/letter_the_figures_in_your_art.md
     files: [art/figures.png, art/figures.art.yaml]
   - file: 36-right-to-left.scene.yaml
-    title: "Read right to left, as manga are: a page from the top right"
+    title: "Right to left"
     kind: scene
+    group: Reading direction
+    summary: "A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored."
+    doc: reference/language.md#direction
   - file: 37-left-to-right.scene.yaml
-    title: "The same page read left to right, figure for figure"
+    title: "The same page, left to right"
     kind: scene
+    group: Reading direction
+    summary: "The right-to-left page read the other way, figure for figure, to compare the two."
+    doc: reference/language.md#direction
+  - file: 38-tour.scene.yaml
+    title: "A tour of Scenet"
+    kind: scene
+    group: Start here
+    summary: "One page lettered over pictures in colour: posed puppets, figures a picture draws, a caption, a thought, a sound and an inset."
+    doc: reference/language.md#the-layers
+    files: [art/street.png, art/figures.png, art/figures.art.yaml]

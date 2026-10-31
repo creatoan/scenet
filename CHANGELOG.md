@@ -10,6 +10,25 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Added
+
+- **The playground's gallery is a guided tour (#237).** It opens on a new example,
+  `38-tour.scene.yaml`: one page lettered over both gallery pictures in colour, with posed
+  puppets, figures a picture draws, a locale caption, a thought, emanata, a sound effect and an
+  inset. The menu groups the examples by theme, Previous and Next walk them in that order, and
+  under the editor each says in a sentence what it shows, with a link to the page of the
+  documentation that explains it. `#example=<file>` opens a gallery example by name, a link
+  that does not go stale as a `#src=` share link does when the example changes.
+- **The gallery manifest gains `groups:`, `start:`, and `group:`, `summary:` and `doc:` on
+  every entry**, and its titles are short names. Entries are only ever appended, as its header
+  now says: a playground draft remembers its example by position. The spec pack prints each
+  example's summary under its title.
+
+### Changed
+
+- **A note in the playground is styled as information**, neutral and marked ℹ, not as an
+  orange warning: nothing is wrong when the compiler says what it decided.
+
 **Upgrading from 0.12.0.**
 
 - **The depth map of every panel with a ground, floor, water or ceiling changes once** (#227),

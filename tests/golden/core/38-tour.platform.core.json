@@ -1,0 +1,232 @@
+{
+  "actors": [],
+  "backdrop": {
+    "atmosphere": null,
+    "image": {
+      "box": {
+        "height": 900.0,
+        "width": 1350.0,
+        "x": 0.0,
+        "y": -3.26
+      },
+      "fit": "cover",
+      "href": "art/figures.png",
+      "keep_out": [
+        [
+          [
+            840.0,
+            86.74
+          ],
+          [
+            1290.0,
+            86.74
+          ],
+          [
+            1290.0,
+            296.74
+          ],
+          [
+            840.0,
+            296.74
+          ]
+        ]
+      ],
+      "media_type": "image/png",
+      "pixels": [
+        900,
+        600
+      ],
+      "preserve_aspect_ratio": "xMidYMid slice",
+      "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
+    },
+    "masses": [],
+    "seed": 2624620346
+  },
+  "balloons": [
+    {
+      "box": {
+        "height": 88.2,
+        "width": 137.76,
+        "x": 99.97,
+        "y": 400.6
+      },
+      "font_size": 24.5,
+      "id": "b0",
+      "kind": "speech",
+      "label": "Ana: Is it always this late?",
+      "line_height": 30.63,
+      "lines": [
+        "Is it always",
+        "this late?"
+      ],
+      "order": 1,
+      "speaker": "ana",
+      "tail": {
+        "control": null,
+        "end": [
+          277.02,
+          421.08
+        ],
+        "start": [
+          237.74,
+          429.66
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 118.83,
+        "width": 201.41,
+        "x": 734.14,
+        "y": 382.39
+      },
+      "font_size": 24.5,
+      "id": "b1",
+      "kind": "speech",
+      "label": "Ben: Only when it rains somewhere else.",
+      "line_height": 30.63,
+      "lines": [
+        "Only when it",
+        "rains somewhere",
+        "else."
+      ],
+      "order": 2,
+      "speaker": "ben",
+      "tail": {
+        "control": null,
+        "end": [
+          686.33,
+          405.62
+        ],
+        "start": [
+          734.14,
+          417.27
+        ],
+        "width": 14.0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "box": {
+        "height": 70.14,
+        "width": 135.85,
+        "x": 17.87,
+        "y": 17.87
+      },
+      "fill": "#ffffff",
+      "font_size": 21.0,
+      "id": "c0",
+      "ink": "#111111",
+      "italic": true,
+      "kind": "locale",
+      "label": "Caption: Platform 4. Ten past nine.",
+      "line_height": 26.25,
+      "lines": [
+        "Platform 4.",
+        "Ten past nine."
+      ],
+      "order": 0,
+      "speaker": null
+    }
+  ],
+  "description": "Ana, left; Ben, centre.",
+  "figures": [
+    {
+      "actor": "ana",
+      "body": [
+        [
+          252.0,
+          440.74
+        ],
+        [
+          438.0,
+          440.74
+        ],
+        [
+          474.0,
+          896.74
+        ],
+        [
+          216.0,
+          896.74
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 345.0,
+        "cy": 371.74,
+        "r": 84.0
+      },
+      "figure": "ana",
+      "mouth": [
+        345.0,
+        406.24
+      ]
+    },
+    {
+      "actor": "ben",
+      "body": [
+        [
+          510.0,
+          425.74
+        ],
+        [
+          720.0,
+          425.74
+        ],
+        [
+          753.0,
+          896.74
+        ],
+        [
+          477.0,
+          896.74
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 615.0,
+        "cy": 350.74,
+        "r": 90.0
+      },
+      "figure": "ben",
+      "mouth": [
+        615.0,
+        388.24
+      ]
+    },
+    {
+      "body": [
+        [
+          1002.0,
+          503.74
+        ],
+        [
+          1158.0,
+          503.74
+        ],
+        [
+          1179.0,
+          896.74
+        ],
+        [
+          981.0,
+          896.74
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 1080.0,
+        "cy": 446.74,
+        "r": 69.0
+      },
+      "figure": "carl",
+      "mouth": [
+        1080.0,
+        475.24
+      ]
+    }
+  ],
+  "format_version": 1,
+  "height": 893.48,
+  "width": 1350.0
+}

@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 1161.52,
+      "panel": "street",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "clearance": {
+        "height": 443.3,
+        "width": 505.5,
+        "x": 919.5,
+        "y": 793.22
+      },
+      "height": 383.3,
+      "inset_of": "street",
+      "panel": "worry",
+      "width": 445.5,
+      "x": 949.5,
+      "y": 823.22
+    },
+    {
+      "height": 893.48,
+      "panel": "platform",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 1281.52
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}
