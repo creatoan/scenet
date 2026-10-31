@@ -148,8 +148,21 @@ interface ManifestEntry {
   readonly file: string;
   readonly title: string;
   readonly kind: "panel" | "scene" | "script";
+  /** The theme the menu lists it under, one of the manifest's `groups:`. */
+  readonly group: string;
+  /** One sentence, shown under the editor. */
+  readonly summary: string;
+  /** The page of `docs/` that explains it, and the heading's anchor. */
+  readonly doc: string;
   /** Files the example names beside itself -- a picture it is lettered over. */
   readonly files?: readonly string[];
+}
+
+interface Manifest {
+  readonly groups: readonly string[];
+  /** The file the playground opens on. */
+  readonly start: string;
+  readonly examples: readonly ManifestEntry[];
 }
 
 /**
@@ -158,12 +171,17 @@ interface ManifestEntry {
  * The examples are real files under `examples/gallery/`, and the Python test suite
  * compiles every one of them. So the playground cannot offer an example that does not
  * work -- which is the failure mode of every hand-maintained list of demo strings.
+ *
+ * The groups and the opening example go with them, the opening example as its index:
+ * `src/gallery.ts` orders the menu from these.
  */
 async function writeExamples(): Promise<void> {
   const gallery = join(playground, "..", "examples", "gallery");
-  const manifest = parseYaml(await readFile(join(gallery, "manifest.yaml"), "utf8")) as {
-    examples: ManifestEntry[];
-  };
+  const manifest = parseYaml(await readFile(join(gallery, "manifest.yaml"), "utf8")) as Manifest;
+  const start = manifest.examples.findIndex((entry) => entry.file === manifest.start);
+  if (start === -1) {
+    throw new Error(`manifest.yaml starts on ${manifest.start}, which it does not list`);
+  }
 
   const examples = [];
   for (const entry of manifest.examples) {
@@ -184,6 +202,9 @@ async function writeExamples(): Promise<void> {
       title: entry.title,
       kind: entry.kind,
       file: entry.file,
+      group: entry.group,
+      summary: entry.summary,
+      doc: entry.doc,
       source,
       ...(entry.files === undefined ? {} : { files }),
     });
@@ -191,7 +212,7 @@ async function writeExamples(): Promise<void> {
 
   await writeFile(
     join(publicDir, "examples.json"),
-    `${JSON.stringify(examples, null, 2)}\n`,
+    `${JSON.stringify({ groups: manifest.groups, start, examples }, null, 2)}\n`,
   );
   console.log(`examples: ${examples.length} from examples/gallery/`);
 }

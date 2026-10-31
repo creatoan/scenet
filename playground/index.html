@@ -65,7 +65,8 @@
       <p class="tagline">
         A semantic DSL for comic panels, compiled to SVG. Deterministic geometry — no
         generative image model. The compiler below is the same Python that runs on the
-        command line, executing in your browser under WebAssembly.
+        command line, executing in your browser under WebAssembly. Letter over your own
+        art, in colour, and export the staging for image models.
       </p>
       <!--
         In the header, not the footer. A page this tall hides its footer, and anyone can
@@ -84,6 +85,11 @@
         <div class="pane-head">
           <label for="examples">Example</label>
           <select id="examples" aria-label="Load an example"></select>
+          <!-- The gallery in the menu's order, from the tour on: it reads as a tutorial. -->
+          <div class="group" aria-label="Walk the gallery">
+            <button type="button" class="tool" id="previous" aria-label="Previous example">‹</button>
+            <button type="button" class="tool" id="next" aria-label="Next example">›</button>
+          </div>
           <span class="spacer"></span>
           <span class="hint" id="kind" aria-live="polite"></span>
           <button
@@ -115,8 +121,15 @@
           </button>
         </div>
         <div id="editor" role="application" aria-label="Panel source"></div>
+        <!--
+          What the example shows, and the page of the documentation that explains it --
+          the same version's, as the header's Documentation link is. In a new tab, so the
+          document stays open here.
+        -->
         <p class="blurb">
-          <span id="blurb"></span>
+          <span id="summary"></span>
+          <a id="doc-link" class="doc-link" target="_blank" rel="noopener" hidden>Read about it</a>
+          <span id="blurb" class="state"></span>
           <button type="button" class="link" id="reset" hidden>Reset to example</button>
         </p>
       </section>
@@ -192,7 +205,7 @@
             </svg>
           </button>
         </div>
-        <p class="hint notes" id="notes" aria-live="polite" hidden></p>
+        <p class="notes" id="notes" aria-live="polite" hidden></p>
         <div
           id="output"
           role="tabpanel"

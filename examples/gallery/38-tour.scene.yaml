@@ -25,7 +25,7 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: worry, at: bottom_right, size: 0.4}
+              - {use: worry, at: bottom_right, size: 0.33}
       - panels: [platform]
 
 panels:
