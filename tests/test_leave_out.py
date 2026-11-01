@@ -10,13 +10,15 @@ script's `(OP)` already does.
 
 import json
 
+import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
-from scenet import compile_script
+from scenet import compile_book, compile_script
 from scenet.compose import merge, settle
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.frontends.yaml_front import parse_panel, parse_scene
+from scenet.ir import SayEvent, Side
 from scenet.schema import panel_schema, scene_schema
 
 SCENE = """\
@@ -129,3 +131,136 @@ class TestTheSchema:
         text = json.dumps(panel_schema()["properties"]["cast"])
         assert "null" in text
         assert "leaves" in text.lower()
+
+
+HEARD = """\
+cast:
+  bob: {reference: bob, at: right_third}
+  carol: {reference: alice, at: left_third}
+staging:
+  - bob looking_at carol
+  - carol left_of bob
+panels:
+  both:
+    script: [{say: {by: carol, text: Hello.}}]
+  heard:
+    cast: {carol: null}
+    script: [{say: {by: carol, text: Over here!, off_panel: true}}]
+"""
+
+
+class TestHeardFromOffPanel:
+    """Left out, then heard from off panel: as a comic script's `CAROL (OP)` has it.
+
+    She is in the scene, not in the frame, so `bob looking_at carol` still holds -- Bob
+    turns toward the side she is heard from -- and her tail ends on the side she was
+    written to stand on. Everything else that names her goes, as before (#258).
+    """
+
+    LOOK = {"subject": "bob", "predicate": "looking_at", "object": "carol"}
+
+    @staticmethod
+    def document(*staging: object, off_panel: object = True) -> dict[str, object]:
+        return {
+            "cast": {"bob": {}, "carol": None},
+            "staging": list(staging),
+            "script": [{"say": {"by": "carol", "text": "Hi.", "off_panel": off_panel}}],
+        }
+
+    @pytest.mark.parametrize("look", ["bob looking_at carol", LOOK])
+    def test_settling_keeps_a_look_at_her(self, look: object):
+        settled, dropped = settle(self.document(look, "carol left_of bob"))
+        assert settled["staging"] == [look]
+        assert [item.relation for item in dropped] == ["carol left_of bob"]
+
+    def test_only_while_she_is_heard_from_off_panel(self):
+        document = self.document("bob looking_at carol")
+        document["script"] = []
+        settled, dropped = settle(document)
+        assert settled["staging"] == []
+        assert [item.actor for item in dropped] == ["carol"]
+
+    def test_not_by_somebody_left_out_too(self):
+        document = self.document("bob looking_at carol")
+        document["cast"] = {"bob": None, "carol": None}
+        settled, dropped = settle(document)
+        assert settled["staging"] == []
+        assert [item.actor for item in dropped] == ["bob"]
+
+    def test_her_line_ends_on_the_side_she_stood(self):
+        beneath = {"cast": {"bob": {}, "carol": {"at": "left_third"}}}
+        settled, _ = settle(self.document(), beneath=beneath)
+        assert settled["script"][0]["say"]["off_panel"] == "left"
+
+    @pytest.mark.parametrize(
+        ("off_panel", "at", "side"),
+        [("right", "left_third", "right"), (True, "center", True), (True, None, True)],
+    )
+    def test_unless_a_side_is_named_or_she_stood_on_neither(
+        self, off_panel: object, at: str | None, side: object
+    ):
+        beneath = {"cast": {"carol": {"at": at} if at else {}}}
+        settled, _ = settle(self.document(off_panel=off_panel), beneath=beneath)
+        assert settled["script"][0]["say"]["off_panel"] == side
+
+    def test_with_nothing_beneath_it_is_left_as_written(self):
+        settled, _ = settle(self.document())
+        assert settled["script"][0]["say"]["off_panel"] is True
+
+    def test_in_a_scene(self):
+        panel = parse_scene(HEARD)["heard"]
+        assert set(panel.cast) == {"bob"}
+        assert [(item.subject, item.predicate.value, item.object) for item in panel.staging] == [
+            ("bob", "looking_at", "carol")
+        ]
+        (line,) = panel.script
+        assert isinstance(line, SayEvent)
+        assert line.off_panel == Side.LEFT
+
+    def test_bob_looks_her_way(self):
+        (bob,) = compile_book(HEARD).panels["heard"].core.actors
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[0] == pytest.approx(-1.0)  # she stood at left_third
+
+    def test_from_wherever_she_was_written_to_stand(self):
+        """Cast by the panel it is over, not by the scene: still found."""
+        source = (
+            "cast:\n  bob: {reference: bob, at: center}\n"
+            "staging: [bob looking_at carol]\n"
+            "panels:\n"
+            "  both:\n"
+            "    cast: {carol: {reference: alice, at: right_third}}\n"
+            "    script: [{say: {by: carol, text: Hello.}}]\n"
+            "  heard:\n"
+            "    over: both\n"
+            "    cast: {carol: null}\n"
+            "    script: [{say: {by: carol, text: Over here!, off_panel: true}}]\n"
+        )
+        (line,) = parse_scene(source)["heard"].script
+        assert isinstance(line, SayEvent)
+        assert line.off_panel == Side.RIGHT
+
+    def test_only_what_cannot_hold_is_noted(self):
+        found = diagnose_source(HEARD)
+        assert [(item.rule, item.path) for item in found] == [
+            ("dropped-relation", ("panels", "heard", "cast", "carol"))
+        ]
+        assert "carol left_of bob" in found[0].message
+
+    def test_in_a_script_too(self):
+        """`@cast: {CAROL: null}` leaves her out; it does not draw her."""
+        script = (
+            "---\ncast:\n"
+            "  BOB: {reference: bob, at: right_third}\n"
+            "  CAROL: {reference: alice, at: left_third}\n"
+            "staging: [BOB looking_at CAROL]\n---\n"
+            "PANEL 1\nCAROL\nHello.\n\n"
+            "PANEL 2\n@cast: {CAROL: null}\nCAROL (OP)\nOver here!\n"
+        )
+        assert diagnose_script(script) == []
+        panel = compile_script(script).panels["2"]
+        (bob,) = panel.core.actors
+        assert bob.gaze_aim is not None
+        assert bob.gaze_aim[0] == pytest.approx(-1.0)
+        (balloon,) = panel.core.balloons
+        assert balloon.off_panel == Side.LEFT
