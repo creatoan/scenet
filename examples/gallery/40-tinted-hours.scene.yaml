@@ -1,0 +1,54 @@
+# The tinted palette: the value ladder in colour, at every hour.
+#
+# `palette: tinted`, written beside `panels:`, is a default every panel inherits. Each value
+# on the ladder is drawn in its twin: a colour with the same lightness, on the same rung,
+# at the same hour. Each hour has a shadow hue at the front and an atmosphere hue at the
+# sky -- warm light and cool shadow, as painters put it -- and the planes between move from
+# one to the other, so with distance colour drifts toward the colour of the air. Night is
+# blue all the way back, and the dark end of the ladder holds almost no colour at all.
+#
+# Build it with `--mono`, or write `palette: mono`, and every panel is the grey one, value
+# for value: colour never changes a value, so nothing moves.
+
+palette: tinted
+
+panel:
+  size: [1100, 620]
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, pose: arms_crossed}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+pages:
+  - tiers:
+      - panels: [dawn, noon]
+      - panels: [dusk, midnight]
+
+panels:
+  dawn:
+    setting: {place: docks, time: dawn, weather: fog}
+    script:
+      - caption: {text: "Dawn.", kind: locale, prefer: top_left}
+
+  noon:
+    setting: {place: docks, time: day}
+    script:
+      - caption: {text: "Noon.", kind: locale, prefer: top_left}
+
+  dusk:
+    setting: {place: docks, time: dusk}
+    script:
+      - caption: {text: "Dusk.", kind: locale, prefer: top_left}
+
+  midnight:
+    setting: {place: docks, time: night, weather: rain}
+    script:
+      - caption: {text: "Midnight.", kind: locale, prefer: top_left}

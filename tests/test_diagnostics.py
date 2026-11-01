@@ -274,7 +274,7 @@ class TestOneMistakeInAScriptEntryIsOneFinding:
                 "invalid-field",
                 ("script", 0, "caption", "tone"),
                 5,
-                "'paper', 'pale' or 'ink'",
+                "'paper', 'pale', 'ink' or 'warm'",
                 id="caption-tone-block",
             ),
             pytest.param(

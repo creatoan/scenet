@@ -37,6 +37,7 @@ def render_page(
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
+    mono: bool = False,
 ) -> str:
     r"""Render one page as a standalone SVG document.
 
@@ -53,6 +54,9 @@ def render_page(
         embed: The supplied pictures' bytes, by digest -- what
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
             SVG. Left out, each picture is linked by the path its document wrote.
+        mono: Draw every value as its grey and ignore its colour, as for a black-and-white
+            edition (#244). Every decision was made on the grey, so this draws exactly what
+            `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
         The page, as SVG.
@@ -70,6 +74,8 @@ def render_page(
         >>> 'viewBox="0 0 2000 3000"' in render_page(book.pages[0], cores)
         True
     """
+    if mono:
+        panels = {name: core.as_mono() for name, core in panels.items()}
     access = aria and not debug
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -103,6 +109,7 @@ def render_pages(
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
+    mono: bool = False,
 ) -> str:
     """Render every page side by side, as one SVG document.
 
@@ -122,6 +129,9 @@ def render_pages(
         embed: The supplied pictures' bytes, by digest -- what
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
             SVG. Left out, each picture is linked by the path its document wrote.
+        mono: Draw every value as its grey and ignore its colour, as for a black-and-white
+            edition (#244). Every decision was made on the grey, so this draws exactly what
+            `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
         Every page, side by side, as SVG: left to right, or for pages read right to left
@@ -133,6 +143,8 @@ def render_pages(
     """
     if not pages:
         raise ValueError("there are no pages to render")
+    if mono:
+        panels = {name: core.as_mono() for name, core in panels.items()}
     rtl = reading_direction([page.direction for page in pages], "pages") is Direction.RTL
     spacing = max(page.width for page in pages) * PAGE_SPACING_FRACTION
     width = sum(page.width for page in pages) + spacing * (len(pages) - 1)

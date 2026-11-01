@@ -4,8 +4,10 @@
  * The moving parts, and this file is the only thing that knows about all of them: a
  * Monaco editor (`./scenet-monaco`), a Pyodide-hosted compiler (`./compiler`), the
  * gallery the build inlined into `examples.json` and the order it is shown in
- * (`./gallery`), a zoomable viewer (`./viewport`),
- * downloads (`./export`), and the draft and share links (`./persist`).
+ * (`./gallery`), a zoomable viewer (`./viewport`) and the panels laid side by side in it
+ * (`./maps`), the output options (`./options`), what a screen reader announces
+ * (`./outline`), the files beside the document (`./files`), downloads (`./export`), and the
+ * draft and share links (`./persist`).
  *
  * No geometry, no layout, no language knowledge beyond telling one document kind from
  * another. Everything else happens in Python.
@@ -22,8 +24,10 @@ import {
   type CompileResult,
   type CompileSuccess,
   type Compiler,
+  type PanelExports,
+  type Picture,
 } from "./compiler";
-import { exampleFiles } from "./examples";
+import { exampleFiles, type DocumentFile } from "./examples";
 import {
   CONDITIONING,
   conditioningFile,
@@ -34,6 +38,7 @@ import {
   svgToPng,
   textBlob,
 } from "./export";
+import { fileKind, formatSize, imageType, listed } from "./files";
 import { declaredPath, fontFileName } from "./fonts";
 import {
   displayOrder,
@@ -46,6 +51,16 @@ import {
   type Gallery,
 } from "./gallery";
 import { declaredImagePath, imageFileName, isContract } from "./images";
+import { composeMaps } from "./maps";
+import {
+  chosenLayout,
+  loadOptions,
+  offeredLayouts,
+  saveOptions,
+  type Layout,
+  type OutputOptions,
+} from "./options";
+import { outline } from "./outline";
 import {
   browserStore,
   clearDraft,
@@ -156,6 +171,13 @@ const errorBox = element<HTMLDivElement>("error");
 const zoomControls = element<HTMLDivElement>("zoom-controls");
 const zoomLevel = element<HTMLButtonElement>("zoom-level");
 const downloadMenu = element<HTMLDetailsElement>("download-menu");
+const optionsMenu = element<HTMLDetailsElement>("options-menu");
+const liveTextOption = element<HTMLInputElement>("option-live-text");
+const outlineHost = element<HTMLDivElement>("outline");
+const outlineList = element<HTMLOListElement>("outline-list");
+const filesHost = element<HTMLDivElement>("files");
+const filesList = element<HTMLUListElement>("files-list");
+const fileView = element<HTMLDivElement>("file-view");
 const fullscreenButton = element<HTMLButtonElement>("fullscreen");
 const versionSelect = element<HTMLSelectElement>("version-select");
 const versionBanner = element<HTMLParagraphElement>("version-banner");
@@ -163,9 +185,34 @@ const tabs = {
   panel: element<HTMLButtonElement>("tab-panel"),
   debug: element<HTMLButtonElement>("tab-debug"),
   core: element<HTMLButtonElement>("tab-core"),
+  ".depth.svg": element<HTMLButtonElement>("tab-depth"),
+  ".mask.svg": element<HTMLButtonElement>("tab-mask"),
+  ".pose.json": element<HTMLButtonElement>("tab-pose"),
+  ".boxes.json": element<HTMLButtonElement>("tab-boxes"),
+  ".semantics.json": element<HTMLButtonElement>("tab-semantics"),
+  outline: element<HTMLButtonElement>("tab-outline"),
+  files: element<HTMLButtonElement>("tab-files"),
 };
+const layoutOptions = {
+  pages: element<HTMLInputElement>("layout-pages"),
+  strip: element<HTMLInputElement>("layout-strip"),
+  panels: element<HTMLInputElement>("layout-panels"),
+} satisfies Record<Layout, HTMLInputElement>;
 
 type View = keyof typeof tabs;
+
+/** The views drawn in the zoomable viewer; the rest are text, or a list. */
+const PICTURE_VIEWS: ReadonlySet<View> = new Set<View>([
+  "panel",
+  "debug",
+  ".depth.svg",
+  ".mask.svg",
+  ".pose.json",
+  ".boxes.json",
+]);
+
+/** The views that show an export for image models, made only while one is open. */
+const EXPORT_VIEWS: ReadonlySet<View> = new Set<View>(CONDITIONING.map((exported) => exported.suffix as View));
 
 const store = browserStore();
 
@@ -301,6 +348,17 @@ async function main(): Promise<void> {
 
   let compiler: Compiler | undefined;
   let lastGood: CompileSuccess | undefined;
+  // What the last document that compiled looks like, as the output options draw it.
+  let pictures: readonly Picture[] = [];
+  let options: OutputOptions = loadOptions(store);
+  // Counts documents that compiled: the exports for image models are kept for one of them.
+  let book = 0;
+  let exportsCache: { readonly book: number; readonly panels: readonly PanelExports[] } | undefined;
+  // Each drawing takes a ticket, as each compile does, so the latest options win.
+  let drawing = 0;
+  // The file the Files tab shows, and the address its picture is shown from.
+  let openFile: string | undefined;
+  let fileUrl: string | undefined;
   let view: View = "panel";
   let origin: Origin = { from: "example", index: start };
   let edited = false;
@@ -312,19 +370,26 @@ async function main(): Promise<void> {
   let generation = 0;
   let timer: number | undefined;
 
-  // --- Panel Core, in its own read-only editor --------------------------------------
+  // --- Panel Core and the semantics, in their own read-only editor -------------------
 
   const coreModel = monaco.editor.createModel(
     "",
     "json",
     monaco.Uri.parse("inmemory://model/panel.core.json"),
   );
+  const semanticsModel = monaco.editor.createModel(
+    "",
+    "json",
+    monaco.Uri.parse("inmemory://model/panel.semantics.json"),
+  );
   let coreEditor: monaco.editor.IStandaloneCodeEditor | undefined;
+  // Where each was scrolled to and what was folded, kept across switching between them.
+  const viewStates = new Map<monaco.editor.ITextModel, monaco.editor.ICodeEditorViewState>();
 
   /** Created on first view: a hidden editor has no size to lay out against. */
-  const showCore = (text: string): void => {
+  const showJson = (model: monaco.editor.ITextModel, text: string): void => {
     coreEditor ??= monaco.editor.create(coreHost, {
-      model: coreModel,
+      model,
       readOnly: true,
       domReadOnly: true,
       automaticLayout: true,
@@ -336,11 +401,19 @@ async function main(): Promise<void> {
       renderLineHighlight: "none",
       padding: { top: 8, bottom: 8 },
     });
-    if (coreModel.getValue() === text) return;
+    const current = coreEditor.getModel();
+    if (current !== model) {
+      const leaving = coreEditor.saveViewState();
+      if (current !== null && leaving !== null) viewStates.set(current, leaving);
+      coreEditor.setModel(model);
+      const returning = viewStates.get(model);
+      if (returning !== undefined) coreEditor.restoreViewState(returning);
+    }
+    if (model.getValue() === text) return;
     // Keep the scroll position and folds across recompiles, so a section folded open
     // to watch one value stays open while the source is edited.
     const state = coreEditor.saveViewState();
-    coreModel.setValue(text);
+    model.setValue(text);
     if (state !== null) coreEditor.restoreViewState(state);
   };
 
@@ -359,16 +432,198 @@ async function main(): Promise<void> {
     for (const [name, button] of Object.entries(tabs)) {
       button.setAttribute("aria-selected", String(name === view));
     }
-    const showingCore = view === "core";
-    coreHost.hidden = !showingCore;
-    output.hidden = showingCore;
-    zoomControls.hidden = showingCore;
-    if (lastGood === undefined) return;
-    if (showingCore) {
-      showCore(lastGood.core);
-    } else {
-      viewport.show(view === "debug" ? lastGood.debug : lastGood.svg);
+    const picture = PICTURE_VIEWS.has(view);
+    output.hidden = !picture;
+    zoomControls.hidden = !picture;
+    coreHost.hidden = view !== "core" && view !== ".semantics.json";
+    outlineHost.hidden = view !== "outline";
+    filesHost.hidden = view !== "files";
+    // The files are there before anything compiles: the gallery's are written at start.
+    if (view === "files") {
+      showFiles();
+      return;
     }
+    if (lastGood === undefined) return;
+    if (view === "core") {
+      showJson(coreModel, lastGood.core);
+    } else if (view === "outline") {
+      showOutline();
+    } else if (EXPORT_VIEWS.has(view)) {
+      void showExport(view);
+    } else if (pictures.length > 0) {
+      const debug = view === "debug";
+      viewport.show(
+        composeMaps(pictures.map((shown) => ({ name: shown.name, svg: debug ? shown.debug : shown.svg }))),
+      );
+    }
+  };
+
+  // --- Exports for image models ------------------------------------------------------
+
+  /**
+   * Every panel's exports, made the first time a tab or a download asks for them after a
+   * compile, so typing stays as fast as it was. Undefined when a later document compiled
+   * while they were being made: drawing that one asks again.
+   */
+  const panelExports = async (): Promise<readonly PanelExports[] | undefined> => {
+    if (compiler === undefined || lastGood === undefined) return undefined;
+    if (exportsCache?.book === book) return exportsCache.panels;
+    const asked = book;
+    const panels = await compiler.conditioning();
+    if (asked !== book) return undefined;
+    exportsCache = { book: asked, panels };
+    return panels;
+  };
+
+  /** The semantics as one JSON document: a lone panel's own, or each panel's by its name. */
+  const semanticsText = (panels: readonly PanelExports[]): string => {
+    const [only] = panels;
+    if (only !== undefined && panels.length === 1) return only.files[".semantics.json"] ?? "";
+    const each = panels.map((panel) => [panel.panel, JSON.parse(panel.files[".semantics.json"] ?? "null")]);
+    return `${JSON.stringify(Object.fromEntries(each), null, 2)}\n`;
+  };
+
+  const showExport = async (shown: View): Promise<void> => {
+    const panels = await panelExports();
+    if (panels === undefined || view !== shown) return;
+    if (shown === ".semantics.json") {
+      showJson(semanticsModel, semanticsText(panels));
+      return;
+    }
+    // The pose and the boxes are JSON: what is shown is their picture, drawn in Python.
+    viewport.show(
+      composeMaps(
+        panels.map((panel) => ({ name: panel.panel, svg: panel.previews[shown] ?? panel.files[shown] ?? "" })),
+      ),
+    );
+  };
+
+  // --- What a screen reader announces ------------------------------------------------
+
+  const ROLE_WORD = { img: "image", group: "group" } as const;
+
+  /** The output as a screen reader walks it, from the very markup the Panel tab shows. */
+  const showOutline = (): void => {
+    const parser = new DOMParser();
+    const entries = pictures.flatMap((shown) =>
+      outline(parser.parseFromString(shown.svg, "image/svg+xml").documentElement),
+    );
+    outlineList.replaceChildren(
+      ...entries.map((entry) => {
+        const item = document.createElement("li");
+        item.style.paddingInlineStart = `${entry.depth * 1.5}rem`;
+        const role = document.createElement("span");
+        role.className = "role";
+        role.textContent = ROLE_WORD[entry.role];
+        const name = document.createElement("span");
+        name.className = entry.name === undefined ? "name unnamed" : "name";
+        name.textContent = entry.name ?? "no name: announced as its role alone";
+        item.append(role, name);
+        return item;
+      }),
+    );
+    if (entries.length === 0) {
+      const item = document.createElement("li");
+      item.className = "unnamed";
+      item.textContent = "Nothing: this output says nothing to a screen reader.";
+      outlineList.append(item);
+    }
+  };
+
+  // --- The files beside the document -------------------------------------------------
+
+  const showFile = (file: DocumentFile | undefined): void => {
+    if (fileUrl !== undefined) URL.revokeObjectURL(fileUrl);
+    fileUrl = undefined;
+    if (file === undefined) {
+      fileView.replaceChildren();
+      return;
+    }
+    const kind = fileKind(file.path);
+    if (kind === "text") {
+      const text = document.createElement("pre");
+      text.textContent = new TextDecoder().decode(file.bytes);
+      fileView.replaceChildren(text);
+    } else if (kind === "image") {
+      fileUrl = URL.createObjectURL(new Blob([file.bytes.slice()], { type: imageType(file.path) ?? "" }));
+      const image = document.createElement("img");
+      image.src = fileUrl;
+      image.alt = file.path;
+      fileView.replaceChildren(image);
+    } else {
+      const note = document.createElement("p");
+      note.textContent =
+        kind === "font"
+          ? `A font. Letter in it with lettering: {font: ${file.path}}.`
+          : "Shown by its name and size only.";
+      fileView.replaceChildren(note);
+    }
+  };
+
+  const showFiles = (): void => {
+    const files = listed(compiler?.files() ?? []);
+    if (!files.some((file) => file.path === openFile)) openFile = files[0]?.path;
+    filesList.replaceChildren(
+      ...files.map((file) => {
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-pressed", String(file.path === openFile));
+        const path = document.createElement("span");
+        path.textContent = file.path;
+        const size = document.createElement("span");
+        size.className = "size";
+        size.textContent = formatSize(file.bytes.length);
+        button.append(path, size);
+        button.addEventListener("click", () => {
+          openFile = file.path;
+          showFiles();
+        });
+        item.append(button);
+        return item;
+      }),
+    );
+    if (files.length === 0) {
+      const item = document.createElement("li");
+      item.className = "unnamed";
+      item.textContent = compiler === undefined ? "Starting the compiler…" : "No files beside the document.";
+      filesList.append(item);
+    }
+    showFile(files.find((file) => file.path === openFile));
+  };
+
+  // --- Drawing, with the output options ----------------------------------------------
+
+  /** The layout menu: what this document offers, and what is shown. */
+  const updateOptionsMenu = (offered: readonly Layout[], shown: string): void => {
+    liveTextOption.checked = options.liveText;
+    for (const [layout, radio] of Object.entries(layoutOptions)) {
+      radio.disabled = !offered.includes(layout as Layout);
+      radio.checked = layout === shown;
+    }
+  };
+
+  /** Draw the last document that compiled as the options say, then show it. */
+  const drawNow = async (): Promise<void> => {
+    if (compiler === undefined || lastGood === undefined) return;
+    const ticket = ++drawing;
+    const offered = offeredLayouts({ pages: lastGood.pages, panels: lastGood.panels.length });
+    const shown = chosenLayout(options.layout, offered);
+    const result = await compiler.render(options.liveText, shown);
+    if (ticket !== drawing) return;
+    if (!result.ok) {
+      setStatus(`Could not draw it: ${result.error}`);
+      return;
+    }
+    pictures = result.pictures;
+    updateOptionsMenu(offered, shown);
+    render();
+  };
+
+  const setOptions = (changed: Partial<OutputOptions>): void => {
+    options = { ...options, ...changed };
+    saveOptions(store, options);
+    void drawNow();
   };
 
   const clearMarkers = (): void => {
@@ -412,6 +667,8 @@ async function main(): Promise<void> {
       // Notes, if any: a document that compiles has no error to show.
       monaco.editor.setModelMarkers(model, SCENET_MARKER_OWNER, toMarkers(monaco, result.findings));
       lastGood = result;
+      book += 1;
+      exportsCache = undefined;
       errorBox.hidden = true;
       errorBox.replaceChildren();
       notes.textContent = result.notes.join(" · ");
@@ -419,7 +676,6 @@ async function main(): Promise<void> {
       const count = result.panels.length;
       setStatus(count === 1 ? "Compiled." : `Compiled ${count} panels.`);
       updateDownloads();
-      render();
       return;
     }
     // The previous panel stays on screen. Blanking it on every keystroke that leaves the
@@ -469,6 +725,7 @@ async function main(): Promise<void> {
     const result = await compiler.compile(model.getValue(), kind);
     if (ticket !== generation) return;
     showResult(result, model);
+    if (result.ok) await drawNow();
   };
 
   const scheduleCompile = (): void => {
@@ -609,23 +866,19 @@ async function main(): Promise<void> {
   // --- Downloads, sharing, full screen -----------------------------------------------
 
   const updateDownloads = (): void => {
+    // One panel's exports are five files; a document of several has them all in one ZIP.
+    const several = (lastGood?.panels.length ?? 0) > 1;
     for (const button of downloadMenu.querySelectorAll<HTMLButtonElement>("[data-download]")) {
       const what = button.dataset["download"] ?? "";
-      if (CONDITIONING.some((exported) => exported.suffix === what)) {
-        // One set of exports per panel: a document of several gets them from the command line.
-        const none = lastGood?.conditioning == null;
-        button.disabled = none;
-        button.title =
-          lastGood === undefined
-            ? "Nothing has compiled yet"
-            : none
-              ? "One panel at a time: `scenet build --conditioning` writes every panel's"
-              : "For image models, as `scenet build --conditioning` writes it";
-        continue;
-      }
       button.disabled = what !== "source" && lastGood === undefined;
+      if (CONDITIONING.some((exported) => exported.suffix === what)) button.hidden = several;
+      if (what === "conditioning") button.hidden = !several;
     }
   };
+
+  /** What the Panel or Overlay tab shows, as one document. */
+  const shownSvg = (debug: boolean): string =>
+    composeMaps(pictures.map((shown) => ({ name: shown.name, svg: debug ? shown.debug : shown.svg })));
 
   const save = async (what: string): Promise<void> => {
     const stem = stemFor(originExample()?.file);
@@ -638,20 +891,26 @@ async function main(): Promise<void> {
       setStatus("Nothing has compiled yet, so there is nothing to download.");
       return;
     }
-    if (what === "svg") download(`${stem}.svg`, svgBlob(lastGood.svg));
-    if (what === "debug") download(`${stem}.debug.svg`, svgBlob(lastGood.debug));
+    if (what === "svg") download(`${stem}.svg`, svgBlob(shownSvg(false)));
+    if (what === "debug") download(`${stem}.debug.svg`, svgBlob(shownSvg(true)));
     if (what === "core") download(`${stem}.core.json`, textBlob(lastGood.core, "application/json"));
-    const exported = lastGood.conditioning?.[what];
-    if (exported !== undefined) {
+    if (CONDITIONING.some((exported) => exported.suffix === what)) {
+      const [only] = (await panelExports()) ?? [];
+      const exported = only?.files[what];
+      if (only === undefined || exported === undefined) return;
       const model = editor.getModel() ?? modelFor("panel");
-      const panel = kindOf(model) === "panel" ? undefined : lastGood.panels[0];
+      const panel = kindOf(model) === "panel" ? undefined : only.panel;
       const { filename, type } = conditioningFile(stem, what, panel);
       download(filename, textBlob(exported, type));
+    }
+    if (what === "conditioning" && compiler !== undefined) {
+      const bytes = await compiler.archive(stem);
+      download(`${stem}.conditioning.zip`, new Blob([bytes.slice()], { type: "application/zip" }));
     }
     if (what === "png") {
       setStatus("Rendering PNG…", true);
       try {
-        download(`${stem}.png`, await svgToPng(lastGood.svg));
+        download(`${stem}.png`, await svgToPng(shownSvg(false)));
         setStatus("PNG saved.");
       } catch (error: unknown) {
         setStatus(`Could not make a PNG: ${error instanceof Error ? error.message : String(error)}`);
@@ -742,6 +1001,7 @@ async function main(): Promise<void> {
       return;
     }
     await compileNow();
+    if (view === "files") render();
     setStatus(
       `Added ${added.join(", ")}. Letter in it with lettering: {font: ${added[0]}}. ` +
         "Fonts stay in this tab only: a reload or a share link does not keep them.",
@@ -769,6 +1029,7 @@ async function main(): Promise<void> {
       return;
     }
     await compileNow();
+    if (view === "files") render();
     const picture = added.find((path) => !isContract(path));
     const contract = added.find((path) => isContract(path));
     const how =
@@ -802,9 +1063,16 @@ async function main(): Promise<void> {
     downloadMenu.open = false;
     void save(button.dataset["download"] ?? "");
   });
+  liveTextOption.addEventListener("change", () => setOptions({ liveText: liveTextOption.checked }));
+  for (const [layout, radio] of Object.entries(layoutOptions)) {
+    radio.addEventListener("change", () => {
+      if (radio.checked) setOptions({ layout: layout as Layout });
+    });
+  }
+  const menus = [downloadMenu, optionsMenu];
   document.addEventListener("click", (event) => {
-    if (downloadMenu.open && !downloadMenu.contains(event.target as Node)) {
-      downloadMenu.open = false;
+    for (const menu of menus) {
+      if (menu.open && !menu.contains(event.target as Node)) menu.open = false;
     }
   });
 
@@ -821,7 +1089,7 @@ async function main(): Promise<void> {
         event.preventDefault();
         void save("source");
       } else if (event.key === "Escape") {
-        downloadMenu.open = false;
+        for (const menu of menus) menu.open = false;
         if (outputPane.classList.contains("maximized")) setMaximized(false);
       }
     },

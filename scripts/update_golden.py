@@ -41,13 +41,16 @@ DIGESTS = GOLDEN / "digests.json"
 COMMAND = "uv run python scripts/update_golden.py"
 
 #: Pictures the documentation shows, each exactly as `scenet build` writes it -- so each is a
-#: golden too, kept whole, and rewritten with the others: the home page's first panel, and a
-#: panel beside its depth map and mask in the how-to on exporting for image models.
+#: golden too, kept whole, and rewritten with the others: the home page's first panel, a
+#: panel beside its depth map and mask in the how-to on exporting for image models, and the
+#: two pages the language reference shows `palette` with.
 PICTURES = {
     ROOT / "docs" / "images" / "two-characters.svg": "01-two-characters.svg",
     ROOT / "docs" / "images" / "conditioning" / "panel.svg": "21-atmosphere.noon.svg",
     ROOT / "docs" / "images" / "conditioning" / "depth.svg": "21-atmosphere.noon.depth.svg",
     ROOT / "docs" / "images" / "conditioning" / "mask.svg": "21-atmosphere.noon.mask.svg",
+    ROOT / "docs" / "images" / "palette" / "hours.svg": "40-tinted-hours.page-1.svg",
+    ROOT / "docs" / "images" / "palette" / "flashback.svg": "41-flashback.page-1.svg",
 }
 
 #: The exports for image models that are JSON, which are digested as the SVGs are.

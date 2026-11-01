@@ -20,7 +20,7 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 | `list_puppets` | — | Every character, with each pose and expression it declares |
 | `validate` | `source`, `syntax`, `deep`, `files` | `{valid, findings}`, every finding at once; `valid` when none is an error |
 | `compile` | `source`, `syntax`, `files` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
-| `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `conditioning` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
+| `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `mono`, `conditioning` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
 
 Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
@@ -65,6 +65,11 @@ the network, or answers differently on a second call. A client can run them with
 : `true` (default): each panel is an image a screen reader can read, named with what it shows and
   then everything said in it, in reading order, as `scenet build` writes it — which also gives a
   model reading the SVG back the panel's words. `false` leaves that out, as `--no-aria` does.
+
+`mono`
+: `true` draws every value as its grey and ignores a palette's colour, as `scenet build --mono`
+  does: byte for byte what the same document draws with `palette: mono`. `false` (default) draws
+  each colour the palette gave.
 
 ### Findings
 
