@@ -1,0 +1,35 @@
+# A description: what the panel shows, in words, for a reader who cannot see it.
+#
+# A screen reader says it first, before what is said in the panel. Nothing is drawn from it:
+# Alice looks bored because of `expression: bored`, not because the description says so.
+# Leave it out and Scenet describes the panel itself -- the shot, the setting, and who is
+# where.
+#
+# Bob's line is lettered at `size: normal`, the default, written out here beside Alice's
+# `size: small` to compare the two.
+
+description: >-
+  Late at night in a living room, Bob points at something off to the side, beaming. Alice
+  watches him, bored stiff.
+
+panel:
+  size: [1000, 650]
+
+camera:
+  shot: full_shot
+
+setting:
+  place: room
+  time: night
+
+cast:
+  alice: {reference: alice, at: left_third, expression: bored}
+  bob:   {reference: bob,   at: right_third, facing: left, pose: pointing, expression: happy}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: bob, text: "And that is the branch line to the harbour.", size: normal}
+  - say: {by: alice, text: "Fascinating.", size: small}

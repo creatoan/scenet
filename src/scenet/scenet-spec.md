@@ -4638,7 +4638,7 @@ A picture painted elsewhere behind the puppets, fitted to cover the panel or con
 
 `34-supplied-art.scene.yaml`
 
-It names `art/street.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+It names `art/street.png`, which is beside it in the gallery: a picture, not printed here.
 
 ```yaml
 # A picture drawn elsewhere, behind the cast.
@@ -4693,7 +4693,7 @@ People the picture draws, lettered from its artwork contract: balloons keep off 
 
 `35-figures.scene.yaml`
 
-It names `art/figures.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+It names `art/figures.png`, which is beside it in the gallery: a picture, not printed here.
 
 ```yaml
 # Figures a picture draws, lettered over (#71).
@@ -4962,9 +4962,9 @@ One page lettered over pictures in colour: posed puppets, figures a picture draw
 
 `38-tour.scene.yaml`
 
-It names `art/street.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+It names `art/street.png`, which is beside it in the gallery: a picture, not printed here.
 
-It names `art/figures.png`, which is beside it in the gallery: a picture, not text, so not printed here.
+It names `art/figures.png`, which is beside it in the gallery: a picture, not printed here.
 
 ```yaml
 # A tour of Scenet: one page, lettered over pictures in colour.
@@ -5225,4 +5225,518 @@ panels:
   again:
     script:
       - say: {by: bob, text: "Neither have you."}
+```
+
+## Your own font
+
+Lettering in a font you supply, Comic Neue: one file for every face, then a file each for dialogue, captions, a stressed word and a sound.
+
+`42-your-own-font.scene.yaml`
+
+It names `fonts/ComicNeue-Regular.ttf`, which is beside it in the gallery: a font, not printed here.
+
+It names `fonts/ComicNeue-Italic.ttf`, which is beside it in the gallery: a font, not printed here.
+
+It names `fonts/ComicNeue-BoldItalic.ttf`, which is beside it in the gallery: a font, not printed here.
+
+It names `fonts/ComicNeue-Bold.ttf`, which is beside it in the gallery: a font, not printed here.
+
+It names `fonts/OFL.txt`, which is beside it in the gallery: a licence, not printed here.
+
+```yaml
+# Your own font: lettering in a face you supply, instead of the one Scenet ships.
+#
+# A font is always a file you name, never one installed on the machine: what the compiler
+# measures has to be the same everywhere. Paths are relative to this document -- these are
+# in fonts/, beside it, and the playground writes them there for you.
+#
+# `font:` may name one file, which then letters every face, as in the first panel. Or it
+# names a file for each face, as in the second: `regular` for dialogue, `italic` for
+# captions, `bold_italic` for a stressed word, `display` for sound effects. The face is
+# Comic Neue, under the SIL Open Font License, which is in fonts/OFL.txt.
+#
+# The second panel also sets its own type size. Written there, `size` letters that panel
+# alone; written beside `panels:`, it would letter every panel.
+
+panel: {size: [1000, 650]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+panels:
+  one-file:
+    lettering: {font: fonts/ComicNeue-Regular.ttf}
+    script:
+      - say: {by: alice, text: "Is that a new font?"}
+      - say: {by: bob, text: "One file, for everything I say."}
+
+  four-faces:
+    lettering:
+      size: 30
+      font:
+        regular: fonts/ComicNeue-Regular.ttf
+        italic: fonts/ComicNeue-Italic.ttf
+        bold_italic: fonts/ComicNeue-BoldItalic.ttf
+        display: fonts/ComicNeue-Bold.ttf
+    script:
+      - caption: {text: "Later, at the type foundry.", kind: locale}
+      - say: {by: alice, text: "Now every face is _yours_."}
+      - sfx: {text: CLUNK, from: bob, size: medium}
+```
+
+## A sound pulled to a zone
+
+A sound placed by who makes it but pulled toward the zone it prefers, turned clockwise or the other way.
+
+`43-sound-pulled-to-a-zone.panel.yaml`
+
+```yaml
+# A sound pulled toward a zone.
+#
+# A sound effect `from:` somebody is placed near them. Give it a `prefer:` too and the zone
+# pulls it: still by its source, but on the side you asked for. With no source at all,
+# `prefer:` alone says where it would like to sit.
+#
+# `rotate` turns it clockwise, in degrees from -45 to 45: positive leans its top to the
+# right, negative to the left. Like everything about a sound, it is applied to the letters'
+# outlines, so it comes out the same in every viewer.
+
+panel: {size: [1200, 800]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left, pose: arms_crossed}
+
+staging:
+  - alice left_of bob
+
+script:
+  - sfx: {text: RING RING, from: bob, prefer: top_right, rotate: 12, size: large}
+  - say: {by: alice, text: "Your phone."}
+  - sfx: {text: tap tap, from: alice, prefer: bottom_left, rotate: -10, size: small}
+  - say: {by: bob, text: "Let it ring."}
+```
+
+## The other five zones
+
+The five zones between the corners, from the top center to the bottom center, each still only a wish.
+
+`44-the-other-zones.panel.yaml`
+
+```yaml
+# The other five zones.
+#
+# `prefer:` names one of nine zones, top, middle or bottom crossed with left, center or
+# right. The four corners have an example of their own; these are the five between them.
+#
+# A zone is still the weakest wish in the language. A balloon never covers a face, never
+# overlaps another balloon and never breaks reading order, and only then does it get as
+# close to its zone as it can.
+
+panel:
+  size: [1200, 900]
+
+camera:
+  shot: full_shot
+
+cast:
+  alice: {reference: alice, at: center}
+
+script:
+  - say: {by: alice, text: "Top center.",    prefer: top_center}
+  - say: {by: alice, text: "Middle left.",   prefer: middle_left}
+  - say: {by: alice, text: "Middle center.", prefer: middle_center}
+  - say: {by: alice, text: "Middle right.",  prefer: middle_right}
+  - say: {by: alice, text: "Bottom center.", prefer: bottom_center}
+```
+
+## A description
+
+What the panel shows, in words, for a reader who cannot see it: read first, and never drawn from.
+
+`45-a-description.panel.yaml`
+
+```yaml
+# A description: what the panel shows, in words, for a reader who cannot see it.
+#
+# A screen reader says it first, before what is said in the panel. Nothing is drawn from it:
+# Alice looks bored because of `expression: bored`, not because the description says so.
+# Leave it out and Scenet describes the panel itself -- the shot, the setting, and who is
+# where.
+#
+# Bob's line is lettered at `size: normal`, the default, written out here beside Alice's
+# `size: small` to compare the two.
+
+description: >-
+  Late at night in a living room, Bob points at something off to the side, beaming. Alice
+  watches him, bored stiff.
+
+panel:
+  size: [1000, 650]
+
+camera:
+  shot: full_shot
+
+setting:
+  place: room
+  time: night
+
+cast:
+  alice: {reference: alice, at: left_third, expression: bored}
+  bob:   {reference: bob,   at: right_third, facing: left, pose: pointing, expression: happy}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: bob, text: "And that is the branch line to the harbour.", size: normal}
+  - say: {by: alice, text: "Fascinating.", size: small}
+```
+
+## Staging, spelled out
+
+Staging written as subject, predicate and object, the form a program writes, mixed with the sentence form it stands for.
+
+`46-staging-spelled-out.panel.yaml`
+
+```yaml
+# Staging, spelled out.
+#
+# `alice left_of bob` is a convenience. Underneath, every relation is a subject, a
+# predicate and an object, and it may be written that way: the form a program that writes
+# Scenet finds easiest to produce. The two forms mix freely, and mean the same.
+
+panel:
+  size: [1100, 700]
+
+camera:
+  shot: full_shot
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - {subject: alice, predicate: left_of, object: bob}
+  - {subject: bob, predicate: looking_at, object: alice}
+  - alice ground_shared_with bob
+
+script:
+  - say: {by: bob, text: "Subject, predicate, object."}
+  - say: {by: alice, text: "Like a scene graph."}
+```
+
+## In front of the cast
+
+A mass on the foreground plane, drawn over the cast like a doorway in silhouette, beside masses spanning the center and the full width.
+
+`47-in-front-of-the-cast.panel.yaml`
+
+```yaml
+# In front of the cast: a mass on the `foreground` plane.
+#
+# Masses on the `near`, `mid` and `far` planes stand behind everybody. One on `foreground`
+# is drawn over the cast, the way a doorway in silhouette is, and darkest of all: reading
+# front to back, a mass never gets darker. Here it is the edge of the door Alice is looking
+# out of.
+#
+# `spans` says how much of the width a mass covers: `full`, the default, written out here,
+# `left`, `right`, or `center` -- the hill in the distance.
+
+panel:
+  size: [1100, 700]
+
+camera:
+  shot: full_shot
+
+setting:
+  horizon: mid
+  time: dusk
+  masses:
+    - {kind: sky,        plane: far,        spans: full}
+    - {kind: solid,      plane: far,        spans: center}
+    - {kind: ground,     plane: near,       spans: full}
+    - {kind: structural, plane: foreground, spans: left}
+
+cast:
+  alice: {reference: alice, at: center, facing: right}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+script:
+  - say: {by: alice, text: "Are you coming in?"}
+  - say: {by: bob, text: "When the sun is down."}
+```
+
+## Two pages
+
+A document of two pages, laid side by side, its panels named by page and number, with an inset read after its panel.
+
+`48-two-pages.scene.yaml`
+
+```yaml
+# Two pages: a document longer than one page.
+#
+# `pages:` is a list, and each page in it is laid out on its own, in the format `page:`
+# gives them all. The playground and `scenet build` draw them side by side, in reading
+# order: from the left, or from the right in a comic read right to left.
+#
+# A panel's name is text, so it can say where the panel is: `2-1` is the first panel of
+# page two, the name a comic script gives a panel when its numbers start again on each
+# page. Quoted, since YAML would read some such names as numbers.
+#
+# On page two, an inset sits in the top right corner of its panel and says `read: after`,
+# which is the default written out: it is read after the panel it is set into.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: ['1-1', '1-2']
+      - {height: 1.3, panels: ['1-3']}
+  - tiers:
+      - height: 1.5
+        panels:
+          - use: '2-1'
+            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+      - panels: ['2-3']
+
+panels:
+  '1-1':
+    camera: {shot: long_shot}
+    script:
+      - caption: {text: "Page one.", kind: locale}
+      - say: {by: alice, text: "Where does this street go?"}
+  '1-2':
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: bob, text: "On to the next page."}
+  '1-3':
+    camera: {shot: full_shot}
+    script:
+      - say: {by: alice, text: "Then turn it."}
+  '2-1':
+    camera: {shot: long_shot}
+    setting: {time: dusk}
+    cast:
+      alice: {at: center}
+      bob: {at: left_third, facing: right}
+    script:
+      - caption: {text: "Page two. Much later."}
+      - say: {by: bob, text: "Still walking."}
+  '2-2':
+    camera: {shot: close_up}
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "My feet.", kind: whisper}
+  '2-3':
+    camera: {shot: full_shot}
+    setting: {time: night}
+    script:
+      - say: {by: alice, text: "Is this the end?"}
+      - say: {by: bob, text: "Of the document, yes."}
+```
+
+## Leaving someone out
+
+A panel that takes away somebody it would inherit, with null.
+
+`49-leaving-someone-out.scene.yaml`
+
+```yaml
+# Leaving someone out of a panel that would inherit them.
+#
+# Everything beside `panels:` is a default every panel takes, and a panel `over:` another
+# takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
+# Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
+#
+# A staging relation naming him would go with him, and `scenet check` would note it. This
+# scene places its cast with `at:` alone, so there is none to lose.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+panels:
+  meeting:
+    script:
+      - say: {by: bob, text: "I'll leave you to it."}
+      - say: {by: alice, text: "Thanks, Bob."}
+
+  alone:
+    over: meeting
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "Finally.", kind: whisper}
+```
+
+## Looking off panel
+
+Somebody heard from off panel can be looked at: Bob turns toward the side the voice comes from.
+
+`50-looking-off-panel.scene.yaml`
+
+```yaml
+# Looking at a voice from off panel.
+#
+# Somebody heard from off panel is nobody the panel draws, so nothing can be staged against
+# them -- except a look. `bob looking_at carol` turns Bob toward the side Carol is heard
+# from, and aims his eyes out of the frame. With `off_panel: true` and no side named, as in
+# the second panel, she is heard from the side Bob faces, so the tail and his look agree.
+#
+# The panels have a margin. It keeps the balloons in, as always; an off-panel tail reaches
+# past it to the frame itself.
+
+panel: {size: [900, 600], margin: 40}
+camera: {shot: medium_shot}
+
+cast:
+  bob: {reference: bob, at: center}
+
+staging:
+  - bob looking_at carol
+
+panels:
+  called:
+    script:
+      - say: {by: carol, text: "Over here!", off_panel: left}
+      - say: {by: bob, text: "Carol?"}
+
+  again:
+    script:
+      - say: {by: carol, text: "No, over here.", off_panel: true}
+      - say: {by: bob, text: "Make up your mind."}
+```
+
+## From puppets to figures
+
+Two puppets in a street, then the same two people drawn by a picture, the place, camera and puppets taken away with null.
+
+`51-puppets-to-figures.scene.yaml`
+
+It names `art/figures.png`, which is beside it in the gallery: a picture, not printed here.
+
+```yaml
+# From puppets to figures: the same two people, drawn first by Scenet, then by a picture.
+#
+# In the first panel Ana and Ben are puppets in a named place. The second is `over:` it, and
+# takes everything it does not take away with `null`:
+#
+# - `place: null` beside its `image`, since a picture is a backdrop of its own;
+# - `camera: null`, since the artist already framed the picture;
+# - `reference: null` beside each `figure`, and every key that posed the puppet -- `at`,
+#   `facing` -- since a member is a puppet or a figure, never both.
+#
+# The picture's artwork contract, art/figures.art.yaml, says where each face and mouth is.
+
+panels:
+  waiting:
+    panel: {size: [1200, 600]}
+    camera: {shot: full_shot}
+    setting: {place: street, time: night}
+    cast:
+      ana: {reference: alice, at: left_third}
+      ben: {reference: bob,   at: right_third, facing: left}
+    script:
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  platform:
+    over: waiting
+    camera: null
+    setting: {place: null, image: art/figures.png, fit: cover}
+    cast:
+      ana: {reference: null, figure: ana, at: null}
+      ben: {reference: null, figure: ben, at: null, facing: null}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}
+```
+
+Its picture's artwork contract, `art/figures.art.yaml`, beside the picture:
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
+```
+
+## A JPEG behind the cast
+
+A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for its size alone.
+
+`52-a-jpeg.panel.yaml`
+
+It names `art/harbour.jpg`, which is beside it in the gallery: a picture, not printed here.
+
+```yaml
+# A JPEG behind the cast.
+#
+# A supplied picture may be a PNG or a JPEG, the two raster formats every SVG viewer must
+# draw. The compiler tells them apart by their first bytes, not by the file's name, and
+# reads nothing but the size from either. This one, art/harbour.jpg, was painted and
+# encoded by scripts/make_gallery_photo.py.
+#
+# `time: dawn` changes nothing in the picture, whose values are the artist's: over a
+# picture, the hour only tints weather, and there is none.
+
+panel:
+  size: [1200, 700]
+
+camera:
+  shot: full_shot
+
+setting:
+  image: art/harbour.jpg
+  fit: cover
+  time: dawn
+
+cast:
+  alice: {reference: alice, at: left_third, pose: pointing}
+  bob:   {reference: bob,   at: center, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "The first boat leaves at six."}
+  - say: {by: bob, text: "Then we have time for coffee."}
 ```

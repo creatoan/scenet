@@ -1,0 +1,29 @@
+# Leaving someone out of a panel that would inherit them.
+#
+# Everything beside `panels:` is a default every panel takes, and a panel `over:` another
+# takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
+# Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
+#
+# A staging relation naming him would go with him, and `scenet check` would note it. This
+# scene places its cast with `at:` alone, so there is none to lose.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+panels:
+  meeting:
+    script:
+      - say: {by: bob, text: "I'll leave you to it."}
+      - say: {by: alice, text: "Thanks, Bob."}
+
+  alone:
+    over: meeting
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "Finally.", kind: whisper}

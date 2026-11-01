@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 1233.0,
+      "panel": "2-1",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "clearance": {
+        "height": 491.55,
+        "width": 532.5,
+        "x": 892.5,
+        "y": 75.0
+      },
+      "height": 431.55,
+      "inset_of": "2-1",
+      "panel": "2-2",
+      "width": 472.5,
+      "x": 922.5,
+      "y": 105.0
+    },
+    {
+      "height": 822.0,
+      "panel": "2-3",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 1353.0
+    }
+  ],
+  "height": 2250.0,
+  "lettering_height": 700.0,
+  "width": 1500.0
+}

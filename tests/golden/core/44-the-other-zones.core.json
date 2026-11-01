@@ -1,0 +1,616 @@
+{
+  "actors": [
+    {
+      "anchors": {
+        "eyes": [
+          600.0,
+          88.68
+        ],
+        "feet": [
+          600.0,
+          864.0
+        ],
+        "head_top": [
+          600.0,
+          45.0
+        ],
+        "mouth": [
+          600.0,
+          126.9
+        ]
+      },
+      "blobs": [
+        {
+          "centre": [
+            600.0,
+            99.6
+          ],
+          "radius": 54.6
+        }
+      ],
+      "capsules": [
+        {
+          "end": [
+            600.0,
+            405.36
+          ],
+          "start": [
+            600.0,
+            189.14
+          ],
+          "width": 78.62
+        },
+        {
+          "end": [
+            571.91,
+            299.04
+          ],
+          "start": [
+            562.87,
+            195.7
+          ],
+          "width": 28.39
+        },
+        {
+          "end": [
+            580.29,
+            394.77
+          ],
+          "start": [
+            571.91,
+            299.04
+          ],
+          "width": 24.02
+        },
+        {
+          "end": [
+            628.09,
+            299.04
+          ],
+          "start": [
+            637.13,
+            195.7
+          ],
+          "width": 28.39
+        },
+        {
+          "end": [
+            619.71,
+            394.77
+          ],
+          "start": [
+            628.09,
+            299.04
+          ],
+          "width": 24.02
+        },
+        {
+          "end": [
+            567.24,
+            656.52
+          ],
+          "start": [
+            567.24,
+            416.28
+          ],
+          "width": 37.13
+        },
+        {
+          "end": [
+            567.24,
+            864.0
+          ],
+          "start": [
+            567.24,
+            656.52
+          ],
+          "width": 30.58
+        },
+        {
+          "end": [
+            632.76,
+            656.52
+          ],
+          "start": [
+            632.76,
+            416.28
+          ],
+          "width": 37.13
+        },
+        {
+          "end": [
+            632.76,
+            864.0
+          ],
+          "start": [
+            632.76,
+            656.52
+          ],
+          "width": 30.58
+        }
+      ],
+      "depth": 0,
+      "emanata": [],
+      "emanata_zones": [],
+      "expression": "neutral",
+      "face_exclusion": {
+        "cx": 600.0,
+        "cy": 99.6,
+        "r": 67.7
+      },
+      "face_marks": [
+        {
+          "closed": false,
+          "id": "brow_l",
+          "mark": "stroke",
+          "points": [
+            [
+              591.26,
+              70.12
+            ],
+            [
+              578.16,
+              67.76
+            ],
+            [
+              565.06,
+              70.12
+            ]
+          ],
+          "width": 3.72
+        },
+        {
+          "closed": false,
+          "id": "brow_r",
+          "mark": "stroke",
+          "points": [
+            [
+              608.74,
+              70.12
+            ],
+            [
+              621.84,
+              67.76
+            ],
+            [
+              634.94,
+              70.12
+            ]
+          ],
+          "width": 3.72
+        },
+        {
+          "centre": [
+            578.16,
+            86.5
+          ],
+          "filled": false,
+          "id": "eye_l",
+          "mark": "disc",
+          "radius": 9.83,
+          "width": 3.72
+        },
+        {
+          "centre": [
+            578.16,
+            86.5
+          ],
+          "filled": true,
+          "id": "pupil_l",
+          "mark": "disc",
+          "radius": 3.34,
+          "width": 0.0
+        },
+        {
+          "centre": [
+            621.84,
+            86.5
+          ],
+          "filled": false,
+          "id": "eye_r",
+          "mark": "disc",
+          "radius": 9.83,
+          "width": 3.72
+        },
+        {
+          "centre": [
+            621.84,
+            86.5
+          ],
+          "filled": true,
+          "id": "pupil_r",
+          "mark": "disc",
+          "radius": 3.34,
+          "width": 0.0
+        },
+        {
+          "closed": false,
+          "id": "nose",
+          "mark": "stroke",
+          "points": [
+            [
+              600.0,
+              99.05
+            ],
+            [
+              600.0,
+              107.24
+            ],
+            [
+              603.28,
+              108.88
+            ]
+          ],
+          "width": 3.72
+        },
+        {
+          "closed": false,
+          "id": "mouth",
+          "mark": "stroke",
+          "points": [
+            [
+              591.26,
+              126.9
+            ],
+            [
+              593.01,
+              127.28
+            ],
+            [
+              594.76,
+              127.57
+            ],
+            [
+              596.51,
+              127.78
+            ],
+            [
+              598.25,
+              127.91
+            ],
+            [
+              600.0,
+              127.95
+            ],
+            [
+              601.75,
+              127.91
+            ],
+            [
+              603.49,
+              127.78
+            ],
+            [
+              605.24,
+              127.57
+            ],
+            [
+              606.99,
+              127.28
+            ],
+            [
+              608.74,
+              126.9
+            ]
+          ],
+          "width": 3.72
+        }
+      ],
+      "features": {
+        "brow_l": [
+          578.16,
+          70.12
+        ],
+        "brow_r": [
+          621.84,
+          70.12
+        ],
+        "eye_l": [
+          578.16,
+          86.5
+        ],
+        "eye_r": [
+          621.84,
+          86.5
+        ],
+        "mouth": [
+          600.0,
+          126.9
+        ],
+        "nose": [
+          600.0,
+          103.97
+        ]
+      },
+      "gaze": [
+        1.0,
+        0.0
+      ],
+      "gaze_aim": null,
+      "hull": [
+        [
+          545.4,
+          99.6
+        ],
+        [
+          561.39,
+          60.99
+        ],
+        [
+          600.0,
+          45.0
+        ],
+        [
+          638.61,
+          60.99
+        ],
+        [
+          654.6,
+          99.6
+        ],
+        [
+          651.32,
+          675.08
+        ],
+        [
+          648.05,
+          879.29
+        ],
+        [
+          551.95,
+          879.29
+        ],
+        [
+          548.68,
+          675.08
+        ]
+      ],
+      "id": "alice",
+      "joints": {
+        "ankle_l": [
+          567.24,
+          864.0
+        ],
+        "ankle_r": [
+          632.76,
+          864.0
+        ],
+        "elbow_l": [
+          571.91,
+          299.04
+        ],
+        "elbow_r": [
+          628.09,
+          299.04
+        ],
+        "head": [
+          600.0,
+          99.6
+        ],
+        "hip_l": [
+          567.24,
+          416.28
+        ],
+        "hip_r": [
+          632.76,
+          416.28
+        ],
+        "knee_l": [
+          567.24,
+          656.52
+        ],
+        "knee_r": [
+          632.76,
+          656.52
+        ],
+        "neck": [
+          600.0,
+          189.14
+        ],
+        "root": [
+          600.0,
+          405.36
+        ],
+        "shoulder_l": [
+          562.87,
+          195.7
+        ],
+        "shoulder_r": [
+          637.13,
+          195.7
+        ],
+        "spine": [
+          600.0,
+          263.4
+        ],
+        "wrist_l": [
+          580.29,
+          394.77
+        ],
+        "wrist_r": [
+          619.71,
+          394.77
+        ]
+      },
+      "marks": [],
+      "pose": "standing_neutral",
+      "reference": "alice",
+      "transform": {
+        "mirrored": false,
+        "scale": 1.09,
+        "x": 600.0,
+        "y": 405.36
+      }
+    }
+  ],
+  "backdrop": null,
+  "balloons": [
+    {
+      "box": {
+        "height": 74.03,
+        "width": 179.68,
+        "x": 644.23,
+        "y": 196.65
+      },
+      "font_size": 31.5,
+      "id": "b0",
+      "kind": "speech",
+      "label": "Alice: Top center.",
+      "line_height": 39.38,
+      "lines": [
+        "Top center."
+      ],
+      "order": 0,
+      "speaker": "alice",
+      "tail": {
+        "control": null,
+        "end": [
+          636.95,
+          156.33
+        ],
+        "start": [
+          687.59,
+          196.65
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 74.03,
+        "width": 181.79,
+        "x": 274.57,
+        "y": 297.13
+      },
+      "font_size": 31.5,
+      "id": "b1",
+      "kind": "speech",
+      "label": "Alice: Middle left.",
+      "line_height": 39.38,
+      "lines": [
+        "Middle left."
+      ],
+      "order": 1,
+      "speaker": "alice",
+      "tail": {
+        "control": null,
+        "end": [
+          565.18,
+          157.67
+        ],
+        "start": [
+          407.35,
+          297.13
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 113.4,
+        "width": 124.02,
+        "x": 654.12,
+        "y": 323.25
+      },
+      "font_size": 31.5,
+      "id": "b2",
+      "kind": "speech",
+      "label": "Alice: Middle center.",
+      "line_height": 39.38,
+      "lines": [
+        "Middle",
+        "center."
+      ],
+      "order": 2,
+      "speaker": "alice",
+      "tail": {
+        "control": null,
+        "end": [
+          617.49,
+          165.01
+        ],
+        "start": [
+          690.11,
+          323.25
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 113.4,
+        "width": 123.92,
+        "x": 841.42,
+        "y": 42.9
+      },
+      "font_size": 31.5,
+      "id": "b3",
+      "kind": "speech",
+      "label": "Alice: Middle right.",
+      "line_height": 39.38,
+      "lines": [
+        "Middle",
+        "right."
+      ],
+      "order": 3,
+      "speaker": "alice",
+      "tail": {
+        "control": null,
+        "end": [
+          664.19,
+          121.12
+        ],
+        "start": [
+          841.42,
+          105.18
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 113.4,
+        "width": 133.12,
+        "x": 18.0,
+        "y": 768.6
+      },
+      "font_size": 31.5,
+      "id": "b4",
+      "kind": "speech",
+      "label": "Alice: Bottom center.",
+      "line_height": 39.38,
+      "lines": [
+        "Bottom",
+        "center."
+      ],
+      "order": 4,
+      "speaker": "alice",
+      "tail": {
+        "control": null,
+        "end": [
+          574.01,
+          162.12
+        ],
+        "start": [
+          126.41,
+          768.6
+        ],
+        "width": 14.0
+      }
+    }
+  ],
+  "camera": {
+    "angle": "eye_level",
+    "footroom": 0.04,
+    "headroom": 0.05,
+    "pullback": 1.0,
+    "reference": "alice",
+    "scale": 1.09,
+    "shot": "full_shot"
+  },
+  "captions": [],
+  "description": "Full shot. Alice, centre.",
+  "format_version": 1,
+  "height": 900.0,
+  "width": 1200.0
+}

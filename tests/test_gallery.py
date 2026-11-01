@@ -220,10 +220,14 @@ class TestEveryExampleWorks:
 
     def test_every_renderer_accepts_it(self, entry: dict[str, str]):
         results = compile_document(GALLERY / entry["file"])
+        # A font the document names is handed over, as `scenet build` hands it over.
+        fonts = {
+            digest: font for result in results.values() for digest, font in result.fonts.items()
+        }
         for result in results.values():
-            assert render(result.core).lstrip().startswith("<?xml")
+            assert render(result.core, fonts=fonts).lstrip().startswith("<?xml")
             assert render_debug(result.core).lstrip().startswith("<?xml")
-        strip = render_strip([(name, result.core) for name, result in results.items()])
+        strip = render_strip([(name, result.core) for name, result in results.items()], fonts=fonts)
         assert strip.lstrip().startswith("<?xml")
 
     def test_it_is_deterministic(self, entry: dict[str, str]):
