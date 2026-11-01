@@ -560,8 +560,11 @@ script:
 
 A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
 `null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
-See [Leaving something out](../howto/compile_a_sequence.md#leaving-something-out). A comic script
-does it with `(OP)`.
+Of the relations the panel shares that name her, `bob looking_at carol` still holds while she does,
+and her `off_panel: true` ends on the side she was written to stand on, `at: left_third` being the
+left, unless her line names one; every other relation goes. See
+[Leaving something out](../howto/compile_a_sequence.md#leaving-something-out). A comic script does
+it with `(OP)`.
 
 ### `caption`
 

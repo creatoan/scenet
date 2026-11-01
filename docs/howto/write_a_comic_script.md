@@ -279,7 +279,8 @@ A panel whose own `@cast:` draws her, or in which she speaks both on and off pan
 panel's own lines.
 
 To leave somebody out of a panel who says nothing in it, write `@cast: {BOB: null}` there. As in
-YAML, the relations that name him go with him, each with a `dropped-relation` note.
+YAML, the relations that name him go with him, each with a `dropped-relation` note. Written for
+somebody who then speaks `(OP)`, it says the same as the cue alone.
 
 ## One panel over another
 

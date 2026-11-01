@@ -18,6 +18,7 @@ from scenet.compose import (
     NOT_A_DEFAULT,
     merge,
     own_direction,
+    resolve_beneath,
     resolve_overrides,
     settle,
 )
@@ -68,12 +69,15 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
     return data
 
 
-def _validate_panel(data: dict[str, Any], source: Path | None) -> PanelIR:
+def _validate_panel(
+    data: dict[str, Any], source: Path | None, *, beneath: dict[str, Any] | None = None
+) -> PanelIR:
     """Normalise a parsed mapping and validate it into IR.
 
     Args:
         data: A parsed top-level panel mapping.
         source: Path it came from, used only to prefix error messages.
+        beneath: The same panel with no removal written, for `settle`.
 
     Returns:
         The validated scene graph.
@@ -81,7 +85,7 @@ def _validate_panel(data: dict[str, Any], source: Path | None) -> PanelIR:
     Raises:
         PanelSyntaxError: The document is well-formed YAML but not a valid panel.
     """
-    data, _ = settle(data)
+    data, _ = settle(data, beneath=beneath)
     try:
         return PanelIR.model_validate(normalise(data))
     except PanelSyntaxError as exc:
@@ -250,12 +254,14 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
         # unresolvable `over:` chain from a syntax error can only do so if the type
         # survives. Both are SourceError, so a caller that does not care is unaffected.
         raise CompositionError(str(exc), source=source) from exc
+    standing = resolve_beneath(panels)
 
     result: dict[str, PanelIR] = {}
     for name, document in composed.items():
         merged = merge(defaults, document) if defaults else document
+        beneath = merge(defaults, standing[name]) if defaults else standing[name]
         try:
-            result[name] = _validate_panel(merged, None)
+            result[name] = _validate_panel(merged, None, beneath=beneath)
         except PanelSyntaxError as exc:
             raise PanelSyntaxError(f"in panel '{name}': {exc}", source=source) from exc
     return result
