@@ -1764,6 +1764,9 @@ dependencies = [
 mcp = [
     { name = "mcp" },
 ]
+watch = [
+    { name = "watchfiles" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1805,8 +1808,9 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.9" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "shapely", specifier = ">=2.0" },
+    { name = "watchfiles", marker = "extra == 'watch'", specifier = ">=1.1" },
 ]
-provides-extras = ["mcp"]
+provides-extras = ["mcp", "watch"]
 
 [package.metadata.requires-dev]
 dev = [

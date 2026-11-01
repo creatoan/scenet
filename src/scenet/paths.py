@@ -20,12 +20,43 @@ forgotten; what a Core records about a font is what is in it.
 
 import posixpath
 import re
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from scenet.errors import PanelSyntaxError
 
-__all__ = ["Folder", "check_relative", "read_relative", "resolve_relative"]
+__all__ = [
+    "Folder",
+    "check_relative",
+    "read_relative",
+    "record_dependency",
+    "resolve_relative",
+    "track_dependencies",
+]
+
+_DEPENDENCIES: ContextVar[set[Path] | None] = ContextVar("scenet_dependencies", default=None)
+
+
+@contextmanager
+def track_dependencies(
+    dependencies: set[Path] | None,
+) -> Generator[None, None, None]:
+    """Collect filesystem paths read during one compilation, without changing its result."""
+    token = _DEPENDENCIES.set(dependencies)
+    try:
+        yield
+    finally:
+        _DEPENDENCIES.reset(token)
+
+
+def record_dependency(path: Path) -> None:
+    """Report a filesystem path to the active compilation, including missing paths."""
+    dependencies = _DEPENDENCIES.get()
+    if dependencies is not None:
+        dependencies.add(path.resolve())
+
 
 #: Where the files a document names are: the folder it is in, or the files themselves, by
 #: the path the document writes.
@@ -109,6 +140,7 @@ def read_relative(
     """
     if base is None or isinstance(base, Path):
         path = resolve_relative(declared, base, what=what, rule=rule, loc=loc)
+        record_dependency(path)
         try:
             return path.read_bytes()
         except FileNotFoundError as exc:

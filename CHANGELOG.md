@@ -23,6 +23,9 @@ below 1.0 means.
   every entry**, and its titles are short names. Entries are only ever appended, as its header
   now says: a playground draft remembers its example by position. The spec pack prints each
   example's summary under its title.
+- **`scenet build --watch`** (#78) rebuilds when the source or compilation dependencies change,
+  with debounced saves and recovery after failed builds. The optional `watch` extra installs
+  the file-watching dependency.
 
 ### Changed
 
