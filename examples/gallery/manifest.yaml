@@ -261,3 +261,21 @@ examples:
     summary: "One page lettered over pictures in colour: posed puppets, figures a picture draws, a caption, a thought, a sound and an inset."
     doc: reference/language.md#the-layers
     files: [art/street.png, art/figures.png, art/figures.art.yaml]
+  - file: 39-warm-caption.panel.yaml
+    title: "A yellow caption"
+    kind: panel
+    group: Balloons and captions
+    summary: "The yellow locale caption in a tinted panel: a pale yellow with the value of a grey, which is what it becomes in monochrome."
+    doc: reference/language.md#caption
+  - file: 40-tinted-hours.scene.yaml
+    title: "Every hour in colour"
+    kind: scene
+    group: Setting
+    summary: "palette: tinted draws each value of the ladder in a colour with the same lightness: rose at dawn, blue at noon, orange at dusk, blue at night."
+    doc: reference/language.md#palette
+  - file: 41-flashback.scene.yaml
+    title: "A flashback in grey"
+    kind: scene
+    group: Setting
+    summary: "A page in colour whose middle panel writes palette: mono for itself, the way a comic drops into grey for a memory."
+    doc: reference/language.md#palette

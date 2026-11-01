@@ -7,7 +7,9 @@ as a tracing over the SVG would be -- and nothing is rasterised: text, JSON and 
 byte-identical across runs and platforms.
 """
 
-from collections.abc import Callable
+import io
+import zipfile
+from collections.abc import Callable, Mapping
 from dataclasses import astuple, dataclass
 
 from scenet.core import PanelCore
@@ -80,4 +82,42 @@ def render_conditioning(core: PanelCore) -> Conditioning:
     return Conditioning(*(export(core) for _, export in EXPORTS))
 
 
-__all__ = ["EXPORTS", "Conditioning", "render_conditioning"]
+#: What every file in an archive is stamped with, whatever machine made it: the earliest date
+#: a ZIP can hold, an ordinary file readable by all, made on Unix.
+_ZIP_DATE = (1980, 1, 1, 0, 0, 0)
+_ZIP_MODE = 0o100644 << 16
+_ZIP_UNIX = 3
+
+
+def conditioning_archive(panels: Mapping[str, PanelCore], stem: str) -> bytes:
+    """Every panel's exports in one ZIP, named as `scenet build --conditioning` names them.
+
+    What the playground offers for a document of several panels, where five downloads a
+    panel would be a click for every file. Unpacked, it is what the command line writes: a
+    panel document's five files are `stem.pose.json` and the rest, and every other
+    document's are named after their panel, `stem.one.pose.json`, even a lone one.
+
+    Stored, not deflated, and stamped with no clock or machine of its own, so the same panels
+    give the same bytes on every run and every platform.
+
+    Args:
+        panels: Each panel's Core, by name, in the document's order.
+        stem: The document's name without its kinds: `story` for `story.scene.yaml`.
+
+    Returns:
+        The archive.
+    """
+    single = len(panels) == 1 and "panel" in panels
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_STORED) as archive:
+        for name, core in panels.items():
+            prefix = stem if single else f"{stem}.{name}"
+            for suffix, export in EXPORTS:
+                entry = zipfile.ZipInfo(f"{prefix}{suffix}", date_time=_ZIP_DATE)
+                entry.create_system = _ZIP_UNIX
+                entry.external_attr = _ZIP_MODE
+                archive.writestr(entry, export(core).encode("utf-8"))
+    return buffer.getvalue()
+
+
+__all__ = ["EXPORTS", "Conditioning", "conditioning_archive", "render_conditioning"]

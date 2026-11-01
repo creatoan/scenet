@@ -1,0 +1,29 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 893.33,
+      "panel": "now",
+      "width": 1800.0,
+      "x": 100.0,
+      "y": 100.0
+    },
+    {
+      "height": 893.33,
+      "panel": "then",
+      "width": 1800.0,
+      "x": 100.0,
+      "y": 1053.33
+    },
+    {
+      "height": 893.33,
+      "panel": "again",
+      "width": 1800.0,
+      "x": 100.0,
+      "y": 2006.67
+    }
+  ],
+  "height": 3000.0,
+  "lettering_height": 933.33,
+  "width": 2000.0
+}

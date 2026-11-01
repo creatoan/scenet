@@ -217,6 +217,44 @@ Everything reading decides is mirrored to pass it, and nothing the picture decid
 - **No disjunction comes back.** Reading order is a filter over candidates, not a Cassowary
   constraint, and the direction is known when the document is read.
 
+## Colour is a twin of value, never a replacement
+
+The compiler drew only greys until #244, and the colour policy it settled keeps every reason the
+greys were chosen for. A notan reading of masses, an aerial-perspective ladder monotonic in depth,
+contrast floors a test can check, lettering on a printer's black plate: none of them may depend on
+which palette a panel is drawn in.
+
+- **A colour has its grey's lightness.** Each value of the tinted ladder is the twin of a rung: the
+  same OKLab lightness, to within 0.005, at the same hour. In monochrome a tinted panel is the mono
+  one, so `mono` is not a separate rendering to keep in step but the same panel with its colours
+  taken out.
+- **Every decision is made on the grey.** The solver settles every value first and only then looks
+  up its twin (`colour_for`, `caption_colour`). The runtime's `lightness` and `contrast_ratio` are
+  exact only for a neutral, and refuse a colour, so a decision cannot be made on one by accident.
+  A property test compiles every place, weather and hour both ways and finds the tinted Core with
+  its colours taken out byte-identical to the mono Core.
+- **The colour sits beside the value, in Core.** `tone` and `fill` keep their keys and their
+  meaning, and the colour is a new key left out when unused. Replacing `tone` with the colour and
+  adding a `value` key would have changed a published key's meaning and moved every golden. A
+  panel-level map from grey to colour was rejected too: the day sky and a `warm` caption share a
+  grey and not a colour.
+- **The table is generated and hardcoded.** Two hues and two chromas per hour, in
+  `scripts/make_palette.py`, give twenty colours, capped at the sRGB gamut and rounded to the
+  nearest `#rrggbb` that keeps the lightness. They were signed off by eye on the setting sheet. No
+  colour library is a dependency, for the reason the ladder has none.
+- **`mono` is the default.** No panel written before palettes draws differently, and the first
+  tuning of the hues can be revised without moving anybody's output who did not opt in. Turning
+  colour on by default later is a decision for a minor release; turning it back off would not be.
+- **Monochrome at two levels.** `palette: mono` is the author's, and lets one panel be the flashback
+  on a page in colour. `--mono` is the output's: a black-and-white edition without editing a
+  document. A test holds the two byte-identical on every gallery example.
+- **Lettering is never coloured.** Balloon text and borders, caption text and sound effects stay
+  neutral in every palette, so a print emitter can keep them on the black plate.
+- **Only the ladder and `warm`, for now.** Colour for puppets needs material slots in the asset
+  contract and a vocabulary for skin that deserves its own discussion. Colour for sound effects
+  raises which plate they print on. Local colour by kind of mass would give each of twelve kinds a
+  hue, where a kind decides a mass's shape and never its value. Each is its own issue.
+
 ## Staging leaves as text, never as a picture or a prompt
 
 `--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by

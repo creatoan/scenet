@@ -156,6 +156,32 @@
             <button type="button" id="tab-core" role="tab" aria-selected="false" aria-controls="core">
               Panel Core
             </button>
+            <!--
+              The exports for image models, one tab each, as `scenet build --conditioning`
+              writes them: every panel's, side by side. Made only while one of these is open.
+              The pose and the boxes are JSON; what is shown is their picture.
+            -->
+            <button type="button" id="tab-depth" role="tab" aria-selected="false" aria-controls="output" data-export=".depth.svg">
+              Depth
+            </button>
+            <button type="button" id="tab-mask" role="tab" aria-selected="false" aria-controls="output" data-export=".mask.svg">
+              Mask
+            </button>
+            <button type="button" id="tab-pose" role="tab" aria-selected="false" aria-controls="output" data-export=".pose.json">
+              Pose
+            </button>
+            <button type="button" id="tab-boxes" role="tab" aria-selected="false" aria-controls="output" data-export=".boxes.json">
+              Boxes
+            </button>
+            <button type="button" id="tab-semantics" role="tab" aria-selected="false" aria-controls="core" data-export=".semantics.json">
+              Semantics
+            </button>
+            <button type="button" id="tab-outline" role="tab" aria-selected="false" aria-controls="outline">
+              Screen reader
+            </button>
+            <button type="button" id="tab-files" role="tab" aria-selected="false" aria-controls="files">
+              Files
+            </button>
           </div>
           <span class="spacer"></span>
           <!--
@@ -168,6 +194,22 @@
             <button type="button" class="tool" id="zoom-in" title="Zoom in (+)" aria-label="Zoom in">+</button>
             <button type="button" class="tool" id="zoom-fit" title="Fit to view (0)">Fit</button>
           </div>
+          <!-- What `scenet build` would be told on the command line, remembered in this browser. -->
+          <details class="menu" id="options-menu">
+            <summary class="tool" title="How the output is written">Output</summary>
+            <div class="menu-items options">
+              <label title="Selectable text in the reader's own copy of the font, rather than glyph outlines">
+                <input type="checkbox" id="option-live-text" />
+                Live text <span>--live-text</span>
+              </label>
+              <fieldset>
+                <legend>A document of several panels</legend>
+                <label><input type="radio" name="layout" id="layout-pages" value="pages" /> Its pages</label>
+                <label><input type="radio" name="layout" id="layout-strip" value="strip" /> A strip <span>--strip</span></label>
+                <label><input type="radio" name="layout" id="layout-panels" value="panels" /> Each panel on its own</label>
+              </fieldset>
+            </div>
+          </details>
           <details class="menu" id="download-menu">
             <summary class="tool" title="Download (Ctrl+S saves the source)">Download</summary>
             <div class="menu-items">
@@ -176,14 +218,17 @@
               <button type="button" data-download="debug">Overlay <span>SVG</span></button>
               <button type="button" data-download="core">Panel Core <span>JSON</span></button>
               <!--
-                A panel's staging for image models, as `scenet build --conditioning` writes it.
-                One set per panel, so offered for a one-panel document only.
+                A panel's staging for image models, as `scenet build --conditioning` writes it:
+                five files for one panel, and for several, every panel's in one ZIP.
               -->
               <button type="button" data-download=".pose.json">Pose <span>JSON</span></button>
               <button type="button" data-download=".boxes.json">Boxes <span>JSON</span></button>
               <button type="button" data-download=".depth.svg">Depth <span>SVG</span></button>
               <button type="button" data-download=".mask.svg">Mask <span>SVG</span></button>
               <button type="button" data-download=".semantics.json">Semantics <span>JSON</span></button>
+              <button type="button" data-download="conditioning" hidden>
+                Every panel's exports <span>ZIP</span>
+              </button>
               <button type="button" data-download="source">Source <span>Ctrl+S</span></button>
             </div>
           </details>
@@ -215,6 +260,23 @@
           <div id="stage"></div>
         </div>
         <div id="core" role="tabpanel" aria-label="Panel Core" hidden></div>
+        <div id="outline" class="panel-text" role="tabpanel" aria-label="What a screen reader announces" hidden>
+          <p class="explain">
+            What a screen reader announces of the output, in order: each panel one image, named
+            by what it shows and then every line said in it; a strip or a page, a group of them.
+          </p>
+          <ol id="outline-list" class="outline"></ol>
+        </div>
+        <div id="files" class="panel-text" role="tabpanel" aria-label="Files beside the document" hidden>
+          <p class="explain">
+            The files beside the document, which it names by a path relative to itself: the
+            gallery's pictures and artwork contracts, and what you add with Font… and Image….
+          </p>
+          <div class="files-body">
+            <ul id="files-list" class="files-list"></ul>
+            <div id="file-view" class="file-view"></div>
+          </div>
+        </div>
         <div id="error" role="alert" hidden></div>
         <p id="status" role="status">Loading the compiler…</p>
       </section>

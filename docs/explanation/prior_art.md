@@ -262,6 +262,14 @@ neutral values fixed once, computed during development and hardcoded, and for a 
 reduces to the cube root of the linear value anyway. Putting a package through the licence gate to
 produce numbers that never change would be the wrong trade.
 
+**Aerial perspective in colour** is the same rule with a hue (#244). With distance, colour drifts
+toward the colour of the air; and light and shadow take opposite temperatures, warm light with cool
+shadow and the reverse — the painters' convention set out in James Gurney's *Color and Light*
+(2010). So each hour has two hues, the shadow's at the foreground and the atmosphere's at the sky,
+and the planes move between them in OKLCh, each keeping its grey's lightness. Still two numbers per
+end, still parametric, and the colours too were computed during development, by
+`scripts/make_palette.py`, and hardcoded with the chroma and hue of each written beside it.
+
 ### COCO-Stuff — the mass vocabulary
 
 [Caesar, Uijlings & Ferrari, *COCO-Stuff: Thing and Stuff Classes in
@@ -608,6 +616,13 @@ checked against, [`control_v11f1p_sd15_depth`](https://huggingface.co/lllyasviel
 is by its own card not trained on any one estimator's depth. Inverse depth is why a ground recedes
 as a straight vertical ramp (#227): on a flat surface it is proportional to the distance below the
 horizon on screen.
+
+The playground draws the pose as ControlNet's OpenPose annotator draws a skeleton (#238): its
+seventeen limbs and its eighteen colours, red round the wheel to rose, each limb in the colour at
+its own position, at half opacity, on black. The table is in `scenet.emit.preview`, as
+[`controlnet_aux`](https://github.com/huggingface/controlnet_aux) inherited it from
+[pytorch-openpose](https://github.com/Hzzone/pytorch-openpose): taken as it is because it is what
+a reader who works with these models has seen. Only the colours and the limbs were taken; no code.
 
 Deliberately not taken: a prompt. Two drafts behind #72 proposed a `scenet prompt` turning a
 panel into positive and negative prompt strings. Dialects differ per model and change every few

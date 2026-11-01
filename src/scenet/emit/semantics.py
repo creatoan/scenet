@@ -20,7 +20,7 @@ from typing import Any
 from scenet.core import CoreBackdrop, PanelCore
 from scenet.emit.conditioning import canvas, corners, fraction_box, regions, to_json
 from scenet.emit.mask import colours
-from scenet.ir import Weather
+from scenet.ir import Palette, Weather
 
 
 def _setting(backdrop: CoreBackdrop | None) -> dict[str, Any] | None:
@@ -95,6 +95,11 @@ def render_semantics(core: PanelCore) -> str:
     Facing is read from the mirror: a mirrored puppet faces left. Each actor and figure has
     its mask colour.
 
+    The palette is named only when it is not `mono` (#244), so the semantics of every panel
+    drawn in grey is what it was before palettes existed. It is the one export a palette
+    reaches: colour never changes a value, so the pose, boxes, depth and mask are the
+    same in every palette.
+
     Args:
         core: The compiled panel.
 
@@ -138,6 +143,8 @@ def render_semantics(core: PanelCore) -> str:
         ],
         "lettering": _lettering(core),
     }
+    if core.palette is not Palette.MONO:
+        payload["palette"] = core.palette
     return to_json(payload)
 
 

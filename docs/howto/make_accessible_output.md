@@ -113,6 +113,14 @@ for a pipeline that post-processes the SVG. It is otherwise byte-identical. From
 `render(core, aria=False)`, and the same on `render_strip`, `render_page` and `render_pages`; the
 MCP server's `render` tool takes `aria: false`.
 
+## See what it says
+
+The [playground](https://creatoan.github.io/scenet/playground/)'s **Screen reader** tab shows what
+a screen reader is given: each image and group the output names, nested as they are, with the
+words of its `<title>`. It walks the SVG the Panel tab shows, skipping what is `aria-hidden` and
+never looking inside an image, as a screen reader does. It is what was emitted, not a recording
+of a screen reader reading it; that is the check below.
+
 ## Check it with a screen reader
 
 What a screen reader says cannot be golden-tested, so it is checked by hand — or by a script,

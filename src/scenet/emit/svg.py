@@ -101,6 +101,7 @@ def render(
     id_prefix: str = "",
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
+    mono: bool = False,
 ) -> str:
     """Render a compiled panel as a standalone SVG document.
 
@@ -125,12 +126,17 @@ def render(
             each picture is written into the SVG as a `data:` URI, and must be here; left
             out, it is linked by the path the document wrote, which a viewer reads from
             beside the SVG.
+        mono: Draw every value as its grey and ignore its colour, as for a black-and-white
+            edition (#244). Every decision was made on the grey, so this draws exactly what
+            `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Raises:
         ValueError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
             Or a picture is to be embedded and was not handed over.
     """
+    if mono:
+        core = core.as_mono()
     family = typeface_of(core, metrics=metrics, fonts=fonts)
     named, names = accessible_name(core) if aria else ("", [])
     lines = [
@@ -375,10 +381,14 @@ def _render_mass(mass: CoreMass, id_prefix: str) -> str:
     No outline, deliberately. A stroked mass reads as a drawn object, and the argument
     for masses in the first place is that a backdrop is read from the arrangement of
     values rather than from drawn detail.
+
+    Filled with its colour when the palette gave it one, and with its tone otherwise.
+    Nothing is chosen here: both were resolved, and the colour is the tone's twin.
     """
     return (
         f"    <polygon id={attr(id_prefix + 'mass-' + mass.id)} "
-        f'points="{_points(list(mass.polygon))}" fill="{mass.tone}" stroke="none"/>'
+        f'points="{_points(list(mass.polygon))}" fill="{mass.colour or mass.tone}" '
+        'stroke="none"/>'
     )
 
 
@@ -407,7 +417,7 @@ def _atmosphere_filter(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     veil = atmosphere.veil
     if veil is None:
         return ""
-    red, green, blue = _channels(veil.tone)
+    red, green, blue = _channels(veil.colour or veil.tone)
     matrix = (
         f"0 0 0 0 {fmt(red)} 0 0 0 0 {fmt(green)} 0 0 0 0 {fmt(blue)} "
         f"{fmt(veil.opacity)} {fmt(veil.opacity / 2)} 0 0 0"
@@ -433,11 +443,12 @@ def _channels(tone: str) -> tuple[float, float, float]:
 
 def _render_veil(core: PanelCore, atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """The rectangle the turbulence filter is painted through."""
-    if atmosphere.veil is None:
+    veil = atmosphere.veil
+    if veil is None:
         return ""
     return (
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-        f'fill="{atmosphere.veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
+        f'fill="{veil.colour or veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
     )
 
 
@@ -445,9 +456,10 @@ def _render_falling(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     """Rain or snow, every mark of which was resolved during compilation."""
     if not atmosphere.streaks and not atmosphere.flecks:
         return ""
+    fall = atmosphere.fall_colour or atmosphere.fall_tone
     marks = [
         f"  <g id={attr(id_prefix + 'weather')} "
-        f'fill="{atmosphere.fall_tone}" stroke="{atmosphere.fall_tone}" '
+        f'fill="{fall}" stroke="{fall}" '
         f'fill-opacity="{fmt(WEATHER_OPACITY)}" stroke-opacity="{fmt(WEATHER_OPACITY)}">'
     ]
     for streak in atmosphere.streaks:
@@ -686,7 +698,7 @@ def _render_caption(
     lines = [f"    <g id={attr(id_prefix + 'caption-' + caption.id)}>"]
     lines.append(
         f'      <rect x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
-        f'height="{fmt(box.height)}" fill="{caption.fill}" stroke="{STROKE}" '
+        f'height="{fmt(box.height)}" fill="{caption.colour or caption.fill}" stroke="{STROKE}" '
         f'stroke-width="{fmt(CAPTION_STROKE_WIDTH)}"/>'
     )
 
