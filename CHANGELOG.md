@@ -53,6 +53,11 @@ below 1.0 means.
   still made on the grey, so a tinted Core with its colours taken out is the mono one. The pose,
   boxes, depth and mask exports are the same in every palette, and the semantics names the palette
   when it is not `mono`. `Palette` is exported, and `colour_for` gives a grey's twin.
+- **`scenet build --mono`** (#244) draws a tinted document as a black-and-white edition, without
+  editing it: every value as its grey, and every panel, page and strip byte-identical to what the
+  same document writes with `palette: mono`. `render`, `render_page`, `render_pages` and
+  `render_strip` take `mono=True`, MCP `render` takes `mono`, and `PanelCore.as_mono()` gives the
+  panel with its colours taken back out, which is the mono Core.
 
 ### Changed
 

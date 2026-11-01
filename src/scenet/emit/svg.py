@@ -101,6 +101,7 @@ def render(
     id_prefix: str = "",
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
+    mono: bool = False,
 ) -> str:
     """Render a compiled panel as a standalone SVG document.
 
@@ -125,12 +126,17 @@ def render(
             each picture is written into the SVG as a `data:` URI, and must be here; left
             out, it is linked by the path the document wrote, which a viewer reads from
             beside the SVG.
+        mono: Draw every value as its grey and ignore its colour, as for a black-and-white
+            edition (#244). Every decision was made on the grey, so this draws exactly what
+            `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Raises:
         ValueError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
             Or a picture is to be embedded and was not handed over.
     """
+    if mono:
+        core = core.as_mono()
     family = typeface_of(core, metrics=metrics, fonts=fonts)
     named, names = accessible_name(core) if aria else ("", [])
     lines = [

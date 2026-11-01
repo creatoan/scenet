@@ -925,6 +925,41 @@ class PanelCore(CoreModel):
                 return Speaking(face, figure.mouth or (face.cx, face.cy))
         raise KeyError(f"nobody in panel plays '{actor_id}'")
 
+    def as_mono(self) -> "PanelCore":
+        """The same panel in monochrome: every colour its palette added, taken back out.
+
+        Every value was decided on the grey and its colour only added beside it (#244), so
+        this is exactly the panel compiled with `palette: mono`. It is what lets a tinted
+        panel be drawn in grey -- a black-and-white edition -- without the emitter choosing
+        anything.
+
+        Returns:
+            A copy whose `palette` is `mono` and whose every `colour` and `fall_colour` is
+            empty.
+
+        Example:
+            >>> from scenet import compile_source
+            >>> grey = "{setting: {place: street}, cast: {a: {reference: alice}}}"
+            >>> tinted = compile_source("{palette: tinted, " + grey[1:]).core
+            >>> tinted.as_mono() == compile_source(grey).core
+            True
+        """
+        backdrop = self.backdrop
+        if backdrop is not None:
+            air = backdrop.atmosphere
+            if air is not None:
+                veil = air.veil
+                air = air.model_copy(
+                    update={
+                        "colour": "",
+                        "fall_colour": "",
+                        "veil": None if veil is None else veil.model_copy(update={"colour": ""}),
+                    }
+                )
+            masses = tuple(mass.model_copy(update={"colour": ""}) for mass in backdrop.masses)
+            backdrop = backdrop.model_copy(update={"masses": masses, "atmosphere": air})
+        return self.model_copy(update={"palette": Palette.MONO, "backdrop": backdrop})
+
     def actor(self, actor_id: str) -> CoreActor:
         """Look up one actor by id.
 
