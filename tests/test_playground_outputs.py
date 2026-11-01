@@ -24,6 +24,7 @@ BUILD_OPTIONS: dict[str, str] = {
     "--debug": "#tab-debug",
     "--conditioning": "#tab-pose",
     "--live-text": "#option-live-text",
+    "--mono": "Write `palette: mono` in the document: it draws byte for byte what --mono does.",
     "--no-aria": "It writes less, not more; the Screen reader tab shows what it leaves out.",
     "--embed-images": "Always on: a picture beside a file is not beside a page.",
     "--strip": "#layout-strip",
