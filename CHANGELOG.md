@@ -60,6 +60,13 @@ below 1.0 means.
   a panel of figures over one with a camera, as the docs teach, was underlined in an editor and
   compiled. Any key a scene reaches through mappings may now be `null`; a list entry is still
   whole. The panel schema is unchanged.
+- **A member left out with `null` keeps the look at them while heard from off panel** (#258).
+  `cast: {carol: null}` dropped the panel's own `bob looking_at carol`, with a
+  `dropped-relation` note, even while Carol spoke `off_panel` there, and her `off_panel: true`
+  ended on the side nearer her balloon. As with a comic script's `CAROL (OP)`, Bob now turns
+  toward her side and her line ends on the side she was written to stand on; every other
+  relation that names her still goes. In a script, `@cast: {CAROL: null}` beside `CAROL (OP)`
+  is no longer refused as drawing her.
 
 **Upgrading from 0.12.0.**
 
