@@ -44,10 +44,22 @@ export interface Finding {
   readonly level: "error" | "note";
 }
 
+/**
+ * Something the compiler decided that the source did not literally ask for, as
+ * `CompileResult.compile_notes` gives it: a camera that retreated, a tail that bent.
+ */
+export interface CompileNote {
+  /** The panel it is about, in a document of several; `null` for a single panel. */
+  readonly panel: string | null;
+  /** Its name, which a gallery entry's `notes:` declares it by: `camera-retreated`. */
+  readonly rule: string;
+  readonly message: string;
+}
+
 export interface CompileSuccess {
   readonly ok: true;
   readonly core: string;
-  readonly notes: readonly string[];
+  readonly notes: readonly CompileNote[];
   /** The panels' names, in the document's order. */
   readonly panels: readonly string[];
   /** How many pages it lays its panels out on: none for a panel, or a scene without `pages:`. */
@@ -208,10 +220,12 @@ def _scenet_compile(source, kind):
                 sort_keys=True,
             )
 
-        notes = []
-        for name, result in results.items():
-            for note in result.notes:
-                notes.append(note if single else f"{name}: {note}")
+        # Each with its name, and its panel's in a document of several.
+        notes = [
+            {"panel": None if single else name, "rule": note.rule, "message": note.message}
+            for name, result in results.items()
+            for note in result.compile_notes
+        ]
 
         _scenet_last = book
         return json.dumps({

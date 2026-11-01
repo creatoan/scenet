@@ -156,6 +156,11 @@ interface ManifestEntry {
   readonly doc: string;
   /** Files the example names beside itself -- a picture it is lettered over. */
   readonly files?: readonly string[];
+  /**
+   * The notes it gives, by rule or name, which the Python tests hold it to. Not copied into
+   * `examples.json`: the page shows what the compiler and the checker say, as they say it.
+   */
+  readonly notes?: readonly string[];
 }
 
 interface Manifest {

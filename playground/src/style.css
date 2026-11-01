@@ -700,26 +700,45 @@ button:disabled {
   color: var(--muted);
 }
 
-/* A note means the compiler did something you did not ask for -- retreated the camera,
-   bent a tail. It is information, not a warning: nothing is wrong, so it is set neutral,
-   marked as information, in the colour of a link rather than of a fault. */
+/* A note means the checker saw a house limit run past -- a balloon over the words a
+   publisher asks for -- or the compiler did something you did not ask for -- retreated the
+   camera, bent a tail. It is information, not a warning: nothing is wrong, so it is set
+   neutral, marked as information, in the colour of a link rather than of a fault. One per
+   line, as findings are; a note the checker places jumps to it, as an error does. */
 .notes {
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  padding: 0.35rem 0.75rem 0.35rem 2rem;
+  padding: 0.25rem 0.4rem;
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--accent) 7%, transparent);
   color: var(--ink);
   font-size: 0.78rem;
-  text-indent: -1.25rem;
+  max-height: 30%;
+  overflow: auto;
 }
 
-.notes::before {
+.notes .finding {
+  grid-template-columns: auto auto auto 1fr;
+  cursor: default;
+}
+
+.notes .finding::before {
   content: "ℹ";
-  display: inline-block;
-  width: 1.25rem;
-  text-indent: 0;
   color: var(--accent);
   font-weight: 600;
+}
+
+.notes .finding:hover {
+  background: none;
+}
+
+.notes button.finding {
+  cursor: pointer;
+}
+
+.notes button.finding:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 footer {
