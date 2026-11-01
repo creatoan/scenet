@@ -85,6 +85,7 @@ def render_strip(
     fonts: Mapping[str, FontMetrics] | None = None,
     aria: bool = True,
     embed: Mapping[str, bytes] | None = None,
+    mono: bool = False,
 ) -> str:
     """Lay panels side by side in reading order: left to right, or right to left.
 
@@ -108,6 +109,9 @@ def render_strip(
         embed: The supplied pictures' bytes, by digest -- what
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into
             the SVG. Left out, each picture is linked by the path its document wrote.
+        mono: Draw every value as its grey and ignore its colour, as for a black-and-white
+            edition (#244). Every decision was made on the grey, so this draws exactly what
+            `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
         One SVG document holding every panel.
@@ -117,6 +121,8 @@ def render_strip(
     """
     if not panels:
         raise ValueError("a strip needs at least one panel")
+    if mono:
+        panels = [(name, core.as_mono()) for name, core in panels]
     rtl = reading_direction([core.direction for _, core in panels], "a strip's panels") is (
         Direction.RTL
     )

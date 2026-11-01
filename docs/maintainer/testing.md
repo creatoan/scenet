@@ -649,6 +649,46 @@ from the pull request's branch, each from nothing (the totals are every mutant o
   [`40952725859`](https://github.com/creatoan/scenet/actions/runs/40952725859): 188 mutants and 1
   survivor, `to_json` 5, accepted above under the same number.
 
+The colour policy (#244) changed `solve/backdrop.py` (the tinted ladder, `colour_for`, the
+twins in `_atmosphere`, and `_luminance` refusing a colour), `solve/balloons.py` (the `warm`
+caption's colour), and in `emit/`, `svg.py`, `page.py`, `strip.py` and `semantics.py` (drawing the
+colour, `mono=`, and the semantics' `palette`). Fresh runs from the stack's top branch, each from
+nothing (the totals are every mutant of the path):
+
+- `solve/backdrop.py`,
+  [`41293701148`](https://github.com/creatoan/scenet/actions/runs/41293701148): 1068 mutants and
+  12 survivors.
+  - 7 are the 7 accepted above: `seed_for` 7 and 14 and `_rng` 6 and 13 under the same numbers,
+    and three renumbered: `_luminance` 15 is now 24, `_atmosphere` 22 is now 38, and
+    `_atmosphere` 63 is now 55.
+  - **1 killed**: `_atmosphere` 106, the snowy sky's colour left out. Rain's was pinned and snow's
+    was not, so `test_the_air_it_falls_through_is_tinted` checks the sky and the cloud of a snowy
+    panel at every hour.
+  - **3 removed**: `_atmosphere` 107, 112 and 114 mutated `fall_colour=colour_for(SNOW_TONE, ...)`,
+    which is always `""`, since white snow is not a rung of the ladder. The line is gone and
+    snow's `fall_colour` takes its default, which says the same thing.
+    `test_snow_stays_white` still holds it.
+  - 1 accepted below.
+- `solve/balloons.py`,
+  [`41293703313`](https://github.com/creatoan/scenet/actions/runs/41293703313): 1371 mutants and
+  29 survivors, the 29 accepted above under the same numbers. None is in the caption's colour.
+- `emit/*`, [`41293705447`](https://github.com/creatoan/scenet/actions/runs/41293705447): 2349
+  mutants and 28 survivors.
+  - 25 are the 25 accepted above, under the same numbers: the 10 in `emit/svg.py` and the 15 in
+    the exports.
+  - **3 killed**: `render_page` 4, `render_pages` 4 and `render_strip` 4, `mono` on by default.
+    The gallery test always passes `mono=True` and the command always passes `mono` itself, so
+    nothing called them without it.
+    `test_without_it_a_page_and_a_strip_draw_the_colour_too` does.
+
+Each mutant killed was applied by hand to see its test fail. `core.py`, where `as_mono` lives, is
+outside what the workflow mutates; `as_mono` is held by the gallery test, which compares it with
+the mono Core on every example.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `solve/backdrop.py` `_luminance` 2 | `.lower()` to `.upper()` on each channel | The channels are only compared with each other and read as hexadecimal, and both are case-insensitive. |
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random

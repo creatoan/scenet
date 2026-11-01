@@ -268,6 +268,26 @@ is: see [`direction`](language.md#direction). A panel read left to right has no 
 so every Core written before it reads, and is written, byte for byte as before — no
 `format_version` bump.
 
+A panel drawn in [`palette: tinted`](language.md#palette) carries `"palette": "tinted"`, and beside
+each value the palette tints, that value's colour: `colour` on each mass, on the atmosphere and on
+its veil, `fall_colour` for rain, and `colour` on a `warm` caption.
+
+```json
+"palette": "tinted",
+"backdrop": {
+  "masses": [{ "id": "m0", "kind": "sky", "plane": "far", "depth": -3, "tone": "#868686", "colour": "#b07750", "polygon": "..." }],
+  "atmosphere": { "tone": "#868686", "colour": "#b07750", "fall_tone": "#060606", "fall_colour": "#080410", "...": "..." }
+}
+```
+
+**The value keeps its key and its meaning.** `tone` and `fill` are always the grey, and every
+decision was made on them: the colour has the grey's lightness and is only what the grey looks like
+in this palette. So a renderer draws `colour` where there is one and `tone` or `fill` where there is
+not, `--mono` draws the greys and ignores the colours, and `PanelCore.as_mono()` takes the colours
+out — which gives exactly the Core the panel compiles to in `mono`. Snow has no colour: it is white
+by convention, not a rung of the ladder. A `mono` panel has none of these keys, so every Core
+written before palettes reads, and is written, byte for byte as before — no `format_version` bump.
+
 ### The staging
 
 What the solver used and once threw away is recorded too, so that an

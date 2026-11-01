@@ -15,7 +15,9 @@
 
 import { loadPyodide, type PyodideInterface } from "pyodide";
 
+import { decodeBase64, type DocumentFile } from "./examples";
 import { FONT_FOLDER } from "./fonts";
+import type { Shown } from "./options";
 
 /**
  * The folder the playground's document is in, in Pyodide's in-memory file system. A
@@ -44,17 +46,12 @@ export interface Finding {
 
 export interface CompileSuccess {
   readonly ok: true;
-  readonly svg: string;
-  readonly debug: string;
   readonly core: string;
   readonly notes: readonly string[];
+  /** The panels' names, in the document's order. */
   readonly panels: readonly string[];
-  /**
-   * A one-panel document's exports for image models, by the suffix `scenet build
-   * --conditioning` gives each file; null for a document of several panels, whose files
-   * are one set per panel.
-   */
-  readonly conditioning: Readonly<Record<string, string>> | null;
+  /** How many pages it lays its panels out on: none for a panel, or a scene without `pages:`. */
+  readonly pages: number;
   /** What `scenet check` says of a document that compiles: notes only, if anything. */
   readonly findings: readonly Finding[];
 }
@@ -68,6 +65,29 @@ export interface CompileFailure {
 
 /** How the compiler reports back. Errors are data, not exceptions. */
 export type CompileResult = CompileSuccess | CompileFailure;
+
+/**
+ * One picture of the last document that compiled, and its overlay: the whole of it, laid out
+ * as pages or a strip, with no name; or one panel, under its own.
+ */
+export interface Picture {
+  readonly name: string;
+  readonly svg: string;
+  readonly debug: string;
+}
+
+export type RenderResult =
+  | { readonly ok: true; readonly pictures: readonly Picture[] }
+  | { readonly ok: false; readonly error: string };
+
+/** One panel's exports for image models, and the pose and the boxes drawn to be seen. */
+export interface PanelExports {
+  readonly panel: string;
+  /** By the suffix `scenet build --conditioning` gives each file. */
+  readonly files: Readonly<Record<string, string>>;
+  /** The pose's and the boxes' pictures, by the suffix of the export each draws. */
+  readonly previews: Readonly<Record<string, string>>;
+}
 
 /** Progress messages, so a twenty-second boot does not look like a hang. */
 export type ProgressReporter = (message: string) => void;
@@ -149,13 +169,16 @@ def _scenet_findings(source, kind, exc):
     return findings
 
 
+# The last document that compiled. Drawing it, its exports for image models and their ZIP
+# are asked for apart from compiling it: a change of output options draws it again without
+# compiling it again, and the exports are made only while a tab shows them.
+_scenet_last = None
+
+
 def _scenet_compile(source, kind):
+    global _scenet_last
     try:
-        from scenet import compile_book, compile_script, render_conditioning
-        from scenet.emit.debug_svg import render_debug
-        from scenet.emit.page import render_pages
-        from scenet.emit.strip import render_strip
-        from scenet.emit.svg import render
+        from scenet import compile_book, compile_script
 
         # Compiled as \`scenet build\` compiles it, whichever kind it is.
         compile = compile_script if kind == "script" else compile_book
@@ -165,22 +188,7 @@ def _scenet_compile(source, kind):
 
         names = list(results)
         single = len(names) == 1
-        conditioning = (
-            dict(render_conditioning(results[names[0]].core).files()) if single else None
-        )
-        # Every declared font the panels were measured in, which is what they are drawn in.
-        fonts = {
-            digest: font for result in results.values() for digest, font in result.fonts.items()
-        }
-        # Every picture embedded: the preview is inlined into this page, and a download is
-        # opened anywhere, or turned into a PNG, none of which could follow a link.
-        images = book.images
-
         if pages:
-            # A document that lays its panels out is shown as its pages, side by side.
-            cores = {name: result.core for name, result in results.items()}
-            svg = render_pages(pages, cores, fonts=fonts, embed=images)
-            debug = render_pages(pages, cores, debug=True)
             core = json.dumps(
                 {
                     "pages": [json.loads(page.to_json()) for page in pages],
@@ -192,14 +200,8 @@ def _scenet_compile(source, kind):
                 sort_keys=True,
             )
         elif single:
-            only = results[names[0]]
-            svg = render(only.core, fonts=fonts, embed=images)
-            debug = render_debug(only.core)
-            core = only.core.to_json()
+            core = results[names[0]].core.to_json()
         else:
-            pairs = [(name, result.core) for name, result in results.items()]
-            svg = render_strip(pairs, fonts=fonts, embed=images)
-            debug = render_strip(pairs, debug=True)
             core = json.dumps(
                 {name: json.loads(result.core.to_json()) for name, result in results.items()},
                 indent=2,
@@ -211,14 +213,13 @@ def _scenet_compile(source, kind):
             for note in result.notes:
                 notes.append(note if single else f"{name}: {note}")
 
+        _scenet_last = book
         return json.dumps({
             "ok": True,
-            "svg": svg,
-            "debug": debug,
             "core": core,
             "notes": notes,
             "panels": names,
-            "conditioning": conditioning,
+            "pages": len(pages),
             # A document that compiles has no error, but may have notes -- a balloon over
             # the words a publisher asks for -- which the editor shows as information.
             "findings": _scenet_check(source, kind, deep=False),
@@ -229,11 +230,101 @@ def _scenet_compile(source, kind):
             "error": f"{type(exc).__name__}: {exc}",
             "findings": _scenet_findings(source, kind, exc),
         })
+
+
+def _scenet_render(live_text, shown):
+    """Draw the last document that compiled: its pages, a strip, or each panel on its own."""
+    try:
+        from scenet.emit.debug_svg import render_debug
+        from scenet.emit.page import render_pages
+        from scenet.emit.strip import render_strip
+        from scenet.emit.svg import render
+
+        book = _scenet_last
+        results = book.panels
+        # Every declared font the panels were measured in, which is what they are drawn in.
+        fonts = {
+            digest: font for result in results.values() for digest, font in result.fonts.items()
+        }
+        # Every picture embedded: the preview is inlined into this page, and a download is
+        # opened anywhere, or turned into a PNG, none of which could follow a link.
+        images = book.images
+
+        if shown == "pages":
+            cores = {name: result.core for name, result in results.items()}
+            pictures = [{
+                "name": "",
+                "svg": render_pages(
+                    book.pages, cores, fonts=fonts, embed=images, live_text=live_text
+                ),
+                "debug": render_pages(book.pages, cores, debug=True),
+            }]
+        elif shown == "strip":
+            pairs = [(name, result.core) for name, result in results.items()]
+            pictures = [{
+                "name": "",
+                "svg": render_strip(pairs, fonts=fonts, embed=images, live_text=live_text),
+                "debug": render_strip(pairs, debug=True),
+            }]
+        else:
+            # Each panel on its own, as \`scenet build\` writes one SVG per panel.
+            pictures = [
+                {
+                    "name": name,
+                    "svg": render(result.core, fonts=fonts, embed=images, live_text=live_text),
+                    "debug": render_debug(result.core),
+                }
+                for name, result in results.items()
+            ]
+        return json.dumps({"ok": True, "pictures": pictures})
+    except Exception as exc:
+        return json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+
+
+def _scenet_conditioning():
+    """Every panel's exports for image models, and the pose and the boxes drawn."""
+    from scenet import render_conditioning
+    from scenet.emit.preview import render_boxes_preview, render_pose_preview
+
+    return json.dumps([
+        {
+            "panel": name,
+            "files": dict(render_conditioning(result.core).files()),
+            "previews": {
+                ".pose.json": render_pose_preview(result.core),
+                ".boxes.json": render_boxes_preview(result.core),
+            },
+        }
+        for name, result in _scenet_last.panels.items()
+    ])
+
+
+def _scenet_archive(stem):
+    """Every panel's exports in one ZIP, under the names \`build --conditioning\` gives them."""
+    import base64
+
+    from scenet.emit.export import conditioning_archive
+
+    cores = {name: result.core for name, result in _scenet_last.panels.items()}
+    return base64.b64encode(conditioning_archive(cores, stem)).decode("ascii")
 `;
 
 /** A booted compiler, ready to be handed source. */
 export interface Compiler {
   compile(source: string, kind: string): Promise<CompileResult>;
+  /**
+   * Draw the last document that compiled.
+   *
+   * @param liveText - Letter with `<text>` rather than glyph outlines, as `--live-text` does.
+   * @param shown - Its pages, a strip, or each panel on its own; `single` for a lone panel.
+   */
+  render(liveText: boolean, shown: Shown): Promise<RenderResult>;
+  /** Every panel's exports for image models, of the last document that compiled. */
+  conditioning(): Promise<readonly PanelExports[]>;
+  /** The same as one ZIP, each file named as `scenet build --conditioning` names it. */
+  archive(stem: string): Promise<Uint8Array>;
+  /** Every file beside the document, as the compiler reads them. */
+  files(): DocumentFile[];
   /**
    * Put a font file in the document's `fonts/` folder, replacing one of the same name.
    *
@@ -315,6 +406,36 @@ await micropip.install(_scenet_wheel)
       pyodide.globals.set("_scenet_kind", kind);
       const raw = await pyodide.runPythonAsync("_scenet_compile(_scenet_source, _scenet_kind)");
       return JSON.parse(String(raw)) as CompileResult;
+    },
+    async render(liveText: boolean, shown: Shown): Promise<RenderResult> {
+      pyodide.globals.set("_scenet_live_text", liveText);
+      pyodide.globals.set("_scenet_shown", shown);
+      const raw = await pyodide.runPythonAsync("_scenet_render(_scenet_live_text, _scenet_shown)");
+      return JSON.parse(String(raw)) as RenderResult;
+    },
+    async conditioning(): Promise<readonly PanelExports[]> {
+      const raw = await pyodide.runPythonAsync("_scenet_conditioning()");
+      return JSON.parse(String(raw)) as PanelExports[];
+    },
+    async archive(stem: string): Promise<Uint8Array> {
+      pyodide.globals.set("_scenet_stem", stem);
+      return decodeBase64(String(await pyodide.runPythonAsync("_scenet_archive(_scenet_stem)")));
+    },
+    files(): DocumentFile[] {
+      const found: DocumentFile[] = [];
+      const walk = (folder: string, prefix: string): void => {
+        for (const name of pyodide.FS.readdir(folder) as string[]) {
+          if (name === "." || name === "..") continue;
+          const path = `${folder}/${name}`;
+          if (pyodide.FS.isDir(pyodide.FS.stat(path).mode)) {
+            walk(path, `${prefix}${name}/`);
+          } else {
+            found.push({ path: `${prefix}${name}`, bytes: pyodide.FS.readFile(path) as Uint8Array });
+          }
+        }
+      };
+      walk(DOCUMENT_FOLDER, "");
+      return found;
     },
     addFont(name: string, bytes: Uint8Array): void {
       // The compiler caches fonts by what is in them, so a file replaced here under the
