@@ -841,11 +841,12 @@ panels:
     def test_a_valid_scene_produces_nothing(self):
         assert diagnose_source(self.SCENE, source=Path("s.scene.yaml")) == []
 
-    def test_the_gallery_scenes_are_clean(self):
+    def test_the_gallery_scenes_have_no_error(self):
         """The examples are the language's shop window; a false positive on them would
-        make the checker useless the first time anybody ran it."""
+        make the checker useless the first time anybody ran it. A note, some give on
+        purpose, and their manifest entry says which (`tests/test_notes.py`)."""
         for path in sorted(Path("examples/gallery").glob("*.scene.yaml")):
-            assert diagnose_file(path) == [], path
+            assert [item for item in diagnose_file(path) if item.level == "error"] == [], path
 
     def test_a_fault_inside_a_panel_names_that_panel(self):
         broken = self.SCENE.replace(

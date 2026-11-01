@@ -13,9 +13,10 @@ construct nobody has looked at.
 import contextlib
 import hashlib
 import re
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import get_args
+from typing import Any, get_args
 
 import pytest
 import yaml
@@ -27,11 +28,12 @@ from scenet import (
     compile_book_file,
     compile_document,
     default_library,
+    pipeline,
     render,
     render_debug,
     render_strip,
 )
-from scenet.diagnostics import diagnose_file
+from scenet.diagnostics import RULES, diagnose_file, diagnose_script, diagnose_source
 from scenet.images import MediaType, measure
 from scenet.ir import PanelIR, Predicate, SayEvent
 from scenet.pipeline import DOCUMENT_LOADERS, Book
@@ -432,6 +434,143 @@ class TestFiguresAPictureDraws:
             assert core.backdrop.image is not None, panel
             assert core.backdrop.image.keep_out, panel
             assert result.camera is None, panel
+
+
+#: The group that shows what the checker and the compiler say of a document (#240).
+TELLS = "What Scenet tells you"
+#: Its entries: each shows a note, and a line away from it, an error.
+TOLD = [entry for entry in ENTRIES if entry.get("group") == TELLS]
+TOLD_IDS = [entry["file"] for entry in TOLD]
+
+#: How the comment over an example's last line opens, when that line, uncommented, makes
+#: the example an error.
+TRY_THIS = "# Try this:"
+
+
+def _note_names() -> set[str]:
+    """Every note there is, by the name `notes:` gives it: a check's rule, or a compile note's."""
+    checks = {name for name, rule in RULES.items() if rule.level == "note"}
+    return checks | set(get_args(pipeline.CompileNoteRule))
+
+
+@dataclass(frozen=True)
+class TryThis:
+    """The line an example ends with, commented out, that makes it an error.
+
+    Attributes:
+        line: Its number, from one.
+        text: The document with that line uncommented.
+        rule: The error the comment over it names.
+    """
+
+    line: int
+    text: str
+    rule: str
+
+
+def _try_this(path: Path) -> TryThis:
+    """An example's try-this: the last line of its YAML, under a `# Try this:` comment.
+
+    The last line of the document, or of a comic script's front matter: that is the only
+    place a script can hold a comment, since every line of its own is read, as prose if as
+    nothing else. The line is written `# ` and then exactly as it must read, indentation
+    and all, so deleting the `# ` -- what Ctrl+/ does in the playground's YAML editor --
+    uncomments it. The comment names the error's rule in backticks.
+    """
+    lines = path.read_text(encoding="utf-8").split("\n")
+    if path.suffix == ".script":
+        assert lines[0] == "---", f"{path.name}: a script's try-this is in its front matter"
+        last = lines.index("---", 1) - 1
+    else:
+        last = max(index for index, line in enumerate(lines) if line.strip())
+    assert lines[last].startswith("# "), f"{path.name} does not end with a line commented out"
+    first = last
+    while first > 0 and lines[first - 1].startswith("#"):
+        first -= 1
+    comment = lines[first:last]
+    opening = [index for index, line in enumerate(comment) if line.startswith(TRY_THIS)]
+    assert opening, f"{path.name}: no {TRY_THIS!r} comment over its last line"
+    said = " ".join(comment[opening[-1] :])
+    named = {name for name in re.findall(r"`([a-z-]+)`", said) if name in RULES}
+    assert len(named) == 1, f"{path.name}: its try-this names one rule, not {sorted(named)}"
+    lines[last] = lines[last].removeprefix("# ")
+    return TryThis(line=last + 1, text="\n".join(lines), rule=named.pop())
+
+
+class TestWhatScenetTellsYou:
+    """The gallery shows what the checker and the compiler say of a document (#240): every
+    note there is, each in an example that declares it -- and from each, a line away, an
+    error, which an example that must compile cannot show otherwise."""
+
+    def test_the_group_is_offered(self):
+        assert TELLS in MANIFEST["groups"]
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=IDS)
+    def test_notes_names_known_notes_each_once(self, entry: dict[str, Any]):
+        if "notes" not in entry:
+            return
+        notes = entry["notes"]
+        assert isinstance(notes, list), "`notes:` is a list"
+        assert notes, "an example that gives no note leaves `notes:` out"
+        assert len(notes) == len(set(notes)), "a note is given or it is not: name each once"
+        assert sorted(set(notes) - _note_names()) == []
+
+    def test_every_note_is_shown_by_an_example_of_the_group(self):
+        """A note the playground cannot show is a gap, and this test says so (#236)."""
+        shown = {note for entry in TOLD for note in entry.get("notes", [])}
+        assert sorted(_note_names() - shown) == []
+
+    @pytest.mark.parametrize("entry", TOLD, ids=TOLD_IDS)
+    def test_each_of_its_examples_gives_a_note(self, entry: dict[str, Any]):
+        assert entry.get("notes")
+
+    @pytest.mark.parametrize("entry", TOLD, ids=TOLD_IDS)
+    def test_its_last_line_uncommented_is_an_error_on_that_line(self, entry: dict[str, Any]):
+        """The error the comment names, and nothing but it, located where it was written:
+        what the playground lists under the editor, a click away from the line."""
+        path = GALLERY / entry["file"]
+        trial = _try_this(path)
+        diagnose = diagnose_script if path.suffix == ".script" else diagnose_source
+        errors = [item for item in diagnose(trial.text, source=path) if item.level == "error"]
+        assert errors, f"{path.name} still compiles with its last line uncommented"
+        where = {(item.rule, item.region.start.line if item.region else 0) for item in errors}
+        assert where == {(trial.rule, trial.line)}
+
+
+class TestReadingATryThis:
+    """The test above is only as good as `_try_this`, which finds the line to uncomment."""
+
+    def test_in_a_document_it_is_the_last_line(self, tmp_path: Path):
+        path = tmp_path / "x.panel.yaml"
+        path.write_text(
+            "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Hi.}\n\n"
+            '# Try this: delete the "# " below. B is in no cast: `unknown-actor`.\n'
+            "#   - say: {by: b, text: Hi.}\n",
+            encoding="utf-8",
+        )
+        trial = _try_this(path)
+        assert (trial.line, trial.rule) == (6, "unknown-actor")
+        assert trial.text.split("\n")[5] == "  - say: {by: b, text: Hi.}"
+
+    def test_in_a_script_it_closes_the_front_matter(self, tmp_path: Path):
+        path = tmp_path / "x.script"
+        path.write_text(
+            "---\ncast:\n  A: {reference: alice}\n"
+            "# Try this: on its own line, `reflexive-relation`.\n# staging: [A left_of A]\n---\n"
+            "PANEL 1\nA\nHi.\n",
+            encoding="utf-8",
+        )
+        trial = _try_this(path)
+        assert (trial.line, trial.rule) == (5, "reflexive-relation")
+        assert trial.text.split("\n")[4] == "staging: [A left_of A]"
+
+    def test_only_a_rule_is_read_from_the_comment(self, tmp_path: Path):
+        path = tmp_path / "x.panel.yaml"
+        path.write_text(
+            "script: []\n# Try this: `fit: contain` is no rule; `syntax` is.\n# : x\n",
+            encoding="utf-8",
+        )
+        assert _try_this(path).rule == "syntax"
 
 
 class TestWhatADocumentWrites:
