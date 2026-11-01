@@ -136,6 +136,7 @@ from scenet.ir import (
 )
 from scenet.pipeline import (
     Book,
+    CompileNote,
     CompileResult,
     compile_book,
     compile_book_file,
@@ -157,6 +158,7 @@ except PackageNotFoundError:  # pragma: no cover -- only when running from a sou
 __all__ = [
     # -- compiling -----------------------------------------------------------
     "Book",
+    "CompileNote",
     "CompileResult",
     "compile_book",
     "compile_book_file",
