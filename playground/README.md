@@ -26,6 +26,8 @@ The Scenet compiler running in a browser, published to GitHub Pages.
 - **Notes listed over the picture**: what `scenet check` notes, each under its rule and a
   click away from its line, then what the compiler decided, each under its name. The
   gallery's *What Scenet tells you* has an example of each.
+- **A link over each try-this**: those examples end with a line commented out that makes
+  them an error, and *Try it* uncomments it, `# ` and all, as one edit Ctrl+Z takes back.
 - **Zoom and pan** the output: scroll or pinch to zoom about the pointer, drag to pan,
   double-click for Fit or 100%. With the picture focused, `+` `-` `0` `1` and the arrow
   keys do the same. Editing keeps the zoom; opening another document fits it.
