@@ -28,9 +28,21 @@ The Scenet compiler running in a browser, published to GitHub Pages.
   keys do the same. Editing keeps the zoom; opening another document fits it.
 - **Overlay** shows the solver's working geometry, for a single panel or a whole scene.
 - **Panel Core** is shown read-only in a second editor, with folding.
-- **Download** the panel as SVG or a 2× PNG, the overlay, the Panel Core, or the source.
+- **Depth, Mask, Pose, Boxes and Semantics** show the exports for image models, every
+  panel's side by side under its name. They are made only while one of these tabs is open,
+  so typing stays fast. The pose and the boxes are JSON; what is shown is their picture,
+  drawn by `scenet.emit.preview`.
+- **Screen reader** lists what a screen reader is given (`src/outline.ts`): every image and
+  group the SVG names, nested, with its words.
+- **Files** shows the files beside the document: the gallery's pictures and artwork
+  contracts, and what Font… and Image… added.
+- **Output** letters with live text, as `--live-text` does, and shows a document of several
+  panels as its pages, a strip, or each panel on its own (`src/maps.ts`). The choice is kept
+  in the browser; a share link does not carry it.
+- **Download** the panel as SVG or a 2× PNG, the overlay, the Panel Core, a panel's exports
+  for image models, or the source; a document of several panels has its exports in one ZIP.
   `Ctrl+S` saves the source. Names follow `scenet build`: `foo.svg`, `foo.debug.svg`,
-  `foo.core.json`.
+  `foo.core.json`, `foo.pose.json`, `foo.conditioning.zip` holding `foo.one.pose.json`.
 - **Share** copies a link with the whole document compressed into the URL fragment. The
   fragment never reaches a server, so there is no backend.
 - **Font…** adds `.ttf` and `.otf` files to the document's `fonts/` folder, in Pyodide's

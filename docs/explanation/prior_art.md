@@ -609,6 +609,13 @@ is by its own card not trained on any one estimator's depth. Inverse depth is wh
 as a straight vertical ramp (#227): on a flat surface it is proportional to the distance below the
 horizon on screen.
 
+The playground draws the pose as ControlNet's OpenPose annotator draws a skeleton (#238): its
+seventeen limbs and its eighteen colours, red round the wheel to rose, each limb in the colour at
+its own position, at half opacity, on black. The table is in `scenet.emit.preview`, as
+[`controlnet_aux`](https://github.com/huggingface/controlnet_aux) inherited it from
+[pytorch-openpose](https://github.com/Hzzone/pytorch-openpose): taken as it is because it is what
+a reader who works with these models has seen. Only the colours and the limbs were taken; no code.
+
 Deliberately not taken: a prompt. Two drafts behind #72 proposed a `scenet prompt` turning a
 panel into positive and negative prompt strings. Dialects differ per model and change every few
 months, and turning structure into prose is the step WordsEye, above, leaves to the language

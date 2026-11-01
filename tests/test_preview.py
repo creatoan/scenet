@@ -40,13 +40,14 @@ FIGURES = {
         "face": {"center": [250, 180], "radius": 50},
         "body": [[180, 140], [320, 140], [340, 600], [160, 600]],
     },
+    "ben": {"face": {"center": [650, 200], "radius": 45}},
 }
 
 
 def _figures() -> PanelCore:
     return compile_source(
         "panel: {size: [900, 600]}\nsetting: {image: art/p.png, fit: contain}\n"
-        "cast:\n  ANA: {figure: ana}\n  bob: {reference: bob}\n",
+        "cast: {ANA: {figure: ana}}\n",
         base={"art/p.png": png(900, 600), "art/p.art.yaml": contract((900, 600), FIGURES)},
     ).core
 
@@ -132,8 +133,7 @@ class TestThePosePreview:
 
     def test_a_figure_a_picture_draws_has_no_skeleton(self):
         core = _figures()
-        skeletons = [name for name in _groups(render_pose_preview(core)) if name]
-        assert skeletons == ["pose-bob"]
+        assert [name for name in _groups(render_pose_preview(core)) if name] == []
 
     def test_the_same_panel_draws_the_same_bytes(self):
         assert render_pose_preview(compile_source(DUEL).core) == render_pose_preview(
@@ -187,7 +187,7 @@ class TestTheBoxesPreview:
         core = _figures()
         fills = _mask_fills(core)
         groups = _groups(render_boxes_preview(core))
-        assert [name for name in groups if name] == ["box-actor-bob", "box-figure-ana"]
+        assert [name for name in groups if name] == ["box-figure-ana", "box-figure-ben"]
         for name, group in groups.items():
             if not name:
                 continue

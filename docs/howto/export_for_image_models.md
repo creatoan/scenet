@@ -46,8 +46,11 @@ assert list(files) == [".pose.json", ".boxes.json", ".depth.svg", ".mask.svg", "
 ```
 
 The [MCP server](../reference/mcp.md)'s `render` takes `conditioning: true` and returns the same
-five per panel; the [playground](https://creatoan.github.io/scenet/playground/) offers them for a
-one-panel document in its Download menu.
+five per panel. The [playground](https://creatoan.github.io/scenet/playground/) shows them: its
+Depth, Mask, Pose, Boxes and Semantics tabs hold every panel's, side by side under the panel's
+name, the pose drawn as OpenPose draws a skeleton and the boxes as rectangles labelled with their
+phrase. Its Download menu offers a panel's five files, or, for a document of several panels, a ZIP
+holding each panel's under the names `build --conditioning` gives them.
 
 ![The docks at noon, Alice and Bob on the quay, as Scenet draws them](../images/conditioning/panel.svg)
 

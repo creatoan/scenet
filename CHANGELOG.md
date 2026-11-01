@@ -19,6 +19,19 @@ below 1.0 means.
   under the editor each says in a sentence what it shows, with a link to the page of the
   documentation that explains it. `#example=<file>` opens a gallery example by name, a link
   that does not go stale as a `#src=` share link does when the example changes.
+- **The playground shows every output (#238).** Depth, Mask, Pose, Boxes and Semantics tabs
+  show the exports for image models of every panel of any document, side by side under each
+  panel's name, made only while one of them is open. A **Screen reader** tab lists what a
+  screen reader is given: every image and group the SVG names, nested, with its words. A
+  **Files** tab shows the files beside the document: the gallery's pictures and artwork
+  contracts, and the fonts and pictures you add. An **Output** menu letters with live text, as
+  `--live-text` does, and shows a document of several panels as its pages, a strip, or each
+  panel on its own. A document of several panels downloads its exports as one ZIP, each file
+  named as `scenet build --conditioning` names it.
+- **`scenet.emit.preview` draws the pose and the boxes** to be looked at: each actor's skeleton
+  in OpenPose's colours, and each box labelled with its phrase in its region's colour in the
+  mask. `scenet.emit.export.conditioning_archive` puts every panel's exports in one ZIP, the
+  same bytes on every run and every platform.
 - **The gallery manifest gains `groups:`, `start:`, and `group:`, `summary:` and `doc:` on
   every entry**, and its titles are short names. Entries are only ever appended, as its header
   now says: a playground draft remembers its example by position. The spec pack prints each

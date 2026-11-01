@@ -212,7 +212,7 @@ class TestTheArchive:
         }
         book = compile_book_file(source)
         cores = {panel: result.core for panel, result in book.panels.items()}
-        stem = name.split(".")[0]
+        stem = name.split(".", maxsplit=1)[0]
         with zipfile.ZipFile(io.BytesIO(conditioning_archive(cores, stem))) as archive:
             held = {entry: archive.read(entry) for entry in archive.namelist()}
         assert held == written
@@ -221,7 +221,9 @@ class TestTheArchive:
         cores = {panel: result.core for panel, result in compile_book(SCENE).panels.items()}
         with zipfile.ZipFile(io.BytesIO(conditioning_archive(cores, "story"))) as archive:
             names = archive.namelist()
-        assert names == [f"story.{panel}{suffix}" for panel in ("one", "two") for suffix in SUFFIXES]
+        assert names == [
+            f"story.{panel}{suffix}" for panel in ("one", "two") for suffix in SUFFIXES
+        ]
 
     def test_the_same_bytes_every_run_on_every_platform(self):
         """No clock, no file mode or system of the machine that made it."""
