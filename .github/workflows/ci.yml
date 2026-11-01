@@ -205,13 +205,16 @@ jobs:
       # The status is captured rather than allowed to end the job, so the findings still
       # reach code scanning when there are any -- which is the case the upload exists
       # for. The job fails afterwards, at the last step.
+      #
+      # Checked as `scenet check` checks it, less the notes the manifest declares: the
+      # examples grouped under "What Scenet tells you" give theirs on purpose, and as
+      # alerts they would stay open for ever. An error, or a note nobody declared, is
+      # still reported, and still fails the job.
       - name: Check the gallery
         id: check
         run: |
           set +e
-          uv run scenet check --format sarif -o results.sarif \
-            examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml \
-            examples/gallery/*.script
+          uv run python scripts/check_gallery.py -o results.sarif
           echo "status=$?" >> "$GITHUB_OUTPUT"
 
       # A pull request from a fork gets a read-only token, so this cannot work there and
