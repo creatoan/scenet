@@ -35,6 +35,19 @@ at commit `cf67eac` (version 2.100); `tests/test_display_face.py` pins its SHA-2
 licence, in the font's own `name` table and beside it. The dependency licence gate checks installed
 distributions and cannot see a file inside one, which is why that test exists.
 
+### Comic Neue (gallery example only)
+
+Licensed under the [SIL Open Font License 1.1][ofl]. Copyright 2014 The Comic Neue Project Authors
+(<https://github.com/crozynski/comicneue>). Designed by Craig Rozynski and Hrant Papazian.
+
+The face the gallery's *Your own font* example letters in, to show `lettering.font`. It is not
+part of the `scenet` wheel: it sits in `examples/gallery/fonts/` with the licence beside it as
+`OFL.txt`, which the example names with the fonts, so the playground and the skill's copy of the
+gallery carry it wherever they carry them. Regular, Italic, Bold Italic and Bold are the files
+from [google/fonts](https://github.com/google/fonts/tree/3dd78844021e948ceb633d1dcee3f7885561b5d9/ofl/comicneue)
+at commit `3dd7884`; `tests/test_gallery.py` pins each file's SHA-256 and checks the licence, in
+each font's own `name` table and beside them.
+
 [ofl]: https://openfontlicense.org/
 
 ## Runtime dependencies
