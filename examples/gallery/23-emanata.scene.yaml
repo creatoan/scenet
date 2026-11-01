@@ -15,7 +15,8 @@
 #
 # That cuts both ways. The camera frames by the body and makes no room for marks, so
 # over the taller character's head, at this framing, they would run off the top of the
-# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so.
+# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so, as
+# the example "Marks cut off" shows.
 
 panel:
   size: [1000, 700]

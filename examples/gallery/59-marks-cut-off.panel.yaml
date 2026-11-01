@@ -1,0 +1,30 @@
+# Marks cut off by the frame: a note, not an error.
+#
+# Emanata are drawn outside the head, in the space balloons go, and they never move
+# anybody: the camera frames by the body and makes no room for them. That cuts both ways.
+# Bob is the taller of the two, and at this framing his plewds run off the top of the
+# panel, so the compiler says so -- `cropped-marks` -- rather than let them vanish without
+# a word.
+#
+# To make the note go away, ask for a looser shot, which shows them whole, or give the
+# marks to Alice, whose head is lower.
+
+panel: {size: [1000, 700]}
+camera: {shot: medium_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left, marks: [plewds]}
+
+staging:
+  - alice left_of bob
+  - alice ground_shared_with bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "You look warm."}
+  - say: {by: bob, text: "It's the coat."}
+
+# Try this: delete the "# " that starts the last line. A line with nothing said is no line
+# at all: `text` is required, and leaving it out is the error `missing-field`, there.
+#   - say: {by: alice}

@@ -3113,11 +3113,13 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
 <!-- scenet-spec:part=gallery -->
 # Gallery
 
-Every example the playground offers, in the order the gallery's manifest lists them. The test suite compiles each one, so all of them are known to work.
+Every example the playground offers, in the order the gallery's manifest lists them. The test suite compiles each one, so all of them are known to work. The examples grouped under "What Scenet tells you" give a note on purpose -- a house limit run past, or something the compiler decided -- and each ends with a commented line that, uncommented, makes it an error.
 
 ## Two characters
 
 The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `01-two-characters.panel.yaml`
 
@@ -3390,6 +3392,8 @@ script:
 
 One character drawn in front of another, the depth that lets two figures share space on purpose.
 
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
+
 `09-depth.panel.yaml`
 
 ```yaml
@@ -3429,6 +3433,8 @@ script:
 
 Four characters too wide for a close-up make the camera step back, and a note says by how much.
 
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
+
 `10-crowd-pullback.panel.yaml`
 
 ```yaml
@@ -3438,7 +3444,11 @@ Four characters too wide for a close-up make the camera step back, and a note sa
 #
 # The requested shot is an UPPER BOUND ON TIGHTNESS, not a promise -- and the retreat
 # is reported rather than done silently, because a panel that is quietly not the shot
-# you asked for is a panel you cannot debug. Look at the note under the picture.
+# you asked for is a panel you cannot debug. Look at the note under the picture:
+# `camera-retreated`. To make it go away, widen the panel or ask for a looser shot.
+#
+# A retreat is a compromise the compiler can make. Constraints that cannot all hold are
+# not: the last line shows one.
 
 panel:
   size: [1400, 700]
@@ -3452,6 +3462,10 @@ cast:
   carol: {reference: alice, pose: hands_on_hips}
   dave:  {reference: bob,   pose: pointing}
 
+script:
+  - say: {by: alice, text: "Is everyone here?"}
+  - say: {by: dave,  text: "Looks like it."}
+
 staging:
   - alice left_of bob
   - bob left_of carol
@@ -3460,9 +3474,9 @@ staging:
   - bob ground_shared_with carol
   - carol ground_shared_with dave
 
-script:
-  - say: {by: alice, text: "Is everyone here?"}
-  - say: {by: dave,  text: "Looks like it."}
+# Try this: delete the "# " that starts the last line. Dave left of Alice closes a loop
+# that no order can satisfy: the error `ordering-cycle`, on that line.
+#   - dave left_of alice
 ```
 
 ## Poses and facing
@@ -3503,6 +3517,8 @@ staging:
 ## A sequence
 
 Panels that follow one another, each written as what changes from the panel before.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `12-sequence.scene.yaml`
 
@@ -3548,6 +3564,8 @@ panels:
 ## A comic script
 
 The same kind of panel written as a comic script, in the plain-text form writers already use.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `13-comic-script.script`
 
@@ -3699,6 +3717,8 @@ script:
 ## Ten expressions
 
 Every expression the shipped puppets have, one panel each.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `17-expressions.scene.yaml`
 
@@ -4015,7 +4035,8 @@ Sweat, dizziness, oaths and dust drawn round a character, and the balloons that 
 #
 # That cuts both ways. The camera frames by the body and makes no room for marks, so
 # over the taller character's head, at this framing, they would run off the top of the
-# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so.
+# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so, as
+# the example "Marks cut off" shows.
 
 panel:
   size: [1000, 700]
@@ -4218,6 +4239,8 @@ panels:
 ## Insets
 
 A small panel set into the corner of another, read before it or after it as it says.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `26-insets.scene.yaml`
 
@@ -4491,6 +4514,8 @@ script:
 
 A script in the format Dark Horse asks for: a title page, counts, and captions written CAP and CAP/NAME.
 
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
+
 `31-dark-horse.script`
 
 ```text
@@ -4587,6 +4612,8 @@ panels:
 ## A French script
 
 A script written in French: planche, cases, récitatif, pensée, hors champ and the échelle des plans.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `33-planche.script`
 
@@ -5570,8 +5597,9 @@ A panel that takes away somebody it would inherit, with null.
 # takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
 # Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
 #
-# A staging relation naming him would go with him, and `scenet check` would note it. This
-# scene places its cast with `at:` alone, so there is none to lose.
+# A staging relation naming him would go with him, and `scenet check` would note it, as
+# the example "A relation left out" shows. This scene places its cast with `at:` alone, so
+# there is none to lose.
 
 panel: {size: [900, 600]}
 camera: {shot: medium_shot}
@@ -5743,4 +5771,483 @@ staging:
 script:
   - say: {by: alice, text: "The first boat leaves at six."}
   - say: {by: bob, text: "Then we have time for coffee."}
+```
+
+## Too many words
+
+A balloon of 34 words still compiles, and the checker notes that Dark Horse asks for about 25 at most.
+
+It gives the note `word-limit`: no fault, since a note never stops a document.
+
+`53-too-many-words.panel.yaml`
+
+```yaml
+# Too many words for one balloon: a note, not an error.
+#
+# Dark Horse's script format asks for "approximately 25 words per balloon, and about 50
+# words per panel, max". Bob's answer holds 34, so `scenet check` notes it, on its line,
+# under the rule `word-limit`. It is a limit a letterer works to, not a contradiction: the
+# panel compiles all the same, and the balloon is lettered as large as it has to be.
+#
+# Words are counted as they are lettered: `--` and an ellipsis are no words, and the
+# underscores around a stressed word add none.
+#
+# To make the note go away, split the balloon in two -- a second `say:` by Bob, which is
+# what a letterer would do -- or carry the rest of the words to the next panel.
+
+panel: {size: [1000, 700]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "So what happened?"}
+  - say: {by: bob, text: "Well, I got up late, missed the bus, walked all the way, lost my keys on the way, found them again, and then the door was locked anyway, so I just came back here."}
+
+# Try this: delete the "# " that starts the last line. Alice opens a stressed word with
+# an underscore and never closes it: the error `unbalanced-emphasis`, on that line.
+#   - say: {by: alice, text: "You _walked?"}
+```
+
+## A page miscounted
+
+A script whose page says three panels where two follow: it compiles, and the checker notes the count.
+
+It gives the note `panel-count`: no fault, since a note never stops a document.
+
+`54-a-page-miscounted.script`
+
+```text
+---
+# A page that says how many panels it holds, and miscounts: a note, not an error.
+#
+# Dark Horse's format labels each page with its count, as PAGE ONE (three panels) does
+# below, and Scenet holds the page to it. Only two panels follow, so `scenet check` notes
+# the PAGE line, `panel-count`: a heading may have been missed, or written so that it
+# reads as prose. The two panels compile all the same.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML. To make the note go away, correct the count, or write the third panel.
+panel:
+  size: [900, 640]
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+cast:
+  MAYA: {reference: alice, at: left_third}
+  THEO: {reference: bob, pose: arms_crossed, at: right_third, facing: left}
+# Try this: delete the "# " that starts the next line. Scenet ships two puppets, alice and
+# bob, and no `nell`: the error `unknown-puppet`, on that line.
+#   NELL: {reference: nell, at: center}
+---
+
+PAGE ONE (three panels)
+
+PANEL 1
+@shot: full_shot
+Maya and Theo on the harbour wall, at dusk.
+
+MAYA
+Is the ferry late again?
+
+THEO
+It was never on time.
+
+PANEL 2
+@shot: medium_shot
+Theo shrugs.
+
+THEO
+We could swim.
+```
+
+## Not read as dialogue
+
+A speaker's name misspelled in a script makes the line prose, not dialogue, and the checker points at it.
+
+It gives the note `looks-like-dialogue`: no fault, since a note never stops a document.
+
+`55-not-read-as-dialogue.script`
+
+```text
+---
+# A line set like dialogue that is not read as dialogue: a note, not an error.
+#
+# THOE: in the panel below is a typo for THEO. A name in capitals with a colon looks like
+# a speaker's line, but nobody called THOE is in the cast, so the line is read as what it
+# would be otherwise: prose, which is the panel's description and is never lettered. A
+# writer's NOTE: line is read the same way, and is no mistake -- but a misspelled speaker
+# looks exactly like one, so `scenet check` points at it, `looks-like-dialogue`, and
+# leaves the call to you.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML. To make the note go away, spell the name as the cast does.
+panel:
+  size: [900, 640]
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+cast:
+  MAYA: {reference: alice, pose: hands_on_hips, at: left_third}
+  THEO: {reference: bob, at: right_third, facing: left}
+# Try this: delete the "# " that starts the next line. The alice puppet has no `sleepy`
+# face: the error `unknown-expression`, on that line.
+#   NELL: {reference: alice, at: center, expression: sleepy}
+---
+
+PANEL 1
+@shot: full_shot
+Maya waits at the door; Theo comes down the stairs at last.
+
+MAYA: Where were you?
+
+THOE: Asleep, mostly.
+```
+
+## A relation left out
+
+A panel that leaves Bob out with null leaves out the relation naming him too, and the checker notes it.
+
+It gives the note `dropped-relation`: no fault, since a note never stops a document.
+
+`56-a-relation-left-out.scene.yaml`
+
+```yaml
+# A relation left out with the actor it names: a note, not an error.
+#
+# Everything beside `panels:` is a default every panel takes -- here Alice, Bob, and
+# `alice left_of bob`. The second panel leaves Bob out with `cast: {bob: null}`, and a
+# relation naming somebody who is not drawn cannot hold, so it goes with him. That changes
+# what the panel stages, so `scenet check` notes it where he is left out:
+# `dropped-relation`. Alice stands where her `at:` puts her, with nobody to be left of.
+#
+# A look is the one relation that stays: `alice looking_at bob` would still hold while
+# Bob is heard from off panel, since Alice can look toward his voice.
+#
+# To make the note go away, place the cast with `at:` alone, as "Leaving someone out"
+# does, or write the relation only in the panels that draw them both.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+panels:
+  meeting:
+    script:
+      - say: {by: bob, text: "Back in a minute."}
+
+  alone:
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "Take your time.", kind: whisper}
+
+  back:
+    script:
+      - say: {by: bob, text: "Did I miss anything?"}
+
+# Try this: delete the "# " that starts the last line. Bob is drawn in this panel, so he
+# cannot speak in it from off panel: the error `off-panel-speaker`, on that line.
+#       - say: {by: bob, text: "Only me.", off_panel: true}
+```
+
+## A tail that bends
+
+A voice from the left with its balloon on the right: the tail bends around Bob's face, and a note says so.
+
+It gives the note `curved-tail`: no fault, since a note never stops a document.
+
+`57-a-tail-that-bends.panel.yaml`
+
+```yaml
+# A tail that bends around a face: a note, not an error.
+#
+# Carol is heard from off panel, on the left, and her balloon asks for the top right. A
+# straight tail from there to the left edge of the frame would run through Bob's head, so
+# it bends around it, and the compiler says so: `curved-tail`, "balloon b0 needed a
+# curved tail to clear a face". A bent tail is a sign the panel is crowded, or a balloon
+# is far from its speaker -- worth a second look, never a reason to refuse the panel.
+#
+# To make the note go away, let the balloon sit on the side the voice comes from: drop
+# `prefer: top_right`, or have Carol heard from the right.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_close_up}
+
+cast:
+  bob: {reference: bob, at: center}
+
+script:
+  - say: {by: carol, text: "Behind you!", off_panel: left, prefer: top_right}
+
+# Try this: delete the "# " that starts the last line. A balloon may prefer one of the
+# nine zones, and `top` is none of them: the error `invalid-field`, on that line.
+#   - say: {by: bob, text: "Where?", prefer: top}
+```
+
+## A mouth cropped away
+
+A picture fitted to cover a tall panel crops Ana's mouth away, so her tail stops on the frame, and a note says so.
+
+It gives the note `cropped-mouth`: no fault, since a note never stops a document.
+
+`58-a-mouth-cropped-away.panel.yaml`
+
+It names `art/figures.png`, which is beside it in the gallery: a picture, not printed here.
+
+```yaml
+# A mouth the picture's fit crops away: a note, not an error.
+#
+# The people are in the picture -- art/figures.png, with its artwork contract beside it --
+# and `fit: cover` fills this tall, narrow panel with it, so the picture overhangs on both
+# sides and is cropped there. Ana stands on the left, and her mouth is cropped away. Her
+# balloon still points at it: the tail stops on the frame, aimed where she is, and the
+# compiler says so, `cropped-mouth`.
+#
+# To make the note go away, write `fit: contain`, which shows the whole picture, or make
+# the panel wide enough to hold her.
+
+panel: {size: [400, 900]}
+setting: {image: art/figures.png, fit: cover, time: night}
+
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+
+script:
+  - say: {by: ana, text: "Is it always this late?"}
+  - say: {by: ben, text: "Only when it rains."}
+
+# Try this: delete the "# " that starts the last line. Carl is in the picture, but nobody
+# cast him, so nobody can speak as him: the error `unknown-actor`, on that line.
+#   - say: {by: carl, text: "Mind the gap."}
+```
+
+Its picture's artwork contract, `art/figures.art.yaml`, beside the picture:
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
+```
+
+## Marks cut off
+
+Sweat drops over the taller character run off the top, since the camera makes no room for marks, and a note says so.
+
+It gives the note `cropped-marks`: no fault, since a note never stops a document.
+
+`59-marks-cut-off.panel.yaml`
+
+```yaml
+# Marks cut off by the frame: a note, not an error.
+#
+# Emanata are drawn outside the head, in the space balloons go, and they never move
+# anybody: the camera frames by the body and makes no room for them. That cuts both ways.
+# Bob is the taller of the two, and at this framing his plewds run off the top of the
+# panel, so the compiler says so -- `cropped-marks` -- rather than let them vanish without
+# a word.
+#
+# To make the note go away, ask for a looser shot, which shows them whole, or give the
+# marks to Alice, whose head is lower.
+
+panel: {size: [1000, 700]}
+camera: {shot: medium_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left, marks: [plewds]}
+
+staging:
+  - alice left_of bob
+  - alice ground_shared_with bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "You look warm."}
+  - say: {by: bob, text: "It's the coat."}
+
+# Try this: delete the "# " that starts the last line. A line with nothing said is no line
+# at all: `text` is required, and leaving it out is the error `missing-field`, there.
+#   - say: {by: alice}
+```
+
+## An inset over a face
+
+An inset set into the corner where Bob's face is covers it, since the art does not move for an inset, and a note says so.
+
+It gives the note `inset-covers-face`: no fault, since a note never stops a document.
+
+`60-an-inset-over-a-face.scene.yaml`
+
+```yaml
+# An inset over a face: a note, not an error.
+#
+# An inset is drawn over its panel, and the art beneath does not move for it: the street is
+# staged and framed as if the clock were not there, and only its lettering keeps clear.
+# The clock is set into the top right corner, which is where Bob's face is, so the
+# compiler says so: `inset-covers-face`.
+#
+# To make the note go away, set the inset into another corner -- the top left is clear --
+# make it smaller, or frame the street so that nobody's face is in that corner.
+
+page: {size: [1500, 1000], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+panels:
+  street:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+    script:
+      - say: {by: alice, text: "We'll miss the start."}
+
+  clock:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: bored}
+    script:
+      - caption: {text: "9:14.", kind: locale}
+
+pages:
+  - tiers:
+      - panels:
+          - use: street
+            insets:
+              - {use: clock, at: top_right, size: 0.35}
+
+# Try this: delete the "# " that starts the last line. A panel is placed on a page once,
+# and the clock already is: the error `page-layout`, on that line.
+#               - {use: clock, at: bottom_left, size: 0.25}
+```
+
+## A slant through a face
+
+A slanted gutter cuts across Bob's face in a close-up, since the camera does not know the cut is there, and a note says so.
+
+It gives the note `slant-cuts-face`: no fault, since a note never stops a document.
+
+`61-a-slant-through-a-face.scene.yaml`
+
+```yaml
+# A slant through a face: a note, not an error.
+#
+# A slanted tier leans the gutters between its panels, and each panel is staged and framed
+# in its bounding box as usual, then cut to its outline, as a margin would cut it. The
+# camera does not know the cut is there. Here the close-up of Bob is cut right across his
+# face, so the compiler says so: `slant-cuts-face`.
+#
+# To make the note go away, lean the tier less, or frame the shot so that the face is
+# clear of the cut: a looser shot, or the face further from the slanted side.
+
+page: {size: [1500, 900], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night}
+
+panels:
+  swing:
+    camera: {shot: full_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, expression: shouting, facing: right}
+    script:
+      - say: {by: alice, text: "Take that!", kind: shout}
+
+  hit:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: surprise, facing: left}
+    script:
+      - say: {by: bob, text: "Oof."}
+
+pages:
+  - tiers:
+      - {slant: 20, panels: [swing, hit]}
+
+# Try this: delete the "# " that starts the last line. A slant leans the gutters between
+# panels, so a tier of one has none to lean: the error `page-layout`, on that line.
+#       - {slant: 10, panels: [swing]}
+```
+
+## A face standing in
+
+Comic Neue Regular named alone stands in for the italic and the bold italic faces, and a note says so for each.
+
+It gives the notes `italic-stand-in` and `bold-italic-stand-in`: no fault, since a note never stops a document.
+
+`62-a-face-standing-in.panel.yaml`
+
+It names `fonts/ComicNeue-Regular.ttf`, which is beside it in the gallery: a font, not printed here.
+
+It names `fonts/OFL.txt`, which is beside it in the gallery: a licence, not printed here.
+
+```yaml
+# A face standing in for one the document did not name: two notes, not errors.
+#
+# `lettering.font` names Comic Neue Regular, and no other face. Every caption but a
+# `spoken` one is set in italic, and a stressed word in bold italic -- so for those the
+# regular face stands in: the caption is set upright, and so is the stressed word. The
+# compiler says so once for each face, `italic-stand-in` and `bold-italic-stand-in`. It is
+# your face that stands in, not the shipped italic: a family mixing your face with
+# another would not be one family.
+#
+# To make the notes go away, name the two faces, which are beside the regular one in
+# fonts/: `italic: fonts/ComicNeue-Italic.ttf` and
+# `bold_italic: fonts/ComicNeue-BoldItalic.ttf`. Comic Neue is under the SIL Open Font
+# License, in fonts/OFL.txt.
+
+panel: {size: [1000, 650]}
+camera: {shot: full_shot}
+
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - caption: {text: "Later, at the type foundry.", kind: locale}
+  - say: {by: alice, text: "Is this _really_ italic?"}
+
+# Try this: delete the "# " that starts the last line. Only a `spoken` caption is said by
+# somebody, so a locale caption naming Bob is the error `caption-speaker`, on that line.
+#   - caption: {text: "Meanwhile.", kind: locale, by: bob}
 ```

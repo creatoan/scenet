@@ -4,7 +4,11 @@
 #
 # The requested shot is an UPPER BOUND ON TIGHTNESS, not a promise -- and the retreat
 # is reported rather than done silently, because a panel that is quietly not the shot
-# you asked for is a panel you cannot debug. Look at the note under the picture.
+# you asked for is a panel you cannot debug. Look at the note under the picture:
+# `camera-retreated`. To make it go away, widen the panel or ask for a looser shot.
+#
+# A retreat is a compromise the compiler can make. Constraints that cannot all hold are
+# not: the last line shows one.
 
 panel:
   size: [1400, 700]
@@ -18,6 +22,10 @@ cast:
   carol: {reference: alice, pose: hands_on_hips}
   dave:  {reference: bob,   pose: pointing}
 
+script:
+  - say: {by: alice, text: "Is everyone here?"}
+  - say: {by: dave,  text: "Looks like it."}
+
 staging:
   - alice left_of bob
   - bob left_of carol
@@ -26,6 +34,6 @@ staging:
   - bob ground_shared_with carol
   - carol ground_shared_with dave
 
-script:
-  - say: {by: alice, text: "Is everyone here?"}
-  - say: {by: dave,  text: "Looks like it."}
+# Try this: delete the "# " that starts the last line. Dave left of Alice closes a loop
+# that no order can satisfy: the error `ordering-cycle`, on that line.
+#   - dave left_of alice

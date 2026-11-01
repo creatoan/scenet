@@ -1,0 +1,42 @@
+# An inset over a face: a note, not an error.
+#
+# An inset is drawn over its panel, and the art beneath does not move for it: the street is
+# staged and framed as if the clock were not there, and only its lettering keeps clear.
+# The clock is set into the top right corner, which is where Bob's face is, so the
+# compiler says so: `inset-covers-face`.
+#
+# To make the note go away, set the inset into another corner -- the top left is clear --
+# make it smaller, or frame the street so that nobody's face is in that corner.
+
+page: {size: [1500, 1000], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+panels:
+  street:
+    camera: {shot: medium_shot}
+    cast:
+      alice: {reference: alice, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+    script:
+      - say: {by: alice, text: "We'll miss the start."}
+
+  clock:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: bored}
+    script:
+      - caption: {text: "9:14.", kind: locale}
+
+pages:
+  - tiers:
+      - panels:
+          - use: street
+            insets:
+              - {use: clock, at: top_right, size: 0.35}
+
+# Try this: delete the "# " that starts the last line. A panel is placed on a page once,
+# and the clock already is: the error `page-layout`, on that line.
+#               - {use: clock, at: bottom_left, size: 0.25}

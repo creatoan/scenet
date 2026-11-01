@@ -1,0 +1,33 @@
+---
+# A line set like dialogue that is not read as dialogue: a note, not an error.
+#
+# THOE: in the panel below is a typo for THEO. A name in capitals with a colon looks like
+# a speaker's line, but nobody called THOE is in the cast, so the line is read as what it
+# would be otherwise: prose, which is the panel's description and is never lettered. A
+# writer's NOTE: line is read the same way, and is no mistake -- but a misspelled speaker
+# looks exactly like one, so `scenet check` points at it, `looks-like-dialogue`, and
+# leaves the call to you.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML. To make the note go away, spell the name as the cast does.
+panel:
+  size: [900, 640]
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+cast:
+  MAYA: {reference: alice, pose: hands_on_hips, at: left_third}
+  THEO: {reference: bob, at: right_third, facing: left}
+# Try this: delete the "# " that starts the next line. The alice puppet has no `sleepy`
+# face: the error `unknown-expression`, on that line.
+#   NELL: {reference: alice, at: center, expression: sleepy}
+---
+
+PANEL 1
+@shot: full_shot
+Maya waits at the door; Theo comes down the stairs at last.
+
+MAYA: Where were you?
+
+THOE: Asleep, mostly.

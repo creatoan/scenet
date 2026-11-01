@@ -1,0 +1,35 @@
+# A slant through a face: a note, not an error.
+#
+# A slanted tier leans the gutters between its panels, and each panel is staged and framed
+# in its bounding box as usual, then cut to its outline, as a margin would cut it. The
+# camera does not know the cut is there. Here the close-up of Bob is cut right across his
+# face, so the compiler says so: `slant-cuts-face`.
+#
+# To make the note go away, lean the tier less, or frame the shot so that the face is
+# clear of the cut: a looser shot, or the face further from the slanted side.
+
+page: {size: [1500, 900], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night}
+
+panels:
+  swing:
+    camera: {shot: full_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, expression: shouting, facing: right}
+    script:
+      - say: {by: alice, text: "Take that!", kind: shout}
+
+  hit:
+    camera: {shot: close_up}
+    cast:
+      bob: {reference: bob, expression: surprise, facing: left}
+    script:
+      - say: {by: bob, text: "Oof."}
+
+pages:
+  - tiers:
+      - {slant: 20, panels: [swing, hit]}
+
+# Try this: delete the "# " that starts the last line. A slant leans the gutters between
+# panels, so a tier of one has none to lean: the error `page-layout`, on that line.
+#       - {slant: 10, panels: [swing]}
