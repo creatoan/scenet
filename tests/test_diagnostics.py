@@ -378,8 +378,8 @@ class TestNestingTooDeep:
     def test_a_comic_script_front_matter_is_a_finding(self):
         script = "---\ncast: " + "[" * 5000 + "]" * 5000 + "\n---\nPANEL 1\n"
         (found,) = diagnose_script(script)
-        # The rule every front-matter YAML error is reported under, today.
-        assert found.rule == "invalid-field"
+        # A front matter's YAML is a document's: its syntax errors are `syntax` (#261).
+        assert found.rule == "syntax"
         assert "nested too deeply" in found.message
 
 

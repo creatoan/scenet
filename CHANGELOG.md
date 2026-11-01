@@ -77,6 +77,13 @@ below 1.0 means.
 
 ### Fixed
 
+- **A line indented to match no line above it is said to be** (#261). PyYAML calls it
+  "expected <block end>", which says nothing of the space too many or too few behind it;
+  the message now says how far in the line is, and how far in the line it likely goes with
+  is: deleting the `#` of a gallery example's try-this line and leaving its space, say.
+- **A syntax error in a comic script's front matter is located** (#261): rule `syntax`, on its
+  line of the file, where it was rule `invalid-field` on line 1, with line numbers counted
+  from the front matter's first line.
 - **The how-to on debugging a layout named two of the compiler's notes**; there are eight,
   now each in a table with what to do about it.
 - **The scene schema accepts a `null` wherever `settle` applies one** (#239): `camera: null` on
