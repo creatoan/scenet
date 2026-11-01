@@ -35,7 +35,8 @@ every one of them, deterministically: the same document always gives the same pi
 
 Start from the closest worked example in `assets/gallery/` rather than from nothing;
 `assets/gallery/manifest.yaml` lists them by theme, with a one-sentence summary each. Every
-one is known to compile.
+one is known to compile. An entry's `notes:` names the notes it gives, which are no fault;
+those grouped under "What Scenet tells you" give theirs on purpose, so start from another.
 
 ## The loop
 

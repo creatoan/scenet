@@ -1,0 +1,23 @@
+# A tail that bends around a face: a note, not an error.
+#
+# Carol is heard from off panel, on the left, and her balloon asks for the top right. A
+# straight tail from there to the left edge of the frame would run through Bob's head, so
+# it bends around it, and the compiler says so: `curved-tail`, "balloon b0 needed a
+# curved tail to clear a face". A bent tail is a sign the panel is crowded, or a balloon
+# is far from its speaker -- worth a second look, never a reason to refuse the panel.
+#
+# To make the note go away, let the balloon sit on the side the voice comes from: drop
+# `prefer: top_right`, or have Carol heard from the right.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_close_up}
+
+cast:
+  bob: {reference: bob, at: center}
+
+script:
+  - say: {by: carol, text: "Behind you!", off_panel: left, prefer: top_right}
+
+# Try this: delete the "# " that starts the last line. A balloon may prefer one of the
+# nine zones, and `top` is none of them: the error `invalid-field`, on that line.
+#   - say: {by: bob, text: "Where?", prefer: top}

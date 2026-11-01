@@ -1,0 +1,42 @@
+---
+# A page that says how many panels it holds, and miscounts: a note, not an error.
+#
+# Dark Horse's format labels each page with its count, as PAGE ONE (three panels) does
+# below, and Scenet holds the page to it. Only two panels follow, so `scenet check` notes
+# the PAGE line, `panel-count`: a heading may have been missed, or written so that it
+# reads as prose. The two panels compile all the same.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML. To make the note go away, correct the count, or write the third panel.
+panel:
+  size: [900, 640]
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+cast:
+  MAYA: {reference: alice, at: left_third}
+  THEO: {reference: bob, pose: arms_crossed, at: right_third, facing: left}
+# Try this: delete the "# " that starts the next line. Scenet ships two puppets, alice and
+# bob, and no `nell`: the error `unknown-puppet`, on that line.
+#   NELL: {reference: nell, at: center}
+---
+
+PAGE ONE (three panels)
+
+PANEL 1
+@shot: full_shot
+Maya and Theo on the harbour wall, at dusk.
+
+MAYA
+Is the ferry late again?
+
+THEO
+It was never on time.
+
+PANEL 2
+@shot: medium_shot
+Theo shrugs.
+
+THEO
+We could swim.

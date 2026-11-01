@@ -60,6 +60,7 @@ import {
   type Layout,
   type OutputOptions,
 } from "./options";
+import { noteRows, type Place } from "./notes";
 import { outline } from "./outline";
 import {
   browserStore,
@@ -166,7 +167,7 @@ const output = element<HTMLDivElement>("output");
 const stage = element<HTMLDivElement>("stage");
 const coreHost = element<HTMLDivElement>("core");
 const statusLine = element<HTMLParagraphElement>("status");
-const notes = element<HTMLParagraphElement>("notes");
+const notes = element<HTMLDivElement>("notes");
 const errorBox = element<HTMLDivElement>("error");
 const zoomControls = element<HTMLDivElement>("zoom-controls");
 const zoomLevel = element<HTMLButtonElement>("zoom-level");
@@ -632,33 +633,54 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * One finding or note as a line: where it is, its rule, what it says. With a place in the
+   * source, the line is a button that puts the cursor there.
+   */
+  const findingLine = (where: string, rule: string, message: string, at?: Place): HTMLElement => {
+    const part = (className: string, text: string): HTMLSpanElement => {
+      const span = document.createElement("span");
+      span.className = className;
+      span.textContent = text;
+      return span;
+    };
+    const parts = [part("where", where), part("rule", rule), part("message", message)];
+    if (at === undefined) {
+      const line = document.createElement("div");
+      line.className = "finding";
+      line.append(...parts);
+      return line;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "finding";
+    button.title = "Show in the editor";
+    button.append(...parts);
+    button.addEventListener("click", () => {
+      editor.setPosition({ lineNumber: at.line, column: at.column });
+      editor.revealLineInCenterIfOutsideViewport(at.line);
+      editor.focus();
+    });
+    return button;
+  };
+
   /** Each finding as a line that jumps the editor to where it is. */
   const showFindings = (failure: CompileFailure): void => {
     errorBox.replaceChildren(
-      ...failure.findings.map((finding) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "finding";
-        button.title = "Show in the editor";
-        const where = document.createElement("span");
-        where.className = "where";
-        where.textContent = `${finding.line}:${finding.column}`;
-        const rule = document.createElement("span");
-        rule.className = "rule";
-        rule.textContent = finding.rule;
-        const message = document.createElement("span");
-        message.className = "message";
-        message.textContent = finding.message;
-        button.append(where, rule, message);
-        button.addEventListener("click", () => {
-          editor.setPosition({ lineNumber: finding.line, column: finding.column });
-          editor.revealLineInCenterIfOutsideViewport(finding.line);
-          editor.focus();
-        });
-        return button;
-      }),
+      ...failure.findings.map((finding) =>
+        findingLine(`${finding.line}:${finding.column}`, finding.rule, finding.message, finding),
+      ),
     );
     errorBox.hidden = false;
+  };
+
+  /** What the checker and the compiler note, over the picture; hidden when there is nothing. */
+  const showNotes = (result: CompileSuccess): void => {
+    const rows = noteRows(result.findings, result.notes);
+    notes.replaceChildren(
+      ...rows.map((row) => findingLine(row.where, row.rule, row.message, row.at)),
+    );
+    notes.hidden = rows.length === 0;
   };
 
   const showResult = (result: CompileResult, model: monaco.editor.ITextModel): void => {
@@ -671,8 +693,7 @@ async function main(): Promise<void> {
       exportsCache = undefined;
       errorBox.hidden = true;
       errorBox.replaceChildren();
-      notes.textContent = result.notes.join(" · ");
-      notes.hidden = result.notes.length === 0;
+      showNotes(result);
       const count = result.panels.length;
       setStatus(count === 1 ? "Compiled." : `Compiled ${count} panels.`);
       updateDownloads();

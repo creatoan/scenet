@@ -23,19 +23,33 @@ for note in result.notes:
     assert isinstance(note, str)
 
 assert any("camera retreated" in note for note in result.notes)
+
+# The same notes, each with the name of what kind it is.
+(note,) = result.compile_notes
+assert note.rule == "camera-retreated"
+assert note.message == result.notes[0]
 ```
 
-Two things get reported:
+Each note is a sentence, and each has a name that says what kind it is:
+{attr}`result.compile_notes <scenet.pipeline.CompileResult.compile_notes>` gives both. The
+name stays when the sentence is reworded, so it is the thing to match on, and it is how a
+gallery example that shows a note declares it.
 
-- **`camera retreated to N% of the requested framing`** — the cast would not fit across
-  the panel at the shot you asked for, so the camera stepped back. Widen the panel, use a
-  looser shot, or accept it.
-- **`balloon bN needed a curved tail to clear a face`** — a straight tail would have gone
-  through somebody's head. Usually a sign the panel is crowded enough to be worth a second
-  look.
+| Name | What happened | What to do |
+|---|---|---|
+| `camera-retreated` | The cast would not fit across the panel at the shot you asked for, so the camera stepped back, by the share the note gives | Widen the panel, ask for a looser shot, or accept it |
+| `curved-tail` | A straight tail would have gone through somebody's head, so it bends around it | Usually a sign the panel is crowded: let the balloon sit nearer its speaker, or give the panel more room |
+| `cropped-mouth` | A picture's `fit: cover` crops a speaking figure's mouth out of the panel, so the tail stops on the frame, aimed at it | `fit: contain` shows the whole picture; or reshape the panel |
+| `cropped-marks` | Emanata run off the panel: the camera frames by the body and makes no room for them | A looser shot, or the marks on somebody they fit around |
+| `inset-covers-face` | An inset is drawn over a face, and the art does not move for it | Put the inset in another corner, or reframe the panel |
+| `slant-cuts-face` | A slanted gutter cuts across a face: the panel is cropped to its outline, as by a margin | Lean the tier less, or frame the shot so the face is clear of it |
+| `italic-stand-in` | `lettering.font` names no italic face, so italic captions are set in the regular one | Name one as `italic:` |
+| `bold-italic-stand-in` | `lettering.font` names no bold italic face, so stressed words are set in the italic one, or the regular | Name one as `bold_italic:` |
 
 On the command line these print as `note:` lines. `--quiet` suppresses them, which you
-should not normally want.
+should not normally want. The playground lists them under the picture, after what
+`scenet check` notes, and its gallery shows each in an example of its own, under *What
+Scenet tells you*.
 
 ## 2. Look at the debug overlay
 

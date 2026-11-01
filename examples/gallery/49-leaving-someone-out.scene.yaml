@@ -4,8 +4,9 @@
 # takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
 # Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
 #
-# A staging relation naming him would go with him, and `scenet check` would note it. This
-# scene places its cast with `at:` alone, so there is none to lose.
+# A staging relation naming him would go with him, and `scenet check` would note it, as
+# the example "A relation left out" shows. This scene places its cast with `at:` alone, so
+# there is none to lose.
 
 panel: {size: [900, 600]}
 camera: {shot: medium_shot}

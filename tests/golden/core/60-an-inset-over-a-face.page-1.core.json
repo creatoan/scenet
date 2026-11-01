@@ -1,0 +1,29 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 850.0,
+      "panel": "street",
+      "width": 1350.0,
+      "x": 75.0,
+      "y": 75.0
+    },
+    {
+      "clearance": {
+        "height": 357.5,
+        "width": 532.5,
+        "x": 892.5,
+        "y": 75.0
+      },
+      "height": 297.5,
+      "inset_of": "street",
+      "panel": "clock",
+      "width": 472.5,
+      "x": 922.5,
+      "y": 105.0
+    }
+  ],
+  "height": 1000.0,
+  "lettering_height": 283.33,
+  "width": 1500.0
+}

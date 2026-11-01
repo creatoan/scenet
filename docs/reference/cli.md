@@ -84,7 +84,9 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `--quiet`
 : Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are
-  where the compiler tells you it did something you did not ask for.
+  where the compiler tells you it did something you did not ask for. Each kind has a name,
+  listed with what to do about it in
+  [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes).
 
 ### Output naming
 

@@ -78,6 +78,34 @@ from scenet.solve.speakers import speaker_of
 from scenet.solve.staging import Placement, solve_staging
 from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
+#: What each kind of compile note is called: a stable name, as a check's rule has one, by
+#: which a gallery entry's `notes:` declares it (#240) while the sentence stays free to be
+#: reworded. One name per sentence; `docs/howto/debug_a_layout.md` explains each.
+CompileNoteRule = Literal[
+    "camera-retreated",
+    "curved-tail",
+    "cropped-mouth",
+    "cropped-marks",
+    "inset-covers-face",
+    "slant-cuts-face",
+    "italic-stand-in",
+    "bold-italic-stand-in",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class CompileNote:
+    """Something the compiler decided that the source did not literally ask for.
+
+    Attributes:
+        rule: What kind of decision it was, by its stable name.
+        message: The sentence that says so, as
+            :attr:`CompileResult.notes <scenet.pipeline.CompileResult.notes>` gives it.
+    """
+
+    rule: CompileNoteRule
+    message: str
+
 
 @dataclass(frozen=True, slots=True)
 class CompileResult:
@@ -101,7 +129,7 @@ class CompileResult:
     images: dict[str, bytes] = field(default_factory=dict)
     #: Faces the document named no file for, and what was used instead -- reported in
     #: `notes` only when something was actually set in one.
-    lettering_notes: tuple[str, ...] = ()
+    lettering_notes: tuple[CompileNote, ...] = ()
 
     @property
     def notes(self) -> tuple[str, ...]:
@@ -111,7 +139,8 @@ class CompileResult:
             Zero or more sentences describing decisions the compiler had to make that
             were not literally what the source asked for -- a camera that retreated to
             fit the cast, a balloon tail that had to bend around a face, a mark drawn
-            partly outside the panel.
+            partly outside the panel. Each is a :class:`CompileNote`'s message, in the
+            order of :attr:`compile_notes`, which also names what kind it is.
 
         These are returned rather than logged so that tooling can put them in front of
         the person who wrote the panel. A camera that silently retreats leaves you with
@@ -128,15 +157,43 @@ class CompileResult:
             >>> any("camera retreated" in note for note in crowded.notes)
             True
         """
-        notes: list[str] = []
+        return tuple(note.message for note in self.compile_notes)
+
+    @property
+    def compile_notes(self) -> tuple[CompileNote, ...]:
+        """The notes, each with the name of what kind it is.
+
+        Returns:
+            The same notes as :attr:`notes`, in the same order, each a sentence and a
+            :data:`CompileNoteRule <scenet.pipeline.CompileNoteRule>` -- the name a
+            gallery entry declares it by, which stays when the sentence is reworded.
+
+        Example:
+            >>> from scenet import compile_source
+            >>> crowded = compile_source(
+            ...     "{panel: {size: [600.0, 400.0]}, camera: {shot: close_up},"
+            ...     " cast: {a: {reference: alice}, b: {reference: bob}},"
+            ...     " staging: [a left_of b]}"
+            ... )
+            >>> [note.rule for note in crowded.compile_notes]
+            ['camera-retreated']
+        """
+        notes: list[CompileNote] = []
         if self.camera is not None and self.camera.was_pulled_back:
             notes.append(
-                f"camera retreated to {self.camera.pullback:.0%} of the requested "
-                f"'{self.camera.shot.value}' framing so the cast would fit across the panel"
+                CompileNote(
+                    "camera-retreated",
+                    f"camera retreated to {self.camera.pullback:.0%} of the requested "
+                    f"'{self.camera.shot.value}' framing so the cast would fit across the panel",
+                )
             )
         for balloon in self.core.balloons:
             if balloon.tail.is_curved:
-                notes.append(f"balloon {balloon.id} needed a curved tail to clear a face")
+                notes.append(
+                    CompileNote(
+                        "curved-tail", f"balloon {balloon.id} needed a curved tail to clear a face"
+                    )
+                )
         notes.extend(_cropped_mouths(self.core))
         # The camera frames by body landmarks and makes no room for emanata, which is
         # what keeps them from ever moving anybody. The cost is that a tight shot can
@@ -146,8 +203,11 @@ class CompileResult:
             for mark in actor.marks:
                 if _cropped(self.core, actor, mark):
                     notes.append(
-                        f"{actor.id}'s {mark.value} run off the panel at this framing; "
-                        "the camera makes no room for marks, so a looser shot shows more"
+                        CompileNote(
+                            "cropped-marks",
+                            f"{actor.id}'s {mark.value} run off the panel at this framing; "
+                            "the camera makes no room for marks, so a looser shot shows more",
+                        )
                     )
         # An inset is drawn over the art, which does not move for it, so it can cover a
         # face as easily as a sky. The lettering keeps clear; the face cannot.
@@ -155,8 +215,12 @@ class CompileResult:
             face = disc.as_circle()
             if any(area.as_bbox().intersects_circle(face) for area in self.core.exclusions):
                 notes.append(
-                    f"an inset covers {who}'s face; it is drawn over the art, which does "
-                    "not move for it, so put the inset in another corner or reframe the panel"
+                    CompileNote(
+                        "inset-covers-face",
+                        f"an inset covers {who}'s face; it is drawn over the art, which does "
+                        "not move for it, so put the inset in another corner or reframe the "
+                        "panel",
+                    )
                 )
         # A slanted edge crops the art like a margin, and the camera does not know it is
         # there. Say so when it runs through a face.
@@ -165,28 +229,34 @@ class CompileResult:
             for who, face in _named_faces(self.core):
                 if not edge.contains(Point(face.cx, face.cy).buffer(face.r)):
                     notes.append(
-                        f"the slanted edge of this panel cuts across {who}'s face; "
-                        "lean the tier less, or frame the shot so the face is clear of it"
+                        CompileNote(
+                            "slant-cuts-face",
+                            f"the slanted edge of this panel cuts across {who}'s face; "
+                            "lean the tier less, or frame the shot so the face is clear of it",
+                        )
                     )
         notes.extend(self.lettering_notes)
         return tuple(notes)
 
 
-def _cropped_mouths(core: PanelCore) -> list[str]:
+def _cropped_mouths(core: PanelCore) -> list[CompileNote]:
     """A note for each balloon whose speaker's mouth a picture's fit cropped out of the panel.
 
     A `cover` fit overhangs, and can crop a figure's mouth away. The tail then stops on the
     frame, aimed at it: correct, and worth knowing about.
     """
-    notes: list[str] = []
+    notes: list[CompileNote] = []
     mouths = {figure.actor: figure.mouth for figure in core.figures if figure.actor}
     for balloon in core.balloons:
         mouth = mouths.get(balloon.speaker)
         if mouth is not None and not (0 <= mouth[0] <= core.width and 0 <= mouth[1] <= core.height):
             notes.append(
-                f"{balloon.speaker}'s mouth is outside the panel, cropped by the picture's "
-                f"fit, so balloon {balloon.id}'s tail stops on the frame; `fit: contain` "
-                "shows the whole picture"
+                CompileNote(
+                    "cropped-mouth",
+                    f"{balloon.speaker}'s mouth is outside the panel, cropped by the picture's "
+                    f"fit, so balloon {balloon.id}'s tail stops on the frame; `fit: contain` "
+                    "shows the whole picture",
+                )
             )
     return notes
 
@@ -344,14 +414,19 @@ def _declared_faces(family: Typeface) -> dict[Face, FontMetrics]:
     return declared
 
 
-def _stand_in_notes(core: PanelCore, lettering: Lettering, family: Typeface) -> tuple[str, ...]:
+def _stand_in_notes(
+    core: PanelCore, lettering: Lettering, family: Typeface
+) -> tuple[CompileNote, ...]:
     """Say so when lettering was set in a face standing in for one the document did not name."""
-    notes: list[str] = []
+    notes: list[CompileNote] = []
     if lettering.stands_in(Face.ITALIC) and any(caption.italic for caption in core.captions):
         regular = family.face(Face.REGULAR)
         notes.append(
-            "no italic face is named in lettering.font, so italic captions are set in "
-            f"{regular.family} {regular.style}; name one as `italic:`"
+            CompileNote(
+                "italic-stand-in",
+                "no italic face is named in lettering.font, so italic captions are set in "
+                f"{regular.family} {regular.style}; name one as `italic:`",
+            )
         )
     stressed = any(
         run.face is Face.BOLD_ITALIC
@@ -362,8 +437,11 @@ def _stand_in_notes(core: PanelCore, lettering: Lettering, family: Typeface) -> 
     if lettering.stands_in(Face.BOLD_ITALIC) and stressed:
         used = family.face(Face.BOLD_ITALIC)
         notes.append(
-            "no bold italic face is named in lettering.font, so emphasis is set in "
-            f"{used.family} {used.style}; name one as `bold_italic:`"
+            CompileNote(
+                "bold-italic-stand-in",
+                "no bold italic face is named in lettering.font, so emphasis is set in "
+                f"{used.family} {used.style}; name one as `bold_italic:`",
+            )
         )
     return tuple(notes)
 

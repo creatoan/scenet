@@ -1,0 +1,31 @@
+# Too many words for one balloon: a note, not an error.
+#
+# Dark Horse's script format asks for "approximately 25 words per balloon, and about 50
+# words per panel, max". Bob's answer holds 34, so `scenet check` notes it, on its line,
+# under the rule `word-limit`. It is a limit a letterer works to, not a contradiction: the
+# panel compiles all the same, and the balloon is lettered as large as it has to be.
+#
+# Words are counted as they are lettered: `--` and an ellipsis are no words, and the
+# underscores around a stressed word add none.
+#
+# To make the note go away, split the balloon in two -- a second `say:` by Bob, which is
+# what a letterer would do -- or carry the rest of the words to the next panel.
+
+panel: {size: [1000, 700]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "So what happened?"}
+  - say: {by: bob, text: "Well, I got up late, missed the bus, walked all the way, lost my keys on the way, found them again, and then the door was locked anyway, so I just came back here."}
+
+# Try this: delete the "# " that starts the last line. Alice opens a stressed word with
+# an underscore and never closes it: the error `unbalanced-emphasis`, on that line.
+#   - say: {by: alice, text: "You _walked?"}

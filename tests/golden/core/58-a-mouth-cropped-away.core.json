@@ -1,0 +1,208 @@
+{
+  "actors": [],
+  "backdrop": {
+    "atmosphere": null,
+    "image": {
+      "box": {
+        "height": 900.0,
+        "width": 1350.0,
+        "x": -475.0,
+        "y": 0.0
+      },
+      "fit": "cover",
+      "href": "art/figures.png",
+      "keep_out": [
+        [
+          [
+            365.0,
+            90.0
+          ],
+          [
+            815.0,
+            90.0
+          ],
+          [
+            815.0,
+            300.0
+          ],
+          [
+            365.0,
+            300.0
+          ]
+        ]
+      ],
+      "media_type": "image/png",
+      "pixels": [
+        900,
+        600
+      ],
+      "preserve_aspect_ratio": "xMidYMid slice",
+      "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
+    },
+    "masses": [],
+    "seed": 493335943
+  },
+  "balloons": [
+    {
+      "box": {
+        "height": 113.4,
+        "width": 177.12,
+        "x": 48.95,
+        "y": 50.79
+      },
+      "font_size": 31.5,
+      "id": "b0",
+      "kind": "speech",
+      "label": "Ana: Is it always this late?",
+      "line_height": 39.38,
+      "lines": [
+        "Is it always",
+        "this late?"
+      ],
+      "order": 0,
+      "speaker": "ana",
+      "tail": {
+        "control": null,
+        "end": [
+          0.0,
+          262.73
+        ],
+        "start": [
+          87.29,
+          164.19
+        ],
+        "width": 14.0
+      }
+    },
+    {
+      "box": {
+        "height": 113.4,
+        "width": 174.45,
+        "x": 210.56,
+        "y": 455.08
+      },
+      "font_size": 31.5,
+      "id": "b1",
+      "kind": "speech",
+      "label": "Ben: Only when it rains.",
+      "line_height": 39.38,
+      "lines": [
+        "Only when",
+        "it rains."
+      ],
+      "order": 1,
+      "speaker": "ben",
+      "tail": {
+        "control": null,
+        "end": [
+          189.45,
+          429.2
+        ],
+        "start": [
+          223.41,
+          455.08
+        ],
+        "width": 14.0
+      }
+    }
+  ],
+  "captions": [],
+  "description": "Ana, left; Ben, centre.",
+  "figures": [
+    {
+      "actor": "ana",
+      "body": [
+        [
+          -223.0,
+          444.0
+        ],
+        [
+          -37.0,
+          444.0
+        ],
+        [
+          -1.0,
+          900.0
+        ],
+        [
+          -259.0,
+          900.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": -130.0,
+        "cy": 375.0,
+        "r": 84.0
+      },
+      "figure": "ana",
+      "mouth": [
+        -130.0,
+        409.5
+      ]
+    },
+    {
+      "actor": "ben",
+      "body": [
+        [
+          35.0,
+          429.0
+        ],
+        [
+          245.0,
+          429.0
+        ],
+        [
+          278.0,
+          900.0
+        ],
+        [
+          2.0,
+          900.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 140.0,
+        "cy": 354.0,
+        "r": 90.0
+      },
+      "figure": "ben",
+      "mouth": [
+        140.0,
+        391.5
+      ]
+    },
+    {
+      "body": [
+        [
+          527.0,
+          507.0
+        ],
+        [
+          683.0,
+          507.0
+        ],
+        [
+          704.0,
+          900.0
+        ],
+        [
+          506.0,
+          900.0
+        ]
+      ],
+      "face_exclusion": {
+        "cx": 605.0,
+        "cy": 450.0,
+        "r": 69.0
+      },
+      "figure": "carl",
+      "mouth": [
+        605.0,
+        478.5
+      ]
+    }
+  ],
+  "format_version": 1,
+  "height": 900.0,
+  "width": 400.0
+}

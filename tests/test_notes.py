@@ -9,8 +9,10 @@ or `note`, and only an error fails a check.
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
+import yaml
 
 from scenet import compile_script
 from scenet.cli import main
@@ -186,16 +188,24 @@ class TestCheck:
 
 
 GALLERY = Path(__file__).resolve().parents[1] / "examples" / "gallery"
+ENTRIES = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))["examples"]
 
 
-@pytest.mark.parametrize(
-    "path",
-    sorted(path for path in GALLERY.iterdir() if path.is_file() and path.name != "manifest.yaml"),
-    ids=lambda path: path.name,
-)
-def test_the_gallery_has_nothing_to_note(path: Path):
-    """The examples are what people copy: not even a note, let alone an error."""
-    assert diagnose_file(path) == []
+@pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
+def test_each_example_gives_exactly_the_notes_it_declares(entry: dict[str, Any]):
+    """The examples are what people copy, so none has an error. Each gives the notes its
+    manifest entry declares under `notes:`, and no other (#240): a check's by its rule, a
+    compile note by its name. Most declare none; those that show what Scenet tells you
+    declare theirs."""
+    path = GALLERY / entry["file"]
+    found = diagnose_file(path)
+    assert [item for item in found if item.level == "error"] == []
+    compiled = {
+        note.rule
+        for result in compile_book_file(path).panels.values()
+        for note in result.compile_notes
+    }
+    assert {item.rule for item in found} | compiled == set(entry.get("notes", []))
 
 
 class TestOneWayToCompileAScript:

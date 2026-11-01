@@ -289,6 +289,19 @@ def _kind(name: str) -> str:
     return NAMED_KINDS.get(posixpath.splitext(name)[1].lower(), "a licence")
 
 
+def _notes(entry: dict[str, Any]) -> str:
+    """The sentence naming the notes an example gives, its manifest's `notes:`, or nothing.
+
+    Said so a model copying the example knows they come with it and are no fault.
+    """
+    names = [f"`{name}`" for name in entry.get("notes", [])]
+    if not names:
+        return ""
+    named = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+    kind = "note" if len(names) == 1 else "notes"
+    return f"It gives the {kind} {named}: no fault, since a note never stops a document.\n\n"
+
+
 def _gallery() -> str:
     sections = []
     for entry in _gallery_entries():
@@ -310,14 +323,16 @@ def _gallery() -> str:
             if name.endswith(CONTRACT_SUFFIX)
         )
         sections.append(
-            f"## {entry['title']}\n\n{entry['summary']}\n\n`{entry['file']}`{beside}\n\n"
-            f"{_fence(source, language)}{contracts}"
+            f"## {entry['title']}\n\n{entry['summary']}\n\n{_notes(entry)}"
+            f"`{entry['file']}`{beside}\n\n{_fence(source, language)}{contracts}"
         )
     return (
         "# Gallery\n\n"
         "Every example the playground offers, in the order the gallery's manifest lists "
-        "them. The test suite compiles each one, so all of them are known to work.\n\n"
-        + "\n".join(sections)
+        "them. The test suite compiles each one, so all of them are known to work. The "
+        'examples grouped under "What Scenet tells you" give a note on purpose -- a house '
+        "limit run past, or something the compiler decided -- and each ends with a "
+        "commented line that, uncommented, makes it an error.\n\n" + "\n".join(sections)
     )
 
 

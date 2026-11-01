@@ -1,0 +1,43 @@
+# A relation left out with the actor it names: a note, not an error.
+#
+# Everything beside `panels:` is a default every panel takes -- here Alice, Bob, and
+# `alice left_of bob`. The second panel leaves Bob out with `cast: {bob: null}`, and a
+# relation naming somebody who is not drawn cannot hold, so it goes with him. That changes
+# what the panel stages, so `scenet check` notes it where he is left out:
+# `dropped-relation`. Alice stands where her `at:` puts her, with nobody to be left of.
+#
+# A look is the one relation that stays: `alice looking_at bob` would still hold while
+# Bob is heard from off panel, since Alice can look toward his voice.
+#
+# To make the note go away, place the cast with `at:` alone, as "Leaving someone out"
+# does, or write the relation only in the panels that draw them both.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+panels:
+  meeting:
+    script:
+      - say: {by: bob, text: "Back in a minute."}
+
+  alone:
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "Take your time.", kind: whisper}
+
+  back:
+    script:
+      - say: {by: bob, text: "Did I miss anything?"}
+
+# Try this: delete the "# " that starts the last line. Bob is drawn in this panel, so he
+# cannot speak in it from off panel: the error `off-panel-speaker`, on that line.
+#       - say: {by: bob, text: "Only me.", off_panel: true}

@@ -15,6 +15,7 @@ import re
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 import yaml
@@ -50,7 +51,7 @@ def pack() -> str:
     return build_spec.spec_pack()
 
 
-def _manifest() -> list[dict[str, str]]:
+def _manifest() -> list[dict[str, Any]]:
     return yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))["examples"]
 
 
@@ -151,6 +152,16 @@ class TestSpecPack:
             assert source.strip() in body, entry["file"]
             positions.append(body.index(entry["file"]))
         assert positions == sorted(positions)
+
+    def test_the_notes_an_example_gives_are_named_under_its_summary(self):
+        """A model copying an example is told which notes it gives, and that they are no
+        fault: the examples that show what Scenet tells you give theirs on purpose (#240)."""
+        body = part("gallery")
+        for entry in _manifest():
+            after = body.split(f"{entry['summary']}\n\n", 1)[1].split("\n", 1)[0]
+            notes = entry.get("notes", [])
+            assert all(f"`{note}`" in after for note in notes), entry["file"]
+            assert after.startswith("It gives") == bool(notes), entry["file"]
 
     def test_every_file_an_example_names_is_called_what_it_is(self):
         """A font is not "a picture", nor its licence: each is named for what it is."""

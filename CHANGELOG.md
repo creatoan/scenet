@@ -12,6 +12,24 @@ below 1.0 means.
 
 ### Added
 
+- **The gallery shows what the checker and the compiler tell you (#240).** A new group,
+  *What Scenet tells you*, has an example for every note: `word-limit`, `panel-count`,
+  `looks-like-dialogue` and `dropped-relation` from `scenet check`, and from the compiler a
+  camera that retreats, a tail that bends around a face, a mouth a picture's fit crops away,
+  marks cut off by the frame, an inset over a face, a slant through a face, and a regular face
+  standing in for the italic and bold italic ones a document did not name (examples 53 to 62,
+  and 10). Each says what to change to make its note go away, and ends with a commented line
+  that, uncommented, is an error located on that line. The manifest declares the notes each
+  example gives under `notes:`, and the tests hold every example to exactly those: eight older
+  examples gave `camera-retreated` without anybody checking, and now say so.
+- **Every compile note has a name.** `CompileResult.compile_notes` gives each note with what
+  kind it is — `camera-retreated`, `curved-tail`, `cropped-mouth`, `cropped-marks`,
+  `inset-covers-face`, `slant-cuts-face`, `italic-stand-in` or `bold-italic-stand-in` — as a
+  `CompileNote`, exported beside `CompileResult`. `notes` still gives the sentences, word for
+  word: match on the name, which stays when a sentence is reworded.
+- **The playground lists what `scenet check` notes**, each under its rule and a click away
+  from its line, as an error is, then what the compiler noted, under its name. A check's note
+  was a squiggle in the editor and nothing more.
 - **The gallery writes every construct of the language, and a test reads it against the
   schemas (#239).** Eleven examples, 42 to 52: a font of your own (Comic Neue, in
   `examples/gallery/fonts/` with its licence), a sound pulled toward a zone from its source,
@@ -53,9 +71,14 @@ below 1.0 means.
 
 - **A note in the playground is styled as information**, neutral and marked ℹ, not as an
   orange warning: nothing is wrong when the compiler says what it decided.
+- **The gallery's CI job drops the notes the manifest declares before code scanning**
+  (`scripts/check_gallery.py`), so the examples that give a note on purpose open no alert. An
+  error, or a note nobody declared, is still uploaded and still fails the job.
 
 ### Fixed
 
+- **The how-to on debugging a layout named two of the compiler's notes**; there are eight,
+  now each in a table with what to do about it.
 - **The scene schema accepts a `null` wherever `settle` applies one** (#239): `camera: null` on
   a panel of figures over one with a camera, as the docs teach, was underlined in an editor and
   compiled. Any key a scene reaches through mappings may now be `null`; a list entry is still

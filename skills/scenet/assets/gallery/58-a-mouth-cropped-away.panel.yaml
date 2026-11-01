@@ -1,0 +1,25 @@
+# A mouth the picture's fit crops away: a note, not an error.
+#
+# The people are in the picture -- art/figures.png, with its artwork contract beside it --
+# and `fit: cover` fills this tall, narrow panel with it, so the picture overhangs on both
+# sides and is cropped there. Ana stands on the left, and her mouth is cropped away. Her
+# balloon still points at it: the tail stops on the frame, aimed where she is, and the
+# compiler says so, `cropped-mouth`.
+#
+# To make the note go away, write `fit: contain`, which shows the whole picture, or make
+# the panel wide enough to hold her.
+
+panel: {size: [400, 900]}
+setting: {image: art/figures.png, fit: cover, time: night}
+
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+
+script:
+  - say: {by: ana, text: "Is it always this late?"}
+  - say: {by: ben, text: "Only when it rains."}
+
+# Try this: delete the "# " that starts the last line. Carl is in the picture, but nobody
+# cast him, so nobody can speak as him: the error `unknown-actor`, on that line.
+#   - say: {by: carl, text: "Mind the gap."}

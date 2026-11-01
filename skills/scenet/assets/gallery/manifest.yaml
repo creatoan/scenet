@@ -15,6 +15,13 @@
 # - `title:` a short name for the menu; the file's leading comment is the explanation.
 # - `summary:` one sentence, shown under the editor.
 # - `doc:` the page of docs/ that explains it, with the heading's anchor if there is one.
+# - `notes:` the notes compiling and checking it give, each named once: a `scenet check`
+#   rule whose level is note, or the name of a compile note (docs/howto/debug_a_layout.md).
+#   Exactly those and no other, which the tests hold every example to; most give none, and
+#   leave it out. The examples of "What Scenet tells you" give theirs on purpose, and each
+#   ends its YAML -- a comic script, its front matter -- with a line commented out under a
+#   `# Try this:` comment: deleting its `# ` makes the example an error, which the comment
+#   names.
 
 groups:
   - Start here
@@ -26,6 +33,7 @@ groups:
   - Your own art
   - Reading direction
   - Comic scripts
+  - What Scenet tells you
 
 start: 38-tour.scene.yaml
 
@@ -36,6 +44,7 @@ examples:
     group: Start here
     summary: "The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue."
     doc: tutorial/first_panel.md
+    notes: [camera-retreated]
   - file: 02-shot-ladder.scene.yaml
     title: "The shot ladder"
     kind: scene
@@ -84,12 +93,14 @@ examples:
     group: Staging and camera
     summary: "One character drawn in front of another, the depth that lets two figures share space on purpose."
     doc: reference/language.md#staging
+    notes: [camera-retreated]
   - file: 10-crowd-pullback.panel.yaml
     title: "The camera retreats"
     kind: panel
-    group: Staging and camera
+    group: What Scenet tells you
     summary: "Four characters too wide for a close-up make the camera step back, and a note says by how much."
     doc: reference/language.md#when-constraints-conflict
+    notes: [camera-retreated]
   - file: 11-poses.panel.yaml
     title: "Poses and facing"
     kind: panel
@@ -102,12 +113,14 @@ examples:
     group: Pages and sequences
     summary: "Panels that follow one another, each written as what changes from the panel before."
     doc: howto/compile_a_sequence.md
+    notes: [camera-retreated]
   - file: 13-comic-script.script
     title: "A comic script"
     kind: script
     group: Comic scripts
     summary: "The same kind of panel written as a comic script, in the plain-text form writers already use."
     doc: howto/write_a_comic_script.md
+    notes: [camera-retreated]
   - file: 14-lettering.panel.yaml
     title: "How lines break"
     kind: panel
@@ -132,6 +145,7 @@ examples:
     group: Staging and camera
     summary: "Every expression the shipped puppets have, one panel each."
     doc: reference/language.md#cast
+    notes: [camera-retreated]
   - file: 18-a-face.panel.yaml
     title: "A face"
     kind: panel
@@ -186,6 +200,7 @@ examples:
     group: Pages and sequences
     summary: "A small panel set into the corner of another, read before it or after it as it says."
     doc: howto/compose_a_page.md#an-inset
+    notes: [camera-retreated]
   - file: 27-slant.scene.yaml
     title: "Slanted tiers"
     kind: scene
@@ -216,6 +231,7 @@ examples:
     group: Comic scripts
     summary: "A script in the format Dark Horse asks for: a title page, counts, and captions written CAP and CAP/NAME."
     doc: howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it
+    notes: [camera-retreated]
   - file: 32-off-panel.scene.yaml
     title: "Off-panel speech"
     kind: scene
@@ -228,6 +244,7 @@ examples:
     group: Comic scripts
     summary: "A script written in French: planche, cases, récitatif, pensée, hors champ and the échelle des plans."
     doc: howto/write_a_comic_script.md#french-scripts
+    notes: [camera-retreated]
   - file: 34-supplied-art.scene.yaml
     title: "A picture behind the cast"
     kind: scene
@@ -348,3 +365,75 @@ examples:
     summary: "A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for its size alone."
     doc: reference/language.md#an-image-behind-the-cast
     files: [art/harbour.jpg]
+  - file: 53-too-many-words.panel.yaml
+    title: "Too many words"
+    kind: panel
+    group: What Scenet tells you
+    summary: "A balloon of 34 words still compiles, and the checker notes that Dark Horse asks for about 25 at most."
+    doc: reference/cli.md#rules
+    notes: [word-limit]
+  - file: 54-a-page-miscounted.script
+    title: "A page miscounted"
+    kind: script
+    group: What Scenet tells you
+    summary: "A script whose page says three panels where two follow: it compiles, and the checker notes the count."
+    doc: howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it
+    notes: [panel-count]
+  - file: 55-not-read-as-dialogue.script
+    title: "Not read as dialogue"
+    kind: script
+    group: What Scenet tells you
+    summary: "A speaker's name misspelled in a script makes the line prose, not dialogue, and the checker points at it."
+    doc: howto/write_a_comic_script.md#the-rules
+    notes: [looks-like-dialogue]
+  - file: 56-a-relation-left-out.scene.yaml
+    title: "A relation left out"
+    kind: scene
+    group: What Scenet tells you
+    summary: "A panel that leaves Bob out with null leaves out the relation naming him too, and the checker notes it."
+    doc: howto/compile_a_sequence.md#leaving-something-out
+    notes: [dropped-relation]
+  - file: 57-a-tail-that-bends.panel.yaml
+    title: "A tail that bends"
+    kind: panel
+    group: What Scenet tells you
+    summary: "A voice from the left with its balloon on the right: the tail bends around Bob's face, and a note says so."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [curved-tail]
+  - file: 58-a-mouth-cropped-away.panel.yaml
+    title: "A mouth cropped away"
+    kind: panel
+    group: What Scenet tells you
+    summary: "A picture fitted to cover a tall panel crops Ana's mouth away, so her tail stops on the frame, and a note says so."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [cropped-mouth]
+    files: [art/figures.png, art/figures.art.yaml]
+  - file: 59-marks-cut-off.panel.yaml
+    title: "Marks cut off"
+    kind: panel
+    group: What Scenet tells you
+    summary: "Sweat drops over the taller character run off the top, since the camera makes no room for marks, and a note says so."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [cropped-marks]
+  - file: 60-an-inset-over-a-face.scene.yaml
+    title: "An inset over a face"
+    kind: scene
+    group: What Scenet tells you
+    summary: "An inset set into the corner where Bob's face is covers it, since the art does not move for an inset, and a note says so."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [inset-covers-face]
+  - file: 61-a-slant-through-a-face.scene.yaml
+    title: "A slant through a face"
+    kind: scene
+    group: What Scenet tells you
+    summary: "A slanted gutter cuts across Bob's face in a close-up, since the camera does not know the cut is there, and a note says so."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [slant-cuts-face]
+  - file: 62-a-face-standing-in.panel.yaml
+    title: "A face standing in"
+    kind: panel
+    group: What Scenet tells you
+    summary: "Comic Neue Regular named alone stands in for the italic and the bold italic faces, and a note says so for each."
+    doc: howto/debug_a_layout.md#1-read-the-notes
+    notes: [italic-stand-in, bold-italic-stand-in]
+    files: [fonts/ComicNeue-Regular.ttf, fonts/OFL.txt]

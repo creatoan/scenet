@@ -1,0 +1,35 @@
+# A face standing in for one the document did not name: two notes, not errors.
+#
+# `lettering.font` names Comic Neue Regular, and no other face. Every caption but a
+# `spoken` one is set in italic, and a stressed word in bold italic -- so for those the
+# regular face stands in: the caption is set upright, and so is the stressed word. The
+# compiler says so once for each face, `italic-stand-in` and `bold-italic-stand-in`. It is
+# your face that stands in, not the shipped italic: a family mixing your face with
+# another would not be one family.
+#
+# To make the notes go away, name the two faces, which are beside the regular one in
+# fonts/: `italic: fonts/ComicNeue-Italic.ttf` and
+# `bold_italic: fonts/ComicNeue-BoldItalic.ttf`. Comic Neue is under the SIL Open Font
+# License, in fonts/OFL.txt.
+
+panel: {size: [1000, 650]}
+camera: {shot: full_shot}
+
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - caption: {text: "Later, at the type foundry.", kind: locale}
+  - say: {by: alice, text: "Is this _really_ italic?"}
+
+# Try this: delete the "# " that starts the last line. Only a `spoken` caption is said by
+# somebody, so a locale caption naming Bob is the error `caption-speaker`, on that line.
+#   - caption: {text: "Meanwhile.", kind: locale, by: bob}
