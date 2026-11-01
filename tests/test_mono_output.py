@@ -10,6 +10,7 @@ And because every decision was made on the grey, what it draws is byte for byte 
 `palette: mono` draws -- which is what keeps the two routes to monochrome from drifting.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,9 @@ GALLERY = Path(__file__).resolve().parents[1] / "examples" / "gallery"
 EXAMPLES = sorted(
     path for path in GALLERY.iterdir() if path.name.endswith((".panel.yaml", ".scene.yaml"))
 )
+
+#: A palette an example writes for itself, at the top of the document.
+PALETTE = re.compile(r"^palette: \w+$", re.MULTILINE)
 
 SCENE = """\
 palette: tinted
@@ -57,8 +61,11 @@ class TestRenderedInMono:
     def test_every_gallery_example_tinted_and_drawn_in_mono_is_the_mono_one(self, path: Path):
         """Each panel, each page and the strip: the two routes to monochrome agree."""
         text = path.read_text(encoding="utf-8")
-        tinted = compile_book(f"palette: tinted\n{text}", source=path)
-        mono = compile_book(text, source=path)
+        written = PALETTE.search(text) is not None
+        coloured = PALETTE.sub("palette: tinted", text) if written else f"palette: tinted\n{text}"
+        grey = PALETTE.sub("palette: mono", text) if written else text
+        tinted = compile_book(coloured, source=path)
+        mono = compile_book(grey, source=path)
         for name, result in tinted.panels.items():
             drawn = render(result.core, fonts=tinted.fonts, mono=True)
             assert drawn == render(mono.panels[name].core, fonts=mono.fonts), name

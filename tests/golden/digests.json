@@ -834,6 +834,13 @@
   "38-tour.worry.pose.json": "8da3d90f0d915c58516ab5c81b2c7bd69fc7f510e477a9d14806ac5f8a061ec4",
   "38-tour.worry.semantics.json": "e1bb4896f88f1aafc7a46c097e619f52c7084e47d08d1c4c63ab956d17a11b08",
   "38-tour.worry.svg": "645eff58583bd847a2ef395bf4607b32cd9b0ee7798c2a5a7419552a84d572f8",
+  "39-warm-caption.boxes.json": "8a5ae9f1d9fbf2647c26d37332c919620643bc789cf3df0d912063c5a8060056",
+  "39-warm-caption.debug.svg": "5d88cc6ec9c48b469063d280bf96498739e7113ee3fb391b334b082d74134eac",
+  "39-warm-caption.depth.svg": "f2367ddd332353853275212369710a17b0930d5f0e4d74535a4b1181b003207f",
+  "39-warm-caption.mask.svg": "bd6cb3857e0b3aea2ea1cbedfd170a8acf2e3ce8e8a266519fbf02ca242b8a5a",
+  "39-warm-caption.pose.json": "8c849cb81ce36d15c2aaf8a1c2f73a824a69e69d3ee45da5d7216d1affb95bee",
+  "39-warm-caption.semantics.json": "c5fc2e4a959955c6b872dc698bf263d6c60544b77e94a4c39d061c8404906953",
+  "39-warm-caption.svg": "346fc33372bbf0a9a6a70438e625d9ecb38e3fad0f2e5cc77407ff2142c46e01",
   "live-text/01-two-characters.svg": "31f8510d4b62b5659daa41e87875dfc886301b92381ec3ebb8dd3d6bf33b1b96",
   "live-text/02-shot-ladder.big_close_up.svg": "90f12a88cadbf48964134ed7b33876da1dfa794e97a59af9898e0c1d8491e8d8",
   "live-text/02-shot-ladder.close_up.svg": "19ce00ea1f67a38ee4222a9f98524c8161006856acafdaa811ca7b3f53da7b52",
@@ -980,6 +987,7 @@
   "live-text/38-tour.street.svg": "d4abe1700960078d1e6aae186f6e90617d4b8f608cbf7043ac27519450e048ae",
   "live-text/38-tour.strip.svg": "7b80f5f87370d2e0b87ac5a3c515c53cb3193c2409fc24581b17a9dd675cf5ec",
   "live-text/38-tour.worry.svg": "a495b50a14fb01e76638d43c22eb464aeb60b80544963fa116d1fc99fde69949",
+  "live-text/39-warm-caption.svg": "3b5f3f96644bc0b82dcd9214a25e096ef49cb2ff33043861eb99caf26d297ae9",
   "no-aria/01-two-characters.svg": "1ed5c1772f0260bb95e4a47ecb91f47330015193305662b69b820a18cfe4606c",
   "no-aria/02-shot-ladder.big_close_up.svg": "3244a4f75d478c3a22d6db4271458b962bffd0aa0fc0c086809d7dd71ff0fcd2",
   "no-aria/02-shot-ladder.close_up.svg": "5155617546e947f4c08836fa6a4ccb5c9aa103c70ea834d0076ef36d2381e697",
@@ -1125,5 +1133,6 @@
   "no-aria/38-tour.platform.svg": "38ee37234d5251a1618fa77af5fca163472d87ee0dd5cf383d1616515ae7a8d0",
   "no-aria/38-tour.street.svg": "a12b6208b90f85a3959fbbe87c1be028cbed4a6831faec4531aef50849ca5bb9",
   "no-aria/38-tour.strip.svg": "358978272ea9bd6ec8a05ab55aa72963c0eebb5012fb00c0386b1db1ca6538f1",
-  "no-aria/38-tour.worry.svg": "bf7f988f0b8b12955af075091e2f75bf05d2a6480cfdb10265a8af514981eaca"
+  "no-aria/38-tour.worry.svg": "bf7f988f0b8b12955af075091e2f75bf05d2a6480cfdb10265a8af514981eaca",
+  "no-aria/39-warm-caption.svg": "547b41d52b5d8e4d1f579307e4b2409e6d427f274f620b90e80ed5a941d7f1f5"
 }

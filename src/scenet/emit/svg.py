@@ -698,7 +698,7 @@ def _render_caption(
     lines = [f"    <g id={attr(id_prefix + 'caption-' + caption.id)}>"]
     lines.append(
         f'      <rect x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
-        f'height="{fmt(box.height)}" fill="{caption.fill}" stroke="{STROKE}" '
+        f'height="{fmt(box.height)}" fill="{caption.colour or caption.fill}" stroke="{STROKE}" '
         f'stroke-width="{fmt(CAPTION_STROKE_WIDTH)}"/>'
     )
 

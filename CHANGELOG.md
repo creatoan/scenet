@@ -58,6 +58,13 @@ below 1.0 means.
   same document writes with `palette: mono`. `render`, `render_page`, `render_pages` and
   `render_strip` take `mono=True`, MCP `render` takes `mono`, and `PanelCore.as_mono()` gives the
   panel with its colours taken back out, which is the mono Core.
+- **`tone: warm`** (#244), the yellow `locale` caption that #28 left out for want of a colour policy.
+  Its value is the `day` row's atmosphere rung, `#eeeeee`, taken by index as `pale` and `ink` are,
+  and it is lettered in ink. Under `palette: tinted` its box is drawn in that grey's twin, the pale
+  yellow `#fef0a1`, which the ink reads on at 16:1. In `mono` it is the grey, which is what a
+  black-and-white reprint does to a yellow caption. Panel Core records the yellow as the caption's
+  `colour`, beside `fill`, and leaves it out in `mono`. `paper`, `pale` and `ink` stay neutral in
+  every palette.
 
 ### Changed
 

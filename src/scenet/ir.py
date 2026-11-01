@@ -521,9 +521,10 @@ class CaptionTone(StrEnum):
     | `paper` | `#ffffff` | the paper the panel is printed on | ink |
     | `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
     | `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
+    | `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere | ink |
 
-    **Drawn from the ladder in `solve/backdrop.py`, not from a second palette.** Two of
-    the three are rungs of it, taken by index rather than restated, which is what keeps
+    **Drawn from the ladder in `solve/backdrop.py`, not from a second palette.** Three of
+    the four are rungs of it, taken by index rather than restated, which is what keeps
     lettering and backdrop from drifting apart as either is tuned. The `day` row is the
     ladder at its widest, so tones taken from it span the most ground.
 
@@ -536,15 +537,20 @@ class CaptionTone(StrEnum):
     Which mark reads is resolved by the solver -- see
     :attr:`CoreCaption.ink <scenet.core.CoreCaption>` -- exactly as falling rain's is.
 
-    There is no free-form colour here, and no yellow. A `fill:` taking any string would
-    be the language's one open vocabulary and would let an author produce an unreadable
-    box; the classic yellow `locale` caption would be the first non-neutral value in the
-    codebase, and the language has no colour policy yet to put it under.
+    `warm` is the classic yellow `locale` caption (#244), under the colour policy: its
+    value is the grey above, and in a palette with colour it is drawn in that grey's twin,
+    a pale yellow of the same lightness. In `mono` it is the grey, which is what a
+    black-and-white reprint does to a yellow caption. The other three are neutral in every
+    palette.
+
+    There is no free-form colour here. A `fill:` taking any string would be the language's
+    one open vocabulary, and would let an author produce an unreadable box.
     """
 
     PAPER = "paper"
     PALE = "pale"
     INK = "ink"
+    WARM = "warm"
 
 
 class MassKind(StrEnum):

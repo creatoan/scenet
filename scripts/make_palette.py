@@ -49,6 +49,11 @@ ENDS: dict[TimeOfDay, tuple[tuple[float, float], tuple[float, float]]] = {
     TimeOfDay.NIGHT: ((260.0, 0.020), (250.0, 0.040)),
 }
 
+#: The `warm` caption tone's colour, as `(hue in degrees, chroma)`: a pale yellow, the twin
+#: of the grey that tone takes from the `day` row, its atmosphere rung. The classic yellow
+#: `locale` caption, at a lightness its ink reads on at 16:1.
+WARM: tuple[float, float] = (100.0, 0.100)
+
 #: How far a colour's lightness may sit from its grey's.
 TOLERANCE = 0.005
 
@@ -246,6 +251,16 @@ def tinted() -> dict[TimeOfDay, tuple[str, str, str, str, str]]:
     return table
 
 
+def warm() -> str:
+    """The `warm` caption tone's colour, by the rule in `WARM`.
+
+    Returns:
+        What `solve/balloons.py` hardcodes as `CAPTION_COLOURS[CaptionTone.WARM]`.
+    """
+    hue, chroma = WARM
+    return colour_for(LADDER[TimeOfDay.DAY][-1], hue, chroma)
+
+
 def table_source() -> str:
     """The table as `solve/backdrop.py` holds it, with each value's chroma and hue beside it.
 
@@ -285,6 +300,7 @@ def main() -> None:
     source = table_source()
     if not args.check:
         sys.stdout.write(source)
+        sys.stdout.write(f"\n# CAPTION_COLOURS in solve/balloons.py\nwarm: {warm()}\n")
         return
     if source not in Path(backdrop.__file__).read_text(encoding="utf-8"):
         sys.exit("solve/backdrop.py holds a stale TINTED: run scripts/make_palette.py")

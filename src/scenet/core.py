@@ -686,6 +686,9 @@ class CoreCaption(CoreModel):
         label: What the box says, and in whose voice -- `Caption: Midnight.` -- without
             the quotation marks a `spoken` caption is lettered with. Left out of the JSON
             when unset.
+        colour: The fill's twin in the panel's palette (#244): a `warm` caption's yellow,
+            drawn in place of `fill` when there is one. `fill` stays the value, and `ink`
+            was chosen against it. Left out of the JSON when there is none.
 
     There is no tail. That is the difference that makes this its own type rather than
     a fifth :class:`BalloonKind <scenet.ir.BalloonKind>`.
@@ -708,6 +711,7 @@ class CoreCaption(CoreModel):
     speaker: str | None = None
     runs: tuple[tuple[CoreRun, ...], ...] = ()
     label: SvgText | None = None
+    colour: str = ""
 
     @model_validator(mode="after")
     def check_runs(self) -> "CoreCaption":
@@ -935,7 +939,7 @@ class PanelCore(CoreModel):
 
         Returns:
             A copy whose `palette` is `mono` and whose every `colour` and `fall_colour` is
-            empty.
+            empty: the masses', the air's, and a `warm` caption's.
 
         Example:
             >>> from scenet import compile_source
@@ -958,7 +962,10 @@ class PanelCore(CoreModel):
                 )
             masses = tuple(mass.model_copy(update={"colour": ""}) for mass in backdrop.masses)
             backdrop = backdrop.model_copy(update={"masses": masses, "atmosphere": air})
-        return self.model_copy(update={"palette": Palette.MONO, "backdrop": backdrop})
+        captions = tuple(caption.model_copy(update={"colour": ""}) for caption in self.captions)
+        return self.model_copy(
+            update={"palette": Palette.MONO, "backdrop": backdrop, "captions": captions}
+        )
 
     def actor(self, actor_id: str) -> CoreActor:
         """Look up one actor by id.
@@ -1003,6 +1010,8 @@ class PanelCore(CoreModel):
             _drop_unused(figure, actor=None, mouth=None, body=())
         for lettered in (*payload["balloons"], *payload["captions"]):
             _drop_unused(lettered, runs=(), label=None)
+        for caption in payload["captions"]:
+            _drop_unused(caption, colour="")
         if payload.get("backdrop") is not None:
             _drop_unused(payload["backdrop"], horizon=None, image=None, place=None, time=None)
             for mass in payload["backdrop"]["masses"]:

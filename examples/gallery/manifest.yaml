@@ -261,3 +261,9 @@ examples:
     summary: "One page lettered over pictures in colour: posed puppets, figures a picture draws, a caption, a thought, a sound and an inset."
     doc: reference/language.md#the-layers
     files: [art/street.png, art/figures.png, art/figures.art.yaml]
+  - file: 39-warm-caption.panel.yaml
+    title: "A yellow caption"
+    kind: panel
+    group: Balloons and captions
+    summary: "The yellow locale caption in a tinted panel: a pale yellow with the value of a grey, which is what it becomes in monochrome."
+    doc: reference/language.md#caption

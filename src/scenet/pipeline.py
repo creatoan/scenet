@@ -610,6 +610,7 @@ def compile_ir(
         bounds=BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
         outline=outline,
         direction=panel.direction,
+        palette=panel.palette,
     )
 
     declared = _declared_faces(family)
@@ -717,6 +718,7 @@ def compile_ir(
                 fill=caption.fill,
                 ink=caption.ink,
                 speaker=caption.speaker,
+                colour=caption.colour,
                 runs=_core_runs(
                     caption.block, Face.ITALIC if caption.kind.is_italic else Face.REGULAR
                 ),
