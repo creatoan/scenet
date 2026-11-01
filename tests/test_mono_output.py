@@ -15,7 +15,15 @@ from pathlib import Path
 
 import pytest
 
-from scenet import Palette, compile_book, compile_source, render, render_page, render_strip
+from scenet import (
+    Palette,
+    compile_book,
+    compile_source,
+    render,
+    render_page,
+    render_pages,
+    render_strip,
+)
 from scenet.cli import main
 from tests.test_palette import SETTINGS, core
 
@@ -80,6 +88,20 @@ class TestRenderedInMono:
     def test_without_it_the_colour_is_drawn(self):
         panel = core("place: docks, time: dusk", "tinted")
         assert render(panel) != render(panel, mono=True)
+
+    def test_without_it_a_page_and_a_strip_draw_the_colour_too(self):
+        book = compile_book(SCENE)
+        cores = {name: result.core for name, result in book.panels.items()}
+        fonts = book.fonts
+        page = book.pages[0]
+        assert render_page(page, cores, fonts=fonts) != render_page(
+            page, cores, fonts=fonts, mono=True
+        )
+        assert render_pages(book.pages, cores, fonts=fonts) != render_pages(
+            book.pages, cores, fonts=fonts, mono=True
+        )
+        strip = list(cores.items())
+        assert render_strip(strip, fonts=fonts) != render_strip(strip, fonts=fonts, mono=True)
 
     def test_on_a_mono_panel_it_changes_nothing(self):
         panel = core("place: docks, time: dusk, weather: rain")

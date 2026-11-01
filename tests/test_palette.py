@@ -192,6 +192,17 @@ class TestCore:
         assert backdrop.atmosphere.fall_tone == SNOW_TONE
         assert backdrop.atmosphere.fall_colour == ""
 
+    @pytest.mark.parametrize("time", list(TimeOfDay))
+    def test_the_air_it_falls_through_is_tinted(self, time: TimeOfDay):
+        """Only the flakes stay white: the sky they fall from and its cloud are rungs."""
+        backdrop = core(f"place: docks, time: {time.value}, weather: snow", "tinted").backdrop
+        assert backdrop is not None
+        air = backdrop.atmosphere
+        assert air is not None
+        assert air.veil is not None
+        assert air.colour == twin(time, air.tone)
+        assert air.veil.colour == twin(time, air.veil.tone)
+
     def test_the_weather_over_a_picture_is_tinted_too(self):
         """A supplied picture has no masses to tint, but the air over it is the setting's."""
         backdrop = core("image: art/street.png, time: dusk, weather: fog", "tinted").backdrop

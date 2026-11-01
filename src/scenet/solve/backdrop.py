@@ -1019,7 +1019,6 @@ def _atmosphere(
             flecks=_snow(panel, rng),
             fall_tone=SNOW_TONE,
             colour=colour,
-            fall_colour=colour_for(SNOW_TONE, time, palette),
         )
     return ResolvedAtmosphere(
         time=time, weather=setting.weather, tone=tone, veil=veil, colour=colour
