@@ -218,10 +218,13 @@ def looks_toward(relation: object, actor: str, leaving: Collection[str]) -> bool
 
 def on_their_side(event: object, cast: dict[str, Any]) -> object:
     """An off-panel line with no side named, given the side its speaker was written at."""
-    say = event.get("say") if isinstance(event, dict) else None
+    if not isinstance(event, dict):
+        return event
+    say = event.get("say")
     if not isinstance(say, dict) or say.get("off_panel") is not True:
         return event
-    member = cast.get(say.get("by"))
+    by = say.get("by")
+    member = cast.get(by) if isinstance(by, str) else None
     at = str(member.get("at", "")) if isinstance(member, dict) else ""
     side = next((value for value in ("left", "right") if at.startswith(value)), None)
     return event if side is None else {**event, "say": {**say, "off_panel": side}}
