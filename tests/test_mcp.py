@@ -57,6 +57,15 @@ script:
   - say: {by: alice, text: "Hello there."}
 """
 
+#: The same panel over a setting, drawn in colour (#244).
+TINTED = (
+    """\
+palette: tinted
+setting: {place: docks, time: dusk}
+"""
+    + VALID
+)
+
 UNKNOWN_ACTOR = """\
 panel: {size: [420, 560]}
 cast:
@@ -386,6 +395,16 @@ class TestRender:
         live = self.resources(call("render", {"source": VALID, "live_text": True}))[0].text
         assert "<text" in live
         assert len(live) < len(outlines)
+
+    def test_mono_draws_a_tinted_panel_as_palette_mono_does(self):
+        """The output's monochrome (#244), as `scenet build --mono` writes it."""
+        tinted = TINTED
+        mono = tinted.replace("palette: tinted", "palette: mono")
+        (drawn,) = self.resources(call("render", {"source": tinted, "mono": True}))
+        (plain,) = self.resources(call("render", {"source": mono}))
+        (coloured,) = self.resources(call("render", {"source": tinted}))
+        assert drawn.text == plain.text
+        assert coloured.text != plain.text
 
     def test_one_resource_per_panel_named_after_it(self):
         result = call("render", {"source": SCENE})

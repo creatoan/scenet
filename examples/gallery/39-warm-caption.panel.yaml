@@ -1,0 +1,38 @@
+# The yellow locale caption, under the colour policy.
+#
+# `tone: warm` is the classic yellow caption that says where and when. Its value is a rung
+# of the value ladder -- the `day` row's atmosphere, `#eeeeee` -- and its lettering is
+# chosen on that grey, so it is set in ink. Under `palette: tinted` the box is drawn in the
+# grey's twin, a pale yellow of the same lightness, and the docks at night take the blues
+# of their hour.
+#
+# Delete the `palette:` line, or build with `--mono`, and the box is the grey: what a
+# black-and-white reprint does to a yellow caption. Nothing else moves, because every
+# decision was made on the grey.
+
+palette: tinted
+
+panel:
+  size: [1400, 900]
+
+camera:
+  shot: long_shot
+
+setting:
+  place: docks
+  horizon: low
+  time: night
+
+cast:
+  alice: {reference: alice, pose: pointing, at: left_third, facing: right}
+  bob: {reference: bob, pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - bob looking_at alice
+
+script:
+  - caption: {text: "Midnight. The docks.", kind: locale, tone: warm}
+  - say: {by: alice, text: "You came."}
+  - say: {by: bob, text: "You called."}

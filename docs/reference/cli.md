@@ -11,7 +11,7 @@ Four commands: `build` compiles a document, `check` validates one without compil
 ## `scenet build`
 
 ```
-scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--no-aria] [--embed-images] [--strip] [--quiet]
+scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--quiet]
 ```
 
 Compiles `SOURCE` to SVG. The frontend is chosen by extension:
@@ -52,6 +52,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   font installed, and on the renderer kerning it as the compiler measured it — browsers
   do by default. The default emits outlines, which makes the file genuinely
   self-contained.
+
+`--mono`
+: Draw every value as its grey and ignore its colour: a black-and-white edition of a document
+  drawn in [`palette: tinted`](language.md#palette), made without editing it. Every panel, page and
+  strip is byte-identical to what the same document writes with `palette: mono`, because a
+  palette only ever adds a colour beside a value the compiler had already decided on its grey.
+  Panel Core and the exports for image models are unaffected: `--core` still records the
+  palette and its colours.
 
 `--no-aria`
 : Write no accessibility markup. By default each panel is an image a screen reader can read

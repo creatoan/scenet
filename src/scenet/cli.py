@@ -90,6 +90,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     build.add_argument(
+        "--mono",
+        action="store_true",
+        help=(
+            "draw every value as its grey, ignoring any palette's colour: a black-and-white "
+            "edition, byte for byte what palette: mono draws"
+        ),
+    )
+    build.add_argument(
         "--no-aria",
         dest="aria",
         action="store_false",
@@ -364,6 +372,7 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
                     core,
                     fonts=book.fonts,
                     live_text=args.live_text,
+                    mono=args.mono,
                     aria=args.aria,
                     embed=embed,
                 ),
@@ -390,6 +399,7 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
                     render_strip,
                     strip,
                     live_text=args.live_text,
+                    mono=args.mono,
                     fonts=book.fonts,
                     aria=args.aria,
                     embed=embed,
@@ -408,6 +418,7 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
                     page,
                     cores,
                     live_text=args.live_text,
+                    mono=args.mono,
                     fonts=book.fonts,
                     aria=args.aria,
                     embed=embed,
