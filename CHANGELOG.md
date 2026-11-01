@@ -65,6 +65,10 @@ below 1.0 means.
   black-and-white reprint does to a yellow caption. Panel Core records the yellow as the caption's
   `colour`, beside `fill`, and leaves it out in `mono`. `paper`, `pale` and `ink` stay neutral in
   every palette.
+- **Colour in the gallery and the reference** (#244). Two gallery examples, *Every hour in colour*
+  and *A flashback in grey*, join *A yellow caption*. The language reference has a `palette`
+  section with both pages as pictures, and `warm` in the `tone` table. Panel Core's reference
+  documents the colour keys, and the design decisions record why colour is a twin of value.
 
 ### Changed
 

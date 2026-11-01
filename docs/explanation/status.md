@@ -34,6 +34,7 @@ attribution. A notation is only worth having if it is not owned.
 | 15 | Supplied artwork: a picture behind the cast, linked or embedded; figures the picture draws, declared in an artwork contract and lettered around | **Done** |
 | 16 | Right-to-left reading, for manga: panels, pages, strips and lettering read from the top right, the scene never mirrored | **Done** |
 | 17 | Exports for image models: an OpenPose pose, boxes with phrases, a depth map, a mask and the semantics, from Panel Core | **Done** |
+| 18 | A colour policy: `palette: tinted`, the value ladder in colour at every value; the yellow `warm` caption; monochrome on output with `--mono` | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.

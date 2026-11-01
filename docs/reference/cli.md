@@ -55,7 +55,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `--mono`
 : Draw every value as its grey and ignore its colour: a black-and-white edition of a document
-  drawn in [`palette: tinted`](language.md), made without editing it. Every panel, page and
+  drawn in [`palette: tinted`](language.md#palette), made without editing it. Every panel, page and
   strip is byte-identical to what the same document writes with `palette: mono`, because a
   palette only ever adds a colour beside a value the compiler had already decided on its grey.
   Panel Core and the exports for image models are unaffected: `--core` still records the

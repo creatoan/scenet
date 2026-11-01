@@ -181,6 +181,9 @@ reading order with its box — DiffSensei's dialog boxes. The `description` and 
   them.
 - **Over a supplied picture**, the picture is the far plane and the background of the mask. The
   semantics names the picture and says nothing of its place or hour, which are in it.
+- **A panel drawn in colour** exports the same pose, boxes, depth and mask as the panel in grey:
+  a [palette](../reference/language.md#palette) changes no value and moves nothing. The semantics
+  says `"palette": "tinted"`, and says nothing of a panel in `mono`.
 
 ## A whole page
 

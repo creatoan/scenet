@@ -320,8 +320,9 @@ itself: there is nothing behind it to reveal.
 
 ### `time` and `weather`
 
-`time` does not tint a daytime panel. It supplies the two ends of the value ladder — the value of
-the foreground and the value of the atmosphere — and the planes are spaced evenly between them in
+`time` sets a panel's values. In `mono` it adds no colour, and under [`palette: tinted`](#palette)
+each value takes the hour's colour without changing. It supplies the two ends of the value ladder —
+the value of the foreground and the value of the atmosphere — and the planes are spaced evenly between them in
 [OKLab](https://bottosson.github.io/posts/oklab/) lightness, which predicts perceived lightness
 well. So `night` is a darker, *narrower* ladder, which is what night does to a drawn scene, and the
 ladder stays monotonic in depth at every hour by construction rather than by tuning.
@@ -694,8 +695,9 @@ the `setting` block produces, a white box on a noon sky is 1.16:1: legible, and 
 | `paper` | `#ffffff` | the paper the panel is printed on — **the default** | ink |
 | `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
 | `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
+| `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere — yellow under `tinted` | ink |
 
-Two of the three are rungs of the ladder in `solve/backdrop.py`, taken by index rather than restated
+Three of the four are rungs of the ladder in `solve/backdrop.py`, taken by index rather than restated
 as literals, so lettering and backdrop cannot drift apart as either is tuned. A tone is **fixed, not
 a function of the panel's `time`**: a caption's value is a property of the caption, and letting it
 follow the hour would make the table below a function of the panel.
@@ -708,15 +710,18 @@ Two floors, and only the first is a rule every tone must meet:
 
 - **Lettering, 4.5:1.** A caption's text against its own fill, WCAG AA for body text. This is the
   contrast a reader actually gets, and every tone in the palette clears it with room — 18.9:1,
-  8.4:1 and 19.9:1 respectively.
+  8.4:1, 19.9:1 and 16.3:1 respectively, and `warm` 16.4:1 on its yellow.
 - **Separation, 3:1.** The box against the plane behind it. *No tone is required to clear this on
   every rung*, and the default does not: white on a noon sky is the case that motivated the feature.
   What the palette owes you is an escape from every background the compiler can produce — at least
   one tone above 3:1 for every rung of every hour — and that is what the test suite checks.
 
-There is no free-form `fill:`, and no yellow. An open colour field would be this language's one open
-vocabulary and would let you produce an unreadable box; the classic yellow `locale` caption would be
-the first non-neutral value in the codebase, and there is no colour policy to put it under yet.
+`warm` is the classic yellow `locale` caption. Its value is a rung of the ladder like the others,
+and its lettering is chosen on that grey; under [`palette: tinted`](#palette) its box is drawn in the
+grey's twin, the pale yellow `#fef0a1`, of the same lightness. In `mono` it is the grey, which is
+what a black-and-white reprint does to a yellow caption. `paper`, `pale` and `ink` stay neutral in
+every palette. There is no free-form `fill:`: an open colour field would be this language's one open
+vocabulary and would let you produce an unreadable box.
 
 **Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
 lettering references describe left alignment as the norm while calling it a house preference. It is
@@ -989,6 +994,71 @@ What follows it, in a panel:
 And on a [page](#page-and-pages): each tier's panels from the right, the pages of a document side
 by side from the right, and a strip from the right — each still written in reading order, the
 order a screen reader follows.
+
+## `palette`
+
+What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
+
+```yaml
+palette: tinted
+setting: {place: docks, time: dusk}
+```
+
+| Key | Means | Default |
+|---|---|---|
+| `palette` | `mono` or `tinted` | `mono` |
+
+![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](https://creatoan.github.io/scenet/images/palette/hours.svg)
+
+**Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
+[ladder](#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
+the same hour. In monochrome a tinted panel is the mono one, value for value: the ladder stays
+monotonic in depth, and every contrast floor still holds — checked on the colours themselves, which
+weigh a little less than their greys in WCAG's luminance.
+
+Each hour has two hues: the shadow's, at the foreground, and the atmosphere's, at the sky. The
+planes between move from one to the other, the hue the short way round the circle and the chroma in
+a straight line, so with distance colour drifts toward the colour of the air. It is aerial
+perspective in colour as well as in value, and the painters' warm light and cool shadow:
+
+| `time` | Shadow | Atmosphere |
+|---|---|---|
+| `dawn` | blue violet | rose gold |
+| `day` | blue grey | sky blue |
+| `dusk` | violet | orange |
+| `night` | blue | blue |
+
+Chroma is capped at what a screen can show at each lightness, and that cap, not a tuning, is what
+drains the colour out of the dark end of night and out of a noon sky.
+
+**What it tints:** the masses of a setting, the veil of fog or cloud, falling rain, and the box of a
+[`warm` caption](#caption). **What it never tints:** snow, which is white by convention, the paper, the
+puppets, a supplied picture, and all lettering — balloons, the words in captions, and sound effects.
+Lettering stays on the black plate a printer wants it on.
+
+**Every decision is made on the grey.** Which rung a mass takes, whether rain is inked or papered,
+where a balloon goes and what a caption is lettered in are all settled before the palette is
+consulted, so a palette moves nothing. [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html) keeps each grey where it always
+was and adds the colour beside it. `scenet build --mono` draws the greys and ignores the colours: a
+black-and-white edition of a book in colour, byte for byte what `palette: mono` writes, made without
+editing a document. The [exports for image models](https://creatoan.github.io/scenet/howto/export_for_image_models.html) are the same
+in every palette, except that the semantics names one that is not `mono`.
+
+It is written where [`lettering`](#lettering) is: at the top of a panel, beside `panels:` in a
+scene, where every panel inherits it, or in a comic script's front matter. Unlike
+[`direction`](#direction), **a panel may have its own**, in a scene or as a script's `@palette:`.
+A page read two ways has no order a reader could follow, but a page in two palettes is a
+convention: the flashback in grey.
+
+![A page in colour, the street at dusk with a yellow caption; its middle panel, ten years earlier, in grey](https://creatoan.github.io/scenet/images/palette/flashback.svg)
+
+A palette with nothing to tint — no `setting`, or a supplied picture under a clear sky — is not a
+mistake and is not reported: it is a choice for the whole document, and changing it never makes a
+document invalid.
+
+**`mono` is the default**, so no panel written before palettes existed draws any differently.
+**There is no free-form colour.** `palette` is a closed set of names for the same reason `tone` is:
+an open colour would be the language's one open vocabulary, and would let a value break the ladder.
 
 ## `page` and `pages`
 
@@ -5032,4 +5102,127 @@ script:
   - caption: {text: "Midnight. The docks.", kind: locale, tone: warm}
   - say: {by: alice, text: "You came."}
   - say: {by: bob, text: "You called."}
+```
+
+## Every hour in colour
+
+palette: tinted draws each value of the ladder in a colour with the same lightness: rose at dawn, blue at noon, orange at dusk, blue at night.
+
+`40-tinted-hours.scene.yaml`
+
+```yaml
+# The tinted palette: the value ladder in colour, at every hour.
+#
+# `palette: tinted`, written beside `panels:`, is a default every panel inherits. Each value
+# on the ladder is drawn in its twin: a colour with the same lightness, on the same rung,
+# at the same hour. Each hour has a shadow hue at the front and an atmosphere hue at the
+# sky -- warm light and cool shadow, as painters put it -- and the planes between move from
+# one to the other, so with distance colour drifts toward the colour of the air. Night is
+# blue all the way back, and the dark end of the ladder holds almost no colour at all.
+#
+# Build it with `--mono`, or write `palette: mono`, and every panel is the grey one, value
+# for value: colour never changes a value, so nothing moves.
+
+palette: tinted
+
+panel:
+  size: [1100, 620]
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, pose: arms_crossed}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+pages:
+  - tiers:
+      - panels: [dawn, noon]
+      - panels: [dusk, midnight]
+
+panels:
+  dawn:
+    setting: {place: docks, time: dawn, weather: fog}
+    script:
+      - caption: {text: "Dawn.", kind: locale, prefer: top_left}
+
+  noon:
+    setting: {place: docks, time: day}
+    script:
+      - caption: {text: "Noon.", kind: locale, prefer: top_left}
+
+  dusk:
+    setting: {place: docks, time: dusk}
+    script:
+      - caption: {text: "Dusk.", kind: locale, prefer: top_left}
+
+  midnight:
+    setting: {place: docks, time: night, weather: rain}
+    script:
+      - caption: {text: "Midnight.", kind: locale, prefer: top_left}
+```
+
+## A flashback in grey
+
+A page in colour whose middle panel writes palette: mono for itself, the way a comic drops into grey for a memory.
+
+`41-flashback.scene.yaml`
+
+```yaml
+# A flashback in grey, on a page in colour.
+#
+# `palette: tinted` beside `panels:` colours every panel, and the middle one writes
+# `palette: mono` for itself: the way a comic drops into grey for a memory. Unlike
+# `direction`, which is the whole document's, a palette may be a panel's own. A page read
+# two ways has no order a reader could follow; a page in two palettes is a convention.
+#
+# The yellow `warm` caption says where the story is now. In the grey panel the caption is
+# `paper`, because a memory has no hour of its own to name.
+
+palette: tinted
+
+panel:
+  size: [1100, 620]
+
+camera:
+  shot: medium_shot
+
+setting: {place: street, time: dusk}
+
+cast:
+  alice: {reference: alice, at: left_third, facing: right}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - bob looking_at alice
+
+pages:
+  - tiers:
+      - panels: [now]
+      - panels: [then]
+      - panels: [again]
+
+panels:
+  now:
+    script:
+      - caption: {text: "The same street, years on.", kind: locale, tone: warm, prefer: top_left}
+      - say: {by: alice, text: "You haven't changed."}
+
+  then:
+    palette: mono
+    setting: {time: day}
+    script:
+      - caption: {text: "Ten years earlier.", kind: locale, prefer: top_left}
+      - say: {by: bob, text: "Promise you'll come back."}
+
+  again:
+    script:
+      - say: {by: bob, text: "Neither have you."}
 ```

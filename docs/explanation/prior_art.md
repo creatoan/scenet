@@ -262,6 +262,14 @@ neutral values fixed once, computed during development and hardcoded, and for a 
 reduces to the cube root of the linear value anyway. Putting a package through the licence gate to
 produce numbers that never change would be the wrong trade.
 
+**Aerial perspective in colour** is the same rule with a hue (#244). With distance, colour drifts
+toward the colour of the air; and light and shadow take opposite temperatures, warm light with cool
+shadow and the reverse — the painters' convention set out in James Gurney's *Color and Light*
+(2010). So each hour has two hues, the shadow's at the foreground and the atmosphere's at the sky,
+and the planes move between them in OKLCh, each keeping its grey's lightness. Still two numbers per
+end, still parametric, and the colours too were computed during development, by
+`scripts/make_palette.py`, and hardcoded with the chroma and hue of each written beside it.
+
 ### COCO-Stuff — the mass vocabulary
 
 [Caesar, Uijlings & Ferrari, *COCO-Stuff: Thing and Stuff Classes in
