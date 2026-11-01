@@ -62,6 +62,7 @@ import {
 } from "./options";
 import { noteRows, type Place } from "./notes";
 import { outline } from "./outline";
+import { COMMENT_MARK, findTryThis } from "./try-this";
 import {
   browserStore,
   clearDraft,
@@ -331,6 +332,41 @@ async function main(): Promise<void> {
     wordWrap: "on",
     padding: { top: 12, bottom: 12 },
     ...SEMANTIC_HIGHLIGHTING,
+  });
+
+  // A gallery example's try-this: a link over its comment that uncomments its line, by
+  // deleting exactly the `# ` in one edit Ctrl+Z takes back (./try-this).
+  const UNCOMMENT_TRY_THIS = "scenet.uncommentTryThis";
+  monaco.editor.registerCommand(UNCOMMENT_TRY_THIS, (_accessor: unknown, line: number) => {
+    const model = editor.getModel();
+    if (model === null || line > model.getLineCount()) return;
+    if (!model.getLineContent(line).startsWith(COMMENT_MARK)) return;
+    editor.executeEdits("try-this", [
+      { range: new monaco.Range(line, 1, line, 1 + COMMENT_MARK.length), text: "" },
+    ]);
+    editor.setPosition({ lineNumber: line, column: 1 });
+    editor.revealLineInCenterIfOutsideViewport(line);
+    editor.focus();
+  });
+  const languages = [...new Set((["panel", "scene", "script"] as const).map(languageFor))];
+  monaco.languages.registerCodeLensProvider(languages, {
+    provideCodeLenses: (model) => {
+      const found = findTryThis(model.getValue(), kindOf(model) === "script");
+      const lenses =
+        found === undefined
+          ? []
+          : [
+              {
+                range: new monaco.Range(found.comment, 1, found.comment, 1),
+                command: {
+                  id: UNCOMMENT_TRY_THIS,
+                  title: "▶ Try it: uncomment the line below",
+                  arguments: [found.line],
+                },
+              },
+            ];
+      return { lenses, dispose: () => undefined };
+    },
   });
 
   window

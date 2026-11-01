@@ -12,6 +12,10 @@ below 1.0 means.
 
 ### Added
 
+- **A *Try it* link over a gallery example's try-this.** The playground puts it over the
+  `# Try this:` comment, and it uncomments the line under it, `# ` and all, as one edit Ctrl+Z
+  takes back. Deleting only the `#` by hand left a space too many, and a comic script, whose
+  try-this ends its front matter, has no comment for Ctrl+/ to toggle.
 - **The gallery shows what the checker and the compiler tell you (#240).** A new group,
   *What Scenet tells you*, has an example for every note: `word-limit`, `panel-count`,
   `looks-like-dialogue` and `dropped-relation` from `scenet check`, and from the compiler a
