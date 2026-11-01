@@ -111,6 +111,28 @@ panels:
 assert [actor.id for actor in panels["alone"].core.actors] == ["alice"]
 ```
 
+All but one, while the member left out is heard from off panel: `bob looking_at carol` still holds
+when Carol speaks `off_panel` in that panel, and Bob turns toward her side of the frame. Her line
+ends on the side she was written to stand on, as a comic script's `CAROL (OP)` does.
+
+```python
+panels = compile_scene("""
+cast:
+  bob:   {reference: bob,   at: right_third}
+  carol: {reference: alice, at: left_third}
+staging: [bob looking_at carol]
+panels:
+  both:
+    script: [{say: {by: carol, text: Hello.}}]
+  heard:
+    cast: {carol: null}
+    script: [{say: {by: carol, text: Over here!, off_panel: true}}]
+""")
+
+(bob,) = panels["heard"].core.actors
+assert bob.gaze_aim[0] < 0  # toward the left, where she stood
+```
+
 A `null` inside a list is left as it is: a list is replaced whole, never merged into.
 
 ## Shared defaults
