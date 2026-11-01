@@ -152,6 +152,16 @@ class TestSpecPack:
             positions.append(body.index(entry["file"]))
         assert positions == sorted(positions)
 
+    def test_every_file_an_example_names_is_called_what_it_is(self):
+        """A font is not "a picture", nor its licence: each is named for what it is."""
+        body = part("gallery")
+        named = {name for entry in _manifest() for name in entry.get("files", [])}
+        kinds = {".png": "a picture", ".jpg": "a picture", ".ttf": "a font", ".txt": "a licence"}
+        for name in named:
+            kind = kinds.get(Path(name).suffix)
+            if kind is not None:
+                assert f"It names `{name}`, which is beside it in the gallery: {kind}" in body
+
     def test_no_relative_link_survives(self, pack: str):
         """`shot_types.md` means nothing once the pack has left the repository."""
         links = re.findall(r"\]\(([^)\s]+)\)", pack)

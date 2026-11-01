@@ -10,32 +10,20 @@ zone, every predicate and both frontends. A construct that no example uses is a
 construct nobody has looked at.
 """
 
+import contextlib
+import hashlib
 import re
+from functools import cache
 from pathlib import Path
+from typing import get_args
 
 import pytest
 import yaml
+from fontTools.ttLib import TTFont
 
 from scenet import (
     BalloonKind,
-    CameraAngle,
     CaptionKind,
-    CaptionTone,
-    Direction,
-    Fit,
-    Horizon,
-    Mark,
-    MassKind,
-    Place,
-    PlacementZone,
-    Plane,
-    Predicate,
-    SfxSize,
-    ShotType,
-    Side,
-    Spans,
-    TimeOfDay,
-    Weather,
     compile_book_file,
     compile_document,
     default_library,
@@ -44,6 +32,12 @@ from scenet import (
     render_strip,
 )
 from scenet.diagnostics import diagnose_file
+from scenet.images import MediaType, measure
+from scenet.ir import PanelIR, Predicate, SayEvent
+from scenet.pipeline import DOCUMENT_LOADERS, Book
+from scenet.safe_yaml import load
+from scenet.schema import panel_schema, scene_schema
+from tests.written import Written, read, read_file, union, vocabulary
 
 ROOT = Path(__file__).parent.parent
 GALLERY = ROOT / "examples" / "gallery"
@@ -251,111 +245,135 @@ class TestEveryExampleWorks:
         assert entry["kind"] == expected
 
 
-class TestTheGalleryCoversTheLanguage:
-    """A construct no example demonstrates is a construct nobody is looking at."""
+#: Every document of the gallery: the files beside the manifest.
+DOCUMENTS = sorted(path for path in GALLERY.iterdir() if path.is_file() and path != MANIFEST_PATH)
 
-    @staticmethod
-    def _all_text() -> str:
-        return "\n".join(
-            path.read_text(encoding="utf-8")
-            for path in GALLERY.iterdir()
-            if path.is_file() and path != MANIFEST_PATH
+#: Everything the two published schemas let a document write.
+VOCABULARY = vocabulary(panel_schema()) | vocabulary(scene_schema())
+
+#: What the schemas offer that no example could write, and why, by the name a failure gives
+#: it. Empty: everything they offer today can be written. An entry that an example writes,
+#: or the schemas drop, fails `test_the_allow_list_is_current`.
+NOT_AUTHORABLE: dict[str, str] = {}
+
+#: The removals the documentation teaches, and where. A `null` is not a word of the
+#: schemas' -- written anywhere it may just leave a default as it is -- so they are listed.
+REMOVALS = {
+    "document.cast.*": "howto/compile_a_sequence.md#leaving-something-out",
+    "document.camera": "reference/language.md#figures-the-picture-draws",
+    "SettingSpec.place": "reference/language.md#place",
+    "CastMember.reference": "reference/language.md#figures-the-picture-draws",
+}
+
+
+@cache
+def _written() -> Written:
+    return union(read_file(path) for path in DOCUMENTS)
+
+
+@cache
+def _book(name: str) -> Book:
+    return compile_book_file(GALLERY / name)
+
+
+def _missing(offered: frozenset[str], written: set[str]) -> list[str]:
+    return sorted(offered - written - NOT_AUTHORABLE.keys())
+
+
+class TestTheGalleryCoversTheLanguage:
+    """Every construct of the language is written in some example (#239).
+
+    Read against the published schemas, never as text: a word in a comment is not a
+    construct, and `center` in `at: center` is not a span. A key the language gains, or a
+    value, fails here until an example writes it. What no schema can say -- a puppet's
+    poses, a removal, a second page -- is checked from what the examples compile to.
+    """
+
+    def test_every_property_is_written(self):
+        assert _missing(VOCABULARY.properties, _written().properties) == []
+
+    def test_every_enum_value_is_written(self):
+        assert _missing(VOCABULARY.values, _written().values) == []
+
+    def test_every_form_is_written(self):
+        """A key written in more than one shape -- `off_panel` as `true` or as a side, a
+        font as one file or as faces -- is written in each."""
+        assert _missing(VOCABULARY.forms, _written().forms) == []
+
+    def test_every_signed_number_is_written_both_ways(self):
+        """A turn, an arc or a slant may lean either way, and is shown leaning both."""
+        signs = frozenset(
+            f"{place} {side} zero" for place in VOCABULARY.signed for side in ("above", "below")
+        )
+        assert _missing(signs, _written().signs) == []
+
+    def test_every_removal_the_docs_teach_is_written(self):
+        assert sorted(set(REMOVALS) - _written().nulls) == []
+
+    def test_the_allow_list_is_current(self):
+        offered = VOCABULARY.properties | VOCABULARY.values | VOCABULARY.forms
+        written = _written()
+        for name in NOT_AUTHORABLE:
+            assert name in offered, f"{name} is not in the schemas any more"
+            assert name not in written.properties | written.values | written.forms, name
+
+    def test_every_pose_and_expression_of_every_puppet_is_drawn(self):
+        """Per puppet: a face looked at on Alice has not been looked at on Bob."""
+        drawn = {
+            (actor.reference, shown)
+            for name in IDS
+            for result in _book(name).panels.values()
+            for actor in result.core.actors
+            for shown in (f"pose {actor.pose}", f"expression {actor.expression}")
+        }
+        library = default_library()
+        declared = {
+            (name, shown)
+            for name in library.names()
+            for shown in [
+                *(f"pose {pose}" for pose in library.get(name).poses),
+                *(f"expression {face}" for face in library.get(name).expressions),
+            ]
+        }
+        assert sorted(declared - drawn) == []
+
+    def test_a_document_has_more_than_one_page(self):
+        """Pages side by side, as `scenet build` and the playground draw them."""
+        assert any(len(_book(name).pages) > 1 for name in IDS)
+
+    def test_somebody_looks_at_a_voice_from_off_panel(self):
+        def looks(panel: PanelIR) -> bool:
+            heard = {
+                event.by
+                for event in panel.script
+                if isinstance(event, SayEvent) and event.off_panel is not False
+            }
+            return any(
+                relation.predicate is Predicate.LOOKING_AT and relation.object in heard
+                for relation in panel.staging
+            )
+
+        panels = [
+            panel
+            for path in DOCUMENTS
+            for panel in DOCUMENT_LOADERS[path.suffix](path).panels.values()
+        ]
+        assert any(looks(panel) for panel in panels)
+
+    def test_a_sound_is_pulled_toward_a_zone_from_its_source(self):
+        assert any(
+            owner == "SfxEvent" and {"from", "prefer"} <= keys
+            for owner, keys in _written().mappings
         )
 
-    def test_every_shot_type_appears(self):
-        text = self._all_text()
-        missing = [shot.value for shot in ShotType if shot.value not in text]
-        assert missing == []
-
-    def test_every_camera_angle_appears(self):
-        text = self._all_text()
-        missing = [angle.value for angle in CameraAngle if angle.value not in text]
-        assert missing == []
-
-    def test_every_balloon_kind_appears(self):
-        text = self._all_text()
-        missing = [kind.value for kind in BalloonKind if kind.value not in text]
-        assert missing == []
-
-    def test_every_caption_kind_appears(self):
-        text = self._all_text()
-        missing = [kind.value for kind in CaptionKind if kind.value not in text]
-        assert missing == []
-
-    def test_every_caption_tone_appears(self):
-        """A tone nobody has looked at is a tone nobody has checked reads."""
-        text = self._all_text()
-        missing = [tone.value for tone in CaptionTone if f"tone: {tone.value}" not in text]
-        assert missing == []
-
-    def test_every_expression_appears(self):
-        """The expression vocabulary is only worth having if every face in it has been
-        looked at at least once."""
-        text = self._all_text()
-        names = sorted(default_library().get("alice").expressions)
-        missing = [name for name in names if name not in text]
-        assert missing == []
-
-    def test_every_direction_appears(self):
-        """A page read right to left has been looked at beside its left-to-right twin."""
-        text = self._all_text()
-        missing = [value.value for value in Direction if f"direction: {value.value}" not in text]
-        assert missing == []
-
-    def test_every_type_size_appears(self):
-        """Small type is read at the size it is lettered, so it has been looked at."""
-        text = self._all_text()
-        assert "size: small" in text
-
-    def test_every_off_panel_side_appears(self):
-        """A tail ending on each edge of the frame has been looked at, and one whose side
-        the compiler chose."""
-        text = self._all_text()
-        missing = [side.value for side in Side if f"off_panel: {side.value}" not in text]
-        assert missing == []
-        assert "off_panel: true" in text
-
-    def test_every_sound_effect_size_appears(self):
-        """A size nobody has looked at is a size nobody has checked reads at a long shot."""
-        text = self._all_text()
-        missing = [size.value for size in SfxSize if f"size: {size.value}" not in text]
-        assert missing == []
-
-    def test_every_mark_appears(self):
-        """Emanata are drawn outside the head, where balloons go, so each one is a
-        layout question as well as a drawing one. Both get looked at here."""
-        text = self._all_text()
-        missing = [mark.value for mark in Mark if mark.value not in text]
-        assert missing == []
-
-    @pytest.mark.parametrize(
-        "enum",
-        [MassKind, Plane, Spans, Horizon, TimeOfDay, Weather, Place, Fit],
-        ids=lambda enum: enum.__name__,
-    )
-    def test_every_setting_word_appears(self, enum):
-        """The setting vocabulary is twelve mass kinds, four planes, four spans, three
-        horizons, four hours, four weathers and ten places. A word no example uses is a
-        word nobody has looked at -- and for this feature, "looked at" is literal: the
-        contact sheet is the only thing that can tell whether a value reads as depth."""
-        text = self._all_text()
-        missing = [member.value for member in enum if member.value not in text]
-        assert missing == []
-
-    def test_every_predicate_appears(self):
-        text = self._all_text()
-        missing = [predicate.value for predicate in Predicate if predicate.value not in text]
-        assert missing == []
-
-    def test_the_corner_placement_zones_appear(self):
-        text = self._all_text()
-        corners = [
-            PlacementZone.TOP_LEFT,
-            PlacementZone.TOP_RIGHT,
-            PlacementZone.BOTTOM_LEFT,
-            PlacementZone.BOTTOM_RIGHT,
-        ]
-        assert all(zone.value in text for zone in corners)
+    def test_every_picture_format_is_supplied(self):
+        """PNG and JPEG, told apart as the compiler tells them: by their first bytes."""
+        named = {name for entry in ENTRIES for name in entry.get("files", [])}
+        kinds: set[str] = set()
+        for name in named:
+            with contextlib.suppress(ValueError):
+                kinds.add(measure((GALLERY / name).read_bytes())[0])
+        assert kinds == set(get_args(MediaType))
 
     def test_both_frontends_appear(self):
         names = [entry["file"] for entry in ENTRIES]
@@ -401,9 +419,6 @@ class TestTheGalleryCoversTheLanguage:
 class TestFiguresAPictureDraws:
     """The gallery shows a cast the picture draws (#71), and it is what it claims to be."""
 
-    def test_a_figure_appears(self):
-        assert "figure:" in TestTheGalleryCoversTheLanguage._all_text()
-
     def test_the_example_letters_figures_over_its_picture(self):
         for panel, result in compile_document(GALLERY / "35-figures.scene.yaml").items():
             core = result.core
@@ -413,3 +428,98 @@ class TestFiguresAPictureDraws:
             assert core.backdrop.image is not None, panel
             assert core.backdrop.image.keep_out, panel
             assert result.camera is None, panel
+
+
+class TestWhatADocumentWrites:
+    """The coverage above is only as good as the reading it rests on (`tests/written.py`)."""
+
+    @staticmethod
+    def _panel(text: str) -> Written:
+        return read(panel_schema(), load(text))
+
+    def test_a_comment_writes_nothing(self):
+        written = self._panel("# setting: {place: docks, time: night}\npanel: {size: [10, 10]}\n")
+        assert written.values == set()
+        assert written.properties == {"document.panel", "PanelSpec.size"}
+
+    def test_a_value_counts_for_the_enum_its_place_expects(self):
+        written = self._panel("cast: {a: {reference: alice, at: center}}")
+        assert "AnchorX.center" in written.values
+        assert "Spans.center" not in written.values
+
+    def test_a_staging_sentence_writes_its_predicate_and_its_form(self):
+        written = self._panel("staging: [a left_of b]")
+        assert "Predicate.left_of" in written.values
+        assert "Relation as string" in written.forms
+        assert "Relation.predicate" not in written.properties
+
+    def test_a_null_is_recorded_where_it_is_written(self):
+        written = read(scene_schema(), load("panels: {a: {camera: null, cast: {bob: null}}}"))
+        assert {"document.camera", "document.cast.*"} <= written.nulls
+
+    def test_a_number_records_its_sign(self):
+        written = self._panel("script: [{sfx: {text: BAM, rotate: -12, arc: 30}}]")
+        assert written.signs == {"SfxEvent.rotate below zero", "SfxEvent.arc above zero"}
+
+    def test_a_script_writes_its_front_matter_and_directives_not_its_prose(self, tmp_path: Path):
+        script = tmp_path / "x.script"
+        script.write_text(
+            "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\n@shot: wide\n"
+            "@setting: {place: docks}\nThe top_left of a dark night.\n\nA\nmiddle_center!\n",
+            encoding="utf-8",
+        )
+        written = read_file(script)
+        assert {"ShotType.wide", "Place.docks"} <= written.values
+        assert {"PlacementZone.top_left", "PlacementZone.middle_center"}.isdisjoint(written.values)
+        assert "document.panels" not in written.properties
+
+
+class TestTheGalleryFont:
+    """The face `lettering.font` is shown in (#239): Comic Neue, under the SIL Open Font
+    License, which lets a font travel with software when its licence travels with it.
+
+    So the licence is beside the fonts, and every example that names a font names it too,
+    which is how the playground and the skill's copy of the gallery carry it along.
+    """
+
+    FONTS = GALLERY / "fonts"
+
+    #: The SHA-256 of each file in google/fonts at commit
+    #: 3dd78844021e948ceb633d1dcee3f7885561b5d9, `ofl/comicneue/`. A different file is a
+    #: different font, and needs its licence read again.
+    UPSTREAM_SHA256 = {
+        "ComicNeue-Bold.ttf": "3e7e5fccfd7e0788f317b43312151c1bd5cf058c9697a8d83eac3939050bd61e",
+        "ComicNeue-BoldItalic.ttf": (
+            "5c312c2a2fa64eee82f3b87fcfab8f3b12a5e59b043124401d322eb323cfbf16"
+        ),
+        "ComicNeue-Italic.ttf": "e06bfd1552f5c9464c5665733ffd69239b0593885dbb9e059688a5900f78cf98",
+        "ComicNeue-Regular.ttf": "a0ee5a37c8b27c4db0700137d928598b1e23b0089e1546a8961909176b779360",
+        "OFL.txt": "7c38a22e5878e60fe423360553e63dd7be23d29f1f60336034935dbfc96e8320",
+    }
+
+    def test_every_file_is_the_one_fetched_from_google_fonts(self):
+        on_disk = {
+            path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in self.FONTS.iterdir()
+        }
+        assert on_disk == self.UPSTREAM_SHA256
+
+    def test_its_licence_is_the_ofl(self):
+        licence = (self.FONTS / "OFL.txt").read_text(encoding="utf-8")
+        assert "SIL Open Font License, Version 1.1" in licence
+        assert "The Comic Neue Project Authors" in licence
+
+    def test_every_face_says_the_same_licence(self):
+        for path in self.FONTS.glob("*.ttf"):
+            name = TTFont(str(path))["name"]
+            assert "SIL Open Font License, Version 1.1" in (name.getDebugName(13) or ""), path
+
+    def test_an_example_that_names_a_font_names_its_licence(self):
+        for entry in ENTRIES:
+            files = entry.get("files", [])
+            if any(name.startswith("fonts/") for name in files):
+                assert "fonts/OFL.txt" in files, entry["file"]
+
+    def test_the_notices_record_it(self):
+        notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+        assert "### Comic Neue" in notices
