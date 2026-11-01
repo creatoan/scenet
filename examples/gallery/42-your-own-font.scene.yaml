@@ -1,0 +1,44 @@
+# Your own font: lettering in a face you supply, instead of the one Scenet ships.
+#
+# A font is always a file you name, never one installed on the machine: what the compiler
+# measures has to be the same everywhere. Paths are relative to this document -- these are
+# in fonts/, beside it, and the playground writes them there for you.
+#
+# `font:` may name one file, which then letters every face, as in the first panel. Or it
+# names a file for each face, as in the second: `regular` for dialogue, `italic` for
+# captions, `bold_italic` for a stressed word, `display` for sound effects. The face is
+# Comic Neue, under the SIL Open Font License, which is in fonts/OFL.txt.
+#
+# The second panel also sets its own type size. Written there, `size` letters that panel
+# alone; written beside `panels:`, it would letter every panel.
+
+panel: {size: [1000, 650]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+panels:
+  one-file:
+    lettering: {font: fonts/ComicNeue-Regular.ttf}
+    script:
+      - say: {by: alice, text: "Is that a new font?"}
+      - say: {by: bob, text: "One file, for everything I say."}
+
+  four-faces:
+    lettering:
+      size: 30
+      font:
+        regular: fonts/ComicNeue-Regular.ttf
+        italic: fonts/ComicNeue-Italic.ttf
+        bold_italic: fonts/ComicNeue-BoldItalic.ttf
+        display: fonts/ComicNeue-Bold.ttf
+    script:
+      - caption: {text: "Later, at the type foundry.", kind: locale}
+      - say: {by: alice, text: "Now every face is _yours_."}
+      - sfx: {text: CLUNK, from: bob, size: medium}

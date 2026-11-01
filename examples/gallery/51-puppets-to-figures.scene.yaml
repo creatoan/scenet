@@ -1,0 +1,34 @@
+# From puppets to figures: the same two people, drawn first by Scenet, then by a picture.
+#
+# In the first panel Ana and Ben are puppets in a named place. The second is `over:` it, and
+# takes everything it does not take away with `null`:
+#
+# - `place: null` beside its `image`, since a picture is a backdrop of its own;
+# - `camera: null`, since the artist already framed the picture;
+# - `reference: null` beside each `figure`, and every key that posed the puppet -- `at`,
+#   `facing` -- since a member is a puppet or a figure, never both.
+#
+# The picture's artwork contract, art/figures.art.yaml, says where each face and mouth is.
+
+panels:
+  waiting:
+    panel: {size: [1200, 600]}
+    camera: {shot: full_shot}
+    setting: {place: street, time: night}
+    cast:
+      ana: {reference: alice, at: left_third}
+      ben: {reference: bob,   at: right_third, facing: left}
+    script:
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  platform:
+    over: waiting
+    camera: null
+    setting: {place: null, image: art/figures.png, fit: cover}
+    cast:
+      ana: {reference: null, figure: ana, at: null}
+      ben: {reference: null, figure: ben, at: null, facing: null}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}

@@ -1,0 +1,32 @@
+# A JPEG behind the cast.
+#
+# A supplied picture may be a PNG or a JPEG, the two raster formats every SVG viewer must
+# draw. The compiler tells them apart by their first bytes, not by the file's name, and
+# reads nothing but the size from either. This one, art/harbour.jpg, was painted and
+# encoded by scripts/make_gallery_photo.py.
+#
+# `time: dawn` changes nothing in the picture, whose values are the artist's: over a
+# picture, the hour only tints weather, and there is none.
+
+panel:
+  size: [1200, 700]
+
+camera:
+  shot: full_shot
+
+setting:
+  image: art/harbour.jpg
+  fit: cover
+  time: dawn
+
+cast:
+  alice: {reference: alice, at: left_third, pose: pointing}
+  bob:   {reference: bob,   at: center, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "The first boat leaves at six."}
+  - say: {by: bob, text: "Then we have time for coffee."}

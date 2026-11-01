@@ -279,3 +279,72 @@ examples:
     group: Setting
     summary: "A page in colour whose middle panel writes palette: mono for itself, the way a comic drops into grey for a memory."
     doc: reference/language.md#palette
+  - file: 42-your-own-font.scene.yaml
+    title: "Your own font"
+    kind: scene
+    group: Lettering and sound
+    summary: "Lettering in a font you supply, Comic Neue: one file for every face, then a file each for dialogue, captions, a stressed word and a sound."
+    doc: reference/language.md#font
+    files: [fonts/ComicNeue-Regular.ttf, fonts/ComicNeue-Italic.ttf, fonts/ComicNeue-BoldItalic.ttf, fonts/ComicNeue-Bold.ttf, fonts/OFL.txt]
+  - file: 43-sound-pulled-to-a-zone.panel.yaml
+    title: "A sound pulled to a zone"
+    kind: panel
+    group: Lettering and sound
+    summary: "A sound placed by who makes it but pulled toward the zone it prefers, turned clockwise or the other way."
+    doc: reference/language.md#sfx
+  - file: 44-the-other-zones.panel.yaml
+    title: "The other five zones"
+    kind: panel
+    group: Balloons and captions
+    summary: "The five zones between the corners, from the top center to the bottom center, each still only a wish."
+    doc: reference/language.md#say
+  - file: 45-a-description.panel.yaml
+    title: "A description"
+    kind: panel
+    group: Balloons and captions
+    summary: "What the panel shows, in words, for a reader who cannot see it: read first, and never drawn from."
+    doc: reference/language.md#description
+  - file: 46-staging-spelled-out.panel.yaml
+    title: "Staging, spelled out"
+    kind: panel
+    group: Staging and camera
+    summary: "Staging written as subject, predicate and object, the form a program writes, mixed with the sentence form it stands for."
+    doc: reference/language.md#staging
+  - file: 47-in-front-of-the-cast.panel.yaml
+    title: "In front of the cast"
+    kind: panel
+    group: Setting
+    summary: "A mass on the foreground plane, drawn over the cast like a doorway in silhouette, beside masses spanning the center and the full width."
+    doc: reference/language.md#masses
+  - file: 48-two-pages.scene.yaml
+    title: "Two pages"
+    kind: scene
+    group: Pages and sequences
+    summary: "A document of two pages, laid side by side, its panels named by page and number, with an inset read after its panel."
+    doc: reference/language.md#page-and-pages
+  - file: 49-leaving-someone-out.scene.yaml
+    title: "Leaving someone out"
+    kind: scene
+    group: Pages and sequences
+    summary: "A panel that takes away somebody it would inherit, with null."
+    doc: howto/compile_a_sequence.md#leaving-something-out
+  - file: 50-looking-off-panel.scene.yaml
+    title: "Looking off panel"
+    kind: scene
+    group: Balloons and captions
+    summary: "Somebody heard from off panel can be looked at: Bob turns toward the side the voice comes from."
+    doc: reference/language.md#off-panel-speech
+  - file: 51-puppets-to-figures.scene.yaml
+    title: "From puppets to figures"
+    kind: scene
+    group: Your own art
+    summary: "Two puppets in a street, then the same two people drawn by a picture, the place, camera and puppets taken away with null."
+    doc: reference/language.md#figures-the-picture-draws
+    files: [art/figures.png, art/figures.art.yaml]
+  - file: 52-a-jpeg.panel.yaml
+    title: "A JPEG behind the cast"
+    kind: panel
+    group: Your own art
+    summary: "A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for its size alone."
+    doc: reference/language.md#an-image-behind-the-cast
+    files: [art/harbour.jpg]

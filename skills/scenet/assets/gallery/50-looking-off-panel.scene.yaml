@@ -1,0 +1,29 @@
+# Looking at a voice from off panel.
+#
+# Somebody heard from off panel is nobody the panel draws, so nothing can be staged against
+# them -- except a look. `bob looking_at carol` turns Bob toward the side Carol is heard
+# from, and aims his eyes out of the frame. With `off_panel: true` and no side named, as in
+# the second panel, she is heard from the side Bob faces, so the tail and his look agree.
+#
+# The panels have a margin. It keeps the balloons in, as always; an off-panel tail reaches
+# past it to the frame itself.
+
+panel: {size: [900, 600], margin: 40}
+camera: {shot: medium_shot}
+
+cast:
+  bob: {reference: bob, at: center}
+
+staging:
+  - bob looking_at carol
+
+panels:
+  called:
+    script:
+      - say: {by: carol, text: "Over here!", off_panel: left}
+      - say: {by: bob, text: "Carol?"}
+
+  again:
+    script:
+      - say: {by: carol, text: "No, over here.", off_panel: true}
+      - say: {by: bob, text: "Make up your mind."}

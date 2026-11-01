@@ -1,0 +1,24 @@
+# Staging, spelled out.
+#
+# `alice left_of bob` is a convenience. Underneath, every relation is a subject, a
+# predicate and an object, and it may be written that way: the form a program that writes
+# Scenet finds easiest to produce. The two forms mix freely, and mean the same.
+
+panel:
+  size: [1100, 700]
+
+camera:
+  shot: full_shot
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - {subject: alice, predicate: left_of, object: bob}
+  - {subject: bob, predicate: looking_at, object: alice}
+  - alice ground_shared_with bob
+
+script:
+  - say: {by: bob, text: "Subject, predicate, object."}
+  - say: {by: alice, text: "Like a scene graph."}

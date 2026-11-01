@@ -279,6 +279,16 @@ def _schema() -> str:
     )
 
 
+#: What a file an example names beside itself is, by its extension: a picture it is lettered
+#: over, or a font it is lettered in. Anything else is the fonts' licence.
+NAMED_KINDS = {".png": "a picture", ".jpg": "a picture", ".jpeg": "a picture", ".ttf": "a font"}
+
+
+def _kind(name: str) -> str:
+    """What a file an example names is, for the sentence saying it is not printed."""
+    return NAMED_KINDS.get(posixpath.splitext(name)[1].lower(), "a licence")
+
+
 def _gallery() -> str:
     sections = []
     for entry in _gallery_entries():
@@ -286,8 +296,8 @@ def _gallery() -> str:
         language = "text" if path.suffix == ".script" else "yaml"
         source = path.read_text(encoding="utf-8")
         beside = "".join(
-            f"\n\nIt names `{name}`, which is beside it in the gallery: a picture, not text, "
-            "so not printed here."
+            f"\n\nIt names `{name}`, which is beside it in the gallery: {_kind(name)}, "
+            "not printed here."
             for name in _named_files(entry)
             if not name.endswith(CONTRACT_SUFFIX)
         )

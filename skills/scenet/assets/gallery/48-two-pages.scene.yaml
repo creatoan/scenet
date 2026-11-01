@@ -1,0 +1,66 @@
+# Two pages: a document longer than one page.
+#
+# `pages:` is a list, and each page in it is laid out on its own, in the format `page:`
+# gives them all. The playground and `scenet build` draw them side by side, in reading
+# order: from the left, or from the right in a comic read right to left.
+#
+# A panel's name is text, so it can say where the panel is: `2-1` is the first panel of
+# page two, the name a comic script gives a panel when its numbers start again on each
+# page. Quoted, since YAML would read some such names as numbers.
+#
+# On page two, an inset sits in the top right corner of its panel and says `read: after`,
+# which is the default written out: it is read after the panel it is set into.
+
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: ['1-1', '1-2']
+      - {height: 1.3, panels: ['1-3']}
+  - tiers:
+      - height: 1.5
+        panels:
+          - use: '2-1'
+            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+      - panels: ['2-3']
+
+panels:
+  '1-1':
+    camera: {shot: long_shot}
+    script:
+      - caption: {text: "Page one.", kind: locale}
+      - say: {by: alice, text: "Where does this street go?"}
+  '1-2':
+    camera: {shot: medium_shot}
+    script:
+      - say: {by: bob, text: "On to the next page."}
+  '1-3':
+    camera: {shot: full_shot}
+    script:
+      - say: {by: alice, text: "Then turn it."}
+  '2-1':
+    camera: {shot: long_shot}
+    setting: {time: dusk}
+    cast:
+      alice: {at: center}
+      bob: {at: left_third, facing: right}
+    script:
+      - caption: {text: "Page two. Much later."}
+      - say: {by: bob, text: "Still walking."}
+  '2-2':
+    camera: {shot: close_up}
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "My feet.", kind: whisper}
+  '2-3':
+    camera: {shot: full_shot}
+    setting: {time: night}
+    script:
+      - say: {by: alice, text: "Is this the end?"}
+      - say: {by: bob, text: "Of the document, yes."}

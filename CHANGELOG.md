@@ -12,6 +12,18 @@ below 1.0 means.
 
 ### Added
 
+- **The gallery writes every construct of the language, and a test reads it against the
+  schemas (#239).** Eleven examples, 42 to 52: a font of your own (Comic Neue, in
+  `examples/gallery/fonts/` with its licence), a sound pulled toward a zone from its source,
+  the five zones between the corners, a description, staging spelled out as subject, predicate
+  and object, a mass in front of the cast, a document of two pages with an inset read after its
+  panel, leaving somebody out with `null`, a look at a voice from off panel, puppets that become
+  a picture's figures, and a JPEG. `scripts/make_gallery_photo.py` paints the JPEG and encodes it
+  itself. The coverage test now walks each document beside the published panel and scene
+  schemas, so a word in a comment no longer passes it: every property, enum value, form and
+  signed number they offer must be written, as must the removals the docs teach, every pose and
+  expression of every puppet, a second page, and both picture formats.
+
 - **The playground's gallery is a guided tour (#237).** It opens on a new example,
   `38-tour.scene.yaml`: one page lettered over both gallery pictures in colour, with posed
   puppets, figures a picture draws, a locale caption, a thought, emanata, a sound effect and an
@@ -41,6 +53,13 @@ below 1.0 means.
 
 - **A note in the playground is styled as information**, neutral and marked ℹ, not as an
   orange warning: nothing is wrong when the compiler says what it decided.
+
+### Fixed
+
+- **The scene schema accepts a `null` wherever `settle` applies one** (#239): `camera: null` on
+  a panel of figures over one with a camera, as the docs teach, was underlined in an editor and
+  compiled. Any key a scene reaches through mappings may now be `null`; a list entry is still
+  whole. The panel schema is unchanged.
 
 **Upgrading from 0.12.0.**
 

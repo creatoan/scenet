@@ -92,7 +92,8 @@ def scene_schema() -> dict[str, Any]:
     panel = panel_schema()
     definitions: dict[str, Any] = panel.pop("$defs")
     properties = {
-        key: _inheritable(value, definitions) for key, value in panel["properties"].items()
+        key: _removable(_inheritable(value, definitions))
+        for key, value in panel["properties"].items()
     }
     # A description says what one picture shows, so a panel may have one but the scene
     # may not offer one to every panel: `compose.NOT_A_DEFAULT`.
@@ -347,7 +348,8 @@ def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str,
         loosened["additionalProperties"] = _inheritable(node["additionalProperties"], definitions)
     if "properties" in node:
         loosened["properties"] = {
-            key: _inheritable(value, definitions) for key, value in node["properties"].items()
+            key: _removable(_inheritable(value, definitions))
+            for key, value in node["properties"].items()
         }
     for combinator in ("anyOf", "oneOf", "allOf"):
         if combinator in node:
@@ -355,6 +357,22 @@ def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str,
                 _inheritable(branch, definitions) for branch in node[combinator]
             ]
     return loosened
+
+
+def _removable(node: dict[str, Any]) -> dict[str, Any]:
+    """Mirror `settle`: in a scene, a key reached through mappings may be `null`.
+
+    A null removes what a panel would otherwise inherit -- `camera: null` on a panel of
+    figures over one that has a camera, `weather: null` to clear the sky again -- at any
+    depth, never inside a list. A key that already takes a null is left as it is.
+    """
+    if node.get("type") == "null" or any(
+        branch.get("type") == "null" for branch in node.get("anyOf", [])
+    ):
+        return node
+    outer = {key: node[key] for key in ("title", "description", "default") if key in node}
+    inner = {key: value for key, value in node.items() if key not in outer}
+    return {**outer, "anyOf": [inner, {"type": "null"}]}
 
 
 def _partial_definition(name: str, definitions: dict[str, Any]) -> str:

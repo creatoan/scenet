@@ -1,0 +1,24 @@
+# The other five zones.
+#
+# `prefer:` names one of nine zones, top, middle or bottom crossed with left, center or
+# right. The four corners have an example of their own; these are the five between them.
+#
+# A zone is still the weakest wish in the language. A balloon never covers a face, never
+# overlaps another balloon and never breaks reading order, and only then does it get as
+# close to its zone as it can.
+
+panel:
+  size: [1200, 900]
+
+camera:
+  shot: full_shot
+
+cast:
+  alice: {reference: alice, at: center}
+
+script:
+  - say: {by: alice, text: "Top center.",    prefer: top_center}
+  - say: {by: alice, text: "Middle left.",   prefer: middle_left}
+  - say: {by: alice, text: "Middle center.", prefer: middle_center}
+  - say: {by: alice, text: "Middle right.",  prefer: middle_right}
+  - say: {by: alice, text: "Bottom center.", prefer: bottom_center}

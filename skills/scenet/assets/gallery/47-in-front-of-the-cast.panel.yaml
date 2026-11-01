@@ -1,0 +1,35 @@
+# In front of the cast: a mass on the `foreground` plane.
+#
+# Masses on the `near`, `mid` and `far` planes stand behind everybody. One on `foreground`
+# is drawn over the cast, the way a doorway in silhouette is, and darkest of all: reading
+# front to back, a mass never gets darker. Here it is the edge of the door Alice is looking
+# out of.
+#
+# `spans` says how much of the width a mass covers: `full`, the default, written out here,
+# `left`, `right`, or `center` -- the hill in the distance.
+
+panel:
+  size: [1100, 700]
+
+camera:
+  shot: full_shot
+
+setting:
+  horizon: mid
+  time: dusk
+  masses:
+    - {kind: sky,        plane: far,        spans: full}
+    - {kind: solid,      plane: far,        spans: center}
+    - {kind: ground,     plane: near,       spans: full}
+    - {kind: structural, plane: foreground, spans: left}
+
+cast:
+  alice: {reference: alice, at: center, facing: right}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+
+script:
+  - say: {by: alice, text: "Are you coming in?"}
+  - say: {by: bob, text: "When the sun is down."}

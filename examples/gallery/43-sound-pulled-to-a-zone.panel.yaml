@@ -1,0 +1,25 @@
+# A sound pulled toward a zone.
+#
+# A sound effect `from:` somebody is placed near them. Give it a `prefer:` too and the zone
+# pulls it: still by its source, but on the side you asked for. With no source at all,
+# `prefer:` alone says where it would like to sit.
+#
+# `rotate` turns it clockwise, in degrees from -45 to 45: positive leans its top to the
+# right, negative to the left. Like everything about a sound, it is applied to the letters'
+# outlines, so it comes out the same in every viewer.
+
+panel: {size: [1200, 800]}
+camera: {shot: full_shot}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left, pose: arms_crossed}
+
+staging:
+  - alice left_of bob
+
+script:
+  - sfx: {text: RING RING, from: bob, prefer: top_right, rotate: 12, size: large}
+  - say: {by: alice, text: "Your phone."}
+  - sfx: {text: tap tap, from: alice, prefer: bottom_left, rotate: -10, size: small}
+  - say: {by: bob, text: "Let it ring."}
