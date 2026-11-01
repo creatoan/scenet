@@ -245,7 +245,7 @@ note as information rather than a red squiggle.
 
 | Rule | Level | Raised when |
 |---|---|---|
-| `scenet/syntax` | error | The file is not valid YAML, or is empty |
+| `scenet/syntax` | error | The file is not valid YAML, or is empty; in a comic script, its front matter. A line indented to match no line above it is said to be |
 | `scenet/duplicate-key` | error | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
 | `scenet/not-a-mapping` | error | The top level is a list or a scalar |
 | `scenet/unknown-key` | error | A key the language does not define — usually a typo |

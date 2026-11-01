@@ -22,6 +22,7 @@ Two subtleties:
   in the result, so they count as a repeat: one of them would be lost all the same.
 """
 
+import math
 from collections.abc import Hashable
 from typing import Any
 
@@ -173,4 +174,82 @@ def describe(error: yaml.YAMLError) -> str:
     problem = str(getattr(error, "problem", "") or "")
     if "scanning an alias" in context or problem.startswith("found undefined alias"):
         return f"{error}\n{ALIAS_HINT}"
+    hint = _indentation_hint(error)
+    if hint is not None:
+        return f"{error}\n{hint}"
     return str(error)
+
+
+def _indentation_hint(error: yaml.YAMLError) -> str | None:
+    r"""Where a line belongs, when the parser stopped at it and it lines up with nothing above.
+
+    A line indented a space too far or too short is the syntax error people make most by
+    hand -- deleting the `#` of a commented line and leaving its space, say -- and PyYAML
+    calls it "expected <block end>". Walking up from that line, a line further out than
+    every line after it is a block still open there: those are the only places the line
+    could line up. If it lines up with none, say how far in it is, and how far in the
+    nearest of them is, a list item preferring a list item and a key a key.
+
+    Example:
+        >>> import yaml
+        >>> from scenet.safe_yaml import load
+        >>> try:
+        ...     load("cast:\n  a: {x: 1}\n   b: {x: 2}\n")
+        ... except yaml.YAMLError as exc:
+        ...     _indentation_hint(exc).endswith("if it goes with line 2, indent it 2 spaces")
+        True
+    """
+    mark = getattr(error, "problem_mark", None)
+    buffer = getattr(mark, "buffer", None)
+    problem = str(getattr(error, "problem", "") or "")
+    if (
+        mark is None
+        or not isinstance(buffer, str)
+        or not problem.startswith("expected <block end>")
+    ):
+        return None
+    lines = buffer.rstrip("\0").split("\n")
+    if mark.line >= len(lines):
+        return None
+    here = lines[mark.line]
+    indent = len(here) - len(here.lstrip(" "))
+    item = _is_item(here)
+    # Each open block: how far in it is, whether it is a list item, and its line.
+    levels: list[tuple[int, bool, int]] = []
+    ceiling = math.inf
+    for index in range(mark.line - 1, -1, -1):
+        line = lines[index]
+        written = line.strip()
+        if not written or written.startswith("#"):
+            continue
+        start = len(line) - len(line.lstrip(" "))
+        if start >= ceiling:
+            continue
+        if _is_item(line) and written[1:].strip():
+            # What follows the dash is a block of its own, as far in as it starts.
+            inside = start + 1 + len(written[1:]) - len(written[1:].lstrip())
+            if inside < ceiling:
+                levels.append((inside, False, index + 1))
+        levels.append((start, _is_item(line), index + 1))
+        ceiling = start
+    if not levels or any(level == indent for level, _, _ in levels):
+        return None
+    alike = [entry for entry in levels if entry[1] == item] or levels
+    # `min` keeps the first of equals, and the list runs from the nearest line up.
+    level, _, number = min(alike, key=lambda entry: abs(entry[0] - indent))
+    where = "do not indent it" if level == 0 else f"indent it {level} {_spaces(level)}"
+    return (
+        f"line {mark.line + 1} is indented {indent} {_spaces(indent)}, which lines up with no "
+        "line above it. YAML reads what belongs with what from indentation alone: if it goes "
+        f"with line {number}, {where}"
+    )
+
+
+def _is_item(line: str) -> bool:
+    """Whether a line opens a list item: a dash, then a space or nothing."""
+    written = line.strip()
+    return written == "-" or written.startswith("- ")
+
+
+def _spaces(count: int) -> str:
+    return "space" if count == 1 else "spaces"

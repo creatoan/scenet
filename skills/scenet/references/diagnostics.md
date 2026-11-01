@@ -162,7 +162,7 @@ A sound effect has no legal position. A sound effect may cover a figure, and bal
 
 ### `scenet/syntax`
 
-The document is not valid YAML. The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it.
+The document is not valid YAML. The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A comic script's front matter is YAML too, and is read the same way.
 
 **Fix:** Fix the reported position; YAML errors cascade, so re-check after each fix.
 

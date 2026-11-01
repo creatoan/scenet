@@ -536,6 +536,22 @@ class TestWhatScenetTellsYou:
         where = {(item.rule, item.region.start.line if item.region else 0) for item in errors}
         assert where == {(trial.rule, trial.line)}
 
+    @pytest.mark.parametrize("entry", TOLD, ids=TOLD_IDS)
+    def test_deleting_only_its_hash_says_how_far_in_the_line_goes(self, entry: dict[str, Any]):
+        """The likeliest slip: the `#` deleted and its space left, one space too deep. The
+        syntax error is on that line, and says where the line belongs (#261)."""
+        path = GALLERY / entry["file"]
+        trial = _try_this(path)
+        lines = path.read_text(encoding="utf-8").split("\n")
+        lines[trial.line - 1] = lines[trial.line - 1].removeprefix("#")
+        diagnose = diagnose_script if path.suffix == ".script" else diagnose_source
+        (found,) = diagnose("\n".join(lines), source=path)
+        assert found.rule == "syntax"
+        assert found.region is not None
+        assert found.region.start.line == trial.line
+        assert f"line {trial.line} is indented" in found.message
+        assert "if it goes with line" in found.message
+
 
 class TestReadingATryThis:
     """The test above is only as good as `_try_this`, which finds the line to uncomment."""

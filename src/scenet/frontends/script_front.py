@@ -493,19 +493,29 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
     if not match:
         return {}, text, 0
     consumed = text.count("\n", 0, match.end())
+    # Read with one empty line for each line of the file above it, so every line YAML
+    # names -- a repeated key's, a syntax error's, in its message as in its mark -- is the
+    # file's, not the block's (#261).
+    padded = "\n" * text.count("\n", 0, match.start(1)) + match.group(1)
     try:
-        loaded = load(match.group(1))
+        loaded = load(padded)
     except DuplicateKeyError as exc:
-        # The block's line, moved to the file's: the cast is what usually repeats.
-        line = text.count("\n", 0, match.start(1)) + exc.line
+        # The cast is what usually repeats.
         raise ScriptSyntaxError(
-            f"line {line}: in the front matter, {exc.summary}",
+            f"line {exc.line}: in the front matter, {exc.summary}",
             source=source,
-            line=line,
+            line=exc.line,
             rule="duplicate-key",
         ) from exc
     except yaml.YAMLError as exc:
-        raise ScriptSyntaxError(f"invalid front matter: {describe(exc)}", source=source) from exc
+        mark = getattr(exc, "problem_mark", None)
+        line = mark.line + 1 if mark is not None else None
+        raise ScriptSyntaxError(
+            f"{f'line {line}: ' if line else ''}invalid front matter: {describe(exc)}",
+            source=source,
+            line=line,
+            rule="syntax",
+        ) from exc
     if loaded is None:
         return {}, text[match.end() :], consumed
     if not isinstance(loaded, dict):
