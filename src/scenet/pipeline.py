@@ -426,6 +426,7 @@ def _core_backdrop(
                 depth=mass.depth,
                 tone=mass.tone,
                 polygon=round_pairs(mass.polygon),
+                colour=mass.colour,
             )
             for mass in backdrop.masses
         ),
@@ -443,6 +444,7 @@ def _core_backdrop(
                 frequency=air.veil.frequency,
                 octaves=air.veil.octaves,
                 seed=air.veil.seed,
+                colour=air.veil.colour,
             ),
             streaks=tuple(
                 CoreStreak(start=point_pair(start), end=point_pair(end))
@@ -451,6 +453,8 @@ def _core_backdrop(
             flecks=tuple(Disc.of(fleck) for fleck in air.flecks),
             streak_width=rounded(air.streak_width),
             fall_tone=air.fall_tone,
+            colour=air.colour,
+            fall_colour=air.fall_colour,
         ),
     )
 
@@ -558,6 +562,7 @@ def compile_ir(
         BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
         frontmost_actor=max((placement.depth for placement in placements), default=0),
         pixels=None if image is None else (image.width, image.height),
+        palette=panel.palette,
     )
 
     picture = (
@@ -605,6 +610,7 @@ def compile_ir(
         bounds=BBox(0.0, 0.0, panel.panel.width, panel.panel.height),
         outline=outline,
         direction=panel.direction,
+        palette=panel.palette,
     )
 
     declared = _declared_faces(family)
@@ -712,6 +718,7 @@ def compile_ir(
                 fill=caption.fill,
                 ink=caption.ink,
                 speaker=caption.speaker,
+                colour=caption.colour,
                 runs=_core_runs(
                     caption.block, Face.ITALIC if caption.kind.is_italic else Face.REGULAR
                 ),
@@ -742,6 +749,7 @@ def compile_ir(
         },
         description=describe(panel, where, width),
         direction=panel.direction,
+        palette=panel.palette,
         camera=None
         if camera is None
         else CoreCamera(

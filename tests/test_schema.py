@@ -27,6 +27,7 @@ from scenet.ir import (
     Horizon,
     Mark,
     MassKind,
+    Palette,
     PanelIR,
     PlacementZone,
     Plane,
@@ -81,6 +82,7 @@ class TestPanelSchema:
             "lettering",
             "description",
             "direction",
+            "palette",
         }
 
     def test_it_is_a_valid_schema(self):
@@ -106,6 +108,7 @@ class TestPanelSchema:
             Fit,
             SfxSize,
             Direction,
+            Palette,
         ],
     )
     def test_every_enum_member_reaches_the_schema(self, enum: type[StrEnum]):

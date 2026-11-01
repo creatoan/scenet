@@ -386,6 +386,16 @@ def render_panel(
     ] = True,
     files: FilesArg = None,
     *,
+    mono: Annotated[
+        bool,
+        Field(
+            description=(
+                "Draw every value as its grey and ignore any palette's colour, as `scenet "
+                "build --mono` does: a black-and-white edition, byte for byte what "
+                "`palette: mono` draws"
+            )
+        ),
+    ] = False,
     conditioning: Annotated[
         bool,
         Field(
@@ -444,6 +454,7 @@ def render_panel(
                     result.core,
                     fonts=result.fonts,
                     live_text=live_text,
+                    mono=mono,
                     aria=aria,
                     embed=book.images,
                 ),
@@ -462,6 +473,7 @@ def render_panel(
                     page,
                     cores,
                     live_text=live_text,
+                    mono=mono,
                     fonts=book.fonts,
                     aria=aria,
                     embed=book.images,

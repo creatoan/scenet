@@ -48,8 +48,46 @@ below 1.0 means.
   and with it the bytes of its `.depth.svg`: regenerate golden depth maps of your own. Nothing
   else changes, Panel Core included.
 
+### Added
+
+- **The tinted ladder** (#244), the first step of the colour policy: the value ladder in
+  colour, each value with the OKLab lightness of the grey on its rung, so that a panel drawn in
+  it is, in monochrome, the panel drawn in greys. Each hour has a shadow hue at the foreground and
+  an atmosphere hue at the sky, and the rungs move between them. `TINTED` in
+  `scenet.solve.backdrop` is generated from those two ends by `scripts/make_palette.py`, and
+  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it.
+- **`palette: mono | tinted`** (#244), what a panel is drawn in. `tinted` draws every value on the
+  ladder (the masses of a setting, the veil and the rain) in its twin colour. `mono`, the default,
+  is what every panel already was. It is written where `lettering` is: at the top of a panel, beside
+  `panels:` for every panel, on one panel for that panel alone, or in a comic script's front matter
+  or as `@palette:`. A panel may have its own, for a flashback in grey on a page in colour. Panel Core
+  keeps every grey where it was and adds `colour` beside it (`fall_colour` for rain), with `palette`
+  at the top, all left out in `mono`: no existing Core, SVG or export changes. Every decision is
+  still made on the grey, so a tinted Core with its colours taken out is the mono one. The pose,
+  boxes, depth and mask exports are the same in every palette, and the semantics names the palette
+  when it is not `mono`. `Palette` is exported, and `colour_for` gives a grey's twin.
+- **`scenet build --mono`** (#244) draws a tinted document as a black-and-white edition, without
+  editing it: every value as its grey, and every panel, page and strip byte-identical to what the
+  same document writes with `palette: mono`. `render`, `render_page`, `render_pages` and
+  `render_strip` take `mono=True`, MCP `render` takes `mono`, and `PanelCore.as_mono()` gives the
+  panel with its colours taken back out, which is the mono Core.
+- **`tone: warm`** (#244), the yellow `locale` caption that #28 left out for want of a colour policy.
+  Its value is the `day` row's atmosphere rung, `#eeeeee`, taken by index as `pale` and `ink` are,
+  and it is lettered in ink. Under `palette: tinted` its box is drawn in that grey's twin, the pale
+  yellow `#fef0a1`, which the ink reads on at 16:1. In `mono` it is the grey, which is what a
+  black-and-white reprint does to a yellow caption. Panel Core records the yellow as the caption's
+  `colour`, beside `fill`, and leaves it out in `mono`. `paper`, `pale` and `ink` stay neutral in
+  every palette.
+- **Colour in the gallery and the reference** (#244). Two gallery examples, *Every hour in colour*
+  and *A flashback in grey*, join *A yellow caption*. The language reference has a `palette`
+  section with both pages as pictures, and `warm` in the `tone` table. Panel Core's reference
+  documents the colour keys, and the design decisions record why colour is a twin of value.
+
 ### Changed
 
+- **`lightness` and `contrast_ratio` refuse a colour** (#244) with a `ValueError`, rather than
+  answer for it with a formula that is exact only for a neutral grey. Every decision the compiler
+  makes from a value is made on the grey.
 - **A ground, floor or stretch of water recedes in the depth export** (#227), instead of standing
   as one flat grey that a depth model reads as a wall. Each is a straight vertical ramp from its own
   step at the horizon to the farthest figure's step at the bottom edge, white when every figure
