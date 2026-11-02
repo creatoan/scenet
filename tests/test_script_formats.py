@@ -494,6 +494,12 @@ class TestBalloonNumbers:
     def test_a_numbered_caption(self):
         assert only("PANEL 1\n2. CAP: Later.\n") == [("caption", None, "locale", "Later.")]
 
+    @pytest.mark.parametrize("line", ["PHONE (OP): Ring.", "NARRATOR (V.O.): Later."])
+    def test_a_numbered_line_from_somebody_nobody_draws_is_still_a_line(self, line: str):
+        """Heard from off panel or in voice over, a speaker need not be cast, numbered or
+        not: `1. PHONE (OP): Ring.` used to be prose, without a word."""
+        assert only(f"PANEL 1\n1. {line}\n") == only(f"PANEL 1\n{line}\n") != []
+
     def test_a_wrapped_line_that_starts_with_a_number_stays_wrapped(self):
         said = only("PANEL 1\nALICE\nJust\n1 MORE TIME\n")
         assert said == [("say", "ALICE", "speech", "Just 1 MORE TIME")]
