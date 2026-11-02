@@ -1,0 +1,55 @@
+---
+# A French script written vignette by vignette, its shots named in full: plan moyen, plan
+# mi-moyen and plan rapproché taille, plan rapproché, plan rapproché épaule and plan épaule,
+# gros plan, très gros plan. Two names for one rung are both read, and each is the rung of
+# the shot ladder it names in French.
+#
+# VIGNETTE is a panel heading as CASE is, and the page counts its vignettes. CARTOUCHE is a
+# caption, as RÉCITATIF and NARRATIF are; its parenthetical says what the box does, here a
+# character's thoughts, (monologue).
+#
+# The nearest shots letter nothing: the head fills the panel, and no balloon may cover a
+# face.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  TOM: {reference: bob, pose: arms_crossed, at: left_third, facing: right}
+setting: {place: room, time: night}
+---
+
+PLANCHE UNE (huit vignettes)
+
+VIGNETTE 1 : La salle de la lanterne, la nuit. Tom, en pied, devant la lampe éteinte.
+@shot: plan moyen
+
+CARTOUCHE (monologue) : Trente ans que cette lampe brille chaque nuit.
+
+VIGNETTE 2 : Tom, coupé à la taille. Il frappe la lampe du plat de la main.
+@shot: plan mi-moyen
+
+TOM : Allez, ma vieille. Pas ce soir.
+
+VIGNETTE 3 : Le même cadre. Rien ne se passe.
+@shot: plan rapproché taille
+
+CARTOUCHE (monologue) : Et ce soir, plus rien.
+
+VIGNETTE 4 : Tom, coupé à la poitrine. Il se gratte la tête.
+@shot: plan rapproché
+
+TOM : Qui a oublié l'huile ?
+
+VIGNETTE 5 : Tom, coupé aux épaules. Il comprend.
+@shot: plan rapproché épaule
+
+TOM : Ah. Moi.
+
+VIGNETTE 6 : Le même cadre. Il soupire.
+@shot: plan épaule
+
+VIGNETTE 7 : Le visage de Tom, les yeux fermés.
+@shot: gros plan
+
+VIGNETTE 8 : Ses yeux qui se rouvrent : on monte l'escalier.
+@shot: très gros plan

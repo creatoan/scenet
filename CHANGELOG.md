@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **The gallery writes the comic-script format in full (#241).** Six scripts, 63 to 68, each in
+  a convention writers use: one kept in Markdown, a manga read right to left over two pages, two
+  French planches that walk the shot ladder in abbreviations and in full, one written like a
+  screenplay, and a letterer's script after Blambot's. Between them they write every word a cue,
+  a caption or a sound may carry in parentheses, every French shot and angle, every keyword a
+  heading or a label opens with, every directive, and the forms of line no table holds, from a
+  heading in Markdown to a panel before the first PAGE. A new test reads them as the script
+  frontend reads them, from its own tables and patterns, so a word or a keyword the frontend
+  gains fails it until an example writes it. *Write a panel as a comic script* links each
+  convention to its example in the playground.
 - **A *Try it* link over a gallery example's try-this.** The playground puts it over the
   `# Try this:` comment, and it uncomments the line under it, `# ` and all, as one edit Ctrl+Z
   takes back. Deleting only the `#` by hand left a space too many, and a comic script, whose

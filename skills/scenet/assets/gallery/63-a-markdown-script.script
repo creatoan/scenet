@@ -1,0 +1,56 @@
+---
+# A comic script kept in Markdown, as many writers keep one: in a notes app, in a README,
+# in any editor that shows it formatted. Headings start with #, a label may be in bold, a
+# rule of three hyphens parts two panels, and a word to stress is written between
+# underscores. Scenet takes the markers off and reads the convention under them; the text
+# itself is never rewritten.
+#
+# The cast ids are in lower case, as YAML panels write them, so every line of dialogue is
+# a name, a colon and the line. A name alone on its line is a cue only in capitals.
+#
+# The first panel is the cover. It comes before the first PAGE heading, so it is on no
+# page, and @panel gives it a size of its own.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+panel:
+  size: [900, 640]
+cast:
+  alice: {reference: alice, pose: hands_on_hips, at: left_third}
+  bob: {reference: bob, pose: standing_neutral, at: right_third, facing: left}
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+setting: {place: street, time: dusk, weather: rain}
+---
+
+# The Umbrella
+
+### PANEL 1
+@panel: {size: [900, 1200]}
+@shot: long_shot
+@description: The cover: a street at dusk in the rain, Alice and Bob small on its corner.
+
+**CAPTION:** The Umbrella.
+
+## PAGE ONE
+
+### PANEL 2
+@shot: full_shot
+**Alice** waits on the corner, soaked. Bob comes round it, dry, and empty-handed.
+
+**alice:** You forgot your _umbrella_.
+
+**bob:** I did not _forget_ it.
+
+---
+
+**PANEL 3**
+@shot: full_shot
+@angle: high
+From above: the two of them, and the rain between them.
+
+**alice:** Then where is it?
+
+**bob:** Over the girl at the bus stop. She had further to go.

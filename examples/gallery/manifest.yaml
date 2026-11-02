@@ -437,3 +437,39 @@ examples:
     doc: howto/debug_a_layout.md#1-read-the-notes
     notes: [italic-stand-in, bold-italic-stand-in]
     files: [fonts/ComicNeue-Regular.ttf, fonts/OFL.txt]
+  - file: 63-a-markdown-script.script
+    title: "A script in Markdown"
+    kind: script
+    group: Comic scripts
+    summary: "A script kept in Markdown, with headings after #, labels in bold, rules between panels, lower-case cast ids and a cover on no page."
+    doc: howto/write_a_comic_script.md#a-script-kept-in-markdown
+  - file: 64-a-manga-script.script
+    title: "A manga, right to left"
+    kind: script
+    group: Comic scripts
+    summary: "A manga read right to left over two pages: a splash in colour, panels numbered again on page two, thoughts, shouts and sound effects."
+    doc: howto/write_a_comic_script.md#a-manga-right-to-left
+  - file: 65-french-shots-abbreviated.script
+    title: "French shots, abbreviated"
+    kind: script
+    group: Comic scripts
+    summary: "A French planche of nine cases that walks the shot ladder in abbreviations, from PE to TGP, with French angles and delivery words."
+    doc: howto/write_a_comic_script.md#shots-and-angles-in-french
+  - file: 66-french-shots-in-full.script
+    title: "French shots, in full"
+    kind: script
+    group: Comic scripts
+    summary: "A French planche of eight vignettes, each shot named in full, from plan moyen to très gros plan, with a cartouche for Tom's thoughts."
+    doc: howto/write_a_comic_script.md#shots-and-angles-in-french
+  - file: 67-written-like-a-screenplay.script
+    title: "Written like a screenplay"
+    kind: script
+    group: Comic scripts
+    summary: "A script written as a screenwriter writes: sluglines, voices over and off screen, and a last panel recast with directives."
+    doc: howto/write_a_comic_script.md#written-like-a-screenplay
+  - file: 68-a-letterers-script.script
+    title: "A letterer's script"
+    kind: script
+    group: Comic scripts
+    summary: "A script as a letterer reads it: numbered items, every kind of caption, voices off panel from above and below, and sounds with their size."
+    doc: howto/write_a_comic_script.md#a-letterers-script
