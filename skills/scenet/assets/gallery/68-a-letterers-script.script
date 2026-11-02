@@ -1,0 +1,48 @@
+---
+# A script as a letterer reads it, after Blambot's comic script basics: every item to letter
+# in a panel is numbered in reading order -- 1. or 2) -- so that writer and letterer can
+# talk about balloon 3. The number is set aside.
+#
+# Each caption says in parentheses what it does: (locale) a place and a time, (monologue) a
+# character's thoughts, (spoken) somebody's speech set in a box, (editorial) an editor's
+# note. Blambot's CAPTION (VOICE OVER) is the spoken kind. A balloon says what it is: (OFF)
+# is a voice from outside the panel, beside the side it comes from, and (WEAK) a line said
+# faintly, in smaller type. A sound is listed where it happens: SFX: with the sound on the
+# line under it, as Dark Horse writes it, and its size in parentheses.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  THEO: {reference: bob, pose: standing_neutral, at: center}
+setting: {place: docks, time: night, weather: fog}
+---
+
+PAGE ONE
+
+PANEL 1
+The harbour wall at night, in fog. Theo walks alone under the lamps.
+@shot: long_shot
+
+1. CAPTION (locale): Port Ellis harbour. Two in the morning.
+2. CAPTION (VOICE OVER): I told him not to wait.
+3. MAYA (OFF, top):
+Theo! Up here!
+
+PANEL 2
+Theo stops and looks up at the lighthouse.
+@shot: full_shot
+
+1) THEO (WEAK): Maya?
+2) SFX:
+KREEEK
+3) FERRYMAN (off-panel, bottom):
+She's been up there all night, lad.
+
+PANEL 3
+Theo at the foot of the lighthouse stairs.
+@shot: medium_shot
+
+1. CAP (monologue): Two hundred steps. I counted them once.
+2. SFX (small): tik tik tik
+3. CAPTION/MAYA (spoken): "Bring the oil."
+4. CAPTION (editorial): See The Lighthouse, issue 1.

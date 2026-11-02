@@ -1,0 +1,69 @@
+---
+# A comic script written the way a screenwriter writes one: a slugline opens each scene, and
+# a cue is a name in capitals alone on its line, with the screenplay's extensions after it.
+# (V.O.), or VOICE OVER in full, is a voice over, lettered as a caption by the speaker, and
+# CAPTION (V.O.) one nobody is named for. (O.S.), and the older (O.C.), is somebody heard
+# from off screen -- here off panel -- on the side the parenthetical names. (CONT'D), like
+# any word Scenet does not letter by, is a note for the artist.
+#
+# One habit does not carry over. A screenplay puts a parenthetical such as (whispering) on
+# the line under the cue, and in a comic script the line under a cue is what is said, so it
+# goes on the cue's own line. A slugline in capitals alone on its line would look like a cue
+# too, so the panel's description follows it on the same line.
+#
+# In the last panel Theo has gone: @cast takes him out with null and casts the keeper,
+# @staging stages the two who are left, and @camera sets the shot and the angle at once.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+panel:
+  size: [900, 640]
+cast:
+  MAYA: {reference: alice, pose: pointing, at: left_third}
+  THEO: {reference: bob, pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+setting: {place: room, time: night}
+---
+
+PANEL 1
+INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark.
+@shot: full_shot
+
+MAYA (V.O.)
+Nobody had climbed those stairs in thirty years.
+
+KEEPER (O.S., left)
+Who's up there?
+
+MAYA (whispering)
+Don't answer him.
+
+PANEL 2
+Theo at the window. Far below, a lantern swings on the path.
+@shot: full_shot
+
+THEO
+He has a lantern.
+
+RADIO (O.C., right)
+...harbour patrol, do you read...
+
+MAYA (CONT'D)
+Then he has oil.
+
+PANEL 3
+INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised.
+@cast: {THEO: null, KEEPER: {reference: bob, pose: hands_on_hips, at: right_third, facing: left}}
+@staging: [MAYA left_of KEEPER, MAYA looking_at KEEPER]
+@camera: {shot: full_shot, angle: low}
+
+CAPTION (V.O.): Theo had gone for help. He took the long way.
+
+KEEPER
+Thirty years. Who let you in?
+
+MAYA (VOICE OVER)
+I let myself in.

@@ -1,0 +1,82 @@
+---
+# A manga script, read right to left. `direction: rtl` makes the whole script read from the
+# top right, as a manga is read: the panels of a page, and the balloons of a panel. Nothing
+# is mirrored -- Hana stands on the right because she is written there -- only what reading
+# decides follows the direction.
+#
+# `page:` gives every page the same format, here a tankobon's proportions. The first page is
+# a splash: its parenthetical is a note for the artist, not a count. Page two numbers its
+# panels from 1 again, as manga scripts do, so its panels are named 2-1 to 2-4, and
+# `@over: 1` there is panel 2-1.
+#
+# A chapter's first page is often printed in colour, so the splash writes `@palette: tinted`
+# for itself. Manga letter a lot of sound, so most of it is SFX with no parenthetical; and a
+# crowded panel sets its own type size with `@lettering`.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+direction: rtl
+page: {size: [1280, 1820], margin: 64, gutter: 24, tier_gutter: 36}
+cast:
+  HANA: {reference: alice, pose: standing_neutral, at: right_third, facing: left}
+  REN: {reference: bob, pose: hands_on_hips, at: left_third, facing: right}
+staging:
+  - REN left_of HANA
+  - HANA looking_at REN
+setting: {place: field, time: dusk}
+---
+
+PAGE ONE (splash)
+
+PANEL 1
+@shot: long_shot
+@palette: tinted
+The field behind the school at dusk. Hana waits by the fence; Ren is running toward her.
+
+HANA (thought)
+He said six o'clock.
+
+SFX: ZAAAA
+
+PAGE TWO
+
+PANEL 1
+@shot: full_shot
+Ren skids to a stop in front of her, out of breath.
+
+REN (yell)
+Hana! Wait!
+
+SFX (medium): ZZAK
+
+PANEL 2
+@over: 1
+@shot: cowboy
+Closer. Hana does not turn round.
+
+HANA (thinking)
+Late. Again.
+
+REN (small)
+...sorry.
+
+PANEL 3
+@shot: cowboy
+@lettering: {size: 18}
+Ren bows low. Hana looks at him at last.
+
+REN (shout)
+I ran the whole way!
+
+HANA (yelling)
+You ran the wrong way!
+
+PANEL 4
+@shot: long_shot
+They walk off along the fence together.
+
+REN
+Same time tomorrow?
+
+HANA
+Six. Not seven.

@@ -6251,3 +6251,436 @@ script:
 # somebody, so a locale caption naming Bob is the error `caption-speaker`, on that line.
 #   - caption: {text: "Meanwhile.", kind: locale, by: bob}
 ```
+
+## A script in Markdown
+
+A script kept in Markdown, with headings after #, labels in bold, rules between panels, lower-case cast ids and a cover on no page.
+
+`63-a-markdown-script.script`
+
+```text
+---
+# A comic script kept in Markdown, as many writers keep one: in a notes app, in a README,
+# in any editor that shows it formatted. Headings start with #, a label may be in bold, a
+# rule of three hyphens parts two panels, and a word to stress is written between
+# underscores. Scenet takes the markers off and reads the convention under them; the text
+# itself is never rewritten.
+#
+# The cast ids are in lower case, as YAML panels write them, so every line of dialogue is
+# a name, a colon and the line. A name alone on its line is a cue only in capitals.
+#
+# The first panel is the cover. It comes before the first PAGE heading, so it is on no
+# page, and @panel gives it a size of its own.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+panel:
+  size: [900, 640]
+cast:
+  alice: {reference: alice, pose: hands_on_hips, at: left_third}
+  bob: {reference: bob, pose: standing_neutral, at: right_third, facing: left}
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+setting: {place: street, time: dusk, weather: rain}
+---
+
+# The Umbrella
+
+### PANEL 1
+@panel: {size: [900, 1200]}
+@shot: long_shot
+@description: The cover: a street at dusk in the rain, Alice and Bob small on its corner.
+
+**CAPTION:** The Umbrella.
+
+## PAGE ONE
+
+### PANEL 2
+@shot: full_shot
+**Alice** waits on the corner, soaked. Bob comes round it, dry, and empty-handed.
+
+**alice:** You forgot your _umbrella_.
+
+**bob:** I did not _forget_ it.
+
+---
+
+**PANEL 3**
+@shot: full_shot
+@angle: high
+From above: the two of them, and the rain between them.
+
+**alice:** Then where is it?
+
+**bob:** Over the girl at the bus stop. She had further to go.
+```
+
+## A manga, right to left
+
+A manga read right to left over two pages: a splash in colour, panels numbered again on page two, thoughts, shouts and sound effects.
+
+`64-a-manga-script.script`
+
+```text
+---
+# A manga script, read right to left. `direction: rtl` makes the whole script read from the
+# top right, as a manga is read: the panels of a page, and the balloons of a panel. Nothing
+# is mirrored -- Hana stands on the right because she is written there -- only what reading
+# decides follows the direction.
+#
+# `page:` gives every page the same format, here a tankobon's proportions. The first page is
+# a splash: its parenthetical is a note for the artist, not a count. Page two numbers its
+# panels from 1 again, as manga scripts do, so its panels are named 2-1 to 2-4, and
+# `@over: 1` there is panel 2-1.
+#
+# A chapter's first page is often printed in colour, so the splash writes `@palette: tinted`
+# for itself. Manga letter a lot of sound, so most of it is SFX with no parenthetical; and a
+# crowded panel sets its own type size with `@lettering`.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+direction: rtl
+page: {size: [1280, 1820], margin: 64, gutter: 24, tier_gutter: 36}
+cast:
+  HANA: {reference: alice, pose: standing_neutral, at: right_third, facing: left}
+  REN: {reference: bob, pose: hands_on_hips, at: left_third, facing: right}
+staging:
+  - REN left_of HANA
+  - HANA looking_at REN
+setting: {place: field, time: dusk}
+---
+
+PAGE ONE (splash)
+
+PANEL 1
+@shot: long_shot
+@palette: tinted
+The field behind the school at dusk. Hana waits by the fence; Ren is running toward her.
+
+HANA (thought)
+He said six o'clock.
+
+SFX: ZAAAA
+
+PAGE TWO
+
+PANEL 1
+@shot: full_shot
+Ren skids to a stop in front of her, out of breath.
+
+REN (yell)
+Hana! Wait!
+
+SFX (medium): ZZAK
+
+PANEL 2
+@over: 1
+@shot: cowboy
+Closer. Hana does not turn round.
+
+HANA (thinking)
+Late. Again.
+
+REN (small)
+...sorry.
+
+PANEL 3
+@shot: cowboy
+@lettering: {size: 18}
+Ren bows low. Hana looks at him at last.
+
+REN (shout)
+I ran the whole way!
+
+HANA (yelling)
+You ran the wrong way!
+
+PANEL 4
+@shot: long_shot
+They walk off along the fence together.
+
+REN
+Same time tomorrow?
+
+HANA
+Six. Not seven.
+```
+
+## French shots, abbreviated
+
+A French planche of nine cases that walks the shot ladder in abbreviations, from PE to TGP, with French angles and delivery words.
+
+`65-french-shots-abbreviated.script`
+
+```text
+---
+# A French script, its shots abbreviated as a French découpage writes them: PE for plan
+# d'ensemble, PM, PA, PRT, PMM, PRP, PR, GP and TGP for très gros plan. Case, accents and
+# full stops do not matter, and each is the rung of the shot ladder its French name is.
+#
+# The nine cases of this planche walk the ladder from the farthest shot to the nearest, each
+# abbreviation once, and the line under the PLANCHE heading says so: a line between a page's
+# heading and its first case belongs to the page, and is kept, never read. The angles are in
+# French too: plongée looks down, angle normal at eye level.
+#
+# The delivery words are French: (murmure) and (chuchoté) a whisper, (cri) and (crié) a
+# shout, (à voix basse) and (voix basse) small type, and (off) somebody nobody draws.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  LÉA: {reference: alice, pose: standing_neutral, at: center}
+setting: {place: shore, time: dusk}
+---
+
+PLANCHE 1 (neuf cases)
+La montée au phare, du plus loin au plus près : de case en case, on descend l'échelle des plans.
+
+CASE 1 : La côte et le phare, vus de très haut. Une silhouette sur le chemin de la falaise.
+@shot: PE
+@angle: plongée
+
+NARRATIF : Port-Ellis, le soir où la lampe s'est éteinte.
+
+CASE 2 : Léa en pied, au bas de l'escalier du phare.
+@shot: PM
+@angle: angle normal
+
+LÉA (murmure) : Encore deux cents marches.
+
+CASE 3 : Léa, coupée à mi-cuisse, la main sur la rampe.
+@shot: PA
+
+TOM (off) : Léa ? C'est toi ?
+
+LÉA (cri) : J'arrive !
+
+CASE 4 : Léa, coupée à la taille. Elle reprend son souffle.
+@shot: PRT
+
+TOM (off, crié) : La lampe ne s'allume plus !
+
+CASE 5 : Le même cadre. Elle lève les yeux vers le haut de l'escalier.
+@shot: PMM
+
+LÉA (à voix basse) : Évidemment.
+
+CASE 6 : Léa, coupée à la poitrine, sort une burette d'huile de sa poche.
+@shot: PRP
+
+LÉA (chuchoté) : J'ai ce qu'il faut.
+
+CASE 7 : Le même cadre, un temps.
+@shot: PR
+
+TOM (off, voix basse) : Tu as pensé à l'huile ?
+
+LÉA : « Je pense toujours à l'huile. »
+
+CASE 8 : Le visage de Léa. Elle sourit, sans un mot.
+@shot: GP
+
+CASE 9 : Son œil, décidé.
+@shot: TGP
+```
+
+## French shots, in full
+
+A French planche of eight vignettes, each shot named in full, from plan moyen to très gros plan, with a cartouche for Tom's thoughts.
+
+`66-french-shots-in-full.script`
+
+```text
+---
+# A French script written vignette by vignette, its shots named in full: plan moyen, plan
+# mi-moyen and plan rapproché taille, plan rapproché, plan rapproché épaule and plan épaule,
+# gros plan, très gros plan. Two names for one rung are both read, and each is the rung of
+# the shot ladder it names in French.
+#
+# VIGNETTE is a panel heading as CASE is, and the page counts its vignettes. CARTOUCHE is a
+# caption, as RÉCITATIF and NARRATIF are; its parenthetical says what the box does, here a
+# character's thoughts, (monologue).
+#
+# The nearest shots letter nothing: the head fills the panel, and no balloon may cover a
+# face.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  TOM: {reference: bob, pose: arms_crossed, at: left_third, facing: right}
+setting: {place: room, time: night}
+---
+
+PLANCHE UNE (huit vignettes)
+
+VIGNETTE 1 : La salle de la lanterne, la nuit. Tom, en pied, devant la lampe éteinte.
+@shot: plan moyen
+
+CARTOUCHE (monologue) : Trente ans que cette lampe brille chaque nuit.
+
+VIGNETTE 2 : Tom, coupé à la taille. Il frappe la lampe du plat de la main.
+@shot: plan mi-moyen
+
+TOM : Allez, ma vieille. Pas ce soir.
+
+VIGNETTE 3 : Le même cadre. Rien ne se passe.
+@shot: plan rapproché taille
+
+CARTOUCHE (monologue) : Et ce soir, plus rien.
+
+VIGNETTE 4 : Tom, coupé à la poitrine. Il se gratte la tête.
+@shot: plan rapproché
+
+TOM : Qui a oublié l'huile ?
+
+VIGNETTE 5 : Tom, coupé aux épaules. Il comprend.
+@shot: plan rapproché épaule
+
+TOM : Ah. Moi.
+
+VIGNETTE 6 : Le même cadre. Il soupire.
+@shot: plan épaule
+
+VIGNETTE 7 : Le visage de Tom, les yeux fermés.
+@shot: gros plan
+
+VIGNETTE 8 : Ses yeux qui se rouvrent : on monte l'escalier.
+@shot: très gros plan
+```
+
+## Written like a screenplay
+
+A script written as a screenwriter writes: sluglines, voices over and off screen, and a last panel recast with directives.
+
+`67-written-like-a-screenplay.script`
+
+```text
+---
+# A comic script written the way a screenwriter writes one: a slugline opens each scene, and
+# a cue is a name in capitals alone on its line, with the screenplay's extensions after it.
+# (V.O.), or VOICE OVER in full, is a voice over, lettered as a caption by the speaker, and
+# CAPTION (V.O.) one nobody is named for. (O.S.), and the older (O.C.), is somebody heard
+# from off screen -- here off panel -- on the side the parenthetical names. (CONT'D), like
+# any word Scenet does not letter by, is a note for the artist.
+#
+# One habit does not carry over. A screenplay puts a parenthetical such as (whispering) on
+# the line under the cue, and in a comic script the line under a cue is what is said, so it
+# goes on the cue's own line. A slugline in capitals alone on its line would look like a cue
+# too, so the panel's description follows it on the same line.
+#
+# In the last panel Theo has gone: @cast takes him out with null and casts the keeper,
+# @staging stages the two who are left, and @camera sets the shot and the angle at once.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+panel:
+  size: [900, 640]
+cast:
+  MAYA: {reference: alice, pose: pointing, at: left_third}
+  THEO: {reference: bob, pose: arms_crossed, at: right_third, facing: left}
+staging:
+  - MAYA left_of THEO
+  - MAYA looking_at THEO
+  - MAYA ground_shared_with THEO
+setting: {place: room, time: night}
+---
+
+PANEL 1
+INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark.
+@shot: full_shot
+
+MAYA (V.O.)
+Nobody had climbed those stairs in thirty years.
+
+KEEPER (O.S., left)
+Who's up there?
+
+MAYA (whispering)
+Don't answer him.
+
+PANEL 2
+Theo at the window. Far below, a lantern swings on the path.
+@shot: full_shot
+
+THEO
+He has a lantern.
+
+RADIO (O.C., right)
+...harbour patrol, do you read...
+
+MAYA (CONT'D)
+Then he has oil.
+
+PANEL 3
+INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised.
+@cast: {THEO: null, KEEPER: {reference: bob, pose: hands_on_hips, at: right_third, facing: left}}
+@staging: [MAYA left_of KEEPER, MAYA looking_at KEEPER]
+@camera: {shot: full_shot, angle: low}
+
+CAPTION (V.O.): Theo had gone for help. He took the long way.
+
+KEEPER
+Thirty years. Who let you in?
+
+MAYA (VOICE OVER)
+I let myself in.
+```
+
+## A letterer's script
+
+A script as a letterer reads it: numbered items, every kind of caption, voices off panel from above and below, and sounds with their size.
+
+`68-a-letterers-script.script`
+
+```text
+---
+# A script as a letterer reads it, after Blambot's comic script basics: every item to letter
+# in a panel is numbered in reading order -- 1. or 2) -- so that writer and letterer can
+# talk about balloon 3. The number is set aside.
+#
+# Each caption says in parentheses what it does: (locale) a place and a time, (monologue) a
+# character's thoughts, (spoken) somebody's speech set in a box, (editorial) an editor's
+# note. Blambot's CAPTION (VOICE OVER) is the spoken kind. A balloon says what it is: (OFF)
+# is a voice from outside the panel, beside the side it comes from, and (WEAK) a line said
+# faintly, in smaller type. A sound is listed where it happens: SFX: with the sound on the
+# line under it, as Dark Horse writes it, and its size in parentheses.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  THEO: {reference: bob, pose: standing_neutral, at: center}
+setting: {place: docks, time: night, weather: fog}
+---
+
+PAGE ONE
+
+PANEL 1
+The harbour wall at night, in fog. Theo walks alone under the lamps.
+@shot: long_shot
+
+1. CAPTION (locale): Port Ellis harbour. Two in the morning.
+2. CAPTION (VOICE OVER): I told him not to wait.
+3. MAYA (OFF, top):
+Theo! Up here!
+
+PANEL 2
+Theo stops and looks up at the lighthouse.
+@shot: full_shot
+
+1) THEO (WEAK): Maya?
+2) SFX:
+KREEEK
+3) FERRYMAN (off-panel, bottom):
+She's been up there all night, lad.
+
+PANEL 3
+Theo at the foot of the lighthouse stairs.
+@shot: medium_shot
+
+1. CAP (monologue): Two hundred steps. I counted them once.
+2. SFX (small): tik tik tik
+3. CAPTION/MAYA (spoken): "Bring the oil."
+4. CAPTION (editorial): See The Lighthouse, issue 1.
+```

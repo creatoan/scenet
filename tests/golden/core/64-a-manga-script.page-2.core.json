@@ -1,0 +1,37 @@
+{
+  "direction": "rtl",
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 828.0,
+      "panel": "2-1",
+      "width": 564.0,
+      "x": 652.0,
+      "y": 64.0
+    },
+    {
+      "height": 828.0,
+      "panel": "2-2",
+      "width": 564.0,
+      "x": 64.0,
+      "y": 64.0
+    },
+    {
+      "height": 828.0,
+      "panel": "2-3",
+      "width": 564.0,
+      "x": 652.0,
+      "y": 928.0
+    },
+    {
+      "height": 828.0,
+      "panel": "2-4",
+      "width": 564.0,
+      "x": 64.0,
+      "y": 928.0
+    }
+  ],
+  "height": 1820.0,
+  "lettering_height": 564.0,
+  "width": 1280.0
+}

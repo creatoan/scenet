@@ -1,0 +1,69 @@
+---
+# A French script, its shots abbreviated as a French découpage writes them: PE for plan
+# d'ensemble, PM, PA, PRT, PMM, PRP, PR, GP and TGP for très gros plan. Case, accents and
+# full stops do not matter, and each is the rung of the shot ladder its French name is.
+#
+# The nine cases of this planche walk the ladder from the farthest shot to the nearest, each
+# abbreviation once, and the line under the PLANCHE heading says so: a line between a page's
+# heading and its first case belongs to the page, and is kept, never read. The angles are in
+# French too: plongée looks down, angle normal at eye level.
+#
+# The delivery words are French: (murmure) and (chuchoté) a whisper, (cri) and (crié) a
+# shout, (à voix basse) and (voix basse) small type, and (off) somebody nobody draws.
+#
+# A comic script has no comments of its own, so this one is in the front matter, which is
+# YAML.
+cast:
+  LÉA: {reference: alice, pose: standing_neutral, at: center}
+setting: {place: shore, time: dusk}
+---
+
+PLANCHE 1 (neuf cases)
+La montée au phare, du plus loin au plus près : de case en case, on descend l'échelle des plans.
+
+CASE 1 : La côte et le phare, vus de très haut. Une silhouette sur le chemin de la falaise.
+@shot: PE
+@angle: plongée
+
+NARRATIF : Port-Ellis, le soir où la lampe s'est éteinte.
+
+CASE 2 : Léa en pied, au bas de l'escalier du phare.
+@shot: PM
+@angle: angle normal
+
+LÉA (murmure) : Encore deux cents marches.
+
+CASE 3 : Léa, coupée à mi-cuisse, la main sur la rampe.
+@shot: PA
+
+TOM (off) : Léa ? C'est toi ?
+
+LÉA (cri) : J'arrive !
+
+CASE 4 : Léa, coupée à la taille. Elle reprend son souffle.
+@shot: PRT
+
+TOM (off, crié) : La lampe ne s'allume plus !
+
+CASE 5 : Le même cadre. Elle lève les yeux vers le haut de l'escalier.
+@shot: PMM
+
+LÉA (à voix basse) : Évidemment.
+
+CASE 6 : Léa, coupée à la poitrine, sort une burette d'huile de sa poche.
+@shot: PRP
+
+LÉA (chuchoté) : J'ai ce qu'il faut.
+
+CASE 7 : Le même cadre, un temps.
+@shot: PR
+
+TOM (off, voix basse) : Tu as pensé à l'huile ?
+
+LÉA : « Je pense toujours à l'huile. »
+
+CASE 8 : Le visage de Léa. Elle sourit, sans un mot.
+@shot: GP
+
+CASE 9 : Son œil, décidé.
+@shot: TGP
