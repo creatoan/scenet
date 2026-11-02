@@ -36,6 +36,10 @@ Save that as `umbrella.script` and compile it exactly like any other document:
 scenet build umbrella.script --strip
 ```
 
+The gallery's `examples/gallery/13-comic-script.script` is a script like it:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=13-comic-script.script).
+Each convention below has an example of its own there, written the way writers who use it write.
+
 ## The rules
 
 | Line | Means |
@@ -45,13 +49,14 @@ scenet build umbrella.script --strip
 | `@shot: full_shot` | A directive. `@shot` and `@angle` set the camera; anything else sets a top-level panel key. Each is written once per panel: a second is reported, not quietly kept. |
 | `ALICE` (all caps, alone) | The lines after it, up to a blank line, are one speech by `ALICE`. |
 | `BOB (small)` | Muttered: smaller type, in a balloon that keeps its room. `(weak)` is the same. |
-| `BOB (whisper)` | Same, with a balloon kind. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
+| `BOB (whisper)` | Same, with a balloon kind: `(whisper)` or `(whispering)`, `(shout)`, `(shouting)`, `(yell)` or `(yelling)`, `(thought)` or `(thinking)`. `(burst)` is a shout. Several parentheticals, or one with commas, are read together. |
 | `ALICE: Hello.` | A cue with its line on the same line. Dialogue when `ALICE` is in the panel's cast; see below. |
-| `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. |
-| `ALICE (OP)` | Dark Horse's off-panel speech: Alice is left out of this panel, and her balloon's tail ends on the frame. `(OFF)`, `(O.S.)` and `(O.C.)` too. |
+| `ALICE (V.O.)` | A voice over: the line is a spoken caption by `ALICE`, not a balloon. `(VO)` and `(VOICE OVER)` too. |
+| `ALICE (OP)` | Dark Horse's off-panel speech: Alice is left out of this panel, and her balloon's tail ends on the frame. `(OFF)`, `(off-panel)`, `(O.S.)` and `(O.C.)` too. |
+| `ALICE (OP, left)` | Same, from the side named: `left`, `right`, `top` or `bottom`. A side alone is a note for the artist. |
 | `CAPTION: Midnight.`, `CAP: Midnight.` | A caption box, its text on the same line. |
 | `CAP:` or `CAPTION` (alone) | Dark Horse's form: the caption's text is on the lines under it, to a blank line. |
-| `CAPTION (monologue): ...` | Same, with a caption kind. `(voice over)` is the spoken kind. |
+| `CAPTION (monologue): ...` | Same, with a caption kind: `(locale)`, `(monologue)`, `(spoken)` or `(editorial)`. `(voice over)` is the spoken kind. |
 | `CAP/ALICE` | Dark Horse's caption carrying a character's speech: a spoken caption by `ALICE`. |
 | `1. ALICE:`, `2) CAP:` | Blambot's numbered lettering items: the number is set aside. |
 | `SFX: BLAM` | A sound effect. The sound is on the same line. |
@@ -155,9 +160,75 @@ THEO (whisper):
   and is never set at the start of a line or alone on one.
 - **A cue with nothing said under it** is a `looks-like-dialogue` note rather than vanishing.
 
+`examples/gallery/31-dark-horse.script` is a script in this format, title page and all:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=31-dark-horse.script).
+
+## A script kept in Markdown
+
 Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `__` around
-it, and a horizontal rule are tolerated: the markers are stripped and the convention read.
-It is not a second format: the text of a line is never rewritten.
+it or around a label, and a horizontal rule are tolerated: the markers are stripped and the
+convention read. It is not a second format: the text of a line is never rewritten.
+
+```text
+## PAGE ONE
+
+### PANEL 2
+**Alice** waits on the corner, soaked.
+
+**alice:** You forgot your _umbrella_.
+
+---
+
+**PANEL 3**
+```
+
+- **A rule, `---`, `***` or `___`, is a blank line**, and parts two panels as one does.
+- **A name in lower case is a cue when it is a cast id**, written with its line after the
+  colon: `alice:` speaks when the front matter casts `alice`, as a YAML panel would. Alone on
+  its line, a name is a cue only in capitals.
+- **A word between underscores is stressed**, in the lettering. In prose, Markdown's markers
+  round a word are taken off the description a screen reader is given.
+
+`examples/gallery/63-a-markdown-script.script` is a script kept this way, with a cover panel
+before its first PAGE heading:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=63-a-markdown-script.script).
+
+## A letterer's script
+
+[Blambot's comic script basics](https://blambot.com/pages/comic-script-basics) asks writers
+to number every item a letterer letters, in reading order, and to say what each is. Scenet
+reads it so:
+
+- **`1.`, `2)` before a label** is a lettering item's number, and is set aside.
+- **A caption's kind in parentheses**: `(locale)`, `(monologue)`, `(spoken)`, `(editorial)`,
+  and Blambot's `CAPTION (VOICE OVER)`, which is the spoken kind.
+- **A balloon's kind**: `(OFF)` from outside the panel, with the side it comes from;
+  `(WEAK)`, said faintly, in smaller type; `(BURST)`, shouted.
+- **A sound where it happens**: `SFX:` with the sound on the line under it, its size in the
+  parenthetical, `SFX (small):`.
+
+`examples/gallery/68-a-letterers-script.script` is a page of one:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=68-a-letterers-script.script).
+
+## Written like a screenplay
+
+A writer coming from film writes a cue as a screenplay does, a name in capitals alone on its line
+with an extension after it, and Scenet reads the extensions it can letter:
+
+- **`(V.O.)`**, or `(VOICE OVER)`, is a voice over: a spoken caption by the speaker.
+  `CAPTION (V.O.)` is one nobody is named for.
+- **`(O.S.)`**, and the older `(O.C.)`, is somebody heard from off screen, here off panel, from
+  the side the parenthetical names: `KEEPER (O.S., left)`.
+- **`(CONT'D)`**, `(beat)` and any word Scenet does not letter by is a note for the artist.
+
+Two habits change. A screenplay puts a parenthetical such as `(whispering)` on the line under
+the cue; in a comic script that line is what is said, so the parenthetical goes on the cue's
+line. And a slugline in capitals alone on its line looks like a cue, so write the panel's
+description after it on the same line: `INT. LIGHTHOUSE - NIGHT. Maya by the dead lamp.`
+
+`examples/gallery/67-written-like-a-screenplay.script` is one, whose last panel recasts the
+scene with `@cast` and `@staging`:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=67-written-like-a-screenplay.script).
 
 ## Pages
 
@@ -209,6 +280,28 @@ A script has no `pages:` key — its pages are its PAGE headings — so writing 
   `story.page-1.svg` whatever its heading says, so an excerpt that starts at `PAGE SEVEN` still
   writes `page-1`. Each panel is written on its own as well, as before.
 
+## A manga, right to left
+
+`direction: rtl` in the front matter makes the whole script read from the top right, as a manga
+is read: the panels of each page, and the balloons of each panel. Nothing is mirrored. A
+character written at `right_third` stands on the right; only what reading decides follows the
+direction, as [`direction`](../reference/language.md#direction) explains.
+
+```text
+---
+direction: rtl
+page: {size: [1280, 1820], margin: 64, gutter: 24, tier_gutter: 36}
+---
+
+PAGE ONE (splash)
+```
+
+`(splash)` is a note for the artist, not a count. A manga script numbers each page's panels from
+1 again, which names them by page, `2-1` to `2-4`, and `@over: 1` on page two is panel `2-1`.
+
+`examples/gallery/64-a-manga-script.script` is two pages of one, the first in colour:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=64-a-manga-script.script).
+
 ## French scripts
 
 A Franco-Belgian script is read in its own words. The vocabulary is the
@@ -235,6 +328,11 @@ outline for a character who *murmure* — *chuchoter* is to murmur, in Larousse 
 bold for one who *crie*, and smaller type for one who *parle bas*. Any other word, `(hurlé)` say,
 stays a note to the artist, as an English one does.
 
+`examples/gallery/33-planche.script` is a planche written in French:
+[open it in the playground](https://creatoan.github.io/scenet/playground/#example=33-planche.script).
+
+### Shots and angles in French
+
 **Shots and angles may be written in French**, in a comic script's `@shot:` and `@angle:` only — the
 YAML language and its schema stay in English. Case, accents, apostrophes and hyphens do not matter,
 and the usual abbreviations are read: `GP`, `P.A.`. The *échelle des plans* maps rung for rung onto
@@ -258,6 +356,13 @@ Lyon academy's sheet (at the neck), and French Wikipedia's ladder, which has its
 at the shoulders instead; writing `plan rapproché épaule` gets that framing. *Plan général* and
 *plan italien* have no rung of their own, and `medium_full` no French name; none is invented. The
 angles are *plongée* (`high`), *contre-plongée* (`low`) and *angle normal* (`eye_level`).
+
+Two planches in the gallery walk the ladder from the farthest shot to the nearest:
+`examples/gallery/65-french-shots-abbreviated.script` in abbreviations, from PE to TGP
+([open it in the playground](https://creatoan.github.io/scenet/playground/#example=65-french-shots-abbreviated.script)),
+and `examples/gallery/66-french-shots-in-full.script` vignette by vignette, every name in full
+([open it in the playground](https://creatoan.github.io/scenet/playground/#example=66-french-shots-in-full.script)).
+The nearest shots letter nothing: the head fills the panel, and no balloon may cover a face.
 
 ## Off-panel speech
 
