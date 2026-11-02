@@ -81,6 +81,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **A numbered line from somebody nobody draws is a line.** In a comic script,
+  `1. PHONE (OP): Ring.` was read as prose, without a word, though `PHONE (OP): Ring.` is a
+  line: a lettering item's number was set aside only before a cast member's cue. Somebody heard
+  from off panel or in voice over need not be cast, numbered or not.
 - **A line indented to match no line above it is said to be** (#261). PyYAML calls it
   "expected <block end>", which says nothing of the space too many or too few behind it;
   the message now says how far in the line is, and how far in the line it likely goes with

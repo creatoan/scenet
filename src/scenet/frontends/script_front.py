@@ -972,6 +972,15 @@ class _Reader:
         """The open panel's cast: the front matter's, and what its own `@cast:` adds."""
         return self.cast | self.panel_casts[len(self.drafts) - 1]
 
+    def may_speak(self, name: str, modifiers: list[str]) -> bool:
+        """Whether `NAME: text` is a line here: its speaker is cast, or is not drawn at all.
+
+        Somebody who speaks from off panel, or in voice over, is not drawn, so need not be in
+        the cast: `PHONE (OP): Ring.` is a line, as `PHONE (OP)` above it would be.
+        """
+        unseen = any(word in OFF_PANEL or word in VOICE_OVER for word in modifiers)
+        return unseen or name in self.cast_here()
+
     def unnumbered(self, line: str) -> str:
         """A line with a balloon number taken off, when what follows it is a label.
 
@@ -987,7 +996,10 @@ class _Reader:
             CAPTION_LABEL.match(rest)
             or SFX_LINE.match(rest)
             or BARE_SFX.match(rest)
-            or (inline is not None and inline.group("name").strip() in self.cast_here())
+            or (
+                inline is not None
+                and self.may_speak(inline.group("name").strip(), _modifiers(inline.group("mods")))
+            )
             or (
                 _looks_like_a_cue(rest)
                 and (rest.endswith(":") or _cue_name(rest) in self.cast_here())
@@ -1031,14 +1043,11 @@ class _Reader:
             return False
         name = cue.group("name").strip()
         modifiers = _modifiers(cue.group("mods"))
-        # Somebody who speaks from off panel, or in voice over, is not drawn, so need not
-        # be in the cast: `PHONE (OP): Ring.` is a line, as `PHONE (OP)` above it would be.
-        unseen = any(word in OFF_PANEL or word in VOICE_OVER for word in modifiers)
-        if name not in self.cast_here() and not unseen:
+        if not self.may_speak(name, modifiers):
             self.not_a_speaker(name, number, current)
             return False
         self.abandon()
-        verb, payload = _line_for(name, _modifiers(cue.group("mods")), number, self.source)
+        verb, payload = _line_for(name, modifiers, number, self.source)
         payload["text"] = cue.group("text")
         current.add({verb: payload}, number)
         self.writing = payload
