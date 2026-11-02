@@ -25,20 +25,24 @@ from fontTools.ttLib import TTFont
 from scenet import (
     BalloonKind,
     CaptionKind,
+    ScriptSyntaxError,
     compile_book_file,
     compile_document,
     default_library,
+    parse_script,
     pipeline,
     render,
     render_debug,
     render_strip,
 )
 from scenet.diagnostics import RULES, diagnose_file, diagnose_script, diagnose_source
+from scenet.frontends import script_front
 from scenet.images import MediaType, measure
 from scenet.ir import PanelIR, Predicate, SayEvent
 from scenet.pipeline import DOCUMENT_LOADERS, Book
 from scenet.safe_yaml import load
 from scenet.schema import panel_schema, scene_schema
+from tests import script_forms
 from tests.written import Written, read, read_file, union, vocabulary
 
 ROOT = Path(__file__).parent.parent
@@ -54,6 +58,12 @@ TOUR = "38-tour.scene.yaml"
 MAX_TITLE = 28
 #: A summary is one sentence under the editor, not a paragraph.
 MAX_SUMMARY = 160
+
+#: The group of comic scripts, each in a convention writers use, and the page about them.
+COMIC_SCRIPTS = "Comic scripts"
+HOW_TO = DOCS / "howto" / "write_a_comic_script.md"
+#: A link that opens a gallery example in the playground, by its file.
+EXAMPLE_LINK = re.compile(r"/playground/#example=([\w.-]+)")
 
 
 class TestManifestMatchesDisk:
@@ -168,6 +178,21 @@ class TestTheGalleryIsGuided:
         assert path.is_file(), page
         if anchor:
             assert anchor in _anchors(path), f"{page} has no heading #{anchor}"
+
+    def test_the_how_to_links_every_comic_script(self):
+        """Each convention the page describes opens its example in the playground (#241)."""
+        linked = set(EXAMPLE_LINK.findall(HOW_TO.read_text(encoding="utf-8")))
+        scripts = [entry["file"] for entry in ENTRIES if entry["group"] == COMIC_SCRIPTS]
+        assert [name for name in scripts if name not in linked] == []
+
+    def test_every_example_link_opens_a_gallery_example(self):
+        pages = [page for page in DOCS.rglob("*.md") if "_build" not in page.parts]
+        linked = {
+            name
+            for page in pages
+            for name in EXAMPLE_LINK.findall(page.read_text(encoding="utf-8"))
+        }
+        assert sorted(linked - set(IDS)) == []
 
     def test_the_slug_is_mysts(self):
         assert _slug("`page` and `pages`") == "page-and-pages"
@@ -422,6 +447,66 @@ class TestTheGalleryCoversTheLanguage:
         assert any("camera retreated" in note for note in notes)
 
 
+#: Every comic script of the gallery.
+SCRIPTS = [path for path in DOCUMENTS if path.suffix == ".script"]
+
+#: How a keyword of each pattern opens a line: the line, with `{}` where the keyword goes.
+OPENINGS = {
+    "PANEL_HEADING": "{} 1",
+    "PAGE_HEADING": "{} 1",
+    "PANEL_COUNT": "two {}",
+    "CAPTION_LABEL": "{}: Midnight.",
+    "SFX_LINE": "{}: BLAM",
+}
+KEYWORDS = [
+    (name, word) for name in OPENINGS for word in script_forms.keywords(getattr(script_front, name))
+]
+
+
+class TestTheGalleryCoversTheScriptFormat:
+    """Every form of the comic-script format is written in some script of the gallery (#241).
+
+    The forms are the script frontend's own: the words of its tables, the keywords its
+    patterns open a line with, each key a panel takes as a directive, and the forms of line
+    `tests/script_forms.py` lists. A script is read as the frontend reads it, so a word in
+    prose or in a comment is not a form. A word added to a table, or a keyword to a pattern,
+    fails here until a script writes it.
+    """
+
+    def test_every_form_is_written(self):
+        written = set[str]().union(*(script_forms.read_file(path) for path in SCRIPTS))
+        assert sorted(script_forms.offered() - written) == []
+
+    def test_every_table_and_pattern_is_read_or_excused(self):
+        """A table or a pattern the frontend gains is read, or said why not, before a form it
+        holds can go without an example."""
+        public = {
+            name
+            for name, value in vars(script_front).items()
+            if not name.startswith("_") and isinstance(value, (re.Pattern, dict, set, frozenset))
+        }
+        assert public == script_forms.READ.keys() | script_forms.NOT_READ.keys()
+        assert script_forms.READ.keys().isdisjoint(script_forms.NOT_READ)
+
+    @pytest.mark.parametrize(("name", "word"), KEYWORDS, ids=[f"{n}-{w}" for n, w in KEYWORDS])
+    def test_a_keyword_read_from_a_pattern_opens_its_line(self, name: str, word: str):
+        pattern: re.Pattern[str] = getattr(script_front, name)
+        assert pattern.match(OPENINGS[name].format(word))
+
+    def test_the_other_heading_and_sound_patterns_open_with_the_same_keywords(self):
+        assert script_forms.keywords(script_front.PANEL_WITH_DESCRIPTION) == (
+            script_forms.keywords(script_front.PANEL_HEADING)
+        )
+        assert script_forms.keywords(script_front.BARE_SFX) == (
+            script_forms.keywords(script_front.SFX_LINE)
+        )
+
+    @pytest.mark.parametrize("key", sorted(script_forms.REFUSED))
+    def test_a_key_left_out_of_the_directives_is_refused_as_one(self, key: str):
+        with pytest.raises(ScriptSyntaxError):
+            parse_script(f"---\ncast: {{A: {{reference: alice}}}}\n---\nPANEL 1\n@{key}: []\n")
+
+
 class TestFiguresAPictureDraws:
     """The gallery shows a cast the picture draws (#71), and it is what it claims to be."""
 
@@ -631,6 +716,91 @@ class TestWhatADocumentWrites:
         assert {"ShotType.wide", "Place.docks"} <= written.values
         assert {"PlacementZone.top_left", "PlacementZone.middle_center"}.isdisjoint(written.values)
         assert "document.panels" not in written.properties
+
+
+class TestWhatAScriptWrites:
+    """The script coverage is only as good as its reading (`tests/script_forms.py`)."""
+
+    FRONT = (
+        "---\ncast:\n  ALICE: {reference: alice, at: left_third}\n"
+        "  BOB: {reference: bob, at: right_third}\n---\n"
+    )
+
+    def _read(self, body: str) -> frozenset[str]:
+        return script_forms.read(self.FRONT + body)
+
+    def test_a_parenthetical_in_prose_or_in_a_comment_writes_nothing(self):
+        forms = script_forms.read(
+            "---\n# BOB (yell)\ncast: {BOB: {reference: bob}}\n---\n"
+            "PANEL 1\nBob turns away (whisper), and waits.\n"
+        )
+        assert {"(yell) on a cue", "(whisper) on a cue"}.isdisjoint(forms)
+        assert "a panel heading alone" in forms
+
+    def test_the_line_under_a_cue_is_its_text_whatever_it_looks_like(self):
+        forms = self._read("PANEL 1\nALICE\nBOB (yell)\n")
+        assert "a cue alone on its line" in forms
+        assert "(yell) on a cue" not in forms
+
+    def test_a_side_counts_beside_an_off_panel_mark_only(self):
+        forms = self._read("PANEL 1\nKEEPER (O.S., left)\nWho is there?\n\nBOB (right)\nMe.\n")
+        assert {"(o.s.) or (os) on a cue", "(left) beside an off-panel mark"} <= forms
+        assert "(right) beside an off-panel mark" not in forms
+
+    def test_two_spellings_of_a_word_are_one_form(self):
+        assert self._read("PANEL 1\nALICE (pensee)\nHm.\n") == self._read(
+            "PANEL 1\nALICE (pensée)\nHm.\n"
+        )
+
+    def test_a_word_the_frontend_does_not_look_up_is_no_form(self):
+        """`(O.S)`, its last dot missing, is a note to the artist: the frontend looks a word
+        up as it is written, and folding only names the form a word it found is."""
+        assert "(o.s.) or (os) on a cue" not in self._read("PANEL 1\nALICE (O.S)\nHi.\n")
+
+    def test_markdown_counts_on_a_heading_and_not_on_prose(self):
+        assert "a heading in Markdown, after #" in self._read("## PANEL 1\nAlice waits.\n")
+        assert "a heading in Markdown, after #" not in self._read("PANEL 1\n## Alice waits.\n")
+
+    def test_a_directive_writes_its_key_and_its_words(self):
+        forms = self._read("PANEL 1\n@shot: GP\n@angle: high\n@cast: {BOB: null}\n")
+        assert {
+            "@shot",
+            "@shot: gp",
+            "@angle",
+            "@angle in English",
+            "@cast",
+            "@cast leaving somebody out with null",
+        } <= forms
+
+    def test_a_page_heading_counts_its_panels_or_carries_a_note(self):
+        forms = self._read("PAGE ONE (one panel)\nPANEL 1\n\nPAGE TWO (splash)\nPANEL 2\n")
+        assert {
+            "a PAGE heading with a count",
+            "panels counted on a page heading",
+            "a PAGE heading with a note that is not a count",
+            "more than one page",
+        } <= forms
+
+    def test_a_panel_before_the_first_page(self):
+        before = "a panel before the first PAGE heading"
+        assert before in self._read("PANEL 1\n\nPAGE ONE\nPANEL 2\n")
+        assert before not in self._read("PAGE ONE\nPANEL 1\n")
+
+    def test_a_voice_over_is_on_a_cue_or_on_a_caption_as_it_is_written(self):
+        forms = self._read("PANEL 1\nALICE (V.O.)\nLater.\n\nCAPTION (voice over): Much later.\n")
+        assert "(v.o.) or (vo) on a cue" in forms
+        assert "(voice over) or (voice-over) or (voiceover) on a caption" in forms
+        assert "(v.o.) or (vo) on a caption" not in forms
+
+    def test_a_cue_in_lower_case_and_a_stressed_word(self):
+        forms = script_forms.read(
+            "---\ncast: {alice: {reference: alice}}\n---\nPANEL 1\nalice: I _told_ you.\n"
+        )
+        assert {
+            "a cue in lower case, a cast id",
+            "a cue with its line after a colon",
+            "a stressed word",
+        } <= forms
 
 
 class TestTheGalleryFont:

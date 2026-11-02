@@ -19,8 +19,8 @@ things:
 - **nulls**, where they are written: a null takes away what a panel would inherit.
 
 A comic script is read through its front matter and its `@` directives, which are YAML and
-mean what the same keys mean in a scene. Its prose, cues and dialogue are the script
-frontend's own vocabulary, and another test's business (#241).
+mean what the same keys mean in a scene. Its headings, cues and captions are the script
+frontend's own vocabulary, which `tests/script_forms.py` reads (#241).
 """
 
 from collections.abc import Iterable
