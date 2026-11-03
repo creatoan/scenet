@@ -25,10 +25,12 @@ from fontTools.ttLib import TTFont
 from scenet import (
     BalloonKind,
     CaptionKind,
+    PuppetSpec,
     ScriptSyntaxError,
     compile_book_file,
     compile_document,
     default_library,
+    load_puppet,
     parse_script,
     pipeline,
     render,
@@ -307,6 +309,16 @@ def _book(name: str) -> Book:
     return compile_book_file(GALLERY / name)
 
 
+def _gallery_puppets() -> dict[str, PuppetSpec]:
+    """The puppets the gallery ships beside its examples, by the path they are cast by."""
+    return {
+        name: load_puppet(GALLERY / name)
+        for entry in ENTRIES
+        for name in entry.get("files", [])
+        if name.endswith(".puppet.yaml")
+    }
+
+
 def _missing(offered: frozenset[str], written: set[str]) -> list[str]:
     return sorted(offered - written - NOT_AUTHORABLE.keys())
 
@@ -349,7 +361,11 @@ class TestTheGalleryCoversTheLanguage:
             assert name not in written.properties | written.values | written.forms, name
 
     def test_every_pose_and_expression_of_every_puppet_is_drawn(self):
-        """Per puppet: a face looked at on Alice has not been looked at on Bob."""
+        """Per puppet: a face looked at on Alice has not been looked at on Bob.
+
+        The gallery's own puppets too, by the path its documents name them by: a pose
+        nobody draws is one nobody has looked at, whoever the puppet belongs to (#242).
+        """
         drawn = {
             (actor.reference, shown)
             for name in IDS
@@ -358,15 +374,30 @@ class TestTheGalleryCoversTheLanguage:
             for shown in (f"pose {actor.pose}", f"expression {actor.expression}")
         }
         library = default_library()
+        puppets = {name: library.get(name) for name in library.names()} | _gallery_puppets()
         declared = {
             (name, shown)
-            for name in library.names()
+            for name, puppet in puppets.items()
             for shown in [
-                *(f"pose {pose}" for pose in library.get(name).poses),
-                *(f"expression {face}" for face in library.get(name).expressions),
+                *(f"pose {pose}" for pose in puppet.poses),
+                *(f"expression {face}" for face in puppet.expressions),
             ]
         }
         assert sorted(declared - drawn) == []
+
+    def test_the_gallery_casts_a_puppet_of_its_own(self):
+        """Beside it, as its pictures and its font are, and cast by the example naming it."""
+        own = _gallery_puppets()
+        assert own
+        for entry in ENTRIES:
+            named = {name for name in entry.get("files", []) if name in own}
+            if named:
+                cast = {
+                    actor.reference
+                    for result in _book(entry["file"]).panels.values()
+                    for actor in result.core.actors
+                }
+                assert named <= cast, entry["file"]
 
     def test_a_document_has_more_than_one_page(self):
         """Pages side by side, as `scenet build` and the playground draw them."""

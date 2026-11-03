@@ -3,7 +3,8 @@
 The playground is the project's shop window and its first tutorial: an output it cannot show
 is a gap. So every export for image models has a tab of its own, the screen-reader text has
 one, and every option of `scenet build` is either something the playground shows or says why
-it is not -- a new flag without an entry here fails, until someone decides which it is.
+it is not -- a new flag without an entry here fails, until someone decides which it is. The
+same holds the other way: every kind of file a document names can be added to it (#242).
 """
 
 import argparse
@@ -61,6 +62,12 @@ def test_the_screen_reader_text_has_a_tab():
 
 def test_the_files_beside_the_document_have_a_tab():
     assert "tab-files" in _ids()
+
+
+def test_every_kind_of_file_a_document_names_can_be_added():
+    """A font, a picture and a puppet of your own: what a document reads beside it (#242)."""
+    assert {"add-font", "add-image", "add-puppet"} <= _ids()
+    assert re.search(r'id="puppet-file"[^>]*\baccept="\.yaml"', PAGE)
 
 
 def test_every_build_option_is_shown_or_says_why_not():
