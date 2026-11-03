@@ -10,6 +10,7 @@ file, and otherwise where the document names it.
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pydantic
 import pytest
@@ -20,6 +21,7 @@ from scenet.assets.contract import (
     PUPPET_RULE,
     PUPPET_SUFFIX,
     PuppetFileError,
+    PuppetLibrary,
     PuppetSpec,
     is_puppet_file,
     library_for,
@@ -182,9 +184,34 @@ class TestTheLibrary:
         library = default_library()
         assert library_for({"a": "alice"}, None, library) is library
 
-    def test_the_shipped_library_is_read_once(self):
-        """As the reference says: not once per panel a document compiles or checks."""
-        assert default_library() is default_library()
+    @pytest.mark.parametrize(
+        ("check", "text"),
+        [
+            (
+                diagnose_source,
+                "cast: {a: {reference: alice}}\npanels:\n  one: {}\n  two: {}\n  three: {}\n",
+            ),
+            (
+                diagnose_script,
+                "---\ncast: {A: {reference: alice}}\n---\n\nPANEL 1\n\nA\nOne.\n"
+                "\nPANEL 2\n\nA\nTwo.\n",
+            ),
+        ],
+    )
+    def test_a_check_reads_the_shipped_library_once(
+        self, check: Any, text: str, monkeypatch: pytest.MonkeyPatch
+    ):
+        """As the reference says: once per document, not once per panel it checks."""
+        reads: list[Path] = []
+        original = PuppetLibrary.from_directory.__func__
+
+        def counted(cls: type[PuppetLibrary], directory: Path) -> PuppetLibrary:
+            reads.append(directory)
+            return original(cls, directory)
+
+        monkeypatch.setattr(PuppetLibrary, "from_directory", classmethod(counted))
+        assert check(text) == []
+        assert len(reads) == 1
 
     def test_the_pose_a_puppet_must_declare_is_the_one_a_member_defaults_to(self):
         assert CastMember.model_fields["pose"].default == DEFAULT_POSE

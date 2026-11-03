@@ -184,8 +184,8 @@ or an agent — wants the whole list rather than one round trip per mistake.
 Beyond validating the IR, `check` resolves every cast member's `reference`, `pose` and
 `expression` against the puppet library — the IR alone cannot tell `pointing` from
 `smirking`, since both are just strings until something looks them up. The library is
-read once per document, only when there is a cast to check against it, so a document
-with no cast pays nothing extra. This is still the cheap pass: no solver, no font
+read once per document, however many panels it has, and a puppet file a cast names once
+per panel that casts it. This is still the cheap pass: no solver, no font
 metrics, no balloon placement — those are what `--deep` adds.
 
 ### Why this exists

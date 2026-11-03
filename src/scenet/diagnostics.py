@@ -981,9 +981,8 @@ def _diagnose_cast(
     The IR does not know the puppet library exists -- `CastMember.reference`, `.pose`
     and `.expression` are plain `str`s, and validating them is what tells `pointing`
     from `smirking`. This runs after `PanelIR.model_validate` succeeds, so it only sees
-    a cast that is otherwise well-formed, and it resolves the library lazily -- only
-    when the panel actually has a cast to check -- so a cast-less document costs
-    nothing extra.
+    a cast that is otherwise well-formed. A check is handed the library its document
+    resolved once; called alone, it reads the shipped one itself.
 
     Every actor is checked, not just the first, mirroring `_diagnose_scene`'s reasoning:
     a panel with three bad references should report three findings. A puppet file is read
@@ -1169,8 +1168,8 @@ def _diagnose_panel(
         source: Path it came from.
         prefix: Path to this panel within the document, so a finding inside a sequence
             points at the panel it is in rather than at the top level.
-        library: Puppet library to resolve cast references against. Resolved lazily
-            (see `_diagnose_cast`) when not given.
+        library: Puppet library to resolve cast references against: the one the whole
+            document resolved. Left out, the shipped one, read for this panel alone.
         deep: Also run the full compiler once the cheap checks come back clean, to
             reach `layout` and `balloon-placement` -- rules the cheap pass cannot
             produce because they only surface once the solver runs.
@@ -1508,8 +1507,7 @@ def diagnose_source(
     Beyond IR validation, every cast member's `reference`, `pose` and `expression` is
     resolved against a puppet library -- the IR alone cannot tell `pointing` from
     `smirking`, so without this a document with a nonsense pose reports clean here and
-    then fails `build` with no rule and no location. The library is read once per call,
-    only when a panel actually has a cast.
+    then fails `build` with no rule and no location. The library is read once per call.
 
     Args:
         text: The document source, in the YAML surface syntax.
@@ -1537,6 +1535,8 @@ def diagnose_source(
     if data is None:
         return refused
     base = _folder(source, base)
+    # Once per document, not once per panel: every panel resolves its cast against it.
+    library = library or default_library()
 
     # A document with a top-level `panels:` key is a sequence, and validating it as a
     # single panel reports `panels` as an unknown key -- a confident, wrong diagnostic on
@@ -1645,6 +1645,8 @@ def diagnose_script(
 
     panels = document.panels
     base = _folder(source, base)
+    # Once per document, not once per panel: every panel resolves its cast against it.
+    library = library or default_library()
     found = _diagnose_script_cast(text, panels, source, library=library, base=base)
     found += _diagnose_script_lettering(text, panels, source, base=base)
     found += _diagnose_script_setting(text, document, source, base=base)

@@ -61,7 +61,7 @@ nose, a mouth, each riding a joint at an offset, with a size. Declare the ones y
 has, in pairs where they come in pairs. See [faces](../reference/asset_contract.md#faces).
 
 **`poses`** are named sets of joint angles. Joints you leave out keep their rest angle. A
-cast member that names no pose gets `standing_neutral`, so declare one.
+cast member that names no pose gets `standing_neutral`, so every puppet must declare one.
 
 **`expressions`** are named states of the face's features — a brow raised, eyes wide, a mouth
 open. A cast member that names none gets `neutral`, so a puppet that declares expressions
@@ -176,6 +176,7 @@ wrong produces a figure that is subtly wrong with nothing to point at:
 | A joint cycle | "sits in a cycle" |
 | A part, anchor, feature or pose naming a joint that does not exist | "references unknown joint" |
 | `gaze.origin` not among the anchors | "is not a declared anchor" |
+| No `standing_neutral` pose | "declares no pose 'standing_neutral'" |
 | One of a pair of features without the other | "is declared without its pair" |
 | Expressions with no features to move | "declares expressions but no face features" |
 | Expressions without `neutral` | "declares expressions but not 'neutral'" |

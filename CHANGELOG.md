@@ -116,6 +116,11 @@ below 1.0 means.
 - **A fault in a puppet is said at the key that is wrong.** The checks of a whole puppet — a
   landmark out of order, a joint naming a parent that does not exist — reported it at the top of
   the file; each now names its key, worded as before.
+- **A puppet must declare `standing_neutral`**, the pose a cast member gets when it names none.
+  Without it every such member was `unknown-pose`, each on its own line, and nothing said the
+  puppet was what was wrong; now it is one finding, at the puppet's `poses`.
+- **`scenet check` reads the shipped puppets once per document**, as its reference always said,
+  rather than once for every panel it checks.
 - **A numbered line from somebody nobody draws is a line.** In a comic script,
   `1. PHONE (OP): Ring.` was read as prose, without a word, though `PHONE (OP): Ring.` is a
   line: a lettering item's number was set aside only before a cast member's cue. Somebody heard

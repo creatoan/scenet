@@ -30,6 +30,7 @@ from scenet.safe_yaml import load
 
 __all__ = [
     "DEFAULT_LIBRARY_PATH",
+    "DEFAULT_POSE",
     "PUPPET_RULE",
     "PUPPET_SUFFIX",
     "AnchorSpec",
@@ -59,6 +60,9 @@ __all__ = [
 #: What a puppet file's name ends in. A cast member's `reference` that ends in it names a
 #: file, relative to the document, rather than a shipped puppet (#242).
 PUPPET_SUFFIX = ".puppet.yaml"
+
+#: The pose a cast member gets when it does not ask for one, which every puppet declares.
+DEFAULT_POSE = "standing_neutral"
 
 #: The rule every fault in a puppet file a document names is reported under.
 PUPPET_RULE = "puppet-file"
@@ -502,6 +506,29 @@ class PuppetSpec(Strict):
         for pose_name, angles in self.poses.items():
             for joint in angles:
                 require(joint, f"pose '{pose_name}'", "poses", pose_name, joint)
+        return self
+
+    @model_validator(mode="after")
+    def check_default_pose(self) -> Self:
+        """Require the pose a cast member gets when it does not ask for one.
+
+        Returns:
+            The validated puppet.
+
+        Raises:
+            ValueError: The puppet declares no `standing_neutral`.
+
+        The counterpart of the `neutral` expression, and for the same reason: without
+        it, every member that names no pose -- most of them -- fails on its own line, and
+        nothing says the puppet is what is wrong. A pose is looked up whether or not the
+        puppet declares any, so this is required of every puppet.
+        """
+        if DEFAULT_POSE not in self.poses:
+            raise _fault(
+                f"puppet '{self.name}' declares no pose '{DEFAULT_POSE}', which is what a "
+                "cast member gets when it does not ask for one",
+                "poses",
+            )
         return self
 
     @model_validator(mode="after")
