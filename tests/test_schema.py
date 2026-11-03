@@ -18,6 +18,7 @@ from jsonschema import Draft202012Validator
 
 from scenet.assets.contract import (
     DEFAULT_LIBRARY_PATH,
+    DEFAULT_POSE,
     BrowState,
     EyeState,
     Feature,
@@ -400,6 +401,12 @@ class TestPuppetSchema:
         landmarks = puppet_schema()["properties"]["landmarks"]
         assert landmarks["required"] == [landmark.value for landmark in Landmark]
 
+    def test_the_default_pose_is_required(self):
+        """Mirrors `check_default_pose`: a member that names no pose gets this one."""
+        schema = puppet_schema()
+        assert "poses" in schema["required"]
+        assert schema["properties"]["poses"]["required"] == [DEFAULT_POSE]
+
     PIP = (REPO / "examples" / "gallery" / "puppets" / "pip.puppet.yaml").read_text(
         encoding="utf-8"
     )
@@ -414,6 +421,7 @@ class TestPuppetSchema:
             ("  head_top: 0", "  crown: 0"),
             ("root_landmark: waist", "root_landmark: belly"),
             ("{parent: null, offset: [0, 0]}", "{parent: null, offset: [0]}"),
+            ("  standing_neutral:", "  standing_relaxed:"),
         ],
     )
     def test_a_slip_is_flagged(self, broken: str, where: str):

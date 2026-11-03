@@ -422,9 +422,9 @@ the editor suggests cannot drift from what compiles — see
 `--puppet`
 : Emit the schema for a [puppet file](../howto/add_your_own_character.md), the
   `*.puppet.yaml` a cast member names by its path in `reference:`. It requires every
-  landmark and a `head_top` of zero; what a schema cannot say — landmarks increasing
-  downward, a skeleton that is a tree, every joint a part or a pose names declared —
-  `scenet check` does, in the puppet file, on a document that casts it.
+  landmark, a `head_top` of zero and a `standing_neutral` pose; what a schema cannot say —
+  landmarks increasing downward, a skeleton that is a tree, every joint a part or a pose
+  names declared — `scenet check` does, in the puppet file, on a document that casts it.
 
 ```bash
 scenet schema -o panel.schema.json

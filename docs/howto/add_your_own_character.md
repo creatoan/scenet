@@ -26,9 +26,10 @@ any editor with a YAML language server does with this on the first line:
 ```
 
 It completes every key, landmark, face feature and expression state, and flags a key misspelt,
-a landmark missing or a part that is neither a whole bone nor a whole blob. `scenet schema
---puppet` prints the same schema. What it cannot see — landmarks out of order, a joint that does
-not exist — is the rest of the table below, which `scenet check` reports.
+a landmark or `standing_neutral` missing, or a part that is neither a whole bone nor a whole
+blob. `scenet schema --puppet` prints the same schema. What it cannot see — landmarks out of
+order, a joint that does not exist — is the rest of the table below, which `scenet check`
+reports.
 
 ## Section by section
 

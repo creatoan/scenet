@@ -410,6 +410,9 @@
         },
         "type": "object"
       },
+      "required": [
+        "standing_neutral"
+      ],
       "title": "Poses",
       "type": "object"
     },
@@ -433,7 +436,8 @@
     "units_per_head",
     "landmarks",
     "joints",
-    "face"
+    "face",
+    "poses"
   ],
   "title": "Scenet puppet",
   "type": "object"

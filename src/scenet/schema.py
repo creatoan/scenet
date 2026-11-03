@@ -28,7 +28,7 @@ import inspect
 from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
-from scenet.assets.contract import Landmark, PuppetSpec
+from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
 from scenet.compose import DESCRIPTION_KEY, DIRECTION_KEY
 from scenet.ir import PUPPET_KEYS, PageLayout, PanelIR, Predicate
 from scenet.places import Place
@@ -83,10 +83,10 @@ def puppet_schema() -> dict[str, Any]:
     """The schema for a puppet file, a `*.puppet.yaml` a cast member names by its path (#242).
 
     A puppet is written as the model reads it, so this is the model's own schema, plus
-    what of its validators a schema can state: every landmark is there, and `head_top`
-    is zero. What it cannot say -- landmarks increasing downward, a skeleton that is a
-    tree, every joint a part or a pose names declared -- `scenet check` does, in the
-    puppet file, on a document that casts it.
+    what of its validators a schema can state: every landmark is there, `head_top` is
+    zero, and the default pose is declared. What it cannot say -- landmarks increasing
+    downward, a skeleton that is a tree, every joint a part or a pose names declared --
+    `scenet check` does, in the puppet file, on a document that casts it.
 
     Returns:
         A JSON Schema (draft 2020-12) for a puppet file.
@@ -94,10 +94,11 @@ def puppet_schema() -> dict[str, Any]:
     Example:
         >>> from scenet.schema import puppet_schema
         >>> puppet_schema()["required"]
-        ['name', 'units_per_head', 'landmarks', 'joints', 'face']
+        ['name', 'units_per_head', 'landmarks', 'joints', 'face', 'poses']
     """
     schema = PuppetSpec.model_json_schema()
     _every_landmark(schema)
+    _default_pose(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet puppet"
     return schema
@@ -203,6 +204,18 @@ def _every_landmark(schema: dict[str, Any]) -> None:
             "description": "The origin every other landmark is measured down from.",
         }
     }
+
+
+def _default_pose(schema: dict[str, Any]) -> None:
+    """Mirror `check_default_pose`: every puppet declares the pose a member gets unasked.
+
+    The model gives `poses` a default, so it is not required there; the validator makes
+    it so, since a puppet without `standing_neutral` fails every member that names no
+    pose.
+    """
+    schema["required"].append("poses")
+    poses: dict[str, Any] = schema["properties"]["poses"]
+    poses["required"] = [DEFAULT_POSE]
 
 
 def _accept_cast_removal(schema: dict[str, Any]) -> None:

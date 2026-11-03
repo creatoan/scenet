@@ -24,9 +24,9 @@ below 1.0 means.
   it otherwise. `scenet check` and `scenet build` refuse a puppet file given as a document.
 - **`scenet schema --puppet`**, the JSON Schema for a puppet file, so an editor completes and
   checks a `*.puppet.yaml` as it does a panel. It is the model's own, plus every landmark
-  required and `head_top` zero. The VS Code extension ships it for every `*.puppet.yaml`, the
-  site publishes it beside `artwork.schema.json`, and a test fails if the site leaves off a
-  schema the extension ships.
+  required, `head_top` zero and a `standing_neutral` pose. The VS Code extension ships it for
+  every `*.puppet.yaml`, the site publishes it beside `artwork.schema.json`, and a test fails
+  if the site leaves off a schema the extension ships.
 - **Pip, the gallery's own puppet (#242).** A child five heads tall, where alice and bob are
   both seven and a half, with a knot of hair, cast beside alice in example 69 in every pose and
   expression it has. The coverage test holds a puppet the gallery ships to that as it holds the
