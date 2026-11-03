@@ -9,6 +9,7 @@ gets reversed by accident later.
 | [Design decisions](design_decisions.md) | The load-bearing choices, and what each one costs |
 | [Prior art](prior_art.md) | What already exists, what was taken from it, and what was deliberately not used |
 | [Implementation status](status.md) | What actually runs, as opposed to what is specified |
+| [PDF print spike](pdf_print_spike.md) | Prototype findings and design decisions for the PDF emitter |
 
 ## The one-paragraph version
 
@@ -63,4 +64,5 @@ Each of these is argued in full in [design decisions](design_decisions.md) and
 design_decisions
 prior_art
 status
+pdf_print_spike
 ```
