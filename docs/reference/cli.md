@@ -397,7 +397,7 @@ close an import cycle.
 ## `scenet schema`
 
 ```
-scenet schema [-o OUTPUT] [--scene | --artwork]
+scenet schema [-o OUTPUT] [--scene | --artwork | --puppet]
 ```
 
 Emits the JSON Schema for a panel document, derived from the same pydantic models the
@@ -419,10 +419,18 @@ the editor suggests cannot drift from what compiles — see
   schema cannot say — every point on the picture, every region a simple polygon, the size
   the picture's own — `scenet check` does.
 
+`--puppet`
+: Emit the schema for a [puppet file](../howto/add_your_own_character.md), the
+  `*.puppet.yaml` a cast member names by its path in `reference:`. It requires every
+  landmark and a `head_top` of zero; what a schema cannot say — landmarks increasing
+  downward, a skeleton that is a tree, every joint a part or a pose names declared —
+  `scenet check` does, in the puppet file, on a document that casts it.
+
 ```bash
 scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
 scenet schema --artwork -o artwork.schema.json
+scenet schema --puppet -o puppet.schema.json
 ```
 
 The output is sorted and indented, so it is stable under version control.

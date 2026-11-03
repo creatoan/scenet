@@ -20,7 +20,7 @@ from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.pipeline import FRONTENDS, Book, compile_book_file
-from scenet.schema import artwork_schema, panel_schema, scene_schema
+from scenet.schema import artwork_schema, panel_schema, puppet_schema, scene_schema
 from scenet.watch import watch_loop
 
 DESCRIPTION = "Compile a semantic comic-panel description into SVG."
@@ -199,6 +199,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--artwork",
         action="store_true",
         help="emit the schema for an artwork contract, the *.art.yaml beside a picture",
+    )
+    which.add_argument(
+        "--puppet",
+        action="store_true",
+        help="emit the schema for a puppet file, the *.puppet.yaml a cast member names",
     )
 
     mcp = subcommands.add_parser(
@@ -658,8 +663,13 @@ def run_schema(args: argparse.Namespace) -> int:
     """
     if _refuse_directory(args.output):
         return 2
-    which = "artwork" if args.artwork else "scene" if args.scene else "panel"
-    schema = {"panel": panel_schema, "scene": scene_schema, "artwork": artwork_schema}[which]()
+    which = next((kind for kind in ("scene", "artwork", "puppet") if getattr(args, kind)), "panel")
+    schema = {
+        "panel": panel_schema,
+        "scene": scene_schema,
+        "artwork": artwork_schema,
+        "puppet": puppet_schema,
+    }[which]()
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if args.output is None:
         _print_document(document)

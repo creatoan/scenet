@@ -20,9 +20,11 @@ cast:
   alice: {reference: alice}
 ```
 
-For a multi-panel document use `scene.schema.json` instead, and for an
+For a multi-panel document use `scene.schema.json` instead, for an
 [artwork contract](../reference/asset_contract.md#artwork-contracts) — the `*.art.yaml` beside a
-picture, declaring the figures it draws — `artwork.schema.json`.
+picture, declaring the figures it draws — `artwork.schema.json`, and for a
+[puppet of your own](add_your_own_character.md) — the `*.puppet.yaml` a cast member names by its
+path — `puppet.schema.json`.
 
 That URL always serves the schema of the **latest release**. To validate against the release
 you have installed instead, put its minor version in the path — each release's schemas stay
@@ -54,8 +56,8 @@ A small extension bundles the same schemas plus a side-by-side preview:
 
 It contributes:
 
-- Schema association for `*.panel.yaml`, `*.scene.yaml` and `*.art.yaml`, so no `$schema`
-  comment is needed.
+- Schema association for `*.panel.yaml`, `*.scene.yaml`, `*.art.yaml` and `*.puppet.yaml`, so
+  no `$schema` comment is needed.
 - **Highlighting for `.script` comic scripts**, the same as the playground's: page and
   panel headings in Dark Horse's layout and in French, `@` directives, captions and
   `CAP/NAME`, sound effects, cues and their parentheticals, balloon numbers, dialogue
@@ -104,9 +106,11 @@ Run it again after a fix to see them go.
 ```bash
 scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
+scenet schema --artwork -o artwork.schema.json
+scenet schema --puppet -o puppet.schema.json
 ```
 
-Both go to stdout without `-o`. This is the same command CI runs, and the same one that
+Each goes to stdout without `-o`. This is the same command CI runs, and the same one that
 produces the copies shipped in the extension.
 
 From Python:

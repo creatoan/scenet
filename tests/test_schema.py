@@ -16,6 +16,14 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+from scenet.assets.contract import (
+    DEFAULT_LIBRARY_PATH,
+    BrowState,
+    EyeState,
+    Feature,
+    Landmark,
+    MouthState,
+)
 from scenet.cli import main
 from scenet.frontends.common import KNOWN_VERBS
 from scenet.ir import (
@@ -39,13 +47,14 @@ from scenet.ir import (
     Weather,
 )
 from scenet.places import Place
-from scenet.schema import artwork_schema, panel_schema, scene_schema
+from scenet.schema import artwork_schema, panel_schema, puppet_schema, scene_schema
 
 REPO = Path(__file__).resolve().parents[1]
 SHIPPED = {
     "panel": REPO / "editor" / "schemas" / "panel.schema.json",
     "scene": REPO / "editor" / "schemas" / "scene.schema.json",
     "artwork": REPO / "editor" / "schemas" / "artwork.schema.json",
+    "puppet": REPO / "editor" / "schemas" / "puppet.schema.json",
 }
 
 EXAMPLES = sorted(
@@ -56,7 +65,12 @@ EXAMPLES = sorted(
 
 
 def generated(kind: str) -> str:
-    schema = {"panel": panel_schema, "scene": scene_schema, "artwork": artwork_schema}[kind]()
+    schema = {
+        "panel": panel_schema,
+        "scene": scene_schema,
+        "artwork": artwork_schema,
+        "puppet": puppet_schema,
+    }[kind]()
     return json.dumps(schema, indent=2, sort_keys=True) + "\n"
 
 
@@ -297,7 +311,7 @@ class TestShippedSchemasAreCurrent:
     completions that no longer compile. CI runs these, so that cannot ship.
     """
 
-    @pytest.mark.parametrize("kind", ["panel", "scene", "artwork"])
+    @pytest.mark.parametrize("kind", ["panel", "scene", "artwork", "puppet"])
     def test_shipped_schema_is_up_to_date(self, kind: str):
         path = SHIPPED[kind]
         assert path.exists(), f"{path} is missing; run `npm run schemas` in editor/"
@@ -349,6 +363,96 @@ keep_out:
         }
         assert associations["*.art.yaml"] == "./schemas/artwork.schema.json"
         assert "--artwork -o editor/schemas/artwork.schema.json" in manifest["scripts"]["schemas"]
+
+
+class TestPuppetSchema:
+    """The schema an editor checks a `*.puppet.yaml` against, a document's own puppet (#242)."""
+
+    PUPPETS = sorted(
+        [
+            *DEFAULT_LIBRARY_PATH.glob("*.puppet.yaml"),
+            *(REPO / "examples").rglob("*.puppet.yaml"),
+        ]
+    )
+
+    def test_it_is_a_valid_schema(self):
+        Draft202012Validator.check_schema(puppet_schema())
+
+    def test_there_are_puppets_to_check(self):
+        assert {path.name for path in self.PUPPETS} >= {
+            "alice.puppet.yaml",
+            "bob.puppet.yaml",
+            "pip.puppet.yaml",
+        }
+
+    @pytest.mark.parametrize("path", PUPPETS, ids=lambda path: path.name)
+    def test_every_puppet_that_loads_is_valid(self, path: Path):
+        assert problems(puppet_schema(), path.read_text(encoding="utf-8")) == []
+
+    @pytest.mark.parametrize("enum", [Landmark, Feature, BrowState, EyeState, MouthState])
+    def test_every_enum_member_reaches_the_schema(self, enum: type[StrEnum]):
+        document = json.dumps(puppet_schema())
+        for member in enum:
+            assert f'"{member.value}"' in document, f"{enum.__name__}.{member.name} is missing"
+
+    def test_every_landmark_is_required(self):
+        """Mirrors `check_landmarks_complete_and_ordered`: any shot may crop at any of them."""
+        landmarks = puppet_schema()["properties"]["landmarks"]
+        assert landmarks["required"] == [landmark.value for landmark in Landmark]
+
+    PIP = (REPO / "examples" / "gallery" / "puppets" / "pip.puppet.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    @pytest.mark.parametrize(
+        ("broken", "where"),
+        [
+            ("units_per_head: 100", "units_per_hed: 100"),
+            ("units_per_head: 100", "units_per_head: 0"),
+            ("  knees: 375", ""),
+            ("  head_top: 0", "  head_top: 5"),
+            ("  head_top: 0", "  crown: 0"),
+            ("root_landmark: waist", "root_landmark: belly"),
+            ("{parent: null, offset: [0, 0]}", "{parent: null, offset: [0]}"),
+        ],
+    )
+    def test_a_slip_is_flagged(self, broken: str, where: str):
+        assert broken in self.PIP
+        assert problems(puppet_schema(), self.PIP.replace(broken, where, 1))
+
+    @pytest.mark.parametrize(
+        "part",
+        [
+            "{from: hip_l, to: knee_l, width: 0}",
+            "{from: hip_l, width: 20}",
+            "{at: head, radius: 50, width: 20}",
+            "{at: head}",
+        ],
+    )
+    def test_a_part_that_is_neither_a_whole_bone_nor_a_whole_blob_is_flagged(self, part: str):
+        puppet = yaml.safe_load(self.PIP)
+        puppet["parts"] = [yaml.safe_load(part)]
+        errors = list(Draft202012Validator(puppet_schema()).iter_errors(puppet))
+        assert errors
+
+    def test_the_command_writes_it(self, tmp_path: Path):
+        target = tmp_path / "puppet.schema.json"
+        assert main(["schema", "--puppet", "-o", str(target)]) == 0
+        assert target.read_text(encoding="utf-8") == generated("puppet")
+
+    def test_it_is_one_schema_at_a_time(self, capsys):
+        with pytest.raises(SystemExit) as exit_info:
+            main(["schema", "--puppet", "--artwork"])
+        assert exit_info.value.code == 2
+        assert "not allowed with argument" in capsys.readouterr().err
+
+    def test_the_editor_checks_puppets_against_it(self):
+        manifest = json.loads((REPO / "editor" / "package.json").read_text(encoding="utf-8"))
+        associations = {
+            entry["fileMatch"]: entry["url"] for entry in manifest["contributes"]["yamlValidation"]
+        }
+        assert associations["*.puppet.yaml"] == "./schemas/puppet.schema.json"
+        assert "--puppet -o editor/schemas/puppet.schema.json" in manifest["scripts"]["schemas"]
 
 
 class TestSchemaCommand:

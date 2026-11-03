@@ -314,6 +314,15 @@ def _contents(root: Path) -> dict[str, bytes]:
     }
 
 
+class TestPublishedSchemas:
+    def test_every_schema_the_editor_ships_is_published(self):
+        """A document's schema comment names the site's copy, so none may be left off it."""
+        _load("build_spec")
+        build_site = _load("build_site")
+        shipped = sorted(path.name for path in (ROOT / "editor" / "schemas").glob("*.json"))
+        assert sorted(build_site.PUBLISHED_SCHEMAS) == shipped
+
+
 class TestArchive:
     """A release's site travels as a zip attached to the release."""
 

@@ -56,6 +56,13 @@ DOCS_BUILD = ROOT / "docs" / "_build" / "html"
 DOCTREES = ROOT / "docs" / "_build" / "doctrees"
 PLAYGROUND = ROOT / "playground"
 SCHEMAS = ROOT / "editor" / "schemas"
+#: Every schema the editor ships, served at a stable URL a document's schema comment names.
+PUBLISHED_SCHEMAS = (
+    "panel.schema.json",
+    "scene.schema.json",
+    "artwork.schema.json",
+    "puppet.schema.json",
+)
 
 
 def run(command: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> None:
@@ -138,7 +145,7 @@ def compose(out: Path, *, dev: bool) -> None:
 
     schemas = out / "schemas"
     schemas.mkdir(parents=True, exist_ok=True)
-    for name in ("panel.schema.json", "scene.schema.json", "artwork.schema.json"):
+    for name in PUBLISHED_SCHEMAS:
         shutil.copyfile(SCHEMAS / name, schemas / name)
 
     # Generated fresh from the sources rather than copied from the committed spec pack,
