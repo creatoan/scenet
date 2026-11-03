@@ -12,6 +12,20 @@ below 1.0 means.
 
 ### Added
 
+- **A puppet of your own, from a document (#242).** A cast member names a `*.puppet.yaml` file
+  by its path, relative to the document, as it names a font or a picture:
+  `reference: puppets/pip.puppet.yaml`. So `scenet check` and `scenet build` read it beside the
+  document, `--watch` rebuilds when it changes, the playground has **Puppet…** beside
+  **Font…** and **Image…**, and the MCP server takes it in `files`, where `list_puppets` now
+  describes it too. A reference that does not end in `.puppet.yaml` is a shipped puppet's name,
+  as before, and Panel Core records the reference as written, for the camera as for the actor.
+  A file that is absolute, missing or not a puppet is the new rule `puppet-file`: in the puppet
+  file, at the key that is wrong, when the document is checked as a file, and on the line naming
+  it otherwise. `scenet check` and `scenet build` refuse a puppet file given as a document.
+- **Pip, the gallery's own puppet (#242).** A child five heads tall, where alice and bob are
+  both seven and a half, with a knot of hair, cast beside alice in example 69 in every pose and
+  expression it has. The coverage test holds a puppet the gallery ships to that as it holds the
+  shipped ones, and the spec pack prints it after its example.
 - **The gallery writes the comic-script format in full (#241).** Six scripts, 63 to 68, each in
   a convention writers use: one kept in Markdown, a manga read right to left over two pages, two
   French planches that walk the shot ladder in abbreviations and in full, one written like a
@@ -94,6 +108,14 @@ below 1.0 means.
 
 ### Fixed
 
+- **Add your own character is rewritten around a puppet file a document casts (#242).** It said
+  puppets have no expressions, though both shipped ones have ten, and its sample puppet named
+  joints it never declared. It now shows the gallery's pip in full, as the file it is, says how
+  to cast one from a document, the command line, the playground, MCP and Python, and lists every
+  fault validation catches.
+- **A fault in a puppet is said at the key that is wrong.** The checks of a whole puppet — a
+  landmark out of order, a joint naming a parent that does not exist — reported it at the top of
+  the file; each now names its key, worded as before.
 - **A numbered line from somebody nobody draws is a line.** In a comic script,
   `1. PHONE (OP): Ring.` was read as prose, without a word, though `PHONE (OP): Ring.` is a
   line: a lettering item's number was set aside only before a cast member's cue. Somebody heard
