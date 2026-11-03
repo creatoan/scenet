@@ -86,6 +86,14 @@ below 1.0 means.
 
 ### Changed
 
+- **`scenet build --watch` keeps one file watcher open** (#266), where it opened and closed one
+  about ten times a second, and watches each folder without its subfolders: a document at the
+  root of a project no longer has its `.venv` or `node_modules` watched. The watcher moves only
+  when a rebuild reads other files, or a missing folder appears. A file is read and hashed again
+  only once its size or modification time moves, so fonts and pictures are no longer reread on
+  every poll, with or without `watchfiles`; touching a file still rebuilds nothing. A file
+  written less than two seconds before a poll is hashed again at the next one, so a save that
+  keeps both its size and its timestamp (FAT, some network shares) is still seen.
 - **A note in the playground is styled as information**, neutral and marked ℹ, not as an
   orange warning: nothing is wrong when the compiler says what it decided.
 - **The gallery's CI job drops the notes the manifest declares before code scanning**
