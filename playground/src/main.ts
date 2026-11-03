@@ -52,6 +52,7 @@ import {
 } from "./gallery";
 import { declaredImagePath, imageFileName, isContract } from "./images";
 import { composeMaps } from "./maps";
+import { declaredPuppetPath, puppetFileName } from "./puppets";
 import {
   chosenLayout,
   loadOptions,
@@ -161,6 +162,8 @@ const addFontButton = element<HTMLButtonElement>("add-font");
 const fontInput = element<HTMLInputElement>("font-file");
 const addImageButton = element<HTMLButtonElement>("add-image");
 const imageInput = element<HTMLInputElement>("image-file");
+const addPuppetButton = element<HTMLButtonElement>("add-puppet");
+const puppetInput = element<HTMLInputElement>("puppet-file");
 const kindLabel = element<HTMLSpanElement>("kind");
 const splitter = element<HTMLDivElement>("splitter");
 const outputPane = element<HTMLElement>("output-pane");
@@ -1101,6 +1104,34 @@ async function main(): Promise<void> {
   };
   addImageButton.addEventListener("click", () => imageInput.click());
   imageInput.addEventListener("change", () => void addImages());
+
+  // A puppet the author adds goes into the document's puppets/ folder, where a cast member's
+  // `reference: puppets/Name.puppet.yaml` finds it. Like a font, it is not kept across reloads
+  // and a share link does not carry it.
+  const addPuppets = async (): Promise<void> => {
+    if (compiler === undefined) return;
+    const added: string[] = [];
+    for (const file of Array.from(puppetInput.files ?? [])) {
+      const name = puppetFileName(file.name);
+      if (name === null) continue;
+      const path = declaredPuppetPath(name);
+      compiler.addFile(path, new Uint8Array(await file.arrayBuffer()));
+      added.push(path);
+    }
+    puppetInput.value = "";
+    if (added.length === 0) {
+      setStatus("A puppet must be a .puppet.yaml file.");
+      return;
+    }
+    await compileNow();
+    if (view === "files") render();
+    setStatus(
+      `Added ${added.join(", ")}. Cast it with reference: ${added[0]}. ` +
+        "Puppets stay in this tab only: a reload or a share link does not keep them.",
+    );
+  };
+  addPuppetButton.addEventListener("click", () => puppetInput.click());
+  puppetInput.addEventListener("change", () => void addPuppets());
 
   for (const [name, button] of Object.entries(tabs)) {
     button.addEventListener("click", () => {
