@@ -26,7 +26,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
 from scenet.assets.artwork import CONTRACT_SUFFIX
-from scenet.assets.contract import Landmark, PuppetLibrary, default_library
+from scenet.assets.contract import PUPPET_SUFFIX, Landmark, PuppetLibrary, default_library
 from scenet.assets.emanata import MIN_EMANATA_DETAIL, ResolvedEmanata, build_emanata
 from scenet.assets.face import MIN_FEATURE_RADIUS, FaceMark, ResolvedDisc, ResolvedStroke
 from scenet.assets.kinematics import ResolvedPuppet, resolve
@@ -47,14 +47,15 @@ from scenet.solve.balloons import (
 )
 
 REPO = Path(__file__).parent.parent
-# Documents only: not the manifest, and not a picture's artwork contract, which is YAML
-# beside the picture it describes rather than a document of its own.
+# Documents only: not the manifest, not a picture's artwork contract, which is YAML beside
+# the picture it describes rather than a document of its own, and not a puppet a document
+# casts by its path.
 DOCUMENTS = sorted(
     path
     for path in (REPO / "examples").rglob("*")
     if path.suffix in {".yaml", ".script"}
     and path.name != "manifest.yaml"
-    and not path.name.endswith(CONTRACT_SUFFIX)
+    and not path.name.endswith((CONTRACT_SUFFIX, PUPPET_SUFFIX))
 )
 EVERY_MARK = "[plewds, squeans, grawlixes, briffits]"
 SAYS = ", script: [{say: {by: a, text: 'What the--'}}]"

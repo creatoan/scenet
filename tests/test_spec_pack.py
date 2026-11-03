@@ -163,6 +163,21 @@ class TestSpecPack:
             assert all(f"`{note}`" in after for note in notes), entry["file"]
             assert after.startswith("It gives") == bool(notes), entry["file"]
 
+    def test_a_puppet_an_example_names_is_printed_after_it(self):
+        """A puppet file is text a model has to learn to write, as a contract is (#242)."""
+        body = part("gallery")
+        named = [
+            (entry["file"], name)
+            for entry in _manifest()
+            for name in entry.get("files", [])
+            if name.endswith(".puppet.yaml")
+        ]
+        assert named
+        for example, name in named:
+            after = body.split(f"`{example}`", 1)[1]
+            assert f"`{name}`" in after
+            assert (GALLERY / name).read_text(encoding="utf-8").strip() in after
+
     def test_every_file_an_example_names_is_called_what_it_is(self):
         """A font is not "a picture", nor its licence: each is named for what it is."""
         body = part("gallery")

@@ -1,0 +1,2 @@
+# The puppet is read relative to this document, and there is no such file beside it.
+cast: {kid: {reference: puppets/kid.puppet.yaml}}

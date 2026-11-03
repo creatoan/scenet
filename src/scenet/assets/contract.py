@@ -9,6 +9,7 @@ a set of joint angles and not a drawing. That avoids the combinatorial explosion
 one image per pose per expression per facing direction.
 """
 
+from collections.abc import Mapping
 from enum import StrEnum
 from itertools import pairwise
 from pathlib import Path
@@ -17,12 +18,20 @@ from typing import Annotated, Self
 import yaml
 from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
 
-from scenet.errors import AssetError, UnknownExpressionError, UnknownPoseError, UnknownPuppetError
-from scenet.paths import record_dependency
+from scenet.errors import (
+    AssetError,
+    RuleViolationError,
+    UnknownExpressionError,
+    UnknownPoseError,
+    UnknownPuppetError,
+)
+from scenet.paths import Folder, NamedFileError, read_model, record_dependency
 from scenet.safe_yaml import load
 
 __all__ = [
     "DEFAULT_LIBRARY_PATH",
+    "PUPPET_RULE",
+    "PUPPET_SUFFIX",
     "AnchorSpec",
     "BlobPart",
     "BonePart",
@@ -36,12 +45,33 @@ __all__ = [
     "JointSpec",
     "Landmark",
     "MouthState",
+    "PuppetFileError",
     "PuppetLibrary",
     "PuppetSpec",
     "Strict",
     "default_library",
+    "is_puppet_file",
+    "library_for",
     "load_puppet",
+    "load_puppet_file",
 ]
+
+#: What a puppet file's name ends in. A cast member's `reference` that ends in it names a
+#: file, relative to the document, rather than a shipped puppet (#242).
+PUPPET_SUFFIX = ".puppet.yaml"
+
+#: The rule every fault in a puppet file a document names is reported under.
+PUPPET_RULE = "puppet-file"
+
+
+def _fault(message: str, *loc: str | int) -> RuleViolationError:
+    """A puppet that is wrong at a key: said as it always was, and located at the key.
+
+    A validator of the whole puppet knows exactly which key it found wrong, and pydantic
+    would report it at the top of the file. This says where, so `scenet check` can put the
+    finding on the line of a puppet file the author has to open.
+    """
+    return RuleViolationError(message, rule=PUPPET_RULE, loc=loc)
 
 
 class Landmark(StrEnum):
@@ -352,19 +382,25 @@ class PuppetSpec(Strict):
         """
         missing = [landmark for landmark in Landmark if landmark not in self.landmarks]
         if missing:
-            raise ValueError(
+            raise _fault(
                 f"puppet '{self.name}' is missing landmarks {[m.value for m in missing]}; "
-                "every landmark is required because any shot type may crop there"
+                "every landmark is required because any shot type may crop there",
+                "landmarks",
             )
         if self.landmarks[Landmark.HEAD_TOP] != 0:
-            raise ValueError(f"puppet '{self.name}': head_top must be 0, it is the origin")
+            raise _fault(
+                f"puppet '{self.name}': head_top must be 0, it is the origin",
+                "landmarks",
+                Landmark.HEAD_TOP.value,
+            )
 
-        ordered = [self.landmarks[landmark] for landmark in Landmark]
-        for earlier, later in pairwise(ordered):
-            if later <= earlier:
-                raise ValueError(
+        for earlier, later in pairwise(Landmark):
+            if self.landmarks[later] <= self.landmarks[earlier]:
+                raise _fault(
                     f"puppet '{self.name}': landmarks must increase downward from head_top "
-                    f"to feet, but {later} follows {earlier}"
+                    f"to feet, but {self.landmarks[later]} follows {self.landmarks[earlier]}",
+                    "landmarks",
+                    later.value,
                 )
         return self
 
@@ -384,14 +420,22 @@ class PuppetSpec(Strict):
         defined position, so both are rejected here rather than discovered at pose time.
         """
         if self.root not in self.joints:
-            raise ValueError(f"puppet '{self.name}': root joint '{self.root}' is not defined")
+            raise _fault(f"puppet '{self.name}': root joint '{self.root}' is not defined", "root")
         if self.joints[self.root].parent is not None:
-            raise ValueError(f"puppet '{self.name}': root joint '{self.root}' must have no parent")
+            raise _fault(
+                f"puppet '{self.name}': root joint '{self.root}' must have no parent",
+                "joints",
+                self.root,
+                "parent",
+            )
 
         for name, joint in self.joints.items():
             if joint.parent is not None and joint.parent not in self.joints:
-                raise ValueError(
-                    f"puppet '{self.name}': joint '{name}' names unknown parent '{joint.parent}'"
+                raise _fault(
+                    f"puppet '{self.name}': joint '{name}' names unknown parent '{joint.parent}'",
+                    "joints",
+                    name,
+                    "parent",
                 )
 
         # Every joint must reach the root, which rules out both cycles and orphans.
@@ -400,7 +444,12 @@ class PuppetSpec(Strict):
             cursor: str | None = name
             while cursor is not None:
                 if cursor in seen:
-                    raise ValueError(f"puppet '{self.name}': joint '{name}' sits in a cycle")
+                    raise _fault(
+                        f"puppet '{self.name}': joint '{name}' sits in a cycle",
+                        "joints",
+                        name,
+                        "parent",
+                    )
                 seen.add(cursor)
                 cursor = self.joints[cursor].parent
         return self
@@ -419,31 +468,40 @@ class PuppetSpec(Strict):
             ValueError: Something references a joint or anchor that is not declared.
         """
 
-        def require(joint: str, context: str) -> None:
+        def require(joint: str, context: str, *loc: str | int) -> None:
             if joint not in self.joints:
-                raise ValueError(
-                    f"puppet '{self.name}': {context} references unknown joint '{joint}'"
+                raise _fault(
+                    f"puppet '{self.name}': {context} references unknown joint '{joint}'", *loc
                 )
 
-        for part in self.parts:
+        for index, part in enumerate(self.parts):
             if isinstance(part, BonePart):
-                require(part.from_joint, "part")
-                require(part.to_joint, "part")
+                require(part.from_joint, "part", "parts", index, "from")
+                require(part.to_joint, "part", "parts", index, "to")
             else:
-                require(part.at, "part")
+                require(part.at, "part", "parts", index, "at")
         for anchor_name, anchor in self.anchors.items():
-            require(anchor.joint, f"anchor '{anchor_name}'")
-        require(self.face.joint, "face")
+            require(anchor.joint, f"anchor '{anchor_name}'", "anchors", anchor_name, "joint")
+        require(self.face.joint, "face", "face", "joint")
         for feature, spec in self.face.features.items():
-            require(spec.joint, f"face feature '{feature.value}'")
+            require(
+                spec.joint,
+                f"face feature '{feature.value}'",
+                "face",
+                "features",
+                feature.value,
+                "joint",
+            )
 
         if self.gaze.origin not in self.anchors:
-            raise ValueError(
-                f"puppet '{self.name}': gaze origin '{self.gaze.origin}' is not a declared anchor"
+            raise _fault(
+                f"puppet '{self.name}': gaze origin '{self.gaze.origin}' is not a declared anchor",
+                "gaze",
+                "origin",
             )
         for pose_name, angles in self.poses.items():
             for joint in angles:
-                require(joint, f"pose '{pose_name}'")
+                require(joint, f"pose '{pose_name}'", "poses", pose_name, joint)
         return self
 
     @model_validator(mode="after")
@@ -465,21 +523,26 @@ class PuppetSpec(Strict):
         for feature in self.face.features:
             twin = feature.twin
             if twin is not None and twin not in self.face.features:
-                raise ValueError(
+                raise _fault(
                     f"puppet '{self.name}': face feature '{feature.value}' is declared "
                     f"without its pair '{twin.value}'; a face with one eyebrow is a "
-                    "typo far more often than it is a character"
+                    "typo far more often than it is a character",
+                    "face",
+                    "features",
+                    feature.value,
                 )
 
         if self.expressions and not self.face.features:
-            raise ValueError(
+            raise _fault(
                 f"puppet '{self.name}' declares expressions but no face features for "
-                "them to move; add `face.features` or drop the expressions"
+                "them to move; add `face.features` or drop the expressions",
+                "expressions",
             )
         if self.expressions and "neutral" not in self.expressions:
-            raise ValueError(
+            raise _fault(
                 f"puppet '{self.name}' declares expressions but not 'neutral', which is "
-                "what a cast member gets when it does not ask for one"
+                "what a cast member gets when it does not ask for one",
+                "expressions",
             )
         return self
 
@@ -622,6 +685,17 @@ class PuppetLibrary:
         """
         return tuple(sorted(self._puppets))
 
+    def with_puppets(self, puppets: Mapping[str, PuppetSpec]) -> "PuppetLibrary":
+        """This library and more puppets, each under the reference that names it.
+
+        Args:
+            puppets: Reference to puppet: a puppet file's, by the path a cast member writes.
+
+        Returns:
+            A new library. This one is unchanged.
+        """
+        return PuppetLibrary({**self._puppets, **puppets})
+
 
 def load_puppet(path: Path) -> PuppetSpec:
     """Read one `*.puppet.yaml` file into a validated specification.
@@ -661,6 +735,106 @@ def load_puppet(path: Path) -> PuppetSpec:
     if not isinstance(data, dict):
         raise AssetError(f"{path}: expected a mapping at the top level")
     return PuppetSpec.model_validate(data)
+
+
+class PuppetFileError(NamedFileError):
+    """A puppet file a cast member names, there and wrong: located in it (#242).
+
+    Its `file` is the path the member's `reference` writes, relative to the document, and
+    its `loc` is that `reference`.
+    """
+
+    KIND = "puppet file"
+    RULE = PUPPET_RULE
+
+
+def is_puppet_file(reference: str) -> bool:
+    """Whether a cast member's `reference` names a puppet file rather than a shipped puppet.
+
+    A path is never a name: `alice` is the shipped puppet whatever sits beside the
+    document, and `puppets/alice.puppet.yaml` is a file, whatever it calls itself.
+
+    Example:
+        >>> from scenet.assets.contract import is_puppet_file
+        >>> is_puppet_file("puppets/pip.puppet.yaml"), is_puppet_file("alice")
+        (True, False)
+    """
+    return reference.lower().endswith(PUPPET_SUFFIX)
+
+
+def load_puppet_file(
+    declared: str, base: Folder | None, *, loc: tuple[str | int, ...] = ()
+) -> PuppetSpec:
+    """Read the puppet file a cast member names, beside the document or among the files sent.
+
+    Read as a document's font and picture are: relative to the folder it is in, with `/`
+    between folders, never absolute -- so a document and its puppets travel together, and
+    the command line, the playground and the MCP server all read it the same way.
+
+    Args:
+        declared: The path the member's `reference` writes.
+        base: The document's folder, or the files sent with it, or `None` for text with
+            neither.
+        loc: Where in the document the file is named: the member's `reference`.
+
+    Returns:
+        The validated puppet.
+
+    Raises:
+        PanelSyntaxError: Rule `puppet-file`, for a path that cannot be read, located
+            where the document names it.
+        PuppetFileError: The same rule, for a file that is there and is not a puppet,
+            located in it too: not text, not YAML, a key written twice or unknown, or a
+            puppet the validators refuse -- at the key they find wrong.
+
+    Example:
+        >>> from scenet.assets.contract import DEFAULT_LIBRARY_PATH, load_puppet_file
+        >>> bob = (DEFAULT_LIBRARY_PATH / "bob.puppet.yaml").read_bytes()
+        >>> load_puppet_file("puppets/mine.puppet.yaml", {"puppets/mine.puppet.yaml": bob}).name
+        'bob'
+    """
+    puppet, _, _ = read_model(
+        declared,
+        base,
+        PuppetSpec,
+        what="puppet",
+        error=PuppetFileError,
+        holds="a puppet's name, landmarks, joints, parts, anchors, face and the rest",
+        unknown_key="not a key a puppet has here",
+        loc=loc,
+        tags=frozenset({"bone", "blob"}),
+    )
+    return puppet
+
+
+def library_for(
+    puppets: Mapping[str, str], base: Folder | None, library: PuppetLibrary
+) -> PuppetLibrary:
+    """The puppets a cast is drawn from: a library, and every puppet file the cast names.
+
+    Each file is read once, however many members it draws, and filed under the reference
+    that names it, so everything downstream looks a member's puppet up by its `reference`
+    as it always has. Only what the cast names is read: a file beside the document that
+    nobody casts changes nothing.
+
+    Args:
+        puppets: Each cast member's `reference`, by actor id, in the cast's order.
+        base: The document's folder, or the files sent with it.
+        library: The puppets a name finds: the shipped ones, unless a caller gave others.
+
+    Returns:
+        `library` itself when the cast names no file, or a new one with them added.
+
+    Raises:
+        PanelSyntaxError: Rule `puppet-file`, for the first member whose file cannot be
+            read, as :func:`load_puppet_file <scenet.assets.contract.load_puppet_file>`
+            reports it.
+    """
+    files: dict[str, PuppetSpec] = {}
+    for actor, reference in puppets.items():
+        if is_puppet_file(reference) and reference not in files:
+            files[reference] = load_puppet_file(reference, base, loc=("cast", actor, "reference"))
+    return library.with_puppets(files) if files else library
 
 
 DEFAULT_LIBRARY_PATH = Path(__file__).parent / "library"

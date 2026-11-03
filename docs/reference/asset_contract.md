@@ -19,7 +19,9 @@ one image per pose per expression per facing direction.
 
 A complete puppet, cut down to one arm so it fits on a screen. It loads as it stands, and a test
 keeps it that way; the shipped characters in `src/scenet/assets/library/` are the full-size
-versions.
+versions. One of your own is a file like it beside the document, which a cast member names by its
+path — see [a puppet of your own](language.md#a-puppet-of-your-own) and
+[Add your own character](../howto/add_your_own_character.md), which walks through the gallery's.
 
 ```yaml
 name: sketch

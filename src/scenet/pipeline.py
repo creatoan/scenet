@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from shapely.geometry import Point, Polygon
 
 from scenet.assets.artwork import LoadedContract, load_contract, pictureless, undrawn
-from scenet.assets.contract import PuppetLibrary, default_library
+from scenet.assets.contract import PuppetLibrary, default_library, library_for
 from scenet.assets.emanata import SINGULAR, build_emanata
 from scenet.assets.face import ResolvedDisc, ResolvedStroke, build_face
 from scenet.assets.kinematics import ResolvedPuppet, resolve
@@ -574,10 +574,10 @@ def compile_ir(
     Raises:
         PanelSyntaxError: Rule `font-file`, for a declared font that cannot be read,
             `image-file`, for a picture, `artwork-contract`, for the contract beside a
-            picture whose figures the panel casts, or `unknown-figure`, for a figure the
-            picture does not draw.
+            picture whose figures the panel casts, `unknown-figure`, for a figure the
+            picture does not draw, or `puppet-file`, for a puppet file a cast member
+            names.
     """
-    library = library or default_library()
     # Read first: a font that cannot be read is the author's to fix, and is better said
     # before the solver spends anything on a panel it could not letter.
     lettering = typeface_for(panel.lettering, base)
@@ -587,6 +587,9 @@ def compile_ir(
         else None
     )
     contract = _contract_for(panel, image, base)
+    # A member whose `reference` names a file is drawn by it, filed under that reference,
+    # so staging and posing look every member up by its reference as they always have.
+    library = library_for(panel.puppets(), base, library or default_library())
     family = lettering.typeface
     if metrics is not None:
         family = replace(family, regular=metrics)

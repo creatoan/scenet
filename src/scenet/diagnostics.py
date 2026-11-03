@@ -48,14 +48,14 @@ from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from scenet import __version__
-from scenet.assets.artwork import (
-    CONTRACT_RULE,
-    ContractError,
-    load_contract,
-    pictureless,
-    undrawn,
+from scenet.assets.artwork import load_contract, pictureless, undrawn
+from scenet.assets.contract import (
+    PuppetLibrary,
+    PuppetSpec,
+    default_library,
+    is_puppet_file,
+    load_puppet_file,
 )
-from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.compose import (
     DESCRIPTION_KEY,
     DIRECTION_KEY,
@@ -107,7 +107,7 @@ from scenet.frontends.script_front import (
 from scenet.images import IMAGE_RULE, load_image
 from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
-from scenet.paths import Folder
+from scenet.paths import Folder, NamedFileError
 from scenet.pipeline import compile_book, compile_ir, compile_script
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
@@ -361,7 +361,28 @@ RULES: dict[str, Rule] = {
     "unknown-puppet": Rule(
         summary="Reference to a character the library does not contain",
         description="A cast member's `reference` names a puppet that is not installed.",
-        help="Check the name against the shipped library, or supply your own.",
+        help=(
+            "Check the name against the shipped library, or name a puppet of your own by "
+            "its file, relative to the document: `reference: puppets/name.puppet.yaml`."
+        ),
+    ),
+    "puppet-file": Rule(
+        summary="A puppet file a cast member names cannot be read",
+        description=(
+            "A cast member's `reference` that ends in `.puppet.yaml` names a puppet file, "
+            "read relative to the folder the document is in, as a font or a picture is. It "
+            "must be a relative path written with `/`, the file must be there, and it must "
+            "be a puppet: YAML that declares its landmarks, joints, parts, anchors and face, "
+            "each joint it names declared. A document compiled from text with no file "
+            "behind it has no folder, and so can name no puppet file unless the file is "
+            "sent with it. A fault inside the file is reported in it, at the key that is "
+            "wrong, when the document was checked as a file."
+        ),
+        help=(
+            "Check the path against the document's folder, write it relative to that "
+            "folder, or fix the puppet where the finding points; "
+            "docs/howto/add_your_own_character.md walks through one."
+        ),
     ),
     "unknown-pose": Rule(
         summary="Reference to a pose the character does not have",
@@ -901,14 +922,14 @@ def _diagnose_figures(
     try:
         loaded = load_contract(image, base, loc=("setting", "image"))
     except ScenetError as exc:
-        return [_contract_fault(exc, text, source, prefix=prefix, base=base)]
+        return [_file_fault(exc, text, source, prefix=prefix, base=base)]
     return [
         _located(fault, text, source, prefix=prefix)
         for fault in undrawn(panel, loaded.contract, image.href)
     ]
 
 
-def _contract_fault(
+def _file_fault(
     exc: ScenetError,
     text: str,
     source: Path | None,
@@ -916,13 +937,17 @@ def _contract_fault(
     prefix: tuple[str | int, ...],
     base: Folder | None,
 ) -> Diagnostic:
-    """A contract that cannot be read: in it, for a document checked as a file."""
-    if isinstance(exc, ContractError) and source is not None and isinstance(base, Path):
+    """A contract or a puppet file that cannot be read: in it, when checked as a file.
+
+    Anything else -- a path that cannot be read, a file that is not there, a document
+    checked as text -- is reported where the document names the file.
+    """
+    if isinstance(exc, NamedFileError) and source is not None and isinstance(base, Path):
         return Diagnostic(
-            rule=exc.rule or CONTRACT_RULE,
+            rule=exc.RULE,
             message=_message_of(exc),
             path=exc.inner,
-            source=base / exc.contract,
+            source=base / exc.file,
             region=exc.region or DOCUMENT_START,
         )
     return _located(exc, text, source, prefix=prefix)
@@ -949,8 +974,9 @@ def _diagnose_cast(
     *,
     prefix: tuple[str | int, ...],
     library: PuppetLibrary | None,
+    base: Folder | None,
 ) -> list[Diagnostic]:
-    """Resolve every cast member against the puppet library.
+    """Resolve every cast member against the puppet library, or the puppet file it names.
 
     The IR does not know the puppet library exists -- `CastMember.reference`, `.pose`
     and `.expression` are plain `str`s, and validating them is what tells `pointing`
@@ -960,7 +986,8 @@ def _diagnose_cast(
     nothing extra.
 
     Every actor is checked, not just the first, mirroring `_diagnose_scene`'s reasoning:
-    a panel with three bad references should report three findings.
+    a panel with three bad references should report three findings. A puppet file is read
+    once, however many members it draws, and a fault in it is one finding (#242).
     """
     puppets = panel.puppets()
     if not puppets:
@@ -968,16 +995,32 @@ def _diagnose_cast(
     library = library or default_library()
 
     found: list[Diagnostic] = []
+    files: dict[str, PuppetSpec | None] = {}
     for actor_id, reference in puppets.items():
         member = panel.cast[actor_id]
         actor_path = (*prefix, "cast", actor_id)
-        try:
-            spec = library.get(reference)
-        except UnknownPuppetError as exc:
-            found.append(
-                _asset_diagnostic("unknown-puppet", exc, text, source, (*actor_path, "reference"))
-            )
-            continue
+        if is_puppet_file(reference):
+            if reference not in files:
+                try:
+                    files[reference] = load_puppet_file(
+                        reference, base, loc=("cast", actor_id, "reference")
+                    )
+                except ScenetError as exc:
+                    files[reference] = None
+                    found.append(_file_fault(exc, text, source, prefix=prefix, base=base))
+            spec = files[reference]
+            if spec is None:
+                continue
+        else:
+            try:
+                spec = library.get(reference)
+            except UnknownPuppetError as exc:
+                found.append(
+                    _asset_diagnostic(
+                        "unknown-puppet", exc, text, source, (*actor_path, "reference")
+                    )
+                )
+                continue
 
         try:
             spec.pose_angles(member.pose)
@@ -1182,7 +1225,7 @@ def _diagnose_panel(
             )
         ]
 
-    found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library)
+    found = notes + _diagnose_cast(panel, text, source, prefix=prefix, library=library, base=base)
     found += _diagnose_lettering(panel, data, text, source, prefix=prefix, base=base)
     found += _diagnose_setting(panel, text, source, prefix=prefix, base=base)
     found += _diagnose_figures(panel, text, source, prefix=prefix, base=base)
@@ -1602,7 +1645,7 @@ def diagnose_script(
 
     panels = document.panels
     base = _folder(source, base)
-    found = _diagnose_script_cast(text, panels, source, library=library)
+    found = _diagnose_script_cast(text, panels, source, library=library, base=base)
     found += _diagnose_script_lettering(text, panels, source, base=base)
     found += _diagnose_script_setting(text, document, source, base=base)
     found += _diagnose_script_figures(text, document, source, base=base)
@@ -1803,6 +1846,7 @@ def _diagnose_script_cast(
     source: Path | None,
     *,
     library: PuppetLibrary | None,
+    base: Folder | None,
 ) -> list[Diagnostic]:
     """Resolve a script's cast, reporting each front-matter fault once, where it is.
 
@@ -1810,7 +1854,8 @@ def _diagnose_script_cast(
     same bad name once per panel. A fault in a member the front matter declares is
     reported once, against the front matter, with no panel in its path. A member a
     panel introduces itself -- through an `@cast:` directive -- keeps its panel name,
-    and the start of the document, since no line of YAML holds it.
+    and the start of the document, since no line of YAML holds it. A fault inside a
+    puppet file stays in that file, once however many panels cast it.
     """
     front, declared = _script_front_matter(text)
     cast = declared.get("cast")
@@ -1818,7 +1863,11 @@ def _diagnose_script_cast(
 
     found: list[Diagnostic] = []
     for name, panel in panels.items():
-        for item in _diagnose_cast(panel, front, source, prefix=(), library=library):
+        for item in _diagnose_cast(panel, front, source, prefix=(), library=library, base=base):
+            if item.source != source:
+                if item not in found:
+                    found.append(item)
+                continue
             actor = item.path[1]
             if actor in shared:
                 if item not in found:
@@ -1847,7 +1896,7 @@ def _diagnose_script_cast(
             alone = PanelIR.model_validate(normalise({"cast": unseen}))
         except (ValidationError, ScenetError):
             return found  # a malformed member is reported where the panels are validated
-        for item in _diagnose_cast(alone, front, source, prefix=(), library=library):
+        for item in _diagnose_cast(alone, front, source, prefix=(), library=library, base=base):
             if item not in found:
                 found.append(item)
     return found

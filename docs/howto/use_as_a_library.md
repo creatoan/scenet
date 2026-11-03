@@ -160,7 +160,9 @@ result = compile_source("cast: {a: {reference: alice}}", library=just_alice)
 assert result.core.actors[0].reference == "alice"
 ```
 
-See [add your own character](add_your_own_character.md) for the file format.
+A document can also name a puppet file of its own, `reference: puppets/pip.puppet.yaml`, read
+beside it — or, for text, from the files passed as `base=` — with no library to build. See
+[add your own character](add_your_own_character.md) for both, and for the file format.
 
 ## What is public
 

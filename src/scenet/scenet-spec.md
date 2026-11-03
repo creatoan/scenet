@@ -55,7 +55,8 @@ so always check.
 
 - **Every actor id used in `staging` or `script` must be a key of `cast`.** Ids are
   case-sensitive.
-- **`reference` names a puppet in the library.** The shipped puppets are `alice`, `bob`.
+- **`reference` names a puppet in the library, or a puppet file of the document's own by
+  its path, `reference: puppets/pip.puppet.yaml`.** The shipped puppets are `alice`, `bob`.
   `pose` and `expression` must be names that puppet declares; see the `characters`
   part. Do not invent them.
 - **Two figures need a left-to-right order**, from `at:` or from an explicit
@@ -463,7 +464,7 @@ A mapping of actor id to properties. Ids are chosen by the author and referenced
 
 | Key | Type | Meaning |
 |---|---|---|
-| `reference` | asset name | Which puppet to pull from the library |
+| `reference` | asset name, or a `.puppet.yaml` path | Which puppet to pull from the library, or a [puppet file of your own](#a-puppet-of-your-own), relative to the document |
 | `figure` | figure name | Instead of `reference`: a figure the panel's picture draws, as its [artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) names it. See [Figures the picture draws](#figures-the-picture-draws) |
 | `pose` | pose name | A named joint configuration declared by that puppet |
 | `expression` | expression name | A named face declared by that puppet |
@@ -531,12 +532,45 @@ convention, the symbols over a head.
 A cast member may instead be a figure the panel's picture draws, written `figure:`; see
 [Figures the picture draws](#figures-the-picture-draws) for what applies to it and what does not.
 
+### A puppet of your own
+
+`alice` and `bob` are shipped. A character of your own is a `*.puppet.yaml` file — a skeleton, the
+parts drawn on it, a face, and the poses and expressions it can take — and a cast member names it by
+its path:
+
+```yaml
+cast:
+  alice: {reference: alice}
+  pip:   {reference: puppets/pip.puppet.yaml, pose: waving}
+```
+
+- **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A path
+  is never a name, so no file shadows `alice` or `bob`.
+- **The path is read as a font's is**: relative to the folder the document is in, wherever `scenet`
+  was run from, with `/` between folders, never absolute — so a document and its puppets travel
+  together, and `../puppets/` reads a folder of characters several documents share. Text compiled
+  with no file behind it names a puppet only when its caller says which folder it belongs to, or
+  hands the file over with it.
+- **Only what the cast names is read**, once however many members it draws.
+- **`pose` and `expression` are the file's own** names, held to it exactly as a shipped puppet's are.
+- **A puppet of another height shares the ground only when staging says so**, with
+  `ground_shared_with`: framed alone, each figure's head is under the top of the panel.
+- **Panel Core records the reference as written**, for the actor and for the camera composed on
+  it. Nothing else of the file reaches the output but the figure drawn.
+
+A file that is absolute, missing or not a puppet is `puppet-file`: in the puppet file, at the key
+that is wrong, when the document is checked as a file, and on the line naming it otherwise. In the
+[playground](https://creatoan.github.io/scenet/playground/), **Puppet…** adds a file to the
+document's `puppets/` folder for as long as the tab is open; over MCP it is sent in `files`. What the
+file holds is in [Add your own character](https://creatoan.github.io/scenet/howto/add_your_own_character.html), and the gallery's
+`69-a-puppet-of-your-own.scene.yaml` casts one.
+
 `reference`, `pose` and `expression` are validated against the puppet library, not just against the
 language's own grammar — a misspelled pose is a perfectly good string as far as the grammar is
 concerned, so nothing at that level can tell `pointing` from `smirking`. `scenet check` resolves the
 library and reports an unmatched name as `unknown-puppet`, `unknown-pose` or `unknown-expression`,
 each naming the field and, for `pose` and `expression`, listing the names that puppet does declare.
-See [`scenet check`](https://creatoan.github.io/scenet/reference/cli.html#scenet-check).
+A puppet file is read to resolve them the same way. See [`scenet check`](https://creatoan.github.io/scenet/reference/cli.html#scenet-check).
 
 ## `staging`
 
@@ -1912,7 +1946,11 @@ The puppets shipped with Scenet. A cast member's `reference` names one of these,
 | `alice` | 7.5 | `arms_crossed`, `hands_on_hips`, `pointing`, `standing_neutral` | `angry`, `bored`, `coy`, `happy`, `laughing`, `neutral`, `sad`, `scared`, `shouting`, `surprise` |
 | `bob` | 7.5 | `arms_crossed`, `hands_on_hips`, `pointing`, `standing_neutral` | `angry`, `bored`, `coy`, `happy`, `laughing`, `neutral`, `sad`, `scared`, `shouting`, `surprise` |
 
-One puppet may appear several times in a panel under different actor ids. Your own puppets are described in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html).
+One puppet may appear several times in a panel under different actor ids.
+
+## A puppet of your own
+
+A `*.puppet.yaml` file beside the document is a puppet of its own, and a cast member names it by its path, relative to the folder the document is in, as a font or a picture is named: `reference: puppets/pip.puppet.yaml`. A reference that ends in `.puppet.yaml` is a file; any other is a shipped puppet's name. The file declares its own poses and expressions, and a member names those. Over MCP, send it in `files` by that path, and `list_puppets` given the same `files` lists it with them. A fault in it is `puppet-file`. What a puppet file holds is in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html) and [Add your own character](https://creatoan.github.io/scenet/howto/add_your_own_character.html); the gallery's `69-a-puppet-of-your-own.scene.yaml` casts one, printed after it.
 
 ## Figures a picture draws
 
@@ -2067,6 +2105,12 @@ The panel has no usable area. Panel dimensions must be positive, and the margins
 
 **Fix:** Give the panel a positive size, and a margin smaller than half its shorter side.
 
+### `scenet/puppet-file`
+
+A puppet file a cast member names cannot be read. A cast member's `reference` that ends in `.puppet.yaml` names a puppet file, read relative to the folder the document is in, as a font or a picture is. It must be a relative path written with `/`, the file must be there, and it must be a puppet: YAML that declares its landmarks, joints, parts, anchors and face, each joint it names declared. A document compiled from text with no file behind it has no folder, and so can name no puppet file unless the file is sent with it. A fault inside the file is reported in it, at the key that is wrong, when the document was checked as a file.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or fix the puppet where the finding points; docs/howto/add_your_own_character.md walks through one.
+
 ### `scenet/reflexive-relation`
 
 A relation relates an actor to itself. No predicate in the language means anything reflexively, so an actor placed left of itself is always a typo for a second actor's id.
@@ -2131,7 +2175,7 @@ Reference to a pose the character does not have. A cast member's `pose` names on
 
 Reference to a character the library does not contain. A cast member's `reference` names a puppet that is not installed.
 
-**Fix:** Check the name against the shipped library, or supply your own.
+**Fix:** Check the name against the shipped library, or name a puppet of your own by its file, relative to the document: `reference: puppets/name.puppet.yaml`.
 
 ### `scenet/word-limit`
 
@@ -6788,4 +6832,201 @@ Theo at the foot of the lighthouse stairs.
 2. SFX (small): tik tik tik
 3. CAPTION/MAYA (spoken): "Bring the oil."
 4. CAPTION (editorial): See The Lighthouse, issue 1.
+```
+
+## A puppet of your own
+
+Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path.
+
+`69-a-puppet-of-your-own.scene.yaml`
+
+```yaml
+# A puppet of your own: pip, a child five heads tall, at the docks with alice.
+#
+# Scenet ships two puppets, alice and bob, and pip is not one of them. Its file,
+# pip.puppet.yaml, is in puppets/, beside this document, and the cast names it by that path:
+# relative to the folder the document is in, as a font or a picture is named. The
+# playground writes it there for you, and Puppet... adds one of your own the same way.
+#
+# A puppet file says what a character is made of -- landmarks, joints, the parts drawn, a
+# face -- and the poses and expressions it can take, by name. Pip's are its own: it waves
+# and throws its arms up, where alice points and crosses hers. This page draws every pose
+# and every expression pip has.
+#
+# Pip is five heads tall to alice's seven and a half. The camera frames each shot by the
+# landmarks a puppet declares, counted in heads, so pip fills a panel of its own at the
+# shot asked for. Beside alice, `ground_shared_with` stands them on one ground, and pip
+# comes up to her chest; without it, each would be framed alone, head under the top of the
+# panel, and pip would float.
+
+page: {size: [1500, 2100], margin: 60, gutter: 30, tier_gutter: 40}
+setting: {place: docks, time: dusk}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: puppets/pip.puppet.yaml, at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: [quay]
+      - {height: 1.2, panels: [wave, enormous, loud]}
+      - panels: [gone]
+
+panels:
+  quay:
+    camera: {shot: full_shot}
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
+    script:
+      - say: {by: pip, text: "Is that our boat?"}
+      - say: {by: alice, text: "Not yet."}
+
+  wave:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: waving, expression: happy, at: center}
+    script:
+      - say: {by: pip, text: "Hello, boat!"}
+
+  enormous:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: arms_up, expression: surprise, at: center}
+    script:
+      - say: {by: pip, text: "It's enormous!"}
+
+  loud:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {expression: scared, at: center}
+    script:
+      - say: {by: pip, text: "And so loud.", kind: whisper}
+
+  gone:
+    camera: {shot: full_shot}
+    cast:
+      alice: {expression: happy}
+      pip: {expression: sad}
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
+    script:
+      - say: {by: pip, text: "It's going without us."}
+      - say: {by: alice, text: "That one wasn't ours."}
+```
+
+The puppet its cast names, `puppets/pip.puppet.yaml`, beside it:
+
+```yaml
+# Pip: a child, five heads tall, and the gallery's own puppet -- Scenet does not ship it.
+#
+# A document casts it by its path, relative to the document, as it names a font or a
+# picture: `reference: puppets/pip.puppet.yaml`. The `name:` below is what a message calls it.
+#
+# What sets it apart from alice and bob, who are both seven and a half heads tall:
+#
+# - Five heads, not seven and a half. A head is the same 100 units as alice's, so the body
+#   below it is shorter, and the head is big for it -- a child's proportion. At the same
+#   shot, a camera that framed by fractions of the panel instead of by landmarks in heads
+#   would get pip visibly wrong.
+# - Big eyes, set low in the face, a small nose and a small mouth.
+# - A knot of hair on top of the head: a blob, as the head is, so pip reads as pip even at
+#   a distance, where a face is too small to draw.
+#
+# Values are native units, one head being 100; landmarks are measured down from the top of
+# the head, and each joint's offset from its parent's. The root sits at the waist.
+
+name: pip
+units_per_head: 100
+root: root
+root_landmark: waist
+
+landmarks:
+  head_top: 0
+  eyes: 50
+  chin: 100
+  shoulders: 120
+  chest: 165
+  waist: 245
+  mid_thigh: 320
+  knees: 375
+  feet: 500
+
+joints:
+  root: {parent: null, offset: [0, 0]}
+  spine: {parent: root, offset: [0, -80]}
+  neck: {parent: spine, offset: [0, -45]}
+  head: {parent: neck, offset: [0, -70]}
+
+  shoulder_l: {parent: neck, offset: [-26, 4]}
+  shoulder_r: {parent: neck, offset: [26, 4]}
+  elbow_l: {parent: shoulder_l, offset: [0, 62]}
+  elbow_r: {parent: shoulder_r, offset: [0, 62]}
+  wrist_l: {parent: elbow_l, offset: [0, 55]}
+  wrist_r: {parent: elbow_r, offset: [0, 55]}
+
+  hip_l: {parent: root, offset: [-20, 8]}
+  hip_r: {parent: root, offset: [20, 8]}
+  knee_l: {parent: hip_l, offset: [0, 122]}
+  knee_r: {parent: hip_r, offset: [0, 122]}
+  ankle_l: {parent: knee_l, offset: [0, 125]}
+  ankle_r: {parent: knee_r, offset: [0, 125]}
+
+parts:
+  - {from: neck, to: root, width: 64}
+  - {from: shoulder_l, to: elbow_l, width: 22}
+  - {from: elbow_l, to: wrist_l, width: 18}
+  - {from: shoulder_r, to: elbow_r, width: 22}
+  - {from: elbow_r, to: wrist_r, width: 18}
+  - {from: hip_l, to: knee_l, width: 28}
+  - {from: knee_l, to: ankle_l, width: 24}
+  - {from: hip_r, to: knee_r, width: 28}
+  - {from: knee_r, to: ankle_r, width: 24}
+  - {at: head, radius: 50}
+  - {at: head, radius: 16, offset: [0, -56]}   # the knot of hair
+
+anchors:
+  head_top: {joint: head, offset: [0, -50]}
+  eyes: {joint: head, offset: [0, 0]}
+  mouth: {joint: head, offset: [0, 26]}
+  feet: {joint: root, offset: [0, 255]}
+
+face:
+  joint: head
+  radius: 60
+  # Feature points ride the head joint, so they mirror and scale with it. `size` means an
+  # eye's radius, a brow's or mouth's half-width, a nose's length.
+  features:
+    brow_l: {offset: [-19, -22], size: 10}
+    brow_r: {offset: [19, -22], size: 10}
+    eye_l:  {offset: [-19, -2], size: 12}
+    eye_r:  {offset: [19, -2], size: 12}
+    nose:   {offset: [0, 12], size: 6}
+    mouth:  {offset: [0, 26], size: 12}
+
+gaze:
+  origin: eyes
+
+poses:
+  standing_neutral:
+    elbow_l: -5
+    elbow_r: 5
+
+  waving:
+    elbow_l: -5
+    elbow_r: -150
+    wrist_r: 35
+
+  arms_up:
+    elbow_l: 155
+    wrist_l: -20
+    elbow_r: -155
+    wrist_r: 20
+
+expressions:
+  neutral:  {}
+  happy:    {mouth: smile}
+  surprise: {brow: raised,     eyes: wide, mouth: open}
+  scared:   {brow: angled_out, eyes: wide, mouth: small}
+  sad:      {brow: angled_out, eyes: half, mouth: frown}
 ```

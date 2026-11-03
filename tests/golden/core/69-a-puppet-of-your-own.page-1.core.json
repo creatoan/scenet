@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "frames": [
+    {
+      "height": 593.75,
+      "panel": "quay",
+      "width": 1380.0,
+      "x": 60.0,
+      "y": 60.0
+    },
+    {
+      "height": 712.5,
+      "panel": "wave",
+      "width": 440.0,
+      "x": 60.0,
+      "y": 693.75
+    },
+    {
+      "height": 712.5,
+      "panel": "enormous",
+      "width": 440.0,
+      "x": 530.0,
+      "y": 693.75
+    },
+    {
+      "height": 712.5,
+      "panel": "loud",
+      "width": 440.0,
+      "x": 1000.0,
+      "y": 693.75
+    },
+    {
+      "height": 593.75,
+      "panel": "gone",
+      "width": 1380.0,
+      "x": 60.0,
+      "y": 1446.25
+    }
+  ],
+  "height": 2100.0,
+  "lettering_height": 660.0,
+  "width": 1500.0
+}

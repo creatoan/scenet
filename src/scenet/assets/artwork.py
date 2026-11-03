@@ -37,18 +37,16 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Annotated, Any, Self
+from typing import Annotated, Self
 
-import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from shapely.geometry import Polygon
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.frontends.positions import Position, Region, locate
+from scenet.frontends.positions import locate
 from scenet.images import SuppliedImage
 from scenet.ir import PanelIR, SayEvent, SfxEvent, SvgText
-from scenet.paths import Folder, read_relative
-from scenet.safe_yaml import DuplicateKeyError, describe, load
+from scenet.paths import Folder, NamedFileError, read_model
 
 __all__ = [
     "CONTRACT_RULE",
@@ -179,43 +177,20 @@ class ArtworkContract(_Strict):
             )
 
 
-class ContractError(PanelSyntaxError):
+class ContractError(NamedFileError):
     """A contract that cannot be read, located in it as well as where its picture is named.
 
-    Attributes:
-        contract: The contract's path, as derived from the picture's -- relative to the
-            document.
-        inner: Where in the contract the fault is, in pydantic's `loc` form; empty for
-            the contract as a whole.
-        region: The fault's span in the contract's text, when it was parsed far enough to
-            find it.
+    Its `file` is the contract's path, as derived from the picture's -- relative to the
+    document -- and its `loc` is where the document names the picture.
     """
 
-    def __init__(
-        self,
-        message: str,
-        *,
-        contract: str,
-        inner: tuple[str | int, ...] = (),
-        region: Region | None = None,
-        loc: tuple[str | int, ...] = (),
-    ) -> None:
-        """Build the error.
+    KIND = "artwork contract"
+    RULE = CONTRACT_RULE
 
-        Args:
-            message: What is wrong, without the contract's name.
-            contract: The contract's path, relative to the document.
-            inner: Where in the contract.
-            region: Where in its text.
-            loc: Where in the document its picture is named.
-        """
-        self.contract = contract
-        self.inner = inner
-        self.region = region
-        line = f", line {region.start.line}" if region is not None else ""
-        super().__init__(
-            f"artwork contract {contract!r}{line}: {message}", rule=CONTRACT_RULE, loc=loc
-        )
+    @property
+    def contract(self) -> str:
+        """The contract's path, relative to the document: its `file`."""
+        return self.file
 
 
 @dataclass(frozen=True, slots=True)
@@ -273,34 +248,26 @@ def load_contract(
             place, or a size that is not the picture's.
     """
     path = contract_path(image.href)
-    data = read_relative(path, base, what="artwork contract", rule=CONTRACT_RULE, loc=loc)
-    try:
-        text = data.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise ContractError("it is not UTF-8 text", contract=path, loc=loc) from exc
-    try:
-        raw = load(text)
-    except DuplicateKeyError as exc:
-        raise ContractError(exc.summary, contract=path, region=_line(exc.line), loc=loc) from exc
-    except yaml.YAMLError as exc:
-        mark = getattr(exc, "problem_mark", None)
-        region = _line(mark.line + 1) if mark is not None else None
-        problem = getattr(exc, "problem", None) or describe(exc)
-        raise ContractError(
-            f"it is not valid YAML: {problem}", contract=path, region=region, loc=loc
-        ) from exc
-    if not isinstance(raw, dict):
-        raise ContractError(
-            "it must be a mapping of size, figures and keep_out", contract=path, loc=loc
-        )
-    contract = _validated(raw, text, path, loc)
+    contract, text, data = read_model(
+        path,
+        base,
+        ArtworkContract,
+        what="artwork contract",
+        error=ContractError,
+        holds="size, figures and keep_out",
+        unknown_key=(
+            "not a key an artwork contract has: size, figures and keep_out at the top, "
+            "and face, mouth and body for a figure"
+        ),
+        loc=loc,
+    )
     if contract.size != (image.width, image.height):
         width, height = contract.size
         raise ContractError(
             f"it was measured on a picture {width} by {height} pixels, and "
             f"{image.href!r} is {image.width} by {image.height}: measure it again on "
             "this one, or scale every coordinate in it",
-            contract=path,
+            file=path,
             inner=("size",),
             region=locate(text, ("size",)),
             loc=loc,
@@ -365,42 +332,3 @@ def undrawn(panel: PanelIR, contract: ArtworkContract, image: str) -> list[Panel
             )
         )
     return found
-
-
-def _validated(
-    raw: dict[Any, Any], text: str, path: str, loc: tuple[str | int, ...]
-) -> ArtworkContract:
-    """The contract, or its first fault, located in its text."""
-    try:
-        return ArtworkContract.model_validate(raw)
-    except ValidationError as exc:
-        error = exc.errors()[0]
-        original = (error.get("ctx") or {}).get("error")
-        if isinstance(original, RuleViolationError):
-            inner, message = original.loc, str(original)
-        else:
-            inner = tuple(error["loc"])
-            message = _plain(error["type"], error["msg"])
-        where = ".".join(str(part) for part in inner)
-        raise ContractError(
-            f"{where}: {message}" if where else message,
-            contract=path,
-            inner=inner,
-            region=locate(text, inner),
-            loc=loc,
-        ) from exc
-
-
-def _plain(kind: str, message: str) -> str:
-    """The message pydantic gave, in the contract's terms where it has its own."""
-    if kind == "extra_forbidden":
-        return (
-            "not a key an artwork contract has: size, figures and keep_out at the top, "
-            "and face, mouth and body for a figure"
-        )
-    return message
-
-
-def _line(number: int) -> Region:
-    """A whole line, for a fault the parser knows only the line of."""
-    return Region(start=Position(line=number, column=1), end=Position(line=number + 1, column=1))

@@ -16,6 +16,11 @@ its own. Both are read the same way, `./art/a.png` and `art/a.png` alike.
 
 Nothing here reaches the output. A resolved path is used to open a file and is then
 forgotten; what a Core records about a font is what is in it.
+
+Some of those files are text an author writes: a picture's artwork contract (#71), a puppet
+a cast member names (#242). :func:`read_model <scenet.paths.read_model>` reads one the same
+way for both, and a fault in it is a :exc:`NamedFileError <scenet.paths.NamedFileError>`,
+located in the file as well as where the document names it.
 """
 
 import posixpath
@@ -24,12 +29,20 @@ from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path, PurePosixPath, PureWindowsPath
+from typing import ClassVar
 
-from scenet.errors import PanelSyntaxError
+import yaml
+from pydantic import BaseModel, ValidationError
+
+from scenet.errors import PanelSyntaxError, RuleViolationError
+from scenet.frontends.positions import Position, Region, locate
+from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 __all__ = [
     "Folder",
+    "NamedFileError",
     "check_relative",
+    "read_model",
     "read_relative",
     "record_dependency",
     "resolve_relative",
@@ -217,3 +230,144 @@ def check_relative(declared: str, *, what: str, rule: str, loc: tuple[str | int,
             rule=rule,
             loc=loc,
         )
+
+
+class NamedFileError(PanelSyntaxError):
+    """A file a document names, there and wrong: located in it, as well as where it is named.
+
+    A fault inside an artwork contract or a puppet file is fixed in that file, so `scenet
+    check` reports it there when the document was checked as a file. Checked as text --
+    the playground, a model over MCP -- there is no such file to open, and it is reported
+    where the document names it, with the file's own line in the message.
+
+    Each kind of file is a subclass, which says what the file is called and the rule its
+    faults are reported under: :exc:`ContractError <scenet.assets.artwork.ContractError>`
+    and :exc:`PuppetFileError <scenet.assets.contract.PuppetFileError>`.
+
+    Attributes:
+        file: The file's path, relative to the document, as the document reaches it.
+        inner: Where in the file the fault is, in pydantic's `loc` form; empty for the file
+            as a whole.
+        region: The fault's span in the file's text, when it was parsed far enough to find
+            it.
+    """
+
+    #: What a file of this kind is called in a message, before its path.
+    KIND: ClassVar[str]
+    #: The rule every fault in a file of this kind is reported under.
+    RULE: ClassVar[str]
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        file: str,
+        inner: tuple[str | int, ...] = (),
+        region: Region | None = None,
+        loc: tuple[str | int, ...] = (),
+    ) -> None:
+        """Build the error.
+
+        Args:
+            message: What is wrong, without the file's name.
+            file: The file's path, relative to the document.
+            inner: Where in the file.
+            region: Where in its text.
+            loc: Where in the document the file is named.
+        """
+        self.file = file
+        self.inner = inner
+        self.region = region
+        line = f", line {region.start.line}" if region is not None else ""
+        super().__init__(f"{self.KIND} {file!r}{line}: {message}", rule=self.RULE, loc=loc)
+
+
+def read_model[M: BaseModel](
+    declared: str,
+    base: Folder | None,
+    model: type[M],
+    *,
+    what: str,
+    error: type[NamedFileError],
+    holds: str,
+    unknown_key: str,
+    loc: tuple[str | int, ...] = (),
+    tags: frozenset[str] = frozenset(),
+) -> tuple[M, str, bytes]:
+    """Read a YAML file a document names, and validate it, each fault located in it.
+
+    Args:
+        declared: The path as the document writes it.
+        base: The document's folder, or the files sent with it, or `None` for text with
+            neither.
+        model: What the file holds.
+        what: What the file is, for a message about its path: `puppet`, say.
+        error: The kind of file, which says how a fault inside it is reported.
+        holds: What its top-level mapping holds, for the message when it is not one.
+        unknown_key: The message for a key the model does not have.
+        loc: Where in the document the file is named.
+        tags: The tags of a tagged union the model validates a list's items with. pydantic
+            puts one in a fault's location after the item's index, where the file has no
+            key, so it is left out to locate the fault where it is written.
+
+    Returns:
+        What the file declares, its text, and its bytes.
+
+    Raises:
+        PanelSyntaxError: Under the error's rule, for a path that cannot be read, as
+            :func:`read_relative <scenet.paths.read_relative>` reports it -- located where
+            the document names the file.
+        NamedFileError: The error given, for a file that is there and wrong, located in it
+            too: not UTF-8 text, not YAML, a key written twice, not a mapping, or not what
+            the model allows -- the first fault, at the key that is wrong.
+    """
+    data = read_relative(declared, base, what=what, rule=error.RULE, loc=loc)
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise error("it is not UTF-8 text", file=declared, loc=loc) from exc
+    try:
+        raw = load(text)
+    except DuplicateKeyError as exc:
+        raise error(exc.summary, file=declared, region=_whole_line(exc.line), loc=loc) from exc
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        region = _whole_line(mark.line + 1) if mark is not None else None
+        problem = getattr(exc, "problem", None) or describe(exc)
+        raise error(
+            f"it is not valid YAML: {problem}", file=declared, region=region, loc=loc
+        ) from exc
+    if not isinstance(raw, dict):
+        raise error(f"it must be a mapping of {holds}", file=declared, loc=loc)
+    try:
+        return model.model_validate(raw), text, data
+    except ValidationError as exc:
+        first = exc.errors()[0]
+        original = (first.get("ctx") or {}).get("error")
+        if isinstance(original, RuleViolationError):
+            inner, message = original.loc, str(original)
+        else:
+            inner = _untagged(tuple(first["loc"]), tags)
+            message = unknown_key if first["type"] == "extra_forbidden" else first["msg"]
+        where = ".".join(str(part) for part in inner)
+        raise error(
+            f"{where}: {message}" if where else message,
+            file=declared,
+            inner=inner,
+            region=locate(text, inner),
+            loc=loc,
+        ) from exc
+
+
+def _untagged(loc: tuple[str | int, ...], tags: frozenset[str]) -> tuple[str | int, ...]:
+    """A fault's location with a union's tag left out after a list item's index."""
+    return tuple(
+        step
+        for index, step in enumerate(loc)
+        if not (step in tags and index > 0 and isinstance(loc[index - 1], int))
+    )
+
+
+def _whole_line(number: int) -> Region:
+    """A whole line, for a fault the parser knows only the line of."""
+    return Region(start=Position(line=number, column=1), end=Position(line=number + 1, column=1))

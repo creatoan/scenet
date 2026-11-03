@@ -43,6 +43,7 @@ from scenet.mcp import (
 )
 from scenet.spec_pack import SPEC_PARTS, part
 from tests.images import contract, tiny_png
+from tests.puppets import KID, KID_PATH, encoded, kid
 
 TOOLS = {"get_spec", "list_puppets", "validate", "compile", "render"}
 
@@ -695,6 +696,75 @@ class TestFiguresAPictureDraws:
         characters = text_of(call("get_spec", {"section": "characters"}))
         assert "figure: <name>" in characters
         assert "art/p01.art.yaml" in characters
+
+
+class TestAPuppetOfYourOwn:
+    """A puppet file comes in `files`, as a picture does, by the path `reference` writes (#242)."""
+
+    SOURCE = (
+        "cast: {kid: {reference: puppets/kid.puppet.yaml, pose: cartwheel}}\n"
+        "script: [{say: {by: kid, text: Wheee!}}]\n"
+    )
+
+    def test_validate_compile_and_render_take_it_in_files(self):
+        files = {KID_PATH: encoded(KID)}
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE, "files": files})))
+        assert report["valid"] is True
+        result = call("compile", {"source": self.SOURCE, "files": files})
+        assert not result.is_error
+        (actor,) = json.loads(text_of(result))["panels"][0]["core"]["actors"]
+        assert (actor["reference"], actor["pose"]) == (KID_PATH, "cartwheel")
+        assert not call("render", {"source": self.SOURCE, "files": files}).is_error
+
+    def test_without_it_the_finding_is_at_the_line_naming_it(self):
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE})))
+        (finding,) = report["findings"]
+        assert finding["rule"] == "scenet/puppet-file"
+        assert finding["where"] == "cast.kid.reference"
+        assert finding["line"] == 1
+
+    def test_a_fault_inside_it_names_its_line_in_the_message(self):
+        files = {KID_PATH: encoded(kid("knee_l: {parent: hip_l,", "knee_l: {parent: hipl,"))}
+        report = json.loads(text_of(call("validate", {"source": self.SOURCE, "files": files})))
+        (finding,) = report["findings"]
+        assert finding["rule"] == "scenet/puppet-file"
+        number = KID.splitlines().index("  knee_l: {parent: hip_l, offset: [0, 122]}") + 1
+        assert f"'{KID_PATH}', line {number}" in finding["message"]
+
+    def test_list_puppets_describes_each_one_sent_by_the_reference_to_write(self):
+        result = call("list_puppets", {"files": {KID_PATH: encoded(KID)}})
+        assert result.structured_content is not None
+        puppets = result.structured_content["puppets"]
+        assert [puppet["name"] for puppet in puppets] == ["alice", "bob", KID_PATH]
+        assert puppets[-1] == {
+            "name": KID_PATH,
+            "heads_tall": 5.0,
+            "poses": ["cartwheel", "standing_neutral"],
+            "expressions": ["dizzy", "neutral"],
+        }
+
+    def test_list_puppets_lists_no_other_file(self):
+        files = {"art/street.png": base64.b64encode(tiny_png()).decode("ascii")}
+        result = call("list_puppets", {"files": files})
+        assert result.structured_content is not None
+        assert [puppet["name"] for puppet in result.structured_content["puppets"]] == [
+            "alice",
+            "bob",
+        ]
+
+    def test_list_puppets_refuses_one_that_is_not_a_puppet(self):
+        result = call("list_puppets", {"files": {KID_PATH: encoded("- a list\n")}})
+        assert result.is_error
+        assert KID_PATH in text_of(result)
+
+    def test_the_server_says_a_puppet_comes_in_files(self, listing: Any):
+        _, instructions, _ = listing
+        assert ".puppet.yaml" in (instructions or "")
+
+    def test_the_spec_pack_says_how_to_cast_your_own(self):
+        characters = text_of(call("get_spec", {"section": "characters"}))
+        assert "reference: puppets/" in characters
+        assert "list_puppets" in characters
 
 
 class TestRenderForImageModels:
