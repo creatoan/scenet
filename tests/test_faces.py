@@ -438,6 +438,7 @@ def _minimal(
         "joints": {"root": {"parent": None}, "head": {"parent": "root", "offset": [0, -300]}},
         "anchors": {"eyes": {"joint": "head", "offset": [0, -10]}},
         "face": face,
+        "poses": {"standing_neutral": {}},
     }
     if expressions is not None:
         document["expressions"] = expressions
