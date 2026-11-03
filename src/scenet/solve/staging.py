@@ -275,12 +275,13 @@ def solve_staging(
     if camera is None:
         # The reference is the first actor the author wrote, which is the one the
         # panel is about.
-        reference = next(iter(panel.cast))
+        first = next(iter(panel.cast))
         camera = solve_camera(
-            puppets[reference],
+            puppets[first],
             shot=panel.camera.shot,
             angle=panel.camera.angle,
             panel_height=panel.panel.height,
+            named=references[first],
         )
 
     order = horizontal_order(panel)

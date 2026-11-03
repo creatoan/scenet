@@ -11,6 +11,7 @@ from pathlib import Path
 
 from scenet import __version__
 from scenet.assets.artwork import CONTRACT_SUFFIX
+from scenet.assets.contract import PUPPET_SUFFIX
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.export import EXPORTS
@@ -250,7 +251,15 @@ def _refuse_unsupported(paths: Sequence[Path]) -> bool:
             "the panel that casts its figures, beside its picture",
             file=sys.stderr,
         )
-    return bool(refused or contracts)
+    # A puppet is YAML too, and is checked the same way: through a document that casts it.
+    puppets = [path for path in paths if path.name.lower().endswith(PUPPET_SUFFIX)]
+    for path in puppets:
+        print(
+            f"scenet: {path}: a puppet is not a document; it is checked through a document "
+            "whose cast names it, with reference: and its path",
+            file=sys.stderr,
+        )
+    return bool(refused or contracts or puppets)
 
 
 def run_build(args: argparse.Namespace) -> int:

@@ -15,6 +15,7 @@ from typing import Annotated, Any, Literal, NamedTuple, Self
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, Tag, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
+from scenet.assets.contract import PUPPET_RULE, is_puppet_file
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
 from scenet.images import MediaType
 from scenet.ir import (
@@ -335,6 +336,13 @@ def _relative(href: str) -> str:
     return href
 
 
+def _puppet_reference(reference: str) -> str:
+    """Refuse a hand-edited path to a puppet file that no document could have written."""
+    if is_puppet_file(reference):
+        check_relative(reference, what="puppet", rule=PUPPET_RULE)
+    return reference
+
+
 class CoreImage(CoreModel):
     """A supplied picture behind the cast, placed (#70).
 
@@ -422,7 +430,9 @@ class CoreActor(CoreModel):
 
     Attributes:
         id: The actor id from the panel source.
-        reference: Which puppet was used. Two actors may share one.
+        reference: Which puppet was used, as the cast names it: a shipped puppet's name,
+            or a puppet file's path relative to the document, exactly as written (#242).
+            Two actors may share one.
         pose: Which named pose was applied.
         expression: Which named expression was applied.
         transform: Where the root joint landed, and the scale and mirroring applied.
@@ -468,7 +478,7 @@ class CoreActor(CoreModel):
     """
 
     id: str
-    reference: str
+    reference: Annotated[str, AfterValidator(_puppet_reference)]
     pose: str
     transform: Transform
     anchors: dict[str, tuple[float, float]]
@@ -788,7 +798,8 @@ class CoreCamera(CoreModel):
     Attributes:
         shot: The shot asked for -- the tightest the camera would go.
         angle: The camera's height, which changed the headroom and nothing else.
-        reference: The puppet the shot was composed on, by its name.
+        reference: The puppet the shot was composed on, as the cast names it: the
+            `reference` of the member written first.
         scale: The one scale every actor is drawn at.
         headroom: The air above the reference actor's head, as a fraction of the panel's
             height.
@@ -799,7 +810,7 @@ class CoreCamera(CoreModel):
 
     shot: ShotType
     angle: CameraAngle
-    reference: str
+    reference: Annotated[str, AfterValidator(_puppet_reference)]
     scale: float
     headroom: float
     footroom: float

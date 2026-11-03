@@ -107,7 +107,8 @@ class CameraSolution:
     # The shot that was asked for. Kept so a diagnostic can name it: a note saying the
     # camera retreated is only useful if it says retreated *from what*.
     shot: ShotType
-    # Name of the puppet the shot was composed on, not the shot itself.
+    # The puppet the shot was composed on, not the shot itself, as the cast's `reference`
+    # names it: a shipped puppet's name, or a puppet file's path (#242).
     reference: str
     # How far the camera had to retreat to fit the whole cast across the frame.
     # 1.0 means the requested shot was used as-is; smaller means it was loosened.
@@ -254,12 +255,14 @@ def solve_camera(
     angle: CameraAngle,
     panel_height: float,
     footroom: float | None = None,
+    named: str | None = None,
 ) -> CameraSolution:
     """Resolve the camera against a reference actor.
 
     Everything else in the panel inherits this scale. The reference is the actor the
     shot is composed on -- by convention the first in the cast, which is the one the
-    author wrote first and therefore the one the panel is about.
+    author wrote first and therefore the one the panel is about. `named` is how the cast
+    names its puppet, which the solution records; left out, the puppet's own name.
     """
     headroom = headroom_for(shot, angle)
     # The shot decides its own footroom unless a caller overrides it.
@@ -282,5 +285,5 @@ def solve_camera(
         footroom=footroom,
         panel_height=panel_height,
         shot=shot,
-        reference=reference.name,
+        reference=reference.name if named is None else named,
     )

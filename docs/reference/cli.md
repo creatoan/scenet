@@ -275,6 +275,7 @@ note as information rather than a red squiggle.
 | `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |
 | `scenet/unknown-pose` | error | A `pose` naming one its puppet does not declare |
 | `scenet/unknown-expression` | error | An `expression` naming one its puppet does not declare |
+| `scenet/puppet-file` | error | A `reference` naming a puppet file (`puppets/pip.puppet.yaml`) that is absolute, missing, named by text with no folder, or not a puppet: not YAML, a key repeated or misspelt, a landmark missing or out of order, a joint naming one that does not exist. Reported in the puppet file when the document is checked as a file |
 | `scenet/image-file` | error | A picture in `setting.image` that is absolute, missing, not a PNG or JPEG, turned by its EXIF orientation, or named by text with no folder |
 | `scenet/artwork-contract` | error | A picture whose figures the panel casts has no artwork contract beside it (`art/p01.png` → `art/p01.art.yaml`), or one that is not YAML, repeats or misspells a key, holds a value out of place, puts a point off the picture, or was measured on a picture of another size. Reported in the contract when the document is checked as a file |
 | `scenet/unknown-figure` | error | A cast `figure` in a panel that names no picture, or a line spoken or sound made by a figure the panel's picture does not draw |
@@ -293,9 +294,10 @@ note as information rather than a red squiggle.
 ### Source positions
 
 A finding is located in the file it is about, which is usually the document checked. A fault inside
-a picture's [artwork contract](asset_contract.md#artwork-contracts) is located in the contract —
+a picture's [artwork contract](asset_contract.md#artwork-contracts), or inside a
+[puppet file](../howto/add_your_own_character.md) a cast member names, is located in that file —
 its own path, line and column — since that is the file to open to fix it; checked as text, with no
-file of its own, the document points at the line naming the picture instead.
+file of its own, the document points at the line naming the picture or the puppet instead.
 
 `yaml.safe_load` discards the position of every value, so the document is composed a
 second time with `yaml.compose`, whose node tree carries `start_mark` and `end_mark`. Those
