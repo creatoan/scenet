@@ -33,7 +33,8 @@ documentation one chapter at a time, checks a snippet, and renders one;
 `render` to draw. The same shapes, rather than new ones:
 
 - `get_spec` -- the spec pack, one part at a time, so a model need not read all of it
-- `list_puppets` -- the characters it may cast, with their poses and expressions
+- `list_puppets` -- the characters it may cast, with their poses and expressions --
+  the shipped ones, and any puppet file sent with a document
 - `validate` -- every finding at once, shaped rather than dumped as raw SARIF
 - `compile` -- the Panel Core: where the compiler put everything, and why
 - `render` -- the SVG, byte-identical to what `scenet build --embed-images` writes
@@ -43,10 +44,10 @@ system with the server, and one calling convention for both transports is one le
 thing to get wrong. Every tool is read-only and closed-world, and says so in its
 annotations: nothing here writes a file or reaches the network.
 
-A document that names a file -- a picture behind the cast, a lettering face -- is sent
-with it: `files` maps the path the document writes to the file's bytes, in base64. They
-stand in for the document's folder and are read in memory; the server never reads a
-folder of its own, and never writes one.
+A document that names a file -- a picture behind the cast, a lettering face, a puppet of
+its own -- is sent with it: `files` maps the path the document writes to the file's
+bytes, in base64. They stand in for the document's folder and are read in memory; the
+server never reads a folder of its own, and never writes one.
 
 ## Keeping stdout clean
 
@@ -72,7 +73,7 @@ from mcp.types import EmbeddedResource, TextContent, TextResourceContents, ToolA
 from pydantic import BaseModel, Field
 
 from scenet import __version__
-from scenet.assets.contract import default_library
+from scenet.assets.contract import PuppetSpec, default_library, is_puppet_file, load_puppet_file
 from scenet.diagnostics import RULE_NAMESPACE, RULES, Diagnostic, diagnose_script, diagnose_source
 from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
@@ -115,10 +116,12 @@ format or worked examples. list_puppets names the characters you can cast.
 
 Then validate the document, fix every finding -- each names its rule, line and fix -- \
 and validate again until it is clean. compile shows where everything was placed; \
-render returns the SVG. Pass the document's text, not a path; if it names a picture or \
-a font, pass that file's bytes in files, by the path the document writes. A cast of \
-figure: members is drawn by its picture, whose artwork contract sits beside it, named \
-after it (art/p01.png, art/p01.art.yaml): pass that file too."""
+render returns the SVG. Pass the document's text, not a path; if it names a picture, \
+a font or a puppet file of its own (reference: puppets/pip.puppet.yaml), pass that \
+file's bytes in files, by the path the document writes, and list_puppets with the same \
+files says what poses and expressions the puppet has. A cast of figure: members is \
+drawn by its picture, whose artwork contract sits beside it, named after it \
+(art/p01.png, art/p01.art.yaml): pass that file too."""
 
 #: Every tool here is a pure function of its arguments.
 READ_ONLY = ToolAnnotations(
@@ -156,11 +159,12 @@ FilesArg = Annotated[
     dict[str, str] | None,
     Field(
         description=(
-            "The files the document names -- a picture behind the cast, a font -- by the "
-            "path it writes, such as `art/p01.png`, each as base64, and the artwork contract "
-            "beside a picture whose figures the cast names, such as `art/p01.art.yaml`. They "
-            "stand in for the document's folder, which a server never reads; left out, a "
-            "document that names a file is refused"
+            "The files the document names -- a picture behind the cast, a font, a puppet "
+            "file a cast member's `reference` names -- by the path it writes, such as "
+            "`art/p01.png` or `puppets/pip.puppet.yaml`, each as base64, and the artwork "
+            "contract beside a picture whose figures the cast names, such as "
+            "`art/p01.art.yaml`. They stand in for the document's folder, which a server "
+            "never reads; left out, a document that names a file is refused"
         )
     ),
 ]
@@ -237,7 +241,9 @@ class CompileReport(BaseModel):
 class Puppet(BaseModel):
     """A character a cast member's `reference` can name."""
 
-    name: str
+    name: str = Field(
+        description="What `reference` writes: a shipped puppet's name, or a puppet file's path"
+    )
     heads_tall: float = Field(description="Height in head-heights; taller reads as older")
     poses: list[str] = Field(description="Every value `pose` may take for this puppet")
     expressions: list[str] = Field(description="Every value `expression` may take")
@@ -272,28 +278,40 @@ def get_spec(
     return part(section)
 
 
-def list_puppets() -> PuppetCatalogue:
+def list_puppets(files: FilesArg = None) -> PuppetCatalogue:
     """List the characters a panel can cast, with every pose and expression each declares.
 
     A cast member's `reference` names one of these; its `pose` and `expression` must be
-    names that puppet declares. Anything else fails validation.
+    names that puppet declares. Anything else fails validation. A puppet of your own is a
+    `*.puppet.yaml` file a cast member names by its path, `reference:
+    puppets/pip.puppet.yaml`: send it in `files`, as validate, compile and render take
+    it, and it is listed after the shipped ones, by that path.
 
     Returns:
-        Every shipped puppet, by name, with its poses and expressions sorted.
+        Every shipped puppet, by name, then every puppet file sent, by path -- each with
+        its poses and expressions sorted.
     """
     library = default_library()
-    puppets = []
-    for name in library.names():
-        puppet = library.get(name)
-        puppets.append(
-            Puppet(
-                name=name,
-                heads_tall=round(puppet.heads_tall, 1),
-                poses=sorted(puppet.poses),
-                expressions=sorted(puppet.expressions),
-            )
-        )
+    puppets = [_puppet(name, library.get(name)) for name in library.names()]
+    sent = _files(files) or {}
+    for name in sorted(sent):
+        if not is_puppet_file(name):
+            continue
+        try:
+            puppets.append(_puppet(name, load_puppet_file(name, sent)))
+        except ScenetError as exc:
+            raise ToolError(f"files: {name!r} is not a puppet: {exc}") from exc
     return PuppetCatalogue(puppets=puppets)
+
+
+def _puppet(name: str, puppet: PuppetSpec) -> Puppet:
+    """One puppet, as a model is told about it: what to write, and what it can do."""
+    return Puppet(
+        name=name,
+        heads_tall=round(puppet.heads_tall, 1),
+        poses=sorted(puppet.poses),
+        expressions=sorted(puppet.expressions),
+    )
 
 
 def validate(

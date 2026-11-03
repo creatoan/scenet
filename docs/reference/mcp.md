@@ -17,7 +17,7 @@ Five, deliberately. Each extra tool is more for a model to read before it can ch
 | Tool | Takes | Returns |
 |---|---|---|
 | `get_spec` | `section` (optional) | The spec pack, one part at a time, as Markdown |
-| `list_puppets` | — | Every character, with each pose and expression it declares |
+| `list_puppets` | `files` (optional) | Every shipped character, then every puppet file sent, with each pose and expression it declares |
 | `validate` | `source`, `syntax`, `deep`, `files` | `{valid, findings}`, every finding at once; `valid` when none is an error |
 | `compile` | `source`, `syntax`, `files` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
 | `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `mono`, `conditioning` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
@@ -33,15 +33,18 @@ the network, or answers differently on a second call. A client can run them with
 
 `files`
 : The files the document names — a [picture behind the cast](language.md#an-image-behind-the-cast),
-  a [lettering face](language.md#lettering) — by the path it writes, each as base64:
-  `{"art/p01.png": "iVBORw0KGgo…"}`. They stand in for the document's folder, which the server
-  never reads, and are read in memory, so nothing is written to the server's disk. A path is held
-  to a document's own rules — relative, `/` between folders — and a value that is not base64 is a
-  tool error naming it. Left out, a document that names a file gets `image-file` or `font-file`,
-  as text with no folder does anywhere. A cast of [figures a picture draws](language.md#figures-the-picture-draws)
+  a [lettering face](language.md#lettering), a [puppet of its own](language.md#a-puppet-of-your-own)
+  — by the path it writes, each as base64: `{"art/p01.png": "iVBORw0KGgo…"}`. They stand in for
+  the document's folder, which the server never reads, and are read in memory, so nothing is
+  written to the server's disk. A path is held to a document's own rules — relative, `/` between
+  folders — and a value that is not base64 is a tool error naming it. Left out, a document that
+  names a file gets `image-file`, `font-file` or `puppet-file`, as text with no folder does
+  anywhere. A cast of [figures a picture draws](language.md#figures-the-picture-draws)
   also needs the picture's artwork contract, beside it and named after it —
   `{"art/p01.png": "…", "art/p01.art.yaml": "…"}`; without it the finding is `artwork-contract`,
-  at the line naming the picture.
+  at the line naming the picture. Given to `list_puppets`, each `*.puppet.yaml` among them is
+  listed after the shipped puppets, by its path — what `reference` writes — and one that is not a
+  puppet is a tool error saying why.
 
 `syntax`
 : `yaml` (default) for a `*.panel.yaml` or `*.scene.yaml` document — a top-level `panels:` key
@@ -120,9 +123,11 @@ dependencies for one tool.
 On connecting, the server sends instructions that many hosts hand straight to the model. They
 say what to do rather than what the server is: read `get_spec` first, cast only what
 `list_puppets` lists, validate until clean, and pass text rather than paths — with the bytes
-of any picture or font the document names in `files`, and of the artwork contract beside a
-picture whose figures the cast names. Figures have no tool of their own, which keeps the server at
-five: their names are the contract's, and `get_spec`'s characters part says where they come from.
+of any picture, font or puppet file the document names in `files`, and of the artwork contract
+beside a picture whose figures the cast names. A puppet file of the document's own needs no tool
+either: `list_puppets` given the same `files` describes it. Figures have no tool of their own,
+which keeps the server at five: their names are the contract's, and `get_spec`'s characters part
+says where they come from.
 
 ## Keeping stdout clean
 
