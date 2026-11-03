@@ -1,0 +1,111 @@
+# Pip: a child, five heads tall, and the gallery's own puppet -- Scenet does not ship it.
+#
+# A document casts it by its path, relative to the document, as it names a font or a
+# picture: `reference: puppets/pip.puppet.yaml`. The `name:` below is what a message calls it.
+#
+# What sets it apart from alice and bob, who are both seven and a half heads tall:
+#
+# - Five heads, not seven and a half. A head is the same 100 units as alice's, so the body
+#   below it is shorter, and the head is big for it -- a child's proportion. At the same
+#   shot, a camera that framed by fractions of the panel instead of by landmarks in heads
+#   would get pip visibly wrong.
+# - Big eyes, set low in the face, a small nose and a small mouth.
+# - A knot of hair on top of the head: a blob, as the head is, so pip reads as pip even at
+#   a distance, where a face is too small to draw.
+#
+# Values are native units, one head being 100; landmarks are measured down from the top of
+# the head, and each joint's offset from its parent's. The root sits at the waist.
+
+name: pip
+units_per_head: 100
+root: root
+root_landmark: waist
+
+landmarks:
+  head_top: 0
+  eyes: 50
+  chin: 100
+  shoulders: 120
+  chest: 165
+  waist: 245
+  mid_thigh: 320
+  knees: 375
+  feet: 500
+
+joints:
+  root: {parent: null, offset: [0, 0]}
+  spine: {parent: root, offset: [0, -80]}
+  neck: {parent: spine, offset: [0, -45]}
+  head: {parent: neck, offset: [0, -70]}
+
+  shoulder_l: {parent: neck, offset: [-26, 4]}
+  shoulder_r: {parent: neck, offset: [26, 4]}
+  elbow_l: {parent: shoulder_l, offset: [0, 62]}
+  elbow_r: {parent: shoulder_r, offset: [0, 62]}
+  wrist_l: {parent: elbow_l, offset: [0, 55]}
+  wrist_r: {parent: elbow_r, offset: [0, 55]}
+
+  hip_l: {parent: root, offset: [-20, 8]}
+  hip_r: {parent: root, offset: [20, 8]}
+  knee_l: {parent: hip_l, offset: [0, 122]}
+  knee_r: {parent: hip_r, offset: [0, 122]}
+  ankle_l: {parent: knee_l, offset: [0, 125]}
+  ankle_r: {parent: knee_r, offset: [0, 125]}
+
+parts:
+  - {from: neck, to: root, width: 64}
+  - {from: shoulder_l, to: elbow_l, width: 22}
+  - {from: elbow_l, to: wrist_l, width: 18}
+  - {from: shoulder_r, to: elbow_r, width: 22}
+  - {from: elbow_r, to: wrist_r, width: 18}
+  - {from: hip_l, to: knee_l, width: 28}
+  - {from: knee_l, to: ankle_l, width: 24}
+  - {from: hip_r, to: knee_r, width: 28}
+  - {from: knee_r, to: ankle_r, width: 24}
+  - {at: head, radius: 50}
+  - {at: head, radius: 16, offset: [0, -56]}   # the knot of hair
+
+anchors:
+  head_top: {joint: head, offset: [0, -50]}
+  eyes: {joint: head, offset: [0, 0]}
+  mouth: {joint: head, offset: [0, 26]}
+  feet: {joint: root, offset: [0, 255]}
+
+face:
+  joint: head
+  radius: 60
+  # Feature points ride the head joint, so they mirror and scale with it. `size` means an
+  # eye's radius, a brow's or mouth's half-width, a nose's length.
+  features:
+    brow_l: {offset: [-19, -22], size: 10}
+    brow_r: {offset: [19, -22], size: 10}
+    eye_l:  {offset: [-19, -2], size: 12}
+    eye_r:  {offset: [19, -2], size: 12}
+    nose:   {offset: [0, 12], size: 6}
+    mouth:  {offset: [0, 26], size: 12}
+
+gaze:
+  origin: eyes
+
+poses:
+  standing_neutral:
+    elbow_l: -5
+    elbow_r: 5
+
+  waving:
+    elbow_l: -5
+    elbow_r: -150
+    wrist_r: 35
+
+  arms_up:
+    elbow_l: 155
+    wrist_l: -20
+    elbow_r: -155
+    wrist_r: 20
+
+expressions:
+  neutral:  {}
+  happy:    {mouth: smile}
+  surprise: {brow: raised,     eyes: wide, mouth: open}
+  scared:   {brow: angled_out, eyes: wide, mouth: small}
+  sad:      {brow: angled_out, eyes: half, mouth: frown}

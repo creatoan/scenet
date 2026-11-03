@@ -96,6 +96,7 @@ class TestWhatIsStillAllowed:
             [
                 *ROOT.glob("examples/*.yaml"),
                 *ROOT.glob("examples/gallery/*.yaml"),
+                *ROOT.glob("examples/gallery/puppets/*.yaml"),
                 *ROOT.glob("src/scenet/assets/library/*.yaml"),
             ]
         ),

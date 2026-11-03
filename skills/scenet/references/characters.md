@@ -9,7 +9,11 @@ The puppets shipped with Scenet. A cast member's `reference` names one of these,
 | `alice` | 7.5 | `arms_crossed`, `hands_on_hips`, `pointing`, `standing_neutral` | `angry`, `bored`, `coy`, `happy`, `laughing`, `neutral`, `sad`, `scared`, `shouting`, `surprise` |
 | `bob` | 7.5 | `arms_crossed`, `hands_on_hips`, `pointing`, `standing_neutral` | `angry`, `bored`, `coy`, `happy`, `laughing`, `neutral`, `sad`, `scared`, `shouting`, `surprise` |
 
-One puppet may appear several times in a panel under different actor ids. Your own puppets are described in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html).
+One puppet may appear several times in a panel under different actor ids.
+
+## A puppet of your own
+
+A `*.puppet.yaml` file beside the document is a puppet of its own, and a cast member names it by its path, relative to the folder the document is in, as a font or a picture is named: `reference: puppets/pip.puppet.yaml`. A reference that ends in `.puppet.yaml` is a file; any other is a shipped puppet's name. The file declares its own poses and expressions, and a member names those. Over MCP, send it in `files` by that path, and `list_puppets` given the same `files` lists it with them. A fault in it is `puppet-file`. What a puppet file holds is in [the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html) and [Add your own character](https://creatoan.github.io/scenet/howto/add_your_own_character.html); the gallery's `69-a-puppet-of-your-own.scene.yaml` casts one, printed after it.
 
 ## Figures a picture draws
 

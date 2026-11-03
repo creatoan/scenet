@@ -473,3 +473,10 @@ examples:
     group: Comic scripts
     summary: "A script as a letterer reads it: numbered items, every kind of caption, voices off panel from above and below, and sounds with their size."
     doc: howto/write_a_comic_script.md#a-letterers-script
+  - file: 69-a-puppet-of-your-own.scene.yaml
+    title: "A puppet of your own"
+    kind: scene
+    group: Your own art
+    summary: "Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path."
+    doc: howto/add_your_own_character.md#cast-it-in-a-document
+    files: [puppets/pip.puppet.yaml]

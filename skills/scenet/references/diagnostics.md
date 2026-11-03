@@ -148,6 +148,12 @@ The panel has no usable area. Panel dimensions must be positive, and the margins
 
 **Fix:** Give the panel a positive size, and a margin smaller than half its shorter side.
 
+### `scenet/puppet-file`
+
+A puppet file a cast member names cannot be read. A cast member's `reference` that ends in `.puppet.yaml` names a puppet file, read relative to the folder the document is in, as a font or a picture is. It must be a relative path written with `/`, the file must be there, and it must be a puppet: YAML that declares its landmarks, joints, parts, anchors and face, each joint it names declared. A document compiled from text with no file behind it has no folder, and so can name no puppet file unless the file is sent with it. A fault inside the file is reported in it, at the key that is wrong, when the document was checked as a file.
+
+**Fix:** Check the path against the document's folder, write it relative to that folder, or fix the puppet where the finding points; docs/howto/add_your_own_character.md walks through one.
+
 ### `scenet/reflexive-relation`
 
 A relation relates an actor to itself. No predicate in the language means anything reflexively, so an actor placed left of itself is always a typo for a second actor's id.
@@ -212,7 +218,7 @@ Reference to a pose the character does not have. A cast member's `pose` names on
 
 Reference to a character the library does not contain. A cast member's `reference` names a puppet that is not installed.
 
-**Fix:** Check the name against the shipped library, or supply your own.
+**Fix:** Check the name against the shipped library, or name a puppet of your own by its file, relative to the document: `reference: puppets/name.puppet.yaml`.
 
 ### `scenet/word-limit`
 

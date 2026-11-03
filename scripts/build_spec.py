@@ -34,6 +34,7 @@ import yaml
 
 from scenet import CastMember, default_library
 from scenet.assets.artwork import CONTRACT_SUFFIX
+from scenet.assets.contract import PUPPET_SUFFIX
 from scenet.diagnostics import RULE_NAMESPACE, RULES
 from scenet.schema import panel_schema
 from scenet.spec_pack import MARKER, RESOURCE, SPEC_PARTS
@@ -197,7 +198,8 @@ so always check.
 
 - **Every actor id used in `staging` or `script` must be a key of `cast`.** Ids are
   case-sensitive.
-- **`reference` names a puppet in the library.** The shipped puppets are {puppets}.
+- **`reference` names a puppet in the library, or a puppet file of the document's own by
+  its path, `reference: puppets/pip.puppet.yaml`.** The shipped puppets are {puppets}.
   `pose` and `expression` must be names that puppet declares; see the `characters`
   part. Do not invent them.
 - **Two figures need a left-to-right order**, from `at:` or from an explicit
@@ -235,9 +237,18 @@ def _characters() -> str:
         f"defaults to `{_default('pose')}` and `expression` to `{_default('expression')}`.\n\n"
         "| Puppet | Heads tall | Poses | Expressions |\n"
         "|---|---|---|---|\n" + "\n".join(rows) + "\n\n"
-        "One puppet may appear several times in a panel under different actor ids. Your "
-        "own puppets are described in "
-        f"[the asset contract]({SITE}/reference/asset_contract.html).\n\n"
+        "One puppet may appear several times in a panel under different actor ids.\n\n"
+        "## A puppet of your own\n\n"
+        "A `*.puppet.yaml` file beside the document is a puppet of its own, and a cast "
+        "member names it by its path, relative to the folder the document is in, as a font "
+        "or a picture is named: `reference: puppets/pip.puppet.yaml`. A reference that ends "
+        "in `.puppet.yaml` is a file; any other is a shipped puppet's name. The file "
+        "declares its own poses and expressions, and a member names those. Over MCP, send "
+        "it in `files` by that path, and `list_puppets` given the same `files` lists it "
+        "with them. A fault in it is `puppet-file`. What a puppet file holds is in "
+        f"[the asset contract]({SITE}/reference/asset_contract.html) and "
+        f"[Add your own character]({SITE}/howto/add_your_own_character.html); the gallery's "
+        "`69-a-puppet-of-your-own.scene.yaml` casts one, printed after it.\n\n"
         "## Figures a picture draws\n\n"
         "A cast member may instead be `figure: <name>`: somebody a supplied picture "
         "(`setting.image`) already draws. No tool lists them, because they are not "
@@ -312,15 +323,21 @@ def _gallery() -> str:
             f"\n\nIt names `{name}`, which is beside it in the gallery: {_kind(name)}, "
             "not printed here."
             for name in _named_files(entry)
-            if not name.endswith(CONTRACT_SUFFIX)
+            if not name.endswith((CONTRACT_SUFFIX, PUPPET_SUFFIX))
         )
         # A picture's artwork contract is text, and what a model has to learn to write
         # beside a picture of its own, so it is printed after the example that reads it.
+        # So is a puppet of the document's own (#242).
         contracts = "".join(
             f"\nIts picture's artwork contract, `{name}`, beside the picture:\n\n"
             f"{_fence((GALLERY / name).read_text(encoding='utf-8'), 'yaml')}"
             for name in _named_files(entry)
             if name.endswith(CONTRACT_SUFFIX)
+        ) + "".join(
+            f"\nThe puppet its cast names, `{name}`, beside it:\n\n"
+            f"{_fence((GALLERY / name).read_text(encoding='utf-8'), 'yaml')}"
+            for name in _named_files(entry)
+            if name.endswith(PUPPET_SUFFIX)
         )
         sections.append(
             f"## {entry['title']}\n\n{entry['summary']}\n\n{_notes(entry)}"

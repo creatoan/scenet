@@ -62,8 +62,10 @@ If `scenet` is not installed: `pip install scenet`, or run it once with
 
 - **Every actor id in `staging` and `script` must be a key of `cast`.** Ids are
   case-sensitive.
-- **`reference` must be a shipped puppet, and `pose` and `expression` must be names it
-  declares.** They are listed in `references/characters.md`. Do not invent them.
+- **`reference` must be a shipped puppet, or a puppet file beside the document named by
+  its path (`reference: puppets/pip.puppet.yaml`), and `pose` and `expression` must be
+  names it declares.** The shipped ones are listed in `references/characters.md`, with
+  how to cast your own. Do not invent them.
 - **Two figures need a left-to-right order**: `at:` (`left_third`, `center`,
   `right_third`, `left_edge`, `right_edge`) or `a left_of b` in `staging`. There is no
   "beside".

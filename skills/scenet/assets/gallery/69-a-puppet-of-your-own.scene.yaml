@@ -1,0 +1,70 @@
+# A puppet of your own: pip, a child five heads tall, at the docks with alice.
+#
+# Scenet ships two puppets, alice and bob, and pip is not one of them. Its file,
+# pip.puppet.yaml, is in puppets/, beside this document, and the cast names it by that path:
+# relative to the folder the document is in, as a font or a picture is named. The
+# playground writes it there for you, and Puppet... adds one of your own the same way.
+#
+# A puppet file says what a character is made of -- landmarks, joints, the parts drawn, a
+# face -- and the poses and expressions it can take, by name. Pip's are its own: it waves
+# and throws its arms up, where alice points and crosses hers. This page draws every pose
+# and every expression pip has.
+#
+# Pip is five heads tall to alice's seven and a half. The camera frames each shot by the
+# landmarks a puppet declares, counted in heads, so pip reaches alice's waist in every
+# panel they share, and fills a panel of its own at the shot asked for.
+
+page: {size: [1500, 2100], margin: 60, gutter: 30, tier_gutter: 40}
+setting: {place: docks, time: dusk}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: puppets/pip.puppet.yaml, at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: [quay]
+      - {height: 1.2, panels: [wave, enormous, loud]}
+      - panels: [gone]
+
+panels:
+  quay:
+    camera: {shot: full_shot}
+    staging: [alice left_of pip, pip looking_at alice]
+    script:
+      - say: {by: pip, text: "Is that our boat?"}
+      - say: {by: alice, text: "Not yet."}
+
+  wave:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: waving, expression: happy, at: center}
+    script:
+      - say: {by: pip, text: "Hello, boat!"}
+
+  enormous:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: arms_up, expression: surprise, at: center}
+    script:
+      - say: {by: pip, text: "It's enormous!"}
+
+  loud:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {expression: scared, at: center}
+    script:
+      - say: {by: pip, text: "And so loud.", kind: whisper}
+
+  gone:
+    camera: {shot: full_shot}
+    cast:
+      alice: {expression: happy}
+      pip: {expression: sad}
+    staging: [alice left_of pip, pip looking_at alice]
+    script:
+      - say: {by: pip, text: "It's going without us."}
+      - say: {by: alice, text: "That one wasn't ours."}
