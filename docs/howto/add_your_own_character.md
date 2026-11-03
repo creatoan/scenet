@@ -220,6 +220,10 @@ aligns feet rather than heads.
 
 If you add characters, make them differ. Identical puppets are a blindfold.
 
+Then stand them together with `ground_shared_with`, as example 69 does with alice and pip. A
+figure in no such group is framed on its own, its head under the top of the panel, so a child
+beside an adult would float with its head level with hers; sharing a ground aligns their feet.
+
 ## What is not modelled
 
 No hands beyond the end of a capsule, no clothing, no props, and no hair beyond a blob like

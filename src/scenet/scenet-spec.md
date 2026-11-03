@@ -553,6 +553,8 @@ cast:
   hands the file over with it.
 - **Only what the cast names is read**, once however many members it draws.
 - **`pose` and `expression` are the file's own** names, held to it exactly as a shipped puppet's are.
+- **A puppet of another height shares the ground only when staging says so**, with
+  `ground_shared_with`: framed alone, each figure's head is under the top of the panel.
 - **Panel Core records the reference as written**, for the actor and for the camera composed on
   it. Nothing else of the file reaches the output but the figure drawn.
 
@@ -6852,8 +6854,10 @@ Pip, a child five heads tall, is drawn from a puppet file beside the gallery, wh
 # and every expression pip has.
 #
 # Pip is five heads tall to alice's seven and a half. The camera frames each shot by the
-# landmarks a puppet declares, counted in heads, so pip reaches alice's waist in every
-# panel they share, and fills a panel of its own at the shot asked for.
+# landmarks a puppet declares, counted in heads, so pip fills a panel of its own at the
+# shot asked for. Beside alice, `ground_shared_with` stands them on one ground, and pip
+# comes up to her chest; without it, each would be framed alone, head under the top of the
+# panel, and pip would float.
 
 page: {size: [1500, 2100], margin: 60, gutter: 30, tier_gutter: 40}
 setting: {place: docks, time: dusk}
@@ -6871,7 +6875,7 @@ pages:
 panels:
   quay:
     camera: {shot: full_shot}
-    staging: [alice left_of pip, pip looking_at alice]
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
     script:
       - say: {by: pip, text: "Is that our boat?"}
       - say: {by: alice, text: "Not yet."}
@@ -6905,7 +6909,7 @@ panels:
     cast:
       alice: {expression: happy}
       pip: {expression: sad}
-    staging: [alice left_of pip, pip looking_at alice]
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
     script:
       - say: {by: pip, text: "It's going without us."}
       - say: {by: alice, text: "That one wasn't ours."}

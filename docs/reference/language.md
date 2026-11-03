@@ -471,6 +471,8 @@ cast:
   hands the file over with it.
 - **Only what the cast names is read**, once however many members it draws.
 - **`pose` and `expression` are the file's own** names, held to it exactly as a shipped puppet's are.
+- **A puppet of another height shares the ground only when staging says so**, with
+  `ground_shared_with`: framed alone, each figure's head is under the top of the panel.
 - **Panel Core records the reference as written**, for the actor and for the camera composed on
   it. Nothing else of the file reaches the output but the figure drawn.
 
