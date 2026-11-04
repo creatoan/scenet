@@ -29,7 +29,7 @@ BUILD_OPTIONS: dict[str, str] = {
     "--no-aria": "It writes less, not more; the Screen reader tab shows what it leaves out.",
     "--embed-images": "Always on: a picture beside a file is not beside a page.",
     "--strip": "#layout-strip",
-    "--pdf": "#download-pdf",
+    "--pdf": "#tab-print",
     "--quiet": "The notes are always shown, under the tabs.",
     "--watch": "In the browser, changes recompile on every edit.",
 }

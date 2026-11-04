@@ -39,15 +39,20 @@ The Scenet compiler running in a browser, published to GitHub Pages.
   drawn by `scenet.emit.preview`.
 - **Screen reader** lists what a screen reader is given (`src/outline.ts`): every image and
   group the SVG names, nested, with its words.
+- **Print** shows the print PDF, as `scenet build --pdf` writes it, in the browser's own
+  viewer, with what print leaves out listed above it; where a browser shows no PDF in a frame,
+  as on a phone, its link opens the file. The Content Security Policy lets frames load only
+  this page's own `blob:` addresses.
 - **Files** shows the files beside the document: the gallery's pictures and artwork
   contracts, and what Font… and Image… added.
 - **Output** letters with live text, as `--live-text` does, and shows a document of several
   panels as its pages, a strip, or each panel on its own (`src/maps.ts`). The choice is kept
   in the browser; a share link does not carry it.
 - **Download** the panel as SVG or a 2× PNG, the overlay, the Panel Core, a panel's exports
-  for image models, or the source; a document of several panels has its exports in one ZIP.
+  for image models, the print PDF, or the source; a document of several panels has its exports in one ZIP.
   `Ctrl+S` saves the source. Names follow `scenet build`: `foo.svg`, `foo.debug.svg`,
-  `foo.core.json`, `foo.pose.json`, `foo.conditioning.zip` holding `foo.one.pose.json`.
+  `foo.core.json`, `foo.pose.json`, `foo.pdf`, `foo.conditioning.zip` holding
+  `foo.one.pose.json`.
 - **Share** copies a link with the whole document compressed into the URL fragment. The
   fragment never reaches a server, so there is no backend.
 - **Font…** adds `.ttf` and `.otf` files to the document's `fonts/` folder, in Pyodide's

@@ -34,6 +34,7 @@ import {
   download,
   sourceFilename,
   stemFor,
+  pdfBlob,
   svgBlob,
   svgToPng,
   textBlob,
@@ -181,6 +182,10 @@ const liveTextOption = element<HTMLInputElement>("option-live-text");
 const outlineHost = element<HTMLDivElement>("outline");
 const outlineList = element<HTMLOListElement>("outline-list");
 const filesHost = element<HTMLDivElement>("files");
+const printHost = element<HTMLDivElement>("print");
+const printFrame = element<HTMLIFrameElement>("print-frame");
+const printOpen = element<HTMLAnchorElement>("print-open");
+const printNotes = element<HTMLUListElement>("print-notes");
 const filesList = element<HTMLUListElement>("files-list");
 const fileView = element<HTMLDivElement>("file-view");
 const fullscreenButton = element<HTMLButtonElement>("fullscreen");
@@ -196,6 +201,7 @@ const tabs = {
   ".boxes.json": element<HTMLButtonElement>("tab-boxes"),
   ".semantics.json": element<HTMLButtonElement>("tab-semantics"),
   outline: element<HTMLButtonElement>("tab-outline"),
+  print: element<HTMLButtonElement>("tab-print"),
   files: element<HTMLButtonElement>("tab-files"),
 };
 const layoutOptions = {
@@ -478,6 +484,7 @@ async function main(): Promise<void> {
     coreHost.hidden = view !== "core" && view !== ".semantics.json";
     outlineHost.hidden = view !== "outline";
     filesHost.hidden = view !== "files";
+    printHost.hidden = view !== "print";
     // The files are there before anything compiles: the gallery's are written at start.
     if (view === "files") {
       showFiles();
@@ -488,6 +495,8 @@ async function main(): Promise<void> {
       showJson(coreModel, lastGood.core);
     } else if (view === "outline") {
       showOutline();
+    } else if (view === "print") {
+      void showPrint();
     } else if (EXPORT_VIEWS.has(view)) {
       void showExport(view);
     } else if (pictures.length > 0) {
@@ -496,6 +505,41 @@ async function main(): Promise<void> {
         composeMaps(pictures.map((shown) => ({ name: shown.name, svg: debug ? shown.debug : shown.svg }))),
       );
     }
+  };
+
+  // --- The print PDF -------------------------------------------------------------------
+
+  /** The address of the PDF shown, let go of when the next one replaces it. */
+  let printUrl: string | undefined;
+
+  /**
+   * The print PDF, in the browser's own viewer, with what print leaves out under it.
+   *
+   * Made only while the tab is open, as the exports are. Where a browser shows no PDF in a
+   * frame, as on a phone, the link above it opens or downloads the same file.
+   */
+  const showPrint = async (): Promise<void> => {
+    if (compiler === undefined || lastGood === undefined) return;
+    const asked = book;
+    const printed = await compiler.pdf();
+    if (asked !== book || view !== "print") return;
+    printNotes.replaceChildren();
+    if (!printed.ok) {
+      const item = document.createElement("li");
+      item.textContent = `Print cannot carry this document: ${printed.error}`;
+      printNotes.append(item);
+      printFrame.removeAttribute("src");
+      return;
+    }
+    for (const note of printed.notes) {
+      const item = document.createElement("li");
+      item.textContent = note;
+      printNotes.append(item);
+    }
+    if (printUrl !== undefined) URL.revokeObjectURL(printUrl);
+    printUrl = URL.createObjectURL(pdfBlob(printed.bytes));
+    printFrame.src = printUrl;
+    printOpen.href = printUrl;
   };
 
   // --- Exports for image models ------------------------------------------------------
@@ -962,6 +1006,14 @@ async function main(): Promise<void> {
       const panel = kindOf(model) === "panel" ? undefined : only.panel;
       const { filename, type } = conditioningFile(stem, what, panel);
       download(filename, textBlob(exported, type));
+    }
+    if (what === "pdf" && compiler !== undefined) {
+      const printed = await compiler.pdf();
+      if (!printed.ok) {
+        setStatus(`Print cannot carry this document: ${printed.error}`);
+        return;
+      }
+      download(`${stem}.pdf`, pdfBlob(printed.bytes));
     }
     if (what === "conditioning" && compiler !== undefined) {
       const bytes = await compiler.archive(stem);

@@ -321,7 +321,28 @@ def _scenet_archive(stem):
 
     cores = {name: result.core for name, result in _scenet_last.panels.items()}
     return base64.b64encode(conditioning_archive(cores, stem)).decode("ascii")
+
+
+def _scenet_pdf():
+    """The print PDF, as \`scenet build --pdf\` writes it, and what print leaves out."""
+    import base64
+
+    from scenet.emit.pdf import print_notes, printed_panels, render_pdf
+
+    book = _scenet_last
+    cores = {name: result.core for name, result in book.panels.items()}
+    try:
+        data = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+    except ValueError as exc:
+        return json.dumps({"ok": False, "error": str(exc)})
+    notes = print_notes(printed_panels(book.pages, cores))
+    return json.dumps({"ok": True, "pdf": base64.b64encode(data).decode("ascii"), "notes": notes})
 `;
+
+/** The print PDF, or why print could not carry the document. */
+export type PrintResult =
+  | { readonly ok: true; readonly bytes: Uint8Array; readonly notes: readonly string[] }
+  | { readonly ok: false; readonly error: string };
 
 /** A booted compiler, ready to be handed source. */
 export interface Compiler {
@@ -337,6 +358,8 @@ export interface Compiler {
   conditioning(): Promise<readonly PanelExports[]>;
   /** The same as one ZIP, each file named as `scenet build --conditioning` names it. */
   archive(stem: string): Promise<Uint8Array>;
+  /** The print PDF of the last document that compiled, as `scenet build --pdf` writes it. */
+  pdf(): Promise<PrintResult>;
   /** Every file beside the document, as the compiler reads them. */
   files(): DocumentFile[];
   /**
@@ -434,6 +457,13 @@ await micropip.install(_scenet_wheel)
     async archive(stem: string): Promise<Uint8Array> {
       pyodide.globals.set("_scenet_stem", stem);
       return decodeBase64(String(await pyodide.runPythonAsync("_scenet_archive(_scenet_stem)")));
+    },
+    async pdf(): Promise<PrintResult> {
+      const raw = JSON.parse(String(await pyodide.runPythonAsync("_scenet_pdf()"))) as
+        | { ok: true; pdf: string; notes: string[] }
+        | { ok: false; error: string };
+      if (!raw.ok) return { ok: false, error: raw.error };
+      return { ok: true, bytes: decodeBase64(raw.pdf), notes: raw.notes };
     },
     files(): DocumentFile[] {
       const found: DocumentFile[] = [];

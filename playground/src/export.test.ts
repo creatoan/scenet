@@ -12,6 +12,7 @@ import {
   conditioningFile,
   MAX_CANVAS_AREA,
   MAX_CANVAS_SIDE,
+  pdfBlob,
   pngScale,
   sourceFilename,
   stemFor,
@@ -71,5 +72,14 @@ describe("exports for image models", () => {
   test("a scene or script of one panel names it, as `scenet build` does", () => {
     assert.equal(conditioningFile("story", ".pose.json", "one").filename, "story.one.pose.json");
     assert.equal(conditioningFile("duel", ".pose.json", undefined).filename, "duel.pose.json");
+  });
+});
+
+describe("pdfBlob", () => {
+  test("is a PDF holding exactly the bytes print wrote", async () => {
+    const bytes = new TextEncoder().encode("%PDF-1.6");
+    const blob = pdfBlob(bytes);
+    assert.equal(blob.type, "application/pdf");
+    assert.deepEqual(new Uint8Array(await blob.arrayBuffer()), bytes);
   });
 });

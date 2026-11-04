@@ -12,6 +12,9 @@ below 1.0 means.
 
 ### Added
 
+- **Print in the playground and the gallery** (#80). The playground's Print tab shows a
+  document's print PDF in the browser's own viewer, with what print leaves out, and Download
+  saves it. Gallery example 70 is a US comic page made for print, with its bleed.
 - **`scenet build --pdf`** (#80) writes the document as one print PDF beside its SVGs, a
   PDF page per page or per panel, with what print leaves out said in notes. `-o` still names
   the SVG; a `.pdf` there is refused.

@@ -23,6 +23,9 @@
       micropip installs are vendored at build time, so nothing is fetched from PyPI at
       runtime either.
 
+      `frame-src blob:` lets the Print tab show the PDF this page made, in the browser's own
+      viewer; no other frame can load.
+
       `frame-ancestors` is deliberately absent: it is ignored when delivered in a meta
       element, and GitHub Pages cannot set response headers, so declaring it here would
       only produce a console error promising protection that is not there.
@@ -35,6 +38,7 @@
         worker-src 'self' blob:;
         style-src 'self' 'unsafe-inline';
         img-src 'self' data: blob:;
+        frame-src blob:;
         font-src 'self' data:;
         connect-src 'self';
         base-uri 'self';
@@ -188,6 +192,9 @@
             <button type="button" id="tab-outline" role="tab" aria-selected="false" aria-controls="outline">
               Screen reader
             </button>
+            <button type="button" id="tab-print" role="tab" aria-selected="false" aria-controls="print">
+              Print
+            </button>
             <button type="button" id="tab-files" role="tab" aria-selected="false" aria-controls="files">
               Files
             </button>
@@ -238,7 +245,7 @@
               <button type="button" data-download="conditioning" hidden>
                 Every panel's exports <span>ZIP</span>
               </button>
-              <button type="button" id="download-pdf" data-download="pdf" hidden>Print <span>PDF</span></button>
+              <button type="button" id="download-pdf" data-download="pdf">Print <span>PDF</span></button>
               <button type="button" data-download="source">Source <span>Ctrl+S</span></button>
             </div>
           </details>
@@ -276,6 +283,17 @@
             by what it shows and then every line said in it; a strip or a page, a group of them.
           </p>
           <ol id="outline-list" class="outline"></ol>
+        </div>
+        <div id="print" class="panel-text" role="tabpanel" aria-label="The print PDF" hidden>
+          <p class="explain">
+            The PDF a printer takes, as <code>scenet build --pdf</code> writes it: lettering on the
+            black plate, overprinting; the paper knocking out; greys as black tints. A page unit
+            prints as 0.1 mm, and a page's bleed runs past its trim.
+            <a id="print-open" target="_blank" rel="noopener">Open it</a> where the browser
+            shows no PDF here.
+          </p>
+          <ul id="print-notes" class="outline"></ul>
+          <iframe id="print-frame" class="print-frame" title="The print PDF"></iframe>
         </div>
         <div id="files" class="panel-text" role="tabpanel" aria-label="Files beside the document" hidden>
           <p class="explain">

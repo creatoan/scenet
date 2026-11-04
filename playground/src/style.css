@@ -535,6 +535,25 @@ button:disabled {
   font-style: italic;
 }
 
+/* The Print tab: the PDF in the browser's own viewer, as tall as the pane allows. */
+#print {
+  display: flex;
+  flex-direction: column;
+}
+
+#print[hidden] {
+  display: none;
+}
+
+.print-frame {
+  flex: 1;
+  min-height: 24rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
 .files-body {
   display: grid;
   grid-template-columns: minmax(12rem, 18rem) 1fr;

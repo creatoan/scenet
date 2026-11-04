@@ -95,6 +95,11 @@ export function svgBlob(svg: string): Blob {
   return new Blob([svg], { type: "image/svg+xml" });
 }
 
+/** A print PDF's bytes, as `scenet build --pdf` writes them (#80). */
+export function pdfBlob(bytes: Uint8Array): Blob {
+  return new Blob([bytes.slice()], { type: "application/pdf" });
+}
+
 export function textBlob(text: string, type = "text/plain"): Blob {
   return new Blob([text], { type: `${type};charset=utf-8` });
 }

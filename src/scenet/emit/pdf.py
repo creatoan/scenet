@@ -129,6 +129,23 @@ def overprints(paint: Paint) -> bool:
     return paint.role is Role.INK
 
 
+def printed_panels(
+    pages: Sequence[PageCore], panels: Mapping[str, PanelCore]
+) -> dict[str, PanelCore]:
+    """The panels a print PDF draws: those on a page, or every panel when there are none.
+
+    Args:
+        pages: The document's pages.
+        panels: Every panel's compiled Core, by name.
+
+    Returns:
+        The panels printed, in the order they are printed.
+    """
+    if not pages:
+        return dict(panels)
+    return {frame.panel: panels[frame.panel] for page in pages for frame in page.frames}
+
+
 def print_notes(panels: Mapping[str, PanelCore]) -> list[str]:
     """What print leaves out or changes, one sentence each, for the panels printed.
 

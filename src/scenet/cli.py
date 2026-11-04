@@ -17,7 +17,7 @@ from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
-from scenet.emit.pdf import print_notes, render_pdf
+from scenet.emit.pdf import print_notes, printed_panels, render_pdf
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
@@ -414,11 +414,8 @@ def _print(book: Book, printed: dict[str, PanelCore], base: Path) -> bytes | int
 
 
 def _printed(book: Book) -> dict[str, PanelCore]:
-    """The panels a print PDF draws: those on a page, or every panel when there are none."""
-    cores = {name: result.core for name, result in book.panels.items()}
-    if not book.pages:
-        return cores
-    return {frame.panel: cores[frame.panel] for page in book.pages for frame in page.frames}
+    """The panels a print PDF draws, which :func:`printed_panels` decides."""
+    return printed_panels(book.pages, {name: result.core for name, result in book.panels.items()})
 
 
 def _links_away_from(book: Book, source: Path, base: Path, *, embedded: bool) -> list[str]:
