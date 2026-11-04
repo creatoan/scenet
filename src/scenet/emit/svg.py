@@ -9,7 +9,6 @@ byte-identical across platforms, whose float repr differs in the last digit.
 """
 
 import base64
-import math
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from urllib.parse import quote
@@ -27,31 +26,20 @@ from scenet.core import (
     FaceDisc,
     FaceMark,
     PanelCore,
-    Tail,
+)
+from scenet.emit import geometry
+from scenet.emit.geometry import (
+    BALLOON_STROKE_WIDTH,
+    CAPTION_STROKE_WIDTH,
+    FIGURE_STROKE_WIDTH,
+    FILL_BALLOON,
+    FILL_FIGURE,
+    FILL_PANEL,
+    STROKE,
+    WEATHER_OPACITY,
 )
 from scenet.ir import BalloonKind, Face
-from scenet.solve.text import FontMetrics, Styled, Typeface
-
-STROKE = "#111111"
-FILL_FIGURE = "#e8e6e1"
-FILL_BALLOON = "#ffffff"
-FILL_PANEL = "#ffffff"
-
-FIGURE_STROKE_WIDTH = 3.0
-BALLOON_STROKE_WIDTH = 3.0
-
-# Corner rounding of a speech balloon, as a fraction of its smaller side.
-BALLOON_CORNER = 0.42
-
-# Half-width of a tail where it meets the balloon, as a fraction of balloon height.
-TAIL_BASE_FRACTION = 0.18
-
-CAPTION_STROKE_WIDTH = 2.5
-
-# Falling weather is drawn at less than full opacity so it reads as passing through the
-# panel rather than as marks on top of it. *Which* tone it uses was chosen by the solver
-# and travels in `CoreAtmosphere.fall_tone`.
-WEATHER_OPACITY = 0.85
+from scenet.solve.text import FontMetrics, Typeface
 
 #: The namespace `xlink:href` is in. SVG 2 deprecates it for plain `href`, and every
 #: renderer still reads it; Inkscape does not yet load a resource named by plain `href`
@@ -525,7 +513,7 @@ def _render_actor(actor: CoreActor, id_prefix: str) -> str:
         lines.append(
             f'      <path d="M{fmt(x1)} {fmt(y1)} L{fmt(x2)} {fmt(y2)}" '
             f'fill="none" stroke="{FILL_FIGURE}" '
-            f'stroke-width="{fmt(max(capsule.width - 2 * FIGURE_STROKE_WIDTH, 1.0))}"/>'
+            f'stroke-width="{fmt(geometry.inner_width(capsule.width))}"/>'
         )
 
     for blob in actor.blobs:
@@ -616,7 +604,7 @@ def _render_sfx(effect: CoreSfx, metrics: FontMetrics, id_prefix: str) -> str:
     stroke is in the glyph's own font units, since the path is scaled down to the type
     size. Nothing is decided here: the origin, the angle and both colours are the Core's.
     """
-    scale = effect.font_size / metrics.units_per_em
+    scale = geometry.sfx_scale(effect, metrics)
     stroke = fmt(effect.stroke_width / scale)
     outlines: dict[str, str] = {}
     lines = [f"    <g id={attr(id_prefix + 'sfx-' + effect.id)}>"]
@@ -645,14 +633,6 @@ def _runs_of(
     return runs[index] if runs else (CoreRun(text=lines[index], face=base),)
 
 
-def _width(runs: Sequence[CoreRun], font_size: float, family: Typeface) -> float:
-    """A line's width, measured exactly as the solver measured it."""
-    line = Styled("", ())
-    for run in runs:
-        line += Styled.of(run.text, run.face)
-    return family.measure(line, font_size)
-
-
 def _render_balloon(
     balloon: CoreBalloon, family: Typeface, *, live_text: bool, id_prefix: str
 ) -> str:
@@ -662,15 +642,13 @@ def _render_balloon(
     lines.append(_tail_shape(balloon))
     lines.append(_balloon_outline(balloon))
 
-    # Text is laid out from the top of the box: padding, then one line height per
-    # line, landing each baseline where the solver's measurement assumed it.
-    padding = (box.height - len(balloon.lines) * balloon.line_height) / 2
-    ascent = balloon.font_size * 0.74
-    for index in range(len(balloon.lines)):
+    _, baselines = geometry.baselines(
+        box, len(balloon.lines), balloon.line_height, balloon.font_size
+    )
+    for index, baseline in enumerate(baselines):
         runs = _runs_of(balloon.lines, balloon.runs, index, Face.REGULAR)
-        baseline = box.y + padding + index * balloon.line_height + ascent
-        width = _width(runs, balloon.font_size, family)
-        start_x = box.x + (box.width - width) / 2
+        width = geometry.line_width(runs, balloon.font_size, family)
+        start_x = geometry.centred(box, width)
         lines.append(
             _live_text(runs, start_x, baseline, balloon.font_size, family, base=Face.REGULAR)
             if live_text
@@ -702,15 +680,14 @@ def _render_caption(
         f'stroke-width="{fmt(CAPTION_STROKE_WIDTH)}"/>'
     )
 
-    # Padding is derived from the box the solver produced rather than restated as a
-    # constant here, so the emitter cannot drift out of agreement with it. The box was
-    # padded equally on both axes, so the vertical inset gives the horizontal one too.
-    padding = (box.height - len(caption.lines) * caption.line_height) / 2
-    ascent = caption.font_size * 0.74
+    # The box was padded equally on both axes, so the vertical inset gives the horizontal
+    # one too.
+    padding, baselines = geometry.baselines(
+        box, len(caption.lines), caption.line_height, caption.font_size
+    )
     base = Face.ITALIC if caption.italic else Face.REGULAR
-    for index in range(len(caption.lines)):
+    for index, baseline in enumerate(baselines):
         runs = _runs_of(caption.lines, caption.runs, index, base)
-        baseline = box.y + padding + index * caption.line_height + ascent
         lines.append(
             _live_text(
                 runs,
@@ -737,18 +714,19 @@ def _balloon_outline(balloon: CoreBalloon) -> str:
 
     if balloon.kind is BalloonKind.SHOUT:
         return (
-            f'      <polygon points="{_points(_burst(balloon))}" fill="{FILL_BALLOON}" '
+            f'      <polygon points="{_points(geometry.burst(box))}" fill="{FILL_BALLOON}" '
             f'stroke="{STROKE}" stroke-width="{fmt(BALLOON_STROKE_WIDTH)}"/>'
         )
     if balloon.kind is BalloonKind.THOUGHT:
+        cx, cy, rx, ry = geometry.ellipse(box)
         return (
-            f'      <ellipse cx="{fmt(box.x + box.width / 2)}" '
-            f'cy="{fmt(box.y + box.height / 2)}" rx="{fmt(box.width / 2)}" '
-            f'ry="{fmt(box.height / 2)}" fill="{FILL_BALLOON}" stroke="{STROKE}" '
+            f'      <ellipse cx="{fmt(cx)}" '
+            f'cy="{fmt(cy)}" rx="{fmt(rx)}" '
+            f'ry="{fmt(ry)}" fill="{FILL_BALLOON}" stroke="{STROKE}" '
             f'stroke-width="{fmt(BALLOON_STROKE_WIDTH)}"/>'
         )
 
-    radius = min(box.width, box.height) * BALLOON_CORNER
+    radius = geometry.corner_radius(box)
     return (
         f'      <rect x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
         f'height="{fmt(box.height)}" rx="{fmt(radius)}" ry="{fmt(radius)}" '
@@ -757,63 +735,27 @@ def _balloon_outline(balloon: CoreBalloon) -> str:
     )
 
 
-def _burst(balloon: CoreBalloon) -> list[tuple[float, float]]:
-    """A spiky outline for a shout.
-
-    Spike count follows the balloon's perimeter so a long balloon does not end up with
-    a handful of enormous points.
-    """
-    box = balloon.box
-    cx, cy = box.x + box.width / 2, box.y + box.height / 2
-    rx, ry = box.width / 2, box.height / 2
-    spikes = max(10, int((box.width + box.height) / 26) * 2)
-    points: list[tuple[float, float]] = []
-    for index in range(spikes * 2):
-        angle = math.pi * index / spikes
-        reach = 1.22 if index % 2 == 0 else 0.94
-        points.append((cx + math.cos(angle) * rx * reach, cy + math.sin(angle) * ry * reach))
-    return points
-
-
 def _tail_shape(balloon: CoreBalloon) -> str:
-    """The pointer from balloon to mouth.
-
-    A thought balloon gets a trail of shrinking circles instead of a triangle, which
-    is the established convention and reads instantly.
-    """
-    tail: Tail = balloon.tail
-    (sx, sy), (ex, ey) = tail.start, tail.end
-
+    """The pointer from balloon to mouth: a tapered triangle, or a thought's bubbles."""
     if balloon.kind is BalloonKind.THOUGHT:
-        bubbles: list[str] = []
-        for index, t in enumerate((0.35, 0.62, 0.85)):
-            x = sx + (ex - sx) * t
-            y = sy + (ey - sy) * t
-            radius = balloon.font_size * (0.34 - index * 0.09)
-            bubbles.append(
-                f'      <circle cx="{fmt(x)}" cy="{fmt(y)}" r="{fmt(radius)}" '
-                f'fill="{FILL_BALLOON}" stroke="{STROKE}" '
-                f'stroke-width="{fmt(BALLOON_STROKE_WIDTH)}"/>'
-            )
-        return "\n".join(bubbles)
+        return "\n".join(
+            f'      <circle cx="{fmt(x)}" cy="{fmt(y)}" r="{fmt(radius)}" '
+            f'fill="{FILL_BALLOON}" stroke="{STROKE}" '
+            f'stroke-width="{fmt(BALLOON_STROKE_WIDTH)}"/>'
+            for x, y, radius in geometry.thought_bubbles(balloon)
+        )
 
-    # A tapered triangle: wide where it leaves the balloon, a point at the mouth.
-    base = max(balloon.box.height * TAIL_BASE_FRACTION, balloon.font_size * 0.35)
-    dx, dy = ex - sx, ey - sy
-    length = math.hypot(dx, dy) or 1.0
-    nx, ny = -dy / length * base / 2, dx / length * base / 2
-
-    if tail.control is not None:
-        cx, cy = tail.control
+    shape = geometry.pointer(balloon)
+    (lx, ly), (ex, ey), (rx, ry) = shape.left, shape.tip, shape.right
+    if shape.control is not None:
+        cx, cy = shape.control
         path = (
-            f"M{fmt(sx + nx)} {fmt(sy + ny)} "
+            f"M{fmt(lx)} {fmt(ly)} "
             f"Q{fmt(cx)} {fmt(cy)} {fmt(ex)} {fmt(ey)} "
-            f"Q{fmt(cx)} {fmt(cy)} {fmt(sx - nx)} {fmt(sy - ny)} Z"
+            f"Q{fmt(cx)} {fmt(cy)} {fmt(rx)} {fmt(ry)} Z"
         )
     else:
-        path = (
-            f"M{fmt(sx + nx)} {fmt(sy + ny)} L{fmt(ex)} {fmt(ey)} L{fmt(sx - nx)} {fmt(sy - ny)} Z"
-        )
+        path = f"M{fmt(lx)} {fmt(ly)} L{fmt(ex)} {fmt(ey)} L{fmt(rx)} {fmt(ry)} Z"
     return (
         f'      <path d="{path}" fill="{FILL_BALLOON}" stroke="{STROKE}" '
         f'stroke-width="{fmt(BALLOON_STROKE_WIDTH)}"/>'
@@ -838,20 +780,18 @@ def _outlined_text(
     passes the value its tone resolved to, so a dark box gets reversed type -- and the
     choice was still the solver's, not this function's.
     """
-    cursor = x
     glyphs: list[str] = []
-    for run in runs:
-        metrics: FontMetrics = family.face(run.face)
-        scale = font_size / metrics.units_per_em
-        for path, advance in metrics.glyph_outlines(run.text):
+    for placed in geometry.glyph_walk(runs, x, font_size, family):
+        scale = placed.scale
+        outlines = placed.metrics.glyph_outlines(placed.run.text)
+        for (path, _), origin in zip(outlines, placed.origins, strict=True):
             if path:
                 glyphs.append(
                     f'      <path d="{path}" fill="{ink}" stroke="none" '
-                    f'transform="translate({fmt(cursor)} {fmt(baseline)}) '
+                    f'transform="translate({fmt(origin)} {fmt(baseline)}) '
                     f"scale({fmt(scale, GLYPH_SCALE_PLACES)} "
                     f'{fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
                 )
-            cursor += advance * font_size
     return "\n".join(glyphs)
 
 

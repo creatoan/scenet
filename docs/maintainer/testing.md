@@ -436,7 +436,7 @@ mutants as before, one renumbered, one new.
 | `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
 | `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
 | `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
-| `emit/svg.py` `_tail_shape` 47 | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
+| `emit/svg.py` `_tail_shape` 47 (now `emit/geometry.py` `pointer`) | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
 
 Supplied pictures (#70) changed `solve/backdrop.py`, `solve/describe.py` and every emitter.
 Fresh runs from the stack's emitter branch:

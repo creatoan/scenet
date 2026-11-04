@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scenet.core import Box, CoreBalloon, PanelCore, Tail
+from scenet.core import Box, CoreBalloon, CoreRun, PanelCore, Tail
 from scenet.emit import geometry
 from scenet.emit.marks import (
     Circle,
@@ -35,7 +35,7 @@ from scenet.emit.marks import (
     marks,
 )
 from scenet.emit.svg import render, typeface_of
-from scenet.ir import BalloonKind
+from scenet.ir import BalloonKind, Face
 from scenet.pipeline import Book, compile_book_file
 from scenet.solve.text import Typeface, load_metrics
 
@@ -144,9 +144,6 @@ class TestGeometry:
 
     def test_glyphs_advance_by_what_was_measured(self):
         family = Typeface()
-        from scenet.core import CoreRun
-        from scenet.ir import Face
-
         runs = (CoreRun(text="AVA", face=Face.REGULAR),)
         (placed,) = geometry.glyph_walk(runs, 5.0, 40.0, family)
         metrics = load_metrics()
@@ -169,16 +166,19 @@ class TestRoles:
         ]
 
     def test_balloon_lettering_and_borders_are_ink_over_paper(self):
-        drawn = [mark for mark in self._marks("01-two-characters.panel.yaml")]
+        drawn = list(self._marks("01-two-characters.panel.yaml"))
         balloons = [mark for mark in drawn if mark.owner.startswith("balloon-")]
         assert balloons
         for mark in balloons:
             if isinstance(mark.shape, Glyph):
-                assert mark.fill is not None and mark.fill.role is Role.INK
+                assert mark.fill is not None
+                assert mark.fill.role is Role.INK
                 assert mark.stroke is None
             else:
-                assert mark.fill is not None and mark.fill.role is Role.PAPER
-                assert mark.stroke is not None and mark.stroke.role is Role.INK
+                assert mark.fill is not None
+                assert mark.fill.role is Role.PAPER
+                assert mark.stroke is not None
+                assert mark.stroke.role is Role.INK
 
     def test_a_reversed_caption_is_solid_ink_lettered_in_paper(self):
         captions = [
