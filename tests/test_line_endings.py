@@ -47,10 +47,10 @@ class TestFilesAreLf:
     def test_every_build_output(self, tmp_path: Path):
         source = tmp_path / "story.scene.yaml"
         source.write_bytes(SCENE.encode("utf-8"))
-        arguments = ["build", str(source), "--core", "--debug", "--strip", "--quiet"]
+        arguments = ["build", str(source), "--core", "--debug", "--strip", "--pdf", "--quiet"]
         assert main(arguments) == 0
         written = sorted(path for path in tmp_path.iterdir() if path != source)
-        assert len(written) == 10
+        assert len(written) == 11
         for path in written:
             content = path.read_bytes()
             assert b"\n" in content, path.name
