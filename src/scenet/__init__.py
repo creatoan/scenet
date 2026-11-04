@@ -63,6 +63,7 @@ from scenet.core import PageCore, PanelCore
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.export import Conditioning, render_conditioning
 from scenet.emit.page import render_page, render_pages
+from scenet.emit.pdf import render_pdf
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import (
@@ -186,6 +187,7 @@ __all__ = [
     "render_debug",
     "render_page",
     "render_pages",
+    "render_pdf",
     "render_strip",
     # -- the intermediate tiers ----------------------------------------------
     "PageCore",

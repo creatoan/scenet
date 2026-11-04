@@ -6,6 +6,28 @@ Keep PDF emission as a third emitter over resolved Panel Core. Do not convert th
 
 This note records the design decision and prototype findings, not a claim of PDF/X conformance. A real PDF/X claim requires a PDF/X-capable preflight run and recorded evidence.
 
+## Outcome: the comparison on a real panel
+
+The prototype below drew a hand-written fixture. The comparison #80 asks for was run on a real
+document, the gallery's `24-page.scene.yaml` (a night page of three panels with lettering, a
+mass at every depth and no supplied picture), by drawing the **same marks**
+(`scenet.emit.marks`, with the same inks and overprint) two ways: through ReportLab 5.1.0, and
+through the dependency-free writer that became `scenet.emit.pdf`.
+
+| | ReportLab 5.1.0 | Direct writer |
+|---|---|---|
+| Dependencies | ReportLab, Pillow, charset-normalizer: an optional extra, and vendored into the playground to show the PDF there | None |
+| Code over the marks | 146 lines, without the even-odd inset holes or the clearance rings | `scenet.emit.pdf`, page composition included |
+| Bytes | 136,269 | 132,994 |
+| Two runs, two hash seeds | Byte-identical, with `rl_config.invariant = 1` | Byte-identical |
+| Dates | A fixed `CreationDate` (the invariant date) | None |
+| Overprint | `setFillOverprint`, `setStrokeOverprint` and `setOverprintMask` per paint; a stroke painted under its fill needs two drawing calls | Fill and stroke apart in one ExtGState, written directly |
+
+Both are deterministic and both control overprint. The direct writer was kept: it adds no
+dependency, so the PDF exists wherever the compiler runs, the browser playground included,
+and every byte is the project's own. The fixture prototype in `scripts/` is
+superseded by it.
+
 ## Candidate comparison
 
 | Concern | ReportLab (optional `print` extra) | Small direct PDF writer |

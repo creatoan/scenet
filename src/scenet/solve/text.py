@@ -29,6 +29,7 @@ from fonts.ttf import (
     SourceSansProBoldIt,  # ty: ignore[unresolved-import]  # pyright: ignore[reportAttributeAccessIssue]
     SourceSansProIt,  # ty: ignore[unresolved-import]  # pyright: ignore[reportAttributeAccessIssue]
 )
+from fontTools.pens.basePen import BasePen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 
@@ -438,6 +439,7 @@ class FontMetrics:
         # Read on first use, then answered pair by pair: expanding every class pair up
         # front would be millions of entries for a font with a full Latin set.
         self._kerning: list[tuple[_PairTable, ...]] | None = None
+        self._pdf_paths: dict[str, str] = {}
         self._kerned: dict[tuple[str, str], int] = {}
         self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
         self.style = _name(self._font, STYLE_NAME) or "Regular"
@@ -588,6 +590,59 @@ class FontMetrics:
             glyph_set[name].draw(pen)
             outlines.append((pen.getCommands(), step))
         return outlines
+
+    def glyph_pdf_path(self, character: str) -> str:
+        """A character's outline as PDF path operators, in font units, y up.
+
+        The same outline :meth:`glyph_outlines` writes for SVG, drawn from the same glyph
+        set -- so a composite glyph, an accented letter, is decomposed the same way -- for
+        the print emitter (#80). PDF has only cubic curves, so a TrueType outline's
+        quadratics are written as the cubics that draw exactly the same curves.
+
+        Returns:
+            `m`, `l`, `c` and `h` operators, or `""` for a character with no outline.
+        """
+        cached = self._pdf_paths.get(character)
+        if cached is not None:
+            return cached
+        glyph_set = self._font.getGlyphSet()
+        name = self._cmap.get(ord(character))
+        path = ""
+        if name is not None and name in glyph_set:
+            pen = _PdfPen(glyph_set)
+            glyph_set[name].draw(pen)
+            path = " ".join(pen.parts)
+        self._pdf_paths[character] = path
+        return path
+
+
+class _PdfPen(BasePen):
+    """Writes an outline as PDF path operators; fontTools turns quadratics into cubics."""
+
+    def __init__(self, glyph_set: object) -> None:
+        super().__init__(glyph_set)  # pyright: ignore[reportArgumentType]
+        self.parts: list[str] = []
+
+    def _moveTo(self, pt: tuple[float, float]) -> None:  # noqa: N802 -- fontTools' name
+        self.parts.append(f"{_number(pt[0])} {_number(pt[1])} m")
+
+    def _lineTo(self, pt: tuple[float, float]) -> None:  # noqa: N802 -- fontTools' name
+        self.parts.append(f"{_number(pt[0])} {_number(pt[1])} l")
+
+    def _curveToOne(  # noqa: N802 -- fontTools' name
+        self, pt1: tuple[float, float], pt2: tuple[float, float], pt3: tuple[float, float]
+    ) -> None:
+        points = " ".join(f"{_number(x)} {_number(y)}" for x, y in (pt1, pt2, pt3))
+        self.parts.append(f"{points} c")
+
+    def _closePath(self) -> None:  # noqa: N802 -- fontTools' name
+        self.parts.append("h")
+
+
+def _number(value: float) -> str:
+    """A coordinate at a hundredth of a font unit, as the emitters write every number."""
+    text = f"{value:.2f}".rstrip("0").rstrip(".")
+    return "0" if text in {"", "-0"} else text
 
 
 @functools.lru_cache(maxsize=8)

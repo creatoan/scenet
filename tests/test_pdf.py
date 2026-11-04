@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 import yaml
 from pypdf import PdfReader
-from pypdf.generic import ContentStream
+from pypdf.generic import BooleanObject, ContentStream, DictionaryObject
 
 from scenet.core import PanelCore
 from scenet.emit.marks import Mark, Paint, Role, marks
@@ -165,8 +165,16 @@ class TestTheBlackPlate:
         reader = PdfReader(io.BytesIO(data))
         states: dict[str, dict[str, object]] = {}
         for page in reader.pages:
-            for name, state in page["/Resources"]["/ExtGState"].items():
-                states[name] = dict(state.items())
+            resources = page["/Resources"]
+            assert isinstance(resources, DictionaryObject)
+            graphics = resources["/ExtGState"]
+            assert isinstance(graphics, DictionaryObject)
+            for name, state in graphics.items():
+                assert isinstance(state, DictionaryObject)
+                states[name] = {
+                    key: value.value if isinstance(value, BooleanObject) else value
+                    for key, value in state.items()
+                }
         return states
 
     def test_lettering_overprints_in_black_alone(self):
@@ -224,10 +232,11 @@ def test_every_picture_free_example_prints_the_same_twice_and_in_its_greys(name:
 
 def test_the_same_bytes_whatever_the_hash_seed():
     script = (
-        "import sys, hashlib\n"
+        "import hashlib\n"
+        "from pathlib import Path\n"
         "from scenet.pipeline import compile_book_file\n"
         "from scenet.emit.pdf import render_pdf\n"
-        f"book = compile_book_file({str(GALLERY / '24-page.scene.yaml')!r})\n"
+        f"book = compile_book_file(Path({str(GALLERY / '24-page.scene.yaml')!r}))\n"
         "cores = {n: r.core for n, r in book.panels.items()}\n"
         "print(hashlib.sha256(render_pdf(book.pages, cores, fonts=book.fonts)).hexdigest())\n"
     )

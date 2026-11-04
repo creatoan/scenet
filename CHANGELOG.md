@@ -12,6 +12,11 @@ below 1.0 means.
 
 ### Added
 
+- **A print PDF, from Python** (#80): `render_pdf` draws a document as a PDF a printer
+  takes. Lettering, balloon borders and every line are 100% black and overprint, so type stays
+  sharp when the colour plates drift; the paper knocks out; greys are black tints; the night
+  foreground prints rich black; a tinted palette prints its greys. A page unit prints as
+  0.1 mm. The file is byte-identical from run to run, with no date in it.
 - **A puppet of your own, from a document (#242).** A cast member names a `*.puppet.yaml` file
   by its path, relative to the document, as it names a font or a picture:
   `reference: puppets/pip.puppet.yaml`. So `scenet check` and `scenet build` read it beside the
