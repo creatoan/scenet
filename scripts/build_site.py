@@ -13,6 +13,7 @@ Each version's site is:
     index.html ...            documentation (Sphinx)
     playground/               the browser playground (Vite)
     schemas/*.json            the JSON Schemas, at stable URLs
+    images/                   the documentation's pictures, where the spec pack links them
     scenet-spec.md            the spec pack: the whole language, in one file for a model
     llms.txt                  an index for retrieval systems, per llmstxt.org
 
@@ -63,6 +64,11 @@ PUBLISHED_SCHEMAS = (
     "artwork.schema.json",
     "puppet.schema.json",
 )
+#: The pictures the documentation shows. Sphinx copies a page's pictures into `_images/` and
+#: links them from there, which is all the pages need. The spec pack is the language
+#: reference with every relative link made absolute (scripts/build_spec.py), so it names a
+#: picture by its path under `docs/` -- which is where the site serves them.
+PICTURES = ROOT / "docs" / "images"
 
 
 def run(command: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> None:
@@ -147,6 +153,7 @@ def compose(out: Path, *, dev: bool) -> None:
     schemas.mkdir(parents=True, exist_ok=True)
     for name in PUBLISHED_SCHEMAS:
         shutil.copyfile(SCHEMAS / name, schemas / name)
+    publish_pictures(out)
 
     # Generated fresh from the sources rather than copied from the committed spec pack,
     # so the published one is current even on a branch that forgot to regenerate.
@@ -156,6 +163,15 @@ def compose(out: Path, *, dev: bool) -> None:
     # needs it at the root or every directory beginning with an underscore is dropped.
     (out / ".nojekyll").touch()
     _report(out)
+
+
+def publish_pictures(out: Path) -> None:
+    """Copy the documentation's pictures to `out/images/`, where the spec pack links them.
+
+    Args:
+        out: One version's site.
+    """
+    shutil.copytree(PICTURES, out / "images", dirs_exist_ok=True)
 
 
 def _report(tree: Path) -> None:
