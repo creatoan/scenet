@@ -413,7 +413,7 @@ class TestWhatMutationTestingFound:
 class TestJpegHeaders:
     def test_fill_bytes_before_a_marker_are_skipped(self):
         data = _jpeg()
-        filled = data[:2] + bytes([0xFF, 0xFF]) + data[2:]
+        filled = data[:2] + bytes([0xFF]) + data[2:]
         assert "/Width 3 /Height 2 " in embed(filled, "image/jpeg", "p.jpg").dictionary
 
     def test_a_long_segment_is_read_as_unsigned(self):

@@ -100,3 +100,11 @@ class TestThePdf:
         data = render_pdf(book.pages, cores)
         k = POINTS_PER_UNIT
         assert f" 0 0 -{k:.6f} {30 * k:.4f} ".encode() in data.replace(b"\n", b" ")
+
+
+def test_the_boxes_are_written_to_a_ten_thousandth_of_a_point():
+    """3 mm of bleed is 8.50394 pt: written as 8.5039, the precision every box carries."""
+    book = _book(", bleed: 30")
+    cores = {name: result.core for name, result in book.panels.items()}
+    data = render_pdf(book.pages, cores)
+    assert b"/TrimBox [8.5039 8.5039 " in data

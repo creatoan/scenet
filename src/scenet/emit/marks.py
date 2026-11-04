@@ -208,7 +208,8 @@ class Mark:
         fill: Its fill, if it has one.
         stroke: Its outline, if it has one.
         width: The outline's width -- in font units for a glyph, which is scaled.
-        rounded: Round caps and joins, as everything drawn over the backdrop has.
+        rounded: Round caps and joins on its outline, as everything drawn over the backdrop
+            has. Only an outline has caps and joins, so a mark with none leaves it `False`.
         dash: A dash pattern along the outline: a whisper's.
         stroke_first: The outline is painted under the fill, as a sound effect's halo is.
     """
@@ -269,12 +270,12 @@ def marks(core: PanelCore, family: Typeface) -> list[Mark]:
     ordered = in_painters_order(core)
     for item in ordered:
         if item.depth < 0:
-            drawn.extend(_item(item, rounded=False))
+            drawn.extend(_item(item))
     if air is not None and air.veil is not None:
         drawn.append(Mark("veil", Veil(core.width, core.height, air.veil)))
     for item in ordered:
         if item.depth >= 0:
-            drawn.extend(_item(item, rounded=True))
+            drawn.extend(_item(item))
 
     if core.sfx:
         display = family.face(Face.DISPLAY)
@@ -299,10 +300,10 @@ def marks(core: PanelCore, family: Typeface) -> list[Mark]:
     return drawn
 
 
-def _item(item: CoreActor | CoreMass, *, rounded: bool) -> list[Mark]:
+def _item(item: CoreActor | CoreMass) -> list[Mark]:
     if isinstance(item, CoreMass):
         fill = Paint(item.colour or item.tone, Role.MASS, item.tone)
-        return [Mark(f"mass-{item.id}", Polygon(item.polygon), fill=fill, rounded=rounded)]
+        return [Mark(f"mass-{item.id}", Polygon(item.polygon), fill=fill)]
     return _actor(item)
 
 
@@ -342,7 +343,7 @@ def _face_mark(owner: str, mark: FaceMark) -> Mark:
         cx, cy = mark.centre
         disc = Circle(cx, cy, mark.radius)
         if mark.filled:
-            return Mark(owner, disc, fill=INK, width=mark.width, rounded=True)
+            return Mark(owner, disc, fill=INK)
         return Mark(owner, disc, fill=WHITE, stroke=INK, width=mark.width, rounded=True)
     return Mark(
         owner,
@@ -397,7 +398,7 @@ def _lettering(
         ):
             if path:
                 glyph = Glyph(placed.metrics, character, origin, baseline, placed.scale)
-                drawn.append(Mark(owner, glyph, fill=ink, rounded=True))
+                drawn.append(Mark(owner, glyph, fill=ink))
     return drawn
 
 

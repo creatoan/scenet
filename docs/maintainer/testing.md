@@ -706,6 +706,45 @@ the mono Core on every example.
 |---|---|---|
 | `solve/backdrop.py` `_luminance` 2 | `.lower()` to `.upper()` on each channel | The channels are only compared with each other and read as hexadecimal, and both are case-insensitive. |
 
+The print PDF (#80) added four modules to `emit/`: `geometry.py` and `marks.py`, which the
+SVG now draws from, and `pdf.py` and `pdf_images.py`. A run of all of `emit/`,
+[`41777653921`](https://github.com/creatoan/scenet/actions/runs/41777653921), reached the
+job's time limit with 748 of 4767 mutants untried, all in `geometry.py` and `marks.py`, so each
+was run on its own, and `pdf*.py` again once the new tests were in:
+
+- `emit/geometry.py`, [`41791026492`](https://github.com/creatoan/scenet/actions/runs/41791026492):
+  199 mutants and 1 survivor, `pointer` 20: the `or 1.0` accepted above as `_tail_shape` 47.
+- `emit/marks.py`, [`41795875604`](https://github.com/creatoan/scenet/actions/runs/41795875604):
+  590 mutants and 22 survivors. 14 were a `rounded` or a `width` set on a mark with no
+  outline, where caps, joins and width mean nothing; the parameters are gone, and with them
+  the mutants. `test_the_marks_are_what_the_svg_paints_in_order` now compares every mark's
+  fill, stroke, width, caps, opacity and dash with the SVG's, which kills the colour mutants
+  of the first run, and the paper caption and the snow have tests of their own.
+- `emit/pdf*.py`, [`41792992306`](https://github.com/creatoan/scenet/actions/runs/41792992306):
+  1603 mutants and 52 survivors. 10 are killed since -- a JPEG's single fill byte, and the
+  page boxes' fourth decimal place -- each applied by hand to see its test fail.
+
+Accepted, by what makes them equivalent:
+
+| Mutants | Change | Why it cannot change an output |
+|---|---|---|
+| `marks.py` `marks`: the veil's owner, width, height or veil | any of them changed | The veil is a mark only so the order is SVG's; no emitter reads it. |
+| `marks.py` `_lettering`: `strict=True` | `None`, `False`, or no `strict` | The three sequences zipped come from one run's text, so they are always as long. |
+| `pdf.py` `_page_content`: the sheet's and rings' owner | `"page"` changed or `None` | The owner names a mark for tests; the PDF writer never reads it. |
+| `pdf.py` `_state` 2, 3 | the default opacity changed | Every call passes a fill or a stroke, whose opacity replaces it. |
+| `pdf.py` `_path` 23, `_Document.write` 126 | `closed=None`, a content stream's entries `None` | Both are read as false, as `False` and `""` are. |
+| `pdf.py` `_linear` 5, `ink` 7 | `<=` to `<` at the sRGB knee and at L 0.10 | Both sides of the knee give the same value there, and no `#rrggbb` grey has an OKLab L of exactly 0.10. |
+| `pdf.py` `ink` 15 | `min(1.0, …)` to `min(2.0, …)` | `1 - L` is never above 1, since L is never below 0. |
+| `pdf.py` `_embedded` 6 | 13 digits of the digest in the message | A message, which says the same thing. |
+| `pdf_images.py` `_jpeg` 3, `_chunks` 5 | `False` to `None`, `b""` to `None` | Read only for truth, and `None` is false as they are. |
+| `pdf_images.py` `_jpeg` 6, 7, 42; `_chunks` 10, 11, 38 | a loop's bound or a slice one byte wider | A frame, a chunk header and an IHDR body are longer than the slack, so each still ends where the format says. |
+| `pdf_images.py` `_chunks` 18, 37 | unsigned fields read as signed | No chunk is 2 GB, and no width, depth or type in a header reaches a sign bit. |
+| `pdf_images.py` `_decoded` 41, 44, 45, 75; `_expanded` 3 | bit-depth tests moved by one, or a default that is never read | At depth 8 the scale is 1 and the sub-byte path packs one sample a byte; alpha is only written when there is a mask; a palette with no `tRNS` writes no mask. |
+| `pdf_images.py` `_packed` 8, `_samples` 2, 9, 22, `_repacked` 2, 11 | `"big"` left out, depth 8 to 9, a longer range | Python's default byte order is big-endian; depth 8 takes the one-sample-a-byte path either way; samples past a row's count are never read. |
+| `pdf_images.py` `_unfiltered` 30 | a row one byte longer | The extra byte is past every index a filter reads. |
+| `pdf_images.py` `_paeth` 12 | `<=` to `<` between left and up | They tie only when they are equal, so which is returned cannot be told apart. |
+| `pdf_images.py` `_deinterlaced` 4, 11, 17, 21, 27 | the grid's fill, or a pass's empty test changed | Every cell is written by some pass, and a pass that starts past the edge counts 0 either way. |
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random

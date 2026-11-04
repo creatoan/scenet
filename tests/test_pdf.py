@@ -34,6 +34,7 @@ from scenet.emit.pdf import (
     resolution,
 )
 from scenet.emit.svg import typeface_of
+from scenet.ir import Fit
 from scenet.pipeline import Book, compile_book, compile_book_file
 
 ROOT = Path(__file__).parent.parent
@@ -267,7 +268,7 @@ class TestWhatMutationTestingFound:
             media_type="image/png",
             sha256="00",
             pixels=(720, 480),
-            fit="cover",
+            fit=Fit.COVER,
             preserve_aspect_ratio="xMidYMid slice",
             box=Box(x=0.0, y=0.0, width=1000.0, height=500.0),
         )
