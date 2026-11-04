@@ -152,7 +152,7 @@ The panel has no usable area. Panel dimensions must be positive, and the margins
 
 A puppet file a cast member names cannot be read. A cast member's `reference` that ends in `.puppet.yaml` names a puppet file, read relative to the folder the document is in, as a font or a picture is. It must be a relative path written with `/`, the file must be there, and it must be a puppet: YAML that declares its landmarks, joints, parts, anchors and face, each joint it names declared. A document compiled from text with no file behind it has no folder, and so can name no puppet file unless the file is sent with it. A fault inside the file is reported in it, at the key that is wrong, when the document was checked as a file.
 
-**Fix:** Check the path against the document's folder, write it relative to that folder, or fix the puppet where the finding points; docs/howto/add_your_own_character.md walks through one.
+**Fix:** Check the path against the document's folder, write it relative to that folder, or fix the puppet where the finding points and check it against `scenet schema --puppet`; docs/howto/add_your_own_character.md walks through one.
 
 ### `scenet/reflexive-relation`
 

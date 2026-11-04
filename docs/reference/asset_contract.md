@@ -22,6 +22,8 @@ keeps it that way; the shipped characters in `src/scenet/assets/library/` are th
 versions. One of your own is a file like it beside the document, which a cast member names by its
 path — see [a puppet of your own](language.md#a-puppet-of-your-own) and
 [Add your own character](../howto/add_your_own_character.md), which walks through the gallery's.
+Its schema is `scenet schema --puppet` ([editor support](../howto/editor_support.md) associates it
+with `*.puppet.yaml`).
 
 ```yaml
 name: sketch

@@ -126,6 +126,10 @@ below 1.0 means.
 
 ### Changed
 
+- **The fix for `puppet-file` names `scenet schema --puppet`** (#271), as the fix for
+  `artwork-contract` names `--artwork`, and the asset-contract reference names the schema
+  beside the puppet it shows. A test runs every `scenet schema` command a fix names, so a fix
+  cannot point at a schema the command does not print.
 - **`scenet build --watch` keeps one file watcher open** (#266), where it opened and closed one
   about ten times a second, and watches each folder without its subfolders: a document at the
   root of a project no longer has its `.venv` or `node_modules` watched. The watcher moves only

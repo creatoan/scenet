@@ -380,8 +380,9 @@ RULES: dict[str, Rule] = {
         ),
         help=(
             "Check the path against the document's folder, write it relative to that "
-            "folder, or fix the puppet where the finding points; "
-            "docs/howto/add_your_own_character.md walks through one."
+            "folder, or fix the puppet where the finding points and check it against "
+            "`scenet schema --puppet`; docs/howto/add_your_own_character.md walks through "
+            "one."
         ),
     ),
     "unknown-pose": Rule(

@@ -295,6 +295,10 @@ class TestEachFaultIsOneFinding:
         assert "'kid'" in found.message
         assert PUPPET_SUFFIX in RULES["unknown-puppet"].help
 
+    def test_the_fix_for_a_puppet_file_names_its_schema(self):
+        """As an artwork contract's fix names `--artwork`: an editor checks as you type."""
+        assert "`scenet schema --puppet`" in RULES[PUPPET_RULE].help
+
 
 class TestCheckedAsAFile:
     """A fault inside a puppet file is reported in the file, which the author can open."""

@@ -8,6 +8,7 @@ that the schema describes what people actually write.
 """
 
 import json
+import re
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ from scenet.assets.contract import (
     MouthState,
 )
 from scenet.cli import main
+from scenet.diagnostics import RULES
 from scenet.frontends.common import KNOWN_VERBS
 from scenet.ir import (
     AnchorX,
@@ -464,6 +466,18 @@ class TestPuppetSchema:
 
 
 class TestSchemaCommand:
+    @pytest.mark.parametrize(
+        ("rule", "command"),
+        [
+            (name, command)
+            for name, rule in sorted(RULES.items())
+            for command in re.findall(r"`(scenet schema(?: --[a-z]+)*)`", rule.help)
+        ],
+    )
+    def test_a_schema_a_fix_names_is_one_the_command_prints(self, rule: str, command: str, capsys):
+        assert main(command.split()[1:]) == 0, f"{rule}'s fix names `{command}`"
+        assert json.loads(capsys.readouterr().out)["$schema"]
+
     def test_it_writes_to_a_file(self, tmp_path: Path, capsys):
         target = tmp_path / "nested" / "panel.schema.json"
         assert main(["schema", "-o", str(target)]) == 0
