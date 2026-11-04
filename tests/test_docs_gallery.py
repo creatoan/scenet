@@ -363,3 +363,39 @@ class TestEveryConstructIsShown:
         links = GALLERY_LINK.findall(LANGUAGE.read_text(encoding="utf-8"))
         assert links, "the reference links the gallery"
         assert [(title, anchor) for title, anchor in links if titles.get(anchor) != title] == []
+
+
+README = ROOT / "README.md"
+
+#: Where the README's pictures are fetched from: the README is PyPI's project page too, where
+#: a path in the repository leads nowhere, and GitHub serves an SVG there as an image.
+RAW = "https://raw.githubusercontent.com/creatoan/scenet/main/"
+
+#: The Gallery page on the site, at the root, which serves the latest release.
+GALLERY_PAGE = "https://creatoan.github.io/scenet/gallery.html"
+
+
+class TestTheReadme:
+    """The README shows the tour, the example the playground opens on, and links the Gallery
+    page (#243)."""
+
+    def test_it_shows_the_tours_pictures(self):
+        (start,) = [entry for entry in ENTRIES if entry["file"] == MANIFEST["start"]]
+        shown = [source for source, _ in _images(README.read_text(encoding="utf-8"))]
+        expected = [
+            f"{RAW}{picture.relative_to(ROOT).as_posix()}" for picture in _pictures_of(start)
+        ]
+        assert expected
+        assert [source for source in shown if source.startswith(RAW)] == expected
+
+    def test_its_pictures_say_what_they_show(self):
+        assert all(alt.strip() for _, alt in _images(README.read_text(encoding="utf-8")))
+
+    def test_it_links_the_gallery(self):
+        readme = README.read_text(encoding="utf-8")
+        assert f"]({GALLERY_PAGE})" in readme
+        assert "](docs/gallery.md)" in readme
+
+    def test_it_opens_the_tour_in_the_playground(self):
+        readme = README.read_text(encoding="utf-8")
+        assert f"]({PLAYGROUND}#example={MANIFEST['start']})" in readme
