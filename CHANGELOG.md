@@ -12,6 +12,9 @@ below 1.0 means.
 
 ### Added
 
+- **The README shows the gallery's tour** (#243), as `scenet build` draws it, and links the
+  Gallery page. The picture is fetched from GitHub by its full address, so PyPI's project page
+  shows it too.
 - **Every section of the language reference shows its construct** (#243): a picture of a gallery
   example, and a link to each example whose `doc:` names the section, on the Gallery page. A test
   holds every section to it, or to a written reason for showing nothing, such as Determinism's.

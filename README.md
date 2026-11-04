@@ -19,9 +19,17 @@ Treat it accordingly: an experiment first, a usable tool second.
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)
 
 **[Playground](https://creatoan.github.io/scenet/playground/)** ·
+**[Gallery](https://creatoan.github.io/scenet/gallery.html)** ·
 **[Documentation](https://creatoan.github.io/scenet/)** ·
 **[Tutorial](https://creatoan.github.io/scenet/tutorial/first_panel.html)** ·
 **[Changelog](CHANGELOG.md)**
+
+![A comic page of three panels lettered over painted pictures: Alice and Bob in the rain on a street at dusk, with Alice worrying in an inset, then Ana and Ben, whom the picture draws, waiting on a station platform](https://raw.githubusercontent.com/creatoan/scenet/main/docs/images/gallery/38-tour.page-1.svg)
+
+*The gallery's tour, exactly as `scenet build` draws it from
+[one YAML file](https://github.com/creatoan/scenet/blob/main/examples/gallery/38-tour.scene.yaml):
+no coordinates, no image model. [Open it in the playground](https://creatoan.github.io/scenet/playground/#example=38-tour.scene.yaml),
+or see [every example in the gallery](https://creatoan.github.io/scenet/gallery.html).*
 
 ## What this is
 
@@ -215,6 +223,7 @@ source under [`docs/`](docs/), which GitHub renders without a build step.
 | | |
 |---|---|
 | [Tutorial](docs/tutorial/first_panel.md) | Build a panel from nothing, in fifteen minutes |
+| [Gallery](docs/gallery.md) | Every example, drawn, with its source |
 | [How-to guides](docs/howto/index.md) | Sequences, comic scripts, your own characters, using it as a library |
 | [Language specification](docs/reference/language.md) | Every construct, with examples |
 | [Shot types](docs/reference/shot_types.md) | Normative camera framing table |
