@@ -1,0 +1,104 @@
+# Print a comic
+
+A screen takes the SVG; a printer takes a PDF, cut to a size, with a bleed around it and the
+lettering on the black plate. `scenet build --pdf` writes one beside the SVGs, from the same
+drawing.
+
+## Give the page its printed size
+
+A page unit prints as a tenth of a millimetre. Write the trim, the size the page is cut to, as
+`page.size`, and how far the printed sheet runs past it on every side as `page.bleed`, in the same
+units:
+
+```yaml
+# A US comic: 6.625 x 10.25 in, with the 0.125 in bleed US printers ask for.
+page: {size: [1682.75, 2603.5], bleed: 31.75, margin: 90, gutter: 30, tier_gutter: 45}
+```
+
+| Format | `size` | `bleed` |
+|---|---|---|
+| US comic, 6.625 × 10.25 in | `[1682.75, 2603.5]` | `31.75` (0.125 in) |
+| Tankōbon, B6, 128 × 182 mm | `[1280, 1820]` | ask the printer; `30` is 3 mm |
+| The default page, 200 × 300 mm | `[2000, 3000]` | `0` |
+
+The bleed is paper around the page: nothing on it moves, and a page without one prints at its
+trim. Ask the printer for both numbers; a Franco-Belgian album, for one, varies by publisher.
+A document with no pages prints each panel at its own size, at the same scale.
+
+## Build it
+
+```bash
+scenet build examples/gallery/70-a-page-for-print.scene.yaml --pdf -o out/
+```
+
+That writes `out/70-a-page-for-print.pdf` beside the SVGs: one PDF page per page of the
+document, or one per panel for a document with no pages. With pages, a panel on no page is not
+printed. `-o` still names the SVG, and a name ending in `.pdf` there is refused. In the
+[playground](https://creatoan.github.io/scenet/playground/), the Print tab shows the same PDF,
+and Download saves it.
+
+From Python, `render_pdf` returns the bytes:
+
+```python
+from scenet import compile_book, render_pdf
+
+book = compile_book("""
+cast: {a: {reference: alice}}
+page: {size: [1682.75, 2603.5], bleed: 31.75}
+pages: [{tiers: [{panels: [one]}]}]
+panels: {one: {script: [{say: {by: a, text: "Off to the printer."}}]}}
+""")
+cores = {name: result.core for name, result in book.panels.items()}
+pdf = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+assert pdf.startswith(b"%PDF-1.6")
+```
+
+## What it prints in which ink
+
+Print is told inks, not colours, and each mark is set by what it *is*:
+
+- **Lettering, balloon borders and every line are 100% black and overprint.** A colour plate
+  drifting out of register cannot blur them, and they never cut a white hole in the art under
+  them.
+- **The paper knocks out**: a balloon, the panel's ground, letters reversed out of a dark caption.
+- **Greys are black tints**, 1 − L for their OKLab lightness L, with no press curve: proof before
+  a long run.
+- **The night foreground prints rich black**, C40 K100, for even, dense coverage within any
+  printer's ink limit. Small type stays 100% K.
+- **A tinted palette prints its greys**, the twins every colour was chosen against; the
+  playground and the SVG keep the colour.
+- **Supplied pictures go in with their pixels unchanged.** An RGB picture stays RGB, and the
+  printer's RIP converts it; a JPEG and most PNGs go in as the file's own data. `gAMA`, `iCCP`
+  and `sRGB` chunks are not carried over.
+
+`scenet build` says, in its notes, what print leaves out or changes:
+
+- the **fog and cloud** over a backdrop, which only SVG's noise filter can draw;
+- a **tinted** panel, printed in its greys;
+- a **picture below 300 dpi** at its size on the page, which is soft in print.
+
+## What it does not do
+
+- **No PDF/X conformance is claimed.** Rain is drawn at 85%, which is live transparency, and
+  pictures stay RGB, which rules out PDF/X-1a; there is no output intent. The file has a TrimBox,
+  a BleedBox and CMYK vectors, which is what most printers check first, but only a preflight tool
+  can say more.
+- **No crop marks.** The TrimBox and the BleedBox carry the trim; a printer's imposition adds the
+  marks.
+- **No text layer.** Lettering is drawn as outlines, as in the SVG, so no font is embedded and
+  none can be missing, and the text cannot be selected.
+- **Panels do not bleed.** Every frame sits inside the page's margin; the bleed is paper.
+
+## Check the plates
+
+Ghostscript separates a PDF as a press does, one TIFF per ink, with overprint honoured:
+
+```sh
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=tiffsep -sCompression=none -r254 \
+   -sOutputFile=plates/page.tif out/70-a-page-for-print.pdf
+```
+
+At 254 dpi a page unit is one pixel. `page(Black).tif` holds the lettering, every line and the
+rich black; `page(Cyan).tif` has no hole where lettering crosses the picture, because the
+lettering overprints. `qpdf --check` reads the file's structure. Both run in CI on every change
+(`tests/test_print_separations.py`), which uploads the plates as an artifact.

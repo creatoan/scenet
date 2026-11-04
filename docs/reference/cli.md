@@ -92,7 +92,8 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   SVG options do not change it — it always letters in outlines, prints greys and carries its
   pictures, so `--live-text`, `--mono`, `--no-aria`, `--embed-images` and `--strip` leave its
   bytes as they are. Notes say what print leaves out: the fog and cloud veil, a palette's
-  colours, a picture below 300 dpi. No PDF/X conformance is claimed.
+  colours, a picture below 300 dpi. No PDF/X conformance is claimed. See
+  [Print a comic](../howto/print_a_comic.md).
 
 `--quiet`
 : Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are

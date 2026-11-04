@@ -255,6 +255,47 @@ which palette a panel is drawn in.
   raises which plate they print on. Local colour by kind of mass would give each of twelve kinds a
   hue, where a kind decides a mass's shape and never its value. Each is its own issue.
 
+## Print is an emitter from Core, not a converter
+
+A printer takes a PDF; the SVG was already there. Converting one into the other was ruled out
+(#80): an SVG has lost what each path *is* -- a converter cannot tell a balloon's lettering from a
+figure's outline, so it cannot put one on the black plate and leave the other alone -- and SVG has
+no overprint to convert. So the PDF is a third emitter beside the SVG, drawing from the same Panel
+Core.
+
+- **The same drawing, from one computation.** `scenet.emit.geometry` works out what Core names
+  but does not spell out -- a burst's spikes, a tail's corners, where each letter lands -- and
+  `scenet.emit.marks` lists what a panel paints, in order. Both emitters draw from them, and a
+  test holds the marks to the SVG for every gallery panel.
+- **No dependency.** ReportLab, the one PDF library that passed the licence gate, was compared on
+  a real page and set aside: both were deterministic and both could overprint, but the direct
+  writer needs nothing, so the PDF exists wherever the compiler runs -- the browser playground
+  included -- and every byte is the project's own.
+- **No dates in the file.** PDF writers stamp a creation date and derive the document's `/ID`
+  from it. Reading `SOURCE_DATE_EPOCH`, as reproducible builds do, would make the bytes depend on
+  the environment they were built in; so the PDF carries no date, and its `/ID` is a digest of
+  its content.
+- **Nothing compressed.** zlib-ng and zlib write different bytes for the same data, and a
+  platform picks one. Content streams are written plain, and a picture's own compressed data is
+  carried as it is, never re-deflated.
+
+## Lettering prints on the black plate
+
+Comics have a convention a generic converter cannot know: **small type is 100% K and
+overprints**, so it stays sharp when the colour plates drift out of register, and never cuts a
+white hole in the art under it. Every paint is set by what it is, never by converting its hex --
+ink is `#111111`, which a conversion would make 93% K.
+
+- **Ink overprints; the paper knocks out.** A shape that is both filled and outlined -- a
+  balloon -- knocks out its white fill and overprints its border, so the outline also hides the
+  tail's stroke where they meet.
+- **Greys are black tints, and the night is rich black.** A grey prints at `1 - L` for its OKLab
+  lightness; a mass dark enough to be the night foreground prints C40 K100, for even coverage
+  within any printer's ink limit. The tonal ladder needs no colour management because every
+  rung of it is neutral.
+- **A tinted palette prints its greys.** Colour is a twin of value; print takes the value. CMYK
+  twins are their own issue.
+
 ## Staging leaves as text, never as a picture or a prompt
 
 `--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by

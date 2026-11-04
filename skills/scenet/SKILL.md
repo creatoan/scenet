@@ -46,7 +46,8 @@ those grouped under "What Scenet tells you" give theirs on purpose, so start fro
 3. Fix every finding and check again, until it prints `FILE: ok`. What each rule means,
    and its fix: `references/diagnostics.md`.
 4. Run `scenet build FILE` to write the SVG. `--core` also writes the resolved layout as
-   JSON; `--debug` writes an overlay showing why things went where they did.
+   JSON; `--debug` writes an overlay showing why things went where they did; `--pdf` writes a
+   print PDF, lettering on the black plate.
 
 `scenet check --deep` also runs the solver, which catches layout and balloon-placement
 failures the cheap check cannot see.

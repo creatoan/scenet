@@ -213,5 +213,5 @@ to be inherited from with `over:`.
 
 ## Not yet
 
-Frames of other shapes; and print sizes with trim and bleed. See
-[the plan](../explanation/status.md).
+Frames of other shapes, and panels that bleed past the trim. A page's printed size and its
+bleed are written in `page:`; see [Print a comic](print_a_comic.md).

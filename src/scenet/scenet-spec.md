@@ -1257,8 +1257,10 @@ The same source always compiles to byte-identical output. No wall-clock time, no
 randomness, no dependence on mapping iteration order. This is what makes a panel description a
 durable artifact rather than a prompt: it will render the same in five years as it does today.
 
-It is the same on every platform too. Every file Scenet writes, and every document it prints
-for redirecting into one, is UTF-8 with LF line endings, on Windows as on Linux.
+It is the same on every platform too. Every text file Scenet writes, and every document it
+prints for redirecting into one, is UTF-8 with LF line endings, on Windows as on Linux. The print
+PDF is bytes, not text, and is byte-identical in the same way: no date, nothing compressed, an
+`/ID` taken from its content.
 
 Backdrop silhouettes are generated, so they are seeded — from the declared setting and the panel
 size, through a content hash. Never a clock, and never Python's `hash()`, which is salted per
@@ -1278,7 +1280,9 @@ noise built in, the specification includes reference code, and the `seed` is fix
 on what to paint from it. That is fine, and it was already true of every glyph outline and every
 antialiased edge in the file.
 
-Golden-file tests therefore target Panel Core and SVG **text**, never a raster. If a raster check is
+Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
+raster. The print plates Ghostscript renders from the PDF are checked for which ink lands where,
+and never kept as goldens. If a raster check is
 ever wanted, [resvg](https://github.com/linebender/resvg) is the candidate: it supports
 `feTurbulence`, aims at the whole specification rather than the common cases, and ships around 1600
 SVG-to-PNG regression tests — which matters because the W3C SVG test suite was abandoned long ago,

@@ -12,6 +12,9 @@ below 1.0 means.
 
 ### Added
 
+- **How-to: Print a comic** (#80): a page's printed size and bleed, what prints in which ink,
+  what print leaves out, and checking the plates with Ghostscript. The design decisions record
+  why print is an emitter from Core rather than a converter, and the black-plate rule.
 - **Print in the playground and the gallery** (#80). The playground's Print tab shows a
   document's print PDF in the browser's own viewer, with what print leaves out, and Download
   saves it. Gallery example 70 is a US comic page made for print, with its bleed.

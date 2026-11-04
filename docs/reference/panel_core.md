@@ -361,7 +361,8 @@ may hold a character an SVG cannot, since Core is hand-edited and both go into t
 The atmosphere's `veil` is a set of `feTurbulence` parameters rather than an image, and the filter
 is reproducible by specification. What browsers paint from it agrees only approximately. See
 [the language reference](language.md#the-contract-is-on-the-svg-text-not-on-pixels), where the
-boundary is stated in full; golden-file tests target this tier and the SVG text, never a raster.
+boundary is stated in full; golden-file tests target this tier, the SVG text and the print PDF's
+bytes, never a raster.
 
 ## Page Core
 

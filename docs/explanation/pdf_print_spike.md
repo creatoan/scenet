@@ -25,8 +25,8 @@ through the dependency-free writer that became `scenet.emit.pdf`.
 
 Both are deterministic and both control overprint. The direct writer was kept: it adds no
 dependency, so the PDF exists wherever the compiler runs, the browser playground included,
-and every byte is the project's own. The fixture prototype in `scripts/` is
-superseded by it.
+and every byte is the project's own. It is `scenet.emit.pdf`, and
+[Print a comic](../howto/print_a_comic.md) says how to use it.
 
 ## Candidate comparison
 
@@ -57,10 +57,8 @@ Target a constrained PDF suitable for print first, but do not label output PDF/X
 
 ## Runnable prototype and findings
 
-`scripts/pdf_print_spike.py` emits the same one-page fixture with a dependency-free PDF writer
-or ReportLab. It records the byte count, SHA-256, and structural checks. Run each backend
-twice and compare hashes; inspect page boxes and the content stream with a PDF inspector.
-ReportLab is an optional install for the spike only, not a base dependency.
+The first prototype, a script drawing one hand-written fixture with both backends, is in the
+history of #207; `scenet.emit.pdf` replaced it. Its findings, kept as they were recorded:
 
 The prototype comparison produced valid, readable one-page PDFs from both backends. `pdfinfo`
 reported PDF 1.4 and Letter-size media pages; `pdftotext` extracted the fixture lettering;
@@ -98,15 +96,11 @@ limits, and colour separations still require manual prepress validation. The fix
 built-in Helvetica face and live text for simplicity; it does not yet exercise Scenet Panel
 Core glyph outlines or its full range of drawing primitives.
 
-## Implementation sequence
+## How it ended
 
-1. Add a `print` optional dependency group for ReportLab only if the spike's working prototype proves it materially reduces code and risk; it must remain outside base dependencies and pass the existing licence gate.
-2. Prototype the same small Core fixture using ReportLab and a direct writer. Compare source size, emitted PDF object structure, overprint state, metadata stability and repeated-build byte identity.
-3. Inspect both PDFs in a PDF inspector and run a print preflight tool. Record tool/version and findings before selecting the implementation. This environment/repository change does not itself perform that manual preflight, so no conformance claim is made here.
-4. Add focused tests for K-only lettering, overprint graphics state, rich-black mass colour, page boxes, deterministic metadata and byte-identical repeated output.
-5. Implement the chosen emitter beside `emit/svg.py`, then wire page output and `scenet build --format pdf` (or a clearly documented equivalent) through the CLI.
-6. Update dependency/licence notices, CLI documentation, print how-to and determinism documentation. Keep MCP out of scope.
-
-## Acceptance boundary
-
-The dual-backend structural prototype now exists and has been parser-checked. The issue’s manual PDF/X preflight acceptance item remains open, as does exercising actual Panel Core output. Do not claim PDF/X conformance or start production integration until those checks resolve the implementation choice.
+Every step the spike planned was taken, in #272 to #278: the comparison on a real page (above),
+tests first, the emitter beside `emit/svg.py`, `scenet build --pdf`, the print how-to and the
+determinism documentation. ReportLab was not added, so no licence notice changed, and MCP is
+unchanged. The manual check became a test: Ghostscript separates every print example in CI, and
+qpdf reads every gallery PDF. **No PDF/X conformance is claimed**: that needs a preflight tool,
+and an output intent, which are their own issue.

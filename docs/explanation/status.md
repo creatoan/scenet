@@ -35,20 +35,17 @@ attribution. A notation is only worth having if it is not owned.
 | 16 | Right-to-left reading, for manga: panels, pages, strips and lettering read from the top right, the scene never mirrored | **Done** |
 | 17 | Exports for image models: an OpenPose pose, boxes with phrases, a depth map, a mask and the semantics, from Panel Core | **Done** |
 | 18 | A colour policy: `palette: tinted`, the value ladder in colour at every value; the yellow `warm` caption; monochrome on output with `--mono` | **Done** |
+| 19 | VS Code: `scenet check` findings, and highlighting for comic scripts | **Done** |
+| 20 | `scenet build --watch`: a rebuild whenever the source or anything it reads changes | **Done** |
+| 21 | Print: a PDF with its trim and bleed, lettering on the black plate, pictures carried unchanged; a page unit printed as 0.1 mm | **Done** |
 
 Single panels compile end to end. Constructs described in `language.md` are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
 
 ## Planned
 
-Each of these is scoped to be a release on its own. The order is deliberately not fixed, and the
-dependency between them is stated in the tickets rather than implied by this table.
-
-| Scope | Ticket |
-|---|---|
-| VS Code: `scenet check` findings, and highlighting for comic scripts | [#77](https://github.com/creatoan/scenet/issues/77) |
-| `scenet build --watch` | [#78](https://github.com/creatoan/scenet/issues/78) |
-| Print: a PDF emitter with trim, bleed and a black plate | [#80](https://github.com/creatoan/scenet/issues/80) |
+What is planned is in the [issues](https://github.com/creatoan/scenet/issues), each scoped to be a
+release on its own, with what it depends on stated there.
 
 Still further out, and not yet ticketed: the interpretation layer that would give a panel a
 *style*.
