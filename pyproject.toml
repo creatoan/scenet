@@ -81,6 +81,10 @@ dev = [
     # a runtime dependency -- Pyodide does not ship it, and the playground installs the
     # same wheel the CLI does.
     "uharfbuzz>=0.56",
+    # A PDF reader, as an oracle for the print emitter (#80): what the file says is read
+    # back and checked against what was meant. BSD-3; never a runtime dependency -- the
+    # emitter writes PDF with the standard library alone.
+    "pypdf>=6.0",
 ]
 docs = [
     "sphinx>=9.1",
