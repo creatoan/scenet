@@ -44,7 +44,7 @@ from scenet.ir import PanelIR, Predicate, SayEvent
 from scenet.pipeline import DOCUMENT_LOADERS, Book
 from scenet.safe_yaml import load
 from scenet.schema import panel_schema, scene_schema
-from tests import script_forms
+from tests import myst, script_forms
 from tests.written import Written, read, read_file, union, vocabulary
 
 ROOT = Path(__file__).parent.parent
@@ -110,29 +110,6 @@ class TestManifestMatchesDisk:
         assert len(IDS) == len(set(IDS))
 
 
-def _slug(heading: str) -> str:
-    """A heading's anchor as MyST makes it, by the rule `mdit_py_plugins.anchors` applies.
-
-    Less its range of CJK ideographs, which no page here has.
-    """
-    return re.sub(r"[^\w\- ]", "", heading.strip().lower().replace(" ", "-"))
-
-
-def _anchors(page: Path) -> set[str]:
-    """The anchors a page has: its headings down to `###`, as `myst_heading_anchors` sets.
-
-    A `#` line inside a fenced block is a comment in an example, not a heading.
-    """
-    anchors: set[str] = set()
-    fenced = False
-    for line in page.read_text(encoding="utf-8").splitlines():
-        if line.lstrip().startswith(("```", "~~~")):
-            fenced = not fenced
-        elif not fenced and (match := re.match(r"(#{1,3}) (.+)", line)):
-            anchors.add(_slug(match.group(2)))
-    return anchors
-
-
 class TestTheGalleryIsGuided:
     """The playground walks the gallery as a tutorial (#237): by theme, from a tour, with a
     sentence on each example and a link to the page that explains it."""
@@ -179,7 +156,7 @@ class TestTheGalleryIsGuided:
         path = DOCS / page
         assert path.is_file(), page
         if anchor:
-            assert anchor in _anchors(path), f"{page} has no heading #{anchor}"
+            assert anchor in myst.anchors(path), f"{page} has no heading #{anchor}"
 
     def test_the_how_to_links_every_comic_script(self):
         """Each convention the page describes opens its example in the playground (#241)."""
@@ -197,9 +174,9 @@ class TestTheGalleryIsGuided:
         assert sorted(linked - set(IDS)) == []
 
     def test_the_slug_is_mysts(self):
-        assert _slug("`page` and `pages`") == "page-and-pages"
-        assert _slug("An image behind the cast") == "an-image-behind-the-cast"
-        assert _slug("Reading order is enforced, not suggested") == (
+        assert myst.slug("`page` and `pages`") == "page-and-pages"
+        assert myst.slug("An image behind the cast") == "an-image-behind-the-cast"
+        assert myst.slug("Reading order is enforced, not suggested") == (
             "reading-order-is-enforced-not-suggested"
         )
 

@@ -26,6 +26,8 @@ import pytest
 import yaml
 from markdown_it import MarkdownIt
 
+from tests import myst
+
 ROOT = Path(__file__).resolve().parents[1]
 GALLERY = ROOT / "examples" / "gallery"
 DIGESTS: dict[str, str] = json.loads(
@@ -136,38 +138,12 @@ def _display_order() -> list[tuple[str, list[dict[str, Any]]]]:
     return order
 
 
-def _headings(text: str) -> list[tuple[int, str, int]]:
-    """Each `##` and `###` heading outside a fenced block: its level, its text, its line.
-
-    A fence closes only on a run of its own character at least as long as the one that
-    opened it, so a script's own fences and headings, shown as its source, stay inside.
-    """
-    headings: list[tuple[int, str, int]] = []
-    fence = ""
-    for number, line in enumerate(text.splitlines()):
-        marker = re.match(r"(`{3,}|~{3,})", line)
-        if fence:
-            closing = re.fullmatch(rf"{re.escape(fence[0])}{{{len(fence)},}}\s*", line)
-            if closing:
-                fence = ""
-        elif marker:
-            fence = marker.group(1)
-        elif match := re.match(r"(#{2,3}) (.+)", line):
-            headings.append((len(match.group(1)), match.group(2), number))
-    return headings
-
-
 def _entries_on_the_page() -> dict[str, str]:
     """The text under each `###` heading of the page, by the heading."""
-    text = PAGE.read_text(encoding="utf-8")
-    lines = text.splitlines()
-    headings = _headings(text)
-    sections: dict[str, str] = {}
-    for index, (level, title, start) in enumerate(headings):
-        if level == 3:
-            end = headings[index + 1][2] if index + 1 < len(headings) else len(lines)
-            sections[title] = "\n".join(lines[start + 1 : end])
-    return sections
+    sections = myst.sections(PAGE.read_text(encoding="utf-8"))
+    return {
+        section.heading.text: section.text for section in sections if section.heading.level == 3
+    }
 
 
 def _accessible_text(picture: Path) -> str:
@@ -191,11 +167,6 @@ def _images(markdown: str) -> list[tuple[str, str]]:
     ]
 
 
-def _slug(heading: str) -> str:
-    """A heading's anchor as MyST (and GitHub) make it."""
-    return re.sub(r"[^\w\- ]", "", heading.strip().lower().replace(" ", "-"))
-
-
 class TestTheGalleryPage:
     """`docs/gallery.md`, generated from the manifest by `scripts/build_spec.py`: every example
     in the order the playground's menu offers them, each with its summary, its pictures, a
@@ -207,11 +178,12 @@ class TestTheGalleryPage:
             for group, members in _display_order()
             for heading in [(2, group), *((3, entry["title"]) for entry in members)]
         ]
-        found = [(level, text) for level, text, _ in _headings(PAGE.read_text(encoding="utf-8"))]
+        headings = myst.headings(PAGE.read_text(encoding="utf-8"))
+        found = [(heading.level, heading.text) for heading in headings if heading.level > 1]
         assert found == expected
 
     def test_every_heading_has_an_anchor_of_its_own(self):
-        slugs = [_slug(text) for _, text, _ in _headings(PAGE.read_text(encoding="utf-8"))]
+        slugs = [heading.anchor for heading in myst.headings(PAGE.read_text(encoding="utf-8"))]
         assert len(slugs) == len(set(slugs))
 
     @pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
@@ -278,3 +250,116 @@ class TestTheReferenceIsInTheGallery:
         settings = [panel["setting"] for panel in document["panels"].values()]
         assert sorted(setting["horizon"] for setting in settings) == ["high", "low", "mid"]
         assert len({setting["place"] for setting in settings}) == 1
+
+
+LANGUAGE = DOCS / "reference" / "language.md"
+
+#: Sections of the language reference that explain rather than define, and so show no
+#: construct of their own: why each has no picture. An entry whose heading goes, or which an
+#: example's `doc:` comes to name, fails `test_every_excuse_is_current`.
+EXPLAINED = {
+    "backdrops-are-never-author-drawn": (
+        "why no backdrop is drawn in the language; `masses`, `place` and the image behind "
+        "the cast show what there is"
+    ),
+    "why-ordering-must-be-explicit": "why the solver needs `left_of`; `staging` shows it",
+    "capitals-are-yours-to-set": "what Scenet does not do to lettering, so nothing to draw",
+    "determinism": "a promise about bytes, which a picture cannot show",
+    "the-contract-is-on-the-svg-text-not-on-pixels": "the same promise, and which bytes",
+}
+
+#: A link from the language reference to an example on the Gallery page.
+GALLERY_LINK = re.compile(r"\[([^\]]+)\]\(\.\./gallery\.md#([\w-]+)\)")
+
+
+def _examples_of(anchor: str) -> list[dict[str, Any]]:
+    """The examples whose `doc:` is this section of the language reference, as the menu
+    orders them."""
+    doc = f"reference/language.md#{anchor}"
+    return [entry for _, members in _display_order() for entry in members if entry["doc"] == doc]
+
+
+def _language_sections() -> list[myst.Section]:
+    return myst.sections(LANGUAGE.read_text(encoding="utf-8"))
+
+
+def _subsections(section: myst.Section) -> list[myst.Section]:
+    """The sections nested in this one: those after it, up to one at its level or above."""
+    found = _language_sections()
+    after = found[found.index(section) + 1 :]
+    nested: list[myst.Section] = []
+    for other in after:
+        if other.heading.level <= section.heading.level:
+            break
+        nested.append(other)
+    return nested
+
+
+def _shows_its_examples(section: myst.Section) -> bool:
+    return bool(_examples_of(section.heading.anchor))
+
+
+class TestEveryConstructIsShown:
+    """Every section of the language reference shows its construct (#243): a picture of a
+    gallery example whose `doc:` names the section, and a link to each of those examples on
+    the Gallery page, in the playground menu's order. A section no example names is shown by
+    its subsections when one of them shows its own and the rest explain; a section that only
+    explains says why, in `EXPLAINED`."""
+
+    @pytest.mark.parametrize(
+        "section",
+        [section for section in _language_sections() if _shows_its_examples(section)],
+        ids=lambda section: section.heading.anchor,
+    )
+    def test_it_shows_a_picture_of_an_example(self, section: myst.Section):
+        examples = _examples_of(section.heading.anchor)
+        theirs = {
+            f"../{picture.relative_to(DOCS).as_posix()}"
+            for entry in examples
+            for picture in _pictures_of(entry)
+        }
+        shown = [source for source, alt in _images(section.text) if alt.strip()]
+        assert set(shown) & theirs, f"no picture of {[entry['file'] for entry in examples]}"
+        assert set(shown) <= theirs, "a picture of an example that names another section"
+
+    @pytest.mark.parametrize(
+        "section",
+        [section for section in _language_sections() if _shows_its_examples(section)],
+        ids=lambda section: section.heading.anchor,
+    )
+    def test_it_links_its_examples_in_the_gallery(self, section: myst.Section):
+        examples = _examples_of(section.heading.anchor)
+        assert GALLERY_LINK.findall(section.text) == [
+            (entry["title"], myst.slug(entry["title"])) for entry in examples
+        ]
+
+    @pytest.mark.parametrize(
+        "section",
+        [section for section in _language_sections() if not _shows_its_examples(section)],
+        ids=lambda section: section.heading.anchor,
+    )
+    def test_one_with_no_example_explains_or_has_sections_that_show(self, section: myst.Section):
+        if section.heading.anchor in EXPLAINED:
+            return
+        nested = _subsections(section)
+        assert nested, f"#{section.heading.anchor} has no example: name it in an example's doc:"
+        shown = [other for other in nested if _shows_its_examples(other)]
+        assert shown, f"#{section.heading.anchor} and its sections show nothing"
+        assert all(
+            _shows_its_examples(other) or other.heading.anchor in EXPLAINED for other in nested
+        ), f"a section of #{section.heading.anchor} shows nothing and does not say why"
+
+    def test_every_excuse_is_current(self):
+        anchors = {section.heading.anchor for section in _language_sections()}
+        assert sorted(EXPLAINED.keys() - anchors) == [], "a heading that is gone"
+        assert [anchor for anchor in EXPLAINED if _examples_of(anchor)] == [], (
+            "an example names it now: show it"
+        )
+
+    def test_a_link_names_an_example_on_the_gallery_page(self):
+        """Its anchor is the example's title, so a link cannot name an example that is not
+        there, or name it by another title."""
+        titles = {myst.slug(entry["title"]): entry["title"] for entry in ENTRIES}
+        links = GALLERY_LINK.findall(LANGUAGE.read_text(encoding="utf-8"))
+        assert links, "the reference links the gallery"
+        assert [(title, anchor) for title, anchor in links if titles.get(anchor) != title] == []
