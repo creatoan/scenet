@@ -307,3 +307,17 @@ def test_snow_is_the_paper_falling():
     ]
     assert flecks
     assert all(mark.fill is not None and mark.fill.role is Role.PAPER for mark in flecks)
+
+
+def test_a_paper_caption_is_the_paper():
+    captions = [
+        mark
+        for result in _book("22-caption-tones.panel.yaml").panels.values()
+        for mark in marks(result.core, typeface_of(result.core))
+        if mark.owner.startswith("caption-") and isinstance(mark.shape, Rect)
+    ]
+    assert {mark.fill.role for mark in captions if mark.fill is not None} == {
+        Role.PAPER,
+        Role.TONE,
+        Role.SOLID,
+    }
