@@ -243,3 +243,38 @@ class TestTheGalleryPage:
         toctree = re.search(r"```\{toctree\}(.*?)```", home, re.DOTALL)
         assert toctree
         assert "gallery" in toctree.group(1).split()
+
+
+#: The gallery's copy of the language reference's complete example (#243).
+COMPLETE = GALLERY / "71-a-complete-panel.panel.yaml"
+
+
+def _without_its_comment(path: Path) -> str:
+    """A gallery document less the comment that introduces it there."""
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    while lines and (lines[0].startswith("#") or not lines[0].strip()):
+        lines.pop(0)
+    return "".join(lines)
+
+
+class TestTheReferenceIsInTheGallery:
+    """What the language reference shows as a whole is a gallery example, so it has a picture,
+    and the test suite compiles it."""
+
+    def test_its_complete_example_is_the_gallerys(self):
+        language = (DOCS / "reference" / "language.md").read_text(encoding="utf-8")
+        block = re.search(r"## A complete example\n\n```yaml\n(.*?)```", language, re.DOTALL)
+        assert block, "the reference shows a complete example"
+        assert block.group(1) == _without_its_comment(COMPLETE)
+
+    def test_the_example_points_back_at_it(self):
+        (entry,) = [entry for entry in ENTRIES if entry["file"] == COMPLETE.name]
+        assert entry["doc"] == "reference/language.md#a-complete-example"
+
+    def test_one_example_sets_every_horizon_in_one_place(self):
+        """`horizon` has an example of its own: the same place under each horizon."""
+        (entry,) = [entry for entry in ENTRIES if entry["doc"] == "reference/language.md#horizon"]
+        document = yaml.safe_load((GALLERY / entry["file"]).read_text(encoding="utf-8"))
+        settings = [panel["setting"] for panel in document["panels"].values()]
+        assert sorted(setting["horizon"] for setting in settings) == ["high", "low", "mid"]
+        assert len({setting["place"] for setting in settings}) == 1
