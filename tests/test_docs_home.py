@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "docs" / "index.md"
 EXAMPLE = ROOT / "examples" / "gallery" / "01-two-characters.panel.yaml"
-PICTURE = ROOT / "docs" / "images" / "two-characters.svg"
+PICTURE = ROOT / "docs" / "images" / "gallery" / "01-two-characters.svg"
 DIGESTS = ROOT / "tests" / "golden" / "digests.json"
 PLAYGROUND = "https://creatoan.github.io/scenet/playground/"
 
@@ -58,7 +58,7 @@ def test_the_picture_is_what_the_compiler_draws():
 
 def test_the_picture_follows_the_example():
     home = _home()
-    picture = home.index("](images/two-characters.svg)")
+    picture = home.index("](images/gallery/01-two-characters.svg)")
     assert home.index("```yaml") < picture < home.index("## Try it without installing anything")
 
 
