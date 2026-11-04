@@ -147,21 +147,24 @@ def _alone(book: Book, panel: str) -> tuple[PanelCore, bytes]:
 @needs_ghostscript
 class TestThePlates:
     def test_a_balloon_over_a_picture_is_paper_lettered_in_black(self, tmp_path: Path):
-        core, pdf = _alone(_book("38-tour.scene.yaml"), "street")
-        plates = _separate(pdf, _folder(tmp_path, "38-tour-street"))
+        core, pdf = _alone(_book("38-tour.scene.yaml"), "worry")
+        plates = _separate(pdf, _folder(tmp_path, "38-tour-worry"))
         assert core.balloons
         for balloon in core.balloons:
+            # The middle half of its box is inside a balloon of any shape.
             box = balloon.box
-            inset = min(box.width, box.height) * 0.42 + 3
-            inside = plates.within(box.x + inset, box.y + 3, box.right - inset, box.bottom - 3)
+            cx, cy = box.x + box.width / 2, box.y + box.height / 2
+            inside = plates.within(
+                cx - box.width / 4, cy - box.height / 4, cx + box.width / 4, cy + box.height / 4
+            )
             assert inside
             assert all(c == m == y == 0 for c, m, y, _ in inside)
             assert {k for *_, k in inside} <= {0, 255}
             assert 255 in {k for *_, k in inside}
 
     def test_ink_overprints_the_colour_under_it(self, tmp_path: Path):
-        _, pdf = _alone(_book("38-tour.scene.yaml"), "street")
-        printed = _separate(pdf, _folder(tmp_path, "38-tour-street"))
+        _, pdf = _alone(_book("38-tour.scene.yaml"), "worry")
+        printed = _separate(pdf, _folder(tmp_path, "38-tour-worry"))
         knocked = _separate(pdf, tmp_path / "knockout", overprint=False)
         differing = [
             (over, out)
