@@ -1046,7 +1046,7 @@ setting: {place: docks, time: dusk}
 |---|---|---|
 | `palette` | `mono` or `tinted` | `mono` |
 
-![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](https://creatoan.github.io/scenet/images/palette/hours.svg)
+![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](https://creatoan.github.io/scenet/images/gallery/40-tinted-hours.page-1.svg)
 
 **Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
 [ladder](#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
@@ -1088,7 +1088,7 @@ scene, where every panel inherits it, or in a comic script's front matter. Unlik
 A page read two ways has no order a reader could follow, but a page in two palettes is a
 convention: the flashback in grey.
 
-![A page in colour, the street at dusk with a yellow caption; its middle panel, ten years earlier, in grey](https://creatoan.github.io/scenet/images/palette/flashback.svg)
+![A page in colour, the street at dusk with a yellow caption; its middle panel, ten years earlier, in grey](https://creatoan.github.io/scenet/images/gallery/41-flashback.page-1.svg)
 
 A palette with nothing to tint — no `setting`, or a supplied picture under a clear sky — is not a
 mistake and is not reported: it is a choice for the whole document, and changing it never makes a

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1586.8" height="657.2" viewBox="0 0 1586.8 657.2" role="group">
+  <title>A strip of 3 panels.</title>
+  <rect x="0" y="0" width="1586.8" height="657.2" fill="#ffffff" aria-hidden="true"/>
+  <g id="panel-low" transform="translate(18.6 18.6)" role="img">
+  <title>Medium close-up, from a low angle. Bob, centre, hands on hips.</title>
+  <clipPath id="p1-frame"><rect x="0" y="0" width="500" height="620"/></clipPath>
+  <g clip-path="url(#p1-frame)">
+  <rect x="0" y="0" width="500" height="620" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p1-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M250 421.78 L250 1005.12" fill="none" stroke="#111111" stroke-width="237.87"/>
+      <path d="M250 421.78 L250 1005.12" fill="none" stroke="#e8e6e1" stroke-width="231.87"/>
+      <path d="M131.07 438.77 L35.18 702.2" fill="none" stroke="#111111" stroke-width="84.95"/>
+      <path d="M131.07 438.77 L35.18 702.2" fill="none" stroke="#e8e6e1" stroke-width="78.95"/>
+      <path d="M35.18 702.2 L295.7 702.2" fill="none" stroke="#111111" stroke-width="70.79"/>
+      <path d="M35.18 702.2 L295.7 702.2" fill="none" stroke="#e8e6e1" stroke-width="64.79"/>
+      <path d="M368.93 438.77 L464.82 702.2" fill="none" stroke="#111111" stroke-width="84.95"/>
+      <path d="M368.93 438.77 L464.82 702.2" fill="none" stroke="#e8e6e1" stroke-width="78.95"/>
+      <path d="M464.82 702.2 L204.3 702.2" fill="none" stroke="#111111" stroke-width="70.79"/>
+      <path d="M464.82 702.2 L204.3 702.2" fill="none" stroke="#e8e6e1" stroke-width="64.79"/>
+      <path d="M159.38 1033.43 L159.38 1684.73" fill="none" stroke="#111111" stroke-width="107.61"/>
+      <path d="M159.38 1033.43 L159.38 1684.73" fill="none" stroke="#e8e6e1" stroke-width="101.61"/>
+      <path d="M159.38 1684.73 L159.38 2245.41" fill="none" stroke="#111111" stroke-width="87.78"/>
+      <path d="M159.38 1684.73 L159.38 2245.41" fill="none" stroke="#e8e6e1" stroke-width="81.78"/>
+      <path d="M340.62 1033.43 L340.62 1684.73" fill="none" stroke="#111111" stroke-width="107.61"/>
+      <path d="M340.62 1033.43 L340.62 1684.73" fill="none" stroke="#e8e6e1" stroke-width="101.61"/>
+      <path d="M340.62 1684.73 L340.62 2245.41" fill="none" stroke="#111111" stroke-width="87.78"/>
+      <path d="M340.62 1684.73 L340.62 2245.41" fill="none" stroke="#e8e6e1" stroke-width="81.78"/>
+      <circle cx="250" cy="178.25" r="147.25" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p1-face-bob-brow_l" points="227.35,98.96 190.53,92.34 153.72,98.96" fill="none" stroke="#111111" stroke-width="10.12"/>
+      <polyline id="p1-face-bob-brow_r" points="272.65,98.96 309.47,92.34 346.28,98.96" fill="none" stroke="#111111" stroke-width="10.12"/>
+      <circle id="p1-face-bob-eye_l" cx="190.53" cy="144.27" r="25.49" fill="#ffffff" stroke="#111111" stroke-width="10.12"/>
+      <circle id="p1-face-bob-pupil_l" cx="190.53" cy="144.27" r="8.67" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p1-face-bob-eye_r" cx="309.47" cy="144.27" r="25.49" fill="#ffffff" stroke="#111111" stroke-width="10.12"/>
+      <circle id="p1-face-bob-pupil_r" cx="309.47" cy="144.27" r="8.67" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p1-face-bob-nose" points="250,175.56 250,198.92 259.34,203.59" fill="none" stroke="#111111" stroke-width="10.12"/>
+      <polyline id="p1-face-bob-mouth" points="225.93,251.88 230.74,252.91 235.56,253.72 240.37,254.3 245.19,254.65 250,254.76 254.81,254.65 259.63,254.3 264.44,253.72 269.26,252.91 274.07,251.88" fill="none" stroke="#111111" stroke-width="10.12"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="500" height="620" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-eye_level" transform="translate(543.4 18.6)" role="img">
+  <title>Medium close-up. Bob, centre, hands on hips.</title>
+  <clipPath id="p2-frame"><rect x="0" y="0" width="500" height="620"/></clipPath>
+  <g clip-path="url(#p2-frame)">
+  <rect x="0" y="0" width="500" height="620" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p2-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M250 432.21 L250 984.85" fill="none" stroke="#111111" stroke-width="225.35"/>
+      <path d="M250 432.21 L250 984.85" fill="none" stroke="#e8e6e1" stroke-width="219.35"/>
+      <path d="M137.33 448.31 L46.49 697.88" fill="none" stroke="#111111" stroke-width="80.48"/>
+      <path d="M137.33 448.31 L46.49 697.88" fill="none" stroke="#e8e6e1" stroke-width="74.48"/>
+      <path d="M46.49 697.88 L293.3 697.88" fill="none" stroke="#111111" stroke-width="67.07"/>
+      <path d="M46.49 697.88 L293.3 697.88" fill="none" stroke="#e8e6e1" stroke-width="61.07"/>
+      <path d="M362.67 448.31 L453.51 697.88" fill="none" stroke="#111111" stroke-width="80.48"/>
+      <path d="M362.67 448.31 L453.51 697.88" fill="none" stroke="#e8e6e1" stroke-width="74.48"/>
+      <path d="M453.51 697.88 L206.7 697.88" fill="none" stroke="#111111" stroke-width="67.07"/>
+      <path d="M453.51 697.88 L206.7 697.88" fill="none" stroke="#e8e6e1" stroke-width="61.07"/>
+      <path d="M164.15 1011.67 L164.15 1628.69" fill="none" stroke="#111111" stroke-width="101.94"/>
+      <path d="M164.15 1011.67 L164.15 1628.69" fill="none" stroke="#e8e6e1" stroke-width="95.94"/>
+      <path d="M164.15 1628.69 L164.15 2159.87" fill="none" stroke="#111111" stroke-width="83.16"/>
+      <path d="M164.15 1628.69 L164.15 2159.87" fill="none" stroke="#e8e6e1" stroke-width="77.16"/>
+      <path d="M335.85 1011.67 L335.85 1628.69" fill="none" stroke="#111111" stroke-width="101.94"/>
+      <path d="M335.85 1011.67 L335.85 1628.69" fill="none" stroke="#e8e6e1" stroke-width="95.94"/>
+      <path d="M335.85 1628.69 L335.85 2159.87" fill="none" stroke="#111111" stroke-width="83.16"/>
+      <path d="M335.85 1628.69 L335.85 2159.87" fill="none" stroke="#e8e6e1" stroke-width="77.16"/>
+      <circle cx="250" cy="201.5" r="139.5" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p2-face-bob-brow_l" points="228.54,126.38 193.66,120.11 158.79,126.38" fill="none" stroke="#111111" stroke-width="9.59"/>
+      <polyline id="p2-face-bob-brow_r" points="271.46,126.38 306.34,120.11 341.21,126.38" fill="none" stroke="#111111" stroke-width="9.59"/>
+      <circle id="p2-face-bob-eye_l" cx="193.66" cy="169.31" r="24.14" fill="#ffffff" stroke="#111111" stroke-width="9.59"/>
+      <circle id="p2-face-bob-pupil_l" cx="193.66" cy="169.31" r="8.21" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p2-face-bob-eye_r" cx="306.34" cy="169.31" r="24.14" fill="#ffffff" stroke="#111111" stroke-width="9.59"/>
+      <circle id="p2-face-bob-pupil_r" cx="306.34" cy="169.31" r="8.21" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p2-face-bob-nose" points="250,198.95 250,221.08 258.85,225.51" fill="none" stroke="#111111" stroke-width="9.59"/>
+      <polyline id="p2-face-bob-mouth" points="227.2,271.25 231.76,272.24 236.32,273 240.88,273.55 245.44,273.88 250,273.99 254.56,273.88 259.12,273.55 263.68,273 268.24,272.24 272.8,271.25" fill="none" stroke="#111111" stroke-width="9.59"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="500" height="620" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-high" transform="translate(1068.2 18.6)" role="img">
+  <title>Medium close-up, from a high angle. Bob, centre, hands on hips.</title>
+  <clipPath id="p3-frame"><rect x="0" y="0" width="500" height="620"/></clipPath>
+  <g clip-path="url(#p3-frame)">
+  <rect x="0" y="0" width="500" height="620" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p3-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M250 444.73 L250 960.52" fill="none" stroke="#111111" stroke-width="210.32"/>
+      <path d="M250 444.73 L250 960.52" fill="none" stroke="#e8e6e1" stroke-width="204.32"/>
+      <path d="M144.84 459.75 L60.06 692.69" fill="none" stroke="#111111" stroke-width="75.12"/>
+      <path d="M144.84 459.75 L60.06 692.69" fill="none" stroke="#e8e6e1" stroke-width="69.12"/>
+      <path d="M60.06 692.69 L290.41 692.69" fill="none" stroke="#111111" stroke-width="62.6"/>
+      <path d="M60.06 692.69 L290.41 692.69" fill="none" stroke="#e8e6e1" stroke-width="56.6"/>
+      <path d="M355.16 459.75 L439.94 692.69" fill="none" stroke="#111111" stroke-width="75.12"/>
+      <path d="M355.16 459.75 L439.94 692.69" fill="none" stroke="#e8e6e1" stroke-width="69.12"/>
+      <path d="M439.94 692.69 L209.59 692.69" fill="none" stroke="#111111" stroke-width="62.6"/>
+      <path d="M439.94 692.69 L209.59 692.69" fill="none" stroke="#e8e6e1" stroke-width="56.6"/>
+      <path d="M169.88 985.56 L169.88 1561.45" fill="none" stroke="#111111" stroke-width="95.15"/>
+      <path d="M169.88 985.56 L169.88 1561.45" fill="none" stroke="#e8e6e1" stroke-width="89.15"/>
+      <path d="M169.88 1561.45 L169.88 2057.21" fill="none" stroke="#111111" stroke-width="77.62"/>
+      <path d="M169.88 1561.45 L169.88 2057.21" fill="none" stroke="#e8e6e1" stroke-width="71.62"/>
+      <path d="M330.12 985.56 L330.12 1561.45" fill="none" stroke="#111111" stroke-width="95.15"/>
+      <path d="M330.12 985.56 L330.12 1561.45" fill="none" stroke="#e8e6e1" stroke-width="89.15"/>
+      <path d="M330.12 1561.45 L330.12 2057.21" fill="none" stroke="#111111" stroke-width="77.62"/>
+      <path d="M330.12 1561.45 L330.12 2057.21" fill="none" stroke="#e8e6e1" stroke-width="71.62"/>
+      <circle cx="250" cy="229.4" r="130.2" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p3-face-bob-brow_l" points="229.97,159.29 197.42,153.43 164.87,159.29" fill="none" stroke="#111111" stroke-width="8.95"/>
+      <polyline id="p3-face-bob-brow_r" points="270.03,159.29 302.58,153.43 335.13,159.29" fill="none" stroke="#111111" stroke-width="8.95"/>
+      <circle id="p3-face-bob-eye_l" cx="197.42" cy="199.35" r="22.53" fill="#ffffff" stroke="#111111" stroke-width="8.95"/>
+      <circle id="p3-face-bob-pupil_l" cx="197.42" cy="199.35" r="7.66" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p3-face-bob-eye_r" cx="302.58" cy="199.35" r="22.53" fill="#ffffff" stroke="#111111" stroke-width="8.95"/>
+      <circle id="p3-face-bob-pupil_r" cx="302.58" cy="199.35" r="7.66" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p3-face-bob-nose" points="250,227.02 250,247.68 258.26,251.81" fill="none" stroke="#111111" stroke-width="8.95"/>
+      <polyline id="p3-face-bob-mouth" points="228.72,294.5 232.97,295.42 237.23,296.13 241.49,296.65 245.74,296.95 250,297.05 254.26,296.95 258.51,296.65 262.77,296.13 267.03,295.42 271.28,294.5" fill="none" stroke="#111111" stroke-width="8.95"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="500" height="620" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+</svg>

@@ -79,7 +79,12 @@ compares the bytes on disk with what is committed:
 - `tests/golden/core/` holds every Panel Core and Page Core, so a layout change is reviewed
   coordinate by coordinate in the diff;
 - `tests/golden/digests.json` holds the SHA-256 of every SVG: panels, overlays, live text,
-  strips and pages; and of every print PDF.
+  strips and pages; and of every print PDF;
+- `docs/images/gallery/` holds what the documentation shows of each gallery example: its pages,
+  or else its strip, or else its one panel, written whole. An example lettered over a picture
+  of its own is built once more with `--embed-images` for it, since an SVG shown as an image
+  loads nothing from outside itself. `tests/test_docs_gallery.py` holds each picture to its
+  digest.
 
 It also builds the gallery in two processes with different `PYTHONHASHSEED`s, and one scene
 and one script from a relative path, an absolute one and another directory; each must

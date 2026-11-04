@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="4435.2" height="593.6" viewBox="0 0 4435.2 593.6" role="group">
+  <title>A strip of 10 panels.</title>
+  <rect x="0" y="0" width="4435.2" height="593.6" fill="#ffffff" aria-hidden="true"/>
+  <g id="panel-long_shot" transform="translate(16.8 16.8)" role="img">
+  <title>Long shot. Alice, centre, pointing.</title>
+  <clipPath id="p1-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p1-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p1-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M168.75 217.91 L168.75 309.57" fill="none" stroke="#111111" stroke-width="33.33"/>
+      <path d="M168.75 217.91 L168.75 309.57" fill="none" stroke="#e8e6e1" stroke-width="27.33"/>
+      <path d="M153.01 220.68 L159.13 264.24" fill="none" stroke="#111111" stroke-width="12.04"/>
+      <path d="M153.01 220.68 L159.13 264.24" fill="none" stroke="#e8e6e1" stroke-width="6.04"/>
+      <path d="M159.13 264.24 L164.8 304.58" fill="none" stroke="#111111" stroke-width="10.18"/>
+      <path d="M159.13 264.24 L164.8 304.58" fill="none" stroke="#e8e6e1" stroke-width="4.18"/>
+      <path d="M184.49 220.68 L228.3 224.52" fill="none" stroke="#111111" stroke-width="12.04"/>
+      <path d="M184.49 220.68 L228.3 224.52" fill="none" stroke="#e8e6e1" stroke-width="6.04"/>
+      <path d="M228.3 224.52 L268.88 228.07" fill="none" stroke="#111111" stroke-width="10.18"/>
+      <path d="M228.3 224.52 L268.88 228.07" fill="none" stroke="#e8e6e1" stroke-width="4.18"/>
+      <path d="M154.86 314.2 L154.86 416.04" fill="none" stroke="#111111" stroke-width="15.74"/>
+      <path d="M154.86 314.2 L154.86 416.04" fill="none" stroke="#e8e6e1" stroke-width="9.74"/>
+      <path d="M154.86 416.04 L154.86 504" fill="none" stroke="#111111" stroke-width="12.96"/>
+      <path d="M154.86 416.04 L154.86 504" fill="none" stroke="#e8e6e1" stroke-width="6.96"/>
+      <path d="M182.64 314.2 L182.64 416.04" fill="none" stroke="#111111" stroke-width="15.74"/>
+      <path d="M182.64 314.2 L182.64 416.04" fill="none" stroke="#e8e6e1" stroke-width="9.74"/>
+      <path d="M182.64 416.04 L182.64 504" fill="none" stroke="#111111" stroke-width="12.96"/>
+      <path d="M182.64 416.04 L182.64 504" fill="none" stroke="#e8e6e1" stroke-width="6.96"/>
+      <circle cx="168.75" cy="179.95" r="23.15" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p1-face-alice-brow_l" points="165.04,167.45 159.49,166.45 153.93,167.45" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <polyline id="p1-face-alice-brow_r" points="172.45,167.45 178.01,166.45 183.56,167.45" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p1-face-alice-eye_l" cx="159.49" cy="174.39" r="4.17" fill="#ffffff" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p1-face-alice-pupil_l" cx="159.49" cy="174.39" r="1.42" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p1-face-alice-eye_r" cx="178.01" cy="174.39" r="4.17" fill="#ffffff" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p1-face-alice-pupil_r" cx="178.01" cy="174.39" r="1.42" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p1-face-alice-nose" points="168.75,179.72 168.75,183.19 170.14,183.88" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <polyline id="p1-face-alice-mouth" points="165.04,191.52 165.79,191.68 166.53,191.8 167.27,191.89 168.01,191.95 168.75,191.96 169.49,191.95 170.23,191.89 170.97,191.8 171.71,191.68 172.45,191.52" fill="none" stroke="#111111" stroke-width="1.58"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-wide" transform="translate(459.2 16.8)" role="img">
+  <title>Long shot. Alice, centre, pointing.</title>
+  <clipPath id="p2-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p2-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p2-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M168.75 217.91 L168.75 309.57" fill="none" stroke="#111111" stroke-width="33.33"/>
+      <path d="M168.75 217.91 L168.75 309.57" fill="none" stroke="#e8e6e1" stroke-width="27.33"/>
+      <path d="M153.01 220.68 L159.13 264.24" fill="none" stroke="#111111" stroke-width="12.04"/>
+      <path d="M153.01 220.68 L159.13 264.24" fill="none" stroke="#e8e6e1" stroke-width="6.04"/>
+      <path d="M159.13 264.24 L164.8 304.58" fill="none" stroke="#111111" stroke-width="10.18"/>
+      <path d="M159.13 264.24 L164.8 304.58" fill="none" stroke="#e8e6e1" stroke-width="4.18"/>
+      <path d="M184.49 220.68 L228.3 224.52" fill="none" stroke="#111111" stroke-width="12.04"/>
+      <path d="M184.49 220.68 L228.3 224.52" fill="none" stroke="#e8e6e1" stroke-width="6.04"/>
+      <path d="M228.3 224.52 L268.88 228.07" fill="none" stroke="#111111" stroke-width="10.18"/>
+      <path d="M228.3 224.52 L268.88 228.07" fill="none" stroke="#e8e6e1" stroke-width="4.18"/>
+      <path d="M154.86 314.2 L154.86 416.04" fill="none" stroke="#111111" stroke-width="15.74"/>
+      <path d="M154.86 314.2 L154.86 416.04" fill="none" stroke="#e8e6e1" stroke-width="9.74"/>
+      <path d="M154.86 416.04 L154.86 504" fill="none" stroke="#111111" stroke-width="12.96"/>
+      <path d="M154.86 416.04 L154.86 504" fill="none" stroke="#e8e6e1" stroke-width="6.96"/>
+      <path d="M182.64 314.2 L182.64 416.04" fill="none" stroke="#111111" stroke-width="15.74"/>
+      <path d="M182.64 314.2 L182.64 416.04" fill="none" stroke="#e8e6e1" stroke-width="9.74"/>
+      <path d="M182.64 416.04 L182.64 504" fill="none" stroke="#111111" stroke-width="12.96"/>
+      <path d="M182.64 416.04 L182.64 504" fill="none" stroke="#e8e6e1" stroke-width="6.96"/>
+      <circle cx="168.75" cy="179.95" r="23.15" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p2-face-alice-brow_l" points="165.04,167.45 159.49,166.45 153.93,167.45" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <polyline id="p2-face-alice-brow_r" points="172.45,167.45 178.01,166.45 183.56,167.45" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p2-face-alice-eye_l" cx="159.49" cy="174.39" r="4.17" fill="#ffffff" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p2-face-alice-pupil_l" cx="159.49" cy="174.39" r="1.42" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p2-face-alice-eye_r" cx="178.01" cy="174.39" r="4.17" fill="#ffffff" stroke="#111111" stroke-width="1.58"/>
+      <circle id="p2-face-alice-pupil_r" cx="178.01" cy="174.39" r="1.42" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p2-face-alice-nose" points="168.75,179.72 168.75,183.19 170.14,183.88" fill="none" stroke="#111111" stroke-width="1.58"/>
+      <polyline id="p2-face-alice-mouth" points="165.04,191.52 165.79,191.68 166.53,191.8 167.27,191.89 168.01,191.95 168.75,191.96 169.49,191.95 170.23,191.89 170.97,191.8 171.71,191.68 172.45,191.52" fill="none" stroke="#111111" stroke-width="1.58"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-full_shot" transform="translate(901.6 16.8)" role="img">
+  <title>Full shot. Alice, centre, pointing.</title>
+  <clipPath id="p3-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p3-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p3-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M149.45 117.69 L149.45 252.22" fill="none" stroke="#111111" stroke-width="48.92"/>
+      <path d="M149.45 117.69 L149.45 252.22" fill="none" stroke="#e8e6e1" stroke-width="42.92"/>
+      <path d="M126.35 121.77 L135.33 185.69" fill="none" stroke="#111111" stroke-width="17.67"/>
+      <path d="M126.35 121.77 L135.33 185.69" fill="none" stroke="#e8e6e1" stroke-width="11.67"/>
+      <path d="M135.33 185.69 L143.66 244.9" fill="none" stroke="#111111" stroke-width="14.95"/>
+      <path d="M135.33 185.69 L143.66 244.9" fill="none" stroke="#e8e6e1" stroke-width="8.95"/>
+      <path d="M172.55 121.77 L236.86 127.39" fill="none" stroke="#111111" stroke-width="17.67"/>
+      <path d="M172.55 121.77 L236.86 127.39" fill="none" stroke="#e8e6e1" stroke-width="11.67"/>
+      <path d="M236.86 127.39 L296.42 132.6" fill="none" stroke="#111111" stroke-width="14.95"/>
+      <path d="M236.86 127.39 L296.42 132.6" fill="none" stroke="#e8e6e1" stroke-width="8.95"/>
+      <path d="M129.07 259.02 L129.07 408.5" fill="none" stroke="#111111" stroke-width="23.1"/>
+      <path d="M129.07 259.02 L129.07 408.5" fill="none" stroke="#e8e6e1" stroke-width="17.1"/>
+      <path d="M129.07 408.5 L129.07 537.6" fill="none" stroke="#111111" stroke-width="19.03"/>
+      <path d="M129.07 408.5 L129.07 537.6" fill="none" stroke="#e8e6e1" stroke-width="13.03"/>
+      <path d="M169.84 259.02 L169.84 408.5" fill="none" stroke="#111111" stroke-width="23.1"/>
+      <path d="M169.84 259.02 L169.84 408.5" fill="none" stroke="#e8e6e1" stroke-width="17.1"/>
+      <path d="M169.84 408.5 L169.84 537.6" fill="none" stroke="#111111" stroke-width="19.03"/>
+      <path d="M169.84 408.5 L169.84 537.6" fill="none" stroke="#e8e6e1" stroke-width="13.03"/>
+      <circle cx="149.45" cy="61.97" r="33.97" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p3-face-alice-brow_l" points="144.02,43.63 135.86,42.16 127.71,43.63" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <polyline id="p3-face-alice-brow_r" points="154.89,43.63 163.04,42.16 171.2,43.63" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p3-face-alice-eye_l" cx="135.86" cy="53.82" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p3-face-alice-pupil_l" cx="135.86" cy="53.82" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p3-face-alice-eye_r" cx="163.04" cy="53.82" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p3-face-alice-pupil_r" cx="163.04" cy="53.82" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p3-face-alice-nose" points="149.45,61.63 149.45,66.73 151.49,67.75" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <polyline id="p3-face-alice-mouth" points="144.02,78.96 145.1,79.19 146.19,79.38 147.28,79.51 148.37,79.59 149.45,79.61 150.54,79.59 151.63,79.51 152.71,79.38 153.8,79.19 154.89,78.96" fill="none" stroke="#111111" stroke-width="2.32"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-medium_full" transform="translate(1344 16.8)" role="img">
+  <title>Medium full shot. Alice, left, pointing.</title>
+  <clipPath id="p4-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p4-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p4-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M128.02 166.24 L128.02 348.4" fill="none" stroke="#111111" stroke-width="66.24"/>
+      <path d="M128.02 166.24 L128.02 348.4" fill="none" stroke="#e8e6e1" stroke-width="60.24"/>
+      <path d="M96.74 171.76 L108.9 258.31" fill="none" stroke="#111111" stroke-width="23.92"/>
+      <path d="M96.74 171.76 L108.9 258.31" fill="none" stroke="#e8e6e1" stroke-width="17.92"/>
+      <path d="M108.9 258.31 L120.17 338.48" fill="none" stroke="#111111" stroke-width="20.24"/>
+      <path d="M108.9 258.31 L120.17 338.48" fill="none" stroke="#e8e6e1" stroke-width="14.24"/>
+      <path d="M159.3 171.76 L246.37 179.38" fill="none" stroke="#111111" stroke-width="23.92"/>
+      <path d="M159.3 171.76 L246.37 179.38" fill="none" stroke="#e8e6e1" stroke-width="17.92"/>
+      <path d="M246.37 179.38 L327.02 186.43" fill="none" stroke="#111111" stroke-width="20.24"/>
+      <path d="M246.37 179.38 L327.02 186.43" fill="none" stroke="#e8e6e1" stroke-width="14.24"/>
+      <path d="M100.42 357.6 L100.42 560" fill="none" stroke="#111111" stroke-width="31.28"/>
+      <path d="M100.42 357.6 L100.42 560" fill="none" stroke="#e8e6e1" stroke-width="25.28"/>
+      <path d="M100.42 560 L100.42 734.8" fill="none" stroke="#111111" stroke-width="25.76"/>
+      <path d="M100.42 560 L100.42 734.8" fill="none" stroke="#e8e6e1" stroke-width="19.76"/>
+      <path d="M155.62 357.6 L155.62 560" fill="none" stroke="#111111" stroke-width="31.28"/>
+      <path d="M155.62 357.6 L155.62 560" fill="none" stroke="#e8e6e1" stroke-width="25.28"/>
+      <path d="M155.62 560 L155.62 734.8" fill="none" stroke="#111111" stroke-width="25.76"/>
+      <path d="M155.62 560 L155.62 734.8" fill="none" stroke="#e8e6e1" stroke-width="19.76"/>
+      <circle cx="128.02" cy="90.8" r="46" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p4-face-alice-brow_l" points="120.66,65.96 109.62,63.97 98.58,65.96" fill="none" stroke="#111111" stroke-width="3.14"/>
+      <polyline id="p4-face-alice-brow_r" points="135.38,65.96 146.42,63.97 157.46,65.96" fill="none" stroke="#111111" stroke-width="3.14"/>
+      <circle id="p4-face-alice-eye_l" cx="109.62" cy="79.76" r="8.28" fill="#ffffff" stroke="#111111" stroke-width="3.14"/>
+      <circle id="p4-face-alice-pupil_l" cx="109.62" cy="79.76" r="2.82" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p4-face-alice-eye_r" cx="146.42" cy="79.76" r="8.28" fill="#ffffff" stroke="#111111" stroke-width="3.14"/>
+      <circle id="p4-face-alice-pupil_r" cx="146.42" cy="79.76" r="2.82" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p4-face-alice-nose" points="128.02,90.34 128.02,97.24 130.78,98.62" fill="none" stroke="#111111" stroke-width="3.14"/>
+      <polyline id="p4-face-alice-mouth" points="120.66,113.8 122.13,114.12 123.6,114.37 125.07,114.54 126.55,114.65 128.02,114.68 129.49,114.65 130.96,114.54 132.43,114.37 133.91,114.12 135.38,113.8" fill="none" stroke="#111111" stroke-width="3.14"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-cowboy" transform="translate(1786.4 16.8)" role="img">
+  <title>Cowboy shot. Alice, left, pointing.</title>
+  <clipPath id="p5-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p5-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p5-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M112.32 189.49 L112.32 406.54" fill="none" stroke="#111111" stroke-width="78.92"/>
+      <path d="M112.32 189.49 L112.32 406.54" fill="none" stroke="#e8e6e1" stroke-width="72.92"/>
+      <path d="M75.05 196.07 L89.54 299.19" fill="none" stroke="#111111" stroke-width="28.5"/>
+      <path d="M75.05 196.07 L89.54 299.19" fill="none" stroke="#e8e6e1" stroke-width="22.5"/>
+      <path d="M89.54 299.19 L102.97 394.72" fill="none" stroke="#111111" stroke-width="24.12"/>
+      <path d="M89.54 299.19 L102.97 394.72" fill="none" stroke="#e8e6e1" stroke-width="18.12"/>
+      <path d="M149.59 196.07 L253.33 205.15" fill="none" stroke="#111111" stroke-width="28.5"/>
+      <path d="M149.59 196.07 L253.33 205.15" fill="none" stroke="#e8e6e1" stroke-width="22.5"/>
+      <path d="M253.33 205.15 L349.43 213.55" fill="none" stroke="#111111" stroke-width="24.12"/>
+      <path d="M253.33 205.15 L349.43 213.55" fill="none" stroke="#e8e6e1" stroke-width="18.12"/>
+      <path d="M79.43 417.5 L79.43 658.66" fill="none" stroke="#111111" stroke-width="37.27"/>
+      <path d="M79.43 417.5 L79.43 658.66" fill="none" stroke="#e8e6e1" stroke-width="31.27"/>
+      <path d="M79.43 658.66 L79.43 866.93" fill="none" stroke="#111111" stroke-width="30.69"/>
+      <path d="M79.43 658.66 L79.43 866.93" fill="none" stroke="#e8e6e1" stroke-width="24.69"/>
+      <path d="M145.21 417.5 L145.21 658.66" fill="none" stroke="#111111" stroke-width="37.27"/>
+      <path d="M145.21 417.5 L145.21 658.66" fill="none" stroke="#e8e6e1" stroke-width="31.27"/>
+      <path d="M145.21 658.66 L145.21 866.93" fill="none" stroke="#111111" stroke-width="30.69"/>
+      <path d="M145.21 658.66 L145.21 866.93" fill="none" stroke="#e8e6e1" stroke-width="24.69"/>
+      <circle cx="112.32" cy="99.61" r="54.81" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p5-face-alice-brow_l" points="103.55,70.01 90.4,67.64 77.24,70.01" fill="none" stroke="#111111" stroke-width="3.74"/>
+      <polyline id="p5-face-alice-brow_r" points="121.09,70.01 134.24,67.64 147.4,70.01" fill="none" stroke="#111111" stroke-width="3.74"/>
+      <circle id="p5-face-alice-eye_l" cx="90.4" cy="86.45" r="9.87" fill="#ffffff" stroke="#111111" stroke-width="3.74"/>
+      <circle id="p5-face-alice-pupil_l" cx="90.4" cy="86.45" r="3.35" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p5-face-alice-eye_r" cx="134.24" cy="86.45" r="9.87" fill="#ffffff" stroke="#111111" stroke-width="3.74"/>
+      <circle id="p5-face-alice-pupil_r" cx="134.24" cy="86.45" r="3.35" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p5-face-alice-nose" points="112.32,99.06 112.32,107.28 115.61,108.93" fill="none" stroke="#111111" stroke-width="3.74"/>
+      <polyline id="p5-face-alice-mouth" points="103.55,127.01 105.3,127.39 107.06,127.69 108.81,127.9 110.57,128.02 112.32,128.07 114.07,128.02 115.83,127.9 117.58,127.69 119.34,127.39 121.09,127.01" fill="none" stroke="#111111" stroke-width="3.74"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-medium_shot" transform="translate(2228.8 16.8)" role="img">
+  <title>Medium shot. Alice, left, pointing.</title>
+  <clipPath id="p6-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p6-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p6-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M73.9 257.6 L73.9 560" fill="none" stroke="#111111" stroke-width="109.96"/>
+      <path d="M73.9 257.6 L73.9 560" fill="none" stroke="#e8e6e1" stroke-width="103.96"/>
+      <path d="M21.98 266.76 L42.17 410.44" fill="none" stroke="#111111" stroke-width="39.71"/>
+      <path d="M21.98 266.76 L42.17 410.44" fill="none" stroke="#e8e6e1" stroke-width="33.71"/>
+      <path d="M42.17 410.44 L60.87 543.53" fill="none" stroke="#111111" stroke-width="33.6"/>
+      <path d="M42.17 410.44 L60.87 543.53" fill="none" stroke="#e8e6e1" stroke-width="27.6"/>
+      <path d="M125.83 266.76 L270.37 279.41" fill="none" stroke="#111111" stroke-width="39.71"/>
+      <path d="M125.83 266.76 L270.37 279.41" fill="none" stroke="#e8e6e1" stroke-width="33.71"/>
+      <path d="M270.37 279.41 L404.26 291.12" fill="none" stroke="#111111" stroke-width="33.6"/>
+      <path d="M270.37 279.41 L404.26 291.12" fill="none" stroke="#e8e6e1" stroke-width="27.6"/>
+      <path d="M28.09 575.27 L28.09 911.27" fill="none" stroke="#111111" stroke-width="51.93"/>
+      <path d="M28.09 575.27 L28.09 911.27" fill="none" stroke="#e8e6e1" stroke-width="45.93"/>
+      <path d="M28.09 911.27 L28.09 1201.45" fill="none" stroke="#111111" stroke-width="42.76"/>
+      <path d="M28.09 911.27 L28.09 1201.45" fill="none" stroke="#e8e6e1" stroke-width="36.76"/>
+      <path d="M119.72 575.27 L119.72 911.27" fill="none" stroke="#111111" stroke-width="51.93"/>
+      <path d="M119.72 575.27 L119.72 911.27" fill="none" stroke="#e8e6e1" stroke-width="45.93"/>
+      <path d="M119.72 911.27 L119.72 1201.45" fill="none" stroke="#111111" stroke-width="42.76"/>
+      <path d="M119.72 911.27 L119.72 1201.45" fill="none" stroke="#e8e6e1" stroke-width="36.76"/>
+      <circle cx="73.9" cy="132.36" r="76.36" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p6-face-alice-brow_l" points="61.69,91.13 43.36,87.83 25.03,91.13" fill="none" stroke="#111111" stroke-width="5.21"/>
+      <polyline id="p6-face-alice-brow_r" points="86.12,91.13 104.45,87.83 122.78,91.13" fill="none" stroke="#111111" stroke-width="5.21"/>
+      <circle id="p6-face-alice-eye_l" cx="43.36" cy="114.04" r="13.75" fill="#ffffff" stroke="#111111" stroke-width="5.21"/>
+      <circle id="p6-face-alice-pupil_l" cx="43.36" cy="114.04" r="4.67" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p6-face-alice-eye_r" cx="104.45" cy="114.04" r="13.75" fill="#ffffff" stroke="#111111" stroke-width="5.21"/>
+      <circle id="p6-face-alice-pupil_r" cx="104.45" cy="114.04" r="4.67" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p6-face-alice-nose" points="73.9,131.6 73.9,143.05 78.49,145.35" fill="none" stroke="#111111" stroke-width="5.21"/>
+      <polyline id="p6-face-alice-mouth" points="61.69,170.55 64.13,171.07 66.57,171.48 69.02,171.78 71.46,171.95 73.9,172.01 76.35,171.95 78.79,171.78 81.24,171.48 83.68,171.07 86.12,170.55" fill="none" stroke="#111111" stroke-width="5.21"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-medium_close_up" transform="translate(2671.2 16.8)" role="img">
+  <title>Medium close-up. Alice, left, pointing.</title>
+  <clipPath id="p7-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p7-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p7-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M-14.56 388.64 L-14.56 887.6" fill="none" stroke="#111111" stroke-width="181.44"/>
+      <path d="M-14.56 388.64 L-14.56 887.6" fill="none" stroke="#e8e6e1" stroke-width="175.44"/>
+      <path d="M-100.24 403.76 L-66.92 640.83" fill="none" stroke="#111111" stroke-width="65.52"/>
+      <path d="M-100.24 403.76 L-66.92 640.83" fill="none" stroke="#e8e6e1" stroke-width="59.52"/>
+      <path d="M-66.92 640.83 L-36.06 860.43" fill="none" stroke="#111111" stroke-width="55.44"/>
+      <path d="M-66.92 640.83 L-36.06 860.43" fill="none" stroke="#e8e6e1" stroke-width="49.44"/>
+      <path d="M71.12 403.76 L309.61 424.63" fill="none" stroke="#111111" stroke-width="65.52"/>
+      <path d="M71.12 403.76 L309.61 424.63" fill="none" stroke="#e8e6e1" stroke-width="59.52"/>
+      <path d="M309.61 424.63 L530.53 443.95" fill="none" stroke="#111111" stroke-width="55.44"/>
+      <path d="M309.61 424.63 L530.53 443.95" fill="none" stroke="#e8e6e1" stroke-width="49.44"/>
+      <path d="M-90.16 912.8 L-90.16 1467.2" fill="none" stroke="#111111" stroke-width="85.68"/>
+      <path d="M-90.16 912.8 L-90.16 1467.2" fill="none" stroke="#e8e6e1" stroke-width="79.68"/>
+      <path d="M-90.16 1467.2 L-90.16 1946" fill="none" stroke="#111111" stroke-width="70.56"/>
+      <path d="M-90.16 1467.2 L-90.16 1946" fill="none" stroke="#e8e6e1" stroke-width="64.56"/>
+      <path d="M61.04 912.8 L61.04 1467.2" fill="none" stroke="#111111" stroke-width="85.68"/>
+      <path d="M61.04 912.8 L61.04 1467.2" fill="none" stroke="#e8e6e1" stroke-width="79.68"/>
+      <path d="M61.04 1467.2 L61.04 1946" fill="none" stroke="#111111" stroke-width="70.56"/>
+      <path d="M61.04 1467.2 L61.04 1946" fill="none" stroke="#e8e6e1" stroke-width="64.56"/>
+      <circle cx="-14.56" cy="182" r="126" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p7-face-alice-brow_l" points="-34.72,113.96 -64.96,108.52 -95.2,113.96" fill="none" stroke="#111111" stroke-width="8.59"/>
+      <polyline id="p7-face-alice-brow_r" points="5.6,113.96 35.84,108.52 66.08,113.96" fill="none" stroke="#111111" stroke-width="8.59"/>
+      <circle id="p7-face-alice-eye_l" cx="-64.96" cy="151.76" r="22.68" fill="#ffffff" stroke="#111111" stroke-width="8.59"/>
+      <circle id="p7-face-alice-pupil_l" cx="-64.96" cy="151.76" r="7.71" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p7-face-alice-eye_r" cx="35.84" cy="151.76" r="22.68" fill="#ffffff" stroke="#111111" stroke-width="8.59"/>
+      <circle id="p7-face-alice-pupil_r" cx="35.84" cy="151.76" r="7.71" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p7-face-alice-nose" points="-14.56,180.74 -14.56,199.64 -7,203.42" fill="none" stroke="#111111" stroke-width="8.59"/>
+      <polyline id="p7-face-alice-mouth" points="-34.72,245 -30.69,245.87 -26.65,246.55 -22.62,247.03 -18.59,247.32 -14.56,247.42 -10.53,247.32 -6.49,247.03 -2.46,246.55 1.57,245.87 5.6,245" fill="none" stroke="#111111" stroke-width="8.59"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-close_up" transform="translate(3113.6 16.8)" role="img">
+  <title>Close-up. Alice, left, pointing.</title>
+  <clipPath id="p8-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p8-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p8-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M-137.8 560 L-137.8 1332.8" fill="none" stroke="#111111" stroke-width="281.02"/>
+      <path d="M-137.8 560 L-137.8 1332.8" fill="none" stroke="#e8e6e1" stroke-width="275.02"/>
+      <path d="M-270.5 583.42 L-218.9 950.6" fill="none" stroke="#111111" stroke-width="101.48"/>
+      <path d="M-270.5 583.42 L-218.9 950.6" fill="none" stroke="#e8e6e1" stroke-width="95.48"/>
+      <path d="M-218.9 950.6 L-171.1 1290.72" fill="none" stroke="#111111" stroke-width="85.87"/>
+      <path d="M-218.9 950.6 L-171.1 1290.72" fill="none" stroke="#e8e6e1" stroke-width="79.87"/>
+      <path d="M-5.1 583.42 L364.28 615.73" fill="none" stroke="#111111" stroke-width="101.48"/>
+      <path d="M-5.1 583.42 L364.28 615.73" fill="none" stroke="#e8e6e1" stroke-width="95.48"/>
+      <path d="M364.28 615.73 L706.44 645.67" fill="none" stroke="#111111" stroke-width="85.87"/>
+      <path d="M364.28 615.73 L706.44 645.67" fill="none" stroke="#e8e6e1" stroke-width="79.87"/>
+      <path d="M-254.89 1371.83 L-254.89 2230.5" fill="none" stroke="#111111" stroke-width="132.7"/>
+      <path d="M-254.89 1371.83 L-254.89 2230.5" fill="none" stroke="#e8e6e1" stroke-width="126.7"/>
+      <path d="M-254.89 2230.5 L-254.89 2972.07" fill="none" stroke="#111111" stroke-width="109.28"/>
+      <path d="M-254.89 2230.5 L-254.89 2972.07" fill="none" stroke="#e8e6e1" stroke-width="103.28"/>
+      <path d="M-20.71 1371.83 L-20.71 2230.5" fill="none" stroke="#111111" stroke-width="132.7"/>
+      <path d="M-20.71 1371.83 L-20.71 2230.5" fill="none" stroke="#e8e6e1" stroke-width="126.7"/>
+      <path d="M-20.71 2230.5 L-20.71 2972.07" fill="none" stroke="#111111" stroke-width="109.28"/>
+      <path d="M-20.71 2230.5 L-20.71 2972.07" fill="none" stroke="#e8e6e1" stroke-width="103.28"/>
+      <circle cx="-137.8" cy="239.95" r="195.15" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p8-face-alice-brow_l" points="-169.02,134.57 -215.86,126.14 -262.7,134.57" fill="none" stroke="#111111" stroke-width="13.31"/>
+      <polyline id="p8-face-alice-brow_r" points="-106.58,134.57 -59.74,126.14 -12.9,134.57" fill="none" stroke="#111111" stroke-width="13.31"/>
+      <circle id="p8-face-alice-eye_l" cx="-215.86" cy="193.12" r="35.13" fill="#ffffff" stroke="#111111" stroke-width="13.31"/>
+      <circle id="p8-face-alice-pupil_l" cx="-215.86" cy="193.12" r="11.94" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p8-face-alice-eye_r" cx="-59.74" cy="193.12" r="35.13" fill="#ffffff" stroke="#111111" stroke-width="13.31"/>
+      <circle id="p8-face-alice-pupil_r" cx="-59.74" cy="193.12" r="11.94" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p8-face-alice-nose" points="-137.8,238 -137.8,267.27 -126.09,273.13" fill="none" stroke="#111111" stroke-width="13.31"/>
+      <polyline id="p8-face-alice-mouth" points="-169.02,337.53 -162.78,338.88 -156.53,339.93 -150.29,340.67 -144.04,341.12 -137.8,341.27 -131.56,341.12 -125.31,340.67 -119.07,339.93 -112.82,338.88 -106.58,337.53" fill="none" stroke="#111111" stroke-width="13.31"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-big_close_up" transform="translate(3556 16.8)" role="img">
+  <title>Big close-up. Alice, left, pointing.</title>
+  <clipPath id="p9-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p9-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p9-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M-264.07 730.24 L-264.07 1783.6" fill="none" stroke="#111111" stroke-width="383.04"/>
+      <path d="M-264.07 730.24 L-264.07 1783.6" fill="none" stroke="#e8e6e1" stroke-width="377.04"/>
+      <path d="M-444.95 762.16 L-374.61 1262.64" fill="none" stroke="#111111" stroke-width="138.32"/>
+      <path d="M-444.95 762.16 L-374.61 1262.64" fill="none" stroke="#e8e6e1" stroke-width="132.32"/>
+      <path d="M-374.61 1262.64 L-309.45 1726.25" fill="none" stroke="#111111" stroke-width="117.04"/>
+      <path d="M-374.61 1262.64 L-309.45 1726.25" fill="none" stroke="#e8e6e1" stroke-width="111.04"/>
+      <path d="M-83.19 762.16 L420.29 806.21" fill="none" stroke="#111111" stroke-width="138.32"/>
+      <path d="M-83.19 762.16 L420.29 806.21" fill="none" stroke="#e8e6e1" stroke-width="132.32"/>
+      <path d="M420.29 806.21 L886.67 847.01" fill="none" stroke="#111111" stroke-width="117.04"/>
+      <path d="M420.29 806.21 L886.67 847.01" fill="none" stroke="#e8e6e1" stroke-width="111.04"/>
+      <path d="M-423.67 1836.8 L-423.67 3007.2" fill="none" stroke="#111111" stroke-width="180.88"/>
+      <path d="M-423.67 1836.8 L-423.67 3007.2" fill="none" stroke="#e8e6e1" stroke-width="174.88"/>
+      <path d="M-423.67 3007.2 L-423.67 4018" fill="none" stroke="#111111" stroke-width="148.96"/>
+      <path d="M-423.67 3007.2 L-423.67 4018" fill="none" stroke="#e8e6e1" stroke-width="142.96"/>
+      <path d="M-104.47 1836.8 L-104.47 3007.2" fill="none" stroke="#111111" stroke-width="180.88"/>
+      <path d="M-104.47 1836.8 L-104.47 3007.2" fill="none" stroke="#e8e6e1" stroke-width="174.88"/>
+      <path d="M-104.47 3007.2 L-104.47 4018" fill="none" stroke="#111111" stroke-width="148.96"/>
+      <path d="M-104.47 3007.2 L-104.47 4018" fill="none" stroke="#e8e6e1" stroke-width="142.96"/>
+      <circle cx="-264.07" cy="294" r="266" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p9-face-alice-brow_l" points="-306.63,150.36 -370.47,138.87 -434.31,150.36" fill="none" stroke="#111111" stroke-width="18.14"/>
+      <polyline id="p9-face-alice-brow_r" points="-221.51,150.36 -157.67,138.87 -93.83,150.36" fill="none" stroke="#111111" stroke-width="18.14"/>
+      <circle id="p9-face-alice-eye_l" cx="-370.47" cy="230.16" r="47.88" fill="#ffffff" stroke="#111111" stroke-width="18.14"/>
+      <circle id="p9-face-alice-pupil_l" cx="-370.47" cy="230.16" r="16.28" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p9-face-alice-eye_r" cx="-157.67" cy="230.16" r="47.88" fill="#ffffff" stroke="#111111" stroke-width="18.14"/>
+      <circle id="p9-face-alice-pupil_r" cx="-157.67" cy="230.16" r="16.28" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p9-face-alice-nose" points="-264.07,291.34 -264.07,331.24 -248.11,339.22" fill="none" stroke="#111111" stroke-width="18.14"/>
+      <polyline id="p9-face-alice-mouth" points="-306.63,427 -298.11,428.84 -289.6,430.27 -281.09,431.29 -272.58,431.9 -264.07,432.11 -255.55,431.9 -247.04,431.29 -238.53,430.27 -230.02,428.84 -221.51,427" fill="none" stroke="#111111" stroke-width="18.14"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-extreme_close_up" transform="translate(3998.4 16.8)" role="img">
+  <title>Extreme close-up. Alice, left, pointing.</title>
+  <clipPath id="p10-frame"><rect x="0" y="0" width="420" height="560"/></clipPath>
+  <g clip-path="url(#p10-frame)">
+  <rect x="0" y="0" width="420" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p10-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M-476.15 1016.4 L-476.15 2541" fill="none" stroke="#111111" stroke-width="554.4"/>
+      <path d="M-476.15 1016.4 L-476.15 2541" fill="none" stroke="#e8e6e1" stroke-width="548.4"/>
+      <path d="M-737.95 1062.6 L-636.14 1786.98" fill="none" stroke="#111111" stroke-width="200.2"/>
+      <path d="M-737.95 1062.6 L-636.14 1786.98" fill="none" stroke="#e8e6e1" stroke-width="194.2"/>
+      <path d="M-636.14 1786.98 L-541.84 2457.99" fill="none" stroke="#111111" stroke-width="169.4"/>
+      <path d="M-636.14 1786.98 L-541.84 2457.99" fill="none" stroke="#e8e6e1" stroke-width="163.4"/>
+      <path d="M-214.35 1062.6 L514.37 1126.35" fill="none" stroke="#111111" stroke-width="200.2"/>
+      <path d="M-214.35 1062.6 L514.37 1126.35" fill="none" stroke="#e8e6e1" stroke-width="194.2"/>
+      <path d="M514.37 1126.35 L1189.39 1185.41" fill="none" stroke="#111111" stroke-width="169.4"/>
+      <path d="M514.37 1126.35 L1189.39 1185.41" fill="none" stroke="#e8e6e1" stroke-width="163.4"/>
+      <path d="M-707.15 2618 L-707.15 4312" fill="none" stroke="#111111" stroke-width="261.8"/>
+      <path d="M-707.15 2618 L-707.15 4312" fill="none" stroke="#e8e6e1" stroke-width="255.8"/>
+      <path d="M-707.15 4312 L-707.15 5775" fill="none" stroke="#111111" stroke-width="215.6"/>
+      <path d="M-707.15 4312 L-707.15 5775" fill="none" stroke="#e8e6e1" stroke-width="209.6"/>
+      <path d="M-245.15 2618 L-245.15 4312" fill="none" stroke="#111111" stroke-width="261.8"/>
+      <path d="M-245.15 2618 L-245.15 4312" fill="none" stroke="#e8e6e1" stroke-width="255.8"/>
+      <path d="M-245.15 4312 L-245.15 5775" fill="none" stroke="#111111" stroke-width="215.6"/>
+      <path d="M-245.15 4312 L-245.15 5775" fill="none" stroke="#e8e6e1" stroke-width="209.6"/>
+      <circle cx="-476.15" cy="385" r="385" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p10-face-alice-brow_l" points="-537.75,177.1 -630.15,160.47 -722.55,177.1" fill="none" stroke="#111111" stroke-width="26.26"/>
+      <polyline id="p10-face-alice-brow_r" points="-414.55,177.1 -322.15,160.47 -229.75,177.1" fill="none" stroke="#111111" stroke-width="26.26"/>
+      <circle id="p10-face-alice-eye_l" cx="-630.15" cy="292.6" r="69.3" fill="#ffffff" stroke="#111111" stroke-width="26.26"/>
+      <circle id="p10-face-alice-pupil_l" cx="-630.15" cy="292.6" r="23.56" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p10-face-alice-eye_r" cx="-322.15" cy="292.6" r="69.3" fill="#ffffff" stroke="#111111" stroke-width="26.26"/>
+      <circle id="p10-face-alice-pupil_r" cx="-322.15" cy="292.6" r="23.56" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p10-face-alice-nose" points="-476.15,381.15 -476.15,438.9 -453.05,450.45" fill="none" stroke="#111111" stroke-width="26.26"/>
+      <polyline id="p10-face-alice-mouth" points="-537.75,577.5 -525.43,580.16 -513.11,582.23 -500.79,583.71 -488.47,584.6 -476.15,584.89 -463.83,584.6 -451.51,583.71 -439.19,582.23 -426.87,580.16 -414.55,577.5" fill="none" stroke="#111111" stroke-width="26.26"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="420" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+</svg>

@@ -12,6 +12,11 @@ below 1.0 means.
 
 ### Added
 
+- **A picture of every gallery example, for the documentation** (#243). `docs/images/gallery/`
+  holds each example drawn whole, as `scenet build` writes it: its pages, or else its strip, or
+  else its one panel, with the picture it is lettered over written in. `update_golden.py`
+  rewrites them with the goldens and a test holds each to its digest, so none can drift from
+  what the compiler draws. The home page and the `palette` section show theirs from there.
 - **How-to: Print a comic** (#80): a page's printed size and bleed, what prints in which ink,
   what print leaves out, and checking the plates with Ghostscript. The design decisions record
   why print is an emitter from Core rather than a converter, and the black-plate rule.

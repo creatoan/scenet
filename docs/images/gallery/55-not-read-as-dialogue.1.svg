@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="640" viewBox="0 0 900 640" role="img">
+  <title>Maya waits at the door; Theo comes down the stairs at last. THOE: Asleep, mostly. MAYA: Where were you?</title>
+  <rect x="0" y="0" width="900" height="640" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="actor-MAYA" fill="#e8e6e1" stroke-width="3">
+      <path d="M300 134.5 L300 288.26" fill="none" stroke="#111111" stroke-width="55.91"/>
+      <path d="M300 134.5 L300 288.26" fill="none" stroke="#e8e6e1" stroke-width="49.91"/>
+      <path d="M273.6 139.16 L248.37 208.48" fill="none" stroke="#111111" stroke-width="20.19"/>
+      <path d="M273.6 139.16 L248.37 208.48" fill="none" stroke="#e8e6e1" stroke-width="14.19"/>
+      <path d="M248.37 208.48 L316.7 208.48" fill="none" stroke="#111111" stroke-width="17.08"/>
+      <path d="M248.37 208.48 L316.7 208.48" fill="none" stroke="#e8e6e1" stroke-width="11.08"/>
+      <path d="M326.4 139.16 L351.63 208.48" fill="none" stroke="#111111" stroke-width="20.19"/>
+      <path d="M326.4 139.16 L351.63 208.48" fill="none" stroke="#e8e6e1" stroke-width="14.19"/>
+      <path d="M351.63 208.48 L283.3 208.48" fill="none" stroke="#111111" stroke-width="17.08"/>
+      <path d="M351.63 208.48 L283.3 208.48" fill="none" stroke="#e8e6e1" stroke-width="11.08"/>
+      <path d="M276.7 296.02 L276.7 466.86" fill="none" stroke="#111111" stroke-width="26.4"/>
+      <path d="M276.7 296.02 L276.7 466.86" fill="none" stroke="#e8e6e1" stroke-width="20.4"/>
+      <path d="M276.7 466.86 L276.7 614.4" fill="none" stroke="#111111" stroke-width="21.74"/>
+      <path d="M276.7 466.86 L276.7 614.4" fill="none" stroke="#e8e6e1" stroke-width="15.74"/>
+      <path d="M323.3 296.02 L323.3 466.86" fill="none" stroke="#111111" stroke-width="26.4"/>
+      <path d="M323.3 296.02 L323.3 466.86" fill="none" stroke="#e8e6e1" stroke-width="20.4"/>
+      <path d="M323.3 466.86 L323.3 614.4" fill="none" stroke="#111111" stroke-width="21.74"/>
+      <path d="M323.3 466.86 L323.3 614.4" fill="none" stroke="#e8e6e1" stroke-width="15.74"/>
+      <circle cx="300" cy="70.83" r="38.83" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="face-MAYA-brow_l" points="293.79,49.86 284.47,48.18 275.15,49.86" fill="none" stroke="#111111" stroke-width="2.65"/>
+      <polyline id="face-MAYA-brow_r" points="306.21,49.86 315.53,48.18 324.85,49.86" fill="none" stroke="#111111" stroke-width="2.65"/>
+      <circle id="face-MAYA-eye_l" cx="284.47" cy="61.51" r="6.99" fill="#ffffff" stroke="#111111" stroke-width="2.65"/>
+      <circle id="face-MAYA-pupil_l" cx="287.92" cy="61.33" r="2.38" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="face-MAYA-eye_r" cx="315.53" cy="61.51" r="6.99" fill="#ffffff" stroke="#111111" stroke-width="2.65"/>
+      <circle id="face-MAYA-pupil_r" cx="318.99" cy="61.33" r="2.38" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="face-MAYA-nose" points="300,70.44 300,76.26 302.33,77.43" fill="none" stroke="#111111" stroke-width="2.65"/>
+      <polyline id="face-MAYA-mouth" points="293.79,90.24 295.03,90.51 296.27,90.72 297.52,90.87 298.76,90.96 300,90.99 301.24,90.96 302.48,90.87 303.73,90.72 304.97,90.51 306.21,90.24" fill="none" stroke="#111111" stroke-width="2.65"/>
+    </g>
+    <g id="actor-THEO" fill="#e8e6e1" stroke-width="3">
+      <path d="M600 114.31 L600 274.28" fill="none" stroke="#111111" stroke-width="65.23"/>
+      <path d="M600 114.31 L600 274.28" fill="none" stroke="#e8e6e1" stroke-width="59.23"/>
+      <path d="M632.61 118.97 L625.91 195.56" fill="none" stroke="#111111" stroke-width="23.3"/>
+      <path d="M632.61 118.97 L625.91 195.56" fill="none" stroke="#e8e6e1" stroke-width="17.3"/>
+      <path d="M625.91 195.56 L619.69 266.73" fill="none" stroke="#111111" stroke-width="19.41"/>
+      <path d="M625.91 195.56 L619.69 266.73" fill="none" stroke="#e8e6e1" stroke-width="13.41"/>
+      <path d="M567.39 118.97 L574.09 195.56" fill="none" stroke="#111111" stroke-width="23.3"/>
+      <path d="M567.39 118.97 L574.09 195.56" fill="none" stroke="#e8e6e1" stroke-width="17.3"/>
+      <path d="M574.09 195.56 L580.31 266.73" fill="none" stroke="#111111" stroke-width="19.41"/>
+      <path d="M574.09 195.56 L580.31 266.73" fill="none" stroke="#e8e6e1" stroke-width="13.41"/>
+      <path d="M624.85 282.04 L624.85 460.65" fill="none" stroke="#111111" stroke-width="29.51"/>
+      <path d="M624.85 282.04 L624.85 460.65" fill="none" stroke="#e8e6e1" stroke-width="23.51"/>
+      <path d="M624.85 460.65 L624.85 614.4" fill="none" stroke="#111111" stroke-width="24.07"/>
+      <path d="M624.85 460.65 L624.85 614.4" fill="none" stroke="#e8e6e1" stroke-width="18.07"/>
+      <path d="M575.15 282.04 L575.15 460.65" fill="none" stroke="#111111" stroke-width="29.51"/>
+      <path d="M575.15 282.04 L575.15 460.65" fill="none" stroke="#e8e6e1" stroke-width="23.51"/>
+      <path d="M575.15 460.65 L575.15 614.4" fill="none" stroke="#111111" stroke-width="24.07"/>
+      <path d="M575.15 460.65 L575.15 614.4" fill="none" stroke="#e8e6e1" stroke-width="18.07"/>
+      <circle cx="600" cy="47.53" r="40.38" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="face-THEO-brow_l" points="606.21,25.79 616.31,23.97 626.4,25.79" fill="none" stroke="#111111" stroke-width="2.78"/>
+      <polyline id="face-THEO-brow_r" points="593.79,25.79 583.69,23.97 573.6,25.79" fill="none" stroke="#111111" stroke-width="2.78"/>
+      <circle id="face-THEO-eye_l" cx="616.31" cy="38.21" r="6.99" fill="#ffffff" stroke="#111111" stroke-width="2.78"/>
+      <circle id="face-THEO-pupil_l" cx="616.31" cy="38.21" r="2.38" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="face-THEO-eye_r" cx="583.69" cy="38.21" r="6.99" fill="#ffffff" stroke="#111111" stroke-width="2.78"/>
+      <circle id="face-THEO-pupil_r" cx="583.69" cy="38.21" r="2.38" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="face-THEO-nose" points="600,46.79 600,53.2 597.44,54.48" fill="none" stroke="#111111" stroke-width="2.78"/>
+      <polyline id="face-THEO-mouth" points="593.4,67.72 594.72,68.01 596.04,68.23 597.36,68.39 598.68,68.48 600,68.51 601.32,68.48 602.64,68.39 603.96,68.23 605.28,68.01 606.6,67.72" fill="none" stroke="#111111" stroke-width="2.78"/>
+    </g>
+    <g id="balloon-b0">
+      <path d="M234.68 115.38 L262.07 100.47 L230.9 101.36 Z" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <rect x="98.34" y="86.19" width="134.44" height="80.64" rx="33.87" ry="33.87" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <path d="M162 0 23 656H109L178 299Q187 245 197.0 193.0Q207 141 216 87H220Q231 141 243.0 193.5Q255 246 266 299L357 656H433L524 299Q536 247 548.0 194.0Q560 141 572 87H576Q585 141 594.0 193.5Q603 246 613 299L682 656H762L626 0H526L427 395Q418 433 410.5 469.5Q403 506 395 544H391Q383 506 374.5 469.5Q366 433 358 395L261 0Z" fill="#111111" stroke="none" transform="translate(110.66 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M82 0V712H164V518L161 418Q196 451 234.0 474.5Q272 498 323 498Q400 498 435.5 450.0Q471 402 471 308V0H389V297Q389 366 367.0 396.5Q345 427 297 427Q259 427 230.0 408.0Q201 389 164 352V0Z" fill="#111111" stroke="none" transform="translate(128.26 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(140.45 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M82 0V486H150L157 398H160Q185 444 220.5 471.0Q256 498 298 498Q327 498 350 488L334 416Q322 420 312.0 422.0Q302 424 287 424Q256 424 222.5 399.0Q189 374 164 312V0Z" fill="#111111" stroke="none" transform="translate(151.56 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(159.11 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M159 0 24 486H108L180 205Q188 170 195.0 137.0Q202 104 209 70H213Q221 104 229.0 137.5Q237 171 246 205L321 486H401L477 205Q486 170 494.5 137.0Q503 104 511 70H515Q523 104 530.0 137.0Q537 170 545 205L616 486H694L564 0H464L394 261Q385 296 377.5 330.0Q370 364 361 401H357Q349 364 341.0 329.5Q333 295 323 260L255 0Z" fill="#111111" stroke="none" transform="translate(174.7 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(190.69 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M82 0V486H150L157 398H160Q185 444 220.5 471.0Q256 498 298 498Q327 498 350 488L334 416Q322 420 312.0 422.0Q302 424 287 424Q256 424 222.5 399.0Q189 374 164 312V0Z" fill="#111111" stroke="none" transform="translate(201.8 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(209.35 115.09) scale(0.0224 -0.0224)"/>
+      <path d="M90 -209Q73 -209 59.0 -206.5Q45 -204 33 -199L49 -134Q57 -136 67.0 -138.5Q77 -141 86 -141Q128 -141 154.5 -111.5Q181 -82 196 -37L207 -1L12 486H97L196 217Q207 185 219.5 149.5Q232 114 243 80H247Q258 113 268.0 149.0Q278 185 288 217L375 486H455L272 -40Q259 -76 243.0 -107.0Q227 -138 205.0 -160.5Q183 -183 155.0 -196.0Q127 -209 90 -209Z" fill="#111111" stroke="none" transform="translate(143.45 143.09) scale(0.0224 -0.0224)"/>
+      <path d="M271 -12Q226 -12 185.5 5.0Q145 22 114.0 54.5Q83 87 64.5 134.5Q46 182 46 242Q46 303 64.5 350.5Q83 398 114.0 431.0Q145 464 185.5 481.0Q226 498 271 498Q316 498 356.5 481.0Q397 464 428.0 431.0Q459 398 477.5 350.5Q496 303 496 242Q496 182 477.5 134.5Q459 87 428.0 54.5Q397 22 356.5 5.0Q316 -12 271 -12ZM271 56Q302 56 328.0 69.5Q354 83 372.5 107.5Q391 132 401.0 166.0Q411 200 411 242Q411 284 401.0 318.5Q391 353 372.5 378.0Q354 403 328.0 416.5Q302 430 271 430Q240 430 214.0 416.5Q188 403 169.5 378.0Q151 353 141.0 318.5Q131 284 131 242Q131 200 141.0 166.0Q151 132 169.5 107.5Q188 83 214.0 69.5Q240 56 271 56Z" fill="#111111" stroke="none" transform="translate(153.82 143.09) scale(0.0224 -0.0224)"/>
+      <path d="M224 -12Q146 -12 110.5 36.0Q75 84 75 178V486H158V189Q158 120 179.5 89.5Q201 59 249 59Q287 59 316.0 78.5Q345 98 380 141V486H462V0H394L387 76H384Q350 36 312.5 12.0Q275 -12 224 -12Z" fill="#111111" stroke="none" transform="translate(165.96 143.09) scale(0.0224 -0.0224)"/>
+      <path d="M160 198Q154 237 162.5 268.5Q171 300 186.0 326.5Q201 353 220.5 376.0Q240 399 257.0 421.5Q274 444 285.5 467.0Q297 490 297 517Q297 557 272.5 585.5Q248 614 200 614Q167 614 137.5 598.5Q108 583 85 556L38 599Q70 635 112.5 658.5Q155 682 210 682Q286 682 331.5 639.5Q377 597 377 522Q377 489 365.0 462.0Q353 435 335.5 411.0Q318 387 298.5 363.5Q279 340 262.5 315.0Q246 290 237.0 261.5Q228 233 232 198ZM198 -12Q173 -12 156.0 5.5Q139 23 139 50Q139 79 156.0 96.5Q173 114 198 114Q223 114 240.5 96.5Q258 79 258 50Q258 23 240.5 5.5Q223 -12 198 -12Z" fill="#111111" stroke="none" transform="translate(178.15 143.09) scale(0.0224 -0.0224)"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="900" height="640" fill="none" stroke="#111111" stroke-width="6"/>
+</svg>

@@ -48,7 +48,7 @@ script:
 And this is what it compiles to — not an illustration of the idea, but the file
 `scenet build` writes for that document:
 
-![Alice points at Bob, saying "You forgot your umbrella!"; Bob, arms crossed, answers "I know."](images/two-characters.svg)
+![Alice points at Bob, saying "You forgot your umbrella!"; Bob, arms crossed, answers "I know."](images/gallery/01-two-characters.svg)
 
 From that, the compiler works out the rest: how large each figure must be for a medium
 shot, where they stand, which way they face, how big each balloon needs to be for its

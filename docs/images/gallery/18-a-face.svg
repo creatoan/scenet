@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img">
+  <title>Big close-up. Alice, centre, angry.</title>
+  <rect x="0" y="0" width="900" height="900" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M450 1173.6 L450 2866.5" fill="none" stroke="#111111" stroke-width="615.6"/>
+      <path d="M450 1173.6 L450 2866.5" fill="none" stroke="#e8e6e1" stroke-width="609.6"/>
+      <path d="M159.3 1224.9 L230.09 2034.06" fill="none" stroke="#111111" stroke-width="222.3"/>
+      <path d="M159.3 1224.9 L230.09 2034.06" fill="none" stroke="#e8e6e1" stroke-width="216.3"/>
+      <path d="M230.09 2034.06 L295.67 2783.6" fill="none" stroke="#111111" stroke-width="188.1"/>
+      <path d="M230.09 2034.06 L295.67 2783.6" fill="none" stroke="#e8e6e1" stroke-width="182.1"/>
+      <path d="M740.7 1224.9 L669.91 2034.06" fill="none" stroke="#111111" stroke-width="222.3"/>
+      <path d="M740.7 1224.9 L669.91 2034.06" fill="none" stroke="#e8e6e1" stroke-width="216.3"/>
+      <path d="M669.91 2034.06 L604.33 2783.6" fill="none" stroke="#111111" stroke-width="188.1"/>
+      <path d="M669.91 2034.06 L604.33 2783.6" fill="none" stroke="#e8e6e1" stroke-width="182.1"/>
+      <path d="M193.5 2952 L193.5 4833" fill="none" stroke="#111111" stroke-width="290.7"/>
+      <path d="M193.5 2952 L193.5 4833" fill="none" stroke="#e8e6e1" stroke-width="284.7"/>
+      <path d="M193.5 4833 L193.5 6457.5" fill="none" stroke="#111111" stroke-width="239.4"/>
+      <path d="M193.5 4833 L193.5 6457.5" fill="none" stroke="#e8e6e1" stroke-width="233.4"/>
+      <path d="M706.5 2952 L706.5 4833" fill="none" stroke="#111111" stroke-width="290.7"/>
+      <path d="M706.5 2952 L706.5 4833" fill="none" stroke="#e8e6e1" stroke-width="284.7"/>
+      <path d="M706.5 4833 L706.5 6457.5" fill="none" stroke="#111111" stroke-width="239.4"/>
+      <path d="M706.5 4833 L706.5 6457.5" fill="none" stroke="#e8e6e1" stroke-width="233.4"/>
+      <circle cx="450" cy="472.5" r="427.5" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="face-alice-brow_l" points="381.6,287.82 279,257.04 176.4,226.26" fill="none" stroke="#111111" stroke-width="29.16"/>
+      <polyline id="face-alice-brow_r" points="518.4,287.82 621,257.04 723.6,226.26" fill="none" stroke="#111111" stroke-width="29.16"/>
+      <polygon id="face-alice-eye_l" points="355.95,369.9 350.09,383.15 333.41,394.39 308.45,401.89 279,404.53 249.55,401.89 224.59,394.39 207.91,383.15 202.05,369.9 207.91,356.65 224.59,345.41 249.55,337.91 279,335.27 308.45,337.91 333.41,345.41 350.09,356.65" fill="none" stroke="#111111" stroke-width="29.16"/>
+      <circle id="face-alice-pupil_l" cx="279" cy="369.9" r="26.16" fill="#111111" stroke="none" stroke-width="0"/>
+      <polygon id="face-alice-eye_r" points="697.95,369.9 692.09,383.15 675.41,394.39 650.45,401.89 621,404.53 591.55,401.89 566.59,394.39 549.91,383.15 544.05,369.9 549.91,356.65 566.59,345.41 591.55,337.91 621,335.27 650.45,337.91 675.41,345.41 692.09,356.65" fill="none" stroke="#111111" stroke-width="29.16"/>
+      <circle id="face-alice-pupil_r" cx="621" cy="369.9" r="26.16" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="face-alice-nose" points="450,468.23 450,532.35 475.65,545.18" fill="none" stroke="#111111" stroke-width="29.16"/>
+      <polyline id="face-alice-mouth" points="333.72,706.77 356.98,685.84 380.23,669.56 403.49,657.93 426.74,650.96 450,648.63 473.26,650.96 496.51,657.93 519.77,669.56 543.02,685.84 566.28,706.77" fill="none" stroke="#111111" stroke-width="29.16"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="900" height="900" fill="none" stroke="#111111" stroke-width="6"/>
+</svg>

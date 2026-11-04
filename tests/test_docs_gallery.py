@@ -53,7 +53,7 @@ SHOWN = sorted(picture for picture in PICTURES if picture.parent == FOLDER)
 
 
 def _stem(file: str) -> str:
-    return file.split(".")[0]
+    return file.split(".", maxsplit=1)[0]
 
 
 def _pictures_of(entry: dict[str, Any]) -> list[Path]:

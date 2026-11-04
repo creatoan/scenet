@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2178.4" height="593.6" viewBox="0 0 2178.4 593.6" role="group">
+  <title>A strip of 3 panels.</title>
+  <rect x="0" y="0" width="2178.4" height="593.6" fill="#ffffff" aria-hidden="true"/>
+  <g id="panel-establishing" transform="translate(16.8 16.8)" role="img">
+  <title>Full shot. Alice, left, pointing; Bob, right, arms crossed. Alice: We need to talk.</title>
+  <clipPath id="p1-frame"><rect x="0" y="0" width="700" height="560"/></clipPath>
+  <g clip-path="url(#p1-frame)">
+  <rect x="0" y="0" width="700" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p1-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M172.79 117.69 L172.79 252.22" fill="none" stroke="#111111" stroke-width="48.92"/>
+      <path d="M172.79 117.69 L172.79 252.22" fill="none" stroke="#e8e6e1" stroke-width="42.92"/>
+      <path d="M149.68 121.77 L158.67 185.69" fill="none" stroke="#111111" stroke-width="17.67"/>
+      <path d="M149.68 121.77 L158.67 185.69" fill="none" stroke="#e8e6e1" stroke-width="11.67"/>
+      <path d="M158.67 185.69 L166.99 244.9" fill="none" stroke="#111111" stroke-width="14.95"/>
+      <path d="M158.67 185.69 L166.99 244.9" fill="none" stroke="#e8e6e1" stroke-width="8.95"/>
+      <path d="M195.89 121.77 L260.19 127.39" fill="none" stroke="#111111" stroke-width="17.67"/>
+      <path d="M195.89 121.77 L260.19 127.39" fill="none" stroke="#e8e6e1" stroke-width="11.67"/>
+      <path d="M260.19 127.39 L319.76 132.6" fill="none" stroke="#111111" stroke-width="14.95"/>
+      <path d="M260.19 127.39 L319.76 132.6" fill="none" stroke="#e8e6e1" stroke-width="8.95"/>
+      <path d="M152.4 259.02 L152.4 408.5" fill="none" stroke="#111111" stroke-width="23.1"/>
+      <path d="M152.4 259.02 L152.4 408.5" fill="none" stroke="#e8e6e1" stroke-width="17.1"/>
+      <path d="M152.4 408.5 L152.4 537.6" fill="none" stroke="#111111" stroke-width="19.03"/>
+      <path d="M152.4 408.5 L152.4 537.6" fill="none" stroke="#e8e6e1" stroke-width="13.03"/>
+      <path d="M193.17 259.02 L193.17 408.5" fill="none" stroke="#111111" stroke-width="23.1"/>
+      <path d="M193.17 259.02 L193.17 408.5" fill="none" stroke="#e8e6e1" stroke-width="17.1"/>
+      <path d="M193.17 408.5 L193.17 537.6" fill="none" stroke="#111111" stroke-width="19.03"/>
+      <path d="M193.17 408.5 L193.17 537.6" fill="none" stroke="#e8e6e1" stroke-width="13.03"/>
+      <circle cx="172.79" cy="61.97" r="33.97" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p1-face-alice-brow_l" points="167.35,43.63 159.2,42.16 151.04,43.63" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <polyline id="p1-face-alice-brow_r" points="178.22,43.63 186.38,42.16 194.53,43.63" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p1-face-alice-eye_l" cx="159.2" cy="53.82" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p1-face-alice-pupil_l" cx="159.2" cy="53.82" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p1-face-alice-eye_r" cx="186.38" cy="53.82" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.32"/>
+      <circle id="p1-face-alice-pupil_r" cx="186.38" cy="53.82" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p1-face-alice-nose" points="172.79,61.63 172.79,66.73 174.82,67.75" fill="none" stroke="#111111" stroke-width="2.32"/>
+      <polyline id="p1-face-alice-mouth" points="167.35,78.96 168.44,79.19 169.52,79.38 170.61,79.51 171.7,79.59 172.79,79.61 173.87,79.59 174.96,79.51 176.05,79.38 177.13,79.19 178.22,78.96" fill="none" stroke="#111111" stroke-width="2.32"/>
+    </g>
+    <g id="p1-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M466.67 100.02 L466.67 239.99" fill="none" stroke="#111111" stroke-width="57.08"/>
+      <path d="M466.67 100.02 L466.67 239.99" fill="none" stroke="#e8e6e1" stroke-width="51.08"/>
+      <path d="M495.2 104.1 L466.78 165.07" fill="none" stroke="#111111" stroke-width="20.38"/>
+      <path d="M495.2 104.1 L466.78 165.07" fill="none" stroke="#e8e6e1" stroke-width="14.38"/>
+      <path d="M466.78 165.07 L405.21 154.21" fill="none" stroke="#111111" stroke-width="16.99"/>
+      <path d="M466.78 165.07 L405.21 154.21" fill="none" stroke="#e8e6e1" stroke-width="10.99"/>
+      <path d="M438.13 104.1 L466.56 165.07" fill="none" stroke="#111111" stroke-width="20.38"/>
+      <path d="M438.13 104.1 L466.56 165.07" fill="none" stroke="#e8e6e1" stroke-width="14.38"/>
+      <path d="M466.56 165.07 L528.12 154.21" fill="none" stroke="#111111" stroke-width="16.99"/>
+      <path d="M466.56 165.07 L528.12 154.21" fill="none" stroke="#e8e6e1" stroke-width="10.99"/>
+      <path d="M488.41 246.79 L488.41 403.07" fill="none" stroke="#111111" stroke-width="25.82"/>
+      <path d="M488.41 246.79 L488.41 403.07" fill="none" stroke="#e8e6e1" stroke-width="19.82"/>
+      <path d="M488.41 403.07 L488.41 537.6" fill="none" stroke="#111111" stroke-width="21.06"/>
+      <path d="M488.41 403.07 L488.41 537.6" fill="none" stroke="#e8e6e1" stroke-width="15.06"/>
+      <path d="M444.92 246.79 L444.92 403.07" fill="none" stroke="#111111" stroke-width="25.82"/>
+      <path d="M444.92 246.79 L444.92 403.07" fill="none" stroke="#e8e6e1" stroke-width="19.82"/>
+      <path d="M444.92 403.07 L444.92 537.6" fill="none" stroke="#111111" stroke-width="21.06"/>
+      <path d="M444.92 403.07 L444.92 537.6" fill="none" stroke="#e8e6e1" stroke-width="15.06"/>
+      <circle cx="466.67" cy="41.59" r="35.33" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p1-face-bob-brow_l" points="472.1,22.56 480.94,20.97 489.77,22.56" fill="none" stroke="#111111" stroke-width="2.43"/>
+      <polyline id="p1-face-bob-brow_r" points="461.23,22.56 452.4,20.97 443.56,22.56" fill="none" stroke="#111111" stroke-width="2.43"/>
+      <circle id="p1-face-bob-eye_l" cx="480.94" cy="33.44" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.43"/>
+      <circle id="p1-face-bob-pupil_l" cx="480.94" cy="33.44" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p1-face-bob-eye_r" cx="452.4" cy="33.44" r="6.12" fill="#ffffff" stroke="#111111" stroke-width="2.43"/>
+      <circle id="p1-face-bob-pupil_r" cx="452.4" cy="33.44" r="2.08" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p1-face-bob-nose" points="466.67,40.94 466.67,46.55 464.42,47.67" fill="none" stroke="#111111" stroke-width="2.43"/>
+      <polyline id="p1-face-bob-mouth" points="460.89,59.26 462.05,59.5 463.2,59.7 464.36,59.84 465.51,59.92 466.67,59.95 467.82,59.92 468.98,59.84 470.13,59.7 471.29,59.5 472.44,59.26" fill="none" stroke="#111111" stroke-width="2.43"/>
+    </g>
+    <g id="p1-balloon-b0">
+      <path d="M132.2 119.9 L149.97 97.39 L124.22 110.02 Z" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <rect x="28.25" y="114.96" width="112.54" height="70.56" rx="29.64" ry="29.64" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <path d="M162 0 23 656H109L178 299Q187 245 197.0 193.0Q207 141 216 87H220Q231 141 243.0 193.5Q255 246 266 299L357 656H433L524 299Q536 247 548.0 194.0Q560 141 572 87H576Q585 141 594.0 193.5Q603 246 613 299L682 656H762L626 0H526L427 395Q418 433 410.5 469.5Q403 506 395 544H391Q383 506 374.5 469.5Q366 433 358 395L261 0Z" fill="#111111" stroke="none" transform="translate(39.03 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(54.43 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M82 0V486H150L157 416H160Q195 451 233.5 474.5Q272 498 323 498Q400 498 435.5 450.0Q471 402 471 308V0H389V297Q389 366 367.0 396.5Q345 427 297 427Q259 427 230.0 408.0Q201 389 164 352V0Z" fill="#111111" stroke="none" transform="translate(68.08 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(78.8 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(88.52 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M248 -12Q156 -12 101.5 54.0Q47 120 47 242Q47 301 64.5 348.5Q82 396 111.0 429.0Q140 462 178.0 480.0Q216 498 258 498Q300 498 331.0 483.0Q362 468 394 442L390 525V712H473V0H405L398 57H395Q366 29 328.5 8.5Q291 -12 248 -12ZM266 57Q300 57 330.0 73.5Q360 90 390 124V378Q359 406 330.5 417.5Q302 429 272 429Q243 429 217.5 415.5Q192 402 173.0 377.5Q154 353 143.0 319.0Q132 285 132 243Q132 155 167.0 106.0Q202 57 266 57Z" fill="#111111" stroke="none" transform="translate(98.24 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M235 -12Q196 -12 169.5 0.0Q143 12 126.5 33.0Q110 54 103.0 84.0Q96 114 96 150V419H24V481L100 486L110 622H179V486H310V419H179V149Q179 104 195.5 79.5Q212 55 254 55Q267 55 282.0 59.0Q297 63 309 68L325 6Q305 -1 281.5 -6.5Q258 -12 235 -12Z" fill="#111111" stroke="none" transform="translate(113.04 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M271 -12Q226 -12 185.5 5.0Q145 22 114.0 54.5Q83 87 64.5 134.5Q46 182 46 242Q46 303 64.5 350.5Q83 398 114.0 431.0Q145 464 185.5 481.0Q226 498 271 498Q316 498 356.5 481.0Q397 464 428.0 431.0Q459 398 477.5 350.5Q496 303 496 242Q496 182 477.5 134.5Q459 87 428.0 54.5Q397 22 356.5 5.0Q316 -12 271 -12ZM271 56Q302 56 328.0 69.5Q354 83 372.5 107.5Q391 132 401.0 166.0Q411 200 411 242Q411 284 401.0 318.5Q391 353 372.5 378.0Q354 403 328.0 416.5Q302 430 271 430Q240 430 214.0 416.5Q188 403 169.5 378.0Q151 353 141.0 318.5Q131 284 131 242Q131 200 141.0 166.0Q151 132 169.5 107.5Q188 83 214.0 69.5Q240 56 271 56Z" fill="#111111" stroke="none" transform="translate(119.39 140.24) scale(0.0196 -0.0196)"/>
+      <path d="M235 -12Q196 -12 169.5 0.0Q143 12 126.5 33.0Q110 54 103.0 84.0Q96 114 96 150V419H24V481L100 486L110 622H179V486H310V419H179V149Q179 104 195.5 79.5Q212 55 254 55Q267 55 282.0 59.0Q297 63 309 68L325 6Q305 -1 281.5 -6.5Q258 -12 235 -12Z" fill="#111111" stroke="none" transform="translate(66.56 164.74) scale(0.0196 -0.0196)"/>
+      <path d="M194 -12Q133 -12 92.5 24.0Q52 60 52 126Q52 206 123.0 248.5Q194 291 350 308Q350 331 345.5 353.0Q341 375 330.0 392.0Q319 409 299.5 419.5Q280 430 250 430Q208 430 171.0 414.0Q134 398 105 378L73 435Q107 457 156.0 477.5Q205 498 264 498Q353 498 393.0 443.5Q433 389 433 298V0H365L358 58H355Q320 29 280.0 8.5Q240 -12 194 -12ZM218 54Q253 54 284.0 70.5Q315 87 350 119V254Q289 246 247.5 235.0Q206 224 180.5 209.0Q155 194 143.5 174.5Q132 155 132 132Q132 90 157.0 72.0Q182 54 218 54Z" fill="#111111" stroke="none" transform="translate(72.77 164.74) scale(0.0196 -0.0196)"/>
+      <path d="M169 -12Q122 -12 102.0 16.0Q82 44 82 98V712H164V92Q164 72 171.0 64.0Q178 56 187 56Q191 56 194.5 56.0Q198 56 205 58L216 -4Q208 -8 197.0 -10.0Q186 -12 169 -12Z" fill="#111111" stroke="none" transform="translate(82.65 164.74) scale(0.0196 -0.0196)"/>
+      <path d="M82 0V712H163V230H166L373 486H464L301 291L486 0H396L254 234L163 128V0Z" fill="#111111" stroke="none" transform="translate(87.65 164.74) scale(0.0196 -0.0196)"/>
+      <path d="M125 -12Q100 -12 82.5 5.5Q65 23 65 50Q65 79 82.5 96.5Q100 114 125 114Q149 114 166.5 96.5Q184 79 184 50Q184 23 166.5 5.5Q149 -12 125 -12Z" fill="#111111" stroke="none" transform="translate(97.6 164.74) scale(0.0196 -0.0196)"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="700" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-reaction" transform="translate(739.2 16.8)" role="img">
+  <title>Medium close-up. Alice, left, pointing; Bob, right, arms crossed. Bob, whispering: Do we.</title>
+  <clipPath id="p2-frame"><rect x="0" y="0" width="700" height="560"/></clipPath>
+  <g clip-path="url(#p2-frame)">
+  <rect x="0" y="0" width="700" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p2-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M67.81 235.02 L67.81 503.55" fill="none" stroke="#111111" stroke-width="97.65"/>
+      <path d="M67.81 235.02 L67.81 503.55" fill="none" stroke="#e8e6e1" stroke-width="91.65"/>
+      <path d="M21.7 243.16 L39.63 370.74" fill="none" stroke="#111111" stroke-width="35.26"/>
+      <path d="M21.7 243.16 L39.63 370.74" fill="none" stroke="#e8e6e1" stroke-width="29.26"/>
+      <path d="M39.63 370.74 L56.24 488.93" fill="none" stroke="#111111" stroke-width="29.84"/>
+      <path d="M39.63 370.74 L56.24 488.93" fill="none" stroke="#e8e6e1" stroke-width="23.84"/>
+      <path d="M113.92 243.16 L242.27 254.39" fill="none" stroke="#111111" stroke-width="35.26"/>
+      <path d="M113.92 243.16 L242.27 254.39" fill="none" stroke="#e8e6e1" stroke-width="29.26"/>
+      <path d="M242.27 254.39 L361.16 264.79" fill="none" stroke="#111111" stroke-width="29.84"/>
+      <path d="M242.27 254.39 L361.16 264.79" fill="none" stroke="#e8e6e1" stroke-width="23.84"/>
+      <path d="M27.12 517.11 L27.12 815.48" fill="none" stroke="#111111" stroke-width="46.11"/>
+      <path d="M27.12 517.11 L27.12 815.48" fill="none" stroke="#e8e6e1" stroke-width="40.11"/>
+      <path d="M27.12 815.48 L27.12 1073.16" fill="none" stroke="#111111" stroke-width="37.97"/>
+      <path d="M27.12 815.48 L27.12 1073.16" fill="none" stroke="#e8e6e1" stroke-width="31.97"/>
+      <path d="M108.5 517.11 L108.5 815.48" fill="none" stroke="#111111" stroke-width="46.11"/>
+      <path d="M108.5 517.11 L108.5 815.48" fill="none" stroke="#e8e6e1" stroke-width="40.11"/>
+      <path d="M108.5 815.48 L108.5 1073.16" fill="none" stroke="#111111" stroke-width="37.97"/>
+      <path d="M108.5 815.48 L108.5 1073.16" fill="none" stroke="#e8e6e1" stroke-width="31.97"/>
+      <circle cx="67.81" cy="123.81" r="67.81" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p2-face-alice-brow_l" points="56.96,87.19 40.69,84.26 24.41,87.19" fill="none" stroke="#111111" stroke-width="4.62"/>
+      <polyline id="p2-face-alice-brow_r" points="78.66,87.19 94.93,84.26 111.21,87.19" fill="none" stroke="#111111" stroke-width="4.62"/>
+      <circle id="p2-face-alice-eye_l" cx="40.69" cy="107.54" r="12.21" fill="#ffffff" stroke="#111111" stroke-width="4.62"/>
+      <circle id="p2-face-alice-pupil_l" cx="40.69" cy="107.54" r="4.15" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p2-face-alice-eye_r" cx="94.93" cy="107.54" r="12.21" fill="#ffffff" stroke="#111111" stroke-width="4.62"/>
+      <circle id="p2-face-alice-pupil_r" cx="94.93" cy="107.54" r="4.15" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p2-face-alice-nose" points="67.81,123.13 67.81,133.3 71.88,135.34" fill="none" stroke="#111111" stroke-width="4.62"/>
+      <polyline id="p2-face-alice-mouth" points="56.96,157.72 59.13,158.18 61.3,158.55 63.47,158.81 65.64,158.97 67.81,159.02 69.98,158.97 72.15,158.81 74.32,158.55 76.49,158.18 78.66,157.72" fill="none" stroke="#111111" stroke-width="4.62"/>
+    </g>
+    <g id="p2-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M530.12 199.76 L530.12 479.14" fill="none" stroke="#111111" stroke-width="113.92"/>
+      <path d="M530.12 199.76 L530.12 479.14" fill="none" stroke="#e8e6e1" stroke-width="107.92"/>
+      <path d="M587.08 207.9 L530.34 329.58" fill="none" stroke="#111111" stroke-width="40.69"/>
+      <path d="M587.08 207.9 L530.34 329.58" fill="none" stroke="#e8e6e1" stroke-width="34.69"/>
+      <path d="M530.34 329.58 L407.47 307.91" fill="none" stroke="#111111" stroke-width="33.91"/>
+      <path d="M530.34 329.58 L407.47 307.91" fill="none" stroke="#e8e6e1" stroke-width="27.91"/>
+      <path d="M473.16 207.9 L529.91 329.58" fill="none" stroke="#111111" stroke-width="40.69"/>
+      <path d="M473.16 207.9 L529.91 329.58" fill="none" stroke="#e8e6e1" stroke-width="34.69"/>
+      <path d="M529.91 329.58 L652.78 307.91" fill="none" stroke="#111111" stroke-width="33.91"/>
+      <path d="M529.91 329.58 L652.78 307.91" fill="none" stroke="#e8e6e1" stroke-width="27.91"/>
+      <path d="M573.52 492.7 L573.52 804.63" fill="none" stroke="#111111" stroke-width="51.54"/>
+      <path d="M573.52 492.7 L573.52 804.63" fill="none" stroke="#e8e6e1" stroke-width="45.54"/>
+      <path d="M573.52 804.63 L573.52 1073.16" fill="none" stroke="#111111" stroke-width="42.04"/>
+      <path d="M573.52 804.63 L573.52 1073.16" fill="none" stroke="#e8e6e1" stroke-width="36.04"/>
+      <path d="M486.72 492.7 L486.72 804.63" fill="none" stroke="#111111" stroke-width="51.54"/>
+      <path d="M486.72 492.7 L486.72 804.63" fill="none" stroke="#e8e6e1" stroke-width="45.54"/>
+      <path d="M486.72 804.63 L486.72 1073.16" fill="none" stroke="#111111" stroke-width="42.04"/>
+      <path d="M486.72 804.63 L486.72 1073.16" fill="none" stroke="#e8e6e1" stroke-width="36.04"/>
+      <circle cx="530.12" cy="83.12" r="70.52" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p2-face-bob-brow_l" points="540.97,45.15 558.6,41.98 576.23,45.15" fill="none" stroke="#111111" stroke-width="4.85"/>
+      <polyline id="p2-face-bob-brow_r" points="519.27,45.15 501.64,41.98 484.01,45.15" fill="none" stroke="#111111" stroke-width="4.85"/>
+      <circle id="p2-face-bob-eye_l" cx="558.6" cy="66.85" r="12.21" fill="#ffffff" stroke="#111111" stroke-width="4.85"/>
+      <circle id="p2-face-bob-pupil_l" cx="558.6" cy="66.85" r="4.15" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p2-face-bob-eye_r" cx="501.64" cy="66.85" r="12.21" fill="#ffffff" stroke="#111111" stroke-width="4.85"/>
+      <circle id="p2-face-bob-pupil_r" cx="501.64" cy="66.85" r="4.15" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p2-face-bob-nose" points="530.12,81.84 530.12,93.02 525.65,95.26" fill="none" stroke="#111111" stroke-width="4.85"/>
+      <polyline id="p2-face-bob-mouth" points="518.6,118.39 520.9,118.88 523.21,119.27 525.51,119.55 527.82,119.71 530.12,119.77 532.43,119.71 534.73,119.55 537.04,119.27 539.35,118.88 541.65,118.39" fill="none" stroke="#111111" stroke-width="4.85"/>
+    </g>
+    <g id="p2-balloon-b0">
+      <path d="M427.96 139.39 L455.85 130.6 L426.62 131.21 Z" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <rect x="350.53" y="118.59" width="76.75" height="46.06" rx="19.35" ry="19.35" fill="#ffffff" stroke="#111111" stroke-width="3" stroke-dasharray="12 9"/>
+      <path d="M90 0V656H254Q406 656 485.0 572.0Q564 488 564 331Q564 253 544.0 191.5Q524 130 485.0 87.5Q446 45 389.0 22.5Q332 0 258 0ZM173 68H248Q363 68 420.5 137.0Q478 206 478 331Q478 456 420.5 522.0Q363 588 248 588H173Z" fill="#111111" stroke="none" transform="translate(361.31 143.87) scale(0.0196 -0.0196)"/>
+      <path d="M271 -12Q226 -12 185.5 5.0Q145 22 114.0 54.5Q83 87 64.5 134.5Q46 182 46 242Q46 303 64.5 350.5Q83 398 114.0 431.0Q145 464 185.5 481.0Q226 498 271 498Q316 498 356.5 481.0Q397 464 428.0 431.0Q459 398 477.5 350.5Q496 303 496 242Q496 182 477.5 134.5Q459 87 428.0 54.5Q397 22 356.5 5.0Q316 -12 271 -12ZM271 56Q302 56 328.0 69.5Q354 83 372.5 107.5Q391 132 401.0 166.0Q411 200 411 242Q411 284 401.0 318.5Q391 353 372.5 378.0Q354 403 328.0 416.5Q302 430 271 430Q240 430 214.0 416.5Q188 403 169.5 378.0Q151 353 141.0 318.5Q131 284 131 242Q131 200 141.0 166.0Q151 132 169.5 107.5Q188 83 214.0 69.5Q240 56 271 56Z" fill="#111111" stroke="none" transform="translate(373.36 143.87) scale(0.0196 -0.0196)"/>
+      <path d="M159 0 24 486H108L180 205Q188 170 195.0 137.0Q202 104 209 70H213Q221 104 229.0 137.5Q237 171 246 205L321 486H401L477 205Q486 170 494.5 137.0Q503 104 511 70H515Q523 104 530.0 137.0Q537 170 545 205L616 486H694L564 0H464L394 261Q385 296 377.5 330.0Q370 364 361 401H357Q349 364 341.0 329.5Q333 295 323 260L255 0Z" fill="#111111" stroke="none" transform="translate(387.91 143.87) scale(0.0196 -0.0196)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(401.9 143.87) scale(0.0196 -0.0196)"/>
+      <path d="M125 -12Q100 -12 82.5 5.5Q65 23 65 50Q65 79 82.5 96.5Q100 114 125 114Q149 114 166.5 96.5Q184 79 184 50Q184 23 166.5 5.5Q149 -12 125 -12Z" fill="#111111" stroke="none" transform="translate(411.62 143.87) scale(0.0196 -0.0196)"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="700" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+  <g id="panel-closer" transform="translate(1461.6 16.8)" role="img">
+  <title>Close-up, from a low angle. Alice, left, pointing; Bob, right, hands on hips. Bob, shouting: Fine. Talk.</title>
+  <clipPath id="p3-frame"><rect x="0" y="0" width="700" height="560"/></clipPath>
+  <g clip-path="url(#p3-frame)">
+  <rect x="0" y="0" width="700" height="560" fill="#ffffff"/>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <g id="p3-actor-alice" fill="#e8e6e1" stroke-width="3">
+      <path d="M70.66 208.94 L70.66 488.75" fill="none" stroke="#111111" stroke-width="101.75"/>
+      <path d="M70.66 208.94 L70.66 488.75" fill="none" stroke="#e8e6e1" stroke-width="95.75"/>
+      <path d="M22.61 217.42 L41.3 350.36" fill="none" stroke="#111111" stroke-width="36.74"/>
+      <path d="M22.61 217.42 L41.3 350.36" fill="none" stroke="#e8e6e1" stroke-width="30.74"/>
+      <path d="M41.3 350.36 L58.6 473.51" fill="none" stroke="#111111" stroke-width="31.09"/>
+      <path d="M41.3 350.36 L58.6 473.51" fill="none" stroke="#e8e6e1" stroke-width="25.09"/>
+      <path d="M118.71 217.42 L252.45 229.12" fill="none" stroke="#111111" stroke-width="36.74"/>
+      <path d="M118.71 217.42 L252.45 229.12" fill="none" stroke="#e8e6e1" stroke-width="30.74"/>
+      <path d="M252.45 229.12 L376.33 239.96" fill="none" stroke="#111111" stroke-width="31.09"/>
+      <path d="M252.45 229.12 L376.33 239.96" fill="none" stroke="#e8e6e1" stroke-width="25.09"/>
+      <path d="M28.26 502.88 L28.26 813.78" fill="none" stroke="#111111" stroke-width="48.05"/>
+      <path d="M28.26 502.88 L28.26 813.78" fill="none" stroke="#e8e6e1" stroke-width="42.05"/>
+      <path d="M28.26 813.78 L28.26 1082.28" fill="none" stroke="#111111" stroke-width="39.57"/>
+      <path d="M28.26 813.78 L28.26 1082.28" fill="none" stroke="#e8e6e1" stroke-width="33.57"/>
+      <path d="M113.05 502.88 L113.05 813.78" fill="none" stroke="#111111" stroke-width="48.05"/>
+      <path d="M113.05 502.88 L113.05 813.78" fill="none" stroke="#e8e6e1" stroke-width="42.05"/>
+      <path d="M113.05 813.78 L113.05 1082.28" fill="none" stroke="#111111" stroke-width="39.57"/>
+      <path d="M113.05 813.78 L113.05 1082.28" fill="none" stroke="#e8e6e1" stroke-width="33.57"/>
+      <circle cx="70.66" cy="93.06" r="70.66" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p3-face-alice-brow_l" points="59.35,54.9 42.4,51.85 25.44,54.9" fill="none" stroke="#111111" stroke-width="4.82"/>
+      <polyline id="p3-face-alice-brow_r" points="81.96,54.9 98.92,51.85 115.88,54.9" fill="none" stroke="#111111" stroke-width="4.82"/>
+      <circle id="p3-face-alice-eye_l" cx="42.4" cy="76.1" r="12.72" fill="#ffffff" stroke="#111111" stroke-width="4.82"/>
+      <circle id="p3-face-alice-pupil_l" cx="42.4" cy="76.1" r="4.32" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p3-face-alice-eye_r" cx="98.92" cy="76.1" r="12.72" fill="#ffffff" stroke="#111111" stroke-width="4.82"/>
+      <circle id="p3-face-alice-pupil_r" cx="98.92" cy="76.1" r="4.32" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p3-face-alice-nose" points="70.66,92.35 70.66,102.95 74.9,105.07" fill="none" stroke="#111111" stroke-width="4.82"/>
+      <polyline id="p3-face-alice-mouth" points="59.35,128.39 61.61,128.88 63.88,129.26 66.14,129.53 68.4,129.69 70.66,129.74 72.92,129.69 75.18,129.53 77.44,129.26 79.7,128.88 81.96,128.39" fill="none" stroke="#111111" stroke-width="4.82"/>
+    </g>
+    <g id="p3-actor-bob" fill="#e8e6e1" stroke-width="3">
+      <path d="M538.05 172.2 L538.05 463.31" fill="none" stroke="#111111" stroke-width="118.71"/>
+      <path d="M538.05 172.2 L538.05 463.31" fill="none" stroke="#e8e6e1" stroke-width="112.71"/>
+      <path d="M597.4 180.68 L645.25 312.14" fill="none" stroke="#111111" stroke-width="42.4"/>
+      <path d="M597.4 180.68 L645.25 312.14" fill="none" stroke="#e8e6e1" stroke-width="36.4"/>
+      <path d="M645.25 312.14 L515.24 312.14" fill="none" stroke="#111111" stroke-width="35.33"/>
+      <path d="M645.25 312.14 L515.24 312.14" fill="none" stroke="#e8e6e1" stroke-width="29.33"/>
+      <path d="M478.69 180.68 L430.84 312.14" fill="none" stroke="#111111" stroke-width="42.4"/>
+      <path d="M478.69 180.68 L430.84 312.14" fill="none" stroke="#e8e6e1" stroke-width="36.4"/>
+      <path d="M430.84 312.14 L560.86 312.14" fill="none" stroke="#111111" stroke-width="35.33"/>
+      <path d="M430.84 312.14 L560.86 312.14" fill="none" stroke="#e8e6e1" stroke-width="29.33"/>
+      <path d="M583.27 477.44 L583.27 802.47" fill="none" stroke="#111111" stroke-width="53.7"/>
+      <path d="M583.27 477.44 L583.27 802.47" fill="none" stroke="#e8e6e1" stroke-width="47.7"/>
+      <path d="M583.27 802.47 L583.27 1082.28" fill="none" stroke="#111111" stroke-width="43.81"/>
+      <path d="M583.27 802.47 L583.27 1082.28" fill="none" stroke="#e8e6e1" stroke-width="37.81"/>
+      <path d="M492.83 477.44 L492.83 802.47" fill="none" stroke="#111111" stroke-width="53.7"/>
+      <path d="M492.83 477.44 L492.83 802.47" fill="none" stroke="#e8e6e1" stroke-width="47.7"/>
+      <path d="M492.83 802.47 L492.83 1082.28" fill="none" stroke="#111111" stroke-width="43.81"/>
+      <path d="M492.83 802.47 L492.83 1082.28" fill="none" stroke="#e8e6e1" stroke-width="37.81"/>
+      <circle cx="538.05" cy="50.66" r="73.49" fill="#e8e6e1" stroke="#111111" stroke-width="3"/>
+      <polyline id="p3-face-bob-brow_l" points="549.35,11.09 567.72,7.79 586.1,11.09" fill="none" stroke="#111111" stroke-width="5.05"/>
+      <polyline id="p3-face-bob-brow_r" points="526.74,11.09 508.37,7.79 490,11.09" fill="none" stroke="#111111" stroke-width="5.05"/>
+      <circle id="p3-face-bob-eye_l" cx="567.72" cy="33.71" r="12.72" fill="#ffffff" stroke="#111111" stroke-width="5.05"/>
+      <circle id="p3-face-bob-pupil_l" cx="567.72" cy="33.71" r="4.32" fill="#111111" stroke="none" stroke-width="0"/>
+      <circle id="p3-face-bob-eye_r" cx="508.37" cy="33.71" r="12.72" fill="#ffffff" stroke="#111111" stroke-width="5.05"/>
+      <circle id="p3-face-bob-pupil_r" cx="508.37" cy="33.71" r="4.32" fill="#111111" stroke="none" stroke-width="0"/>
+      <polyline id="p3-face-bob-nose" points="538.05,49.32 538.05,60.98 533.38,63.31" fill="none" stroke="#111111" stroke-width="5.05"/>
+      <polyline id="p3-face-bob-mouth" points="526.04,87.41 528.44,87.93 530.84,88.33 533.24,88.62 535.64,88.79 538.05,88.85 540.45,88.79 542.85,88.62 545.25,88.33 547.66,87.93 550.06,87.41" fill="none" stroke="#111111" stroke-width="5.05"/>
+    </g>
+    <g id="p3-balloon-b0">
+      <path d="M432.77 110.76 L461.43 101.33 L431.29 102.6 Z" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <polygon points="443.49,116.14 426.52,122.83 431.36,132.65 408.75,133.65 399.61,142.86 379.99,137.79 360.37,142.86 351.23,133.65 328.62,132.65 333.46,122.83 316.49,116.14 333.46,109.45 328.62,99.63 351.23,98.63 360.37,89.42 379.99,94.49 399.61,89.42 408.75,98.63 431.36,99.63 426.52,109.45" fill="#ffffff" stroke="#111111" stroke-width="3"/>
+      <path d="M90 0V656H468V586H173V364H423V294H173V0Z" fill="#111111" stroke="none" transform="translate(338.72 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M82 0V486H164V0ZM124 586Q100 586 83.5 601.0Q67 616 67 639Q67 663 83.5 677.5Q100 692 124 692Q148 692 164.5 677.5Q181 663 181 639Q181 616 164.5 601.0Q148 586 124 586Z" fill="#111111" stroke="none" transform="translate(348.4 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M82 0V486H150L157 416H160Q195 451 233.5 474.5Q272 498 323 498Q400 498 435.5 450.0Q471 402 471 308V0H389V297Q389 366 367.0 396.5Q345 427 297 427Q259 427 230.0 408.0Q201 389 164 352V0Z" fill="#111111" stroke="none" transform="translate(353.23 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M279 -12Q230 -12 187.5 5.5Q145 23 113.5 55.5Q82 88 64.0 135.0Q46 182 46 242Q46 302 64.5 349.5Q83 397 113.5 430.0Q144 463 183.0 480.5Q222 498 264 498Q310 498 346.5 482.0Q383 466 407.5 436.0Q432 406 445.0 364.0Q458 322 458 270Q458 257 457.5 244.5Q457 232 455 223H127Q132 145 175.5 99.5Q219 54 289 54Q324 54 353.5 64.5Q383 75 410 92L439 38Q407 18 368.0 3.0Q329 -12 279 -12ZM126 282H386Q386 356 354.5 394.5Q323 433 266 433Q240 433 216.5 423.0Q193 413 174.0 393.5Q155 374 142.5 346.0Q130 318 126 282Z" fill="#111111" stroke="none" transform="translate(363.95 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M125 -12Q100 -12 82.5 5.5Q65 23 65 50Q65 79 82.5 96.5Q100 114 125 114Q149 114 166.5 96.5Q184 79 184 50Q184 23 166.5 5.5Q149 -12 125 -12Z" fill="#111111" stroke="none" transform="translate(373.67 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M226 0V586H28V656H508V586H310V0Z" fill="#111111" stroke="none" transform="translate(382.47 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M194 -12Q133 -12 92.5 24.0Q52 60 52 126Q52 206 123.0 248.5Q194 291 350 308Q350 331 345.5 353.0Q341 375 330.0 392.0Q319 409 299.5 419.5Q280 430 250 430Q208 430 171.0 414.0Q134 398 105 378L73 435Q107 457 156.0 477.5Q205 498 264 498Q353 498 393.0 443.5Q433 389 433 298V0H365L358 58H355Q320 29 280.0 8.5Q240 -12 194 -12ZM218 54Q253 54 284.0 70.5Q315 87 350 119V254Q289 246 247.5 235.0Q206 224 180.5 209.0Q155 194 143.5 174.5Q132 155 132 132Q132 90 157.0 72.0Q182 54 218 54Z" fill="#111111" stroke="none" transform="translate(391.54 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M169 -12Q122 -12 102.0 16.0Q82 44 82 98V712H164V92Q164 72 171.0 64.0Q178 56 187 56Q191 56 194.5 56.0Q198 56 205 58L216 -4Q208 -8 197.0 -10.0Q186 -12 169 -12Z" fill="#111111" stroke="none" transform="translate(401.42 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M82 0V712H163V230H166L373 486H464L301 291L486 0H396L254 234L163 128V0Z" fill="#111111" stroke="none" transform="translate(406.42 118.39) scale(0.0196 -0.0196)"/>
+      <path d="M125 -12Q100 -12 82.5 5.5Q65 23 65 50Q65 79 82.5 96.5Q100 114 125 114Q149 114 166.5 96.5Q184 79 184 50Q184 23 166.5 5.5Q149 -12 125 -12Z" fill="#111111" stroke="none" transform="translate(416.38 118.39) scale(0.0196 -0.0196)"/>
+    </g>
+  </g>
+  <rect x="0" y="0" width="700" height="560" fill="none" stroke="#111111" stroke-width="6"/>
+  </g>
+  </g>
+</svg>

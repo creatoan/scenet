@@ -576,3 +576,27 @@ Sources:
 - numpy's and pandas' switcher data:
   [numpy](https://numpy.org/doc/_static/versions.json),
   [pandas](https://pandas.pydata.org/versions.json)
+
+## The documentation's pictures are golden outputs, committed
+
+Every picture of a gallery example in the documentation is the file `scenet build` writes for
+it, copied from the golden build by `scripts/update_golden.py` into `docs/images/gallery/` and
+held to its digest by a test ([#243](https://github.com/creatoan/scenet/issues/243)). It was
+that or rendering them while Sphinx builds, which would commit nothing. Copying won:
+
+- **GitHub renders these pages.** The documentation is Markdown so that a reader who lands in
+  the repository reads it without a build step, and a picture that exists only on the site is
+  a broken image there.
+- **The README needs a committed picture anyway**: GitHub and PyPI render it, not Sphinx.
+- **It is the mechanism the goldens already have.** `update_golden.py --check` and
+  `tests/test_golden.py` name a stale picture with the other goldens, and the docs build stays
+  a Markdown render that compiles nothing.
+- **A pull request that changes a drawing shows it**, as GitHub's image diff of the SVG.
+
+The price is the repository's size: 3.9 MB of SVG, 0.8 MB compressed, rewritten whenever
+the drawing of an example changes, as its Core golden is. One set of pictures per example
+keeps it down, and every page that shows an example shows that set, the README included.
+
+An example lettered over a picture of its own is shown as `--embed-images` builds it. An SVG
+shown as an image, as every page shows these, loads nothing from outside itself, so a picture
+the SVG only links would be missing from it.
