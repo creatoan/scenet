@@ -9,10 +9,12 @@ what was encoded.
 import io
 import struct
 import zlib
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
+from pypdf.generic import DictionaryObject
 
 from scenet.emit.pdf import print_notes, render_pdf
 from scenet.emit.pdf_images import embed
@@ -75,7 +77,7 @@ def _pack(values: list[int], depth: int) -> bytes:
 
 
 def _png(
-    pixels: list[list[tuple[int, ...]]],
+    pixels: Sequence[Sequence[tuple[int, ...]]],
     *,
     kind: int,
     depth: int = 8,
@@ -87,7 +89,7 @@ def _png(
     channels = len(pixels[0][0])
     distance = max(1, channels * depth // 8)
 
-    def encoded(rows: list[list[tuple[int, ...]]]) -> bytes:
+    def encoded(rows: Sequence[Sequence[tuple[int, ...]]]) -> bytes:
         packed = [_pack([value for pixel in row for value in pixel], depth) for row in rows]
         return _filtered(packed, distance)
 
@@ -255,6 +257,7 @@ def test_a_gallery_picture_prints(name: str):
     data = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
     reader = PdfReader(io.BytesIO(data))
     resources = reader.pages[0]["/Resources"]
+    assert isinstance(resources, DictionaryObject)
     assert "/XObject" in resources
     assert data == render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
 

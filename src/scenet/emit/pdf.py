@@ -28,7 +28,7 @@ import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
-from scenet.core import Box, PageCore, PanelCore
+from scenet.core import Box, CoreImage, PageCore, PanelCore
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
     Circle,
@@ -47,6 +47,7 @@ from scenet.emit.marks import (
     Veil,
     marks,
 )
+from scenet.emit.pdf_images import Embedded, embed
 from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt, typeface_of
 from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
@@ -68,6 +69,9 @@ RICH_BLACK = (0.4, 0.0, 0.0, 1.0)
 #: How dark, in OKLab lightness, a mass must be to print rich black: the night foreground,
 #: the darkest rung of the ladder (`solve/backdrop.py`).
 RICH_BLACK_LIGHTNESS = 0.10
+
+#: The resolution printers ask a picture to have at its printed size.
+PRINT_DPI = 300
 
 #: How round a quarter of a circle is, drawn as one cubic curve.
 KAPPA = 4 * (math.sqrt(2) - 1) / 3
@@ -143,7 +147,25 @@ def print_notes(panels: Mapping[str, PanelCore]) -> list[str]:
             )
         if core.as_mono() != core:
             notes.append(f"panel {name!r} is tinted; print draws it in its greys")
+        image = core.backdrop.image if core.backdrop is not None else None
+        if image is not None:
+            dpi = resolution(image)
+            if dpi < PRINT_DPI:
+                notes.append(
+                    f"the picture {image.href!r} in panel {name!r} prints at {dpi} dpi at its "
+                    f"size; printers ask for {PRINT_DPI}"
+                )
     return notes
+
+
+def resolution(image: CoreImage) -> int:
+    """How many of a picture's pixels fall to the inch where it is printed, the lower way.
+
+    A unit prints as a tenth of a millimetre, so an inch is 254 units.
+    """
+    across = image.pixels[0] * 254 / image.box.width
+    down = image.pixels[1] * 254 / image.box.height
+    return math.floor(min(across, down))
 
 
 def render_pdf(
@@ -151,6 +173,7 @@ def render_pdf(
     panels: Mapping[str, PanelCore],
     *,
     fonts: Mapping[str, FontMetrics] | None = None,
+    images: Mapping[str, bytes] | None = None,
 ) -> bytes:
     r"""Draw a document as a print PDF.
 
@@ -162,13 +185,17 @@ def render_pdf(
         pages: The document's pages, in order -- empty for a document without any.
         panels: Every panel's compiled Core, by name.
         fonts: The declared fonts the panels were lettered in, by digest.
+        images: The supplied pictures' bytes, by digest -- what
+            :attr:`Book.images <scenet.pipeline.Book.images>` holds. A picture is always
+            carried inside the PDF, pixels unchanged; see `scenet.emit.pdf_images`.
 
     Returns:
         The PDF's bytes.
 
     Raises:
         ValueError: A page places a panel that was not given, a Core names a font that was
-            not, or a panel is drawn over a supplied picture, which print does not draw yet.
+            not, a picture's bytes were not handed over, or a picture is one no PDF reader
+            decodes.
 
     Example:
         >>> from scenet import compile_book
@@ -178,7 +205,14 @@ def render_pdf(
         >>> render_pdf(book.pages, cores)[:8]
         b'%PDF-1.6'
     """
-    document = _Document()
+    pictures = {
+        _picture_name(core.backdrop.image): core.backdrop.image
+        for core in panels.values()
+        if core.backdrop is not None and core.backdrop.image is not None
+    }
+    document = _Document(
+        pictures={name: _embedded(image, images) for name, image in pictures.items()}
+    )
     if pages:
         for page in pages:
             document.add_page(page.width, page.height, _page_content(page, panels, fonts))
@@ -187,6 +221,21 @@ def render_pdf(
             document.add_page(core.width, core.height, _lone_content(core, fonts))
     rtl = any(page.direction is Direction.RTL for page in pages)
     return document.write(rtl=rtl)
+
+
+def _picture_name(image: CoreImage) -> str:
+    """A picture's resource name: from its bytes, so one drawn twice is carried once."""
+    return f"Im{image.sha256[:16]}"
+
+
+def _embedded(image: CoreImage, images: Mapping[str, bytes] | None) -> Embedded:
+    data = (images or {}).get(image.sha256)
+    if data is None:
+        raise ValueError(
+            f"the panel is drawn over {image.href!r} (sha256 {image.sha256[:12]}...), and those "
+            "bytes were not handed over to print; pass Book.images"
+        )
+    return embed(data, image.media_type, image.href)
 
 
 def _lone_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None) -> list[str]:
@@ -263,10 +312,15 @@ def panel_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None = Non
 def _painted(mark: Mark) -> list[str]:
     """One mark, in a graphics state of its own."""
     if isinstance(mark.shape, Picture):
-        raise ValueError(
-            f"print does not draw supplied pictures yet, and this panel is drawn over "
-            f"{mark.shape.image.href!r}"
-        )
+        # An image is drawn in the unit square, its first row at the top: mapped onto the
+        # box Panel Core placed it in, which already has its proportions.
+        box = mark.shape.image.box
+        return [
+            "q",
+            f"{fmt(box.width)} 0 0 {fmt(-box.height)} {fmt(box.x)} {fmt(box.y + box.height)} cm",
+            f"/{_picture_name(mark.shape.image)} Do",
+            "Q",
+        ]
     head = ["q"]
     if mark.stroke is not None:
         head.append(f"{fmt(mark.width)} w")
@@ -475,44 +529,59 @@ class _Document:
     """The objects of a PDF, written in a fixed order."""
 
     pages: list[tuple[float, float, list[str]]] = field(default_factory=list)
+    pictures: dict[str, Embedded] = field(default_factory=dict)
 
     def add_page(self, width: float, height: float, content: list[str]) -> None:
         """A page of `width` by `height` units, drawn by `content` in its own units."""
         self.pages.append((width, height, content))
 
     def write(self, *, rtl: bool) -> bytes:
-        """The whole file."""
+        """The whole file.
+
+        Catalog 1, pages 2, then each page and its content, then each picture and its soft
+        mask, once however many pages draw it, then the document info.
+        """
         count = len(self.pages)
-        # Catalog 1, pages 2, then each page and its content, then the document info.
         kids = " ".join(f"{3 + 2 * index} 0 R" for index in range(count))
         reading = " /ViewerPreferences << /Direction /R2L >>" if rtl else ""
         objects = [
             f"<< /Type /Catalog /Pages 2 0 R{reading} >>".encode(),
             f"<< /Type /Pages /Kids [{kids}] /Count {count} >>".encode(),
         ]
+        numbers: dict[str, int] = {}
+        pictures: list[bytes] = []
+        next_number = 3 + 2 * count
+        for name, picture in self.pictures.items():
+            numbers[name] = next_number
+            mask = ""
+            if picture.mask is not None:
+                mask = f" /SMask {next_number + 1} 0 R"
+            pictures.append(_stream(picture.dictionary + mask, picture.data))
+            next_number += 1
+            if picture.mask is not None:
+                pictures.append(_stream(*picture.mask))
+                next_number += 1
+
         scale = fmt(POINTS_PER_UNIT, SCALE_PLACES)
         for index, (width, height, content) in enumerate(self.pages):
             box = f"[0 0 {fmt(width * POINTS_PER_UNIT, 4)} {fmt(height * POINTS_PER_UNIT, 4)}]"
             states = sorted({part.split()[0][1:] for part in content if part.endswith(" gs")})
-            resources = " ".join(
+            graphics = " ".join(
                 f"/{name} {_GraphicsState.parse(name).dictionary()}" for name in states
             )
+            drawn = sorted({part.split()[0][1:] for part in content if part.endswith(" Do")})
+            images = " ".join(f"/{name} {numbers[name]} 0 R" for name in drawn)
+            xobjects = f" /XObject << {images} >>" if drawn else ""
             objects.append(
                 (
                     f"<< /Type /Page /Parent 2 0 R /MediaBox {box} /TrimBox {box} "
-                    f"/BleedBox {box} /Resources << /ExtGState << {resources} >> >> "
+                    f"/BleedBox {box} /Resources << /ExtGState << {graphics} >>{xobjects} >> "
                     f"/Contents {4 + 2 * index} 0 R >>"
                 ).encode()
             )
             flip = f"{scale} 0 0 -{scale} 0 {fmt(height * POINTS_PER_UNIT, 4)} cm"
-            stream = "\n".join(["4 M", flip, *content, ""]).encode()
-            objects.append(
-                b"<< /Length "
-                + str(len(stream)).encode()
-                + b" >>\nstream\n"
-                + stream
-                + b"endstream"
-            )
+            objects.append(_stream("", "\n".join(["4 M", flip, *content, ""]).encode()))
+        objects += pictures
         objects.append(f"<< /Producer ({PRODUCER}) >>".encode())
 
         output = bytearray(b"%PDF-1.6\n%\xe2\xe3\xcf\xd3\n")
@@ -530,3 +599,9 @@ class _Document:
             f"/ID [<{identifier}> <{identifier}>] >>\nstartxref\n{xref}\n%%EOF\n"
         ).encode()
         return bytes(output)
+
+
+def _stream(entries: str, data: bytes) -> bytes:
+    """A stream object: its dictionary, its length, its bytes."""
+    head = f"<< {entries} /Length {len(data)} >>" if entries else f"<< /Length {len(data)} >>"
+    return head.encode() + b"\nstream\n" + data + b"\nendstream"

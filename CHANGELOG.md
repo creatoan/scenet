@@ -17,6 +17,9 @@ below 1.0 means.
   sharp when the colour plates drift; the paper knocks out; greys are black tints; the night
   foreground prints rich black; a tinted palette prints its greys. A page unit prints as
   0.1 mm. The file is byte-identical from run to run, with no date in it.
+  Supplied pictures go in with their pixels unchanged: a JPEG and most PNGs as the file's own
+  data, the rest decoded and stored uncompressed, alpha as a soft mask. `print_notes` says
+  what print leaves out or changes, and names a picture that prints below 300 dpi.
 - **A puppet of your own, from a document (#242).** A cast member names a `*.puppet.yaml` file
   by its path, relative to the document, as it names a font or a picture:
   `reference: puppets/pip.puppet.yaml`. So `scenet check` and `scenet build` read it beside the

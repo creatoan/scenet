@@ -18,7 +18,7 @@ from pypdf import PdfReader
 from pypdf.generic import BooleanObject, ContentStream, DictionaryObject
 
 from scenet.core import PanelCore
-from scenet.emit.marks import Mark, Paint, Role, marks
+from scenet.emit.marks import Mark, Paint, Picture, Role, marks
 from scenet.emit.pdf import (
     POINTS_PER_UNIT,
     RICH_BLACK,
@@ -72,6 +72,8 @@ def _blocks(lines: list[str]) -> list[list[str]]:
 
 
 def _expected(mark: Mark) -> tuple[str, ...]:
+    if isinstance(mark.shape, Picture):
+        return ()
     if mark.fill is not None and mark.stroke is not None:
         return PAINTING["Sf" if mark.stroke_first else "B"]
     return PAINTING["f" if mark.fill is not None else "S"]

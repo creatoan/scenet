@@ -3,7 +3,8 @@
 `setting: {image: art/p01.png}` puts a picture drawn elsewhere behind the cast. The
 solver never sees artwork, so what this module takes from the file is a fact about it,
 not its content: **how many pixels across and how many down**, read from the header. The
-pixels are never decoded.
+compiler never decodes the pixels; only the print emitter carries them, unchanged, into a
+PDF (`scenet.emit.pdf_images`, #80).
 
 Two formats, PNG and JPEG, because they are what SVG 2 requires every viewer to draw.
 They are told apart by their first bytes, never by the file's name. Both headers take a
