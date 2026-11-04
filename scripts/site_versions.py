@@ -345,7 +345,9 @@ def download(repository: str, into: Path) -> list[Path]:
         [GH, "api", "--paginate", "--slurp", f"repos/{repository}/releases"],
         check=True,
         capture_output=True,
-        text=True,
+        # gh writes UTF-8 whatever the system's code page, and release notes hold curly
+        # quotes; read as the locale's (cp1252 on Windows) they stop the build.
+        encoding="utf-8",
     ).stdout
     releases = [release for page in json.loads(listed) for release in page]
     sites, notes = select(releases)
