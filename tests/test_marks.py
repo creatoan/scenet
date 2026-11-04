@@ -34,7 +34,7 @@ from scenet.emit.marks import (
     Veil,
     marks,
 )
-from scenet.emit.svg import render, typeface_of
+from scenet.emit.svg import fmt, render, typeface_of
 from scenet.ir import BalloonKind, Face
 from scenet.pipeline import Book, compile_book_file
 from scenet.solve.text import Typeface, load_metrics
@@ -80,11 +80,37 @@ def _owner(element: ET.Element, parents: dict[ET.Element, ET.Element]) -> str:
     return "panel"
 
 
-def _painted(svg: str) -> list[tuple[str, str]]:
-    """Each painted element of an SVG, in document order: its owner and its tag."""
+#: What each painted element says about how it is painted, inherited from its groups as SVG
+#: inherits it: fill, stroke, stroke width, line cap, opacity and dash pattern.
+Painting = tuple[str, str, str, str, str, str, str, str]
+
+#: SVG's initial values, for an attribute no element or group sets.
+INITIAL = {
+    "fill": "#000000",
+    "stroke": "none",
+    "stroke-width": "1",
+    "stroke-linecap": "butt",
+    "fill-opacity": "1",
+    "stroke-opacity": "1",
+    "stroke-dasharray": "",
+}
+
+
+def _inherited(element: ET.Element, parents: dict[ET.Element, ET.Element], name: str) -> str:
+    node: ET.Element | None = element
+    while node is not None:
+        value = node.get(name)
+        if value is not None:
+            return value
+        node = parents.get(node)
+    return INITIAL[name]
+
+
+def _painted(svg: str) -> list[Painting]:
+    """Each painted element of an SVG, in document order: its owner, tag and paint."""
     root = ET.fromstring(svg)
     parents = {child: parent for parent in root.iter() for child in parent}
-    painted: list[tuple[str, str]] = []
+    painted: list[Painting] = []
 
     def walk(element: ET.Element) -> None:
         for child in element:
@@ -96,14 +122,53 @@ def _painted(svg: str) -> list[tuple[str, str]]:
                 continue
             if tag == "rect" and child.get("filter"):
                 continue
-            painted.append((_owner(child, parents), tag))
+            if tag == "image":
+                painted.append((_owner(child, parents), tag, "", "", "", "", "", ""))
+                continue
+            stroke = _inherited(child, parents, "stroke")
+            # A line is never filled, whatever its group says.
+            fill = "none" if tag == "line" else _inherited(child, parents, "fill")
+            stroked = stroke != "none"
+            painted.append(
+                (
+                    _owner(child, parents),
+                    tag,
+                    fill,
+                    stroke,
+                    _inherited(child, parents, "stroke-width") if stroked else "",
+                    _inherited(child, parents, "stroke-linecap") if stroked else "",
+                    _inherited(child, parents, "stroke-opacity" if stroked else "fill-opacity"),
+                    _inherited(child, parents, "stroke-dasharray") if stroked else "",
+                )
+            )
 
     walk(root)
     return painted
 
 
-def _drawn(core: PanelCore, family: Typeface) -> list[tuple[str, str]]:
-    return [(mark.owner, mark.shape.tag) for mark in marks(core, family) if not mark.is_veil]
+def _drawn(core: PanelCore, family: Typeface) -> list[Painting]:
+    drawn: list[Painting] = []
+    for mark in marks(core, family):
+        if mark.is_veil:
+            continue
+        if isinstance(mark.shape, Picture):
+            drawn.append((mark.owner, mark.shape.tag, "", "", "", "", "", ""))
+            continue
+        stroked = mark.stroke is not None
+        paint = mark.stroke if mark.stroke is not None else mark.fill
+        drawn.append(
+            (
+                mark.owner,
+                mark.shape.tag,
+                mark.fill.colour if mark.fill is not None else "none",
+                mark.stroke.colour if mark.stroke is not None else "none",
+                fmt(mark.width) if stroked else "",
+                ("round" if mark.rounded else "butt") if stroked else "",
+                fmt(paint.opacity) if paint is not None else "1",
+                " ".join(fmt(length) for length in mark.dash) if stroked else "",
+            )
+        )
+    return drawn
 
 
 class TestGeometry:
@@ -219,3 +284,26 @@ def test_the_marks_are_what_the_svg_paints_in_order(name: str):
         family = typeface_of(result.core, fonts=book.fonts)
         svg = render(result.core, fonts=book.fonts, aria=False, embed=book.images)
         assert _drawn(result.core, family) == _painted(svg)
+
+
+@pytest.mark.parametrize("name", IDS)
+def test_a_tinted_mark_keeps_its_grey_as_the_core_does(name: str):
+    """Every paint's grey is the Core's grey: what `--mono` draws, and what print inks."""
+    book = _book(name)
+    for result in book.panels.values():
+        family = typeface_of(result.core, fonts=book.fonts)
+        mono = result.core.as_mono()
+        tinted = [mark.fill.grey for mark in marks(result.core, family) if mark.fill is not None]
+        greys = [mark.fill.colour for mark in marks(mono, family) if mark.fill is not None]
+        assert tinted == greys
+
+
+def test_snow_is_the_paper_falling():
+    flecks = [
+        mark
+        for result in _book("21-atmosphere.scene.yaml").panels.values()
+        for mark in marks(result.core, typeface_of(result.core))
+        if mark.owner == "weather" and isinstance(mark.shape, Circle)
+    ]
+    assert flecks
+    assert all(mark.fill is not None and mark.fill.role is Role.PAPER for mark in flecks)

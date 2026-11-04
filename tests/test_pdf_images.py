@@ -6,6 +6,7 @@ in as the file's own image data; every other is decoded and compared, pixel by p
 what was encoded.
 """
 
+import hashlib
 import io
 import struct
 import zlib
@@ -17,6 +18,7 @@ from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
 from scenet.emit.pdf import print_notes, render_pdf
+from scenet.emit.pdf_images import _paeth as paeth_predictor
 from scenet.emit.pdf_images import embed
 from scenet.pipeline import compile_book_file
 from tests.images import PNG_SIGNATURE, chunk
@@ -274,3 +276,185 @@ def test_a_picture_printing_below_300_dpi_is_said():
     cores = {key: result.core for key, result in book.panels.items()}
     notes = print_notes(cores)
     assert any("dpi" in note and "300" in note for note in notes)
+
+
+def _noise(
+    width: int, height: int, channels: int, *, seed: str, depth: int = 8
+) -> list[list[tuple[int, ...]]]:
+    """Pixels of deterministic noise, so every filter meets ties and carries."""
+    limit = (1 << depth) - 1
+    stream = hashlib.sha256(seed.encode()).digest()
+    while len(stream) < width * height * channels * 2:
+        stream += hashlib.sha256(stream).digest()
+    values = [
+        int.from_bytes(stream[i : i + 2], "big") % (limit + 1) for i in range(0, len(stream), 2)
+    ]
+    return [
+        [
+            tuple(values[(y * width + x) * channels + c] for c in range(channels))
+            for x in range(width)
+        ]
+        for y in range(height)
+    ]
+
+
+def _flat(pixels: Sequence[Sequence[tuple[int, ...]]], take: slice, depth: int = 8) -> bytes:
+    values = [value for row in pixels for pixel in row for value in pixel[take]]
+    if depth == 16:
+        return b"".join(value.to_bytes(2, "big") for value in values)
+    return bytes(values)
+
+
+class TestWhatMutationTestingFound:
+    """Decoding and parsing the mutation run (#80) showed nothing checked."""
+
+    @pytest.mark.parametrize("interlaced", [False, True])
+    def test_noise_through_every_filter_comes_back_as_it_went_in(self, interlaced: bool):
+        pixels = _noise(23, 19, 4, seed=f"rgba-{interlaced}")
+        picture = embed(_png(pixels, kind=6, interlaced=interlaced), "image/png", "p.png")
+        assert picture.data == _flat(pixels, slice(0, 3))
+        assert picture.mask is not None
+        assert picture.mask[1] == _flat(pixels, slice(3, 4))
+
+    def test_sixteen_bit_rgba_is_decoded_whole(self):
+        pixels = _noise(9, 7, 4, seed="rgba16", depth=16)
+        picture = embed(_png(pixels, kind=6, depth=16), "image/png", "p.png")
+        assert picture.data == _flat(pixels, slice(0, 3), 16)
+        assert picture.mask is not None
+        assert picture.mask[1] == _flat(pixels, slice(3, 4), 16)
+
+    def test_an_interlaced_sixteen_bit_grey_is_put_back_together(self):
+        pixels = _noise(10, 9, 1, seed="grey16", depth=16)
+        picture = embed(_png(pixels, kind=0, depth=16, interlaced=True), "image/png", "p.png")
+        assert picture.data == _flat(pixels, slice(0, 1), 16)
+        assert picture.dictionary == (
+            "/Type /XObject /Subtype /Image /Width 10 /Height 9 "
+            "/ColorSpace /DeviceGray /BitsPerComponent 16"
+        )
+
+    @pytest.mark.parametrize(("width", "height"), [(1, 1), (2, 3), (3, 2), (5, 1), (1, 6)])
+    def test_a_tiny_interlaced_picture_has_empty_passes(self, width: int, height: int):
+        pixels = _noise(width, height, 3, seed=f"tiny-{width}-{height}")
+        picture = embed(_png(pixels, kind=2, interlaced=True), "image/png", "p.png")
+        assert picture.data == _flat(pixels, slice(0, 3))
+
+    @pytest.mark.parametrize("depth", [2, 4])
+    def test_an_interlaced_grey_below_eight_bits_is_widened(self, depth: int):
+        pixels = _noise(9, 9, 1, seed=f"grey-{depth}", depth=depth)
+        picture = embed(_png(pixels, kind=0, depth=depth, interlaced=True), "image/png", "p.png")
+        scale = 255 // ((1 << depth) - 1)
+        assert picture.data == bytes(p[0] * scale for row in pixels for p in row)
+
+    def test_a_palette_with_transparency_takes_each_entry_whole(self):
+        palette = bytes(range(12))
+        data = _png(
+            [[(index,) for index in (0, 1, 2, 3)]],
+            kind=3,
+            extra=chunk(b"PLTE", palette) + chunk(b"tRNS", bytes([10, 20])),
+        )
+        picture = embed(data, "image/png", "p.png")
+        assert picture.data == palette
+        assert picture.dictionary == (
+            "/Type /XObject /Subtype /Image /Width 4 /Height 1 "
+            "/ColorSpace /DeviceRGB /BitsPerComponent 8"
+        )
+        assert picture.mask == (
+            "/Type /XObject /Subtype /Image /Width 4 /Height 1 "
+            "/ColorSpace /DeviceGray /BitsPerComponent 8",
+            bytes([10, 20, 255, 255]),
+        )
+
+    def test_a_transparent_rgb_colour_is_a_three_part_key(self):
+        key = struct.pack(">HHH", 1, 2, 3)
+        data = _png([[(1, 2, 3), (4, 5, 6)]], kind=2, extra=chunk(b"tRNS", key))
+        assert "/Mask [1 1 2 2 3 3] " in embed(data, "image/png", "p.png").dictionary
+
+    def test_a_grey_png_is_device_grey(self):
+        data = _png([[(10,), (20,)]], kind=0)
+        assert embed(data, "image/png", "p.png").dictionary.startswith(
+            "/Type /XObject /Subtype /Image /Width 2 /Height 1 /ColorSpace /DeviceGray "
+        )
+
+    def test_ancillary_chunks_and_anything_after_iend_are_ignored(self):
+        plain = _png(RGB_PIXELS, kind=2)
+        gamma = chunk(b"gAMA", struct.pack(">I", 45455))
+        with_gamma = _png(RGB_PIXELS, kind=2, extra=gamma)
+        trailing = plain + chunk(b"IDAT", b"not image data")
+        assert embed(with_gamma, "image/png", "p.png").data == _idat(plain)
+        assert embed(trailing, "image/png", "p.png").data == _idat(plain)
+
+    def test_a_png_cut_off_before_iend_still_embeds(self):
+        plain = _png(RGB_PIXELS, kind=2)
+        cut = plain[: -len(chunk(b"IEND", b""))]
+        assert embed(cut, "image/png", "p.png").data == _idat(plain)
+
+    def test_a_png_with_no_header_or_palette_says_which_file(self):
+        no_header = PNG_SIGNATURE + chunk(b"IDAT", zlib.compress(b"\x00\x00")) + chunk(b"IEND", b"")
+        with pytest.raises(ValueError, match=r"art/q\.png is a PNG with no image data"):
+            embed(no_header, "image/png", "art/q.png")
+        no_palette = _png([[(0,)]], kind=3)
+        with pytest.raises(ValueError, match=r"art/q\.png is a palette PNG with no palette"):
+            embed(no_palette, "image/png", "art/q.png")
+
+    def test_a_png_whose_data_cannot_be_read_says_which_file(self):
+        header = struct.pack(">IIBBBBB", 2, 2, 8, 6, 0, 0, 0)
+        broken = (
+            PNG_SIGNATURE
+            + chunk(b"IHDR", header)
+            + chunk(b"IDAT", b"not zlib")
+            + chunk(b"IEND", b"")
+        )
+        with pytest.raises(
+            ValueError, match=r"art/q\.png is a PNG whose image data cannot be read"
+        ):
+            embed(broken, "image/png", "art/q.png")
+
+
+class TestJpegHeaders:
+    def test_fill_bytes_before_a_marker_are_skipped(self):
+        data = _jpeg()
+        filled = data[:2] + bytes([0xFF, 0xFF]) + data[2:]
+        assert "/Width 3 /Height 2 " in embed(filled, "image/jpeg", "p.jpg").dictionary
+
+    def test_a_long_segment_is_read_as_unsigned(self):
+        icc = bytes([0xFF, 0xE2]) + struct.pack(">H", 40002) + bytes(40000)
+        data = _jpeg()
+        assert "/Width 3 " in embed(data[:2] + icc + data[2:], "image/jpeg", "p.jpg").dictionary
+
+    def test_a_wide_picture_is_read_as_unsigned(self):
+        frame = struct.pack(">BHHB", 8, 40000, 50000, 3) + bytes(9)
+        data = bytes([0xFF, 0xD8, 0xFF, 0xC0]) + struct.pack(">H", len(frame) + 2) + frame
+        dictionary = embed(data + bytes([0xFF, 0xD9]), "image/jpeg", "p.jpg").dictionary
+        assert "/Width 50000 /Height 40000 " in dictionary
+
+    def test_an_app14_that_is_not_adobe_inverts_nothing(self):
+        body = b"Other" + bytes(7)
+        other = bytes([0xFF, 0xEE]) + struct.pack(">H", len(body) + 2) + body
+        data = _jpeg(components=4)
+        assert "/Decode" not in embed(data[:2] + other + data[2:], "image/jpeg", "p.jpg").dictionary
+
+    def test_an_adobe_jpeg_is_written_exactly(self):
+        assert embed(_jpeg(components=4, adobe=True), "image/jpeg", "p.jpg").dictionary == (
+            "/Type /XObject /Subtype /Image /Width 3 /Height 2 /ColorSpace /DeviceCMYK "
+            "/BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0 1 0 1 0 1 0]"
+        )
+
+    def test_a_jpeg_with_no_frame_is_refused(self):
+        app = bytes([0xFF, 0xE0]) + struct.pack(">H", 4) + bytes(2)
+        with pytest.raises(ValueError, match=r"p\.jpg is a JPEG whose data ends before its frame"):
+            embed(bytes([0xFF, 0xD8]) + app, "image/jpeg", "p.jpg")
+
+
+class TestPaeth:
+    """PNG's Paeth predictor, at each of the ties its specification breaks in order."""
+
+    def test_left_wins_a_tie_with_the_corner(self):
+        assert paeth_predictor(10, 25, 20) == 10
+
+    def test_up_wins_a_tie_with_the_corner(self):
+        assert paeth_predictor(25, 10, 20) == 10
+
+    def test_the_nearest_of_the_three_wins(self):
+        assert paeth_predictor(30, 40, 50) == 30
+        assert paeth_predictor(10, 12, 30) == 10
+        assert paeth_predictor(20, 22, 21) == 21

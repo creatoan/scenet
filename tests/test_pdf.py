@@ -7,32 +7,37 @@ knocking out; greys as black tints -- and the drawing against the marks it was m
 
 import io
 import os
+import shutil
 import subprocess
 import sys
 from functools import cache
 from pathlib import Path
 
+import fonts.ttf
 import pytest
 import yaml
 from pypdf import PdfReader
 from pypdf.generic import BooleanObject, ContentStream, DictionaryObject
 
-from scenet.core import PanelCore
-from scenet.emit.marks import Mark, Paint, Picture, Role, marks
+from scenet.core import Box, CoreImage, PanelCore
+from scenet.emit.marks import Mark, Paint, Picture, Rect, Role, marks
 from scenet.emit.pdf import (
     POINTS_PER_UNIT,
     RICH_BLACK,
+    _rect,
     ink,
     lightness,
     overprints,
     panel_content,
     print_notes,
     render_pdf,
+    resolution,
 )
 from scenet.emit.svg import typeface_of
 from scenet.pipeline import Book, compile_book, compile_book_file
 
 ROOT = Path(__file__).parent.parent
+SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 GALLERY = ROOT / "examples" / "gallery"
 ENTRIES = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))["examples"]
 IDS = [entry["file"] for entry in ENTRIES]
@@ -251,3 +256,66 @@ class TestNotes:
 
     def test_a_plain_panel_has_nothing_to_say(self):
         assert print_notes(_cores(_book("01-two-characters.panel.yaml"))) == []
+
+
+class TestWhatMutationTestingFound:
+    """Behaviour the mutation run (#80) showed nothing checked."""
+
+    def test_resolution_is_pixels_per_inch_at_a_tenth_of_a_millimetre(self):
+        image = CoreImage(
+            href="art/p.png",
+            media_type="image/png",
+            sha256="00",
+            pixels=(720, 480),
+            fit="cover",
+            preserve_aspect_ratio="xMidYMid slice",
+            box=Box(x=0.0, y=0.0, width=1000.0, height=500.0),
+        )
+        # 720 px over 100 mm is 182.88 dpi; 480 px over 50 mm is 243.84: the lower, floored.
+        assert resolution(image) == 182
+        tall = image.model_copy(update={"box": Box(x=0.0, y=0.0, width=500.0, height=1000.0)})
+        assert resolution(tall) == 121
+
+    def test_a_picture_at_exactly_300_dpi_is_not_noted(self):
+        book = compile_book_file(GALLERY / "52-a-jpeg.panel.yaml")
+        core = next(iter(_cores(book).values()))
+        assert core.backdrop is not None
+        assert core.backdrop.image is not None
+        image = core.backdrop.image
+        width = image.pixels[0] * 254 / 300
+        height = image.pixels[1] * 254 / 300
+        exact = image.model_copy(update={"box": Box(x=0.0, y=0.0, width=width, height=height)})
+        assert resolution(exact) == 300
+        backdrop = core.backdrop.model_copy(update={"image": exact})
+        assert not [
+            note
+            for note in print_notes({"p": core.model_copy(update={"backdrop": backdrop})})
+            if "dpi" in note
+        ]
+
+    def test_a_page_lettered_in_a_declared_font_prints_in_it(self, tmp_path: Path):
+        folder = tmp_path / "comic"
+        (folder / "fonts").mkdir(parents=True)
+        shutil.copy(SEMIBOLD, folder / "fonts" / "Lettering-Regular.ttf")
+        source = folder / "page.scene.yaml"
+        source.write_text(
+            "lettering: {font: fonts/Lettering-Regular.ttf}\n"
+            "cast: {a: {reference: alice}}\n"
+            "pages: [{tiers: [{panels: [one]}]}]\n"
+            "panels: {one: {script: [{say: {by: a, text: Printed.}}]}}\n",
+            encoding="utf-8",
+        )
+        book = compile_book_file(source)
+        assert book.fonts
+        data = render_pdf(book.pages, _cores(book), fonts=book.fonts)
+        assert data.startswith(b"%PDF")
+        with pytest.raises(ValueError, match="not given to the renderer"):
+            render_pdf(book.pages, _cores(book))
+
+    def test_a_corner_rounder_than_its_box_is_clamped_to_half_of_it(self):
+        assert _rect(Rect(0.0, 0.0, 10.0, 40.0, radius=30.0)).startswith("5 0 m 5 0 l")
+        assert _rect(Rect(0.0, 0.0, 40.0, 10.0, radius=30.0)).startswith("5 0 m 35 0 l")
+
+    def test_a_slightly_rounded_corner_is_still_a_curve(self):
+        assert " c " in _rect(Rect(0.0, 0.0, 10.0, 10.0, radius=0.5))
+        assert _rect(Rect(0.0, 0.0, 10.0, 10.0)) == "0 0 10 10 re"
