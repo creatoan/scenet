@@ -323,6 +323,23 @@ class TestPublishedSchemas:
         assert sorted(build_site.PUBLISHED_SCHEMAS) == shipped
 
 
+class TestPublishedPictures:
+    """The spec pack is the language reference with every relative link made absolute, so
+    it names each picture by its path under `docs/`, on the site. Sphinx copies a page's
+    pictures to `_images/` and links them from there, so the site serves `docs/images/`
+    itself, or the pack -- and the agent skill, which carries the same text -- would link
+    pictures that are not there."""
+
+    def test_every_picture_the_spec_pack_links_is_served(self, tmp_path: Path):
+        build_spec = _load("build_spec")
+        build_site = _load("build_site")
+        build_site.publish_pictures(tmp_path)
+        site = re.escape(build_spec.SITE)
+        linked = re.findall(rf"!\[[^\]]*\]\({site}/([^)\s]+)\)", build_spec.spec_pack())
+        assert linked, "the language reference shows pictures"
+        assert [path for path in linked if not (tmp_path / path).is_file()] == []
+
+
 class TestArchive:
     """A release's site travels as a zip attached to the release."""
 
