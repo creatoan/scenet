@@ -12,6 +12,10 @@ below 1.0 means.
 
 ### Added
 
+- **Gallery examples 71 and 72** (#243). 71 is the language reference's complete example, a
+  test keeping the two identical, so the reference can show what it compiles to. 72 shows one
+  shore under each `horizon`, which no example showed before. Example 69 now reads about its
+  puppet in the language reference's section on puppets of your own.
 - **A Gallery page in the documentation** (#243), beside the tutorial: every example the
   playground offers, in its menu's order and under its groups, each with its summary, its
   pictures, a link that opens it in that version's playground, the page that explains it and

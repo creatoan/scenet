@@ -7107,3 +7107,89 @@ panels:
       - say: {by: bob, text: "Then it goes to the binders."}
       - say: {by: alice, text: "And the plates?"}
 ```
+
+## A complete panel
+
+The language reference's complete example: a frame, a camera, a setting, a cast, their staging and a script, every layer at once.
+
+It gives the note `camera-retreated`: no fault, since a note never stops a document.
+
+`71-a-complete-panel.panel.yaml`
+
+```yaml
+# A complete panel: every layer of the language at once.
+#
+# This is the complete example in docs/reference/language.md, and a test keeps the two
+# identical, so the reference shows what it compiles to. Each block is one layer:
+#
+# - `panel`, the frame: its size, in panel units.
+# - `camera`, how the scene is framed: a shot named by where it cuts the body.
+# - `setting`, where and when: a named place, an hour and the weather.
+# - `cast` and `staging`, who is there and how they relate: an order, a look, one ground.
+# - `script`, what is said, in the order it is read.
+#
+# Change one layer and the others stay as they are: try `shot: close_up`, or `time: day`.
+
+panel:
+  size: [1000, 1000]
+
+camera:
+  shot: medium_shot
+  angle: eye_level
+
+setting:
+  place: docks
+  time: night
+  weather: rain
+
+cast:
+  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+script:
+  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
+  - say: {by: bob,   text: "I know."}
+```
+
+## Three horizons
+
+The same shore with its horizon high, in the middle and low: the one line every mass of the backdrop is composed against.
+
+`72-three-horizons.scene.yaml`
+
+```yaml
+# The horizon: one line for the whole panel, which every mass is composed against.
+#
+# Masses of the ground sort -- ground, floor, water -- start at the horizon and run down to
+# the bottom edge; masses that stand in the world rise from it. A high horizon sits near the
+# top of the frame, so more ground is in view; a low one gives the panel to the sky.
+#
+# The same shore three times, with nothing changed but `horizon`, which each caption names.
+# Alice stands where she stands in each: the camera frames the cast, and the horizon moves
+# only the backdrop.
+
+panel:
+  size: [900, 560]
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, facing: right}
+
+panels:
+  high:
+    setting: {place: shore, horizon: high}
+    script: [caption: {text: "A high horizon: more ground in view.", kind: editorial}]
+  mid:
+    setting: {place: shore, horizon: mid}
+    script: [caption: {text: "A horizon in the middle.", kind: editorial}]
+  low:
+    setting: {place: shore, horizon: low}
+    script: [caption: {text: "A low horizon: the panel is mostly sky.", kind: editorial}]
+```
