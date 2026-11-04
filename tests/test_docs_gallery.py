@@ -13,8 +13,10 @@ from outside itself.
 """
 
 import hashlib
+import html
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -22,15 +24,18 @@ from typing import Any
 
 import pytest
 import yaml
+from markdown_it import MarkdownIt
 
 ROOT = Path(__file__).resolve().parents[1]
 GALLERY = ROOT / "examples" / "gallery"
 DIGESTS: dict[str, str] = json.loads(
     (ROOT / "tests" / "golden" / "digests.json").read_text(encoding="utf-8")
 )
-ENTRIES: list[dict[str, Any]] = yaml.safe_load(
-    (GALLERY / "manifest.yaml").read_text(encoding="utf-8")
-)["examples"]
+MANIFEST: dict[str, Any] = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))
+ENTRIES: list[dict[str, Any]] = MANIFEST["examples"]
+DOCS = ROOT / "docs"
+PAGE = DOCS / "gallery.md"
+PLAYGROUND = "https://creatoan.github.io/scenet/playground/"
 
 
 def _load(name: str) -> ModuleType:
@@ -118,3 +123,117 @@ class TestWhatShowsADocument:
     def test_nothing_to_show_is_refused(self, names: list[str]):
         with pytest.raises(ValueError, match="'a'"):
             update_golden.shown("a", names)
+
+
+def _display_order() -> list[tuple[str, list[dict[str, Any]]]]:
+    """The playground's menu (`grouped()` in playground/src/gallery.ts): by group, in the
+    order `groups:` names them, each in the manifest's order with the opening example first."""
+    order = []
+    for group in MANIFEST["groups"]:
+        members = [entry for entry in ENTRIES if entry["group"] == group]
+        start = [entry for entry in members if entry["file"] == MANIFEST["start"]]
+        order.append((group, start + [entry for entry in members if entry not in start]))
+    return order
+
+
+def _headings(text: str) -> list[tuple[int, str, int]]:
+    """Each `##` and `###` heading outside a fenced block: its level, its text, its line.
+
+    A fence closes only on a run of its own character at least as long as the one that
+    opened it, so a script's own fences and headings, shown as its source, stay inside.
+    """
+    headings: list[tuple[int, str, int]] = []
+    fence = ""
+    for number, line in enumerate(text.splitlines()):
+        marker = re.match(r"(`{3,}|~{3,})", line)
+        if fence:
+            closing = re.fullmatch(rf"{re.escape(fence[0])}{{{len(fence)},}}\s*", line)
+            if closing:
+                fence = ""
+        elif marker:
+            fence = marker.group(1)
+        elif match := re.match(r"(#{2,3}) (.+)", line):
+            headings.append((len(match.group(1)), match.group(2), number))
+    return headings
+
+
+def _entries_on_the_page() -> dict[str, str]:
+    """The text under each `###` heading of the page, by the heading."""
+    text = PAGE.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    headings = _headings(text)
+    sections: dict[str, str] = {}
+    for index, (level, title, start) in enumerate(headings):
+        if level == 3:
+            end = headings[index + 1][2] if index + 1 < len(headings) else len(lines)
+            sections[title] = "\n".join(lines[start + 1 : end])
+    return sections
+
+
+def _accessible_text(picture: Path) -> str:
+    """What the SVG says to a screen reader: its titles, in order."""
+    titles = re.findall(r"<title>(.*?)</title>", picture.read_text(encoding="utf-8"), re.DOTALL)
+    return " ".join(html.unescape(title) for title in titles)
+
+
+def _images(markdown: str) -> list[tuple[str, str]]:
+    """Every image the Markdown shows, as CommonMark reads it: its source and its alt text."""
+    rendered = MarkdownIt("commonmark").render(markdown)
+    return [
+        (html.unescape(source), html.unescape(alt))
+        for source, alt in re.findall(r'<img src="([^"]*)" alt="([^"]*)"', rendered)
+    ]
+
+
+def _slug(heading: str) -> str:
+    """A heading's anchor as MyST (and GitHub) make it."""
+    return re.sub(r"[^\w\- ]", "", heading.strip().lower().replace(" ", "-"))
+
+
+class TestTheGalleryPage:
+    """`docs/gallery.md`, generated from the manifest by `scripts/build_spec.py`: every example
+    in the order the playground's menu offers them, each with its summary, its pictures, a
+    link that opens it in the playground, the page that explains it, and its source."""
+
+    def test_it_holds_every_example_once_in_the_menus_order(self):
+        expected = [
+            heading
+            for group, members in _display_order()
+            for heading in [(2, group), *((3, entry["title"]) for entry in members)]
+        ]
+        found = [(level, text) for level, text, _ in _headings(PAGE.read_text(encoding="utf-8"))]
+        assert found == expected
+
+    def test_every_heading_has_an_anchor_of_its_own(self):
+        slugs = [_slug(text) for _, text, _ in _headings(PAGE.read_text(encoding="utf-8"))]
+        assert len(slugs) == len(set(slugs))
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
+    def test_an_example_shows_its_summary_and_pictures(self, entry: dict[str, Any]):
+        section = _entries_on_the_page()[entry["title"]]
+        assert entry["summary"] in section
+        assert _images(section) == [
+            (picture.relative_to(DOCS).as_posix(), _accessible_text(picture))
+            for picture in _pictures_of(entry)
+        ]
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
+    def test_an_example_opens_in_the_playground_and_says_where_to_read(self, entry: dict[str, Any]):
+        """Written in full, as GitHub needs it; `docs/conf.py` makes the playground link
+        relative in each version of the site, so it opens that version's playground."""
+        section = _entries_on_the_page()[entry["title"]]
+        assert f"[Open in the playground]({PLAYGROUND}#example={entry['file']})" in section
+        assert f"[Read about it]({entry['doc']})" in section
+
+    @pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
+    def test_an_example_shows_its_source(self, entry: dict[str, Any]):
+        section = _entries_on_the_page()[entry["title"]]
+        source = (GALLERY / entry["file"]).read_text(encoding="utf-8")
+        tokens = MarkdownIt("commonmark").parse(section)
+        assert [token.content for token in tokens if token.type == "fence"] == [source]
+
+    def test_it_is_in_the_documentations_contents(self):
+        home = (DOCS / "index.md").read_text(encoding="utf-8")
+        toctree = re.search(r"```\{toctree\}(.*?)```", home, re.DOTALL)
+        assert toctree
+        assert "gallery" in toctree.group(1).split()

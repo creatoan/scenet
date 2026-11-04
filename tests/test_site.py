@@ -68,6 +68,9 @@ html_static_path = [{static!r}]
 _INDEX = """\
 # Scenet
 
+At the root, as the Gallery page is, one example opens in
+[the playground](https://creatoan.github.io/scenet/playground/#example=38-tour.scene.yaml).
+
 ```{toctree}
 howto/other
 ```
@@ -271,6 +274,13 @@ class TestCheckDocs:
         """Absolute in the Markdown, so it works on GitHub; relative once built."""
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         assert 'href="../playground/#src=abc"' in page
+
+    def test_a_link_to_a_gallery_example_stays_in_its_version(
+        self, build_docs: Callable[[str], Path]
+    ):
+        """The Gallery page's "Open in the playground", from a page at the root (#243)."""
+        page = (build_docs("dev") / "index.html").read_text(encoding="utf-8")
+        assert 'href="playground/#example=38-tour.scene.yaml"' in page
 
     def test_the_navbar_names_the_playground(self, build_docs: Callable[[str], Path]):
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
