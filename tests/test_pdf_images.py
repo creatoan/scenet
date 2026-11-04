@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
-from scenet.emit.pdf import render_pdf
+from scenet.emit.pdf import print_notes, render_pdf
 from scenet.emit.pdf_images import embed
 from scenet.pipeline import compile_book_file
 from tests.images import PNG_SIGNATURE, chunk
@@ -264,3 +264,10 @@ def test_a_picture_not_handed_over_is_refused():
     cores = {key: result.core for key, result in book.panels.items()}
     with pytest.raises(ValueError, match="not handed over"):
         render_pdf(book.pages, cores, fonts=book.fonts)
+
+
+def test_a_picture_printing_below_300_dpi_is_said():
+    book = compile_book_file(GALLERY / "34-supplied-art.scene.yaml")
+    cores = {key: result.core for key, result in book.panels.items()}
+    notes = print_notes(cores)
+    assert any("dpi" in note and "300" in note for note in notes)
