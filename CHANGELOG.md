@@ -167,6 +167,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **`scripts/build_site.py` builds on Windows.** It read the releases `gh` lists in the system's
+  code page rather than in UTF-8, so a curly quote in a release's notes stopped the build
+  before it downloaded anything.
 - **The spec pack's pictures are on the site.** The language reference shows two pictures for
   `palette`, and the spec pack and the agent skill, which carry the reference with every link
   made absolute, linked them at `images/palette/` on the site, where nothing was: Sphinx serves
