@@ -177,11 +177,17 @@ def _accessible_text(picture: Path) -> str:
 
 
 def _images(markdown: str) -> list[tuple[str, str]]:
-    """Every image the Markdown shows, as CommonMark reads it: its source and its alt text."""
-    rendered = MarkdownIt("commonmark").render(markdown)
+    """Every image the Markdown shows, as CommonMark reads it: its source and its alt text.
+
+    Read from the parse rather than the rendered HTML, whose alt text markdown-it-py writes
+    without the characters a backslash escapes.
+    """
     return [
-        (html.unescape(source), html.unescape(alt))
-        for source, alt in re.findall(r'<img src="([^"]*)" alt="([^"]*)"', rendered)
+        (str(child.attrs["src"]), "".join(text.content for text in child.children or []))
+        for token in MarkdownIt("commonmark").parse(markdown)
+        if token.type == "inline"
+        for child in token.children or []
+        if child.type == "image"
     ]
 
 

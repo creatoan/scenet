@@ -12,6 +12,11 @@ below 1.0 means.
 
 ### Added
 
+- **A Gallery page in the documentation** (#243), beside the tutorial: every example the
+  playground offers, in its menu's order and under its groups, each with its summary, its
+  pictures, a link that opens it in that version's playground, the page that explains it and
+  its source. Each picture's alternative text is what its SVG says to a screen reader.
+  `scripts/build_spec.py` writes it from the manifest, and a test fails if it is stale.
 - **A picture of every gallery example, for the documentation** (#243). `docs/images/gallery/`
   holds each example drawn whole, as `scenet build` writes it: its pages, or else its strip, or
   else its one panel, with the picture it is lettered over written in. `update_golden.py`

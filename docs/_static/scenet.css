@@ -8,3 +8,38 @@ img[src$="two-characters.svg"] {
   border-radius: 4px;
   box-shadow: 0 1px 6px rgb(16 24 40 / 14%);
 }
+
+/* A gallery example drawn whole (#243): a panel, a strip of panels or a page, on the Gallery
+   page and in the language reference. Sphinx keeps each file's name under _images/, which is
+   how a page and a strip are told from a panel. On paper, each sits apart from the page. */
+.bd-article img[src*="_images/"][src$=".svg"] {
+  display: block;
+  height: auto;
+  max-width: min(100%, 34rem);
+  margin: 1rem auto 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgb(16 24 40 / 14%);
+}
+
+/* A strip reads across, and its panels need the column's whole width to be seen. */
+.bd-article img[src*="_images/"][src$=".strip.svg"] {
+  max-width: 100%;
+}
+
+/* A page is tall: limited by height, so it fits on a screen. */
+.bd-article img[src*="_images/"][src*=".page-"] {
+  width: auto;
+  max-height: 40rem;
+}
+
+/* Two pages of one document, side by side as a spread. */
+.bd-article p:has(> img[src*=".page-"] + img[src*=".page-"]) {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.bd-article p:has(> img[src*=".page-"] + img[src*=".page-"]) img {
+  max-width: calc(50% - 0.5rem);
+  margin: 1rem 0 1.5rem;
+}

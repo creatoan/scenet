@@ -5,13 +5,16 @@ One generator, three destinations, all from the same sources:
     src/scenet/scenet-spec.md     the spec pack, packaged for the MCP server's get_spec
     skills/scenet/references/     the same parts as separate files, for an agent skill
     skills/scenet/assets/gallery/ the gallery, byte for byte
+    docs/gallery.md               the gallery drawn, as a page of the documentation
     site/scenet-spec.md           the spec pack, at a stable URL         (site build only)
     site/llms.txt                 an index for retrieval, per llmstxt.org (site build only)
 
-The first three are committed, because neither an installed wheel nor a copied skill
-folder can read `docs/`. `tests/test_spec_pack.py` regenerates them and fails on any
-difference, so a committed copy cannot go stale -- the same arrangement that keeps the
-editor's JSON Schemas honest.
+The first four are committed: neither an installed wheel nor a copied skill folder can
+read `docs/`, and the Gallery page is Markdown that GitHub renders, as every page of the
+documentation is. Its pictures are copies of golden outputs, which `scripts/update_golden.py`
+writes. `tests/test_spec_pack.py` regenerates them and fails on any difference, so a
+committed copy cannot go stale -- the same arrangement that keeps the editor's JSON Schemas
+honest.
 
 Nothing here carries a version number or a date. Either would make every release, or
 every day, a reason for the committed copies to differ from a fresh build.
@@ -23,12 +26,14 @@ Run from the repository root after changing any source document:
 """
 
 import argparse
+import html
 import json
 import posixpath
 import re
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import yaml
 
@@ -353,6 +358,95 @@ def _gallery() -> str:
     )
 
 
+#: The documentation's Gallery page (#243): every example, drawn, in the order the
+#: playground's menu offers them. Committed, as the pages beside it are, so GitHub renders it.
+GALLERY_PAGE = DOCS / "gallery.md"
+
+#: Each example's pictures, which `scripts/update_golden.py` copies from the golden build and
+#: names as the build names them: `38-tour.page-1.svg`.
+PICTURES = DOCS / "images" / "gallery"
+
+#: The playground, by its full address, the only kind that works where GitHub renders the
+#: page. `docs/conf.py` makes it relative in each version's documentation, so a link opens
+#: the playground of the version it is read in.
+PLAYGROUND = f"{SITE}/playground/"
+
+#: A character Markdown would read as markup in a picture's alternative text. `!` is not one:
+#: it is markup only before a `[`, which is escaped.
+MARKUP = re.compile(r"([\\`*_\[\]<>&])")
+
+GALLERY_INTRO = """\
+Every example the [playground](https://creatoan.github.io/scenet/playground/) offers, in its
+menu's order, drawn as `scenet build` draws it. Each is a file under
+[`examples/gallery/`](https://github.com/creatoan/scenet/tree/main/examples/gallery) that the
+test suite compiles, and each picture is a golden output of that build, held to its digest, so
+neither can drift from what the compiler does. Open an example in the playground to change it,
+or read the page that explains it.
+"""
+
+
+def _manifest() -> dict[str, Any]:
+    return yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))
+
+
+def gallery_groups() -> list[tuple[str, list[dict[str, Any]]]]:
+    """The gallery as the playground's menu offers it: by group, the opening example first.
+
+    Each group in the order `groups:` names them, holding its entries in the manifest's order
+    with `start:` first, as `grouped()` in `playground/src/gallery.ts` orders them.
+    """
+    manifest = _manifest()
+    groups: list[tuple[str, list[dict[str, Any]]]] = []
+    for name in manifest["groups"]:
+        members = [entry for entry in manifest["examples"] if entry["group"] == name]
+        members.sort(key=lambda entry: entry["file"] != manifest.get("start"))
+        groups.append((name, members))
+    return groups
+
+
+def pictures_of(entry: dict[str, Any]) -> list[Path]:
+    """An example's pictures, as `update_golden.py` keeps them: its pages, strip or panel."""
+    stem = entry["file"].split(".", maxsplit=1)[0]
+    return sorted(
+        path for path in PICTURES.iterdir() if path.name.split(".", maxsplit=1)[0] == stem
+    )
+
+
+def _alt(picture: Path) -> str:
+    """A picture's alternative text: what its SVG says to a screen reader, every title in order."""
+    svg = picture.read_text(encoding="utf-8")
+    spoken = " ".join(
+        html.unescape(title) for title in re.findall(r"<title>(.*?)</title>", svg, re.S)
+    )
+    return MARKUP.sub(r"\\\1", spoken)
+
+
+def _gallery_entry(entry: dict[str, Any]) -> str:
+    path = GALLERY / entry["file"]
+    language = "text" if path.suffix == ".script" else "yaml"
+    images = "\n".join(
+        f"![{_alt(picture)}]({picture.relative_to(DOCS).as_posix()})"
+        for picture in pictures_of(entry)
+    )
+    link = f"{PLAYGROUND}#{urlencode({'example': entry['file']})}"
+    return (
+        f"### {entry['title']}\n\n{entry['summary']}\n\n{images}\n\n"
+        f"[Open in the playground]({link}) · [Read about it]({entry['doc']})\n\n"
+        "<details>\n<summary>Source</summary>\n\n"
+        f"{_fence(path.read_text(encoding='utf-8'), language)}\n</details>\n"
+    )
+
+
+def gallery_page() -> str:
+    """The documentation's Gallery page, `docs/gallery.md`."""
+    groups = "\n".join(
+        f"## {name}\n\n" + "\n".join(_gallery_entry(entry) for entry in members)
+        for name, members in gallery_groups()
+    )
+    notice = GENERATED_NOTICE.format(source="examples/gallery/ and docs/images/gallery/")
+    return f"{notice}# Gallery\n\n{GALLERY_INTRO}\n{groups}"
+
+
 def parts() -> dict[str, str]:
     """Every part of the pack, in order, each ending in exactly one newline."""
     built = {
@@ -439,7 +533,11 @@ def skill_files() -> dict[Path, bytes]:
 
 def committed_files() -> dict[Path, bytes]:
     """Every generated file that lives in the repository, with its expected content."""
-    return {PACKAGED: spec_pack().encode("utf-8"), **skill_files()}
+    return {
+        PACKAGED: spec_pack().encode("utf-8"),
+        GALLERY_PAGE: gallery_page().encode("utf-8"),
+        **skill_files(),
+    }
 
 
 def write_site_files(site: Path) -> None:

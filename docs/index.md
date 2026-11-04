@@ -73,6 +73,8 @@ reimplementation: the page installs the exact wheel `uv build` produces, so ther
 second copy of the geometry to drift out of step. Edit the document on the left and the
 panel on the right follows as you type, with every finding underlined where it applies.
 
+Every example it offers is in the [gallery](gallery.md) too, drawn, with its source.
+
 ## Thirty seconds
 
 ```python
@@ -151,6 +153,7 @@ without restriction. A notation is only worth having if it is not owned.
 :maxdepth: 2
 
 tutorial/index
+gallery
 howto/index
 reference/index
 explanation/index
