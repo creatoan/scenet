@@ -11,7 +11,7 @@ Four commands: `build` compiles a document, `check` validates one without compil
 ## `scenet build`
 
 ```
-scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--quiet]
+scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--pdf] [--quiet] [--watch]
 ```
 
 Compiles `SOURCE` to SVG. The frontend is chosen by extension:
@@ -82,11 +82,25 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   order, as one extra file. Ignored when there is only one panel, a one-panel scene
   included.
 
+`--pdf`
+: Also write the document as one print PDF, `stem.pdf`, beside the SVGs (#80): a PDF page per
+  page, or per panel for a document with no pages; with pages, a panel on no page is not
+  printed. A page unit prints as 0.1 mm, and a page's `bleed` runs the sheet past its trim
+  (TrimBox and BleedBox). Lettering, balloon borders and every line are 100% black and
+  overprint; the paper knocks out; greys are black tints, the night foreground rich black; a
+  tinted palette prints its greys; supplied pictures go in with their pixels unchanged. The
+  SVG options do not change it — it always letters in outlines, prints greys and carries its
+  pictures, so `--live-text`, `--mono`, `--no-aria`, `--embed-images` and `--strip` leave its
+  bytes as they are. Notes say what print leaves out: the fog and cloud veil, a palette's
+  colours, a picture below 300 dpi. No PDF/X conformance is claimed.
+
 `--quiet`
 : Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are
   where the compiler tells you it did something you did not ask for. Each kind has a name,
   listed with what to do about it in
-  [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes).
+  [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes) — all but
+  what the build says about its files: a linked picture written away from its document, and
+  what `--pdf` leaves out.
 
 `--watch`
 : Build once, then rebuild when the source, a file read during compilation, or a tracked
@@ -115,6 +129,13 @@ them. Pages are numbered by position, from 1, whatever a script's headings call 
 story.scene.yaml     →  story.page-1.svg
                         story.page-1.core.json      (with --core)
                         story.page-1.debug.svg      (with --debug)
+```
+
+With `--pdf`, the whole document is one PDF named after the main SVG, and `-o` with a `.pdf`
+name is a usage error, since `-o` names the SVG:
+
+```
+story.scene.yaml     →  story.pdf                   (with --pdf)
 ```
 
 With `--conditioning`, each panel's exports for image models are named after its SVG:
@@ -491,4 +512,5 @@ Prints the installed version and exits 0.
 
 The same input always produces byte-identical output — no wall-clock time, no unseeded
 randomness, no absolute paths in the output. Two runs on different machines produce files
-you can compare with `cmp`.
+you can compare with `cmp`. The print PDF carries no date and takes its `/ID` from its content,
+and compresses nothing: zlib implementations differ from one platform to the next.

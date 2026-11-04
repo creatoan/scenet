@@ -12,6 +12,9 @@ below 1.0 means.
 
 ### Added
 
+- **`scenet build --pdf`** (#80) writes the document as one print PDF beside its SVGs, a
+  PDF page per page or per panel, with what print leaves out said in notes. `-o` still names
+  the SVG; a `.pdf` there is refused.
 - **A page prints at a size, with a bleed** (#80). A page unit prints as a tenth of a
   millimetre, so the default page is 200 × 300 mm and a US comic is
   `size: [1682.75, 2603.5]`. `page: {bleed: 31.75}` runs the printed sheet 0.125 in past the

@@ -79,7 +79,7 @@ compares the bytes on disk with what is committed:
 - `tests/golden/core/` holds every Panel Core and Page Core, so a layout change is reviewed
   coordinate by coordinate in the diff;
 - `tests/golden/digests.json` holds the SHA-256 of every SVG: panels, overlays, live text,
-  strips and pages.
+  strips and pages; and of every print PDF.
 
 It also builds the gallery in two processes with different `PYTHONHASHSEED`s, and one scene
 and one script from a relative path, an absolute one and another directory; each must

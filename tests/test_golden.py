@@ -124,7 +124,17 @@ class TestThePathChangesNothing:
         with pytest.MonkeyPatch.context() as patch:
             patch.chdir(cwd)
             status = main(
-                ["build", source, "-o", f"{out}/", "--core", "--debug", "--strip", "--quiet"]
+                [
+                    "build",
+                    source,
+                    "-o",
+                    f"{out}/",
+                    "--core",
+                    "--debug",
+                    "--strip",
+                    "--pdf",
+                    "--quiet",
+                ]
             )
         assert status == 0
         return {path.name: path.read_bytes() for path in sorted(out.iterdir())}
@@ -141,6 +151,7 @@ class TestThePathChangesNothing:
 
         markers = {str(tmp_path), str(ROOT), tmp_path.name}
         for file_name, data in builds[0].items():
-            text = data.decode("utf-8")
-            leaked = [marker for marker in markers if marker in text]
+            # Searched as bytes, since a PDF is not text; a path written into one is still
+            # its UTF-8 bytes.
+            leaked = [marker for marker in markers if marker.encode("utf-8") in data]
             assert not leaked, f"{file_name} holds the path {leaked[0]!r}"

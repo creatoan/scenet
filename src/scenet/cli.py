@@ -12,10 +12,12 @@ from pathlib import Path
 from scenet import __version__
 from scenet.assets.artwork import CONTRACT_SUFFIX
 from scenet.assets.contract import PUPPET_SUFFIX
+from scenet.core import PanelCore
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
+from scenet.emit.pdf import print_notes, render_pdf
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
@@ -120,6 +122,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--strip",
         action="store_true",
         help="for a multi-panel document, also lay the panels out as a strip",
+    )
+    build.add_argument(
+        "--pdf",
+        action="store_true",
+        help=(
+            "also write the document as a print PDF beside the SVGs: lettering on the black "
+            "plate, a page unit printed as 0.1 mm, a page's bleed around its trim"
+        ),
     )
     build.add_argument("--quiet", action="store_true", help="suppress diagnostic notes")
     build.add_argument(
@@ -349,28 +359,66 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     single = len(book.panels) == 1 and "panel" in book.panels
     if _refuse_unusable_names(book):
         return 2
-    outputs = _outputs(book, base, args, single=single)
-    if _refuse_clashes(outputs):
-        return 2
+    printed = _printed(book)
+    pdf = _print(book, printed, base) if args.pdf else None
+    outputs = [] if isinstance(pdf, int) else _outputs(book, base, args, single=single, pdf=pdf)
+    refused = pdf if isinstance(pdf, int) else 2 if _refuse_clashes(outputs) else 0
+    if refused:
+        return refused
 
     # Everything is checked before anything is written, so a refusal leaves no half-built
     # set of files behind.
     for path, content in outputs:
-        path.write_text(content(), encoding="utf-8", newline="\n")
+        _write(path, content())
 
     if not args.quiet:
         for path, _ in outputs:
             print(f"wrote {path}")
         # What reading the document noticed, each naming its line, then what the compiler
-        # decided in each panel.
-        for note in book.notes:
-            print(f"note: {note}")
-        for note in _links_away_from(book, source, base, embedded=args.embed_images):
-            print(f"note: {note}")
+        # decided in each panel, then what print leaves out.
+        notes = [*book.notes, *_links_away_from(book, source, base, embedded=args.embed_images)]
         for name, result in book.panels.items():
-            for note in result.notes:
-                print(f"note: {note}" if single else f"note: {name}: {note}")
+            notes += [note if single else f"{name}: {note}" for note in result.notes]
+        notes += print_notes(printed) if args.pdf else []
+        for note in notes:
+            print(f"note: {note}")
     return 0
+
+
+def _write(path: Path, content: str | bytes) -> None:
+    """One output: text with LF line endings everywhere, or a PDF's bytes as they are."""
+    if isinstance(content, bytes):
+        path.write_bytes(content)
+    else:
+        path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def _print(book: Book, printed: dict[str, PanelCore], base: Path) -> bytes | int:
+    """The print PDF, built before anything is written; or the status a refusal exits with.
+
+    A picture print cannot carry fails the whole build, and leaves no half-built set of
+    files behind. So does an `-o` naming a PDF: it names the SVG, and the PDF goes beside it.
+    """
+    if base.suffix.lower() == ".pdf":
+        print(
+            f"scenet: -o names the SVG, and {base} would be written as both it and the PDF "
+            "beside it; give -o a .svg name or a folder",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        return render_pdf(book.pages, printed, fonts=book.fonts, images=book.images)
+    except ValueError as exc:
+        print(f"scenet: {exc}", file=sys.stderr)
+        return 1
+
+
+def _printed(book: Book) -> dict[str, PanelCore]:
+    """The panels a print PDF draws: those on a page, or every panel when there are none."""
+    cores = {name: result.core for name, result in book.panels.items()}
+    if not book.pages:
+        return cores
+    return {frame.panel: cores[frame.panel] for page in book.pages for frame in page.frames}
 
 
 def _links_away_from(book: Book, source: Path, base: Path, *, embedded: bool) -> list[str]:
@@ -400,17 +448,20 @@ def _links_away_from(book: Book, source: Path, base: Path, *, embedded: bool) ->
 
 #: One file `build` will write, and how to produce what goes in it -- deferred, so that
 #: the whole set can be checked for clashes before any of it is rendered.
-_Output = tuple[Path, Callable[[], str]]
+_Output = tuple[Path, Callable[[], str | bytes]]
 
 
-def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) -> list[_Output]:
+def _outputs(
+    book: Book, base: Path, args: argparse.Namespace, *, single: bool, pdf: bytes | None = None
+) -> list[_Output]:
     """Every file a build writes, in the order it writes them.
 
     A single-panel document writes to the requested name; a sequence suffixes each panel
     with its own name, so the mapping back to source is obvious. A strip needs more than
     one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels. The
     exports for image models are per panel only: a page adds no layout to a panel, and its
-    Page Core says where every frame is.
+    Page Core says where every frame is. The print PDF, already rendered, is one file for
+    the whole document, `stem.pdf`.
     """
     outputs: list[_Output] = []
     embed = book.images if args.embed_images else None
@@ -487,6 +538,8 @@ def _outputs(book: Book, base: Path, args: argparse.Namespace, *, single: bool) 
                     partial(render_page, page, cores, debug=True),
                 )
             )
+    if pdf is not None:
+        outputs.append((base.with_suffix(".pdf"), partial(bytes, pdf)))
     return outputs
 
 

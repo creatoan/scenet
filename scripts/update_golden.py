@@ -13,8 +13,8 @@ Two kinds of golden:
   is small, readable and diffable by design, so a change in layout is reviewed coordinate
   by coordinate.
 - `tests/golden/digests.json` holds the SHA-256 of every SVG: each panel, its debug
-  overlay, its live-text variant, each strip and each page. SVG is too large to review
-  usefully as text, and its Core already says what moved.
+  overlay, its live-text variant, each strip and each page; and of every print PDF (#80).
+  SVG is too large to review usefully as text, and its Core already says what moved.
 
 After an intended change to the output, regenerate and review the diff:
 
@@ -59,7 +59,7 @@ EXPORTED_JSON = (".pose.json", ".boxes.json", ".semantics.json")
 #: Three builds of every document: one with every output; one with live text, whose SVG
 #: differs and whose Core does not; and one without accessibility markup.
 VARIANTS = {
-    "": ["--core", "--debug", "--strip", "--conditioning"],
+    "": ["--core", "--debug", "--strip", "--conditioning", "--pdf"],
     "live-text/": ["--live-text", "--strip"],
     # Without accessibility markup: what a post-processing pipeline gets, which must be
     # exactly what was written before there was any, file for file.
@@ -109,13 +109,14 @@ def goldens(written: dict[str, bytes]) -> tuple[dict[str, bytes], dict[str, str]
     """Split a build into the Core files kept whole and the digests of everything else.
 
     Returns:
-        Core file name to bytes, and each SVG or exported JSON path to its SHA-256.
+        Core file name to bytes, and each SVG, print PDF or exported JSON path to its
+        SHA-256.
     """
     cores = {name: data for name, data in written.items() if name.endswith(".core.json")}
     digests = {
         name: hashlib.sha256(data).hexdigest()
         for name, data in sorted(written.items())
-        if name.endswith((".svg", *EXPORTED_JSON))
+        if name.endswith((".svg", ".pdf", *EXPORTED_JSON))
     }
     return cores, digests
 

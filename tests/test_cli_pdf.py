@@ -19,7 +19,7 @@ from scenet import cli
 PANEL = "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Hello there.}\n"
 FOGGY = (
     "cast: {a: {reference: alice}}\nsetting: {place: street, weather: fog}\n"
-    "script:\n  - say: {by: a, text: Who is there?}\n"
+    "script:\n  - say: {by: a, text: Who is it}\n"
 )
 SCENE = (
     "cast: {a: {reference: alice}}\n"
@@ -107,7 +107,7 @@ class TestNotes:
     def test_without_the_flag_print_says_nothing(self, tmp_path: Path, capsys):
         source = _write(tmp_path, "fog.panel.yaml", FOGGY)
         assert cli.main(["build", str(source)]) == 0
-        assert "print" not in capsys.readouterr().out
+        assert "note:" not in capsys.readouterr().out
 
 
 def test_a_picture_print_cannot_carry_fails_before_anything_is_written(tmp_path: Path, capsys):
