@@ -1,0 +1,29 @@
+# The horizon: one line for the whole panel, which every mass is composed against.
+#
+# Masses of the ground sort -- ground, floor, water -- start at the horizon and run down to
+# the bottom edge; masses that stand in the world rise from it. A high horizon sits near the
+# top of the frame, so more ground is in view; a low one gives the panel to the sky.
+#
+# The same shore three times, with nothing changed but `horizon`, which each caption names.
+# Alice stands where she stands in each: the camera frames the cast, and the horizon moves
+# only the backdrop.
+
+panel:
+  size: [900, 560]
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, facing: right}
+
+panels:
+  high:
+    setting: {place: shore, horizon: high}
+    script: [caption: {text: "A high horizon: more ground in view.", kind: editorial}]
+  mid:
+    setting: {place: shore, horizon: mid}
+    script: [caption: {text: "A horizon in the middle.", kind: editorial}]
+  low:
+    setting: {place: shore, horizon: low}
+    script: [caption: {text: "A low horizon: the panel is mostly sky.", kind: editorial}]

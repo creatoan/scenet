@@ -478,7 +478,7 @@ examples:
     kind: scene
     group: Your own art
     summary: "Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path."
-    doc: howto/add_your_own_character.md#cast-it-in-a-document
+    doc: reference/language.md#a-puppet-of-your-own
     files: [puppets/pip.puppet.yaml]
   - file: 70-a-page-for-print.scene.yaml
     title: "A page made for print"
@@ -487,3 +487,16 @@ examples:
     summary: "A US comic page with its bleed, printed as a PDF: lettering on the black plate, rich black at night, the picture's pixels unchanged."
     doc: reference/language.md#page-and-pages
     files: [art/street.png]
+  - file: 71-a-complete-panel.panel.yaml
+    title: "A complete panel"
+    kind: panel
+    group: Start here
+    summary: "The language reference's complete example: a frame, a camera, a setting, a cast, their staging and a script, every layer at once."
+    doc: reference/language.md#a-complete-example
+    notes: [camera-retreated]
+  - file: 72-three-horizons.scene.yaml
+    title: "Three horizons"
+    kind: scene
+    group: Setting
+    summary: "The same shore with its horizon high, in the middle and low: the one line every mass of the backdrop is composed against."
+    doc: reference/language.md#horizon

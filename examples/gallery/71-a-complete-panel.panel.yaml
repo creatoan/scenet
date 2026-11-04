@@ -1,0 +1,37 @@
+# A complete panel: every layer of the language at once.
+#
+# This is the complete example in docs/reference/language.md, and a test keeps the two
+# identical, so the reference shows what it compiles to. Each block is one layer:
+#
+# - `panel`, the frame: its size, in panel units.
+# - `camera`, how the scene is framed: a shot named by where it cuts the body.
+# - `setting`, where and when: a named place, an hour and the weather.
+# - `cast` and `staging`, who is there and how they relate: an order, a look, one ground.
+# - `script`, what is said, in the order it is read.
+#
+# Change one layer and the others stay as they are: try `shot: close_up`, or `time: day`.
+
+panel:
+  size: [1000, 1000]
+
+camera:
+  shot: medium_shot
+  angle: eye_level
+
+setting:
+  place: docks
+  time: night
+  weather: rain
+
+cast:
+  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+script:
+  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
+  - say: {by: bob,   text: "I know."}
