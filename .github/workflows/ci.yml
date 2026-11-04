@@ -83,8 +83,27 @@ jobs:
       # Runs the unit tests, every docstring example, and every fenced Python block in
       # the Markdown documentation. A documented example that no longer works fails
       # here, which is the whole point.
+      # The print PDF's plates are checked as a press separates them (#80), by Ghostscript,
+      # and its structure by qpdf. Neither is a Python package; installed on one leg only,
+      # where a missing tool then fails the tests rather than skipping them.
+      - name: Install Ghostscript and qpdf
+        if: matrix.python == '3.14'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends ghostscript qpdf
+
       - name: Tests, doctests and documentation examples
         run: uv run pytest
+        env:
+          SCENET_REQUIRE_PRINT_TOOLS: ${{ matrix.python == '3.14' && '1' || '' }}
+          SCENET_PLATES_DIR: ${{ matrix.python == '3.14' && 'print-plates' || '' }}
+
+      # The plates, for a person to look at: what each ink prints, page by page.
+      - name: Upload the print plates
+        if: matrix.python == '3.14' && always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: print-plates
+          path: print-plates/
+          if-no-files-found: ignore
 
   windows:
     name: Tests on Windows

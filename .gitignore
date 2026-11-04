@@ -34,3 +34,6 @@ site/
 *.vsix
 docs/_linkcheck/
 mutants/
+
+# The print PDF's plates, written by tests/test_print_separations.py when asked.
+print-plates/

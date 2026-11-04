@@ -93,6 +93,23 @@ uv run python scripts/update_golden.py
 
 `--check` exits 1 and names every stale golden without writing anything.
 
+## The print plates
+
+`tests/test_print_separations.py` renders the print PDF (#80) to its plates with
+Ghostscript's `tiffsep` device, one per ink, and checks the black-plate rule in ink: lettering
+on K alone, an overprinting line leaving the colour under it, the paper and reversed captions
+knocking out, the night foreground rich black. `qpdf --check` reads every gallery PDF. Both
+are external tools, installed in CI's Python 3.14 job, where `SCENET_REQUIRE_PRINT_TOOLS` makes
+a missing one fail; elsewhere the tests skip without them. To run them locally, install
+Ghostscript (`gs`, or `gswin64c` on Windows) and qpdf, then:
+
+```sh
+SCENET_PLATES_DIR=print-plates uv run pytest tests/test_print_separations.py
+```
+
+`SCENET_PLATES_DIR` keeps the plates, which CI also uploads as the `print-plates` artifact.
+They are looked at, never kept as goldens: the determinism contract is on the PDF's bytes.
+
 ## The reference as a contract
 
 `docs/reference/cli.md` is the specification, so `tests/test_reference_contract.py`
