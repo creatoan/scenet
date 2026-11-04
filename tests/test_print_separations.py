@@ -227,3 +227,28 @@ def test_every_gallery_pdf_is_sound(entry: dict[str, str], tmp_path: Path):
         [QPDF, "--check", str(path)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@needs_ghostscript
+def test_the_print_example_prints_its_night_in_rich_black(tmp_path: Path):
+    """The gallery's page for print, with its bleed: the alley's foreground is rich black."""
+    book = _book("70-a-page-for-print.scene.yaml")
+    cores = {name: result.core for name, result in book.panels.items()}
+    (page,) = book.pages
+    pdf = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+    plates = _separate(pdf, _folder(tmp_path, "70-a-page-for-print"))
+    assert plates.width == round(page.width + 2 * page.bleed)
+    frame = next(frame for frame in page.frames if frame.panel == "alley")
+    core = cores["alley"]
+    assert core.backdrop is not None
+    darkest = [mass for mass in core.backdrop.masses if mass.tone == "#020202"]
+    assert darkest
+    # Figures and lettering stand over parts of the mass; what shows of it is rich black.
+    left, top, right, bottom = Polygon(darkest[0].polygon).buffer(-6).bounds
+    inks = plates.within(
+        frame.x + left + page.bleed,
+        frame.y + top + page.bleed,
+        frame.x + right + page.bleed,
+        frame.y + bottom + page.bleed,
+    )
+    assert any(98 <= c <= 106 and m == y == 0 and k == 255 for c, m, y, k in inks)

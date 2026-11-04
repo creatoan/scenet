@@ -480,3 +480,10 @@ examples:
     summary: "Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path."
     doc: howto/add_your_own_character.md#cast-it-in-a-document
     files: [puppets/pip.puppet.yaml]
+  - file: 70-a-page-for-print.scene.yaml
+    title: "A page made for print"
+    kind: scene
+    group: Pages and sequences
+    summary: "A US comic page with its bleed, printed as a PDF: lettering on the black plate, rich black at night, the picture's pixels unchanged."
+    doc: reference/language.md#page-and-pages
+    files: [art/street.png]

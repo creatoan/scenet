@@ -284,12 +284,10 @@ DOCUMENTS = sorted(path for path in GALLERY.iterdir() if path.is_file() and path
 #: Everything the two published schemas let a document write.
 VOCABULARY = vocabulary(panel_schema()) | vocabulary(scene_schema())
 
-#: What the schemas offer that no example writes yet, and why, by the name a failure gives
-#: it. An entry that an example writes, or the schemas drop, fails
-#: `test_the_allow_list_is_current`.
-NOT_AUTHORABLE: dict[str, str] = {
-    "PageFormat.bleed": "the print example writes it, with the PDF in the playground (#80)",
-}
+#: What the schemas offer that no example could write, and why, by the name a failure gives
+#: it. Empty: everything they offer today can be written. An entry that an example writes,
+#: or the schemas drop, fails `test_the_allow_list_is_current`.
+NOT_AUTHORABLE: dict[str, str] = {}
 
 #: The removals the documentation teaches, and where. A `null` is not a word of the
 #: schemas' -- written anywhere it may just leave a default as it is -- so they are listed.

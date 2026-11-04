@@ -7038,3 +7038,68 @@ expressions:
   scared:   {brow: angled_out, eyes: wide, mouth: small}
   sad:      {brow: angled_out, eyes: half, mouth: frown}
 ```
+
+## A page made for print
+
+A US comic page with its bleed, printed as a PDF: lettering on the black plate, rich black at night, the picture's pixels unchanged.
+
+`70-a-page-for-print.scene.yaml`
+
+It names `art/street.png`, which is beside it in the gallery: a picture, not printed here.
+
+```yaml
+# A page made for print: `scenet build --pdf`, or the Print tab.
+#
+# A page unit prints as a tenth of a millimetre, so this is a US comic's 6.625 x 10.25
+# inches, and `bleed: 31.75` runs the printed sheet the 0.125 in past the trim that US
+# printers ask for. The bleed is paper around the page: nothing on it moves.
+#
+# Print says everything in inks. Lettering, balloon borders and every line are 100% black
+# and overprint, so type stays sharp when the colour plates drift; the paper knocks out;
+# greys are black tints; the night foreground is rich black, C40 K100. A tinted palette
+# prints its greys, the twins every colour was chosen against, and the picture goes in with
+# its pixels unchanged. The notes say what print leaves out or changes.
+
+page: {size: [1682.75, 2603.5], bleed: 31.75, margin: 90, gutter: 30, tier_gutter: 45}
+palette: tinted
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, cold]
+      - {height: 1.2, panels: [alley]}
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    setting: {image: art/street.png, fit: cover, time: dusk}
+    cast:
+      alice: {reference: alice, pose: pointing, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    staging:
+      - alice left_of bob
+      - alice looking_at bob
+      - alice ground_shared_with bob
+    script:
+      - sfx: {text: HONK, prefer: top_right, size: medium, rotate: -6}
+      - say: {by: alice, text: "Is that the press?"}
+
+  cold:
+    camera: {shot: medium_close_up}
+    setting: {place: street, time: dusk}
+    cast:
+      bob: {reference: bob, expression: happy, facing: left}
+    script:
+      - caption: {text: "Printed in black, every word.", kind: editorial, tone: ink}
+      - say: {by: bob, text: "The last one tonight."}
+
+  alley:
+    camera: {shot: full_shot}
+    setting: {place: alley, time: night}
+    cast:
+      alice: {reference: alice, pose: standing_neutral, at: left_third}
+      bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+    script:
+      - sfx: {text: CLANG, prefer: bottom_left, size: medium}
+      - say: {by: bob, text: "Then it goes to the binders."}
+      - say: {by: alice, text: "And the plates?"}
+```
