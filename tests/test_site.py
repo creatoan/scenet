@@ -731,6 +731,30 @@ class TestSelect:
         ]
 
 
+class TestDownload:
+    def test_the_release_list_is_read_as_utf_8(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ):
+        """`gh` writes UTF-8 whatever the system's code page, and release notes hold curly
+        quotes: read in Windows' cp1252, one ended a local build of the site.
+
+        `gh` is stood in for by a process writing the list's UTF-8 bytes, read with the
+        arguments `download` reads `gh` with.
+        """
+        quoted = f"{chr(0x201C)}the site{chr(0x201D)}"
+        release = {"tag_name": "v0.7.0", "body": quoted, "assets": []}
+        listing = json.dumps([[release]], ensure_ascii=False)
+        run = subprocess.run
+
+        def gh(command: list[str], **options: Any) -> subprocess.CompletedProcess[str]:
+            assert command[1] == "api", "nothing is downloaded from a release with no site"
+            write = "import sys; sys.stdout.buffer.write(sys.argv[1].encode('utf-8'))"
+            return run([sys.executable, "-c", write, listing], **options)
+
+        monkeypatch.setattr(site_versions.subprocess, "run", gh)
+        assert site_versions.download("creatoan/scenet", tmp_path) == []
+
+
 # ---------------------------------------------------------------- backfill
 
 
