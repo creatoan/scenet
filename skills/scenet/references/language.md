@@ -20,6 +20,10 @@ character or a panel. A merge key's override (`<<: *base`, then the key again) i
 A panel description has five authored layers. A sixth — resolution — is computed, and a seventh —
 rendering — is emitted.
 
+![A page of three panels lettered over painted pictures: Alice and Bob in the rain on a street at dusk, Alice worrying in an inset, and Ana and Ben, whom the picture draws, on a station platform](https://creatoan.github.io/scenet/images/gallery/38-tour.page-1.svg)
+
+**In the gallery:** [A tour of Scenet](https://creatoan.github.io/scenet/gallery.html#a-tour-of-scenet).
+
 | Layer | Block | What it says |
 |---|---|---|
 | Frame | `panel` | Size and margins of the panel |
@@ -63,12 +67,20 @@ script:
   - say: {by: bob,   text: "I know."}
 ```
 
+![Alice, pointing, and Bob, arms crossed, on the docks at night in the rain. Alice: You forgot your umbrella! Bob: I know.](https://creatoan.github.io/scenet/images/gallery/71-a-complete-panel.svg)
+
+**In the gallery:** [A complete panel](https://creatoan.github.io/scenet/gallery.html#a-complete-panel).
+
 ## `panel`
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `size` | `[width, height]` | required | Panel dimensions in panel units; printed, a unit is 0.1 mm |
 | `margin` | number | `0` | Inset all content by this much |
+
+![Alice and Bob in a medium close-up, their figures running off the panel's edges while both balloons keep inside its margin](https://creatoan.github.io/scenet/images/gallery/15-margin.svg)
+
+**In the gallery:** [Margins and bleed](https://creatoan.github.io/scenet/gallery.html#margins-and-bleed).
 
 Panel units are arbitrary and internally consistent; they become SVG user units.
 
@@ -78,6 +90,10 @@ Panel units are arbitrary and internally consistent; they become SVG user units.
 |---|---|---|
 | `shot` | see [shot types](https://creatoan.github.io/scenet/reference/shot_types.html) | `medium_shot` |
 | `angle` | `low`, `eye_level`, `high` | `eye_level` |
+
+![Bob in a medium close-up three times: from a low angle, at eye level and from a high angle, with less air above his head each time](https://creatoan.github.io/scenet/images/gallery/03-camera-angles.strip.svg)
+
+**In the gallery:** [Camera angles](https://creatoan.github.io/scenet/gallery.html#camera-angles).
 
 `shot` determines the **scale** of every actor, by naming where the frame cuts the body rather than
 what fraction of the panel a figure fills. This is the single most consequential value in a panel.
@@ -143,6 +159,10 @@ setting:
     - {kind: ground,   plane: near, spans: full}
 ```
 
+![Two panels of masses written by hand: outdoors, seven kinds of stuff four planes deep, and a room at dusk with its window](https://creatoan.github.io/scenet/images/gallery/19-setting.strip.svg)
+
+**In the gallery:** [Masses and planes](https://creatoan.github.io/scenet/gallery.html#masses-and-planes) and [In front of the cast](https://creatoan.github.io/scenet/gallery.html#in-front-of-the-cast).
+
 | Key | Values | Default | Meaning |
 |---|---|---|---|
 | `kind` | see below | required | What the mass is made of, which decides its silhouette |
@@ -195,6 +215,10 @@ the shape.
 The headline surface, because the thing an author wants to write is *where the scene is*, not a
 list of shapes.
 
+![Alice in each of the ten places, one panel each: docks, street, alley, room, office, forest, field, shore, desert and mountain](https://creatoan.github.io/scenet/images/gallery/20-places.strip.svg)
+
+**In the gallery:** [Ten places](https://creatoan.github.io/scenet/gallery.html#ten-places).
+
 | Place | Expands into |
 |---|---|
 | `alley` | sky·far, building·near·left, building·near·right, ground·near, building·foreground·left |
@@ -234,6 +258,10 @@ One line for the whole panel, which every mass is composed against: masses of th
 at it and run down, masses that stand in the world rise from it. A **high** horizon sits nearer the
 top of the frame, so more ground is in view.
 
+![The same shore three times, its horizon high, in the middle and low](https://creatoan.github.io/scenet/images/gallery/72-three-horizons.strip.svg)
+
+**In the gallery:** [Three horizons](https://creatoan.github.io/scenet/gallery.html#three-horizons).
+
 Ground, floor and water all run to the bottom edge, so a near quayside drawn from the horizon would
 bury the water behind it. Each starts lower than the plane behind it, and that stack of receding
 bands is the depth cue. The exception is the *farthest* one in a panel, which meets the horizon
@@ -247,6 +275,10 @@ the value of the foreground and the value of the atmosphere — and the planes a
 [OKLab](https://bottosson.github.io/posts/oklab/) lightness, which predicts perceived lightness
 well. So `night` is a darker, *narrower* ladder, which is what night does to a drawn scene, and the
 ladder stays monotonic in depth at every hour by construction rather than by tuning.
+
+![The docks four times: at midnight in the rain, at dawn in fog, at noon, and in snow](https://creatoan.github.io/scenet/images/gallery/21-atmosphere.strip.svg)
+
+**In the gallery:** [Time and weather](https://creatoan.github.io/scenet/gallery.html#time-and-weather).
 
 `weather` adds a layer over that. `clouds` and `fog` are first-class stuff in COCO-Stuff, so this
 vocabulary did not have to be invented either:
@@ -270,6 +302,10 @@ white, and the overcast veil is what gives it something to read against.
 
 `image` names a picture drawn elsewhere — painted, pencilled, photographed or rendered — and the
 cast is drawn in front of it, lettered by the same rules as on any other backdrop.
+
+![Alice and Bob in front of a photograph of a harbour, supplied as a JPEG](https://creatoan.github.io/scenet/images/gallery/52-a-jpeg.svg)
+
+**In the gallery:** [A JPEG behind the cast](https://creatoan.github.io/scenet/gallery.html#a-jpeg-behind-the-cast).
 
 | Key | Values | Default |
 |---|---|---|
@@ -323,6 +359,10 @@ the hour over a picture — the compiler has not seen it — only the weather it
 A picture can draw its own people. Cast them with `figure:` in place of `reference:`, and Scenet
 letters them as it letters puppets — balloons in reading order, never over a face, tails to the
 mouth — while drawing nothing of them: the picture already has.
+
+![Two panels: Ana and Ben as puppets in a street at night, then the same two as a picture draws them, lettered from its artwork contract](https://creatoan.github.io/scenet/images/gallery/51-puppets-to-figures.strip.svg)
+
+**In the gallery:** [From puppets to figures](https://creatoan.github.io/scenet/gallery.html#from-puppets-to-figures).
 
 ```yaml
 setting: {image: art/p01-street.png}
@@ -383,6 +423,10 @@ panel, which is how a contract is checked against its picture.
 
 A mapping of actor id to properties. Ids are chosen by the author and referenced everywhere else.
 
+![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
+
+**In the gallery:** [Poses and facing](https://creatoan.github.io/scenet/gallery.html#poses-and-facing), [Ten expressions](https://creatoan.github.io/scenet/gallery.html#ten-expressions) and [A face](https://creatoan.github.io/scenet/gallery.html#a-face).
+
 | Key | Type | Meaning |
 |---|---|---|
 | `reference` | asset name, or a `.puppet.yaml` path | Which puppet to pull from the library, or a [puppet file of your own](#a-puppet-of-your-own), relative to the document |
@@ -413,6 +457,10 @@ disc that balloons may not cover.
 cast:
   alice: {reference: alice, expression: angry, marks: [grawlixes, plewds]}
 ```
+
+![Alice and Bob in four panels with marks drawn round them: sweat, an oath, dizziness, and dust where one has gone](https://creatoan.github.io/scenet/images/gallery/23-emanata.strip.svg)
+
+**In the gallery:** [Emanata](https://creatoan.github.io/scenet/gallery.html#emanata).
 
 `marks` are what a comic draws *around* a character rather than on them. The vocabulary is Mort
 Walker's, from *The Lexicon of Comicana*, and it is closed:
@@ -465,6 +513,10 @@ cast:
   pip:   {reference: puppets/pip.puppet.yaml, pose: waving}
 ```
 
+![A page of five panels: Pip, a puppet five heads tall from a file beside the document, beside Alice on the docks at dusk](https://creatoan.github.io/scenet/images/gallery/69-a-puppet-of-your-own.page-1.svg)
+
+**In the gallery:** [A puppet of your own](https://creatoan.github.io/scenet/gallery.html#a-puppet-of-your-own).
+
 - **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A path
   is never a name, so no file shadows `alice` or `bob`.
 - **The path is read as a font's is**: relative to the folder the document is in, wherever `scenet`
@@ -499,6 +551,10 @@ A list of relations between actors, written `subject predicate object`. This is 
 cast are nodes, these are the edges. Predicates come from the spatial subset of the Visual Genome
 vocabulary rather than being invented here, so a Scenet scene remains convertible to and from the
 scene-graph representations used elsewhere in computer vision.
+
+![Alice points at Bob and the two look at each other; their balloons keep clear of the space in front of their eyes](https://creatoan.github.io/scenet/images/gallery/07-gaze.svg)
+
+**In the gallery:** [Gaze steers balloons](https://creatoan.github.io/scenet/gallery.html#gaze-steers-balloons), [Feet align, heads do not](https://creatoan.github.io/scenet/gallery.html#feet-align-heads-do-not), [Depth and overlap](https://creatoan.github.io/scenet/gallery.html#depth-and-overlap) and [Staging, spelled out](https://creatoan.github.io/scenet/gallery.html#staging-spelled-out).
 
 | Predicate | Effect |
 |---|---|
@@ -544,6 +600,10 @@ script:
 | `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
 | `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
 
+![Alice and Bob in four balloons: a dashed whisper, a spiked shout, a speech balloon and a cloud for a thought](https://creatoan.github.io/scenet/images/gallery/04-balloon-kinds.svg)
+
+**In the gallery:** [Every balloon kind](https://creatoan.github.io/scenet/gallery.html#every-balloon-kind), [Placement zones](https://creatoan.github.io/scenet/gallery.html#placement-zones) and [The other five zones](https://creatoan.github.io/scenet/gallery.html#the-other-five-zones).
+
 `text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
 compilation, because a balloon's size determines whether it fits where it is wanted — so the
 compiler must decide the line breaks before it can place anything.
@@ -566,6 +626,10 @@ script:
   - say: {by: caller, text: "Open up!", off_panel: left}
   - say: {by: bob, text: "Who is it?"}
 ```
+
+![Bob in a room at night, answering voices from off panel whose balloons' tails run to the edge of the frame](https://creatoan.github.io/scenet/images/gallery/32-off-panel.strip.svg)
+
+**In the gallery:** [Off-panel speech](https://creatoan.github.io/scenet/gallery.html#off-panel-speech) and [Looking off panel](https://creatoan.github.io/scenet/gallery.html#looking-off-panel).
 
 A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
 on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
@@ -607,6 +671,10 @@ it with `(OP)`.
 A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
 happens without a character having to explain it out loud — which is the thing writers are told not
 to do. Comics solved this long before they had reliable backgrounds.
+
+![Alice and Bob on the docks with four captions: a place and time, an inner voice, a line spoken off panel, and an editor's note](https://creatoan.github.io/scenet/images/gallery/16-captions.svg)
+
+**In the gallery:** [Captions](https://creatoan.github.io/scenet/gallery.html#captions), [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones) and [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption).
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -702,6 +770,10 @@ script:
   - say: {by: alice, text: "I _told_ you it would rain."}
 ```
 
+![Alice, angry, says: I told you it would rain, with told lettered in bold italic](https://creatoan.github.io/scenet/images/gallery/28-emphasis.svg)
+
+**In the gallery:** [Emphasis](https://creatoan.github.io/scenet/gallery.html#emphasis).
+
 Bold italic is the letterers' convention for a stressed word: Blambot's *Comic Book Grammar &
 Tradition* notes there is almost no plain bold in comics dialogue. The underscore stands in for
 the underline a script uses, as Dark Horse's script format asks. It works the same in `say` and
@@ -736,6 +808,10 @@ such as `@#*%!` is made of.
 
 A sound effect is letters treated as picture. `BLAM` is not dialogue: comics letter sound big,
 angled and outlined, near where it happens, with no balloon.
+
+![Alice and Bob with three sound effects lettered into the picture: KRAK, tok tok tok and WHOOSH](https://creatoan.github.io/scenet/images/gallery/30-sound-effects.svg)
+
+**In the gallery:** [Sound effects](https://creatoan.github.io/scenet/gallery.html#sound-effects) and [A sound pulled to a zone](https://creatoan.github.io/scenet/gallery.html#a-sound-pulled-to-a-zone).
 
 ```yaml
 script:
@@ -781,6 +857,10 @@ above-and-left of the one before it — above-and-*right*, in a comic read right
 in the wrong order, which is a correctness bug in a comic. The constraint is therefore hard, and a
 panel whose boxes cannot be placed without breaking it is rejected rather than rendered wrongly.
 
+![Four balloons, First, Second, Third and Fourth, placed so that they read in that order](https://creatoan.github.io/scenet/images/gallery/06-reading-order.svg)
+
+**In the gallery:** [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order).
+
 Captions take their turn in that sequence rather than being placed first as a layer. A caption
 written between two lines of dialogue is read between them; one written last is read last.
 
@@ -797,6 +877,10 @@ they are painted in; see [accessible output](https://creatoan.github.io/scenet/h
 ## `description`
 
 What the panel shows, in words, for a reader who cannot see it.
+
+![Late at night, Bob points at something off to the side, beaming, while Alice watches him, bored](https://creatoan.github.io/scenet/images/gallery/45-a-description.svg)
+
+**In the gallery:** [A description](https://creatoan.github.io/scenet/gallery.html#a-description).
 
 ```yaml
 description: Alice and Bob face each other on a rainy street corner. She is exasperated.
@@ -828,6 +912,10 @@ dialogue, it may not hold a character an SVG cannot hold.
 
 How the lettering is set: its size, and the face it is set in.
 
+![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](https://creatoan.github.io/scenet/images/gallery/14-lettering.svg)
+
+**In the gallery:** [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break) and [Type size](https://creatoan.github.io/scenet/gallery.html#type-size).
+
 ```yaml
 lettering:
   size: 30
@@ -858,6 +946,10 @@ for the panel leaves a balloon nowhere to go, which `scenet check --deep` report
 Scenet letters in Source Sans Pro unless you name a face of your own. A font is always a **file you
 name**, never a font installed on the machine: what is measured has to be the same everywhere, or the
 same document would letter differently on two computers.
+
+![Two panels of Alice and Bob lettered in Comic Neue: dialogue, a caption and the sound CLUNK](https://creatoan.github.io/scenet/images/gallery/42-your-own-font.strip.svg)
+
+**In the gallery:** [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font).
 
 ```yaml
 lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
@@ -910,6 +1002,10 @@ Which way the comic is read: `ltr`, from the top left, as Western comics are, or
 top right, as manga are. It is the comic's **progression**, not the direction of its text: a manga
 translated into English still reads right to left, while the words in each balloon read left to
 right. Vertical Japanese lettering is not part of it.
+
+![A page of eight panels read from the top right: Hana and Ken on a street at night, in the rain](https://creatoan.github.io/scenet/images/gallery/36-right-to-left.page-1.svg)
+
+**In the gallery:** [Right to left](https://creatoan.github.io/scenet/gallery.html#right-to-left) and [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right).
 
 ```yaml
 direction: rtl
@@ -968,6 +1064,8 @@ setting: {place: docks, time: dusk}
 
 ![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](https://creatoan.github.io/scenet/images/gallery/40-tinted-hours.page-1.svg)
 
+**In the gallery:** [Every hour in colour](https://creatoan.github.io/scenet/gallery.html#every-hour-in-colour) and [A flashback in grey](https://creatoan.github.io/scenet/gallery.html#a-flashback-in-grey).
+
 **Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
 [ladder](#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
 the same hour. In monochrome a tinted panel is the mono one, value for value: the ladder stays
@@ -1024,6 +1122,11 @@ A scene can lay its panels out on pages. `pages:` is a list of pages; each page 
 **tiers**, top to bottom; each tier is a list of panels, in reading order — left to right, or right
 to left for a comic read that way. `page:` is the
 format they share.
+
+![The first of two pages: three panels of Alice and Bob in a street, laid out in tiers](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-1.svg)
+![The second page of the same document, its panels named by page and number, one with an inset](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-2.svg)
+
+**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) and [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print).
 
 A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
 not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
@@ -1166,6 +1269,10 @@ priority rather than by failing:
 | **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
 | **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
 | **Weak** | `at:` anchors, `prefer:` balloon hints |
+
+![Four characters asked for in a close-up, the camera stepped back so that all four fit](https://creatoan.github.io/scenet/images/gallery/10-crowd-pullback.svg)
+
+**In the gallery:** [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats).
 
 So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
 required non-overlap wins and the weak anchors yield. This is why `at` is documented as a

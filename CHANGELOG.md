@@ -12,6 +12,10 @@ below 1.0 means.
 
 ### Added
 
+- **Every section of the language reference shows its construct** (#243): a picture of a gallery
+  example, and a link to each example whose `doc:` names the section, on the Gallery page. A test
+  holds every section to it, or to a written reason for showing nothing, such as Determinism's.
+  The spec pack and the agent skill carry the same pictures and links.
 - **Gallery examples 71 and 72** (#243). 71 is the language reference's complete example, a
   test keeping the two identical, so the reference can show what it compiles to. 72 shows one
   shore under each `horizon`, which no example showed before. Example 69 now reads about its
