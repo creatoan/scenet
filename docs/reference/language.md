@@ -65,7 +65,7 @@ script:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `size` | `[width, height]` | required | Panel dimensions in panel units |
+| `size` | `[width, height]` | required | Panel dimensions in panel units; printed, a unit is 0.1 mm |
 | `margin` | number | `0` | Inset all content by this much |
 
 Panel units are arbitrary and internally consistent; they become SVG user units.
@@ -284,6 +284,7 @@ The picture is centred either way and never stretched.
   first bytes rather than by the file's name.
 - **Only the size is read.** The compiler takes from the file how many pixels it has across and
   down, from its header, and decodes nothing: the solver never sees artwork, here as everywhere.
+  Only the print PDF carries the pixels, unchanged, into the file it writes.
 - **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag —
   Chromium turns an SVG `<image>` by it, others do not — so such a picture would be upright in
   one viewer and on its side in the next. Save it with the pixels turned instead.
@@ -1042,10 +1043,11 @@ panels:
 
 | Key | Means | Default |
 |---|---|---|
-| `page.size` | Width and height, in the same abstract units a panel uses | `[2000, 3000]` |
+| `page.size` | Width and height, in the units a panel uses: the trim, the size the printed page is cut to | `[2000, 3000]` |
 | `page.margin` | The blank border inside the page edge | `100` |
 | `page.gutter` | The gap between two panels side by side in a tier | `40` |
 | `page.tier_gutter` | The gap between two tiers; wider than `gutter`, as in print | `60` |
+| `page.bleed` | How far the printed sheet runs past the trim on every side, so art reaching the edge can be cut cleanly | `0` |
 | `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
 | `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
 | `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
@@ -1060,6 +1062,13 @@ panels:
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
+
+**Printed, a unit is a tenth of a millimetre** (#80). The default page prints at 200 × 300 mm; a US
+comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6 is
+`size: [1280, 1820]`. `bleed` is in the same units: `30` is 3 mm, `31.75` is the 0.125 in US
+printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
+page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
+before.
 
 A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
 of short ones is written: the tier is split across into columns, and each column down into its
@@ -1142,10 +1151,8 @@ names a place on the page keeps naming it: an inset's `at:` is a corner of its p
 positive `slant` leans the top of each gutter right, as written. A layout one direction refuses, the
 other refuses too.
 
-Not yet: frames of any other shape, such as round panels or ones without borders; comic-script
-`PAGE` headings as pages
-([#75](https://github.com/creatoan/scenet/issues/75)), and print sizes with trim and bleed
-([#80](https://github.com/creatoan/scenet/issues/80)).
+Not yet: frames of any other shape, such as round panels or ones without borders; and panels
+that bleed past the trim, their frame running to the bleed line with no border on that side.
 
 ## When constraints conflict
 

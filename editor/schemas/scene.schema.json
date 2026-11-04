@@ -523,8 +523,14 @@
     },
     "PageFormat": {
       "additionalProperties": false,
-      "description": "The page every panel on it is laid out on.\n\nIn the same abstract units a panel uses: a page is not yet a printed size. Millimetres,\ntrim and bleed belong to print, which is a separate piece of work.\n\nAttributes:\n    size: `(width, height)`. The default is 1 : 1.5, close to a US comic's\n        6.625 x 10.25 inches.\n    margin: The blank border inside the page edge, on all four sides.\n    gutter: The gap between two panels side by side in a tier.\n    tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it\n        usually is in print: a narrower gap within a tier binds its panels into one\n        row, which is the direction they are read in.\n\nExample:\n    >>> from scenet import PageFormat\n    >>> PageFormat().size\n    (2000.0, 3000.0)",
+      "description": "The page every panel on it is laid out on.\n\nIn the same units a panel uses, and a unit prints as a tenth of a millimetre (#80):\nthe default page prints at 200 x 300 mm, and a US comic's 6.625 x 10.25 inches is\n`size: [1682.75, 2603.5]`.\n\nAttributes:\n    size: `(width, height)`: the trim, the size the printed page is cut to.\n    margin: The blank border inside the page edge, on all four sides.\n    gutter: The gap between two panels side by side in a tier.\n    tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it\n        usually is in print: a narrower gap within a tier binds its panels into one\n        row, which is the direction they are read in.\n    bleed: How far the printed sheet runs past the trim on every side, so that art reaching\n        the edge can be cut cleanly: 30 is 3 mm, 31.75 is 0.125 in. Paper around the page;\n        nothing on it moves. 0, the default, prints the page at its trim.\n\nExample:\n    >>> from scenet import PageFormat\n    >>> PageFormat().size\n    (2000.0, 3000.0)",
       "properties": {
+        "bleed": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Bleed",
+          "type": "number"
+        },
         "gutter": {
           "default": 40.0,
           "minimum": 0.0,
@@ -1724,6 +1730,7 @@
     "page": {
       "$ref": "#/$defs/PageFormat",
       "default": {
+        "bleed": 0.0,
         "gutter": 40.0,
         "margin": 100.0,
         "size": [

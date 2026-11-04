@@ -1070,6 +1070,7 @@ def _compile_document(
                 lettering_height=type_height,
                 frames=tuple(_core_frame(frame) for frame in resolved),
                 direction=document.direction,
+                bleed=rounded(layout.page.bleed),
             )
         )
     exclusions = _inset_clearances(frames)

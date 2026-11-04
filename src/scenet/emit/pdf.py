@@ -215,7 +215,9 @@ def render_pdf(
     )
     if pages:
         for page in pages:
-            document.add_page(page.width, page.height, _page_content(page, panels, fonts))
+            document.add_page(
+                page.width, page.height, _page_content(page, panels, fonts), bleed=page.bleed
+            )
     else:
         for core in panels.values():
             document.add_page(core.width, core.height, _lone_content(core, fonts))
@@ -528,12 +530,14 @@ def _glyph_transform(glyph: Glyph) -> list[str]:
 class _Document:
     """The objects of a PDF, written in a fixed order."""
 
-    pages: list[tuple[float, float, list[str]]] = field(default_factory=list)
+    pages: list[tuple[float, float, float, list[str]]] = field(default_factory=list)
     pictures: dict[str, Embedded] = field(default_factory=dict)
 
-    def add_page(self, width: float, height: float, content: list[str]) -> None:
-        """A page of `width` by `height` units, drawn by `content` in its own units."""
-        self.pages.append((width, height, content))
+    def add_page(
+        self, width: float, height: float, content: list[str], *, bleed: float = 0.0
+    ) -> None:
+        """A page trimmed to `width` by `height` units, with `bleed` around it."""
+        self.pages.append((width, height, bleed, content))
 
     def write(self, *, rtl: bool) -> bytes:
         """The whole file.
@@ -563,8 +567,10 @@ class _Document:
                 next_number += 1
 
         scale = fmt(POINTS_PER_UNIT, SCALE_PLACES)
-        for index, (width, height, content) in enumerate(self.pages):
-            box = f"[0 0 {fmt(width * POINTS_PER_UNIT, 4)} {fmt(height * POINTS_PER_UNIT, 4)}]"
+        for index, (width, height, bleed, content) in enumerate(self.pages):
+            k = POINTS_PER_UNIT
+            sheet = _box(0.0, 0.0, (width + 2 * bleed) * k, (height + 2 * bleed) * k)
+            trim = _box(bleed * k, bleed * k, (width + bleed) * k, (height + bleed) * k)
             states = sorted({part.split()[0][1:] for part in content if part.endswith(" gs")})
             graphics = " ".join(
                 f"/{name} {_GraphicsState.parse(name).dictionary()}" for name in states
@@ -574,12 +580,12 @@ class _Document:
             xobjects = f" /XObject << {images} >>" if drawn else ""
             objects.append(
                 (
-                    f"<< /Type /Page /Parent 2 0 R /MediaBox {box} /TrimBox {box} "
-                    f"/BleedBox {box} /Resources << /ExtGState << {graphics} >>{xobjects} >> "
+                    f"<< /Type /Page /Parent 2 0 R /MediaBox {sheet} /TrimBox {trim} "
+                    f"/BleedBox {sheet} /Resources << /ExtGState << {graphics} >>{xobjects} >> "
                     f"/Contents {4 + 2 * index} 0 R >>"
                 ).encode()
             )
-            flip = f"{scale} 0 0 -{scale} 0 {fmt(height * POINTS_PER_UNIT, 4)} cm"
+            flip = f"{scale} 0 0 -{scale} {fmt(bleed * k, 4)} {fmt((height + bleed) * k, 4)} cm"
             objects.append(_stream("", "\n".join(["4 M", flip, *content, ""]).encode()))
         objects += pictures
         objects.append(f"<< /Producer ({PRODUCER}) >>".encode())
@@ -599,6 +605,10 @@ class _Document:
             f"/ID [<{identifier}> <{identifier}>] >>\nstartxref\n{xref}\n%%EOF\n"
         ).encode()
         return bytes(output)
+
+
+def _box(left: float, bottom: float, right: float, top: float) -> str:
+    return f"[{fmt(left, 4)} {fmt(bottom, 4)} {fmt(right, 4)} {fmt(top, 4)}]"
 
 
 def _stream(entries: str, data: bytes) -> bytes:

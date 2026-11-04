@@ -529,6 +529,7 @@ def scenes(draw: st.DrawFn, *, direction: str | None = None) -> DrawnScene:
         "size": [draw(st.sampled_from([1600, 2000])), draw(st.sampled_from([2400, 3000]))],
         "margin": draw(st.sampled_from([60, 100])),
         "gutter": draw(st.sampled_from([30, 40])),
+        "bleed": draw(st.sampled_from([0, 30, 31.75])),
     }
     remaining = list(names)
     pages: list[dict[str, Any]] = []

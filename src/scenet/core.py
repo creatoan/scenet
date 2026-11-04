@@ -1122,6 +1122,8 @@ class PageCore(CoreModel):
             left for a page read that way.
         direction: Which way the page is read (#68). Left out of the JSON for `ltr`, so every
             page written before it reads and writes as it always did.
+        bleed: How far the printed sheet runs past the trim on every side, in page units
+            (#80). Left out of the JSON when 0, as `direction` is when `ltr`.
 
     Example:
         >>> from scenet import compile_book
@@ -1139,11 +1141,12 @@ class PageCore(CoreModel):
     lettering_height: float
     frames: tuple[CoreFrame, ...] = ()
     direction: Direction = Direction.LTR
+    bleed: float = 0.0
 
     def to_json(self) -> str:
         """Serialise deterministically, exactly as a Panel Core is."""
         payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, direction=Direction.LTR)
+        _drop_unused(payload, direction=Direction.LTR, bleed=0.0)
         for frame in payload["frames"]:
             _drop_unused(frame, inset_of=None, clearance=None, outline=None)
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"

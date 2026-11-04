@@ -19,7 +19,7 @@ from scenet.ir import PageFormat
 from scenet.pipeline import compile_book
 
 DOCUMENT = (
-    "cast: {a: {reference: alice}}\n"
+    "cast: {{a: {{reference: alice}}}}\n"
     "page: {{size: [1682.75, 2603.5]{bleed}}}\n"
     "pages: [{{tiers: [{{panels: [one]}}]}}]\n"
     "panels: {{one: {{}}}}\n"

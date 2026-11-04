@@ -403,6 +403,10 @@ alone at that size, and a page adds no layout decision to a panel.
 A page read right to left carries `"direction": "rtl"` as its panels do; one read left to right
 has no `direction` key.
 
+A page with a `bleed` carries it, in page units: how far the printed sheet runs past the trim on
+every side (#80). A page with none has no `bleed` key, so every Page Core written before it reads,
+and is written, byte for byte as before — which is why it needed no `format_version` bump.
+
 `lettering_height` is the one thing every panel on the page shares: the height their type sizes are
 a fraction of, in place of each panel's own. It is recorded so that a Page Core says why two panels
 of different heights letter at the same size.

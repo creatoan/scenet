@@ -1698,17 +1698,20 @@ class PanelIR(Strict):
 class PageFormat(Strict):
     """The page every panel on it is laid out on.
 
-    In the same abstract units a panel uses: a page is not yet a printed size. Millimetres,
-    trim and bleed belong to print, which is a separate piece of work.
+    In the same units a panel uses, and a unit prints as a tenth of a millimetre (#80):
+    the default page prints at 200 x 300 mm, and a US comic's 6.625 x 10.25 inches is
+    `size: [1682.75, 2603.5]`.
 
     Attributes:
-        size: `(width, height)`. The default is 1 : 1.5, close to a US comic's
-            6.625 x 10.25 inches.
+        size: `(width, height)`: the trim, the size the printed page is cut to.
         margin: The blank border inside the page edge, on all four sides.
         gutter: The gap between two panels side by side in a tier.
         tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it
             usually is in print: a narrower gap within a tier binds its panels into one
             row, which is the direction they are read in.
+        bleed: How far the printed sheet runs past the trim on every side, so that art reaching
+            the edge can be cut cleanly: 30 is 3 mm, 31.75 is 0.125 in. Paper around the page;
+            nothing on it moves. 0, the default, prints the page at its trim.
 
     Example:
         >>> from scenet import PageFormat
@@ -1720,6 +1723,7 @@ class PageFormat(Strict):
     margin: float = Field(default=100.0, ge=0.0)
     gutter: float = Field(default=40.0, ge=0.0)
     tier_gutter: float = Field(default=60.0, ge=0.0)
+    bleed: float = Field(default=0.0, ge=0.0)
 
     @property
     def width(self) -> float:

@@ -12,6 +12,10 @@ below 1.0 means.
 
 ### Added
 
+- **A page prints at a size, with a bleed** (#80). A page unit prints as a tenth of a
+  millimetre, so the default page is 200 × 300 mm and a US comic is
+  `size: [1682.75, 2603.5]`. `page: {bleed: 31.75}` runs the printed sheet 0.125 in past the
+  trim on every side; nothing on the page moves, and a page without it is what it was.
 - **A print PDF, from Python** (#80): `render_pdf` draws a document as a PDF a printer
   takes. Lettering, balloon borders and every line are 100% black and overprint, so type stays
   sharp when the colour plates drift; the paper knocks out; greys are black tints; the night
