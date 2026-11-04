@@ -146,6 +146,11 @@ below 1.0 means.
 
 ### Fixed
 
+- **The spec pack's pictures are on the site.** The language reference shows two pictures for
+  `palette`, and the spec pack and the agent skill, which carry the reference with every link
+  made absolute, linked them at `images/palette/` on the site, where nothing was: Sphinx serves
+  a page's pictures from `_images/`. Each version of the site now serves `docs/images/` at
+  `images/`.
 - **Add your own character is rewritten around a puppet file a document casts (#242).** It said
   puppets have no expressions, though both shipped ones have ten, and its sample puppet named
   joints it never declared. It now shows the gallery's pip in full, as the file it is, says how
