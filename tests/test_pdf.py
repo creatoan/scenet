@@ -183,9 +183,7 @@ class TestTheBlackPlate:
     def test_lettering_overprints_in_black_alone(self):
         book = _book("01-two-characters.panel.yaml")
         core = next(iter(_cores(book).values()))
-        drawn = [
-            mark for mark in marks(core, typeface_of(core, fonts=book.fonts)) if not mark.is_veil
-        ]
+        drawn = marks(core, typeface_of(core, fonts=book.fonts))
         blocks = _blocks(panel_content(core, book.fonts))
         assert len(blocks) == len(drawn)
         states = self._states(_pdf(book))
@@ -212,7 +210,7 @@ def test_every_mark_is_one_block_painted_as_it_should_be(name: str):
     book = _book(name)
     for core in _cores(book).values():
         family = typeface_of(core, fonts=book.fonts)
-        drawn = [mark for mark in marks(core, family) if not mark.is_veil]
+        drawn = marks(core, family)
         blocks = _blocks(panel_content(core, book.fonts))
         assert [_painting(block) for block in blocks] == [_expected(mark) for mark in drawn]
 
@@ -253,9 +251,9 @@ def test_the_same_bytes_whatever_the_hash_seed():
 
 
 class TestNotes:
-    def test_the_veil_is_said_to_be_left_out(self):
+    def test_the_veil_is_printed_and_so_not_said(self):
         notes = print_notes(_cores(_book("21-atmosphere.scene.yaml")))
-        assert any("fog and cloud" in note for note in notes)
+        assert not any("fog" in note for note in notes)
 
     def test_a_tinted_panel_is_said_to_print_in_greys(self):
         notes = print_notes(_cores(_book("40-tinted-hours.scene.yaml")))

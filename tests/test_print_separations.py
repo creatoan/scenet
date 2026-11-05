@@ -371,3 +371,29 @@ def test_every_gallery_pdf_lettered_as_text_is_sound(entry: dict[str, str], tmp_
         [QPDF, "--check", str(path)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@needs_ghostscript
+def test_the_fog_varies_the_black_plate(tmp_path: Path):
+    """The veil prints as noise (#282): under the fog the black plate shades as the SVG's
+    does, where a panel without its veil is flat greys."""
+    book = _book("21-atmosphere.scene.yaml")
+    core = book.panels["morning"].core
+    assert core.backdrop is not None
+    assert core.backdrop.atmosphere is not None
+    clear = core.model_copy(
+        update={
+            "backdrop": core.backdrop.model_copy(
+                update={"atmosphere": core.backdrop.atmosphere.model_copy(update={"veil": None})}
+            )
+        }
+    )
+    fogged = _separate(
+        render_pdf((), {"morning": core}, fonts=book.fonts), _folder(tmp_path, "21-morning-fog")
+    )
+    flat = _separate(render_pdf((), {"morning": clear}, fonts=book.fonts), tmp_path / "flat")
+    # The ground below the figures' feet, across the whole panel.
+    band = (0, core.height * 0.92, core.width, core.height - 8)
+    shades = {k for *_, k in fogged.within(*band)}
+    assert len(shades) > len({k for *_, k in flat.within(*band)}) + 10
+    assert all(c == m == y == 0 for c, m, y, _ in fogged.pixels())

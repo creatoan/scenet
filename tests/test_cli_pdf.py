@@ -104,10 +104,10 @@ def test_live_text_letters_the_pdf_in_its_faces(tmp_path: Path):
 
 
 class TestNotes:
-    def test_what_print_leaves_out_is_said(self, tmp_path: Path, capsys):
+    def test_the_fog_is_printed_and_so_not_said(self, tmp_path: Path, capsys):
         source = _write(tmp_path, "fog.panel.yaml", FOGGY)
         assert cli.main(["build", str(source), "--pdf"]) == 0
-        assert "note: print leaves out the fog and cloud" in capsys.readouterr().out
+        assert "fog" not in capsys.readouterr().out
 
     def test_quiet_says_nothing(self, tmp_path: Path, capsys):
         source = _write(tmp_path, "fog.panel.yaml", FOGGY)

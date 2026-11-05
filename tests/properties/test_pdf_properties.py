@@ -35,7 +35,7 @@ def _blocks(lines: list[str]) -> list[list[str]]:
 
 
 def _sound(core: PanelCore) -> None:
-    drawn = [mark for mark in marks(core, typeface_of(core)) if not mark.is_veil]
+    drawn = marks(core, typeface_of(core))
     blocks = _blocks(panel_content(core))
     assert len(blocks) == len(drawn)
     for mark, block in zip(drawn, blocks, strict=True):
