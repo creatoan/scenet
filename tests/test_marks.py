@@ -146,9 +146,9 @@ def _painted(svg: str) -> list[Painting]:
     return painted
 
 
-def _drawn(core: PanelCore, family: Typeface) -> list[Painting]:
+def _drawn(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list[Painting]:
     drawn: list[Painting] = []
-    for mark in marks(core, family):
+    for mark in marks(core, family, live_text=live_text):
         if mark.is_veil:
             continue
         if isinstance(mark.shape, Picture):
@@ -284,6 +284,16 @@ def test_the_marks_are_what_the_svg_paints_in_order(name: str):
         family = typeface_of(result.core, fonts=book.fonts)
         svg = render(result.core, fonts=book.fonts, aria=False, embed=book.images)
         assert _drawn(result.core, family) == _painted(svg)
+
+
+@pytest.mark.parametrize("name", IDS)
+def test_the_marks_are_what_the_svg_paints_with_live_text(name: str):
+    """A line set as text is one `<text>`, and one mark, whatever its runs (#284)."""
+    book = _book(name)
+    for result in book.panels.values():
+        family = typeface_of(result.core, fonts=book.fonts)
+        svg = render(result.core, fonts=book.fonts, aria=False, embed=book.images, live_text=True)
+        assert _drawn(result.core, family, live_text=True) == _painted(svg)
 
 
 @pytest.mark.parametrize("name", IDS)

@@ -339,3 +339,35 @@ def test_a_page_lettered_in_an_embedded_face_is_sound(tmp_path: Path):
         [QPDF, "--check", str(path)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@needs_ghostscript
+@pytest.mark.parametrize("name", ["01-two-characters.panel.yaml", "22-caption-tones.panel.yaml"])
+def test_live_text_inks_where_the_outlines_do(tmp_path: Path, name: str):
+    """A panel lettered in its embedded faces prints as it does in outlines (#284)."""
+    book = _book(name)
+    key = next(iter(book.panels))
+    core = book.panels[key].core
+    cores = {key: core}
+    as_text = render_pdf((), cores, fonts=book.fonts, images=book.images, live_text=True)
+    as_outlines = render_pdf((), cores, fonts=book.fonts, images=book.images)
+    text_ink = _inked(_separate(as_text, _folder(tmp_path, f"live-{key}")))
+    outline_ink = _inked(_separate(as_outlines, tmp_path / "outlines"))
+    assert all(_near(point, outline_ink) for point in text_ink)
+    assert all(_near(point, text_ink) for point in outline_ink)
+
+
+@needs_qpdf
+@pytest.mark.parametrize("entry", ENTRIES, ids=[entry["file"] for entry in ENTRIES])
+def test_every_gallery_pdf_lettered_as_text_is_sound(entry: dict[str, str], tmp_path: Path):
+    book = _book(entry["file"])
+    cores = {name: result.core for name, result in book.panels.items()}
+    path = tmp_path / "document.pdf"
+    path.write_bytes(
+        render_pdf(book.pages, cores, fonts=book.fonts, images=book.images, live_text=True)
+    )
+    assert QPDF is not None
+    result = subprocess.run(  # noqa: S603 -- a fixed command
+        [QPDF, "--check", str(path)], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

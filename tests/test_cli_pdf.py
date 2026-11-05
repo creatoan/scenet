@@ -1,9 +1,10 @@
 """`scenet build --pdf`: the print PDF from the command line (#80).
 
 One PDF per document, beside the SVGs: a PDF page per page, or per panel when the document
-has none. The options that change how the SVG is written do not change the PDF, which always
-letters in outlines, prints greys and carries its pictures. Everything is checked before
-anything is written, a PDF included.
+has none. `--live-text` letters it in its embedded faces, as it letters the SVG in text
+(#284); the other options that change how the SVG is written do not change the PDF, which
+prints greys and carries its pictures. Everything is checked before anything is written, a
+PDF included.
 """
 
 import io
@@ -82,15 +83,24 @@ class TestWhatItWrites:
         assert not (tmp_path / "hello.pdf").exists()
 
 
-@pytest.mark.parametrize(
-    "flag", ["--live-text", "--mono", "--no-aria", "--embed-images", "--strip"]
-)
+@pytest.mark.parametrize("flag", ["--mono", "--no-aria", "--embed-images", "--strip"])
 def test_an_svg_option_does_not_change_the_pdf(tmp_path: Path, flag: str):
     source = _write(tmp_path, "book.scene.yaml", SCENE)
     assert cli.main(["build", str(source), "--pdf", "--quiet"]) == 0
     plain = (tmp_path / "book.pdf").read_bytes()
     assert cli.main(["build", str(source), "--pdf", "--quiet", flag]) == 0
     assert (tmp_path / "book.pdf").read_bytes() == plain
+
+
+def test_live_text_letters_the_pdf_in_its_faces(tmp_path: Path):
+    source = _write(tmp_path, "book.scene.yaml", SCENE)
+    assert cli.main(["build", str(source), "--pdf", "--quiet"]) == 0
+    outlined = (tmp_path / "book.pdf").read_bytes()
+    assert cli.main(["build", str(source), "--pdf", "--quiet", "--live-text"]) == 0
+    lettered = (tmp_path / "book.pdf").read_bytes()
+    assert b"/FontFile2" not in outlined
+    assert b"/FontFile2" in lettered
+    assert "One." in PdfReader(io.BytesIO(lettered)).pages[0].extract_text()
 
 
 class TestNotes:
