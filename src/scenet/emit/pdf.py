@@ -238,7 +238,13 @@ def render_pdf(
     else:
         for core in panels.values():
             document.add_page(core.width, core.height, _lone_content(core, fonts))
-    rtl = any(page.direction is Direction.RTL for page in pages)
+    # A page says which way it is read; without pages each PDF page is a panel, read the
+    # way the panels are.
+    rtl = (
+        any(page.direction is Direction.RTL for page in pages)
+        if pages
+        else any(core.direction is Direction.RTL for core in panels.values())
+    )
     return document.write(rtl=rtl)
 
 

@@ -167,6 +167,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **A right-to-left document without pages prints right to left** (#296). Its print PDF, one
+  page per panel, did not say `/Direction /R2L`, which only pages read right to left wrote, so
+  a reader laid it out left to right.
 - **`scripts/build_site.py` builds on Windows.** It read the releases `gh` lists in the system's
   code page rather than in UTF-8, so a curly quote in a release's notes stopped the build
   before it downloaded anything.
