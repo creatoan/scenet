@@ -68,9 +68,10 @@ def test_the_veil_is_a_mark_painted_in_its_greys_ink():
     air = core.backdrop.atmosphere if core.backdrop is not None else None
     assert air is not None
     assert air.veil is not None
-    assert veil.fill == Paint(air.veil.colour or air.veil.tone, Role.TONE, air.veil.tone)
+    paint = Paint(air.veil.colour or air.veil.tone, Role.TONE, air.veil.tone)
+    assert veil.fill == paint
     lines = panel_content(core, book.fonts)
-    assert f"{_cmyk(ink(veil.fill))} k" in lines
+    assert f"{_cmyk(ink(paint))} k" in lines
 
 
 def test_it_is_seen_through_a_luminosity_soft_mask_and_knocks_out():
@@ -98,8 +99,9 @@ def test_its_image_is_the_veils_alpha_one_sample_per_two_units():
     assert isinstance(image, StreamObject)
     assert image["/ColorSpace"] == NameObject("/DeviceGray")
     assert image["/BitsPerComponent"] == 8
-    assert image["/Width"] == math.ceil(core.width / VEIL_STEP)
-    assert image["/Height"] == math.ceil(core.height / VEIL_STEP)
+    across, down = int(str(image["/Width"])), int(str(image["/Height"]))
+    assert across == math.ceil(core.width / VEIL_STEP)
+    assert down == math.ceil(core.height / VEIL_STEP)
     air = core.backdrop.atmosphere if core.backdrop is not None else None
     assert air is not None
     assert air.veil is not None
@@ -107,12 +109,12 @@ def test_its_image_is_the_veils_alpha_one_sample_per_two_units():
     operations = ContentStream(group, None).operations
     (matrix,) = [operands for operands, operator in operations if operator == b"cm"]
     assert [float(value) for value in matrix] == [
-        image["/Width"] * VEIL_STEP,
+        across * VEIL_STEP,
         0.0,
         0.0,
-        -image["/Height"] * VEIL_STEP,
+        -down * VEIL_STEP,
         0.0,
-        image["/Height"] * VEIL_STEP,
+        down * VEIL_STEP,
     ]
 
 
