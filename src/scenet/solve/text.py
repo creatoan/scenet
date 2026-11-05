@@ -419,6 +419,7 @@ class FontMetrics:
         if data is None:
             data = Path(path).read_bytes()
         self.sha256 = self.digest(data)
+        self._data = data
         self._font = TTFont(io.BytesIO(data), lazy=True)
         # fontTools builds table objects dynamically, so `unitsPerEm` exists at runtime
         # but not in any stub. Both checkers are told, each in its own dialect.
@@ -458,6 +459,11 @@ class FontMetrics:
     def digest(data: bytes) -> str:
         """What a font file is known by: the SHA-256 of its bytes, in hex."""
         return hashlib.sha256(data).hexdigest()
+
+    @property
+    def data(self) -> bytes:
+        """The font file's bytes, as they were read: what print embeds for live text (#284)."""
+        return self._data
 
     @property
     def units_per_em(self) -> float:
@@ -590,6 +596,17 @@ class FontMetrics:
             glyph_set[name].draw(pen)
             outlines.append((pen.getCommands(), step))
         return outlines
+
+    def glyph_id(self, character: str) -> int | None:
+        """The id of the glyph a character is drawn with, or `None` for one the face lacks.
+
+        What print letters live text by (#284): a face goes into the PDF with its glyphs at
+        their own ids, so the code for a glyph is its id.
+        """
+        name = self._cmap.get(ord(character))
+        if name is None:
+            return None
+        return self._font.getReverseGlyphMap().get(name)
 
     def glyph_pdf_path(self, character: str) -> str:
         """A character's outline as PDF path operators, in font units, y up.
