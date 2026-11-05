@@ -9,7 +9,7 @@ covers.
 
 from xml.sax.saxutils import escape
 
-from scenet.core import FaceDisc, PanelCore
+from scenet.core import Box, FaceDisc, PanelCore
 from scenet.emit.svg import attr, fmt
 from scenet.ir import Direction
 
@@ -29,6 +29,8 @@ IMAGE = "#2d7d4f"
 INSET = "#5a5a5a"
 SFX = "#d0451b"
 KEEP_OUT = "#8c6d1f"
+#: The trim of a page whose panels bleed, and the box their lettering keeps inside (#281).
+TRIM = "#d0217a"
 
 
 def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
@@ -48,6 +50,15 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
         "</svg>",
     ]
     return "\n".join(lines) + "\n"
+
+
+def lettering_box(box: Box) -> str:
+    """A bleeding panel's lettering box, dashed: what the trim will never cut (#281)."""
+    return (
+        f'  <rect class="lettering-box" x="{fmt(box.x)}" y="{fmt(box.y)}" '
+        f'width="{fmt(box.width)}" height="{fmt(box.height)}" fill="none" stroke="{TRIM}" '
+        'stroke-width="2" stroke-dasharray="6 6"/>'
+    )
 
 
 def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
@@ -78,6 +89,8 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
         f'fill-opacity="0.12" stroke="{INSET}" stroke-width="2" stroke-dasharray="12 6"/>'
         for area in core.exclusions
     )
+    if core.lettering is not None:
+        parts.append(lettering_box(core.lettering))
     if core.outline is not None:
         corners = " ".join(f"{fmt(x)},{fmt(y)}" for x, y in core.outline)
         parts.append(

@@ -263,15 +263,25 @@ def panel_body(
 
     if outline is not None:
         parts.append("  </g>")
-        parts.append(
-            f'  <polygon points="{outline}" fill="none" stroke="{STROKE}" stroke-width="6"/>'
-        )
-    else:
-        parts.append(
-            f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-            f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
-        )
+    parts.extend(_border(core, outline))
     return [part for part in parts if part]
+
+
+def _border(core: PanelCore, outline: str | None) -> list[str]:
+    """A panel's border: its frame, or the sides that keep one when it bleeds (#281)."""
+    runs = geometry.border(core)
+    if runs is not None:
+        return [
+            f'  <polyline points="{_points(list(run))}" fill="none" stroke="{STROKE}" '
+            'stroke-width="6"/>'
+            for run in runs
+        ]
+    if outline is not None:
+        return [f'  <polygon points="{outline}" fill="none" stroke="{STROKE}" stroke-width="6"/>']
+    return [
+        f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
+        f'fill="none" stroke="{STROKE}" stroke-width="6"/>'
+    ]
 
 
 def in_painters_order(core: PanelCore) -> list[CoreActor | CoreMass]:

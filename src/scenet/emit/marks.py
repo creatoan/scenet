@@ -316,13 +316,24 @@ def marks(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list
     if air is not None:
         drawn.extend(_weather(air))
 
+    drawn.extend(_border(core))
+    return drawn
+
+
+def _border(core: PanelCore) -> list[Mark]:
+    """A panel's border: its frame, or the sides that keep one when it bleeds (#281)."""
+    runs = geometry.border(core)
+    if runs is not None:
+        return [
+            Mark("panel", Polygon(run, closed=False), stroke=INK, width=FRAME_STROKE_WIDTH)
+            for run in runs
+        ]
     frame: Shape = (
         Polygon(tuple(core.outline))
         if core.outline is not None
         else Rect(0.0, 0.0, core.width, core.height)
     )
-    drawn.append(Mark("panel", frame, stroke=INK, width=FRAME_STROKE_WIDTH))
-    return drawn
+    return [Mark("panel", frame, stroke=INK, width=FRAME_STROKE_WIDTH)]
 
 
 def _item(item: CoreActor | CoreMass) -> list[Mark]:

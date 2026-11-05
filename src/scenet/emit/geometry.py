@@ -15,7 +15,8 @@ import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from scenet.core import Box, CoreBalloon, CoreRun, CoreSfx
+from scenet.core import Box, CoreBalloon, CoreRun, CoreSfx, PanelCore
+from scenet.ir import Side
 from scenet.solve.text import FontMetrics, Styled, Typeface
 
 #: Ink: every line drawn and every letter lettered, unless Core says otherwise.
@@ -198,6 +199,45 @@ def glyph_walk(
             cursor += step * font_size
         placed.append(PlacedRun(run=run, metrics=metrics, scale=scale, origins=tuple(origins)))
     return placed
+
+
+def border(core: PanelCore) -> list[tuple[tuple[float, float], ...]] | None:
+    """The border of a panel that bleeds (#281): the sides that keep one, as open lines.
+
+    Each run of neighbouring sides that keep a border is one line, from corner to corner
+    clockwise, so a border that turns a corner is drawn as one stroke round it.
+
+    Returns:
+        The lines, none at all for a panel open on every side; or `None` for a panel that
+        does not bleed, whose border is its whole frame, closed.
+    """
+    if not core.open:
+        return None
+    corners = core.outline or (
+        (0.0, 0.0),
+        (core.width, 0.0),
+        (core.width, core.height),
+        (0.0, core.height),
+    )
+    sides = (Side.TOP, Side.RIGHT, Side.BOTTOM, Side.LEFT)
+    kept = [side not in core.open for side in sides]
+    if not any(kept):
+        return []
+    # Start just after an open side, so no run is split where the list wraps round.
+    start = next(index for index in range(4) if kept[index] and not kept[index - 1])
+    runs: list[tuple[tuple[float, float], ...]] = []
+    current: list[tuple[float, float]] = []
+    for step in range(4):
+        index = (start + step) % 4
+        if kept[index]:
+            current = current or [corners[index]]
+            current.append(corners[(index + 1) % 4])
+        elif current:
+            runs.append(tuple(current))
+            current = []
+    if current:
+        runs.append(tuple(current))
+    return runs
 
 
 def sfx_scale(effect: CoreSfx, metrics: FontMetrics) -> float:

@@ -13,6 +13,7 @@ order; the page's own shapes -- its sheet, an inset's ring -- are hidden.
 from collections.abc import Mapping, Sequence
 
 from scenet.core import PageCore, PanelCore
+from scenet.emit.debug_svg import TRIM
 from scenet.emit.strip import GROUP, HIDDEN, counted, placed_panel, reading_direction
 from scenet.emit.svg import fmt
 from scenet.ir import Direction
@@ -77,10 +78,14 @@ def render_page(
     if mono:
         panels = {name: core.as_mono() for name, core in panels.items()}
     access = aria and not debug
+    # A debug view of a page whose panels bleed shows the whole sheet, so what is cut shows.
+    sheet = debug and any(frame.bleed for frame in page.frames)
+    edge = page.bleed if sheet else 0.0
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(page.width)}" '
-        f'height="{fmt(page.height)}" viewBox="0 0 {fmt(page.width)} {fmt(page.height)}"'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{fmt(page.width + 2 * edge)}" '
+        f'height="{fmt(page.height + 2 * edge)}" viewBox="{fmt(-edge)} {fmt(-edge)} '
+        f'{fmt(page.width + 2 * edge)} {fmt(page.height + 2 * edge)}"'
         f"{GROUP if access else ''}>",
         *([f"  <title>A page of {counted(len(page.frames), 'panel')}.</title>"] if access else []),
         f'  <rect x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
@@ -95,6 +100,7 @@ def render_page(
             aria=aria,
             embed=embed,
         ),
+        *([_trim(page)] if sheet else []),
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
@@ -176,6 +182,15 @@ def render_pages(
             f'  <rect x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
             f'fill="{PAGE_FILL}" stroke="{PAGE_EDGE}" stroke-width="2"{hidden}/>'
         )
+        # A frame that bleeds runs past the sheet: each page is cut at its trim, as print
+        # cuts it, rather than spilling onto the next (#281).
+        clipped = any(frame.bleed for frame in page.frames)
+        if clipped:
+            parts.append(
+                f'  <clipPath id="page-{number}-sheet"><rect x="0" y="0" '
+                f'width="{fmt(page.width)}" height="{fmt(page.height)}"/></clipPath>'
+            )
+            parts.append(f'  <g clip-path="url(#page-{number}-sheet)">')
         parts.extend(
             _frames(
                 page,
@@ -188,6 +203,8 @@ def render_pages(
                 embed=embed,
             )
         )
+        if clipped:
+            parts.append("  </g>")
         parts.append("  </g>")
         position += len(page.frames)
         if rtl and number < len(pages):
@@ -196,6 +213,14 @@ def render_pages(
             cursor += page.width + spacing
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
+
+
+def _trim(page: PageCore) -> str:
+    """Over a debug page that bleeds, the trim; each panel's overlay draws its lettering box."""
+    return (
+        f'  <rect id="trim" x="0" y="0" width="{fmt(page.width)}" height="{fmt(page.height)}" '
+        f'fill="none" stroke="{TRIM}" stroke-width="3" stroke-dasharray="18 9"/>'
+    )
 
 
 def _frames(
