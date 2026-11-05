@@ -71,9 +71,15 @@ Print is told inks, not colours, and each mark is set by what it *is*:
   printer's RIP converts it; a JPEG and most PNGs go in as the file's own data. `gAMA`, `iCCP`
   and `sRGB` chunks are not carried over.
 
+**The fog and cloud print as the SVG draws them.** The veil is noise the SVG draws with a filter
+that PDF does not have, so print computes the same noise -- SVG 1.1's reference `feTurbulence`,
+with the seed and frequencies the compiler chose -- and lays it over the veil's ink as a soft
+mask, where the SVG puts it: above the masses behind the cast, below the ones in front, fading
+whatever is under it rather than darkening it. It is sampled once every two page units, 127 dpi,
+which prints no differently from twice as fine; a veiled panel grows by a few hundred kilobytes.
+
 `scenet build` says, in its notes, what print leaves out or changes:
 
-- the **fog and cloud** over a backdrop, which only SVG's noise filter can draw;
 - a **tinted** panel, printed in its greys;
 - a **picture below 300 dpi** at its size on the page, which is soft in print;
 - with `--live-text`, a **face that may not be embedded**, whose lettering prints in outlines.

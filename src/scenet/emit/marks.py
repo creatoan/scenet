@@ -205,7 +205,7 @@ class Picture:
 
 @dataclass(frozen=True, slots=True)
 class Veil:
-    """The fog or cloud over a backdrop: noise only SVG can draw."""
+    """The fog or cloud over a backdrop: the atmosphere's noise, over the panel (#282)."""
 
     tag: ClassVar[str] = "rect"
     width: float
@@ -245,7 +245,7 @@ class Mark:
 
     @property
     def is_veil(self) -> bool:
-        """Whether this is the veil, which only SVG paints."""
+        """Whether this is the veil, which the SVG draws with a filter and print as a mask."""
         return isinstance(self.shape, Veil)
 
 
@@ -295,7 +295,9 @@ def marks(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list
         if item.depth < 0:
             drawn.extend(_item(item))
     if air is not None and air.veil is not None:
-        drawn.append(Mark("veil", Veil(core.width, core.height, air.veil)))
+        # Painted in its grey's ink, as every paint prints its grey (#244).
+        tone = Paint(air.veil.colour or air.veil.tone, Role.TONE, air.veil.tone)
+        drawn.append(Mark("veil", Veil(core.width, core.height, air.veil), fill=tone))
     for item in ordered:
         if item.depth >= 0:
             drawn.extend(_item(item))

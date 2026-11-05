@@ -14,8 +14,9 @@ drift out of register. So every paint is set by what it *is*, never by convertin
 - a tinted palette prints its greys, the twins every colour was chosen against (#244).
 
 Nothing is decided here that the SVG does not already show. A page unit prints as a tenth
-of a millimetre. The fog veil, which only SVG's noise filter can draw, is left out, and
-:func:`print_notes` says so.
+of a millimetre. The fog and cloud veil, which the SVG draws with a noise filter PDF does not
+have, is the same noise computed here (`scenet.emit.turbulence`) and drawn as a soft mask over
+the veil's ink (#282).
 
 Deterministic, like every other output: objects in a fixed order, nothing compressed (zlib
 implementations differ from one platform to the next), no dates, and an `/ID` taken from
@@ -53,6 +54,7 @@ from scenet.emit.pdf_fonts import WIDTH_PLACES, Part, pdf_font, refusal
 from scenet.emit.pdf_fonts import width as advance_width
 from scenet.emit.pdf_images import Embedded, embed
 from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt, typeface_of
+from scenet.emit.turbulence import VEIL_STEP, veil_alpha
 from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
@@ -92,6 +94,9 @@ TEXT_PLACES = 6
 #: The faces a document's text is set in, by their resource name, each with every character
 #: lettered in it: what goes into the file, once each.
 Faces = dict[str, tuple[FontMetrics, set[str]]]
+
+#: The veils a document paints, by the name of the graphics state that masks each.
+Veils = dict[str, Veil]
 
 
 def lightness(colour: str) -> float:
@@ -183,11 +188,6 @@ def print_notes(
                         f"the face {metrics.family} {metrics.style} in panel {name!r} is not "
                         f"embedded: {reason}; its lettering prints in outlines"
                     )
-        air = core.backdrop.atmosphere if core.backdrop is not None else None
-        if air is not None and air.veil is not None:
-            notes.append(
-                f"print leaves out the fog and cloud over panel {name!r}: only SVG can draw them"
-            )
         if core.as_mono() != core:
             notes.append(f"panel {name!r} is tinted; print draws it in its greys")
         image = core.backdrop.image if core.backdrop is not None else None
@@ -268,7 +268,7 @@ def render_pdf(
     document = _Document(
         pictures={name: _embedded(image, images) for name, image in pictures.items()}
     )
-    lettering = _Lettering(fonts, live_text, document.faces)
+    lettering = _Resources(fonts, live_text, document.faces, document.veils)
     if pages:
         for page in pages:
             document.add_page(
@@ -303,24 +303,25 @@ def _embedded(image: CoreImage, images: Mapping[str, bytes] | None) -> Embedded:
 
 
 @dataclass(frozen=True, slots=True)
-class _Lettering:
-    """How a document is lettered.
+class _Resources:
+    """What a document's panels draw from, gathered as they are drawn.
 
-    The fonts it names, whether in text or in outlines, and the faces its text has been set
-    in so far.
+    The fonts they name, whether lettering is set in text or in outlines, the faces its text
+    has been set in, and the veils painted, so each goes into the file once.
     """
 
     fonts: Mapping[str, FontMetrics] | None
     live_text: bool
     faces: Faces
+    veils: Veils
 
 
-def _lone_content(core: PanelCore, lettering: _Lettering) -> list[str]:
+def _lone_content(core: PanelCore, lettering: _Resources) -> list[str]:
     return ["q", *_clip(core), *_content(core, lettering), "Q"]
 
 
 def _page_content(
-    page: PageCore, panels: Mapping[str, PanelCore], lettering: _Lettering
+    page: PageCore, panels: Mapping[str, PanelCore], lettering: _Resources
 ) -> list[str]:
     """A page: its sheet, then every panel at its frame, in reading order.
 
@@ -368,7 +369,7 @@ def panel_content(
 ) -> list[str]:
     """A panel's marks as PDF content, one `q ... Q` block each, in painting order.
 
-    The veil is left out: it is noise only SVG can draw.
+    The veil is a soft mask over its ink, named by the `gs` its block sets.
 
     Args:
         core: The compiled panel.
@@ -382,20 +383,69 @@ def panel_content(
     Raises:
         ValueError: The panel is drawn over a supplied picture, or names a font not given.
     """
-    return _content(core, _Lettering(fonts, live_text, {}))
+    return _content(core, _Resources(fonts, live_text, {}, {}))
 
 
-def _content(core: PanelCore, lettering: _Lettering) -> list[str]:
+def _content(core: PanelCore, lettering: _Resources) -> list[str]:
     family = typeface_of(core, fonts=lettering.fonts)
     lines: list[str] = []
     for mark in marks(core, family, live_text=lettering.live_text):
-        if mark.is_veil:
-            continue
-        if isinstance(mark.shape, Text):
+        if isinstance(mark.shape, Veil):
+            lines += _veil(mark, mark.shape, lettering.veils)
+        elif isinstance(mark.shape, Text):
             lines += _text(mark, mark.shape, lettering.faces)
         else:
             lines += _painted(mark)
     return lines
+
+
+def _veil(mark: Mark, shape: Veil, veils: Veils) -> list[str]:
+    """The fog or cloud: the panel filled with the veil's ink, seen through its noise.
+
+    The noise is a luminosity soft mask, set by the block's own graphics state; it knocks
+    out, as the SVG's veil fades whatever is under it towards its tone.
+    """
+    veil = shape.veil
+    held = (
+        f"{veil.seed}:{veil.opacity}:{veil.frequency}:{veil.octaves}:{shape.width}:{shape.height}"
+    )
+    name = f"GSV{hashlib.sha256(held.encode()).hexdigest()[:16]}"
+    veils.setdefault(name, shape)
+    if mark.fill is None:  # pragma: no cover - `marks` always gives the veil its ink
+        raise TypeError("a veil is painted in an ink")
+    return [
+        "q",
+        f"/{name} gs",
+        f"{_cmyk(ink(mark.fill))} k",
+        f"0 0 {fmt(shape.width)} {fmt(shape.height)} re",
+        "f",
+        "Q",
+    ]
+
+
+def _veil_objects(shape: Veil, number: int) -> list[bytes]:
+    """A veil's noise: its alpha image, then the transparency group that draws it."""
+    alpha = veil_alpha(shape.veil, shape.width, shape.height)
+    across, down = fmt(alpha.columns * VEIL_STEP), fmt(alpha.rows * VEIL_STEP)
+    image = (
+        f"/Type /XObject /Subtype /Image /Width {alpha.columns} /Height {alpha.rows} "
+        "/ColorSpace /DeviceGray /BitsPerComponent 8"
+    )
+    group = (
+        f"/Type /XObject /Subtype /Form /BBox [0 0 {fmt(shape.width)} {fmt(shape.height)}] "
+        "/Group << /Type /Group /S /Transparency /CS /DeviceGray >> "
+        f"/Resources << /XObject << /Alpha {number} 0 R >> >>"
+    )
+    drawing = f"q {across} 0 0 -{down} 0 {down} cm /Alpha Do Q".encode()
+    return [_stream(image, alpha.data), _stream(group, drawing)]
+
+
+def _veil_state(group: int) -> str:
+    """The graphics state a veil is painted in: knocking out, through its noise."""
+    return (
+        "<< /Type /ExtGState /op false /OP false /OPM 1 "
+        f"/SMask << /Type /Mask /S /Luminosity /G {group} 0 R >> >>"
+    )
 
 
 def _faces_lettered(core: PanelCore, fonts: Mapping[str, FontMetrics] | None) -> list[FontMetrics]:
@@ -584,8 +634,6 @@ def _path(shape: Shape) -> tuple[list[str], str]:  # noqa: PLR0911 -- one return
         return [], _pointer(shape.shape)
     if isinstance(shape, Glyph):
         return _glyph_transform(shape), shape.metrics.glyph_pdf_path(shape.char)
-    if isinstance(shape, Veil):  # pragma: no cover - the veil is filtered out above
-        return [], ""
     raise TypeError(f"no PDF path for {shape!r}")  # pragma: no cover
 
 
@@ -698,6 +746,7 @@ class _Document:
     pages: list[tuple[float, float, float, list[str]]] = field(default_factory=list)
     pictures: dict[str, Embedded] = field(default_factory=dict)
     faces: Faces = field(default_factory=dict)
+    veils: Veils = field(default_factory=dict)
 
     def add_page(
         self, width: float, height: float, content: list[str], *, bleed: float = 0.0
@@ -709,8 +758,9 @@ class _Document:
         """The whole file.
 
         Catalog 1, pages 2, then each page and its content, then each picture and its soft
-        mask, once however many pages draw it, then each face text is set in, five objects
-        each (`scenet.emit.pdf_fonts`), then the document info.
+        mask, once however many pages draw it, then each veil's noise and the group that draws
+        it, then each face text is set in, five objects each (`scenet.emit.pdf_fonts`), then
+        the document info.
         """
         count = len(self.pages)
         kids = " ".join(f"{3 + 2 * index} 0 R" for index in range(count))
@@ -732,6 +782,10 @@ class _Document:
             if picture.mask is not None:
                 pictures.append(_stream(*picture.mask))
                 next_number += 1
+        for name, shape in self.veils.items():
+            numbers[name] = next_number + 1
+            pictures += _veil_objects(shape, next_number)
+            next_number += 2
         for name, (metrics, characters) in self.faces.items():
             numbers[name] = next_number
             pictures += [_part(part) for part in pdf_font(metrics, characters).objects(next_number)]
@@ -744,7 +798,10 @@ class _Document:
             trim = _box(bleed * k, bleed * k, (width + bleed) * k, (height + bleed) * k)
             states = sorted({part.split()[0][1:] for part in content if part.endswith(" gs")})
             graphics = " ".join(
-                f"/{name} {_GraphicsState.parse(name).dictionary()}" for name in states
+                f"/{name} {_veil_state(numbers[name])}"
+                if name in self.veils
+                else f"/{name} {_GraphicsState.parse(name).dictionary()}"
+                for name in states
             )
             drawn = sorted({part.split()[0][1:] for part in content if part.endswith(" Do")})
             images = " ".join(f"/{name} {numbers[name]} 0 R" for name in drawn)

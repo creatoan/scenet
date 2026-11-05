@@ -595,6 +595,22 @@ asks and what renderers and editors do, which differ.
 | Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
 | EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
 
+### The veil's noise — SVG 1.1's `feTurbulence` and Park and Miller
+
+[SVG 1.1, `feTurbulence`](https://www.w3.org/TR/SVG11/filters.html#feTurbulenceElement) ·
+[Filter Effects 1, `feTurbulence`](https://www.w3.org/TR/filter-effects-1/#feTurbulenceElement) ·
+[Park and Miller, CACM 31(10), 1988](https://doi.org/10.1145/63039.63042) ·
+[Skia `SkPerlinNoiseShader`](https://skia.googlesource.com/skia/+/refs/heads/main/src/shaders/SkPerlinNoiseShader.cpp)
+
+How print draws the fog and cloud the SVG leaves to a filter (#282).
+
+| Question | What the sources say | What Scenet computes |
+|---|---|---|
+| Which algorithm | SVG 1.1 gives its C code as the exact algorithm. Filter Effects 1 redraws a zero gradient and rejects one longer than 1, which moves every later gradient. Browsers implement SVG 1.1's. | SVG 1.1's. |
+| A zero gradient | SVG 1.1's code divides 0 by 0. Skia keeps (0, 0); Gecko redraws; resvg divides. | (0, 0), as Skia: what Edge and Chrome paint. |
+| The random numbers | Park and Miller's minimal standard, whose 10,000th number from seed 1 is 1043618065. | The same, and that number is a test. |
+| Colour from noise | `fractalNoise`: `(sum * 255 + 255) / 2`, clamped. | `(sum + 1) / 2` clamped, then the colour matrix's alpha, rounded to a byte once. |
+
 ### Fonts in print — ISO 32000, the OpenType `OS/2` table, the OFL FAQ
 
 [ISO 32000-1, §9.7 and §9.9](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf) ·

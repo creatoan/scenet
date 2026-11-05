@@ -12,6 +12,12 @@ below 1.0 means.
 
 ### Added
 
+- **The fog and cloud veil in print** (#282). The print PDF drew no veil, and said so; it now
+  carries the same noise the SVG's `feTurbulence` draws, computed by the compiler from SVG 1.1's
+  reference algorithm and laid over the veil's ink as a soft mask, where the SVG paints it, at
+  127 dpi. Where the reference code would divide by a zero gradient, the gradient stays zero, as
+  Chromium keeps it. `scenet.emit.turbulence` computes it, in numpy, to the same bytes everywhere;
+  `print_notes` no longer mentions the veil.
 - **Live text in the print PDF** (#284). `scenet build --pdf --live-text`, `render_pdf(...,
   live_text=True)` and the playground's Print tab with live text on letter balloons and
   captions as text, so the words can be selected, searched and copied. Each face is embedded

@@ -296,6 +296,27 @@ ink is `#111111`, which a conversion would make 93% K.
 - **A tinted palette prints its greys.** Colour is a twin of value; print takes the value. CMYK
   twins are their own issue.
 
+## The veil prints as the same noise
+
+The fog and cloud veil is `feTurbulence` in the SVG, and PDF has no such filter (#282). Leaving it
+out changed a panel's values most -- the near ground of a foggy dawn went much darker -- and a
+flat tint at the veil's mean opacity kept the values but lost the fog. So print computes the
+noise itself and carries it as a raster, a luminosity soft mask over the veil's ink, compared on
+proofs against the SVG as Edge draws it.
+
+- **SVG 1.1's algorithm, which browsers run.** SVG 1.1 gives C code as "the exact algorithm used
+  for this filter effect"; the Filter Effects draft has since changed how it draws its gradients,
+  and browsers have not followed. Print follows the screen.
+- **A zero gradient stays zero.** For 243 of the 65,536 seeds Scenet writes, the reference code
+  draws a (0, 0) gradient and divides by its length. Chromium keeps it (0, 0), and so does print.
+- **127 dpi.** One sample every two units: about fifteen across the finest octave of fog, and no
+  different printed from 254 dpi at a quarter of the bytes and time.
+- **Deterministic arithmetic.** float64 addition, subtraction, multiplication and `floor`, octaves
+  summed in order, nothing a platform or a vector unit could reorder; the same veil is the same
+  bytes, in the playground too. The test oracle is the C code transliterated line by line.
+- **It knocks out.** A black tint that overprinted could only darken; the SVG's veil fades what is
+  under it towards its tone, lightening a dark scene and greying a picture.
+
 ## Live text in print is exact, and asked for
 
 `--live-text` letters the print PDF in text as it letters the SVG (#284): one flag, one meaning,

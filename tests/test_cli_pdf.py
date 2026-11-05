@@ -107,7 +107,8 @@ class TestNotes:
     def test_the_fog_is_printed_and_so_not_said(self, tmp_path: Path, capsys):
         source = _write(tmp_path, "fog.panel.yaml", FOGGY)
         assert cli.main(["build", str(source), "--pdf"]) == 0
-        assert "fog" not in capsys.readouterr().out
+        notes = [line for line in capsys.readouterr().out.splitlines() if line.startswith("note:")]
+        assert not [note for note in notes if "fog" in note or "cloud" in note]
 
     def test_quiet_says_nothing(self, tmp_path: Path, capsys):
         source = _write(tmp_path, "fog.panel.yaml", FOGGY)

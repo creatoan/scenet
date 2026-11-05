@@ -124,8 +124,9 @@ def test_one_veil_drawn_twice_is_carried_once():
     )
     cores = {name: result.core for name, result in book.panels.items()}
     data = render_pdf(book.pages, cores)
+    # Each page lists the state that masks it; the noise and its group are written once.
     assert data.count(b"/Subtype /Form") == 1
-    assert data.count(b"/Luminosity") == 1
+    assert data.count(b"/ColorSpace /DeviceGray /BitsPerComponent 8") == 1
 
 
 def test_a_panel_without_a_veil_has_no_mask():

@@ -91,12 +91,12 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   printed. A page unit prints as 0.1 mm, and a page's `bleed` runs the sheet past its trim
   (TrimBox and BleedBox). Lettering, balloon borders and every line are 100% black and
   overprint; the paper knocks out; greys are black tints, the night foreground rich black; a
-  tinted palette prints its greys; supplied pictures go in with their pixels unchanged. It
+  tinted palette prints its greys; supplied pictures go in with their pixels unchanged; the fog
+  and cloud veil is the SVG's noise, rasterised at 127 dpi. It
   letters in outlines, or with `--live-text` in its embedded faces. The other SVG options do
   not change it — it prints greys and carries its pictures, so `--mono`, `--no-aria`,
-  `--embed-images` and `--strip` leave its bytes as they are. Notes say what print leaves out:
-  the fog and cloud veil, a palette's colours, a picture below 300 dpi, a face that may not be
-  embedded. No PDF/X conformance is claimed. See
+  `--embed-images` and `--strip` leave its bytes as they are. Notes say what print leaves out
+  or changes: a palette's colours, a picture below 300 dpi, a face that may not be embedded. No PDF/X conformance is claimed. See
   [Print a comic](../howto/print_a_comic.md).
 
 `--quiet`
