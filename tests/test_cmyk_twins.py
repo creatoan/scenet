@@ -23,6 +23,8 @@ from scenet.solve.balloons import CAPTION_COLOURS
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILES = ROOT / "scripts" / "profiles"
+#: Where each profile lives: sRGB in the package, which tags RGB pictures with it (#283).
+FOLDERS = {"sRGB2014.icc": ROOT / "src" / "scenet" / "profiles", "GRACoL2013_CRPC6.icc": PROFILES}
 
 #: The profiles as published: a changed byte is an altered profile, which neither licence allows.
 DIGESTS = {
@@ -55,7 +57,7 @@ COLOURS = sorted(
 
 @pytest.mark.parametrize("name", sorted(DIGESTS))
 def test_the_profiles_are_as_published(name: str):
-    assert hashlib.sha256((PROFILES / name).read_bytes()).hexdigest() == DIGESTS[name]
+    assert hashlib.sha256((FOLDERS[name] / name).read_bytes()).hexdigest() == DIGESTS[name]
 
 
 def test_the_condition_is_the_registrys_name():
