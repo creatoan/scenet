@@ -167,6 +167,10 @@ below 1.0 means.
 
 ### Fixed
 
+- **The playground's print PDF is the one `scenet build --pdf` writes** (#294). It carried the
+  picture of a panel no page places, which nothing draws, and refused the whole document when
+  that picture was one print cannot carry, such as a lossless JPEG. `render_pdf` now takes only
+  the pictures of the panels it prints.
 - **`scripts/build_site.py` builds on Windows.** It read the releases `gh` lists in the system's
   code page rather than in UTF-8, so a curly quote in a release's notes stopped the build
   before it downloaded anything.
