@@ -441,3 +441,27 @@ def test_a_bleeding_panel_inks_the_bleed(tmp_path: Path):
 
     assert any(k for *_, k in band(BLEEDING, "bled"))
     assert not any(any(pixel) for pixel in band(PLAIN, "unbled"))
+
+
+#: A page's transparency group, as the writer puts it on every page (#283).
+PAGE_GROUP = b"/Group << /Type /Group /S /Transparency /CS /DeviceCMYK >>"
+
+
+@needs_ghostscript
+@pytest.mark.parametrize("name", ["21-atmosphere.scene.yaml", "70-a-page-for-print.scene.yaml"])
+def test_the_page_group_moves_no_plate(tmp_path: Path, name: str):
+    """Blending in CMYK is what Ghostscript's separations already did (#283).
+
+    The group is blanked out with as many spaces, so every offset in the file still holds,
+    and the plates are compared pixel for pixel: rain at 85%, the veil's mask and the
+    overprinting lettering separate the same with the group as without it.
+    """
+    book = compile_book_file(GALLERY / name)
+    cores = {key: result.core for key, result in book.panels.items()}
+    pdf = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+    assert PAGE_GROUP in pdf
+    without = pdf.replace(PAGE_GROUP, b" " * len(PAGE_GROUP))
+    stem = name.split(".", maxsplit=1)[0]
+    grouped = _separate(pdf, _folder(tmp_path, f"group-{stem}"))
+    plain = _separate(without, _folder(tmp_path, f"no-group-{stem}"))
+    assert grouped.pixels() == plain.pixels()
