@@ -48,7 +48,8 @@ def _painted(core: PanelCore, book: Book) -> list[tuple[Mark, list[str]]]:
 
 
 def _twin(colour: str) -> str:
-    return f"{_cmyk(tuple(value / 100 for value in CMYK[colour]))} k"
+    cyan, magenta, yellow, black = CMYK[colour]
+    return f"{_cmyk((cyan / 100, magenta / 100, yellow / 100, black / 100))} k"
 
 
 def test_every_tinted_paint_prints_its_twin():
