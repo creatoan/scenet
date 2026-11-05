@@ -101,9 +101,10 @@ class TestInks:
         assert ink(paint) == (0.0, 0.0, 0.0, 0.0)
         assert not overprints(paint)
 
-    def test_a_grey_is_a_black_tint_of_its_darkness(self):
+    def test_a_grey_is_a_black_tint_that_knocks_out(self):
         paint = Paint("#707070", Role.TONE, "#707070")
-        assert ink(paint) == pytest.approx((0.0, 0.0, 0.0, 1.0 - lightness("#707070")))
+        assert ink(paint)[:3] == (0.0, 0.0, 0.0)
+        assert 0 < ink(paint)[3] < 1
         assert not overprints(paint)
 
     def test_a_tinted_paint_prints_its_cmyk_twin(self):

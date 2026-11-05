@@ -30,7 +30,7 @@ from shapely.geometry import Polygon
 
 from scenet.core import PanelCore
 from scenet.emit.cmyk import CMYK
-from scenet.emit.pdf import render_pdf
+from scenet.emit.pdf import black_for, render_pdf
 from scenet.emit.pdf_fonts import pdf_font
 from scenet.ir import Face
 from scenet.pipeline import Book, compile_book, compile_book_file
@@ -404,3 +404,22 @@ def test_the_fog_varies_the_black_plate(tmp_path: Path):
     shades = {k for *_, k in fogged.within(*band)}
     assert len(shades) > len({k for *_, k in flat.within(*band)}) + 10
     assert all(c == m == y == 0 for c, m, y, _ in fogged.pixels())
+
+
+@needs_ghostscript
+def test_a_grey_prints_on_black_alone_at_its_ramps_black(tmp_path: Path):
+    """A grey mass inks the black plate at the K that prints its lightness (#280)."""
+    book = compile_book(
+        "cast: {a: {reference: alice}}\npanels: {one: {setting: {place: street, time: day}}}\n"
+    )
+    core, pdf = _alone(book, "one")
+    assert core.backdrop is not None
+    greys = [mass for mass in core.backdrop.masses if mass.tone == "#707070"]
+    assert greys
+    plates = _separate(pdf, _folder(tmp_path, "grey-mass"))
+    wanted = round(black_for("#707070") * 255)
+    shape = Polygon(greys[0].polygon).buffer(-8)
+    point = shape.representative_point()
+    c, m, y, k = plates.at(point.x, point.y)
+    assert c == m == y == 0
+    assert abs(k - wanted) <= 3
