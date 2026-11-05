@@ -17,11 +17,11 @@ import pytest
 from pypdf import PdfReader
 from pypdf.generic import DictionaryObject
 
-from scenet.emit.pdf import print_notes, render_pdf
+from scenet.emit.pdf import print_notes, printed_panels, render_pdf
 from scenet.emit.pdf_images import _paeth as paeth_predictor
 from scenet.emit.pdf_images import embed
 from scenet.pipeline import compile_book_file
-from tests.images import PNG_SIGNATURE, chunk
+from tests.images import PNG_SIGNATURE, chunk, jpeg
 
 GALLERY = Path(__file__).parent.parent / "examples" / "gallery"
 
@@ -262,6 +262,43 @@ def test_a_gallery_picture_prints(name: str):
     assert isinstance(resources, DictionaryObject)
     assert "/XObject" in resources
     assert data == render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+
+
+@pytest.mark.parametrize(
+    ("picture", "data"),
+    [
+        ("art/street.png", (GALLERY / "art" / "street.png").read_bytes()),
+        # A lossless JPEG: the SVG draws it, and no PDF reader decodes it.
+        ("art/lossless.jpg", jpeg(400, 300, frame=0xC3)),
+    ],
+    ids=["printable", "unprintable"],
+)
+def test_a_picture_on_no_page_is_not_carried(tmp_path: Path, picture: str, data: bytes):
+    """Only the panels a page places are printed, so only their pictures are carried.
+
+    The playground hands `render_pdf` every panel, and `scenet build --pdf` only the
+    printed ones: both must write the same PDF, and neither may refuse a picture it does
+    not print.
+    """
+    folder = tmp_path / "comic"
+    (folder / "art").mkdir(parents=True)
+    (folder / picture).write_bytes(data)
+    source = folder / "page.scene.yaml"
+    source.write_text(
+        "cast: {a: {reference: alice}}\n"
+        "pages: [{tiers: [{panels: [shown]}]}]\n"
+        "panels:\n"
+        "  shown: {}\n"
+        f"  spare: {{setting: {{image: {picture}}}}}\n",
+        encoding="utf-8",
+    )
+    book = compile_book_file(source)
+    cores = {key: result.core for key, result in book.panels.items()}
+    printed = printed_panels(book.pages, cores)
+    assert list(printed) == ["shown"]
+    every = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+    assert every == render_pdf(book.pages, printed, fonts=book.fonts, images=book.images)
+    assert b"/XObject" not in every
 
 
 def test_a_picture_not_handed_over_is_refused():
