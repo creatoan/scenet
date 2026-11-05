@@ -639,6 +639,23 @@ How a face is carried into the print PDF for live text (#284).
 | Which PDF font | A Type0 font with Identity-H takes two-byte codes; a CIDFontType2 maps them to glyphs through `CIDToGIDMap`, a CIDFontType0 over a CFF without CID operators reads them as glyph ids; `FontFile3 /OpenType` is PDF 1.6. | Glyph ids as codes, kept by the subsetter; TrueType in `FontFile2`, CFF in its OpenType file; CFF2 and CID-keyed CFF left in outlines. |
 | Where glyphs land | A glyph's displacement is its `W` width less the `TJ` adjustment, in thousandths of the type size. | Adjustments computed from the widths as written, so every glyph lands on the solver's step. |
 
+### PDF/X — ISO 15930-7, output intents, and what can check them
+
+[ISO 15930-7:2010, PDF/X-4, in the Library of Congress format description](https://www.loc.gov/preservation/digital/formats/fdd/fdd000124.shtml) ·
+[ISO 32000-1, §14.11.5, output intents](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf) ·
+[ICC registry, CGATS21-2-CRPC6](https://registry.color.org/cmyk-registry/cgats21-2-crpc6) ·
+[ICC, sRGB profiles](https://www.color.org/srgbprofiles.xalter) ·
+[veraPDF validation profiles](https://docs.verapdf.org/cli/validation/)
+
+How far the print PDF goes toward PDF/X-4, and why it claims nothing (#283).
+
+| Question | What the sources say | What Scenet writes |
+|---|---|---|
+| What PDF/X-4 asks | Built on PDF 1.6; keeps live transparency and device-independent colour; an output intent with the printing condition's profile embedded (X-4p may reference it); XMP with `GTS_PDFXVersion`, creation, modification and metadata dates, a document and version id; `Trapped` said; every font embedded; a TrimBox or ArtBox inside the BleedBox; no encryption, LZW, JBIG2 or JPEG 2000. | Everything that holds whatever a preflight would say: PDF 1.6, `/Trapped /False`, the boxes, embedded fonts, none of the forbidden filters. No XMP, no dates, no `GTS_PDFXVersion`. |
+| An output intent without its profile | ISO 32000-1, Table 365: `DestOutputProfile` is required only when `OutputConditionIdentifier` does not name a standard condition. The registry's Reference Name for GRACoL 2013 is `CGATS21-2-CRPC6`. | An identifier-only intent, `/S /GTS_PDFX`, naming the condition the CMYK twins were made for. Valid PDF; not PDF/X-4, which embeds the profile. |
+| RGB pictures | Device RGB under a CMYK output intent is not PDF/X-4; an `ICCBased` space says what the numbers mean. The ICC's `sRGB2014.icc` "may be copied, distributed, embedded" unaltered. | Every RGB and indexed-RGB picture tagged with `sRGB2014.icc`, written once; grey and CMYK pictures left in their device space, so black stays K alone. |
+| What can check it | veraPDF's profiles are PDF/A, PDF/UA and WTPDF; PDFBox's preflight is PDF/A-1b; the free X-1a checkers do not read X-4. Acrobat Pro, callas pdfToolbox and Enfocus PitStop check PDF/X-4. | No claim: none of those was available, and a claim nothing has checked is worse than none. |
+
 ### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
 
 **Load-bearing** for `--conditioning` (#72), as formats and consumers rather than as code.

@@ -375,6 +375,36 @@ for live text.
   subset tag taken from what it holds, nothing compressed. The playground's own fontTools may
   subset to other bytes; that is said, not promised away.
 
+## Print claims no PDF/X, and says what its colours are
+
+A printer may ask for PDF/X-4. Scenet's print PDF does not claim it (#283), because nothing
+free can check the claim: veraPDF validates PDF/A and PDF/UA, PDFBox PDF/A-1b, and the free
+X-1a checkers do not read X-4. A claim no preflight has checked is worse than none, since a
+RIP or a printer trusts it. Writing one would also take what the determinism contract rules
+out or the package should not carry: creation and modification dates, which would have to be
+given as input, and the condition's 3.5 MB profile embedded in every PDF.
+
+What the file does carry is true of it whatever a preflight would say:
+
+- **An output intent naming the printing condition**, `CGATS21-2-CRPC6`, by the ICC registry's
+  identifier, without its profile: valid PDF for a registered condition, and a statement of what
+  the CMYK twins were made for. Preflight tools read PDF/X from `GTS_PDFXVersion`, never from the
+  intent, so it claims nothing.
+- **RGB pictures in `ICCBased` sRGB**, the ICC's own profile, shipped in the package and written
+  once per file. Untagged, a picture was already read as sRGB by every viewer; tagged, a RIP no
+  longer guesses. A grey picture stays `DeviceGray` and a CMYK JPEG `DeviceCMYK`, so black stays K
+  alone. A picture's own embedded profile is not carried: it would need reassembling and
+  validating, and could be one PDF cannot hold.
+- **Every page blends in CMYK.** Without a page group, a RIP picks the blending space, and one
+  that blends in RGB turns rain over a K-only grey into four-colour black. With it, Ghostscript's
+  plates are the same as before, which a test checks.
+- **`/Trapped /False`**: Scenet traps nothing.
+
+A test checks every gallery PDF against the PDF/X-4 requirements the writer can meet -- boxes,
+embedded fonts, no forbidden filter, version -- and that what a claim would need stays absent. A
+printer finishes the file with Acrobat Pro's "Convert to PDF/X-4", callas pdfToolbox or Enfocus
+PitStop, given GRACoL 2013's profile.
+
 ## A panel bleeds to the bleed line, framed to the trim
 
 A placement's `bleed` runs its frame past the trim, out to the bleed line, with no border there

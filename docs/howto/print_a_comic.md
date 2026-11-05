@@ -137,10 +137,15 @@ slightly different bytes than the command line does: the same letters, in the sa
 
 ## What it does not do
 
-- **No PDF/X conformance is claimed.** Rain is drawn at 85%, which is live transparency, and
-  pictures stay RGB, which rules out PDF/X-1a; there is no output intent. The file has a TrimBox,
-  a BleedBox and CMYK vectors, which is what most printers check first, but only a preflight tool
-  can say more.
+- **No PDF/X conformance is claimed.** No free tool can check PDF/X-4, and none was run, so
+  the file says nothing about it. It goes as far as it can without one: PDF 1.6, a TrimBox and a
+  BleedBox, CMYK vectors, every font embedded, RGB pictures tagged sRGB, every page blending in
+  CMYK, `/Trapped /False`, and an output intent naming GRACoL 2013, `CGATS21-2-CRPC6`, without
+  embedding its profile. What PDF/X-4 still needs is dates, XMP metadata with `GTS_PDFXVersion`,
+  and the condition's profile embedded. If the printer asks for PDF/X-4, convert it with Acrobat
+  Pro's Preflight ("Convert to PDF/X-4"), callas pdfToolbox or Enfocus PitStop, with GRACoL 2013
+  as the output condition, and let that tool's report, not Scenet, say it conforms. PDF/X-1a is
+  further: rain at 85% is live transparency, and pictures are RGB.
 - **No crop marks.** The TrimBox and the BleedBox carry the trim; a printer's imposition adds the
   marks.
 - **No tagged text.** With `--live-text` the words can be selected and searched, but the PDF has

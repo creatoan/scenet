@@ -17,7 +17,9 @@ below 1.0 means.
   keep their device space. An output intent names the printing condition the CMYK twins were
   made for, `CGATS21-2-CRPC6`, by its registry identifier, without embedding its profile. Every
   page blends its transparency in CMYK, and the file says it is not trapped. No PDF/X
-  conformance is claimed: no free tool can check it.
+  conformance is claimed: no free tool can check it. A test holds every gallery PDF to the
+  PDF/X-4 requirements the writer can meet, and the print how-to says what is missing and how a
+  printer converts the file.
 - **Panels that bleed past the trim** (#281). A page placement's `bleed: true` runs its frame out
   to the bleed line on every side that reaches the page's margin, `bleed: [top, left]` on those
   sides; no border is drawn there. The cast is staged in what the reader sees, out to the trim,
