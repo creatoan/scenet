@@ -126,3 +126,11 @@ def test_the_print_pdf_carries_the_art_into_the_bleed():
     cores = {name: result.core for name, result in book.panels.items()}
     data = render_pdf(book.pages, cores)
     assert data.startswith(b"%PDF")
+
+
+def test_a_border_round_three_sides_is_one_line():
+    """Open at the bottom alone, the border runs from the bottom left round to the bottom
+    right as one stroke, however the sides are listed (#310)."""
+    core = _plain().panels["wide"].core.model_copy(update={"open": (Side.BOTTOM,)})
+    w, h = core.width, core.height
+    assert geometry.border(core) == [((0.0, h), (0.0, 0.0), (w, 0.0), (w, h))]

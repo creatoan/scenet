@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 import yaml
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
+from fontTools.ttLib import TTFont
 from pypdf import PdfReader
 from pypdf.generic import ArrayObject, ContentStream, DictionaryObject, TextStringObject
 
@@ -233,3 +235,76 @@ class TestAFacePrintMayNotCarry:
         notes = print_notes(cores, live_text=True, fonts=book.fonts)
         assert any("not embedded" in note and "fsType 0x0002" in note for note in notes)
         assert not print_notes(cores, fonts=book.fonts)
+
+
+class TestFacesPrintMayNotCarry:
+    """Lettering in faces print may not embed is drawn as its outlines would be (#310)."""
+
+    @pytest.fixture
+    def book(self, tmp_path: Path) -> Book:
+        folder = tmp_path / "comic"
+        (folder / "fonts").mkdir(parents=True)
+        for name, postscript in (("R", "Test-Regular"), ("RB", "Test-BoldItalic")):
+            built = face(tmp_path / f"{name}.ttf", fs_type=0x0002, postscript_name=postscript)
+            shutil.copy(built, folder / "fonts" / f"{name}.ttf")
+        source = folder / "panel.panel.yaml"
+        source.write_text(
+            "lettering: {font: {regular: fonts/R.ttf, bold_italic: fonts/RB.ttf}}\n"
+            "cast: {a: {reference: alice}}\n"
+            "script: [{say: {by: a, text: AB _BA_}}]\n",
+            encoding="utf-8",
+        )
+        return compile_book_file(source)
+
+    @staticmethod
+    def _glyphs(lines: list[str]) -> list[tuple[str, ...]]:
+        """Each glyph's place and outline; outlines alone set their ink glyph by glyph."""
+        drawn = [line for line in lines if not line.endswith((" gs", " k", " K"))]
+        return [
+            tuple(drawn[k + 1 : k + 4])
+            for k, line in enumerate(drawn)
+            if line == "q" and k + 1 < len(drawn) and drawn[k + 1].startswith("1 0 0 1 ")
+        ]
+
+    def test_every_run_is_drawn_glyph_by_glyph(self, book: Book):
+        core = next(iter(book.panels.values())).core
+        live = panel_content(core, book.fonts, live_text=True)
+        outlines = panel_content(core, book.fonts)
+        glyphs = self._glyphs(live)
+        assert len(glyphs) == 4
+        assert glyphs == self._glyphs(outlines)
+        for k, line in enumerate(live):
+            if line == "q" and live[k + 1].startswith("1 0 0 1 "):
+                assert live[k + 4 : k + 6] == ["f", "Q"]
+
+    def test_each_face_is_said(self, book: Book):
+        cores = {name: result.core for name, result in book.panels.items()}
+        notes = print_notes(cores, live_text=True, fonts=book.fonts)
+        assert len([note for note in notes if "not embedded" in note]) == 2
+
+
+def test_a_kern_in_a_face_of_another_size_is_written_to_the_millionth(tmp_path: Path):
+    """In a 2048-unit face, A's width less its kerned step is not a whole thousandth (#310).
+
+    A is 600 units wide and kerned -37 before B: its width is 600 x 1000 / 2048 thousandths of
+    an em and its step 563 x 1000 / 2048, so the adjustment is 37 x 1000 / 2048, 18.06640625.
+    """
+    folder = tmp_path / "comic"
+    (folder / "fonts").mkdir(parents=True)
+    font = TTFont(str(face(tmp_path / "k.ttf")))
+    font["head"].unitsPerEm = 2048  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue] -- fontTools tables are untyped
+    addOpenTypeFeaturesFromString(font, "feature kern { pos A B -37; } kern;")
+    font.save(str(folder / "fonts" / "K.ttf"))
+    source = folder / "panel.panel.yaml"
+    source.write_text(
+        "lettering: {font: fonts/K.ttf}\n"
+        "cast: {a: {reference: alice}}\n"
+        "script: [{say: {by: a, text: AB}}]\n",
+        encoding="utf-8",
+    )
+    book = compile_book_file(source)
+    core = next(iter(book.panels.values())).core
+    shown = [
+        line for line in panel_content(core, book.fonts, live_text=True) if line.endswith("TJ")
+    ]
+    assert shown == ["[<0001> 18.066406 <0002>] TJ"]

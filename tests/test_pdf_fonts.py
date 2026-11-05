@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ from fontTools.ttLib import TTFont
 from pypdf import PdfReader
 
 from scenet.emit.pdf_fonts import Embedding, embedding, pdf_font, refusal
+from scenet.emit.svg import fmt
 from scenet.ir import Face
 from scenet.solve.text import FontMetrics, Typeface
 from tests.pdf_files import face, page
@@ -299,3 +301,134 @@ class TestALineReadsBack:
         blocks = [int(count) for count in re.findall(r"(\d+) beginbfchar", text)]
         assert sum(blocks) == len(font.text)
         assert all(0 < count <= 100 for count in blocks)
+
+
+def _edited(path: Path, edit: Callable[[TTFont], None], **options: Any) -> FontMetrics:
+    """The test face, changed by `edit` once it is built, read back as metrics."""
+    built = TTFont(str(face(path, **options)), recalcBBoxes=False, recalcTimestamp=False)
+    edit(built)
+    built.save(str(path))
+    return FontMetrics(path)
+
+
+def _descriptor_of(metrics: FontMetrics) -> str:
+    return pdf_font(metrics, "AB").descriptor
+
+
+class TestWhatMutationTestingFound:
+    """Faces unlike the shipped ones, whose edges no gallery face reaches (#310)."""
+
+    def test_a_face_not_of_a_thousand_units_is_scaled_to_thousandths(self, tmp_path: Path):
+        def larger(font: TTFont) -> None:
+            _table(font, "head").unitsPerEm = 2048
+
+        metrics = _edited(tmp_path / "large.ttf", larger)
+        font = pdf_font(metrics, "AB")
+        scale = 1000 / 2048
+        assert f"/Ascent {fmt(800 * scale)} /Descent {fmt(-200 * scale)}" in font.descriptor
+        assert f"/CapHeight {fmt(700 * scale)}" in font.descriptor
+        head = _table(TTFont(io.BytesIO(metrics.data)), "head")
+        box = " ".join(fmt(v * scale) for v in (head.xMin, head.yMin, head.xMax, head.yMax))
+        assert f"/FontBBox [{box}]" in font.descriptor
+        widths = font.objects(1)[1][0]
+        assert f"[{fmt(600 * scale, 6)} {fmt(650 * scale, 6)}]" in widths
+        assert fmt(600 * scale, 6) != fmt(600 * scale)
+
+    def test_an_italic_face_says_so_by_its_angle_or_its_selection(self, tmp_path: Path):
+        def slanted(font: TTFont) -> None:
+            _table(font, "post").italicAngle = -11.123456
+
+        def selected(font: TTFont) -> None:
+            _table(font, "OS/2").fsSelection = 1
+
+        by_angle = _descriptor_of(_edited(tmp_path / "angle.ttf", slanted))
+        assert "/Flags 68 " in by_angle
+        assert "/ItalicAngle -11.1235 " in by_angle
+        by_selection = _descriptor_of(_edited(tmp_path / "selection.ttf", selected))
+        assert "/Flags 68 " in by_selection
+        assert "/ItalicAngle 0 " in by_selection
+        assert "/Flags 4 " in _descriptor_of(FontMetrics(face(tmp_path / "upright.ttf")))
+
+    def test_a_fixed_pitch_face_says_so(self, tmp_path: Path):
+        def fixed(font: TTFont) -> None:
+            _table(font, "post").isFixedPitch = 1
+
+        assert "/Flags 5 " in _descriptor_of(_edited(tmp_path / "fixed.ttf", fixed))
+
+    @pytest.mark.parametrize(
+        ("version", "cap", "expected"), [(2, 1, "1"), (2, 0, "800"), (1, 700, "800")]
+    )
+    def test_the_cap_height_is_the_faces_own_when_it_states_one(
+        self, tmp_path: Path, version: int, cap: int, expected: str
+    ):
+        """`sCapHeight` is in `OS/2` from version 2; a face that gives none uses its ascent."""
+
+        def stated(font: TTFont) -> None:
+            os2 = _table(font, "OS/2")
+            os2.version = version
+            os2.sCapHeight = cap
+
+        assert f"/CapHeight {expected} " in _descriptor_of(_edited(tmp_path / "cap.ttf", stated))
+
+    def test_a_face_with_no_os2_table_has_a_regular_stem(self, tmp_path: Path):
+        """`StemV` is estimated from the weight class, 400 when the face gives none."""
+        metrics = FontMetrics(face(tmp_path / "plain.ttf", fs_type=None))
+        assert _descriptor_of(metrics).endswith("/StemV 87")
+
+    def test_a_cff_font_maps_no_glyphs_itself(self, tmp_path: Path):
+        metrics = FontMetrics(face(tmp_path / "cff.otf", outlines="CFF"))
+        cid_font = pdf_font(metrics, "AB").objects(1)[1][0]
+        assert cid_font.endswith("]")
+        assert "CIDToGIDMap" not in cid_font
+
+
+class TestANameFromTheFont:
+    def _named(self, path: Path, names: dict[int, str]) -> str:
+        def rename(font: TTFont) -> None:
+            table = _table(font, "name")
+            table.names = []
+            for number, text in names.items():
+                table.setName(text, number, 3, 1, 0x409)
+
+        return pdf_font(_edited(path, rename), "A").name.split("+")[1]
+
+    def test_unsafe_characters_are_dropped_not_replaced(self, tmp_path: Path):
+        assert self._named(tmp_path / "a.ttf", {6: "Sans Bold X"}) == "SansBoldX"
+
+    def test_without_a_postscript_name_it_is_family_and_style(self, tmp_path: Path):
+        assert self._named(tmp_path / "b.ttf", {1: "Test", 2: "Regular"}) == "Test-Regular"
+
+    def test_a_dash_left_at_an_end_is_trimmed(self, tmp_path: Path):
+        assert self._named(tmp_path / "c.ttf", {2: "Regular"}) == "Regular"
+
+    def test_a_face_with_no_name_table_is_called_lettering(self, tmp_path: Path):
+        def nameless(font: TTFont) -> None:
+            del font["name"]
+
+        assert pdf_font(_edited(tmp_path / "d.ttf", nameless), "A").name.endswith("+Lettering")
+
+
+class TestAFaceThatGoesInWhole:
+    def test_a_font_file_goes_in_byte_for_byte(self, tmp_path: Path):
+        metrics = FontMetrics(face(tmp_path / "whole.ttf", fs_type=0x0100))
+        assert pdf_font(metrics, "AB").program == metrics.data
+
+    def test_a_web_font_goes_in_as_the_font_file_it_wraps(self, tmp_path: Path):
+        """Unwrapped, but otherwise as it is: its date, and its box even when it is wrong."""
+        source = TTFont(
+            str(face(tmp_path / "whole.ttf", fs_type=0x0100)),
+            recalcBBoxes=False,
+            recalcTimestamp=False,
+        )
+        head = _table(source, "head")
+        head.xMin = -77
+        head.modified = 3_700_000_000
+        source.flavor = "woff"
+        path = tmp_path / "whole.woff"
+        source.save(str(path), reorderTables=False)
+        program = pdf_font(FontMetrics(path), "AB").program
+        assert program[:4] == b"\x00\x01\x00\x00"
+        unwrapped = TTFont(io.BytesIO(program))
+        assert unwrapped.flavor is None
+        assert _table(unwrapped, "head").xMin == -77
+        assert _table(unwrapped, "head").modified == 3_700_000_000

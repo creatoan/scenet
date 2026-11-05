@@ -282,3 +282,46 @@ class TestThePrintNote:
     def test_a_page_with_its_bleed_is_not(self, book: Book):
         cores = {name: result.core for name, result in book.panels.items()}
         assert print_notes(cores, pages=book.pages) == []
+
+
+class TestWhereAMistakeIsSaid:
+    """`scenet check` names the placement at fault, wherever it is written (#310)."""
+
+    def _loc(self, tiers: list[dict[str, Any]]) -> tuple[str | int, ...]:
+        with pytest.raises(RuleViolationError) as caught:
+            _frames(PageSpec.model_validate({"tiers": tiers}))
+        return tuple(caught.value.loc or ())
+
+    def test_in_a_column(self):
+        stack = {"panels": [{"use": "a"}, {"use": "b", "bleed": ["top"]}]}
+        loc = self._loc([{"columns": [stack, {"panels": [{"use": "c"}]}]}])
+        assert loc == ("pages", 0, "tiers", 0, "columns", 0, "panels", 1, "bleed")
+
+    def test_in_a_slanted_tier(self):
+        panels = [{"use": "a"}, {"use": "b", "bleed": ["left"]}]
+        loc = self._loc([{"slant": 10, "panels": panels}])
+        assert loc == ("pages", 0, "tiers", 0, "panels", 1, "bleed")
+
+    def test_for_a_panel_that_reaches_no_edge(self):
+        rows = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
+        tiers: list[dict[str, Any]] = [
+            {"panels": [{"use": name, "bleed": name == "e"} for name in row]} for row in rows
+        ]
+        assert self._loc(tiers) == ("pages", 0, "tiers", 1, "panels", 1, "bleed")
+
+
+def test_a_slanted_outline_moves_only_its_bleeding_corners():
+    """Each corner moves to the bleed line on the sides that bleed, and on no other (#310)."""
+
+    def page(a: list[str], b: list[str]) -> PageSpec:
+        panels = [{"use": "a", "bleed": a}, {"use": "b", "bleed": b}]
+        return PageSpec.model_validate({"tiers": [{"slant": 10, "panels": panels}]})
+
+    plain = _frames(page([], []))
+    bled = _frames(page(["left", "top"], ["right", "bottom"]))
+    a, b = plain["a"].outline, plain["b"].outline
+    assert a is not None
+    assert b is not None
+    # The trim is 1200 by 1800: the bleed line is 30 past it, 90 past the margin.
+    assert bled["a"].outline == ((-30.0, -30.0), (a[1][0], -30.0), a[2], (-30.0, a[3][1]))
+    assert bled["b"].outline == (b[0], (1230.0, b[1][1]), (1230.0, 1830.0), (b[3][0], 1830.0))

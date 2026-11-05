@@ -194,3 +194,25 @@ class TestPictures:
 
     def test_it_prints_the_same_twice(self):
         assert _gallery("38-tour.scene.yaml") == _gallery("38-tour.scene.yaml")
+
+
+def test_a_picture_with_alpha_points_at_the_profile(tmp_path: Path):
+    """A soft mask is an object of its own, so the profile's number counts it (#310)."""
+    rgba = PNG_SIGNATURE + b"".join(
+        [
+            chunk(
+                b"IHDR", (2).to_bytes(4, "big") + (1).to_bytes(4, "big") + bytes([8, 6, 0, 0, 0])
+            ),
+            chunk(b"IDAT", zlib.compress(b"\x00" + bytes([255, 0, 0, 128, 0, 0, 255, 255]))),
+            chunk(b"IEND", b""),
+        ]
+    )
+    data = _with_picture(tmp_path, "a.png", rgba)
+    (image,) = _images(data)
+    space = image["/ColorSpace"]
+    assert isinstance(space, ArrayObject)
+    profile = space[1]
+    assert isinstance(profile, IndirectObject)
+    stream = profile.get_object()
+    assert isinstance(stream, StreamObject)
+    assert stream.get_data() == SRGB_PROFILE

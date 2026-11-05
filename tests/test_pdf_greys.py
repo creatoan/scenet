@@ -69,3 +69,19 @@ def test_a_grey_paint_prints_its_black_and_nothing_else():
 
 def test_the_night_foreground_still_prints_rich_black():
     assert ink(Paint("#020202", Role.MASS, "#020202")) == RICH_BLACK
+
+
+class TestTheEnds:
+    """Greys at either end of the ramp and of CIELAB's curve (#310)."""
+
+    def test_a_grey_near_black_is_on_cielabs_straight_part(self):
+        # Y = (5 / 255) / 12.92, and L* = Y x 24389 / 27 below 216 / 24389.
+        assert lightness_star("#050505") == pytest.approx(1.3709, abs=1e-4)
+
+    def test_a_grey_lighter_than_black_at_one_percent_takes_less(self):
+        assert 0 < black_for("#fefefe") < 0.01
+
+    def test_a_grey_between_the_last_two_steps_is_found_between_them(self):
+        """Black point compensation lifts it to just lighter than K 100 prints."""
+        assert len(BLACK_RAMP) == 101
+        assert 0.99 < black_for("#1c1c1c") < 1

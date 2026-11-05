@@ -113,3 +113,45 @@ def test_a_colour_the_palette_does_not_own_prints_its_grey_and_is_said():
     notes = print_notes({"dawn": edited})
     assert any("#123456" in note for note in notes)
     assert print_notes({"dawn": core}) == []
+
+
+class TestWhatANoteSays:
+    """A hand-edited colour is said wherever it is in the panel (#310)."""
+
+    @staticmethod
+    def _night() -> PanelCore:
+        core = _book("40-tinted-hours.scene.yaml").panels["midnight"].core
+        assert core.backdrop is not None
+        assert core.backdrop.atmosphere is not None
+        return core
+
+    def _air(self, **update: object) -> PanelCore:
+        core = self._night()
+        assert core.backdrop is not None
+        air = core.backdrop.atmosphere
+        assert air is not None
+        backdrop = core.backdrop.model_copy(update={"atmosphere": air.model_copy(update=update)})
+        return core.model_copy(update={"backdrop": backdrop})
+
+    def test_in_the_rain(self):
+        assert any(
+            "#123456" in note for note in print_notes({"n": self._air(fall_colour="#123456")})
+        )
+
+    def test_in_the_veil(self):
+        core = self._night()
+        assert core.backdrop is not None
+        air = core.backdrop.atmosphere
+        assert air is not None
+        assert air.veil is not None
+        veil = air.veil.model_copy(update={"colour": "#123456"})
+        assert any("#123456" in note for note in print_notes({"n": self._air(veil=veil)}))
+
+    def test_in_a_caption(self):
+        core = _book("70-a-page-for-print.scene.yaml").panels["cold"].core
+        captions = (core.captions[0].model_copy(update={"colour": "#123456"}), *core.captions[1:])
+        edited = core.model_copy(update={"captions": captions})
+        assert any("#123456" in note for note in print_notes({"c": edited}))
+
+    def test_air_with_no_veil_has_nothing_to_say(self):
+        assert print_notes({"n": self._air(veil=None)}) == []

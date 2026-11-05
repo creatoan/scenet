@@ -277,3 +277,17 @@ class TestTheVeilsAlpha:
         rows = np.frombuffer(whole.data, dtype=np.uint8).reshape(whole.rows, whole.columns)
         top = veil_alpha(veil, 300.0, 200.0)
         assert rows[: top.rows].tobytes() == top.data
+
+
+def test_every_number_is_one_the_generator_can_give():
+    """Schrage's step is right modulo M whichever way it corrects a result, so the 10,000th
+    number alone cannot tell; each number staying between 1 and M - 1 can (#310)."""
+    seed = 1
+    for _ in range(10_000):
+        seed = park_miller(seed)
+        assert 0 < seed < RAND_M
+
+
+def test_the_step_that_gives_one_gives_one():
+    """1 is the one result the generator keeps without correcting it at the edge (#310)."""
+    assert park_miller(pow(RAND_A, -1, RAND_M)) == 1
