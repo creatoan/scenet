@@ -85,6 +85,12 @@ dev = [
     # back and checked against what was meant. BSD-3; never a runtime dependency -- the
     # emitter writes PDF with the standard library alone.
     "pypdf>=6.0",
+    # littleCMS, through Pillow's ImageCms, for scripts/make_palette.py: the tinted palette's
+    # CMYK twins and black's ramp are converted through a printing condition's ICC profile
+    # (#280) and committed as a table, which a test holds to the conversion. Pinned exactly:
+    # the wheels bundle littleCMS, and a new one could move a value sitting on a half percent.
+    # Never a runtime dependency -- print reads the table and converts nothing.
+    "pillow==13.0.0",
 ]
 docs = [
     "sphinx>=9.1",
