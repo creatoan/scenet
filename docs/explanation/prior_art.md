@@ -595,6 +595,18 @@ asks and what renderers and editors do, which differ.
 | Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
 | EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
 
+### Print in colour — CGATS21-2, littleCMS and black point compensation
+
+[ICC registry, CGATS21-2-CRPC6](https://registry.color.org/cmyk-registry/) ·
+[GRACoL2013_CRPC6.icc](https://registry.color.org/profile-registry/GRACoL2013_CRPC6) ·
+[littleCMS](https://www.littlecms.com/) ·
+[Adobe, black point compensation](https://www.color.org/WP40-Black_Point_Compensation_2010-07-27.pdf)
+
+How a tinted palette is printed (#280): each colour converted, once, to CMYK under a registered
+printing condition, as a layout program converts artwork -- relative colorimetric with black point
+compensation, which keeps every in-gamut colour where it is and maps the screen's black onto the
+press's, in luminance. The table is committed; nothing converts at run time.
+
 ### The veil's noise — SVG 1.1's `feTurbulence` and Park and Miller
 
 [SVG 1.1, `feTurbulence`](https://www.w3.org/TR/SVG11/filters.html#feTurbulenceElement) ·

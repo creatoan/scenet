@@ -65,11 +65,27 @@ Print is told inks, not colours, and each mark is set by what it *is*:
   a long run.
 - **The night foreground prints rich black**, C40 K100, for even, dense coverage within any
   printer's ink limit. Small type stays 100% K.
-- **A tinted palette prints its greys**, the twins every colour was chosen against; the
-  playground and the SVG keep the colour.
+- **A tinted palette prints in colour**: each of its colours in its CMYK twin, below. `--mono`
+  prints the greys every colour was chosen against instead, as it draws them in the SVG.
 - **Supplied pictures go in with their pixels unchanged.** An RGB picture stays RGB, and the
   printer's RIP converts it; a JPEG and most PNGs go in as the file's own data. `gAMA`, `iCCP`
   and `sRGB` chunks are not carried over.
+
+**The colours print as one printing condition's CMYK.** Every colour a tinted palette draws -- its
+twenty masses of the ladder, its veil and rain, the `warm` caption -- has a CMYK twin under
+CGATS21-2-CRPC6 (GRACoL 2013, coated #1 sheetfed), converted from its sRGB colour through that
+condition's profile with littleCMS: relative colorimetric, with black point compensation, which is
+how a layout program converts artwork. Lettering and every line stay 100% black over them,
+overprinting. A few things to know:
+
+- **The tints were checked against the profile and on screen, never on paper.** No print proof
+  was made: proof before a long run.
+- **It is a US condition.** A printer on another one, FOGRA39 or FOGRA51 in Europe, re-separates
+  the file for its press, as it would any artwork; that is expected, not a fault.
+- **The darkest twin takes 310% ink** (the night foreground, C85 M73 Y55 K97): under GRACoL's
+  limit, above the 300% some comic printers ask for.
+- **Transparency blends in ink.** Rain at 85% and the veil's mask mix in CMYK on press, where the
+  screen mixes them in RGB, so a composite drifts slightly from the SVG.
 
 **The fog and cloud print as the SVG draws them.** The veil is noise the SVG draws with a filter
 that PDF does not have, so print computes the same noise -- SVG 1.1's reference `feTurbulence`,
@@ -80,7 +96,8 @@ which prints no differently from twice as fine; a veiled panel grows by a few hu
 
 `scenet build` says, in its notes, what print leaves out or changes:
 
-- a **tinted** panel, printed in its greys;
+- a **colour that is none of the palette's**, which only a hand-edited Panel Core can hold,
+  printed in its grey;
 - a **picture below 300 dpi** at its size on the page, which is soft in print;
 - with `--live-text`, a **face that may not be embedded**, whose lettering prints in outlines.
 

@@ -61,8 +61,9 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   drawn in [`palette: tinted`](language.md#palette), made without editing it. Every panel, page and
   strip is byte-identical to what the same document writes with `palette: mono`, because a
   palette only ever adds a colour beside a value the compiler had already decided on its grey.
-  Panel Core and the exports for image models are unaffected: `--core` still records the
-  palette and its colours.
+  With `--pdf`, the print PDF is printed in the greys too, rather than in the colours' CMYK
+  twins: the same file `palette: mono` prints. Panel Core and the exports for image models are
+  unaffected: `--core` still records the palette and its colours.
 
 `--no-aria`
 : Write no accessibility markup. By default each panel is an image a screen reader can read
@@ -91,12 +92,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   printed. A page unit prints as 0.1 mm, and a page's `bleed` runs the sheet past its trim
   (TrimBox and BleedBox). Lettering, balloon borders and every line are 100% black and
   overprint; the paper knocks out; greys are black tints, the night foreground rich black; a
-  tinted palette prints its greys; supplied pictures go in with their pixels unchanged; the fog
+  tinted palette prints its colours' CMYK twins under GRACoL 2013 (CGATS21-2-CRPC6), and with
+  `--mono` its greys; supplied pictures go in with their pixels unchanged; the fog
   and cloud veil is the SVG's noise, rasterised at 127 dpi. It
   letters in outlines, or with `--live-text` in its embedded faces. The other SVG options do
-  not change it — it prints greys and carries its pictures, so `--mono`, `--no-aria`,
-  `--embed-images` and `--strip` leave its bytes as they are. Notes say what print leaves out
-  or changes: a palette's colours, a picture below 300 dpi, a face that may not be embedded. No PDF/X conformance is claimed. See
+  not change it — it carries its pictures, so `--no-aria`, `--embed-images` and `--strip` leave
+  its bytes as they are. Notes say what print leaves out or changes: a colour that is none of
+  the palette's, a picture below 300 dpi, a face that may not be embedded. No PDF/X
+  conformance is claimed. See
   [Print a comic](../howto/print_a_comic.md).
 
 `--quiet`

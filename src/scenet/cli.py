@@ -361,7 +361,9 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     if _refuse_unusable_names(book):
         return 2
     printed = _printed(book)
-    pdf = _print(book, printed, base, live_text=args.live_text) if args.pdf else None
+    pdf = (
+        _print(book, printed, base, live_text=args.live_text, mono=args.mono) if args.pdf else None
+    )
     outputs = [] if isinstance(pdf, int) else _outputs(book, base, args, single=single, pdf=pdf)
     refused = pdf if isinstance(pdf, int) else 2 if _refuse_clashes(outputs) else 0
     if refused:
@@ -396,7 +398,7 @@ def _write(path: Path, content: str | bytes) -> None:
 
 
 def _print(
-    book: Book, printed: dict[str, PanelCore], base: Path, *, live_text: bool
+    book: Book, printed: dict[str, PanelCore], base: Path, *, live_text: bool, mono: bool
 ) -> bytes | int:
     """The print PDF, built before anything is written; or the status a refusal exits with.
 
@@ -412,7 +414,12 @@ def _print(
         return 2
     try:
         return render_pdf(
-            book.pages, printed, fonts=book.fonts, images=book.images, live_text=live_text
+            book.pages,
+            printed,
+            fonts=book.fonts,
+            images=book.images,
+            live_text=live_text,
+            mono=mono,
         )
     except ValueError as exc:
         print(f"scenet: {exc}", file=sys.stderr)

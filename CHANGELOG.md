@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **A tinted palette prints in colour** (#280). Every colour the compiler owns has a CMYK twin
+  under CGATS21-2-CRPC6 (GRACoL 2013), converted from its sRGB colour through the condition's
+  ICC profile with littleCMS, relative colorimetric with black point compensation, and committed
+  as `scenet.emit.cmyk`; `scripts/make_palette.py` generates it and `--check`s it, with the
+  profiles in `scripts/profiles/` and Pillow as a pinned dev dependency. The print PDF draws a
+  tinted mass, veil, rain and `warm` caption in its twin, lettering staying 100% black over it.
+  `--mono` and `render_pdf(..., mono=True)` print the greys instead: the same file as the
+  document's `palette: mono` twin. A colour none of the palette's prints its grey, with a note;
+  the note that a tinted panel prints in its greys is gone. The tints were checked against the
+  profile, never on paper.
 - **The fog and cloud veil in print** (#282). The print PDF drew no veil, and said so; it now
   carries the same noise the SVG's `feTurbulence` draws, computed by the compiler from SVG 1.1's
   reference algorithm and laid over the veil's ink as a soft mask, where the SVG paints it, at
@@ -65,11 +75,11 @@ below 1.0 means.
 - **A print PDF, from Python** (#80): `render_pdf` draws a document as a PDF a printer
   takes. Lettering, balloon borders and every line are 100% black and overprint, so type stays
   sharp when the colour plates drift; the paper knocks out; greys are black tints; the night
-  foreground prints rich black; a tinted palette prints its greys. A page unit prints as
-  0.1 mm. The file is byte-identical from run to run, with no date in it.
-  Supplied pictures go in with their pixels unchanged: a JPEG and most PNGs as the file's own
-  data, the rest decoded and stored uncompressed, alpha as a soft mask. `print_notes` says
-  what print leaves out or changes, and names a picture that prints below 300 dpi.
+  foreground prints rich black; a tinted palette prints its colours' CMYK twins (#280). A page
+  unit prints as 0.1 mm. The file is byte-identical from run to run, with no date in it. Supplied
+  pictures go in with their pixels unchanged: a JPEG and most PNGs as the file's own data, the
+  rest decoded and stored uncompressed, alpha as a soft mask. `print_notes` says what print leaves
+  out or changes, and names a picture that prints below 300 dpi.
 - **A puppet of your own, from a document (#242).** A cast member names a `*.puppet.yaml` file
   by its path, relative to the document, as it names a font or a picture:
   `reference: puppets/pip.puppet.yaml`. So `scenet check` and `scenet build` read it beside the

@@ -11,7 +11,8 @@ drift out of register. So every paint is set by what it *is*, never by convertin
   knocks out what is under it;
 - a grey is a K tint, `1 - L` for its OKLab lightness `L`, with no press curve; a mass dark
   enough to be near black prints rich black instead, C40 K100, for even coverage;
-- a tinted palette prints its greys, the twins every colour was chosen against (#244).
+- a tinted colour prints its CMYK twin under one printing condition (#280,
+  `scenet.emit.cmyk`), and in `mono` its grey, the twin every colour was chosen against.
 
 Nothing is decided here that the SVG does not already show. A page unit prints as a tenth
 of a millimetre. The fog and cloud veil, which the SVG draws with a noise filter PDF does not
@@ -30,6 +31,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from scenet.core import Box, CoreImage, PageCore, PanelCore
+from scenet.emit.cmyk import CMYK
 from scenet.emit.geometry import PlacedRun
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
@@ -134,6 +136,10 @@ def ink(paint: Paint) -> tuple[float, float, float, float]:
         return INK
     if paint.role is Role.PAPER:
         return NO_INK
+    twin = CMYK.get(paint.colour) if paint.colour != paint.grey else None
+    if twin is not None:
+        cyan, magenta, yellow, black = twin
+        return cyan / 100, magenta / 100, yellow / 100, black / 100
     level = lightness(paint.grey)
     if paint.role is Role.MASS and level <= RICH_BLACK_LIGHTNESS:
         return RICH_BLACK
@@ -188,8 +194,11 @@ def print_notes(
                         f"the face {metrics.family} {metrics.style} in panel {name!r} is not "
                         f"embedded: {reason}; its lettering prints in outlines"
                     )
-        if core.as_mono() != core:
-            notes.append(f"panel {name!r} is tinted; print draws it in its greys")
+        for colour in _colours_not_owned(core):
+            notes.append(
+                f"the colour {colour} in panel {name!r} is none of the palette's; print draws "
+                "it in its grey"
+            )
         image = core.backdrop.image if core.backdrop is not None else None
         if image is not None:
             dpi = resolution(image)
@@ -199,6 +208,19 @@ def print_notes(
                     f"size; printers ask for {PRINT_DPI}"
                 )
     return notes
+
+
+def _colours_not_owned(core: PanelCore) -> list[str]:
+    """Colours a panel paints that have no CMYK twin: only a hand-edited Core holds one."""
+    backdrop = core.backdrop
+    colours = [caption.colour for caption in core.captions]
+    if backdrop is not None:
+        colours += [mass.colour for mass in backdrop.masses]
+        air = backdrop.atmosphere
+        if air is not None:
+            colours.append(air.fall_colour)
+            colours.append(air.veil.colour if air.veil is not None else "")
+    return sorted({colour for colour in colours if colour and colour not in CMYK})
 
 
 def resolution(image: CoreImage) -> int:
@@ -218,6 +240,7 @@ def render_pdf(
     fonts: Mapping[str, FontMetrics] | None = None,
     images: Mapping[str, bytes] | None = None,
     live_text: bool = False,
+    mono: bool = False,
 ) -> bytes:
     r"""Draw a document as a print PDF.
 
@@ -235,6 +258,8 @@ def render_pdf(
         live_text: Letter balloons and captions in text, their faces embedded, rather than
             in outlines (#284). Each glyph lands where its outline would; a face whose
             licence forbids embedding stays in outlines, as :func:`print_notes` says.
+        mono: Print a tinted panel in its greys, as `--mono` draws it, rather than in its
+            colours' CMYK twins: the same file as the panel's `palette: mono` twin.
 
     Returns:
         The PDF's bytes.
@@ -252,6 +277,8 @@ def render_pdf(
         >>> render_pdf(book.pages, cores)[:8]
         b'%PDF-1.6'
     """
+    if mono:
+        panels = {name: core.as_mono() for name, core in panels.items()}
     # Only what is printed is carried: a panel on no page brings no picture, in the order
     # the pages print them, so every caller -- the CLI hands over the printed panels, the
     # playground all of them -- writes the same file.

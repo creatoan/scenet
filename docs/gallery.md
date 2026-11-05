@@ -2400,9 +2400,10 @@ A US comic page with its bleed, printed as a PDF: lettering on the black plate, 
 #
 # Print says everything in inks. Lettering, balloon borders and every line are 100% black
 # and overprint, so type stays sharp when the colour plates drift; the paper knocks out;
-# greys are black tints; the night foreground is rich black, C40 K100. A tinted palette
-# prints its greys, the twins every colour was chosen against, and the picture goes in with
-# its pixels unchanged. The notes say what print leaves out or changes.
+# greys are black tints. A tinted palette prints in colour, each colour as its CMYK twin
+# under GRACoL 2013, the night foreground included; `--mono` prints the greys every colour
+# was chosen against. The picture goes in with its pixels unchanged. The notes say what print
+# leaves out or changes.
 
 page: {size: [1682.75, 2603.5], bleed: 31.75, margin: 90, gutter: 30, tier_gutter: 45}
 palette: tinted

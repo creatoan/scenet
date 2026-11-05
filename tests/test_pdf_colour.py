@@ -59,6 +59,9 @@ def test_every_tinted_paint_prints_its_twin():
             if mark.fill is not None and mark.fill.colour != mark.fill.grey:
                 assert _twin(mark.fill.colour) in block
                 owners.add(mark.owner.split("-")[0])
+            if mark.stroke is not None and mark.stroke.colour != mark.stroke.grey:
+                assert _twin(mark.stroke.colour)[:-1] + "K" in block
+                owners.add(mark.owner.split("-")[0])
     assert {"mass", "veil", "weather"} <= owners
 
 
