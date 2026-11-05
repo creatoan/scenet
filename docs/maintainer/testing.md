@@ -733,13 +733,11 @@ Accepted, by what makes them equivalent:
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
-| `marks.py` `marks`: the veil's owner, width, height or veil | any of them changed | The veil is a mark only so the order is SVG's; no emitter reads it. |
 | `marks.py` `_lettering`: `strict=True` | `None`, `False`, or no `strict` | The three sequences zipped come from one run's text, so they are always as long. |
 | `pdf.py` `_page_content`: the sheet's and rings' owner | `"page"` changed or `None` | The owner names a mark for tests; the PDF writer never reads it. |
 | `pdf.py` `_state` 2, 3 | the default opacity changed | Every call passes a fill or a stroke, whose opacity replaces it. |
 | `pdf.py` `_path` 23, `_Document.write` 126 | `closed=None`, a content stream's entries `None` | Both are read as false, as `False` and `""` are. |
 | `pdf.py` `_linear` 5, `ink` 7 | `<=` to `<` at the sRGB knee and at L 0.10 | Both sides of the knee give the same value there, and no `#rrggbb` grey has an OKLab L of exactly 0.10. |
-| `pdf.py` `ink` 15 | `min(1.0, …)` to `min(2.0, …)` | `1 - L` is never above 1, since L is never below 0. |
 | `pdf.py` `_embedded` 6 | 13 digits of the digest in the message | A message, which says the same thing. |
 | `pdf_images.py` `_jpeg` 3, `_chunks` 5 | `False` to `None`, `b""` to `None` | Read only for truth, and `None` is false as they are. |
 | `pdf_images.py` `_jpeg` 6, 7, 42; `_chunks` 10, 11, 38 | a loop's bound or a slice one byte wider | A frame, a chunk header and an IHDR body are longer than the slack, so each still ends where the format says. |

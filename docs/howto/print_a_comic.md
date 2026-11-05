@@ -61,8 +61,9 @@ Print is told inks, not colours, and each mark is set by what it *is*:
   drifting out of register cannot blur them, and they never cut a white hole in the art under
   them.
 - **The paper knocks out**: a balloon, the panel's ground, letters reversed out of a dark caption.
-- **Greys are black tints**, 1 − L for their OKLab lightness L, with no press curve: proof before
-  a long run.
+- **Greys are black tints**, at the K that prints their lightness under the same condition the
+  colours print under, below: black's own ramp, measured through the condition's profile. A grey
+  darker than black alone can print takes it all. Proof before a long run.
 - **The night foreground prints rich black**, C40 K100, for even, dense coverage within any
   printer's ink limit. Small type stays 100% K.
 - **A tinted palette prints in colour**: each of its colours in its CMYK twin, below. `--mono`
@@ -78,8 +79,8 @@ condition's profile with littleCMS: relative colorimetric, with black point comp
 how a layout program converts artwork. Lettering and every line stay 100% black over them,
 overprinting. A few things to know:
 
-- **The tints were checked against the profile and on screen, never on paper.** No print proof
-  was made: proof before a long run.
+- **The tints, and black's ramp, were checked against the profile and on screen, never on
+  paper.** No print proof was made: proof before a long run.
 - **It is a US condition.** A printer on another one, FOGRA39 or FOGRA51 in Europe, re-separates
   the file for its press, as it would any artwork; that is expected, not a fault.
 - **The darkest twin takes 310% ink** (the night foreground, C85 M73 Y55 K97): under GRACoL's

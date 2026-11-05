@@ -20,7 +20,10 @@ below 1.0 means.
   tinted mass, veil, rain and `warm` caption in its twin, lettering staying 100% black over it.
   `--mono` and `render_pdf(..., mono=True)` print the greys instead: the same file as the
   document's `palette: mono` twin. A colour none of the palette's prints its grey, with a note;
-  the note that a tinted panel prints in its greys is gone. The tints were checked against the
+  the note that a tinted panel prints in its greys is gone. Greys follow the same condition: a
+  grey prints on black alone at the K that prints its lightness there, read from black's ramp
+  measured through the profile, where K = 1 − L printed far too light (`#707070` went from K 45%
+  to 69%), so every PDF's greys move once. The tints and the ramp were checked against the
   profile, never on paper.
 - **The fog and cloud veil in print** (#282). The print PDF drew no veil, and said so; it now
   carries the same noise the SVG's `feTurbulence` draws, computed by the compiler from SVG 1.1's

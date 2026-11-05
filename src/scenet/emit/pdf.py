@@ -9,8 +9,9 @@ drift out of register. So every paint is set by what it *is*, never by convertin
 - ink -- every line and letter -- is 100% K and overprints;
 - the paper -- a balloon, the panel's ground, letters reversed out -- is no ink at all, and
   knocks out what is under it;
-- a grey is a K tint, `1 - L` for its OKLab lightness `L`, with no press curve; a mass dark
-  enough to be near black prints rich black instead, C40 K100, for even coverage;
+- a grey is black alone, at the K that prints its lightness under the condition the colours
+  print under (:func:`black_for`); a mass dark enough to be near black prints rich black
+  instead, C40 K100, for even coverage;
 - a tinted colour prints its CMYK twin under one printing condition (#280,
   `scenet.emit.cmyk`), and in `mono` its grey, the twin every colour was chosen against.
 
@@ -31,7 +32,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from scenet.core import Box, CoreImage, PageCore, PanelCore
-from scenet.emit.cmyk import CMYK
+from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK
 from scenet.emit.geometry import PlacedRun
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
@@ -123,6 +124,59 @@ def _linear(channel: float) -> float:
     return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
 
 
+#: CIELAB's two constants: where its lightness turns from a straight line to a cube root.
+LAB_EPSILON = 216 / 24389
+LAB_KAPPA = 24389 / 27
+
+
+def lightness_star(colour: str) -> float:
+    """CIELAB L* of an sRGB `#rrggbb` colour: how light it looks, as press profiles measure it.
+
+    Example:
+        >>> round(lightness_star("#777777"), 1)
+        50.0
+    """
+    red, green, blue = (_linear(int(colour[index : index + 2], 16) / 255) for index in (1, 3, 5))
+    return _star(0.2126729 * red + 0.7151522 * green + 0.0721750 * blue)
+
+
+def _star(luminance: float) -> float:
+    return 116 * math.cbrt(luminance) - 16 if luminance > LAB_EPSILON else luminance * LAB_KAPPA
+
+
+def _luminance(star: float) -> float:
+    if star <= LAB_KAPPA * LAB_EPSILON:
+        return star / LAB_KAPPA
+    root = (star + 16) / 116
+    return root * root * root
+
+
+def black_for(grey: str) -> float:
+    """How much black, alone, a grey prints with: its lightness, on paper.
+
+    Black's ramp under the printing condition (`scenet.emit.cmyk.BLACK_RAMP`) says what each
+    whole percent of K prints; a grey takes the K, read between them, that prints its own
+    lightness -- once black point compensation has put the screen's black on the press's, in
+    luminance, as it does for every colour's twin. A grey darker than black alone can print
+    takes it all.
+
+    Args:
+        grey: The grey, `#rrggbb`.
+
+    Returns:
+        K, from 0 to 1.
+    """
+    black = _luminance(BLACK_POINT)
+    wanted = _star(black + _luminance(lightness_star(grey)) * (1 - black))
+    if wanted >= BLACK_RAMP[0]:
+        return 0.0
+    for percent in range(len(BLACK_RAMP) - 1):
+        lighter, darker = BLACK_RAMP[percent], BLACK_RAMP[percent + 1]
+        if darker <= wanted:
+            return (percent + (lighter - wanted) / (lighter - darker)) / 100
+    return 1.0
+
+
 def ink(paint: Paint) -> tuple[float, float, float, float]:
     """The CMYK a paint prints in, by what it is.
 
@@ -143,7 +197,7 @@ def ink(paint: Paint) -> tuple[float, float, float, float]:
     level = lightness(paint.grey)
     if paint.role is Role.MASS and level <= RICH_BLACK_LIGHTNESS:
         return RICH_BLACK
-    return (0.0, 0.0, 0.0, min(1.0, max(0.0, 1.0 - level)))
+    return (0.0, 0.0, 0.0, black_for(paint.grey))
 
 
 def overprints(paint: Paint) -> bool:
