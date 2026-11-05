@@ -29,6 +29,7 @@ import yaml
 from shapely.geometry import Polygon
 
 from scenet.core import PanelCore
+from scenet.emit.cmyk import CMYK
 from scenet.emit.pdf import render_pdf
 from scenet.emit.pdf_fonts import pdf_font
 from scenet.ir import Face
@@ -236,8 +237,9 @@ def test_every_gallery_pdf_is_sound(entry: dict[str, str], tmp_path: Path):
 
 
 @needs_ghostscript
-def test_the_print_example_prints_its_night_in_rich_black(tmp_path: Path):
-    """The gallery's page for print, with its bleed: the alley's foreground is rich black."""
+def test_the_print_example_prints_its_tinted_night_in_its_twin(tmp_path: Path):
+    """The gallery's page for print, with its bleed, is tinted: the alley's foreground prints
+    its CMYK twin (#280), the condition's own black, on all four plates."""
     book = _book("70-a-page-for-print.scene.yaml")
     cores = {name: result.core for name, result in book.panels.items()}
     (page,) = book.pages
@@ -257,7 +259,12 @@ def test_the_print_example_prints_its_night_in_rich_black(tmp_path: Path):
         frame.x + right + page.bleed,
         frame.y + bottom + page.bleed,
     )
-    assert any(98 <= c <= 106 and m == y == 0 and k == 255 for c, m, y, k in inks)
+    twin = CMYK[darkest[0].colour]
+    expected = tuple(round(value * 255 / 100) for value in twin)
+    assert any(
+        all(abs(found - wanted) <= 3 for found, wanted in zip(pixel, expected, strict=True))
+        for pixel in inks
+    )
 
 
 #: Two pixels: how far apart the same glyph lands when Ghostscript rasterises it as a glyph

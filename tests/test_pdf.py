@@ -20,6 +20,7 @@ from pypdf import PdfReader
 from pypdf.generic import BooleanObject, ContentStream, DictionaryObject
 
 from scenet.core import Box, CoreImage, PanelCore
+from scenet.emit.cmyk import CMYK
 from scenet.emit.marks import Mark, Paint, Picture, Rect, Role, marks
 from scenet.emit.pdf import (
     POINTS_PER_UNIT,
@@ -105,9 +106,9 @@ class TestInks:
         assert ink(paint) == pytest.approx((0.0, 0.0, 0.0, 1.0 - lightness("#707070")))
         assert not overprints(paint)
 
-    def test_a_tinted_paint_prints_its_grey(self):
-        assert ink(Paint("#fef0a1", Role.TONE, "#eeeeee")) == ink(
-            Paint("#eeeeee", Role.TONE, "#eeeeee")
+    def test_a_tinted_paint_prints_its_cmyk_twin(self):
+        assert ink(Paint("#fef0a1", Role.TONE, "#eeeeee")) == tuple(
+            value / 100 for value in CMYK["#fef0a1"]
         )
 
     def test_a_near_black_mass_prints_rich_black(self):
@@ -216,12 +217,17 @@ def test_every_mark_is_one_block_painted_as_it_should_be(name: str):
 
 
 @pytest.mark.parametrize("name", IDS)
-def test_every_example_prints_the_same_twice_and_in_its_greys(name: str):
+def test_every_example_prints_the_same_twice_and_in_mono_its_greys(name: str):
     book = _book(name)
     data = _pdf(book)
     assert data == _pdf(_book(name))
     mono = {key: core.as_mono() for key, core in _cores(book).items()}
-    assert data == render_pdf(book.pages, mono, fonts=book.fonts, images=book.images)
+    greys = render_pdf(book.pages, mono, fonts=book.fonts, images=book.images)
+    assert greys == render_pdf(
+        book.pages, _cores(book), fonts=book.fonts, images=book.images, mono=True
+    )
+    tinted = any(core.as_mono() != core for core in _cores(book).values())
+    assert (data != greys) == tinted
     reader = PdfReader(io.BytesIO(data))
     for page in reader.pages:
         assert ContentStream(page.get_contents(), reader).operations
@@ -255,9 +261,8 @@ class TestNotes:
         notes = print_notes(_cores(_book("21-atmosphere.scene.yaml")))
         assert not any("fog" in note for note in notes)
 
-    def test_a_tinted_panel_is_said_to_print_in_greys(self):
-        notes = print_notes(_cores(_book("40-tinted-hours.scene.yaml")))
-        assert any("greys" in note for note in notes)
+    def test_a_tinted_panel_prints_in_colour_and_so_is_not_said(self):
+        assert print_notes(_cores(_book("40-tinted-hours.scene.yaml"))) == []
 
     def test_a_plain_panel_has_nothing_to_say(self):
         assert print_notes(_cores(_book("01-two-characters.panel.yaml"))) == []

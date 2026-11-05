@@ -2,9 +2,9 @@
 
 One PDF per document, beside the SVGs: a PDF page per page, or per panel when the document
 has none. `--live-text` letters it in its embedded faces, as it letters the SVG in text
-(#284); the other options that change how the SVG is written do not change the PDF, which
-prints greys and carries its pictures. Everything is checked before anything is written, a
-PDF included.
+(#284), and `--mono` prints a tinted document in its greys, as it draws the SVG (#280); the
+other options that change how the SVG is written do not change the PDF, which carries its
+pictures. Everything is checked before anything is written, a PDF included.
 """
 
 import io
@@ -34,6 +34,7 @@ SCENE = (
 
 
 def _write(tmp_path: Path, name: str, text: str) -> Path:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     source = tmp_path / name
     source.write_text(text, encoding="utf-8")
     return source
@@ -90,6 +91,18 @@ def test_an_svg_option_does_not_change_the_pdf(tmp_path: Path, flag: str):
     plain = (tmp_path / "book.pdf").read_bytes()
     assert cli.main(["build", str(source), "--pdf", "--quiet", flag]) == 0
     assert (tmp_path / "book.pdf").read_bytes() == plain
+
+
+def test_mono_prints_a_tinted_document_in_its_greys(tmp_path: Path):
+    dusk = f"setting: {{place: street, time: dusk}}\n{SCENE}"
+    tinted = _write(tmp_path / "tinted", "book.scene.yaml", f"palette: tinted\n{dusk}")
+    mono = _write(tmp_path / "mono", "book.scene.yaml", f"palette: mono\n{dusk}")
+    assert cli.main(["build", str(tinted), "--pdf", "--quiet"]) == 0
+    coloured = (tmp_path / "tinted" / "book.pdf").read_bytes()
+    assert cli.main(["build", str(tinted), "--pdf", "--quiet", "--mono"]) == 0
+    assert cli.main(["build", str(mono), "--pdf", "--quiet"]) == 0
+    greys = (tmp_path / "mono" / "book.pdf").read_bytes()
+    assert (tmp_path / "tinted" / "book.pdf").read_bytes() == greys != coloured
 
 
 def test_live_text_letters_the_pdf_in_its_faces(tmp_path: Path):

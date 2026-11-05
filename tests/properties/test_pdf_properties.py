@@ -53,7 +53,9 @@ def test_every_panel_prints_every_mark_once(drawn: Drawn):
     _sound(core)
     data = render_pdf((), {"panel": core})
     assert len(PdfReader(io.BytesIO(data)).pages) == 1
-    assert data == render_pdf((), {"panel": core.as_mono()})
+    assert render_pdf((), {"panel": core}, mono=True) == render_pdf((), {"panel": core.as_mono()})
+    if core.as_mono() == core:
+        assert data == render_pdf((), {"panel": core}, mono=True)
 
 
 @given(scenes())
