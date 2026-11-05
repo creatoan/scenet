@@ -98,7 +98,9 @@ def test_x4_requirements_are_not_broken(name: str, live_text: bool):
         for reference in fonts.values():
             font = reference.get_object()
             assert isinstance(font, DictionaryObject)
-            (descendant,) = font["/DescendantFonts"]
+            descendants = font["/DescendantFonts"]
+            assert isinstance(descendants, ArrayObject)
+            (descendant,) = descendants
             descriptor = descendant.get_object()["/FontDescriptor"].get_object()
             assert isinstance(descriptor, DictionaryObject)
             assert "/FontFile2" in descriptor or "/FontFile3" in descriptor
