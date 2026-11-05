@@ -17,7 +17,7 @@ from types import ModuleType
 import pytest
 from PIL import Image, ImageCms
 
-from scenet.emit.cmyk import BLACK_RAMP, CMYK, CONDITION
+from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK, CONDITION
 from scenet.solve.backdrop import TINTED
 from scenet.solve.balloons import CAPTION_COLOURS
 
@@ -96,14 +96,39 @@ def _printed_lightness(inks: tuple[int, int, int, int]) -> float:
         profile, lab, "CMYK", "LAB", renderingIntent=ImageCms.Intent.RELATIVE_COLORIMETRIC
     )
     image = Image.new("CMYK", (1, 1), tuple(round(value * 255 / 100) for value in inks))
-    return ImageCms.applyTransform(image, transform).getpixel((0, 0))[0] * 100 / 255
+    converted = ImageCms.applyTransform(image, transform)
+    assert converted is not None
+    pixel = converted.getpixel((0, 0))
+    assert isinstance(pixel, tuple)
+    return float(pixel[0]) * 100 / 255
+
+
+def _luminance(lightness: float) -> float:
+    return ((lightness + 16) / 116) ** 3 if lightness > 8 else lightness / 903.3
+
+
+def _lightness(luminance: float) -> float:
+    return 116 * luminance ** (1 / 3) - 16 if luminance > 0.008856 else luminance * 903.3
+
+
+def _compensated(lightness: float) -> float:
+    """Where black point compensation puts a lightness: sRGB's black onto the condition's."""
+    black = _luminance(BLACK_POINT)
+    return _lightness(black + _luminance(lightness) * (1 - black))
+
+
+def test_the_black_point_is_the_conditions_black():
+    assert make_palette.black_point() == BLACK_POINT
+    printed = _printed_lightness(make_palette.convert("#000000"))
+    assert abs(printed - BLACK_POINT) <= 0.5
 
 
 @pytest.mark.parametrize("colour", COLOURS)
 def test_a_twin_prints_at_its_colours_lightness(colour: str):
-    """The twin rule, on paper: what the colour shows on screen, the twin prints."""
+    """The twin rule, on paper: what the colour shows on screen, the twin prints -- once black
+    point compensation has put the screen's black on the press's."""
     assert _printed_lightness(CMYK[colour]) == pytest.approx(
-        make_palette.lightness_star(colour), abs=LIGHTNESS
+        _compensated(make_palette.lightness_star(colour)), abs=LIGHTNESS
     )
 
 
