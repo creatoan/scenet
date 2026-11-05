@@ -19,10 +19,17 @@ reason the ladder is: a handful of values that never change at runtime are not w
 colour library in `dependencies`. `tests/test_tinted_ladder.py` regenerates the table and
 fails on any difference, so the hexes cannot drift from the rule.
 
+Print has a twin for every one of those colours too (#280): its CMYK under one printing
+condition, CGATS21-2-CRPC6 (GRACoL 2013), converted with littleCMS -- relative colorimetric,
+black point compensation, from `sRGB2014.icc` -- through the condition's own profile in
+`scripts/profiles/`. With it, black's ramp: what each whole percent of K alone prints, in
+CIELAB L*, which is how a grey finds its black. Both are written to `src/scenet/emit/cmyk.py`,
+which `tests/test_cmyk_twins.py` holds to this conversion.
+
 Run from the repository root after changing `ENDS`:
 
-    uv run python scripts/make_palette.py           # print the table to paste
-    uv run python scripts/make_palette.py --check   # exit 1 if the committed table is stale
+    uv run python scripts/make_palette.py           # print the table to paste, write cmyk.py
+    uv run python scripts/make_palette.py --check   # exit 1 if anything committed is stale
 
 Then look at it, because whether these hues are right is a question about a picture:
 
@@ -35,9 +42,12 @@ import sys
 from itertools import product
 from pathlib import Path
 
+from PIL import Image, ImageCms
+
 from scenet.ir import TimeOfDay
-from scenet.solve import backdrop
-from scenet.solve.backdrop import LADDER, lightness
+from scenet.solve import backdrop, balloons
+from scenet.solve.backdrop import LADDER, TINTED, lightness
+from scenet.solve.balloons import CAPTION_COLOURS
 
 #: Each hour's two ends, as `(hue in degrees, chroma)` in OKLCh: the shadow at the
 #: foreground, then the atmosphere. Warm light, cool shadow, except at night, which is
@@ -289,11 +299,125 @@ def table_source() -> str:
     return "\n".join(lines) + "\n"
 
 
+#: The printing condition the CMYK twins are for, by its ICC registry name.
+CONDITION = "CGATS21-2-CRPC6"
+
+#: The profiles the conversion goes through, as published.
+PROFILES = Path(__file__).parent / "profiles"
+SOURCE_PROFILE = PROFILES / "sRGB2014.icc"
+CONDITION_PROFILE = PROFILES / "GRACoL2013_CRPC6.icc"
+
+#: Where the twins and black's ramp are written.
+CMYK_MODULE = Path(__file__).resolve().parents[1] / "src" / "scenet" / "emit" / "cmyk.py"
+
+#: How the twins are converted: relative colorimetric, keeping every colour the condition can
+#: print where it is, with black point compensation, so the darkest rung maps to the
+#: condition's black rather than clipping; at the engine's highest precision.
+FLAGS = ImageCms.Flags.BLACKPOINTCOMPENSATION | ImageCms.Flags.HIGHRESPRECALC
+
+
+def _rgb(colour: str) -> tuple[int, int, int]:
+    return int(colour[1:3], 16), int(colour[3:5], 16), int(colour[5:7], 16)
+
+
+def convert(colour: str) -> tuple[int, int, int, int]:
+    """A colour's CMYK under the condition, in whole percents."""
+    transform = ImageCms.buildTransform(
+        ImageCms.getOpenProfile(str(SOURCE_PROFILE)),
+        ImageCms.getOpenProfile(str(CONDITION_PROFILE)),
+        "RGB",
+        "CMYK",
+        renderingIntent=ImageCms.Intent.RELATIVE_COLORIMETRIC,
+        flags=FLAGS,
+    )
+    c, m, y, k = _pixel(ImageCms.applyTransform(Image.new("RGB", (1, 1), _rgb(colour)), transform))
+    return round(c * 100 / 255), round(m * 100 / 255), round(y * 100 / 255), round(k * 100 / 255)
+
+
+def _pixel(image: Image.Image | None) -> tuple[int, ...]:
+    """The one pixel a one-pixel conversion made."""
+    if image is None:
+        raise RuntimeError("littleCMS converted nothing")
+    pixel = image.getpixel((0, 0))
+    if not isinstance(pixel, tuple):
+        raise TypeError(f"expected a pixel of channels, got {pixel!r}")
+    return tuple(int(channel) for channel in pixel)
+
+
+def cmyk() -> dict[str, tuple[int, int, int, int]]:
+    """Every colour the compiler owns, and its CMYK twin, in order of colour."""
+    owned = {colour for colours in TINTED.values() for colour in colours}
+    owned |= set(CAPTION_COLOURS.values())
+    return {colour: convert(colour) for colour in sorted(owned)}
+
+
+def _to_lab(mode: str, pixel: tuple[int, ...]) -> float:
+    profile = SOURCE_PROFILE if mode == "RGB" else CONDITION_PROFILE
+    transform = ImageCms.buildTransform(
+        ImageCms.getOpenProfile(str(profile)),
+        ImageCms.createProfile("LAB", 5000),
+        mode,
+        "LAB",
+        renderingIntent=ImageCms.Intent.RELATIVE_COLORIMETRIC,
+        flags=ImageCms.Flags.HIGHRESPRECALC,
+    )
+    lightness_byte = _pixel(ImageCms.applyTransform(Image.new(mode, (1, 1), pixel), transform))[0]
+    return round(lightness_byte * 100 / 255, 2)
+
+
+def lightness_star(colour: str) -> float:
+    """A colour's CIELAB L*, as the sRGB profile has it."""
+    return _to_lab("RGB", _rgb(colour))
+
+
+def black_point() -> float:
+    """The CIELAB L* of the condition's black: where black point compensation puts sRGB's."""
+    return _to_lab("CMYK", tuple(round(value * 255 / 100) for value in convert("#000000")))
+
+
+def black_ramp() -> tuple[float, ...]:
+    """What each whole percent of K, alone, prints under the condition: CIELAB L*."""
+    return tuple(_to_lab("CMYK", (0, 0, 0, round(k * 255 / 100))) for k in range(101))
+
+
+def cmyk_source() -> str:
+    """`src/scenet/emit/cmyk.py`, as this script writes it."""
+    rows = "\n".join(
+        f'    "{colour}": ({", ".join(map(str, inks))}),' for colour, inks in cmyk().items()
+    )
+    ramp_rows = "\n".join(f"    {value:.2f}," for value in black_ramp())
+    return f'''"""The tinted palette's CMYK twins, and black's ramp, for print (#280).
+
+Generated by `scripts/make_palette.py`, which converts every colour the compiler owns through
+the condition's ICC profile with littleCMS -- relative colorimetric, black point compensation,
+from sRGB -- and measures what K alone prints. Do not edit: run the script.
+"""
+
+#: The printing condition, by its ICC registry name: GRACoL 2013, coated #1.
+CONDITION = "{CONDITION}"
+
+#: How dark the condition's black prints, in CIELAB L*. Black point compensation maps sRGB's
+#: black onto it, and every lightness on the way, in luminance: Y' = Ybk + Y (1 - Ybk).
+BLACK_POINT = {black_point():.2f}
+
+#: Each colour's CMYK under the condition, in whole percents, by the colour's `#rrggbb`.
+CMYK: dict[str, tuple[int, int, int, int]] = {{
+{rows}
+}}
+
+#: What each whole percent of K, alone, prints under the condition, in CIELAB L*: K 0 is the
+#: paper, L* 100; K 100 is as dark as one plate goes.
+BLACK_RAMP: tuple[float, ...] = (
+{ramp_rows}
+)
+'''
+
+
 def main() -> None:
     """Print the table, or check the committed one."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "--check", action="store_true", help="exit 1 if solve/backdrop.py holds another table"
+        "--check", action="store_true", help="exit 1 if a committed table is not what this makes"
     )
     args = parser.parse_args()
 
@@ -301,10 +425,16 @@ def main() -> None:
     if not args.check:
         sys.stdout.write(source)
         sys.stdout.write(f"\n# CAPTION_COLOURS in solve/balloons.py\nwarm: {warm()}\n")
+        CMYK_MODULE.write_text(cmyk_source(), encoding="utf-8", newline="\n")
+        print(f"wrote {CMYK_MODULE.name}")
         return
     if source not in Path(backdrop.__file__).read_text(encoding="utf-8"):
         sys.exit("solve/backdrop.py holds a stale TINTED: run scripts/make_palette.py")
-    print("TINTED is what the rule produces")
+    if warm() not in Path(balloons.__file__).read_text(encoding="utf-8"):
+        sys.exit("solve/balloons.py holds a stale warm caption: run scripts/make_palette.py")
+    if CMYK_MODULE.read_text(encoding="utf-8") != cmyk_source():
+        sys.exit("emit/cmyk.py is stale: run scripts/make_palette.py")
+    print("TINTED, the warm caption and the CMYK twins are what the rules produce")
 
 
 if __name__ == "__main__":
