@@ -8,7 +8,6 @@ is staged and framed, so the trim never cuts a shot; and its **lettering box**, 
 was before bleeding and inset by the panel's margin, so the page margin stays the live area.
 """
 
-import json
 from typing import Any
 
 import pytest
@@ -105,15 +104,13 @@ class TestTheKey:
             )
 
     def test_the_schema_offers_it(self):
-        text = json.dumps(scene_schema())
-        placements = [
-            definition
-            for name, definition in scene_schema()["$defs"].items()
-            if name in {"PanelPlacement", "StackedPanel"}
-        ]
-        assert len(placements) == 2
-        assert all("bleed" in definition["properties"] for definition in placements)
-        assert '"bleed"' in text
+        """A placement is a panel's name or a mapping; the mapping takes `bleed`."""
+        definitions = scene_schema()["$defs"]
+        for name in ("PanelPlacement", "StackedPanel"):
+            (written,) = [
+                branch for branch in definitions[name]["anyOf"] if branch.get("type") == "object"
+            ]
+            assert "bleed" in written["properties"], name
 
     def test_a_side_that_cannot_bleed_is_located(self):
         """`scenet check` names the placement's `bleed`, as it does any page-layout finding."""
@@ -157,8 +154,7 @@ class TestTheFrames:
     def test_a_panel_that_reaches_no_edge_cannot_bleed(self):
         rows = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         tiers: list[dict[str, Any]] = [
-            {"panels": [{"use": name, "bleed": True} if name == "e" else name for name in row]}
-            for row in rows
+            {"panels": [{"use": name, "bleed": name == "e"} for name in row]} for row in rows
         ]
         with pytest.raises(RuleViolationError, match="'e'") as caught:
             _frames(PageSpec.model_validate({"tiers": tiers}))
@@ -191,7 +187,8 @@ class TestTheFrames:
 
     def test_a_stacked_panel_bleeds(self):
         stack = {"panels": [{"use": "a", "bleed": True}, {"use": "b"}]}
-        page = PageSpec.model_validate({"tiers": [{"columns": [stack, {"panels": ["c"]}]}]})
+        beside = {"panels": [{"use": "c"}]}
+        page = PageSpec.model_validate({"tiers": [{"columns": [stack, beside]}]})
         assert _frames(page)["a"].bleed == (Side.LEFT, Side.TOP)
 
     def test_sides_are_the_pages_whichever_way_it_is_read(self):
