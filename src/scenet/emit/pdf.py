@@ -29,6 +29,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from scenet.core import Box, CoreImage, PageCore, PanelCore
+from scenet.emit.geometry import PlacedRun
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
     Circle,
@@ -44,9 +45,12 @@ from scenet.emit.marks import (
     Role,
     Segment,
     Shape,
+    Text,
     Veil,
     marks,
 )
+from scenet.emit.pdf_fonts import WIDTH_PLACES, Part, pdf_font, refusal
+from scenet.emit.pdf_fonts import width as advance_width
 from scenet.emit.pdf_images import Embedded, embed
 from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt, typeface_of
 from scenet.ir import Direction
@@ -81,6 +85,13 @@ PRODUCER = "Scenet"
 
 INK = (0.0, 0.0, 0.0, 1.0)
 NO_INK = (0.0, 0.0, 0.0, 0.0)
+
+#: Places for where a line set as text starts, so its glyphs land on the outlines' origins.
+TEXT_PLACES = 6
+
+#: The faces a document's text is set in, by their resource name, each with every character
+#: lettered in it: what goes into the file, once each.
+Faces = dict[str, tuple[FontMetrics, set[str]]]
 
 
 def lightness(colour: str) -> float:
@@ -146,17 +157,32 @@ def printed_panels(
     return {frame.panel: panels[frame.panel] for page in pages for frame in page.frames}
 
 
-def print_notes(panels: Mapping[str, PanelCore]) -> list[str]:
+def print_notes(
+    panels: Mapping[str, PanelCore],
+    *,
+    live_text: bool = False,
+    fonts: Mapping[str, FontMetrics] | None = None,
+) -> list[str]:
     """What print leaves out or changes, one sentence each, for the panels printed.
 
     Args:
         panels: The panels the PDF draws, by name.
+        live_text: The PDF letters in text, so a face that may not be embedded is said.
+        fonts: The declared fonts the panels were lettered in, by digest.
 
     Returns:
         The notes, in the panels' order.
     """
     notes: list[str] = []
     for name, core in panels.items():
+        if live_text:
+            for metrics in _faces_lettered(core, fonts):
+                reason = refusal(metrics)
+                if reason is not None:
+                    notes.append(
+                        f"the face {metrics.family} {metrics.style} in panel {name!r} is not "
+                        f"embedded: {reason}; its lettering prints in outlines"
+                    )
         air = core.backdrop.atmosphere if core.backdrop is not None else None
         if air is not None and air.veil is not None:
             notes.append(
@@ -191,6 +217,7 @@ def render_pdf(
     *,
     fonts: Mapping[str, FontMetrics] | None = None,
     images: Mapping[str, bytes] | None = None,
+    live_text: bool = False,
 ) -> bytes:
     r"""Draw a document as a print PDF.
 
@@ -205,6 +232,9 @@ def render_pdf(
         images: The supplied pictures' bytes, by digest -- what
             :attr:`Book.images <scenet.pipeline.Book.images>` holds. A picture is always
             carried inside the PDF, pixels unchanged; see `scenet.emit.pdf_images`.
+        live_text: Letter balloons and captions in text, their faces embedded, rather than
+            in outlines (#284). Each glyph lands where its outline would; a face whose
+            licence forbids embedding stays in outlines, as :func:`print_notes` says.
 
     Returns:
         The PDF's bytes.
@@ -238,14 +268,15 @@ def render_pdf(
     document = _Document(
         pictures={name: _embedded(image, images) for name, image in pictures.items()}
     )
+    lettering = _Lettering(fonts, live_text, document.faces)
     if pages:
         for page in pages:
             document.add_page(
-                page.width, page.height, _page_content(page, panels, fonts), bleed=page.bleed
+                page.width, page.height, _page_content(page, panels, lettering), bleed=page.bleed
             )
     else:
         for core in panels.values():
-            document.add_page(core.width, core.height, _lone_content(core, fonts))
+            document.add_page(core.width, core.height, _lone_content(core, lettering))
     # A page says which way it is read; without pages each PDF page is a panel, read the
     # way the panels are.
     rtl = (
@@ -271,12 +302,25 @@ def _embedded(image: CoreImage, images: Mapping[str, bytes] | None) -> Embedded:
     return embed(data, image.media_type, image.href)
 
 
-def _lone_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None) -> list[str]:
-    return ["q", *_clip(core), *panel_content(core, fonts), "Q"]
+@dataclass(frozen=True, slots=True)
+class _Lettering:
+    """How a document is lettered.
+
+    The fonts it names, whether in text or in outlines, and the faces its text has been set
+    in so far.
+    """
+
+    fonts: Mapping[str, FontMetrics] | None
+    live_text: bool
+    faces: Faces
+
+
+def _lone_content(core: PanelCore, lettering: _Lettering) -> list[str]:
+    return ["q", *_clip(core), *_content(core, lettering), "Q"]
 
 
 def _page_content(
-    page: PageCore, panels: Mapping[str, PanelCore], fonts: Mapping[str, FontMetrics] | None
+    page: PageCore, panels: Mapping[str, PanelCore], lettering: _Lettering
 ) -> list[str]:
     """A page: its sheet, then every panel at its frame, in reading order.
 
@@ -297,7 +341,7 @@ def _page_content(
         lines += ["q", f"1 0 0 1 {fmt(frame.x)} {fmt(frame.y)} cm", *_clip(core)]
         for hole in core.exclusions:
             lines.append(_hole(core, hole))
-        lines += [*panel_content(core, fonts), "Q"]
+        lines += [*_content(core, lettering), "Q"]
     return lines
 
 
@@ -319,7 +363,9 @@ def _hole(core: PanelCore, hole: Box) -> str:
     )
 
 
-def panel_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None = None) -> list[str]:
+def panel_content(
+    core: PanelCore, fonts: Mapping[str, FontMetrics] | None = None, *, live_text: bool = False
+) -> list[str]:
     """A panel's marks as PDF content, one `q ... Q` block each, in painting order.
 
     The veil is left out: it is noise only SVG can draw.
@@ -327,6 +373,8 @@ def panel_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None = Non
     Args:
         core: The compiled panel.
         fonts: The declared fonts it was lettered in, by digest.
+        live_text: Each line of a balloon or a caption set as text, one `BT ... ET` in its
+            block, rather than in outlines.
 
     Returns:
         The content lines, in the panel's own units.
@@ -334,11 +382,97 @@ def panel_content(core: PanelCore, fonts: Mapping[str, FontMetrics] | None = Non
     Raises:
         ValueError: The panel is drawn over a supplied picture, or names a font not given.
     """
-    family = typeface_of(core, fonts=fonts)
+    return _content(core, _Lettering(fonts, live_text, {}))
+
+
+def _content(core: PanelCore, lettering: _Lettering) -> list[str]:
+    family = typeface_of(core, fonts=lettering.fonts)
     lines: list[str] = []
-    for mark in marks(core, family):
-        if not mark.is_veil:
+    for mark in marks(core, family, live_text=lettering.live_text):
+        if mark.is_veil:
+            continue
+        if isinstance(mark.shape, Text):
+            lines += _text(mark, mark.shape, lettering.faces)
+        else:
             lines += _painted(mark)
+    return lines
+
+
+def _faces_lettered(core: PanelCore, fonts: Mapping[str, FontMetrics] | None) -> list[FontMetrics]:
+    """The faces a panel's balloons and captions are lettered in, each once, in order."""
+    faces: dict[str, FontMetrics] = {}
+    for mark in marks(core, typeface_of(core, fonts=fonts), live_text=True):
+        if isinstance(mark.shape, Text):
+            for placed in mark.shape.runs:
+                faces.setdefault(placed.metrics.sha256, placed.metrics)
+    return list(faces.values())
+
+
+def _text(mark: Mark, line: Text, faces: Faces) -> list[str]:
+    """One line of lettering set as text, each run in its embedded face.
+
+    Each run starts at its first glyph's origin, and every glyph after lands on the step the
+    solver measured: the adjustment after a glyph is its width as the font's `W` array
+    writes it, less that step, so a reader's arithmetic and the outlines' agree. A character
+    the face lacks is stepped over, as its outline -- none -- is. A run in a face that may
+    not be embedded is drawn in its outlines after the text, in the same ink.
+    """
+    set_as_text: list[str] = []
+    outlined: list[str] = []
+    for placed in line.runs:
+        if refusal(placed.metrics) is not None:
+            outlined += _outlined_run(placed, line.baseline)
+            continue
+        name = f"F{placed.metrics.sha256[:16]}"
+        lettered = faces.setdefault(name, (placed.metrics, set()))[1]
+        size = fmt(line.font_size, TEXT_PLACES)
+        set_as_text += [
+            f"/{name} 1 Tf",
+            f"{size} 0 0 -{size} {fmt(placed.origins[0], TEXT_PLACES)} "
+            f"{fmt(line.baseline, TEXT_PLACES)} Tm",
+            f"[{_shown(placed, lettered)}] TJ",
+        ]
+    lines = ["q", *_state(mark.fill, None)]
+    if set_as_text:
+        lines += ["BT", *set_as_text, "ET"]
+    return [*lines, *outlined, "Q"]
+
+
+def _shown(placed: PlacedRun, lettered: set[str]) -> str:
+    """A run as a `TJ` array: its glyphs by code, and between them what steps them."""
+    metrics, text = placed.metrics, placed.run.text
+    parts: list[str] = []
+    codes: list[str] = []
+    adjustment = 0.0
+    last = len(text) - 1
+    for index, character in enumerate(text):
+        step = metrics.step(character, text[index + 1] if index < last else None) * 1000
+        code = metrics.glyph_id(character)
+        if code is None:
+            adjustment -= step
+            continue
+        written = fmt(adjustment, WIDTH_PLACES)
+        if written != "0":
+            if codes:
+                parts.append(f"<{''.join(codes)}>")
+                codes = []
+            parts.append(written)
+        codes.append(f"{code:04X}")
+        lettered.add(character)
+        adjustment = float(fmt(advance_width(metrics, character), WIDTH_PLACES)) - step
+    if codes:
+        parts.append(f"<{''.join(codes)}>")
+    return " ".join(parts)
+
+
+def _outlined_run(placed: PlacedRun, baseline: float) -> list[str]:
+    """A run in its glyphs' outlines, as print letters without live text."""
+    lines: list[str] = []
+    for character, origin in zip(placed.run.text, placed.origins, strict=True):
+        path = placed.metrics.glyph_pdf_path(character)
+        if path:
+            glyph = Glyph(placed.metrics, character, origin, baseline, placed.scale)
+            lines += ["q", *_glyph_transform(glyph), path, "f", "Q"]
     return lines
 
 
@@ -563,6 +697,7 @@ class _Document:
 
     pages: list[tuple[float, float, float, list[str]]] = field(default_factory=list)
     pictures: dict[str, Embedded] = field(default_factory=dict)
+    faces: Faces = field(default_factory=dict)
 
     def add_page(
         self, width: float, height: float, content: list[str], *, bleed: float = 0.0
@@ -574,7 +709,8 @@ class _Document:
         """The whole file.
 
         Catalog 1, pages 2, then each page and its content, then each picture and its soft
-        mask, once however many pages draw it, then the document info.
+        mask, once however many pages draw it, then each face text is set in, five objects
+        each (`scenet.emit.pdf_fonts`), then the document info.
         """
         count = len(self.pages)
         kids = " ".join(f"{3 + 2 * index} 0 R" for index in range(count))
@@ -596,6 +732,10 @@ class _Document:
             if picture.mask is not None:
                 pictures.append(_stream(*picture.mask))
                 next_number += 1
+        for name, (metrics, characters) in self.faces.items():
+            numbers[name] = next_number
+            pictures += [_part(part) for part in pdf_font(metrics, characters).objects(next_number)]
+            next_number += 5
 
         scale = fmt(POINTS_PER_UNIT, SCALE_PLACES)
         for index, (width, height, bleed, content) in enumerate(self.pages):
@@ -609,6 +749,9 @@ class _Document:
             drawn = sorted({part.split()[0][1:] for part in content if part.endswith(" Do")})
             images = " ".join(f"/{name} {numbers[name]} 0 R" for name in drawn)
             xobjects = f" /XObject << {images} >>" if drawn else ""
+            named = sorted({part.split()[0][1:] for part in content if part.endswith(" Tf")})
+            faces = " ".join(f"/{name} {numbers[name]} 0 R" for name in named)
+            xobjects += f" /Font << {faces} >>" if named else ""
             objects.append(
                 (
                     f"<< /Type /Page /Parent 2 0 R /MediaBox {sheet} /TrimBox {trim} "
@@ -640,6 +783,12 @@ class _Document:
 
 def _box(left: float, bottom: float, right: float, top: float) -> str:
     return f"[{fmt(left, 4)} {fmt(bottom, 4)} {fmt(right, 4)} {fmt(top, 4)}]"
+
+
+def _part(part: Part) -> bytes:
+    """An object a font is carried in: a dictionary, or a stream."""
+    entries, data = part
+    return _stream(entries, data) if data is not None else f"<< {entries} >>".encode()
 
 
 def _stream(entries: str, data: bytes) -> bytes:

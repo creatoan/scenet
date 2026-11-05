@@ -212,6 +212,16 @@ class PdfFont:
         return " ".join(f"{start} [{' '.join(widths)}]" for start, widths in runs)
 
 
+def width(metrics: FontMetrics, character: str) -> float:
+    """A character's advance as the font's `W` array gives it, in thousandths of an em.
+
+    The writer sets each glyph by this same number, so a reader's arithmetic and the
+    outlines' agree: see `scenet.emit.pdf`.
+    """
+    advance = round(metrics.advance(character) * metrics.units_per_em)
+    return advance * 1000 / metrics.units_per_em
+
+
 def pdf_font(metrics: FontMetrics, characters: Iterable[str]) -> PdfFont:
     """A face as a PDF font, holding the glyphs of `characters`.
 
@@ -236,17 +246,13 @@ def _pdf_font(metrics: FontMetrics, characters: tuple[str, ...]) -> PdfFont:
             text[code] = character
     codes = sorted(text)
     source = TTFont(io.BytesIO(metrics.data), lazy=True)
-    names = source.getGlyphOrder()
-    metric_table: Any = source["hmtx"]
     whole = embedding(_fs_type(source)) is Embedding.WHOLE
     postscript = _postscript_name(source)
     return PdfFont(
         name=postscript if whole else f"{_tag(metrics.sha256, codes)}+{postscript}",
         program=_sfnt(metrics.data) if whole else _subset(metrics.data, codes),
         truetype="glyf" in source,
-        widths=tuple(
-            (code, metric_table[names[code]][0] * 1000 / metrics.units_per_em) for code in codes
-        ),
+        widths=tuple((code, width(metrics, text[code])) for code in codes),
         text=tuple((code, text[code]) for code in codes),
         descriptor=_descriptor(source, metrics.units_per_em),
     )

@@ -379,8 +379,9 @@ class FontMetrics:
     Kerning is applied, in measurement and in the outlines alike. It used to be ignored,
     because SVG renderers do not agree on whether to kern `<text>`, and a measurement the
     renderer will not reproduce is worse than a slightly generous one. That holds for
-    `--live-text` and not for the default: outlines are positioned here, glyph by glyph,
-    so no renderer has a say and every pair adjustment is reproduced exactly.
+    the SVG's `--live-text` and not for the default: outlines are positioned here, glyph by
+    glyph, so no renderer has a say and every pair adjustment is reproduced exactly. So is
+    the print PDF's live text, whose glyphs are placed here too (#284).
 
     Attributes:
         path: The file it was read from, or the path a document wrote for bytes it was
@@ -581,7 +582,7 @@ class FontMetrics:
         the output genuinely self-contained: no font to embed, no font to be missing,
         and the rendered shapes are by construction the ones that were measured. The
         cost is that the text is no longer selectable, which is why `--live-text`
-        exists.
+        exists -- in the print PDF with the face embedded, so exactly (#284).
         """
         glyph_set = self._font.getGlyphSet()
         outlines: list[tuple[str, float]] = []

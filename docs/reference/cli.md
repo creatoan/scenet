@@ -51,7 +51,10 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   selectable text, but the result depends on the reader having a metrically compatible
   font installed, and on the renderer kerning it as the compiler measured it — browsers
   do by default. The default emits outlines, which makes the file genuinely
-  self-contained.
+  self-contained. With `--pdf`, the print PDF is lettered in text too, and exactly: each
+  face is embedded as a subset where its licence (the font's `OS/2` `fsType`) allows, and
+  every glyph lands where its outline would; a face that may not be embedded stays in
+  outlines, and a note says so (#284). Sound effects stay outlines in both.
 
 `--mono`
 : Draw every value as its grey and ignore its colour: a black-and-white edition of a document
@@ -88,11 +91,12 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   printed. A page unit prints as 0.1 mm, and a page's `bleed` runs the sheet past its trim
   (TrimBox and BleedBox). Lettering, balloon borders and every line are 100% black and
   overprint; the paper knocks out; greys are black tints, the night foreground rich black; a
-  tinted palette prints its greys; supplied pictures go in with their pixels unchanged. The
-  SVG options do not change it — it always letters in outlines, prints greys and carries its
-  pictures, so `--live-text`, `--mono`, `--no-aria`, `--embed-images` and `--strip` leave its
-  bytes as they are. Notes say what print leaves out: the fog and cloud veil, a palette's
-  colours, a picture below 300 dpi. No PDF/X conformance is claimed. See
+  tinted palette prints its greys; supplied pictures go in with their pixels unchanged. It
+  letters in outlines, or with `--live-text` in its embedded faces. The other SVG options do
+  not change it — it prints greys and carries its pictures, so `--mono`, `--no-aria`,
+  `--embed-images` and `--strip` leave its bytes as they are. Notes say what print leaves out:
+  the fog and cloud veil, a palette's colours, a picture below 300 dpi, a face that may not be
+  embedded. No PDF/X conformance is claimed. See
   [Print a comic](../howto/print_a_comic.md).
 
 `--quiet`

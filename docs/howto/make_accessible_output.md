@@ -34,7 +34,9 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
 - **Nothing inside the panel is named.** An image's children are presentational: a name on a
   balloon in there would never be read. The panel is read whole, as one graphic.
 - **Lettering stays outlines.** The words are in the file as what the panel is named by, not as
-  `<text>`; with `--live-text`, the text is inside the image and so not read twice.
+  `<text>`; with `--live-text`, the text is inside the image and so not read twice. A print PDF
+  built with `--live-text` carries its words as text that can be searched and copied, but no
+  structure tree: it is not a tagged, PDF/UA file.
 - **The title is also a tooltip.** A browser shows an SVG's `<title>` when the pointer rests on
   it, so a sighted reader hovering a panel sees its words.
 

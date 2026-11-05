@@ -296,6 +296,30 @@ ink is `#111111`, which a conversion would make 93% K.
 - **A tinted palette prints its greys.** Colour is a twin of value; print takes the value. CMYK
   twins are their own issue.
 
+## Live text in print is exact, and asked for
+
+`--live-text` letters the print PDF in text as it letters the SVG (#284): one flag, one meaning,
+lettering as text rather than outlines in every output that letters. Outlines stay the default, so
+no PDF changes unless asked, and a document never depends on its fonts' licences unless it asks
+for live text.
+
+- **Exact, unlike the SVG's.** The SVG names a family and trusts the reader to have it. The PDF
+  embeds the face, as a subset of the glyphs drawn and those they are built from, and places
+  every glyph itself: each run starts at its first glyph's origin, and each adjustment is the
+  glyph's width as the font's `W` array writes it, less the step the solver measured. A reader's
+  arithmetic then lands every glyph on its outline's origin, which a test checks for every
+  gallery panel.
+- **The font says whether it may go in.** Its `OS/2` `fsType` is read as the OpenType
+  specification says, least restrictive bit first. A face that may not go in keeps its lettering
+  in outlines, and print says so, rather than the PDF silently carrying a font it has no right
+  to.
+- **One kind of font.** Each glyph is kept at its own id, so the code a PDF draws it by is that
+  id: Type0, Identity-H, for TrueType and CFF alike. Nothing a reader would lay text out with
+  goes in -- no `GSUB`, no `GPOS`, no hinting -- since every position is the PDF's.
+- **Deterministic as the rest.** Fixed subsetting options, the face's date never rewritten, a
+  subset tag taken from what it holds, nothing compressed. The playground's own fontTools may
+  subset to other bytes; that is said, not promised away.
+
 ## Staging leaves as text, never as a picture or a prompt
 
 `--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by
@@ -393,8 +417,9 @@ Pair kerning was ignored at first, on a sound argument: SVG renderers do not agr
 kern `<text>`, and a measurement the renderer will not reproduce is worse than a slightly generous
 one. That argument is about `--live-text`. The default emits glyph outlines, and Scenet positions
 every one of them itself, so no renderer has a say: a pair adjustment that is measured is drawn,
-exactly. So kerning is applied, to measurement and outlines through one function, and live text is
-the best-effort mode it always was.
+exactly. So kerning is applied, to measurement and outlines through one function, and live text in
+the SVG is the best-effort mode it always was. In the print PDF it is exact, because there Scenet
+embeds the face and places every glyph itself (#284).
 
 The pairs are read with `fontTools` from the GPOS `kern` feature, or from a legacy `kern` table in a
 font with no GPOS kerning. HarfBuzz would shape the text for us, but Pyodide does not ship it and the

@@ -59,8 +59,8 @@ strip = render_strip([(name, result.core) for name, result in panels.items()])
 ```
 
 For print, `render_pdf(book.pages, cores, fonts=..., images=...)` returns a PDF's bytes:
-lettering on the black plate, a page unit printed as 0.1 mm. See
-[Print a comic](print_a_comic.md).
+lettering on the black plate, a page unit printed as 0.1 mm. `live_text=True` letters it in its
+embedded faces rather than outlines. See [Print a comic](print_a_comic.md).
 
 `render` takes `live_text=True` if you want selectable `<text>` elements instead of
 glyph outlines. The default emits outlines, which makes the file self-contained — no

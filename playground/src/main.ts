@@ -515,13 +515,15 @@ async function main(): Promise<void> {
   /**
    * The print PDF, in the browser's own viewer, with what print leaves out under it.
    *
-   * Made only while the tab is open, as the exports are. Where a browser shows no PDF in a
-   * frame, as on a phone, the link above it opens or downloads the same file.
+   * Made only while the tab is open, as the exports are, and lettered as the options say: in
+   * text with live text on, as `--live-text` does, so turning it on or off shows it again.
+   * Where a browser shows no PDF in a frame, as on a phone, the link above it opens or
+   * downloads the same file.
    */
   const showPrint = async (): Promise<void> => {
     if (compiler === undefined || lastGood === undefined) return;
     const asked = book;
-    const printed = await compiler.pdf();
+    const printed = await compiler.pdf(options.liveText);
     if (asked !== book || view !== "print") return;
     printNotes.replaceChildren();
     if (!printed.ok) {
@@ -1008,7 +1010,7 @@ async function main(): Promise<void> {
       download(filename, textBlob(exported, type));
     }
     if (what === "pdf" && compiler !== undefined) {
-      const printed = await compiler.pdf();
+      const printed = await compiler.pdf(options.liveText);
       if (!printed.ok) {
         setStatus(`Print cannot carry this document: ${printed.error}`);
         return;

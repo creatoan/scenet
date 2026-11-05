@@ -176,6 +176,26 @@ class Glyph:
 
 
 @dataclass(frozen=True, slots=True)
+class Text:
+    """One line of lettering set as text, with `--live-text` (#284).
+
+    The SVG writes it as one `<text>`; print sets each run in its embedded face. Its glyphs
+    land where their outlines would, each run's origins worked out by
+    :func:`geometry.glyph_walk <scenet.emit.geometry.glyph_walk>`.
+
+    Attributes:
+        runs: The line's runs, each in its face, with every character's origin.
+        baseline: The line's baseline.
+        font_size: The type size, in panel units.
+    """
+
+    tag: ClassVar[str] = "text"
+    runs: tuple[geometry.PlacedRun, ...]
+    baseline: float
+    font_size: float
+
+
+@dataclass(frozen=True, slots=True)
 class Picture:
     """A supplied picture, in the box Panel Core placed it in."""
 
@@ -193,7 +213,7 @@ class Veil:
     veil: CoreVeil
 
 
-Shape = Rect | Circle | Ellipse | Polygon | Line | Segment | Pointer | Glyph | Picture | Veil
+Shape = Rect | Circle | Ellipse | Polygon | Line | Segment | Pointer | Glyph | Text | Picture | Veil
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,13 +269,16 @@ def _valued(value: str) -> Paint | None:
     return Paint(value, Role.TONE, value)
 
 
-def marks(core: PanelCore, family: Typeface) -> list[Mark]:
+def marks(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list[Mark]:
     """Everything a panel paints, in the order it is painted.
 
     Args:
         core: The compiled panel.
         family: The faces its lettering was measured in, from
             :func:`typeface_of <scenet.emit.svg.typeface_of>`.
+        live_text: Each line of a balloon or a caption as one :class:`Text` mark, as the
+            SVG's `--live-text` writes one `<text>`, rather than a mark for each letter's
+            outline. Sound effects are outlines either way.
 
     Returns:
         One mark per element the SVG paints, in the same order, with the veil where the
@@ -284,9 +307,9 @@ def marks(core: PanelCore, family: Typeface) -> list[Mark]:
 
     for lettered in sorted([*core.balloons, *core.captions], key=lambda item: item.order):
         if isinstance(lettered, CoreCaption):
-            drawn.extend(_caption(lettered, family))
+            drawn.extend(_caption(lettered, family, live_text=live_text))
         else:
-            drawn.extend(_balloon(lettered, family))
+            drawn.extend(_balloon(lettered, family, live_text=live_text))
 
     if air is not None:
         drawn.extend(_weather(air))
@@ -389,7 +412,11 @@ def _lettering(
     font_size: float,
     family: Typeface,
     ink: Paint | None,
+    live_text: bool,
 ) -> list[Mark]:
+    if live_text:
+        placed_runs = tuple(geometry.glyph_walk(runs, x, font_size, family))
+        return [Mark(owner, Text(placed_runs, baseline, font_size), fill=ink)]
     drawn: list[Mark] = []
     for placed in geometry.glyph_walk(runs, x, font_size, family):
         outlines = placed.metrics.glyph_outlines(placed.run.text)
@@ -408,7 +435,7 @@ def _runs(
     return runs[index] if runs else (CoreRun(text=lines[index], face=base),)
 
 
-def _balloon(balloon: CoreBalloon, family: Typeface) -> list[Mark]:
+def _balloon(balloon: CoreBalloon, family: Typeface, *, live_text: bool) -> list[Mark]:
     owner = f"balloon-{balloon.id}"
     box = balloon.box
     drawn: list[Mark] = []
@@ -437,7 +464,14 @@ def _balloon(balloon: CoreBalloon, family: Typeface) -> list[Mark]:
         start = geometry.centred(box, geometry.line_width(runs, balloon.font_size, family))
         drawn.extend(
             _lettering(
-                owner, runs, start, baseline, font_size=balloon.font_size, family=family, ink=INK
+                owner,
+                runs,
+                start,
+                baseline,
+                font_size=balloon.font_size,
+                family=family,
+                ink=INK,
+                live_text=live_text,
             )
         )
     return drawn
@@ -456,7 +490,7 @@ def _outlined(owner: str, shape: Shape, *, dash: tuple[float, ...] = ()) -> Mark
     )
 
 
-def _caption(caption: CoreCaption, family: Typeface) -> list[Mark]:
+def _caption(caption: CoreCaption, family: Typeface, *, live_text: bool) -> list[Mark]:
     owner = f"caption-{caption.id}"
     box = caption.box
     role = (
@@ -489,6 +523,7 @@ def _caption(caption: CoreCaption, family: Typeface) -> list[Mark]:
                 font_size=caption.font_size,
                 family=family,
                 ink=ink,
+                live_text=live_text,
             )
         )
     return drawn

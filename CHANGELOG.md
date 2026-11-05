@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **Live text in the print PDF** (#284). `scenet build --pdf --live-text`, `render_pdf(...,
+  live_text=True)` and the playground's Print tab with live text on letter balloons and
+  captions as text, so the words can be selected, searched and copied. Each face is embedded
+  as a subset of the glyphs it draws, at its own glyph ids, and every glyph lands where its
+  outline would, at the advance and kerning the solver measured. A face goes in only where
+  its licence allows: the font's `OS/2` `fsType` is read as the OpenType specification says,
+  and a face that may not be embedded, or a CFF2 one, keeps its lettering in outlines, with a
+  note. Sound effects stay outlines. Outlines remain the default, and no PDF changes unless
+  asked. `scenet.emit.pdf_fonts` carries a face; `FontMetrics` keeps its bytes and gives a
+  character's glyph id.
 - **The README shows the gallery's tour** (#243), as `scenet build` draws it, and links the
   Gallery page. The picture is fetched from GitHub by its full address, so PyPI's project page
   shows it too.

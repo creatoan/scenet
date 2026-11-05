@@ -45,8 +45,12 @@ def _alone(book: Book, core: PanelCore, name: str) -> bytes:
 
 def _widths(font: DictionaryObject) -> dict[int, float]:
     """A Type0 font's widths by code, from its CIDFont's `W` array."""
-    descendant = font["/DescendantFonts"][0].get_object()
+    descendants = font["/DescendantFonts"]
+    assert isinstance(descendants, ArrayObject)
+    descendant = descendants[0].get_object()
+    assert isinstance(descendant, DictionaryObject)
     entries = descendant["/W"]
+    assert isinstance(entries, ArrayObject)
     widths: dict[int, float] = {}
     index = 0
     while index < len(entries):

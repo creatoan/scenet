@@ -75,7 +75,31 @@ Print is told inks, not colours, and each mark is set by what it *is*:
 
 - the **fog and cloud** over a backdrop, which only SVG's noise filter can draw;
 - a **tinted** panel, printed in its greys;
-- a **picture below 300 dpi** at its size on the page, which is soft in print.
+- a **picture below 300 dpi** at its size on the page, which is soft in print;
+- with `--live-text`, a **face that may not be embedded**, whose lettering prints in outlines.
+
+## Lettering as text
+
+`--live-text` letters the PDF in text rather than outlines, as it letters the SVG (#284), so the
+words can be selected, searched and copied:
+
+```sh
+scenet build comic.scene.yaml --pdf --live-text
+```
+
+The letters do not move. Each face is embedded, as a subset of the glyphs it draws, and every
+glyph is set where its outline would be, at the advance and kerning the solver measured. Ink is
+the same 100% K, overprinting. Sound effects stay outlines: they are letters treated as picture.
+
+A face goes in only if its licence allows it, as the font itself says in its `OS/2` table
+(`fsType`). Installable, print-and-preview and editable faces are embedded, and one that may not
+be subset is embedded whole. A face with a restricted licence, or one whose bitmaps alone may go
+in, keeps its lettering in outlines, and a note names it. So does a CFF2 face, which a PDF 1.6 file
+cannot carry. Source Sans Pro, Bangers and the gallery's Comic Neue are under the SIL Open Font
+License, which lets a document embed them, whole or as a subset.
+
+A PDF made in the playground uses its own build of fontTools, which may subset a face to
+slightly different bytes than the command line does: the same letters, in the same places.
 
 ## What it does not do
 
@@ -85,8 +109,9 @@ Print is told inks, not colours, and each mark is set by what it *is*:
   can say more.
 - **No crop marks.** The TrimBox and the BleedBox carry the trim; a printer's imposition adds the
   marks.
-- **No text layer.** Lettering is drawn as outlines, as in the SVG, so no font is embedded and
-  none can be missing, and the text cannot be selected.
+- **No tagged text.** With `--live-text` the words can be selected and searched, but the PDF has
+  no structure tree: it is not PDF/UA. Without it, lettering is outlines, as in the SVG, so no
+  font is embedded and none can be missing.
 - **Panels do not bleed.** Every frame sits inside the page's margin; the bleed is paper.
 
 ## Check the plates

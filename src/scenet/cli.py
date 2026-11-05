@@ -89,8 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--live-text",
         action="store_true",
         help=(
-            "emit selectable <text> instead of glyph outlines; smaller, but depends on the "
-            "reader having a metrically compatible font installed"
+            "emit selectable <text> instead of glyph outlines; smaller, but the SVG depends "
+            "on the reader having a metrically compatible font installed; the print PDF "
+            "embeds its faces, where their licences allow"
         ),
     )
     build.add_argument(
@@ -360,7 +361,7 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     if _refuse_unusable_names(book):
         return 2
     printed = _printed(book)
-    pdf = _print(book, printed, base) if args.pdf else None
+    pdf = _print(book, printed, base, live_text=args.live_text) if args.pdf else None
     outputs = [] if isinstance(pdf, int) else _outputs(book, base, args, single=single, pdf=pdf)
     refused = pdf if isinstance(pdf, int) else 2 if _refuse_clashes(outputs) else 0
     if refused:
@@ -379,7 +380,8 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         notes = [*book.notes, *_links_away_from(book, source, base, embedded=args.embed_images)]
         for name, result in book.panels.items():
             notes += [note if single else f"{name}: {note}" for note in result.notes]
-        notes += print_notes(printed) if args.pdf else []
+        if args.pdf:
+            notes += print_notes(printed, live_text=args.live_text, fonts=book.fonts)
         for note in notes:
             print(f"note: {note}")
     return 0
@@ -393,7 +395,9 @@ def _write(path: Path, content: str | bytes) -> None:
         path.write_text(content, encoding="utf-8", newline="\n")
 
 
-def _print(book: Book, printed: dict[str, PanelCore], base: Path) -> bytes | int:
+def _print(
+    book: Book, printed: dict[str, PanelCore], base: Path, *, live_text: bool
+) -> bytes | int:
     """The print PDF, built before anything is written; or the status a refusal exits with.
 
     A picture print cannot carry fails the whole build, and leaves no half-built set of
@@ -407,7 +411,9 @@ def _print(book: Book, printed: dict[str, PanelCore], base: Path) -> bytes | int
         )
         return 2
     try:
-        return render_pdf(book.pages, printed, fonts=book.fonts, images=book.images)
+        return render_pdf(
+            book.pages, printed, fonts=book.fonts, images=book.images, live_text=live_text
+        )
     except ValueError as exc:
         print(f"scenet: {exc}", file=sys.stderr)
         return 1

@@ -13,7 +13,8 @@ Two kinds of golden:
   is small, readable and diffable by design, so a change in layout is reviewed coordinate
   by coordinate.
 - `tests/golden/digests.json` holds the SHA-256 of every SVG: each panel, its debug
-  overlay, its live-text variant, each strip and each page; and of every print PDF (#80).
+  overlay, its live-text variant, each strip and each page; and of every print PDF (#80),
+  lettered in outlines and, in the live-text variant, in its embedded faces (#284).
   SVG is too large to review usefully as text, and its Core already says what moved.
 - `docs/images/gallery/` holds the pictures the documentation shows of each gallery
   example (#243), whole: copies of goldens, compared byte for byte.
@@ -81,7 +82,7 @@ EXPORTED_JSON = (".pose.json", ".boxes.json", ".semantics.json")
 #: differs and whose Core does not; and one without accessibility markup.
 VARIANTS = {
     "": ["--core", "--debug", "--strip", "--conditioning", "--pdf"],
-    "live-text/": ["--live-text", "--strip"],
+    "live-text/": ["--live-text", "--strip", "--pdf"],
     # Without accessibility markup: what a post-processing pipeline gets, which must be
     # exactly what was written before there was any, file for file.
     "no-aria/": ["--no-aria", "--strip"],

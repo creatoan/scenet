@@ -595,6 +595,22 @@ asks and what renderers and editors do, which differ.
 | Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
 | EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
 
+### Fonts in print — ISO 32000, the OpenType `OS/2` table, the OFL FAQ
+
+[ISO 32000-1, §9.7 and §9.9](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf) ·
+[OpenType `OS/2`, `fsType`](https://learn.microsoft.com/en-us/typography/opentype/spec/os2#fstype) ·
+[OFL FAQ 1.11-1.14](https://openfontlicense.org/ofl-faq/) ·
+[fontTools subset](https://fonttools.readthedocs.io/en/latest/subset/index.html)
+
+How a face is carried into the print PDF for live text (#284).
+
+| Question | What the sources say | What Scenet writes |
+|---|---|---|
+| May a face be embedded | `fsType` bits 0-3: 0 installable, 2 restricted, 4 preview & print, 8 editable; when several are set the least restrictive applies; bit 8 forbids subsetting; bit 9 allows bitmaps only. | Embedded unless restricted or bitmap-only; whole when it may not be subset. |
+| An OFL face | "So can I embed OFL fonts in my document? Yes, either in full or a subset." The restrictions on modification do not apply to a font embedded in a document. | Source Sans Pro, Bangers and Comic Neue embedded as subsets under their own names. |
+| Which PDF font | A Type0 font with Identity-H takes two-byte codes; a CIDFontType2 maps them to glyphs through `CIDToGIDMap`, a CIDFontType0 over a CFF without CID operators reads them as glyph ids; `FontFile3 /OpenType` is PDF 1.6. | Glyph ids as codes, kept by the subsetter; TrueType in `FontFile2`, CFF in its OpenType file; CFF2 and CID-keyed CFF left in outlines. |
+| Where glyphs land | A glyph's displacement is its `W` width less the `TJ` adjustment, in thousandths of the type size. | Adjustments computed from the widths as written, so every glyph lands on the solver's step. |
+
 ### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
 
 **Load-bearing** for `--conditioning` (#72), as formats and consumers rather than as code.

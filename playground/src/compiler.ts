@@ -323,7 +323,7 @@ def _scenet_archive(stem):
     return base64.b64encode(conditioning_archive(cores, stem)).decode("ascii")
 
 
-def _scenet_pdf():
+def _scenet_pdf(live_text):
     """The print PDF, as \`scenet build --pdf\` writes it, and what print leaves out."""
     import base64
 
@@ -332,10 +332,13 @@ def _scenet_pdf():
     book = _scenet_last
     cores = {name: result.core for name, result in book.panels.items()}
     try:
-        data = render_pdf(book.pages, cores, fonts=book.fonts, images=book.images)
+        data = render_pdf(
+            book.pages, cores, fonts=book.fonts, images=book.images, live_text=live_text
+        )
     except ValueError as exc:
         return json.dumps({"ok": False, "error": str(exc)})
-    notes = print_notes(printed_panels(book.pages, cores))
+    printed = printed_panels(book.pages, cores)
+    notes = print_notes(printed, live_text=live_text, fonts=book.fonts)
     return json.dumps({"ok": True, "pdf": base64.b64encode(data).decode("ascii"), "notes": notes})
 `;
 
@@ -358,8 +361,13 @@ export interface Compiler {
   conditioning(): Promise<readonly PanelExports[]>;
   /** The same as one ZIP, each file named as `scenet build --conditioning` names it. */
   archive(stem: string): Promise<Uint8Array>;
-  /** The print PDF of the last document that compiled, as `scenet build --pdf` writes it. */
-  pdf(): Promise<PrintResult>;
+  /**
+   * The print PDF of the last document that compiled, as `scenet build --pdf` writes it.
+   *
+   * @param liveText - Letter it in its embedded faces rather than glyph outlines, as
+   *   `--live-text` does.
+   */
+  pdf(liveText: boolean): Promise<PrintResult>;
   /** Every file beside the document, as the compiler reads them. */
   files(): DocumentFile[];
   /**
@@ -458,8 +466,9 @@ await micropip.install(_scenet_wheel)
       pyodide.globals.set("_scenet_stem", stem);
       return decodeBase64(String(await pyodide.runPythonAsync("_scenet_archive(_scenet_stem)")));
     },
-    async pdf(): Promise<PrintResult> {
-      const raw = JSON.parse(String(await pyodide.runPythonAsync("_scenet_pdf()"))) as
+    async pdf(liveText: boolean): Promise<PrintResult> {
+      pyodide.globals.set("_scenet_live_text", liveText);
+      const raw = JSON.parse(String(await pyodide.runPythonAsync("_scenet_pdf(_scenet_live_text)"))) as
         | { ok: true; pdf: string; notes: string[] }
         | { ok: false; error: string };
       if (!raw.ok) return { ok: false, error: raw.error };

@@ -61,7 +61,7 @@ All runtime dependencies are permissively licensed. CI enforces this on every bu
 | `pyyaml` | Parsing the surface syntax | MIT |
 | `kiwisolver` | Cassowary constraint solver for actor placement | BSD |
 | `shapely` | Occlusion polygons, free-space and intersection tests | BSD |
-| `fonttools` | Glyph advance widths for balloon sizing | MIT |
+| `fonttools` | Glyph advance widths for balloon sizing; subsetting faces for live text in print | MIT |
 | `numpy` | Numeric arrays in the geometry layer | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | `typing-extensions` | Typing backports pulled in by pydantic | PSF-2.0 |
 | `annotated-types`, `typing-inspection` | pydantic support packages | MIT |
