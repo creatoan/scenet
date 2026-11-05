@@ -30,9 +30,10 @@ import hashlib
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from importlib.resources import files
 
 from scenet.core import Box, CoreImage, PageCore, PanelCore
-from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK
+from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK, CONDITION
 from scenet.emit.geometry import PlacedRun
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
@@ -87,6 +88,23 @@ KAPPA = 4 * (math.sqrt(2) - 1) / 3
 
 #: What a PDF reader is told made the file. No version: a release would change every byte.
 PRODUCER = "Scenet"
+
+#: The ICC's sRGB profile, which every RGB picture is tagged with (#283): what a browser reads
+#: an untagged picture as, said to a print workflow rather than left to its guess.
+SRGB_PROFILE = files("scenet").joinpath("profiles", "sRGB2014.icc").read_bytes()
+
+#: The printing condition the CMYK twins were made for, named by its ICC registry identifier
+#: (#283). A registered condition needs no profile in a plain PDF, and none is embedded: the
+#: file claims no PDF/X, which would.
+OUTPUT_INTENT = (
+    f"<< /Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier ({CONDITION}) "
+    "/RegistryName (http://www.color.org) "
+    "/Info (GRACoL 2013, coated #1 sheetfed, CGATS 21-2 CRPC6) >>"
+)
+
+#: Every page blends its transparency in CMYK, the space it prints in, rather than in one a
+#: reader or a RIP picks (#283).
+PAGE_GROUP = "/Group << /Type /Group /S /Transparency /CS /DeviceCMYK >>"
 
 INK = (0.0, 0.0, 0.0, 1.0)
 NO_INK = (0.0, 0.0, 0.0, 0.0)
@@ -850,36 +868,18 @@ class _Document:
         Catalog 1, pages 2, then each page and its content, then each picture and its soft
         mask, once however many pages draw it, then each veil's noise and the group that draws
         it, then each face text is set in, five objects each (`scenet.emit.pdf_fonts`), then
-        the document info.
+        the sRGB profile when an RGB picture is drawn, then the document info.
         """
         count = len(self.pages)
         kids = " ".join(f"{3 + 2 * index} 0 R" for index in range(count))
         reading = " /ViewerPreferences << /Direction /R2L >>" if rtl else ""
         objects = [
-            f"<< /Type /Catalog /Pages 2 0 R{reading} >>".encode(),
+            (
+                f"<< /Type /Catalog /Pages 2 0 R{reading} /OutputIntents [{OUTPUT_INTENT}] >>"
+            ).encode(),
             f"<< /Type /Pages /Kids [{kids}] /Count {count} >>".encode(),
         ]
-        numbers: dict[str, int] = {}
-        pictures: list[bytes] = []
-        next_number = 3 + 2 * count
-        for name, picture in self.pictures.items():
-            numbers[name] = next_number
-            mask = ""
-            if picture.mask is not None:
-                mask = f" /SMask {next_number + 1} 0 R"
-            pictures.append(_stream(picture.dictionary + mask, picture.data))
-            next_number += 1
-            if picture.mask is not None:
-                pictures.append(_stream(*picture.mask))
-                next_number += 1
-        for name, shape in self.veils.items():
-            numbers[name] = next_number + 1
-            pictures += _veil_objects(shape, next_number)
-            next_number += 2
-        for name, (metrics, characters) in self.faces.items():
-            numbers[name] = next_number
-            pictures += [_part(part) for part in pdf_font(metrics, characters).objects(next_number)]
-            next_number += 5
+        numbers, pictures = self._shared(3 + 2 * count)
 
         scale = fmt(POINTS_PER_UNIT, SCALE_PLACES)
         for index, (width, height, bleed, content) in enumerate(self.pages):
@@ -902,14 +902,16 @@ class _Document:
             objects.append(
                 (
                     f"<< /Type /Page /Parent 2 0 R /MediaBox {sheet} /TrimBox {trim} "
-                    f"/BleedBox {sheet} /Resources << /ExtGState << {graphics} >>{xobjects} >> "
+                    f"/BleedBox {sheet} {PAGE_GROUP} "
+                    f"/Resources << /ExtGState << {graphics} >>{xobjects} >> "
                     f"/Contents {4 + 2 * index} 0 R >>"
                 ).encode()
             )
             flip = f"{scale} 0 0 -{scale} {fmt(bleed * k, 4)} {fmt((height + bleed) * k, 4)} cm"
             objects.append(_stream("", "\n".join(["4 M", flip, *content, ""]).encode()))
         objects += pictures
-        objects.append(f"<< /Producer ({PRODUCER}) >>".encode())
+        # Scenet traps nothing; a printer that does traps the file itself.
+        objects.append(f"<< /Producer ({PRODUCER}) /Trapped /False >>".encode())
 
         output = bytearray(b"%PDF-1.6\n%\xe2\xe3\xcf\xd3\n")
         offsets: list[int] = []
@@ -926,6 +928,48 @@ class _Document:
             f"/ID [<{identifier}> <{identifier}>] >>\nstartxref\n{xref}\n%%EOF\n"
         ).encode()
         return bytes(output)
+
+    def _shared(self, next_number: int) -> tuple[dict[str, int], list[bytes]]:
+        """Every object pages share, numbered from `next_number`, and their numbers by name.
+
+        Each picture and its soft mask, then each veil's two objects, then each face's five,
+        then the sRGB profile, when an RGB picture is drawn: it comes after every other, so
+        nothing before it is renumbered (#283).
+        """
+        numbers: dict[str, int] = {}
+        pictures: list[bytes] = []
+        profile = (
+            next_number
+            + sum(1 + (picture.mask is not None) for picture in self.pictures.values())
+            + 2 * len(self.veils)
+            + 5 * len(self.faces)
+        )
+        tagged = False
+        for name, picture in self.pictures.items():
+            numbers[name] = next_number
+            mask = ""
+            if picture.mask is not None:
+                mask = f" /SMask {next_number + 1} 0 R"
+            dictionary = picture.dictionary
+            if "/DeviceRGB" in dictionary:
+                dictionary = dictionary.replace("/DeviceRGB", f"[/ICCBased {profile} 0 R]")
+                tagged = True
+            pictures.append(_stream(dictionary + mask, picture.data))
+            next_number += 1
+            if picture.mask is not None:
+                pictures.append(_stream(*picture.mask))
+                next_number += 1
+        for name, shape in self.veils.items():
+            numbers[name] = next_number + 1
+            pictures += _veil_objects(shape, next_number)
+            next_number += 2
+        for name, (metrics, characters) in self.faces.items():
+            numbers[name] = next_number
+            pictures += [_part(part) for part in pdf_font(metrics, characters).objects(next_number)]
+            next_number += 5
+        if tagged:
+            pictures.append(_stream("/N 3 /Alternate /DeviceRGB", SRGB_PROFILE))
+        return numbers, pictures
 
 
 def _box(left: float, bottom: float, right: float, top: float) -> str:

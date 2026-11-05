@@ -50,16 +50,18 @@ each font's own `name` table and beside them.
 
 [ofl]: https://openfontlicense.org/
 
-## ICC profiles (the palette script only)
+## ICC profiles
 
-Neither is part of the `scenet` wheel or its source distribution: they sit in `scripts/profiles/`,
-with a README giving their sources, licences and SHA-256, which `tests/test_cmyk_twins.py` pins.
-`scripts/make_palette.py` converts the tinted palette through them to the CMYK table print reads
-(#280).
+`scripts/make_palette.py` converts the tinted palette through two profiles to the CMYK table
+print reads (#280). Each sits beside a README giving its source, licence and SHA-256, which
+`tests/test_cmyk_twins.py` pins.
 
 - **`sRGB2014.icc`**, copyright International Color Consortium, 2015, which "may be copied,
-  distributed, embedded, made, used, and sold without restriction" if unaltered.
-- **`GRACoL2013_CRPC6.icc`**, copyright X-Rite, Inc., made available by IDEAlliance with X-Rite's
+  distributed, embedded, made, used, and sold without restriction" if unaltered. It is part of
+  the `scenet` package, in `scenet/profiles/`, since the print PDF tags RGB pictures with it and
+  so embeds it (#283).
+- **`GRACoL2013_CRPC6.icc`**, in `scripts/profiles/` and not part of the wheel or the source
+  distribution, copyright X-Rite, Inc., made available by IDEAlliance with X-Rite's
   permission, and which "may be used, embedded, exchanged, included in commercial software and
   shared without restriction" if unaltered.
 

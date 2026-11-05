@@ -2,8 +2,8 @@
 
 The compiler only ever reads a picture's size (`scenet.images`); print has to carry the
 picture itself. The rule is to change nothing: no colour conversion -- an RGB picture
-stays RGB, which the printer's RIP converts -- and, wherever PDF can read the file's own
-data, the file's own bytes:
+stays RGB, which the printer's RIP converts, and the PDF writer tags it as sRGB (#283) --
+and, wherever PDF can read the file's own data, the file's own bytes:
 
 - a JPEG Acrobat and every RIP decode (baseline, extended or progressive, 8-bit) goes in
   whole, as `DCTDecode`;
@@ -14,8 +14,9 @@ data, the file's own bytes:
   samples stored uncompressed, alpha as a soft mask beside them. Never re-deflated: zlib
   implementations differ from one platform to the next, and so would the bytes.
 
-`gAMA`, `iCCP` and `sRGB` chunks are not carried over: a browser applies them, a print
-workflow its own profile.
+`gAMA`, `iCCP` and `sRGB` chunks, and a JPEG's own profile, are not carried over: an RGB
+picture is read as sRGB, as a browser reads an untagged one. A grey picture stays
+`DeviceGray`, printing on black alone, and a CMYK JPEG `DeviceCMYK`.
 """
 
 import struct

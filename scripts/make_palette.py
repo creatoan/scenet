@@ -21,10 +21,10 @@ fails on any difference, so the hexes cannot drift from the rule.
 
 Print has a twin for every one of those colours too (#280): its CMYK under one printing
 condition, CGATS21-2-CRPC6 (GRACoL 2013), converted with littleCMS -- relative colorimetric,
-black point compensation, from `sRGB2014.icc` -- through the condition's own profile in
-`scripts/profiles/`. With it, black's ramp: what each whole percent of K alone prints, in
-CIELAB L*, which is how a grey finds its black. Both are written to `src/scenet/emit/cmyk.py`,
-which `tests/test_cmyk_twins.py` holds to this conversion.
+black point compensation, from `sRGB2014.icc` (`src/scenet/profiles/`) -- through the
+condition's own profile in `scripts/profiles/`. With it, black's ramp: what each whole percent
+of K alone prints, in CIELAB L*, which is how a grey finds its black. Both are written to
+`src/scenet/emit/cmyk.py`, which `tests/test_cmyk_twins.py` holds to this conversion.
 
 Run from the repository root after changing `ENDS`:
 
@@ -302,9 +302,10 @@ def table_source() -> str:
 #: The printing condition the CMYK twins are for, by its ICC registry name.
 CONDITION = "CGATS21-2-CRPC6"
 
-#: The profiles the conversion goes through, as published.
+#: The profiles the conversion goes through, as published: sRGB from the package, which
+#: tags print's RGB pictures with it (#283), and the condition's beside this script.
 PROFILES = Path(__file__).parent / "profiles"
-SOURCE_PROFILE = PROFILES / "sRGB2014.icc"
+SOURCE_PROFILE = Path(__file__).parent.parent / "src" / "scenet" / "profiles" / "sRGB2014.icc"
 CONDITION_PROFILE = PROFILES / "GRACoL2013_CRPC6.icc"
 
 #: Where the twins and black's ramp are written.

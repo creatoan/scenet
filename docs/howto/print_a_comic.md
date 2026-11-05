@@ -74,9 +74,13 @@ Print is told inks, not colours, and each mark is set by what it *is*:
   printer's ink limit. Small type stays 100% K.
 - **A tinted palette prints in colour**: each of its colours in its CMYK twin, below. `--mono`
   prints the greys every colour was chosen against instead, as it draws them in the SVG.
-- **Supplied pictures go in with their pixels unchanged.** An RGB picture stays RGB, and the
-  printer's RIP converts it; a JPEG and most PNGs go in as the file's own data. `gAMA`, `iCCP`
-  and `sRGB` chunks are not carried over.
+- **Supplied pictures go in with their pixels unchanged.** An RGB picture stays RGB, tagged
+  with the ICC's sRGB profile so the printer's RIP converts it from what a browser shows rather
+  than from a guess; a JPEG and most PNGs go in as the file's own data. A picture's own `gAMA`,
+  `iCCP` or `sRGB` chunk, or a JPEG's own profile, is not carried over: it is read as sRGB. A
+  grey picture prints on black alone, and a CMYK JPEG as it is.
+- **Every page blends in CMYK.** Rain at 85% and the veil's mask are live transparency, and each
+  page says to blend it in the inks it prints in, so no RIP blends a grey into four colours.
 
 **The colours print as one printing condition's CMYK.** Every colour a tinted palette draws -- its
 twenty masses of the ladder, its veil and rain, the `warm` caption -- has a CMYK twin under

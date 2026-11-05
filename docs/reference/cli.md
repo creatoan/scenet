@@ -98,8 +98,9 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   letters in outlines, or with `--live-text` in its embedded faces. The other SVG options do
   not change it — it carries its pictures, so `--no-aria`, `--embed-images` and `--strip` leave
   its bytes as they are. Notes say what print leaves out or changes: a colour that is none of
-  the palette's, a picture below 300 dpi, a face that may not be embedded. No PDF/X
-  conformance is claimed. See
+  the palette's, a picture below 300 dpi, a face that may not be embedded. RGB pictures are
+  tagged sRGB, and an output intent names the printing condition, but no PDF/X conformance
+  is claimed. See
   [Print a comic](../howto/print_a_comic.md).
 
 `--quiet`
