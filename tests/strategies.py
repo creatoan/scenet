@@ -546,6 +546,12 @@ def scenes(draw: st.DrawFn, *, direction: str | None = None) -> DrawnScene:
             tier, tier_order = draw(_tier(on_page))
             tiers.append(tier)
             read += tier_order
+        # The first panel of a page always reaches its top margin, so it may bleed (#281).
+        if draw(st.integers(0, 3)) == 0:
+            first = (
+                tiers[0]["columns"][0]["panels"] if "columns" in tiers[0] else tiers[0]["panels"]
+            )
+            first[0]["bleed"] = True
         pages.append({"tiers": tiers})
         order.append(tuple(read))
     document["pages"] = pages

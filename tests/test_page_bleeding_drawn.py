@@ -16,25 +16,22 @@ from scenet.emit.marks import Polygon, marks
 from scenet.emit.page import render_page, render_pages
 from scenet.emit.pdf import panel_content, render_pdf
 from scenet.emit.svg import render, typeface_of
-from scenet.frontends.yaml_front import parse_scene_document
 from scenet.ir import Side
-from scenet.pipeline import Book, _compile_document
+from scenet.pipeline import Book, compile_book
 from tests.test_marks import _drawn, _painted
-from tests.test_page_bleeding import SCENE
+from tests.test_page_bleeding import PLAIN, SCENE
 
 SVG = "{http://www.w3.org/2000/svg}"
 
 
 @cache
 def _book() -> Book:
-    return _compile_document(
-        parse_scene_document(SCENE), None, None, None, bleeds={"wide": True, "last": True}
-    )
+    return compile_book(SCENE)
 
 
 @cache
 def _plain() -> Book:
-    return _compile_document(parse_scene_document(SCENE), None, None, None)
+    return compile_book(PLAIN)
 
 
 def test_the_border_is_the_sides_that_keep_one():

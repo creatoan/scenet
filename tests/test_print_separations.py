@@ -32,12 +32,12 @@ from scenet.core import PanelCore
 from scenet.emit.cmyk import CMYK
 from scenet.emit.pdf import black_for, render_pdf
 from scenet.emit.pdf_fonts import pdf_font
-from scenet.frontends.yaml_front import parse_scene_document
 from scenet.ir import Face
-from scenet.pipeline import Book, _compile_document, compile_book, compile_book_file
+from scenet.pipeline import Book, compile_book, compile_book_file
 from scenet.solve.text import FontMetrics, Typeface
 from tests.pdf_files import face as face_file
 from tests.pdf_files import page
+from tests.test_page_bleeding import PLAIN
 from tests.test_page_bleeding import SCENE as BLEEDING
 
 GALLERY = Path(__file__).parent.parent / "examples" / "gallery"
@@ -432,13 +432,12 @@ def test_a_bleeding_panel_inks_the_bleed(tmp_path: Path):
     """The sheet past the trim carries a bleeding panel's art (#281), where a page without
     one leaves it paper."""
 
-    def band(bleeds: dict[str, bool]) -> list[Pixel]:
-        book = _compile_document(parse_scene_document(BLEEDING), None, None, None, bleeds=bleeds)
+    def band(text: str, name: str) -> list[Pixel]:
+        book = compile_book(text)
         cores = {name: result.core for name, result in book.panels.items()}
-        name = "bled" if bleeds else "unbled"
         plates = _separate(render_pdf(book.pages, cores), _folder(tmp_path, f"bleed-{name}"))
         # The 30-unit band left of the trim, beside the top-left panel; a pixel a unit.
         return plates.within(2, 100, 28, 400)
 
-    assert any(k for *_, k in band({"wide": True}))
-    assert not any(any(pixel) for pixel in band({}))
+    assert any(k for *_, k in band(BLEEDING, "bled"))
+    assert not any(any(pixel) for pixel in band(PLAIN, "unbled"))
