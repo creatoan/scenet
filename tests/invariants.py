@@ -22,7 +22,7 @@ from shapely.geometry import box as rectangle
 
 from scenet.core import CoreFrame, PageCore, PanelCore
 from scenet.geom import BBox
-from scenet.ir import Direction
+from scenet.ir import Direction, Side
 from scenet.solve.balloons import READING_EPSILON
 from scenet.solve.text import SHIPPED_FACES, load_metrics
 
@@ -70,7 +70,8 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
     """Every balloon and caption is where the language promises it will be.
 
     - inside the panel's margin, which `PanelCore` does not record, so it is passed in
-      from the authored document;
+      from the authored document -- or, for a panel that bleeds past the trim, inside the
+      lettering box it records (#281);
     - over no face, and under no exclusion such as an inset's clearance;
     - overlapping no other balloon or caption;
     - in reading order against **every** box read before it, not only the previous one --
@@ -81,7 +82,11 @@ def assert_lettering_is_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         core: The compiled panel.
         margin: The panel's margin, as authored.
     """
-    inner = BBox(margin, margin, core.width - 2 * margin, core.height - 2 * margin)
+    inner = (
+        core.lettering.as_bbox()
+        if core.lettering is not None
+        else BBox(margin, margin, core.width - 2 * margin, core.height - 2 * margin)
+    )
     faces = [face.as_circle() for face in core.face_exclusions()]
     exclusions = [box.as_bbox() for box in core.exclusions]
     boxes = lettered_boxes(core)
@@ -167,7 +172,8 @@ def _on_the_frame(core: PanelCore, point: tuple[float, float]) -> bool:
 def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:
     """Every sound effect is where the language promises it will be.
 
-    - inside the panel's margin, and inside its outline when it has one;
+    - inside the panel's margin -- its lettering box, when it bleeds (#281) -- and inside
+      its outline when it has one;
     - over no face, and under no exclusion such as an inset;
     - overlapping no other sound effect;
     - and with one letter for every character of its text, once runs of spaces are one.
@@ -176,7 +182,13 @@ def assert_effects_are_placed(core: PanelCore, *, margin: float = 0.0) -> None:
         core: The compiled panel.
         margin: The panel's margin, as authored.
     """
-    inner = rectangle(margin, margin, core.width - margin, core.height - margin).buffer(TOLERANCE)
+    if core.lettering is not None:
+        box = core.lettering
+        inner = rectangle(box.x, box.y, box.right, box.bottom).buffer(TOLERANCE)
+    else:
+        inner = rectangle(margin, margin, core.width - margin, core.height - margin).buffer(
+            TOLERANCE
+        )
     outline = Polygon(core.outline).buffer(TOLERANCE) if core.outline is not None else None
     zones = [(effect.id, Polygon(effect.zone)) for effect in core.sfx]
     for effect, (identifier, zone) in zip(core.sfx, zones, strict=True):
@@ -333,7 +345,8 @@ def _shape(frame: CoreFrame) -> Polygon:
 def assert_frames_are_placed(page: PageCore, *, margin: float) -> None:
     """Every frame on a page is inside its margins and clear of every other frame.
 
-    The one exception is an inset, which lies wholly inside the panel it is set into.
+    A frame that bleeds runs out to the bleed line on its bleeding sides instead (#281). The
+    one exception is an inset, which lies wholly inside the panel it is set into.
     Frames are compared as the shapes they are drawn as, so the neighbours in a slanted
     tier, whose bounding boxes overlap, are held to their shared cut.
 
@@ -341,11 +354,18 @@ def assert_frames_are_placed(page: PageCore, *, margin: float) -> None:
         page: The compiled page.
         margin: The page's margin, as authored.
     """
-    inner = rectangle(margin, margin, page.width - margin, page.height - margin).buffer(TOLERANCE)
     shapes = {frame.panel: _shape(frame) for frame in page.frames}
     parents = {frame.panel: frame.inset_of for frame in page.frames}
+    for frame in page.frames:
+        reach = dict.fromkeys(frame.bleed, -page.bleed)
+        inner = rectangle(
+            reach.get(Side.LEFT, margin),
+            reach.get(Side.TOP, margin),
+            page.width - reach.get(Side.RIGHT, margin),
+            page.height - reach.get(Side.BOTTOM, margin),
+        ).buffer(TOLERANCE)
+        assert inner.contains(shapes[frame.panel]), f"frame {frame.panel} leaves the page margins"
     for name, shape in shapes.items():
-        assert inner.contains(shape), f"frame {name} leaves the page margins"
         parent = parents[name]
         if parent is not None:
             assert shapes[parent].buffer(TOLERANCE).contains(shape), f"inset {name} leaves {parent}"
