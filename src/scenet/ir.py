@@ -272,10 +272,11 @@ class TypeSize(StrEnum):
 
 
 class Side(StrEnum):
-    """A side of the panel's frame: where an off-panel speaker is.
+    """A side of the panel's frame: where an off-panel speaker is, or where it bleeds.
 
     An off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel
-    Dialogue*: "the tail of the balloon generally butts against the panel border".
+    Dialogue*: "the tail of the balloon generally butts against the panel border". A panel
+    on a page bleeds past the trim on the sides its placement lists (#281).
     """
 
     LEFT = "left"
@@ -1796,11 +1797,14 @@ class PanelPlacement(Strict):
         use: The name of a panel under `panels:`.
         width: Its share of the tier's width, relative to the other panels in the tier.
         insets: Panels set into its corners.
+        bleed: Whether its frame runs past the trim to the bleed line, with no border there:
+            `true` on every side that reaches the page's margin, or a list of those sides.
     """
 
     use: str
     width: float = Field(default=1.0, gt=0.0)
     insets: tuple[Inset, ...] = ()
+    bleed: bool | tuple[Side, ...] = False
 
 
 class StackedPanel(Strict):
@@ -1813,11 +1817,14 @@ class StackedPanel(Strict):
         use: The name of a panel under `panels:`.
         height: Its share of the column's height, relative to the other panels in it.
         insets: Panels set into its corners.
+        bleed: Whether its frame runs past the trim to the bleed line, with no border there:
+            `true` on every side that reaches the page's margin, or a list of those sides.
     """
 
     use: str
     height: float = Field(default=1.0, gt=0.0)
     insets: tuple[Inset, ...] = ()
+    bleed: bool | tuple[Side, ...] = False
 
 
 def _read_with_insets(

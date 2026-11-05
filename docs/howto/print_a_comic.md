@@ -25,6 +25,12 @@ The bleed is paper around the page: nothing on it moves, and a page without one 
 trim. Ask the printer for both numbers; a Franco-Belgian album, for one, varies by publisher.
 A document with no pages prints each panel at its own size, at the same scale.
 
+A panel whose art should run off the cut page says so on its placement: `bleed: true`, or the
+sides, `bleed: [top, left]` (#281). Its frame then runs out to the bleed line with no border
+there, its cast is framed to the trim and its lettering kept inside the page margin, so the
+cutter takes nothing but art. Such a panel needs the page's `bleed`; without one it stops at the
+trim, and print notes it. See [the language reference](../reference/language.md#page-and-pages).
+
 ## Build it
 
 ```bash
@@ -136,7 +142,6 @@ slightly different bytes than the command line does: the same letters, in the sa
 - **No tagged text.** With `--live-text` the words can be selected and searched, but the PDF has
   no structure tree: it is not PDF/UA. Without it, lettering is outlines, as in the SVG, so no
   font is embedded and none can be missing.
-- **Panels do not bleed.** Every frame sits inside the page's margin; the bleed is paper.
 
 ## Check the plates
 

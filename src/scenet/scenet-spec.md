@@ -1206,7 +1206,7 @@ format they share.
 ![The first of two pages: three panels of Alice and Bob in a street, laid out in tiers](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-1.svg)
 ![The second page of the same document, its panels named by page and number, one with an inset](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-2.svg)
 
-**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) and [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print).
+**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages), [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) and [Panels that bleed](https://creatoan.github.io/scenet/gallery.html#panels-that-bleed).
 
 A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
 not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
@@ -1244,6 +1244,7 @@ panels:
 | `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
 | `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
 | `insets[].read` | `after` its parent, or `before` it | `after` |
+| `panels[].bleed`, `columns[].panels[].bleed` | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of sides, such as `[top, left]` | `false` |
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
@@ -1254,6 +1255,37 @@ comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6
 printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
 page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
 before.
+
+**A panel can bleed** (#281): its frame runs past the trim, out to the bleed line, and has no
+border on that side, so its art goes to the edge of the cut page.
+
+![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
+
+```yaml
+page: {size: [1600, 2400], margin: 80, bleed: 30}
+pages:
+  - tiers:
+      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - columns:
+          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
+          - {panels: [far]}
+```
+
+`bleed: true` bleeds every side of the frame that reaches the page's margin; a list bleeds those
+sides only, and a listed side that does not reach the margin is a `page-layout` error. The sides
+are the page's, `top`, `bottom`, `left` and `right`, whichever way it is read: the page is never
+mirrored. An inset sits inside its parent, so it cannot bleed.
+
+A bleeding panel is three boxes. Its **frame** runs to the bleed line: that is its size in its
+Core, and what its art, picture, veil and weather cover. What the reader sees stops at the trim,
+so its cast is staged and its camera framed in **the frame out to the trim**, and the trim never
+cuts a shot. Its lettering keeps inside **the frame as it was** before bleeding, inside the panel
+margin, so the page margin stays the safe area for words. Its insets stay where they were. The SVG
+page is drawn at its trim, as it will look once cut; its debug view shows the whole sheet, the trim
+and each bleeding panel's lettering box.
+
+A page needs a `bleed` of its own for its panels to bleed into; with `bleed: 0`, they stop at the
+trim, and print says so.
 
 A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
 of short ones is written: the tier is split across into columns, and each column down into its
@@ -1323,8 +1355,8 @@ in is the order they are read in; that holds by construction. A panel can be on 
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
 both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, an inset
-too big for its panel, a slant that cannot apply or is too steep, or margins and gutters that leave
-no room are reported as `page-layout`.
+too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not
+reach the page's margin, or margins and gutters that leave no room are reported as `page-layout`.
 
 **Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
 right. Panels are still written in reading order, so the first panel of a tier is at its right and
@@ -1333,11 +1365,11 @@ still read top to bottom — a stack beside a tall panel is read down before acr
 Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
 way round, so every panel keeps its size, and its art is the art it has read left to right. What
 names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
-positive `slant` leans the top of each gutter right, as written. A layout one direction refuses, the
-other refuses too.
+positive `slant` leans the top of each gutter right, as written, and a `bleed` names the page's
+own sides, so `bleed: [left]` on a tier's first panel, which right to left is at the right, is
+refused. Any other layout one direction refuses, the other refuses too.
 
-Not yet: frames of any other shape, such as round panels or ones without borders; and panels
-that bleed past the trim, their frame running to the bleed line with no border on that side.
+Not yet: frames of any other shape, such as round panels or ones without borders.
 
 ## When constraints conflict
 
@@ -1783,7 +1815,8 @@ PANEL 1
 That page's first panel takes the top tier alone, and the next two share the one under it. The
 counts must add up to the page's panels; when they do not, or `@tiers:` is written anywhere else,
 it is a `page-layout` error at its line. Anything finer — a panel twice as wide, a tier taller than
-the rest, columns, insets, slants — is a scene's `pages:`; see [Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
+the rest, columns, insets, slants, a panel that bleeds past the trim — is a scene's `pages:`; see
+[Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
 
 **The front matter's `page:` sets the format** every page shares: its size, margin, gutters and
 bleed.
@@ -2206,9 +2239,9 @@ Horizontal ordering contains a cycle. `left_of` and `right_of` are resolved into
 
 ### `scenet/page-layout`
 
-A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A document with pages needs panels to lay out.
+A page cannot lay out what it says. `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A panel bleeds only on a side of its frame that reaches the page's margin. A document with pages needs panels to lay out.
 
-**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, or shrink the margin and gutters in `page:`.
+**Fix:** Check the panel names in `pages:`, place each panel once, put a panel that spans the tier between two stacks, move or shrink an inset, lean a slant less, bleed only on a side at the page's edge, or shrink the margin and gutters in `page:`.
 
 ### `scenet/panel-count`
 
@@ -3193,7 +3226,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Side": {
-      "description": "A side of the panel's frame: where an off-panel speaker is.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\".",
+      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\". A panel\non a page bleeds past the trim on the sides its placement lists (#281).",
       "enum": [
         "left",
         "right",
@@ -7304,4 +7337,77 @@ panels:
   low:
     setting: {place: shore, horizon: low}
     script: [caption: {text: "A low horizon: the panel is mostly sky.", kind: editorial}]
+```
+
+## Panels that bleed
+
+Frames that run past the trim to the bleed line, with no border there: every edge they reach, or the sides they list, in tiers and in columns.
+
+`73-panels-that-bleed.scene.yaml`
+
+```yaml
+# Panels that bleed: frames that run past the trim, out to the bleed line.
+#
+# `bleed: true` on a placement bleeds every side of its frame that reaches the page's margin;
+# `bleed: [top, left]` bleeds those sides only. A bleeding side has no border, and the art
+# runs on to the bleed line so the cutter has something to spare. The page needs a `bleed`
+# of its own for that: here 30 units, 3 mm printed.
+#
+# The cast is staged and framed in what the reader sees, the frame out to the trim, so the
+# trim never cuts a shot. The lettering keeps inside the frame as it was, inside the panel
+# margin, where the page margin keeps it safe from the cutter.
+#
+# `wide` bleeds off the top and left; `look` off the top and right. In the tier below, `dock`
+# bleeds off the left alone, `gull` off the left and bottom, and `far`, beside them, keeps its
+# border on every side.
+
+page: {size: [1600, 2400], margin: 80, gutter: 30, tier_gutter: 45, bleed: 30}
+setting: {place: docks, time: dawn}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - height: 1.6
+        columns:
+          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
+          - {width: 1.2, panels: [far]}
+
+panels:
+  wide:
+    camera: {shot: long_shot}
+    staging: [alice left_of bob]
+    script:
+      - caption: {text: "The docks, before the first ferry.", kind: locale}
+      - say: {by: alice, text: "Nobody here yet."}
+  look:
+    camera: {shot: medium_close_up}
+    cast:
+      alice: null
+    script:
+      - say: {by: bob, text: "Give it a minute."}
+  dock:
+    camera: {shot: full_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, at: center}
+      bob: null
+    script:
+      - say: {by: alice, text: "There!"}
+  gull:
+    camera: {shot: medium_shot}
+    setting: {place: shore, time: dawn}
+    cast:
+      alice: null
+      bob: {reference: bob, expression: happy, at: center}
+    script:
+      - sfx: {text: SKREE, prefer: top_right, size: small}
+  far:
+    camera: {shot: long_shot}
+    setting: {place: docks, time: day}
+    staging: [alice left_of bob]
+    script:
+      - caption: {text: "This one keeps its border.", kind: editorial}
 ```

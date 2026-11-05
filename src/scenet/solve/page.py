@@ -19,13 +19,18 @@ sits in, so it is read after its parent unless it says otherwise.
 The tier is laid out by the same arithmetic over its panels in the other order, so each
 frame is exactly the one a left-to-right page gives that panel with the tier written the
 other way round. Nothing is mirrored: a slanted gutter leans the way its `slant` says, an
-inset sits in the corner its `at` names, and a column is still read top to bottom. An end
-panel stays an end panel and keeps its width, so a layout one direction refuses, the other
-refuses too.
+inset sits in the corner its `at` names, a bleed is on the sides it names, and a column is
+still read top to bottom. An end panel stays an end panel and keeps its width, so a layout one
+direction refuses, the other refuses too -- except a bleed on a side that, the other way
+round, is a gutter.
+
+**A panel can bleed** (#281): each side its placement's `bleed` names runs past the margin
+and the trim to the bleed line. The frame keeps two more boxes: what the reader sees, out to
+the trim, and the frame as it was, where its lettering keeps.
 """
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from scenet.errors import RuleViolationError
@@ -264,7 +269,6 @@ def resolve_frames(
     *,
     index: int = 0,
     direction: Direction = Direction.LTR,
-    bleeds: Mapping[str, Bleed] | None = None,
 ) -> tuple[Frame, ...]:
     """Lay out one page.
 
@@ -274,8 +278,6 @@ def resolve_frames(
         index: The page's position among the pages, from 0, to locate a mistake.
         direction: Which way the page is read. Right to left, each tier's first panel or
             column is at the right.
-        bleeds: For a panel that bleeds past the trim (#281), on which sides: `True` for
-            every side its frame reaches the page's margin on.
 
     Returns:
         One frame per panel, in reading order: tier by tier, and within a tier left to
@@ -306,6 +308,12 @@ def resolve_frames(
     frames: list[Frame] = []
     # Where each placement was written, so a bleed it cannot have names it.
     written: dict[str, tuple[str | int, ...]] = {}
+    bleeds: dict[str, Bleed] = {
+        placement.use: placement.bleed
+        for tier in page.tiers
+        for placement in (*tier.panels, *(p for column in tier.columns for p in column.panels))
+        if placement.bleed
+    }
     rows = _split(
         margin, usable_height, page_format.tier_gutter, [tier.height for tier in page.tiers]
     )
@@ -356,10 +364,9 @@ def resolve_frames(
                     (*loc, "columns", column_index, "panels", panel_index),
                 )
                 written[stacked.use] = (*loc, "columns", column_index, "panels", panel_index)
-    bleeds = bleeds or {}
     return tuple(
         _bled(frame, bleeds[frame.panel], page_format, written[frame.panel])
-        if frame.panel in bleeds and frame.inset_of is None
+        if frame.panel in bleeds
         else frame
         for frame in frames
     )

@@ -266,7 +266,8 @@ PANEL 1
 That page's first panel takes the top tier alone, and the next two share the one under it. The
 counts must add up to the page's panels; when they do not, or `@tiers:` is written anywhere else,
 it is a `page-layout` error at its line. Anything finer — a panel twice as wide, a tier taller than
-the rest, columns, insets, slants — is a scene's `pages:`; see [Compose a page](compose_a_page.md).
+the rest, columns, insets, slants, a panel that bleeds past the trim — is a scene's `pages:`; see
+[Compose a page](compose_a_page.md).
 
 **The front matter's `page:` sets the format** every page shares: its size, margin, gutters and
 bleed.

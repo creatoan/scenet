@@ -1,0 +1,64 @@
+# Panels that bleed: frames that run past the trim, out to the bleed line.
+#
+# `bleed: true` on a placement bleeds every side of its frame that reaches the page's margin;
+# `bleed: [top, left]` bleeds those sides only. A bleeding side has no border, and the art
+# runs on to the bleed line so the cutter has something to spare. The page needs a `bleed`
+# of its own for that: here 30 units, 3 mm printed.
+#
+# The cast is staged and framed in what the reader sees, the frame out to the trim, so the
+# trim never cuts a shot. The lettering keeps inside the frame as it was, inside the panel
+# margin, where the page margin keeps it safe from the cutter.
+#
+# `wide` bleeds off the top and left; `look` off the top and right. In the tier below, `dock`
+# bleeds off the left alone, `gull` off the left and bottom, and `far`, beside them, keeps its
+# border on every side.
+
+page: {size: [1600, 2400], margin: 80, gutter: 30, tier_gutter: 45, bleed: 30}
+setting: {place: docks, time: dawn}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - height: 1.6
+        columns:
+          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
+          - {width: 1.2, panels: [far]}
+
+panels:
+  wide:
+    camera: {shot: long_shot}
+    staging: [alice left_of bob]
+    script:
+      - caption: {text: "The docks, before the first ferry.", kind: locale}
+      - say: {by: alice, text: "Nobody here yet."}
+  look:
+    camera: {shot: medium_close_up}
+    cast:
+      alice: null
+    script:
+      - say: {by: bob, text: "Give it a minute."}
+  dock:
+    camera: {shot: full_shot}
+    cast:
+      alice: {reference: alice, pose: pointing, at: center}
+      bob: null
+    script:
+      - say: {by: alice, text: "There!"}
+  gull:
+    camera: {shot: medium_shot}
+    setting: {place: shore, time: dawn}
+    cast:
+      alice: null
+      bob: {reference: bob, expression: happy, at: center}
+    script:
+      - sfx: {text: SKREE, prefer: top_right, size: small}
+  far:
+    camera: {shot: long_shot}
+    setting: {place: docks, time: day}
+    staging: [alice left_of bob]
+    script:
+      - caption: {text: "This one keeps its border.", kind: editorial}

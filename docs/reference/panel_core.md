@@ -408,6 +408,12 @@ A page with a `bleed` carries it, in page units: how far the printed sheet runs 
 every side (#80). A page with none has no `bleed` key, so every Page Core written before it reads,
 and is written, byte for byte as before — which is why it needed no `format_version` bump.
 
+A frame that bleeds (#281) carries `bleed` too, but as a list: the sides it runs past the trim on,
+to the bleed line. Its panel's Core carries `open`, the same sides, where no border is drawn, and
+`lettering`, the box its balloons, captions and sound effects keep inside: its frame as it was
+before bleeding, inset by the panel margin, in panel units. Each is left out where nothing bleeds,
+so no Core written before them changed.
+
 `lettering_height` is the one thing every panel on the page shares: the height their type sizes are
 a fraction of, in place of each panel's own. It is recorded so that a Page Core says why two panels
 of different heights letter at the same size.

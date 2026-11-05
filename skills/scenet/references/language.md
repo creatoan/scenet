@@ -1126,7 +1126,7 @@ format they share.
 ![The first of two pages: three panels of Alice and Bob in a street, laid out in tiers](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-1.svg)
 ![The second page of the same document, its panels named by page and number, one with an inset](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-2.svg)
 
-**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) and [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print).
+**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages), [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) and [Panels that bleed](https://creatoan.github.io/scenet/gallery.html#panels-that-bleed).
 
 A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
 not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
@@ -1164,6 +1164,7 @@ panels:
 | `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
 | `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
 | `insets[].read` | `after` its parent, or `before` it | `after` |
+| `panels[].bleed`, `columns[].panels[].bleed` | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of sides, such as `[top, left]` | `false` |
 
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
@@ -1174,6 +1175,37 @@ comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6
 printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
 page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
 before.
+
+**A panel can bleed** (#281): its frame runs past the trim, out to the bleed line, and has no
+border on that side, so its art goes to the edge of the cut page.
+
+![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
+
+```yaml
+page: {size: [1600, 2400], margin: 80, bleed: 30}
+pages:
+  - tiers:
+      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - columns:
+          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
+          - {panels: [far]}
+```
+
+`bleed: true` bleeds every side of the frame that reaches the page's margin; a list bleeds those
+sides only, and a listed side that does not reach the margin is a `page-layout` error. The sides
+are the page's, `top`, `bottom`, `left` and `right`, whichever way it is read: the page is never
+mirrored. An inset sits inside its parent, so it cannot bleed.
+
+A bleeding panel is three boxes. Its **frame** runs to the bleed line: that is its size in its
+Core, and what its art, picture, veil and weather cover. What the reader sees stops at the trim,
+so its cast is staged and its camera framed in **the frame out to the trim**, and the trim never
+cuts a shot. Its lettering keeps inside **the frame as it was** before bleeding, inside the panel
+margin, so the page margin stays the safe area for words. Its insets stay where they were. The SVG
+page is drawn at its trim, as it will look once cut; its debug view shows the whole sheet, the trim
+and each bleeding panel's lettering box.
+
+A page needs a `bleed` of its own for its panels to bleed into; with `bleed: 0`, they stop at the
+trim, and print says so.
 
 A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
 of short ones is written: the tier is split across into columns, and each column down into its
@@ -1243,8 +1275,8 @@ in is the order they are read in; that holds by construction. A panel can be on 
 on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
 `over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
 both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, an inset
-too big for its panel, a slant that cannot apply or is too steep, or margins and gutters that leave
-no room are reported as `page-layout`.
+too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not
+reach the page's margin, or margins and gutters that leave no room are reported as `page-layout`.
 
 **Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
 right. Panels are still written in reading order, so the first panel of a tier is at its right and
@@ -1253,11 +1285,11 @@ still read top to bottom — a stack beside a tall panel is read down before acr
 Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
 way round, so every panel keeps its size, and its art is the art it has read left to right. What
 names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
-positive `slant` leans the top of each gutter right, as written. A layout one direction refuses, the
-other refuses too.
+positive `slant` leans the top of each gutter right, as written, and a `bleed` names the page's
+own sides, so `bleed: [left]` on a tier's first panel, which right to left is at the right, is
+refused. Any other layout one direction refuses, the other refuses too.
 
-Not yet: frames of any other shape, such as round panels or ones without borders; and panels
-that bleed past the trim, their frame running to the bleed line with no border on that side.
+Not yet: frames of any other shape, such as round panels or ones without borders.
 
 ## When constraints conflict
 

@@ -205,6 +205,8 @@ replacing the other, `scenet build` stops and asks you to rename the panel.
 - two insets in one panel that come within a gutter of each other;
 - a slant on a tier of columns, on a tier of one panel, or on panels with insets, or one so
   steep that a panel would have no width left at its top or bottom;
+- a `bleed` on a side of a frame that does not reach the page's margin, or `bleed: true` on a
+  panel that reaches no edge;
 - a margin and gutters that leave no room for the panels;
 - `pages:` in a document that has no `panels:` to lay out.
 
@@ -213,5 +215,7 @@ to be inherited from with `over:`.
 
 ## Not yet
 
-Frames of other shapes, and panels that bleed past the trim. A page's printed size and its
-bleed are written in `page:`; see [Print a comic](print_a_comic.md).
+Frames of other shapes. A page's printed size and its bleed are written in `page:`, and a panel
+that runs past the trim says `bleed:` on its placement; see
+[the language reference](../reference/language.md#page-and-pages) and
+[Print a comic](print_a_comic.md).

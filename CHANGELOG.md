@@ -12,6 +12,12 @@ below 1.0 means.
 
 ### Added
 
+- **Panels that bleed past the trim** (#281). A page placement's `bleed: true` runs its frame out
+  to the bleed line on every side that reaches the page's margin, `bleed: [top, left]` on those
+  sides; no border is drawn there. The cast is staged in what the reader sees, out to the trim,
+  and lettering keeps inside the frame as it was, so the trim cuts neither. Panel Core gains
+  `open` and `lettering`, a Page Core frame `bleed`, each only where something bleeds. Gallery
+  example 73 writes every form of the key.
 - **A tinted palette prints in colour** (#280). Every colour the compiler owns has a CMYK twin
   under CGATS21-2-CRPC6 (GRACoL 2013), converted from its sRGB colour through the condition's
   ICC profile with littleCMS, relative colorimetric with black point compensation, and committed
@@ -74,7 +80,8 @@ below 1.0 means.
 - **A page prints at a size, with a bleed** (#80). A page unit prints as a tenth of a
   millimetre, so the default page is 200 × 300 mm and a US comic is
   `size: [1682.75, 2603.5]`. `page: {bleed: 31.75}` runs the printed sheet 0.125 in past the
-  trim on every side; nothing on the page moves, and a page without it is what it was.
+  trim on every side; nothing on the page moves, and a page without it is what it was. A
+  panel can bleed into it since #281.
 - **A print PDF, from Python** (#80): `render_pdf` draws a document as a PDF a printer
   takes. Lettering, balloon borders and every line are 100% black and overprint, so type stays
   sharp when the colour plates drift; the paper knocks out; greys are black tints; the night

@@ -375,6 +375,26 @@ for live text.
   subset tag taken from what it holds, nothing compressed. The playground's own fontTools may
   subset to other bytes; that is said, not promised away.
 
+## A panel bleeds to the bleed line, framed to the trim
+
+A placement's `bleed` runs its frame past the trim, out to the bleed line, with no border there
+(#281). It is `true`, for every side that reaches the page's margin, or a list of the page's own
+sides, never mirrored right to left: a side that does not reach the margin is an error, not a
+guess.
+
+- **Three boxes, so the trim cuts nothing that matters.** The frame to the bleed line is the
+  panel's size and what its art covers. Shot types are normative, and a full shot's feet are 4% of
+  the frame from its bottom: composed to the bleed line, they would be cut off. So the cast is
+  staged and the camera framed in the frame out to the trim, then moved into place. Lettering
+  keeps inside the frame as it was, inside the panel margin, so the page margin stays the safe
+  area for words, as a printer's live area is.
+- **Nothing else moves.** A panel that does not bleed compiles byte for byte as before; Core
+  gains `open`, `lettering` and a frame's `bleed`, each left out where nothing bleeds.
+- **Drawn as cut.** The SVG page stays at its trim, clipped there, and only the debug view shows
+  the sheet. A page with no bleed of its own still lets panels bleed to the trim, with a print
+  note, rather than refusing a layout that is right for screen.
+- **Not in comic scripts**, which have no per-placement keys; a scene's `pages:` writes it.
+
 ## Staging leaves as text, never as a picture or a prompt
 
 `--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by

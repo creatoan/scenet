@@ -72,7 +72,7 @@ from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.describe import describe, labels
 from scenet.solve.figures import PlacedPicture, place_figures
-from scenet.solve.page import Bleed, Frame, lettering_height, resolve_frames
+from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
 from scenet.solve.speakers import speaker_of
 from scenet.solve.staging import Placement, solve_staging
@@ -1069,7 +1069,6 @@ def _compile_document(
     library: PuppetLibrary | None,
     metrics: FontMetrics | None,
     base: Folder | None,
-    bleeds: Mapping[str, Bleed] | None = None,
 ) -> Book:
     """Lay out every page, then compile every panel at the size its page gave it."""
     library = library or default_library()
@@ -1080,9 +1079,7 @@ def _compile_document(
     frames: dict[str, Frame] = {}
     for index, page in enumerate(layout.pages):
         try:
-            resolved = resolve_frames(
-                layout.page, page, index=index, direction=document.direction, bleeds=bleeds
-            )
+            resolved = resolve_frames(layout.page, page, index=index, direction=document.direction)
         except RuleViolationError as exc:
             raise PanelSyntaxError(str(exc), rule=exc.rule, loc=exc.loc) from exc
         frames.update((frame.panel, frame) for frame in resolved)

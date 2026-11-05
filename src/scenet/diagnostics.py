@@ -299,12 +299,14 @@ RULES: dict[str, Rule] = {
             "in one panel must stay a gutter clear of each other. A slant leans the "
             "gutters between a tier's panels, so it needs two panels or more, no columns "
             "and no insets, and must leave every panel some width at its top and bottom. A "
+            "panel bleeds only on a side of its frame that reaches the page's margin. A "
             "document with pages needs panels to lay out."
         ),
         help=(
             "Check the panel names in `pages:`, place each panel once, put a panel that "
             "spans the tier between two stacks, move or shrink an inset, lean a slant "
-            "less, or shrink the margin and gutters in `page:`."
+            "less, bleed only on a side at the page's edge, or shrink the margin and "
+            "gutters in `page:`."
         ),
     ),
     "panel-direction": Rule(

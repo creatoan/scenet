@@ -1,0 +1,59 @@
+{
+  "bleed": 30.0,
+  "format_version": 1,
+  "frames": [
+    {
+      "bleed": [
+        "left",
+        "top"
+      ],
+      "height": 954.23,
+      "panel": "wide",
+      "width": 1050.0,
+      "x": -30.0,
+      "y": -30.0
+    },
+    {
+      "bleed": [
+        "right",
+        "top"
+      ],
+      "height": 954.23,
+      "panel": "look",
+      "width": 580.0,
+      "x": 1050.0,
+      "y": -30.0
+    },
+    {
+      "bleed": [
+        "left"
+      ],
+      "height": 652.88,
+      "panel": "dock",
+      "width": 750.91,
+      "x": -30.0,
+      "y": 969.23
+    },
+    {
+      "bleed": [
+        "left",
+        "bottom"
+      ],
+      "height": 762.88,
+      "panel": "gull",
+      "width": 750.91,
+      "x": -30.0,
+      "y": 1667.12
+    },
+    {
+      "height": 1350.77,
+      "panel": "far",
+      "width": 769.09,
+      "x": 750.91,
+      "y": 969.23
+    }
+  ],
+  "height": 2400.0,
+  "lettering_height": 746.67,
+  "width": 1600.0
+}

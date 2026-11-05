@@ -383,7 +383,9 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         for name, result in book.panels.items():
             notes += [note if single else f"{name}: {note}" for note in result.notes]
         if args.pdf:
-            notes += print_notes(printed, live_text=args.live_text, fonts=book.fonts)
+            notes += print_notes(
+                printed, live_text=args.live_text, fonts=book.fonts, pages=book.pages
+            )
         for note in notes:
             print(f"note: {note}")
     return 0

@@ -227,6 +227,7 @@ def print_notes(
     *,
     live_text: bool = False,
     fonts: Mapping[str, FontMetrics] | None = None,
+    pages: Sequence[PageCore] = (),
 ) -> list[str]:
     """What print leaves out or changes, one sentence each, for the panels printed.
 
@@ -234,11 +235,19 @@ def print_notes(
         panels: The panels the PDF draws, by name.
         live_text: The PDF letters in text, so a face that may not be embedded is said.
         fonts: The declared fonts the panels were lettered in, by digest.
+        pages: The pages the PDF prints, so a page whose panels bleed with no bleed to run
+            into is said.
 
     Returns:
-        The notes, in the panels' order.
+        The notes: the pages' first, in order, then the panels', in the panels' order.
     """
-    notes: list[str] = []
+    notes = [
+        f"page {number} has panels that bleed but no bleed of its own, so they stop at the "
+        "trim and the cutter has nothing to spare; give `page:` a `bleed`, which printers "
+        "ask to be 3 mm, 30 units"
+        for number, page in enumerate(pages, start=1)
+        if not page.bleed and any(frame.bleed for frame in page.frames)
+    ]
     for name, core in panels.items():
         if live_text:
             for metrics in _faces_lettered(core, fonts):

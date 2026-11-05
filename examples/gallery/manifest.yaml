@@ -500,3 +500,9 @@ examples:
     group: Setting
     summary: "The same shore with its horizon high, in the middle and low: the one line every mass of the backdrop is composed against."
     doc: reference/language.md#horizon
+  - file: 73-panels-that-bleed.scene.yaml
+    title: "Panels that bleed"
+    kind: scene
+    group: Pages and sequences
+    summary: "Frames that run past the trim to the bleed line, with no border there: every edge they reach, or the sides they list, in tiers and in columns."
+    doc: reference/language.md#page-and-pages

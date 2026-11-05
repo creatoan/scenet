@@ -877,7 +877,7 @@
       "type": "string"
     },
     "Side": {
-      "description": "A side of the panel's frame: where an off-panel speaker is.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\".",
+      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\". A panel\non a page bleeds past the trim on the sides its placement lists (#281).",
       "enum": [
         "left",
         "right",

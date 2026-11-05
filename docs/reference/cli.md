@@ -298,7 +298,7 @@ note as information rather than a red squiggle.
 | `scenet/composition` | error | An `over:` chain that is missing or cyclic |
 | `scenet/panel-direction` | error | A panel of a scene that writes `direction`, or a comic script's `@direction:`: the reading direction is the whole document's |
 | `scenet/duplicate-panel` | error | Two panels in a comic script with the same name, even counting pages |
-| `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, or no room for its tiers |
+| `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not reach the margin, or no room for its tiers |
 | `scenet/unknown-puppet` | error | A `reference` naming a character the library lacks |
 | `scenet/unknown-place` | error | A setting's `place` naming one the library does not have |
 | `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |

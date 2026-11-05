@@ -338,7 +338,7 @@ def _scenet_pdf(live_text):
     except ValueError as exc:
         return json.dumps({"ok": False, "error": str(exc)})
     printed = printed_panels(book.pages, cores)
-    notes = print_notes(printed, live_text=live_text, fonts=book.fonts)
+    notes = print_notes(printed, live_text=live_text, fonts=book.fonts, pages=book.pages)
     return json.dumps({"ok": True, "pdf": base64.b64encode(data).decode("ascii"), "notes": notes})
 `;
 

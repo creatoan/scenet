@@ -608,6 +608,21 @@
         {
           "additionalProperties": false,
           "properties": {
+            "bleed": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Side"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": false,
+              "title": "Bleed"
+            },
             "insets": {
               "default": [],
               "items": {
@@ -633,7 +648,7 @@
           "type": "object"
         }
       ],
-      "description": "One panel in a tier.\n\nWritten as the panel's name alone, or as `{use: name, width: 2}` to give it a larger\nshare of the tier.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    width: Its share of the tier's width, relative to the other panels in the tier.\n    insets: Panels set into its corners.",
+      "description": "One panel in a tier.\n\nWritten as the panel's name alone, or as `{use: name, width: 2}` to give it a larger\nshare of the tier.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    width: Its share of the tier's width, relative to the other panels in the tier.\n    insets: Panels set into its corners.\n    bleed: Whether its frame runs past the trim to the bleed line, with no border there:\n        `true` on every side that reaches the page's margin, or a list of those sides.",
       "title": "PanelPlacement"
     },
     "PanelSpec": {
@@ -1535,7 +1550,7 @@
       "type": "string"
     },
     "Side": {
-      "description": "A side of the panel's frame: where an off-panel speaker is.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\".",
+      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\". A panel\non a page bleeds past the trim on the sides its placement lists (#281).",
       "enum": [
         "left",
         "right",
@@ -1565,6 +1580,21 @@
         {
           "additionalProperties": false,
           "properties": {
+            "bleed": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Side"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": false,
+              "title": "Bleed"
+            },
             "height": {
               "default": 1.0,
               "exclusiveMinimum": 0.0,
@@ -1590,7 +1620,7 @@
           "type": "object"
         }
       ],
-      "description": "One panel in a column.\n\nWritten as the panel's name alone, or as `{use: name, height: 2}` to give it a larger\nshare of the column.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    height: Its share of the column's height, relative to the other panels in it.\n    insets: Panels set into its corners.",
+      "description": "One panel in a column.\n\nWritten as the panel's name alone, or as `{use: name, height: 2}` to give it a larger\nshare of the column.\n\nAttributes:\n    use: The name of a panel under `panels:`.\n    height: Its share of the column's height, relative to the other panels in it.\n    insets: Panels set into its corners.\n    bleed: Whether its frame runs past the trim to the bleed line, with no border there:\n        `true` on every side that reaches the page's margin, or a list of those sides.",
       "title": "StackedPanel"
     },
     "Tier": {
