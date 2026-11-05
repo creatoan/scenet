@@ -31,8 +31,8 @@ FORMAT = PageFormat(size=(1200, 1800), margin=60, gutter=30, tier_gutter=40, ble
 PAGE = PageSpec.model_validate(
     {
         "tiers": [
-            {"height": 1, "panels": ["wide", {"use": "tall", "width": 2}]},
-            {"height": 3, "panels": ["last"]},
+            {"height": 1, "panels": [{"use": "wide"}, {"use": "tall", "width": 2}]},
+            {"height": 3, "panels": [{"use": "last"}]},
         ]
     }
 )
@@ -100,9 +100,9 @@ class TestTheFrames:
         page = PageSpec.model_validate(
             {
                 "tiers": [
-                    {"panels": ["a", "b", "c"]},
-                    {"panels": ["d", "e", "f"]},
-                    {"panels": ["g", "h", "i"]},
+                    {"panels": [{"use": "a"}, {"use": "b"}, {"use": "c"}]},
+                    {"panels": [{"use": "d"}, {"use": "e"}, {"use": "f"}]},
+                    {"panels": [{"use": "g"}, {"use": "h"}, {"use": "i"}]},
                 ]
             }
         )
@@ -131,7 +131,9 @@ class TestTheFrames:
         assert bled["big"].width == plain["big"].width + 2 * 90
 
     def test_a_slanted_tiers_outline_runs_out_too(self):
-        page = PageSpec.model_validate({"tiers": [{"slant": 10, "panels": ["a", "b"]}]})
+        page = PageSpec.model_validate(
+            {"tiers": [{"slant": 10, "panels": [{"use": "a"}, {"use": "b"}]}]}
+        )
         plain = {frame.panel: frame for frame in resolve_frames(FORMAT, page)}
         a = _frames({"a": (Side.LEFT, Side.TOP)}, page)["a"]
         assert a.outline is not None
