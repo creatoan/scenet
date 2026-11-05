@@ -170,17 +170,27 @@ class TestTheCompiledPanel:
         assert {frame.panel: frame.bleed for frame in page.frames}["wide"] == (Side.LEFT, Side.TOP)
 
     def test_its_cast_is_staged_in_its_visible_frame(self, book):
-        """As the panel alone at the size the reader sees, moved by the bleed."""
+        """As the panel alone at the size the reader sees, moved by the bleed.
+
+        `last` reaches the left, right and bottom margins: its visible frame runs to the trim
+        on all three, 1200 by 1290, and starts 30 in from its bled frame's left edge.
+        """
         (page,) = book.pages
         alone = compile_ir(
             parse_scene(SCENE)["last"].model_copy(
-                update={"panel": PanelSpec(size=(1080.0, 1290.0))}
+                update={"panel": PanelSpec(size=(1200.0, 1290.0))}
             ),
             lettering_height=page.lettering_height,
         )
         bled = book.panels["last"].core
-        assert [actor.transform for actor in bled.actors] == [
-            actor.transform for actor in alone.core.actors
+        assert bled.open == (Side.LEFT, Side.RIGHT, Side.BOTTOM)
+        moved = [
+            (actor.transform.x - 30.0, actor.transform.y, actor.transform.scale)
+            for actor in bled.actors
+        ]
+        assert moved == [
+            pytest.approx((actor.transform.x, actor.transform.y, actor.transform.scale))
+            for actor in alone.core.actors
         ]
         assert bled.camera == alone.core.camera
 
