@@ -1387,6 +1387,10 @@ noise built in, the specification includes reference code, and the `seed` is fix
 on what to paint from it. That is fine, and it was already true of every glyph outline and every
 antialiased edge in the file.
 
+Print has no such filter, so it computes the same noise from that reference code (#282) and
+carries it in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
+viewer paints from them is not.
+
 Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
 raster. The print plates Ghostscript renders from the PDF are checked for which ink lands where,
 and never kept as goldens. If a raster check is
