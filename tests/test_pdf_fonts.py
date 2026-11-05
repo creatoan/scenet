@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fontTools.ttLib import TTFont
@@ -75,6 +76,17 @@ def _subset(metrics: FontMetrics, text: str = SAMPLE) -> TTFont:
     return TTFont(io.BytesIO(pdf_font(metrics, text).program))
 
 
+def _cmap(font: TTFont) -> dict[int, str]:
+    cmap = font.getBestCmap()
+    assert cmap is not None
+    return cmap
+
+
+def _table(font: TTFont, tag: str) -> Any:
+    """A table, as fontTools builds it at runtime: its attributes are invisible to checkers."""
+    return font[tag]
+
+
 class TestAShippedFace:
     @pytest.fixture(params=list(Face), ids=lambda face: face.value)
     def metrics(self, request: pytest.FixtureRequest) -> FontMetrics:
@@ -85,18 +97,20 @@ class TestAShippedFace:
 
     def test_the_glyphs_drawn_keep_their_ids_and_their_advances(self, metrics: FontMetrics):
         source, subset = _source(metrics), _subset(metrics)
-        cmap = source.getBestCmap()
+        cmap = _cmap(source)
         drawn = [character for character in SAMPLE if ord(character) in cmap]
         assert drawn
+        # A subset keeps no glyph names, so glyphs are compared by id, as the PDF draws them.
+        kept = subset.getGlyphOrder()
         for character in drawn:
             name = cmap[ord(character)]
-            assert subset.getGlyphID(name) == source.getGlyphID(name)
-            assert metrics.glyph_id(character) == source.getGlyphID(name)
-            assert subset["hmtx"][name][0] == source["hmtx"][name][0]
+            code = source.getGlyphID(name)
+            assert metrics.glyph_id(character) == code
+            assert subset["hmtx"][kept[code]][0] == source["hmtx"][name][0]
 
     def test_it_holds_the_glyphs_drawn_and_the_glyphs_they_are_made_of(self, metrics: FontMetrics):
         source, subset = _source(metrics), _subset(metrics)
-        cmap = source.getBestCmap()
+        cmap = _cmap(source)
         wanted = {".notdef"} | {
             cmap[ord(character)] for character in SAMPLE if ord(character) in cmap
         }
@@ -110,13 +124,17 @@ class TestAShippedFace:
                         wanted.add(component.glyphName)
                         pending.append(component.glyphName)
         drawn = {
-            name for name in subset.getGlyphOrder() if subset["glyf"][name].numberOfContours != 0
+            code
+            for code, name in enumerate(subset.getGlyphOrder())
+            if subset["glyf"][name].numberOfContours != 0
         }
-        assert drawn == {name for name in wanted if glyphs[name].numberOfContours != 0}
+        assert drawn == {
+            source.getGlyphID(name) for name in wanted if glyphs[name].numberOfContours != 0
+        }
 
     def test_its_licence_and_its_date_are_kept(self, metrics: FontMetrics):
         source, subset = _source(metrics), _subset(metrics)
-        assert subset["OS/2"].fsType == source["OS/2"].fsType
+        assert _table(subset, "OS/2").fsType == _table(source, "OS/2").fsType
         assert subset["head"].modified == source["head"].modified
 
     def test_what_print_never_reads_is_left_out(self, metrics: FontMetrics):
@@ -142,7 +160,8 @@ class TestAShippedFace:
         assert [code for code, _ in font.widths] == sorted(expected)
 
     def test_its_name_is_a_subset_tag_and_its_postscript_name(self, metrics: FontMetrics):
-        postscript = _source(metrics)["name"].getDebugName(6)
+        postscript = _table(_source(metrics), "name").getDebugName(6)
+        assert postscript
         assert re.fullmatch(r"[A-Z]{6}\+" + re.escape(postscript), pdf_font(metrics, SAMPLE).name)
 
     def test_it_goes_in_as_truetype(self, metrics: FontMetrics):
@@ -248,7 +267,7 @@ class TestTheMetrics:
     def test_a_glyph_id_is_the_one_the_font_maps_the_character_to(self):
         metrics = Typeface().face(Face.REGULAR)
         source = _source(metrics)
-        assert metrics.glyph_id("A") == source.getGlyphID(source.getBestCmap()[ord("A")])
+        assert metrics.glyph_id("A") == source.getGlyphID(_cmap(source)[ord("A")])
         assert metrics.glyph_id(chr(0x200B)) is None
 
 
