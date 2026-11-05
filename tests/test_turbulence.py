@@ -197,9 +197,14 @@ def test_the_noise_is_the_reference_codes_to_the_bit(
 
 
 def _veil(**changes: object) -> CoreVeil:
-    fields = {"tone": "#b7b7b7", "opacity": 0.55, "frequency": 0.0042, "octaves": 4, "seed": 30388}
-    fields.update(changes)
-    return CoreVeil.model_validate(fields)
+    fields: dict[str, object] = {
+        "tone": "#b7b7b7",
+        "opacity": 0.55,
+        "frequency": 0.0042,
+        "octaves": 4,
+        "seed": 30388,
+    }
+    return CoreVeil.model_validate({**fields, **changes})
 
 
 class TestTheVeilsAlpha:

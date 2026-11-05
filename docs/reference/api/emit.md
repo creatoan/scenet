@@ -31,6 +31,11 @@ so that every emitter draws the same thing (#80).
 ```{automodule} scenet.emit.pdf_fonts
 ```
 
+## `scenet.emit.turbulence`
+
+```{automodule} scenet.emit.turbulence
+```
+
 ## `scenet.emit.debug_svg`
 
 ```{automodule} scenet.emit.debug_svg
