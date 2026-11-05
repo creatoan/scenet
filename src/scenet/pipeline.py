@@ -72,7 +72,7 @@ from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.describe import describe, labels
 from scenet.solve.figures import PlacedPicture, place_figures
-from scenet.solve.page import Frame, lettering_height, resolve_frames
+from scenet.solve.page import Bleed, Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
 from scenet.solve.speakers import speaker_of
 from scenet.solve.staging import Placement, solve_staging
@@ -546,6 +546,9 @@ def compile_ir(
     lettering_height: float | None = None,
     exclusions: Sequence[BBox] = (),
     outline: Sequence[tuple[float, float]] | None = None,
+    staged_in: BBox | None = None,
+    lettering_box: BBox | None = None,
+    open_sides: tuple[Side, ...] = (),
 ) -> CompileResult:
     """Compile validated IR into Panel Core.
 
@@ -567,6 +570,12 @@ def compile_ir(
         outline: The panel's border when it is not a rectangle -- on a page, a panel in a
             slanted tier -- in panel units. The panel is staged and framed in its bounding
             box as usual, and cropped to this; lettering stays inside it, a margin in.
+        staged_in: For a panel that bleeds past the trim (#281), the part of it the reader
+            sees, in panel units: its cast is staged and framed there, as in a panel that
+            size, so the trim never cuts a shot. Its art covers the whole panel.
+        lettering_box: For a panel that bleeds, the box its lettering keeps inside, a
+            margin in, in panel units: its frame as it was before bleeding.
+        open_sides: For a panel that bleeds, the sides with no border.
 
     Returns:
         The compiled panel, with the fonts it was lettered in.
@@ -598,6 +607,14 @@ def compile_ir(
     camera: CameraSolution | None
     if panel.drawn_by_its_picture:
         placements, camera = (), None
+    elif staged_in is not None:
+        # Staged and framed in what the reader sees, then moved into the bled frame.
+        seen = PanelSpec(size=(staged_in.width, staged_in.height), margin=panel.panel.margin)
+        placements, camera = solve_staging(panel.model_copy(update={"panel": seen}), library)
+        placements = tuple(
+            replace(placement, x=placement.x + staged_in.x, y=placement.y + staged_in.y)
+            for placement in placements
+        )
     else:
         placements, camera = solve_staging(panel, library)
 
@@ -659,11 +676,12 @@ def compile_ir(
         if figure.name in playing
     )
 
+    live = lettering_box or BBox(0.0, 0.0, panel.panel.width, panel.panel.height)
     frame = BBox(
-        panel.panel.margin,
-        panel.panel.margin,
-        panel.panel.width - 2 * panel.panel.margin,
-        panel.panel.height - 2 * panel.panel.margin,
+        live.x + panel.panel.margin,
+        live.y + panel.panel.margin,
+        live.width - 2 * panel.panel.margin,
+        live.height - 2 * panel.panel.margin,
     )
     # A line from off panel with no side named is heard from where whoever answers it
     # looks; with nobody looking, the solver takes the side nearer its balloon.
@@ -831,6 +849,8 @@ def compile_ir(
         description=describe(panel, where, width),
         direction=panel.direction,
         palette=panel.palette,
+        open=open_sides,
+        lettering=Box.of(frame) if lettering_box is not None else None,
         camera=None
         if camera is None
         else CoreCamera(
@@ -1049,6 +1069,7 @@ def _compile_document(
     library: PuppetLibrary | None,
     metrics: FontMetrics | None,
     base: Folder | None,
+    bleeds: Mapping[str, Bleed] | None = None,
 ) -> Book:
     """Lay out every page, then compile every panel at the size its page gave it."""
     library = library or default_library()
@@ -1059,7 +1080,9 @@ def _compile_document(
     frames: dict[str, Frame] = {}
     for index, page in enumerate(layout.pages):
         try:
-            resolved = resolve_frames(layout.page, page, index=index, direction=document.direction)
+            resolved = resolve_frames(
+                layout.page, page, index=index, direction=document.direction, bleeds=bleeds
+            )
         except RuleViolationError as exc:
             raise PanelSyntaxError(str(exc), rule=exc.rule, loc=exc.loc) from exc
         frames.update((frame.panel, frame) for frame in resolved)
@@ -1090,6 +1113,9 @@ def _compile_document(
                 lettering_height=type_height,
                 exclusions=exclusions.get(name, ()),
                 outline=_local_outline(frame),
+                staged_in=_local(frame.visible, frame),
+                lettering_box=_local(frame.live, frame),
+                open_sides=frame.bleed,
             )
         except ScenetError as exc:
             # Which panel, so `check --deep` can say: it compiles a document the one way
@@ -1110,7 +1136,15 @@ def _core_frame(frame: Frame) -> CoreFrame:
         inset_of=frame.inset_of,
         clearance=Box.of(frame.clearance) if frame.clearance is not None else None,
         outline=frame.outline,
+        bleed=frame.bleed,
     )
+
+
+def _local(box: BBox | None, frame: Frame) -> BBox | None:
+    """A box on the page, in its frame's own units."""
+    if box is None:
+        return None
+    return BBox(rounded(box.x - frame.x), rounded(box.y - frame.y), box.width, box.height)
 
 
 def _margined(

@@ -866,6 +866,11 @@ class PanelCore(CoreModel):
         palette: What the panel is drawn in (#244). Each value it tints keeps its grey,
             and gains its colour beside it. Left out of the JSON for `mono`, so every
             panel written before it reads and writes as it always did.
+        open: For a panel that bleeds past the trim (#281), the sides its frame runs out to
+            the bleed line on: no border is drawn there. Left out of the JSON when empty.
+        lettering: For a panel that bleeds, the box its balloons, captions and sound effects
+            keep inside: its frame as it was before bleeding, inset by its margin, so the
+            page's margin stays the live area. Left out of the JSON otherwise.
 
     Golden-file tests target this tier rather than the SVG, because it changes only when
     the layout genuinely changes. Diffing SVG text is brittle -- a reordered attribute or
@@ -898,6 +903,8 @@ class PanelCore(CoreModel):
     direction: Direction = Direction.LTR
     camera: CoreCamera | None = None
     palette: Palette = Palette.MONO
+    open: tuple[Side, ...] = ()
+    lettering: Box | None = None
 
     @property
     def bounds(self) -> BBox:
@@ -1014,6 +1021,8 @@ class PanelCore(CoreModel):
             direction=Direction.LTR,
             camera=None,
             palette=Palette.MONO,
+            open=(),
+            lettering=None,
         )
         for actor in payload["actors"]:
             _drop_unused(actor, joints={}, features={}, looking_at=None)
@@ -1092,6 +1101,9 @@ class CoreFrame(CoreModel):
         outline: For a panel in a slanted tier, its four corners in page units, clockwise
             from the top left; the frame is their bounding box. Left out of the JSON for a
             rectangle.
+        bleed: The sides the frame runs out to the bleed line on, past the trim (#281):
+            its frame is then that larger box, partly off the page. Left out of the JSON
+            when empty.
     """
 
     panel: str
@@ -1102,6 +1114,7 @@ class CoreFrame(CoreModel):
     inset_of: str | None = None
     clearance: Box | None = None
     outline: tuple[tuple[float, float], ...] | None = None
+    bleed: tuple[Side, ...] = ()
 
 
 class PageCore(CoreModel):
@@ -1148,7 +1161,7 @@ class PageCore(CoreModel):
         payload: Any = self.model_dump(mode="json")
         _drop_unused(payload, direction=Direction.LTR, bleed=0.0)
         for frame in payload["frames"]:
-            _drop_unused(frame, inset_of=None, clearance=None, outline=None)
+            _drop_unused(frame, inset_of=None, clearance=None, outline=None, bleed=())
         return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod

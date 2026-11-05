@@ -25,7 +25,7 @@ refuses too.
 """
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from scenet.errors import RuleViolationError
@@ -37,6 +37,7 @@ from scenet.ir import (
     PageFormat,
     PageSpec,
     PanelPlacement,
+    Side,
     StackedPanel,
 )
 
@@ -48,6 +49,12 @@ __all__ = ["LETTERING_TIERS", "Frame", "lettering_height", "resolve_frames"]
 #: also exactly what a single panel letters at today when it is a third of a page tall, so
 #: nothing changes for a panel that was already the size it ends up on the page.
 LETTERING_TIERS = 3
+
+#: How close, in page units, a frame's edge must be to the margin to reach it.
+REACH = 0.01
+
+#: A placement's bleed, as written: on every side that reaches the margin, or on these.
+Bleed = bool | tuple[Side, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +73,12 @@ class Frame:
             its parent's lettering keeps clear of it. `None` for a panel that is no inset.
         outline: For a panel in a slanted tier, its four corners, clockwise from the top
             left, in page units; the frame is their bounding box. `None` for a rectangle.
+        bleed: The sides the frame runs out to the bleed line on (#281): its frame is then
+            the larger box, partly past the page's edge.
+        visible: For a panel that bleeds, its frame out to the trim only: what the reader
+            sees, which its cast is staged and framed in.
+        live: For a panel that bleeds, its frame as it was before: what its lettering keeps
+            inside, the page's margin being the live area.
     """
 
     panel: str
@@ -76,6 +89,9 @@ class Frame:
     inset_of: str | None = None
     clearance: BBox | None = None
     outline: tuple[tuple[float, float], ...] | None = None
+    bleed: tuple[Side, ...] = ()
+    visible: BBox | None = None
+    live: BBox | None = None
 
 
 def _split(start: float, length: float, gap: float, weights: Sequence[float]) -> list[float]:
@@ -248,6 +264,7 @@ def resolve_frames(
     *,
     index: int = 0,
     direction: Direction = Direction.LTR,
+    bleeds: Mapping[str, Bleed] | None = None,
 ) -> tuple[Frame, ...]:
     """Lay out one page.
 
@@ -257,6 +274,8 @@ def resolve_frames(
         index: The page's position among the pages, from 0, to locate a mistake.
         direction: Which way the page is read. Right to left, each tier's first panel or
             column is at the right.
+        bleeds: For a panel that bleeds past the trim (#281), on which sides: `True` for
+            every side its frame reaches the page's margin on.
 
     Returns:
         One frame per panel, in reading order: tier by tier, and within a tier left to
@@ -265,9 +284,10 @@ def resolve_frames(
         it is set into, or right before it when it says `read: before`.
 
     Raises:
-        RuleViolationError: Rule `page-layout`, for two insets in one panel that overlap.
-            It is found here, where the frames are worked out, and `scenet check` runs
-            this too, so the finding is still located.
+        RuleViolationError: Rule `page-layout`, for two insets in one panel that overlap,
+            or a bleed on a side that does not reach the page's margin. Each is found here,
+            where the frames are worked out, and `scenet check` runs this too, so the
+            finding is still located.
 
     Example:
         >>> from scenet.ir import PageFormat, PageSpec
@@ -284,6 +304,8 @@ def resolve_frames(
 
     rtl = direction is Direction.RTL
     frames: list[Frame] = []
+    # Where each placement was written, so a bleed it cannot have names it.
+    written: dict[str, tuple[str | int, ...]] = {}
     rows = _split(
         margin, usable_height, page_format.tier_gutter, [tier.height for tier in page.tiers]
     )
@@ -302,6 +324,10 @@ def resolve_frames(
                 loc,
             )
             frames += laid[::-1] if rtl else laid
+            written.update(
+                (placement.use, (*loc, "panels", panel_index))
+                for panel_index, placement in enumerate(tier.panels)
+            )
             continue
         if tier.panels:
             weights = [p.width for p in tier.panels]
@@ -312,6 +338,7 @@ def resolve_frames(
                 frames += _with_insets(
                     placement, BBox(x, y, width, height), gutter, (*loc, "panels", panel_index)
                 )
+                written[placement.use] = (*loc, "panels", panel_index)
             continue
         weights = [c.width for c in tier.columns]
         spans = _split(margin, usable_width, gutter, weights[::-1] if rtl else weights)
@@ -328,7 +355,91 @@ def resolve_frames(
                     gutter,
                     (*loc, "columns", column_index, "panels", panel_index),
                 )
-    return tuple(frames)
+                written[stacked.use] = (*loc, "columns", column_index, "panels", panel_index)
+    bleeds = bleeds or {}
+    return tuple(
+        _bled(frame, bleeds[frame.panel], page_format, written[frame.panel])
+        if frame.panel in bleeds and frame.inset_of is None
+        else frame
+        for frame in frames
+    )
+
+
+def _bled(
+    frame: Frame, wanted: Bleed, page_format: PageFormat, loc: tuple[str | int, ...]
+) -> Frame:
+    """A frame run out to the bleed line on the sides it bleeds on.
+
+    Each side moves past the margin and the trim to the bleed line; the visible frame stops at
+    the trim. A slanted frame's outline moves with it.
+
+    Raises:
+        RuleViolationError: Rule `page-layout`, for a side that does not reach the page's
+            margin, or a frame that reaches none.
+    """
+    margin = page_format.margin
+    left, top = frame.x, frame.y
+    right, bottom = frame.x + frame.width, frame.y + frame.height
+    reached = {
+        Side.LEFT: abs(left - margin) < REACH,
+        Side.RIGHT: abs(right - (page_format.width - margin)) < REACH,
+        Side.TOP: abs(top - margin) < REACH,
+        Side.BOTTOM: abs(bottom - (page_format.height - margin)) < REACH,
+    }
+    if wanted is True:
+        sides = tuple(side for side in Side if reached[side])
+        if not sides:
+            raise RuleViolationError(
+                f"panel '{frame.panel}' reaches no edge of the page, so it cannot bleed: only "
+                "a side on the page's margin runs out past the trim",
+                rule="page-layout",
+                loc=(*loc, "bleed"),
+            )
+    else:
+        for side in wanted or ():
+            if not reached[side]:
+                raise RuleViolationError(
+                    f"panel '{frame.panel}' cannot bleed on the {side.value}: that side of its "
+                    "frame does not reach the page's margin. Bleed only on a side at the "
+                    "page's edge, or write `bleed: true` for all of them",
+                    rule="page-layout",
+                    loc=(*loc, "bleed"),
+                )
+        sides = tuple(side for side in Side if side in (wanted or ()))
+    if not sides:
+        return frame
+
+    def grown(by: float) -> tuple[float, float, float, float]:
+        return (
+            left - by if Side.LEFT in sides else left,
+            top - by if Side.TOP in sides else top,
+            right + by if Side.RIGHT in sides else right,
+            bottom + by if Side.BOTTOM in sides else bottom,
+        )
+
+    reach = margin + page_format.bleed
+    x0, y0, x1, y1 = (rounded(value) for value in grown(reach))
+    seen = [rounded(value) for value in grown(margin)]
+    outline = None
+    if frame.outline is not None:
+        outline = tuple(
+            (
+                x0 if abs(x - left) < REACH else x1 if abs(x - right) < REACH else x,
+                y0 if abs(y - top) < REACH else y1 if abs(y - bottom) < REACH else y,
+            )
+            for x, y in frame.outline
+        )
+    return Frame(
+        frame.panel,
+        x0,
+        y0,
+        rounded(x1 - x0),
+        rounded(y1 - y0),
+        outline=outline,
+        bleed=sides,
+        visible=BBox(seen[0], seen[1], rounded(seen[2] - seen[0]), rounded(seen[3] - seen[1])),
+        live=BBox(frame.x, frame.y, frame.width, frame.height),
+    )
 
 
 def lettering_height(page_format: PageFormat) -> float:
