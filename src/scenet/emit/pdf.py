@@ -222,9 +222,17 @@ def render_pdf(
         >>> render_pdf(book.pages, cores)[:8]
         b'%PDF-1.6'
     """
+    # Only what is printed is carried: a panel on no page brings no picture, in the order
+    # the pages print them, so every caller -- the CLI hands over the printed panels, the
+    # playground all of them -- writes the same file.
+    drawn = (
+        [panels[frame.panel] for page in pages for frame in page.frames if frame.panel in panels]
+        if pages
+        else list(panels.values())
+    )
     pictures = {
         _picture_name(core.backdrop.image): core.backdrop.image
-        for core in panels.values()
+        for core in drawn
         if core.backdrop is not None and core.backdrop.image is not None
     }
     document = _Document(
@@ -238,7 +246,13 @@ def render_pdf(
     else:
         for core in panels.values():
             document.add_page(core.width, core.height, _lone_content(core, fonts))
-    rtl = any(page.direction is Direction.RTL for page in pages)
+    # A page says which way it is read; without pages each PDF page is a panel, read the
+    # way the panels are.
+    rtl = (
+        any(page.direction is Direction.RTL for page in pages)
+        if pages
+        else any(core.direction is Direction.RTL for core in panels.values())
+    )
     return document.write(rtl=rtl)
 
 

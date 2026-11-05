@@ -156,6 +156,12 @@ class TestFile:
         assert b"/Direction /R2L" in _pdf(_book("36-right-to-left.scene.yaml"))
         assert b"/Direction" not in _pdf(_book("24-page.scene.yaml"))
 
+    def test_right_to_left_is_said_of_panels_printed_one_a_page(self):
+        """Without pages a PDF page is a panel, read in the panels' own direction."""
+        panels = "cast: {a: {reference: alice}}\npanels: {one: {}, two: {}}\n"
+        assert b"/Direction /R2L" in _pdf(compile_book(f"direction: rtl\n{panels}"))
+        assert b"/Direction" not in _pdf(compile_book(panels))
+
 
 class TestTheBlackPlate:
     def _states(self, data: bytes) -> dict[str, dict[str, object]]:
