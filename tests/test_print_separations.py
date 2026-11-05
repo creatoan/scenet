@@ -3,8 +3,9 @@
 Ghostscript's `tiffsep` device renders a PDF the way a press sees it: one plate per ink, with
 overprint honoured. These tests read its output and check what the black-plate rule means in
 ink, not in PDF syntax: lettering lands on K alone; an overprinting line leaves the colour
-under it; the paper and a reversed caption knock out; the night foreground is rich black.
-`qpdf --check` reads every gallery PDF's structure.
+under it; the paper and a reversed caption knock out; the night foreground is rich black; a
+face embedded for live text (#284) inks where its outlines do. `qpdf --check` reads every
+gallery PDF's structure.
 
 Both tools are external and not Python packages, so the tests skip where they are absent --
 except where `SCENET_REQUIRE_PRINT_TOOLS` is set, as in CI, where a missing tool fails. They
@@ -29,7 +30,12 @@ from shapely.geometry import Polygon
 
 from scenet.core import PanelCore
 from scenet.emit.pdf import render_pdf
+from scenet.emit.pdf_fonts import pdf_font
+from scenet.ir import Face
 from scenet.pipeline import Book, compile_book, compile_book_file
+from scenet.solve.text import FontMetrics, Typeface
+from tests.pdf_files import face as face_file
+from tests.pdf_files import page
 
 GALLERY = Path(__file__).parent.parent / "examples" / "gallery"
 ENTRIES = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))["examples"]
@@ -252,3 +258,84 @@ def test_the_print_example_prints_its_night_in_rich_black(tmp_path: Path):
         frame.y + bottom + page.bleed,
     )
     assert any(98 <= c <= 106 and m == y == 0 and k == 255 for c, m, y, k in inks)
+
+
+#: Two pixels: how far apart the same glyph lands when Ghostscript rasterises it as a glyph
+#: and when it fills it as a path, which it draws about a pixel fatter on every edge.
+REACH = 2
+
+
+def _lettered(metrics: FontMetrics, text: str) -> tuple[bytes, bytes]:
+    """One line in a face, as embedded text and as the outlines the SVG draws.
+
+    Each glyph is set where the outlines put it, its own origin, so only the font and its
+    objects are being compared.
+    """
+    font = pdf_font(metrics, text)
+    size, x, baseline = 40.0, 10.0, 40.0
+    scale = size / metrics.units_per_em
+    set_in_text: list[str] = []
+    drawn: list[str] = []
+    for index, character in enumerate(text):
+        code = metrics.glyph_id(character)
+        assert code is not None
+        set_in_text.append(f"1 0 0 1 {x:.4f} {baseline} Tm <{code:04X}> Tj")
+        path = metrics.glyph_pdf_path(character)
+        if path:
+            drawn.append(f"q {scale:.6f} 0 0 {scale:.6f} {x:.4f} {baseline} cm {path} f Q")
+        following = text[index + 1] if index + 1 < len(text) else None
+        x += metrics.step(character, following) * size
+    width = round(x + 10)
+    text_pdf = page(font, f"0 0 0 1 k BT /F1 {size} Tf {' '.join(set_in_text)} ET", width=width)
+    outline_pdf = page(None, "0 0 0 1 k " + " ".join(drawn), width=width)
+    return text_pdf, outline_pdf
+
+
+def _inked(plates: Plates) -> set[tuple[int, int]]:
+    return {
+        (index % plates.width, index // plates.width)
+        for index, (*_, k) in enumerate(plates.pixels())
+        if k > 127
+    }
+
+
+def _near(point: tuple[int, int], inked: set[tuple[int, int]]) -> bool:
+    x, y = point
+    return any(
+        (x + dx, y + dy) in inked
+        for dx in range(-REACH, REACH + 1)
+        for dy in range(-REACH, REACH + 1)
+    )
+
+
+def _faces(tmp_path: Path) -> dict[str, FontMetrics]:
+    faces = {face.value: Typeface().face(face) for face in Face}
+    faces["cff"] = FontMetrics(face_file(tmp_path / "cff.otf", outlines="CFF"))
+    return faces
+
+
+@needs_ghostscript
+@pytest.mark.parametrize("name", [*(face.value for face in Face), "cff"])
+def test_an_embedded_face_prints_the_glyphs_its_outlines_draw(tmp_path: Path, name: str):
+    """A line in the embedded face inks where the same line in outlines does (#284)."""
+    metrics = _faces(tmp_path)[name]
+    text = "AB BA" if name == "cff" else "AVAVA Hello wavy"
+    text_pdf, outline_pdf = _lettered(metrics, text)
+    as_text = _inked(_separate(text_pdf, _folder(tmp_path, f"embedded-{name}")))
+    as_outlines = _inked(_separate(outline_pdf, tmp_path / "outlines"))
+    assert as_text
+    assert as_outlines
+    assert all(_near(point, as_outlines) for point in as_text)
+    assert all(_near(point, as_text) for point in as_outlines)
+
+
+@needs_qpdf
+def test_a_page_lettered_in_an_embedded_face_is_sound(tmp_path: Path):
+    metrics = Typeface().face(Face.REGULAR)
+    path = tmp_path / "lettered.pdf"
+    path.write_bytes(_lettered(metrics, "AVAVA Hello wavy")[0])
+    assert QPDF is not None
+    result = subprocess.run(  # noqa: S603 -- a fixed command
+        [QPDF, "--check", str(path)], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
