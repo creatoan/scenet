@@ -748,6 +748,88 @@ Accepted, by what makes them equivalent:
 | `pdf_images.py` `_paeth` 12 | `<=` to `<` between left and up | They tie only when they are equal, so which is returned cannot be told apart. |
 | `pdf_images.py` `_deinterlaced` 4, 11, 17, 21, 27 | the grid's fill, or a pass's empty test changed | Every cell is written by some pass, and a pass that starts past the edge counts 0 either way. |
 
+The print follow-ups (#280–#284) added `emit/pdf_fonts.py` and `emit/turbulence.py`, changed
+`emit/pdf.py` and `emit/geometry.py`, and made `solve/page.py` bleed. Each file was run on its own
+from the stack's top (#310):
+
+| File | Run | Mutants | Survivors | Killed since | Accepted |
+|---|---|---|---|---|---|
+| `emit/pdf.py` | [`42006878954`](https://github.com/creatoan/scenet/actions/runs/42006878954) | 1380 | 52 | 27 | 25: 13 above, 12 below |
+| `emit/pdf_fonts.py` | [`42006883885`](https://github.com/creatoan/scenet/actions/runs/42006883885) | 306 | 51 | 35 | 16, below |
+| `emit/turbulence.py` | [`42006888799`](https://github.com/creatoan/scenet/actions/runs/42006888799) | 143 | 5 | 3 | 2, below |
+| `solve/page.py` | [`42006894798`](https://github.com/creatoan/scenet/actions/runs/42006894798) | 715 | 52 | 17 | 35: 26 above, 9 below |
+| `emit/geometry.py` | [`42006899872`](https://github.com/creatoan/scenet/actions/runs/42006899872) | 237 | 5 | 1 | 4: 1 above, 3 below |
+
+Each mutant killed was applied by hand to see its test fail. Two lessons from it:
+
+- **A cache outlives a mutant.** mutmut forks each mutant from a process that has already run
+  the suite, so a function behind an `lru_cache` -- `lattice`, `_pdf_font` -- answers from what
+  the unmutated code put there. `park_miller` 7, 9 and 11 survived that way, and
+  `test_the_lattice_is_the_reference_codes` could not see them. They are killed by tests of
+  `park_miller` itself: every number stays between 1 and M - 1, and the step that gives 1
+  gives 1. Schrage's step is right modulo M whichever way it corrects, so the 10,000th number
+  alone cannot tell.
+- **A run's test selection can miss a test that kills.** `render_pdf` 54, which prints every
+  panel's pictures rather than the printed ones, fails `test_a_picture_on_no_page_is_not_carried`
+  when applied by hand.
+
+Killed since, by what the tests now hold:
+
+- **Faces unlike the gallery's**, which are all 1000 units per em, upright, proportional and
+  fully named. A 2048-unit face scales its box, ascent, descent, cap height and widths to
+  thousandths (`_descriptor` 66, 81, 83, 85; `_widths` 15, 20). A kern in it is written to the
+  millionth (`_shown` 29, 45). Other cases:
+  - italic by its angle or its selection, and fixed pitch (`_descriptor` 25, 30, 32, 33, 35,
+    36, 40, 78, 79);
+  - a cap height stated at `OS/2` version 2, or of 0 or 1 (`_descriptor` 52-55);
+  - no `OS/2`, which takes a regular stem (`_descriptor` 61);
+  - names that need cutting, missing, or absent (`_postscript_name` 1, 2, 13, 16, 26-30);
+  - a CFF font's CIDFont, which maps no glyphs (`objects` 31);
+  - a face that may not be subset, which goes in byte for byte, or, from a WOFF, unwrapped
+    with its date (`_sfnt` 2, 6, 7, 11, 14).
+- **Faces print may not embed**, in two files and two runs of a line: each glyph outlined
+  exactly as outline mode outlines it, in every run, and each face said (`_outlined_run` 9,
+  22, 24, 25, 27-30; `_text` 5, 11; `_faces_lettered` 13).
+- **Hand-edited colours** in the rain, the veil and a caption are said, and air with no veil
+  says nothing (`_colours_not_owned` 4, 6, 8-13).
+- **The ends of the greys**: `#050505` on CIELAB's straight part, a grey lighter than black's
+  first step, and one between its last two (`_linear` 4, `_star` 9, `black_for` 12, 16).
+- **A picture with alpha**: its soft mask is an object, and the profile's number counts it
+  (`_shared` 8).
+- **Where a bleed mistake is said** -- a column, a slanted tier, a panel that reaches no edge --
+  and a slanted outline whose every corner moves only on the sides that bleed
+  (`resolve_frames` 75, 76, 199-203; `_bled` 28, 31, 34, 35, 86, 87, 89, 92, 96, 99).
+- **A border round three sides** is one line, wherever the open side is listed
+  (`border` 17).
+
+Accepted above, under new numbers: in `pdf.py`, `_linear` 5, `ink` 22 (was 7), `_embedded` 6,
+`_page_content` 3, 9, 10, 29, 35 and 36, `_state` 2 and 3, `_path` 23 and `_Document.write` 131
+(was 126); in `solve/page.py`, `_frame` 1, `_fmt` 5 and 6, `_slanted` 30, 33, 35, 41, 87, 92, 142
+and 157, the `zip(..., strict=True)` mutants now `resolve_frames` 30, 34, 38, 96, 99, 104, 146,
+149, 154, 168, 172 and 176, and `_across` 5, 8 and 12; in `geometry.py`, `pointer` 20. Accepted
+here:
+
+| Mutants | Change | Why it cannot change an output |
+|---|---|---|
+| `pdf.py` `_star` 8, `_luminance` 1, `black_for` 11, 20 | `>` to `>=`, `<=` to `<` at CIELAB's knee and between two steps of the ramp | Both sides give the same value there: the two parts of CIELAB's curve meet at the knee, and interpolating at a step gives that step's percent from either segment. |
+| `pdf.py` `ink` 5 | the CMYK table read for a grey too | No key of the table is a grey, so a grey finds no twin either way. |
+| `pdf.py` `_text` 24 | a type size written to 2 places, not 6 | Core rounds every type size to 2 places (`pipeline.py`). |
+| `pdf.py` `_outlined_run` 4, 7, 8 | `zip(..., strict=True)` relaxed | A run has one origin per character. |
+| `pdf.py` `_outlined_run` 12, 13 | a glyph's metrics or character `None` | `_glyph_transform` reads only its origin, baseline, scale and angle. |
+| `pdf.py` `_Document._shared` 15 | `tagged = None` | Read only for truth. |
+| `pdf_fonts.py` `_subset` 3, 4, 14; `_sfnt` 3, 4, 5, 9, 13 | `False` to `None`, `lazy` changed | Read only for truth; lazy loading only decides when a table is decompiled. |
+| `pdf_fonts.py` `_subset` 16 | `layout_features = None` | `GSUB` and `GPOS` are dropped before any feature is read. |
+| `pdf_fonts.py` `_sfnt` 8, 12 | boxes recalculated when a WOFF is unwrapped | Read lazily, `glyf` is never decompiled, so there is nothing to recalculate from; a test with a wrong box keeps it either way. |
+| `pdf_fonts.py` `_saved` 1 | `flavor = ""` | fontTools reads the flavour for truth, so an empty one writes a plain font file. |
+| `pdf_fonts.py` `_descriptor` 20, 23 | the italic angle when there is no `post` table | `post` is a table every OpenType face must have. |
+| `pdf_fonts.py` `_character_map` 17, 38 | `UTF-16-BE`, `ASCII` | Python's codec names are not case-sensitive. |
+| `turbulence.py` `park_miller` 10 | `<= 0` to `< 0` | A result is 0 only for a seed that is a multiple of M, and no seed between 1 and M - 1 is. |
+| `turbulence.py` `fractal_noise` 2 | `zeros_like(None)` | A 0-d zero, which broadcasts to the same sums; the alpha is cast to bytes either way. |
+| `solve/page.py` `_bled` 9, 13, 16, 20, 85, 90, 95, 100 | `< REACH` to `<= REACH` | An edge on the margin is within float noise of it; one that is not is a gutter or more away, never exactly a hundredth. |
+| `solve/page.py` `_bled` 97 | every corner not on the top moved to the bottom line | A slanted tier's corners all lie on its top or its bottom edge. |
+| `geometry.py` `border` 16 | `range(4)` to `range(5)` | A panel whose border is drawn open has a side open and a side kept, so a start is found before the fifth. |
+| `geometry.py` `border` 22, 38 | the current line `None` instead of empty | `current or [...]` and `if current` read both as empty. |
+
 ### Exploring with fresh seeds
 
 The same workflow's second job runs the property tests under the `explore` profile: random
