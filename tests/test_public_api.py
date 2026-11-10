@@ -123,8 +123,7 @@ class TestErrorHierarchy:
         public = {
             name for name in errors.__all__ if issubclass(getattr(errors, name), errors.ScenetError)
         }
-        internal = {"UnknownPoseError", "UnknownExpressionError"}
-        assert sorted(public - internal - set(scenet.__all__)) == []
+        assert sorted(public - set(scenet.__all__)) == []
 
     def test_errors_module_exports_match_its_contents(self):
         for name in errors.__all__:
