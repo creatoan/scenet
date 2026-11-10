@@ -45,7 +45,11 @@ html_static_path = [{static!r}]
 """
 
 _PAGES = {
-    "index.md": "# Reference\n\n```{toctree}\nraw\nrendered\nquoted\n```\n",
+    "index.md": "# Reference\n\n```{toctree}\nraw\nrendered\nquoted\nalias\nmodel\n```\n",
+    # A discriminated union, which autodoc shows as what it is an alias of.
+    "alias.md": "# Alias\n\n```{eval-rst}\n.. autodata:: scenet.core.FaceMark\n```\n",
+    # A model whose fields only pydantic's `Field(description=...)` describes.
+    "model.md": "# Model\n\n```{eval-rst}\n.. autoclass:: scenet.mcp.CompiledPage\n```\n",
     # The mistake as it shipped: autodoc called from a MyST fence.
     "raw.md": "# Raw\n\n```{automodule} scenet.places\n```\n",
     # Its fix: autodoc inside an {eval-rst} fence, so reStructuredText reads its output. A
@@ -286,3 +290,34 @@ class TestSources:
                     where = getattr(node, "name", "the module")
                     offenders.append(f"{path.relative_to(ROOT).as_posix()}: {where}")
         assert offenders == []
+
+
+# ---------------------------------------------------------------- what a reader is shown
+
+
+class TestTypeAliases:
+    """An alias reads as what a value may be, not as pydantic's machinery."""
+
+    def test_its_metadata_is_taken_off(self, conf: dict[str, Any]):
+        from scenet.core import FaceDisc, FaceMark, FaceStroke  # noqa: PLC0415
+
+        assert conf["_without_metadata"](FaceMark) == FaceStroke | FaceDisc
+
+    def test_a_plain_type_is_left_as_it_is(self, conf: dict[str, Any]):
+        assert conf["_without_metadata"](dict[str, int]) == dict[str, int]
+
+    def test_the_built_page_shows_none(self, build: Build):
+        page = (build.html / "alias.html").read_text(encoding="utf-8")
+        assert "alias of" in page
+        assert "Tag(" not in page
+        assert "Discriminator" not in page
+        assert "FaceStroke" in page
+
+
+class TestFieldsPydanticDescribes:
+    """A field `Field(description=...)` describes is on its page, described."""
+
+    def test_are_on_the_page(self, build: Build):
+        page = (build.html / "model.html").read_text(encoding="utf-8")
+        assert 'id="scenet.mcp.CompiledPage.number"' in page
+        assert "number, from 1" in page

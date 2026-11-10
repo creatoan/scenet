@@ -18,6 +18,7 @@ from typing import Any
 import pytest
 
 import scenet
+import scenet.core
 
 ROOT = Path(__file__).resolve().parents[1]
 REGENERATE = "run `uv run python scripts/build_api_pages.py`"
@@ -205,3 +206,22 @@ class TestSourceLinks:
 
 def _tuple(version: str) -> tuple[int, ...]:
     return tuple(int(part) for part in version.split("."))
+
+
+class TestThePanelCoreFieldTable:
+    """`docs/reference/panel_core.md` has a table of every field, made from the models."""
+
+    @pytest.mark.parametrize("model", ["PanelCore", "PageCore"])
+    def test_every_field_is_a_row(self, model: str):
+        table = pages.field_table(getattr(scenet.core, model))
+        for field in getattr(scenet.core, model).model_fields:
+            assert f"| `{field}` |" in table, field
+
+    def test_every_row_says_what_it_holds(self):
+        table = pages.field_table(scenet.core.PanelCore)
+        empty = [row for row in table.splitlines()[2:] if row.rstrip().endswith("|  |")]
+        assert empty == []
+
+    def test_the_page_carries_it(self):
+        text = pages.PANEL_CORE.read_text(encoding="utf-8")
+        assert pages.field_table(scenet.core.PanelCore) in text
