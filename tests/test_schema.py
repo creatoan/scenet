@@ -534,3 +534,39 @@ class TestAFigureInTheCast:
     def test_a_scene_panel_may_not_pose_a_figure(self):
         scene = "panels: {one: {cast: {a: {figure: ben, pose: pointing}}}}\n"
         assert problems(scene_schema(), scene)
+
+
+class TestDescriptionsAreForAuthors:
+    """An editor shows a description on hover, to someone writing YAML.
+
+    A model's description is its docstring, and a docstring carries Python for the API
+    reference: an example, where to look next. Neither means anything in a YAML file.
+    """
+
+    PYTHON_ONLY = (">>>", "See Also:", "Example:", "Raises:", "Args:", "Returns:")
+
+    @staticmethod
+    def _descriptions(node: object) -> list[str]:
+        if isinstance(node, dict):
+            found = [node["description"]] if isinstance(node.get("description"), str) else []
+            return found + [
+                d
+                for value in node.values()
+                for d in TestDescriptionsAreForAuthors._descriptions(value)
+            ]
+        if isinstance(node, list):
+            return [d for value in node for d in TestDescriptionsAreForAuthors._descriptions(value)]
+        return []
+
+    @pytest.mark.parametrize("make", [panel_schema, scene_schema, puppet_schema, artwork_schema])
+    def test_no_description_holds_python(self, make: Any):
+        offenders = [
+            description[:60]
+            for description in self._descriptions(make())
+            if any(marker in description for marker in self.PYTHON_ONLY)
+        ]
+        assert offenders == []
+
+    def test_what_comes_before_is_kept(self):
+        anchor = panel_schema()["$defs"]["AnchorX"]["description"]
+        assert anchor.startswith("Where along the panel width an actor would like to stand.")
