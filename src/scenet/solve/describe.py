@@ -166,6 +166,7 @@ def name(actor: str) -> str:
     An id written in capitals, as a comic script writes its cast, is kept as it is.
 
     Example:
+        >>> from scenet.solve.describe import name
         >>> [name(actor) for actor in ("alice", "guard_left", "ALICE")]
         ['Alice', 'Guard left', 'ALICE']
     """
@@ -183,6 +184,7 @@ def sentence(text: str) -> str:
     it is.
 
     Example:
+        >>> from scenet.solve.describe import sentence
         >>> [sentence(line) for line in ("Hi", "You what?!", "“Get down”")]
         ['Hi.', 'You what?!', '“Get down”.']
     """
@@ -212,7 +214,8 @@ def label(event: ScriptEvent) -> str:
     lettering rather than speech.
 
     Example:
-        >>> from scenet.ir import SayEvent
+        >>> from scenet import SayEvent
+        >>> from scenet.solve.describe import label
         >>> label(SayEvent(by="bob", text="I _know_", kind="whisper"))
         'Bob, whispering: I know.'
     """
@@ -279,7 +282,8 @@ def traits(pose: str, expression: str, marks: Sequence[Mark]) -> list[str]:
     of a figure: the description reads it, and so does the boxes export (#72).
 
     Example:
-        >>> from scenet.ir import Mark
+        >>> from scenet import Mark
+        >>> from scenet.solve.describe import traits
         >>> traits("hands_on_hips", "surprise", [Mark.PLEWDS])
         ['hands on hips', 'surprised', 'sweating']
         >>> traits("standing_neutral", "neutral", [])
@@ -324,6 +328,7 @@ def describe(panel: PanelIR, faces: Mapping[str, float], width: float) -> str:
 
     Example:
         >>> from scenet import parse_panel
+        >>> from scenet.solve.describe import describe
         >>> panel = parse_panel("setting: {place: docks, time: night}")
         >>> describe(panel, {}, 1000.0)
         'The docks at night.'

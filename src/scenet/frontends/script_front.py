@@ -376,6 +376,7 @@ def _folded(text: str) -> str:
     Lower case, no accents, no apostrophes, hyphens or full stops, single spaces.
 
     Example:
+        >>> from scenet.frontends.script_front import _folded
         >>> _folded("Plan d'Ensemble"), _folded("contre-plongée"), _folded("P.A.")
         ('plan d ensemble', 'contre plongee', 'pa')
     """
@@ -428,6 +429,7 @@ class _PanelDraft:
         and is reported at its heading.
 
         Example:
+            >>> from scenet.frontends.script_front import _PanelDraft
             >>> draft = _PanelDraft(line=4, label="1")
             >>> draft.add({"say": {}}, 6)
             >>> draft.directive_lines[("camera", "shot")] = 5
@@ -530,6 +532,7 @@ def _number_value(token: str) -> int | None:
     `twenty-one`, `TWENTY ONE`.
 
     Example:
+        >>> from scenet.frontends.script_front import _number_value
         >>> [_number_value(token) for token in ("TWO", "twenty-one", "Twenty One", "07", "3A")]
         [2, 21, 21, 7, None]
     """
@@ -556,6 +559,7 @@ def _number_label(token: str) -> str:
     `PANEL 1` are the same panel. Anything else, `3A` say, is kept exactly as written.
 
     Example:
+        >>> from scenet.frontends.script_front import _number_label
         >>> [_number_label(token) for token in ("TWO", "twenty-one", "07", "3A")]
         ['2', '21', '7', '3A']
     """
@@ -581,6 +585,7 @@ def _without_markdown(prose: str) -> str:
     """Prose with the emphasis markers taken off, which a screen reader would read out.
 
     Example:
+        >>> from scenet.frontends.script_front import _without_markdown
         >>> _without_markdown("**Alice** looks _up_ at *Bob*, past snake_case and 2*3*4.")
         'Alice looks up at Bob, past snake_case and 2*3*4.'
     """
@@ -616,6 +621,7 @@ def _recognisable(line: str) -> str:
     only what a line is recognised as, and the text itself is never rewritten.
 
     Example:
+        >>> from scenet.frontends.script_front import _recognisable
         >>> [_recognisable(line) for line in ("## PANEL 2", "**ALICE:** Hi.", "__PANEL 3__")]
         ['PANEL 2', 'ALICE: Hi.', 'PANEL 3']
     """
@@ -1199,6 +1205,7 @@ def default_tiers(count: int) -> list[int]:
     and beyond nine, rows of three with the extras in the earlier tiers.
 
     Example:
+        >>> from scenet.frontends.script_front import default_tiers
         >>> [default_tiers(count) for count in (1, 4, 5, 7, 10)]
         [[1], [2, 2], [2, 1, 2], [2, 3, 2], [3, 3, 2, 2]]
     """
@@ -1275,6 +1282,7 @@ def _modifiers(parentheticals: str | None) -> list[str]:
     so what is reported about them does not depend on how a set iterates.
 
     Example:
+        >>> from scenet.frontends.script_front import _modifiers
         >>> _modifiers("(OP) (Whisper, burst)")
         ['op', 'whisper', 'burst']
     """
@@ -1723,6 +1731,7 @@ def normalise_text(text: str) -> str:
       composed; compared as stored, the cue named nobody.
 
     Example:
+        >>> from scenet.frontends.script_front import normalise_text
         >>> normalise_text("\ufeffZOE\u0308\r\n") == "ZO\u00cb\n"
         True
     """
@@ -1820,6 +1829,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     did validate -- a balloon over the word limit, say -- needs to know where it is.
 
     Example:
+        >>> from scenet.frontends.script_front import parse_script_document
         >>> document = parse_script_document(
         ...     "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n"
         ... )

@@ -670,7 +670,7 @@ class Spans(StrEnum):
         plane, which reads as a mistake rather than as two masses.
 
         Example:
-            >>> from scenet.ir import Spans
+            >>> from scenet import Spans
             >>> Spans.FULL.fractions
             (0.0, 1.0)
         """
@@ -703,7 +703,7 @@ class Horizon(StrEnum):
         and the camera reads as looking down over it.
 
         Example:
-            >>> from scenet.ir import Horizon
+            >>> from scenet import Horizon
             >>> Horizon.HIGH.fraction < Horizon.LOW.fraction
             True
         """
@@ -844,7 +844,7 @@ class Mass(Strict):
     of masses rather than from rendered detail.
 
     Example:
-        >>> from scenet.ir import Mass, MassKind
+        >>> from scenet import Mass, MassKind
         >>> Mass(kind=MassKind.SKY).plane.value
         'mid'
     """
@@ -1212,7 +1212,7 @@ class CaptionEvent(Strict):
     in the cast would defeat the point of saying they are off panel.
 
     Example:
-        >>> from scenet.ir import CaptionEvent
+        >>> from scenet import CaptionEvent
         >>> CaptionEvent(text="Midnight. The docks.").kind.value
         'locale'
     """
@@ -1304,7 +1304,7 @@ class SfxEvent(Strict):
     is exempt from the geometric reading-order rule: a sound sits where the sound is.
 
     Example:
-        >>> from scenet.ir import SfxEvent
+        >>> from scenet import SfxEvent
         >>> SfxEvent.model_validate({"text": "BLAM", "from": "bob"}).source
         'bob'
     """

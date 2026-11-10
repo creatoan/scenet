@@ -38,6 +38,7 @@ def character_colour(slot: int) -> str:
     """A character's colour: one of `CHARACTER_SLOTS` hues, saturated and bright.
 
     Example:
+        >>> from scenet.emit.mask import character_colour
         >>> character_colour(0)
         '#ff2626'
     """
@@ -51,6 +52,7 @@ def mass_colour(index: int) -> str:
     neighbours in drawing order are easy to tell apart.
 
     Example:
+        >>> from scenet.emit.mask import mass_colour
         >>> mass_colour(0)
         '#d97777'
     """
@@ -62,6 +64,7 @@ def slot_of(name: str) -> int:
     """Where a character's colour starts: from its name's digest, the same in every panel.
 
     Example:
+        >>> from scenet.emit.mask import slot_of
         >>> slot_of("alice") == slot_of("alice")
         True
     """

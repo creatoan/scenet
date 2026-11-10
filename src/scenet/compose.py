@@ -71,6 +71,7 @@ def own_direction(where: str) -> str:
     """Why a panel's own `direction` is refused, and where to write it instead.
 
     Example:
+        >>> from scenet.compose import own_direction
         >>> own_direction("beside `panels:`").endswith("once, beside `panels:`")
         True
     """
@@ -255,6 +256,7 @@ def settle(
         The document, and the relations dropped, in the order they were written.
 
     Example:
+        >>> from scenet.compose import settle
         >>> settled, dropped = settle({"cast": {"a": {}, "b": None}, "staging": ["a left_of b"]})
         >>> settled, [item.actor for item in dropped]
         ({'cast': {'a': {}}, 'staging': []}, ['b'])

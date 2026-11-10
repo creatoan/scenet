@@ -424,6 +424,7 @@ def rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]:
     `diagnostics` adds its own check that the catalogue has the rule.
 
     Example:
+        >>> from scenet.frontends.common import rule_for_pydantic
         >>> rule_for_pydantic({"type": "missing", "loc": ("cast",), "msg": "", "input": None})
         ('missing-field', ('cast',))
     """

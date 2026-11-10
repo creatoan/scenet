@@ -28,6 +28,7 @@ def canvas(core: PanelCore) -> tuple[int, int]:
 
     Example:
         >>> from scenet import compile_source
+        >>> from scenet.emit.conditioning import canvas
         >>> canvas(
         ...     compile_source("{panel: {size: [600.5, 400]}, cast: {a: {reference: alice}}}").core
         ... )

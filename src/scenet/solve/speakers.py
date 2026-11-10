@@ -52,6 +52,7 @@ class Speaker:
 
         Example:
             >>> from scenet.geom import Circle, Point
+            >>> from scenet.solve.speakers import Speaker
             >>> Speaker(Circle(10.0, 10.0, 2.0), Point(10.0, 11.0)).outline[0]
             Point(x=8.0, y=8.0)
         """

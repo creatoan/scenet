@@ -151,6 +151,7 @@ def lightness_star(colour: str) -> float:
     """CIELAB L* of an sRGB `#rrggbb` colour: how light it looks, as press profiles measure it.
 
     Example:
+        >>> from scenet.emit.pdf import lightness_star
         >>> round(lightness_star("#777777"), 1)
         50.0
     """
@@ -351,8 +352,7 @@ def render_pdf(
             decodes.
 
     Example:
-        >>> from scenet import compile_book
-        >>> from scenet.emit.pdf import render_pdf
+        >>> from scenet import compile_book, render_pdf
         >>> book = compile_book("cast: {a: {reference: alice}}\npanels: {one: {}}")
         >>> cores = {name: result.core for name, result in book.panels.items()}
         >>> render_pdf(book.pages, cores)[:8]

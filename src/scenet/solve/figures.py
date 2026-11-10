@@ -66,10 +66,11 @@ def place_figures(contract: ArtworkContract, image: ResolvedImage) -> PlacedPict
         The figures and keep-out regions, in panel units.
 
     Example:
+        >>> from scenet import Fit
         >>> from scenet.assets.artwork import ArtworkContract
         >>> from scenet.geom import BBox
-        >>> from scenet.ir import Fit
         >>> from scenet.solve.backdrop import ResolvedImage
+        >>> from scenet.solve.figures import place_figures
         >>> contract = ArtworkContract.model_validate(
         ...     {
         ...         "size": [200, 100],

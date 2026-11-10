@@ -292,7 +292,8 @@ def resolve_frames(
             finding is still located.
 
     Example:
-        >>> from scenet.ir import PageFormat, PageSpec
+        >>> from scenet import PageFormat, PageSpec
+        >>> from scenet.solve.page import resolve_frames
         >>> page = PageSpec.model_validate(
         ...     {"tiers": [{"panels": [{"use": "a"}, {"use": "b", "width": 2}]}]}
         ... )

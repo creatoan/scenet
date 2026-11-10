@@ -68,6 +68,7 @@ def counted(number: int, noun: str) -> str:
     """`1 panel`, `2 panels`: a count as it is said.
 
     Example:
+        >>> from scenet.emit.strip import counted
         >>> counted(1, "panel"), counted(3, "page")
         ('1 panel', '3 pages')
     """

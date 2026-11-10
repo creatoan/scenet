@@ -170,7 +170,7 @@ def layout_effect(event: SfxEvent, *, dialogue_size: float, typeface: Typeface) 
         The effect, centred on the origin.
 
     Example:
-        >>> from scenet.ir import SfxEvent
+        >>> from scenet import SfxEvent
         >>> from scenet.solve.sfx import layout_effect
         >>> from scenet.solve.text import Typeface
         >>> shape = layout_effect(SfxEvent(text="BLAM"), dialogue_size=30, typeface=Typeface())

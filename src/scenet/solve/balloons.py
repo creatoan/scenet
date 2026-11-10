@@ -834,7 +834,7 @@ def caption_colour(tone: CaptionTone, palette: Palette) -> str:
         but `warm`.
 
     Example:
-        >>> from scenet.ir import CaptionTone, Palette
+        >>> from scenet import CaptionTone, Palette
         >>> from scenet.solve.balloons import caption_colour
         >>> caption_colour(CaptionTone.WARM, Palette.TINTED)
         '#fef0a1'
@@ -866,7 +866,7 @@ def caption_text(events: Sequence[ScriptEvent], index: int) -> str:
         The text to letter.
 
     Example:
-        >>> from scenet.ir import CaptionEvent, CaptionKind
+        >>> from scenet import CaptionEvent, CaptionKind
         >>> from scenet.solve.balloons import caption_text
         >>> run = (
         ...     CaptionEvent(text="Get down!", kind=CaptionKind.SPOKEN),
@@ -1186,6 +1186,8 @@ def _within_frame(origin: Point, target: Point, frame: "_Frame") -> Point:
     tail reaches its mouth, which lies inside.
 
     Example:
+        >>> from scenet.geom import BBox, Point
+        >>> from scenet.solve.balloons import _Frame, _within_frame
         >>> _within_frame(Point(50, 50), Point(150, 50), _Frame(BBox(0, 0, 100, 100)))
         Point(x=100.0, y=50.0)
     """
@@ -1319,6 +1321,9 @@ def _nearer_side(balloon: BBox, panel: BBox, direction: Direction = Direction.LT
     On a tie, the side reading starts from: left, or right for a panel read right to left.
 
     Example:
+        >>> from scenet import Direction
+        >>> from scenet.geom import BBox
+        >>> from scenet.solve.balloons import _nearer_side
         >>> _nearer_side(BBox(100, 50, 40, 20), BBox(0, 0, 300, 200))
         <Side.LEFT: 'left'>
         >>> _nearer_side(BBox(130, 50, 40, 20), BBox(0, 0, 300, 200), Direction.RTL)
@@ -1337,6 +1342,9 @@ def _edge_point(balloon: BBox, side: Side, frame: _Frame) -> Point:
     out from the balloon's centre crosses it.
 
     Example:
+        >>> from scenet import Side
+        >>> from scenet.geom import BBox
+        >>> from scenet.solve.balloons import _edge_point, _Frame
         >>> _edge_point(BBox(100, 50, 40, 20), Side.LEFT, _Frame(BBox(0, 0, 300, 200)))
         Point(x=0, y=60.0)
     """

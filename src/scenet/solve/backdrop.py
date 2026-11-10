@@ -341,7 +341,7 @@ def tone_for(kind: MassKind, plane: Plane, time: TimeOfDay) -> str:
         A `#rrggbb` neutral grey.
 
     Example:
-        >>> from scenet.ir import MassKind, Plane, TimeOfDay
+        >>> from scenet import MassKind, Plane, TimeOfDay
         >>> from scenet.solve.backdrop import tone_for
         >>> tone_for(MassKind.SKY, Plane.FAR, TimeOfDay.NIGHT)
         '#4d4d4d'
@@ -373,7 +373,7 @@ def colour_for(tone: str, time: TimeOfDay, palette: Palette) -> str:
         not a rung of the ladder -- snow is white by convention, not by value.
 
     Example:
-        >>> from scenet.ir import Palette, TimeOfDay
+        >>> from scenet import Palette, TimeOfDay
         >>> from scenet.solve.backdrop import colour_for
         >>> colour_for("#eeeeee", TimeOfDay.DAY, Palette.TINTED)
         '#ddf2ff'
@@ -584,8 +584,8 @@ def solve_backdrop(
         every panel written before this block existed gets.
 
     Example:
+        >>> from scenet import SettingSpec
         >>> from scenet.geom import BBox
-        >>> from scenet.ir import SettingSpec
         >>> from scenet.solve.backdrop import solve_backdrop
         >>> solve_backdrop(SettingSpec(), BBox(0.0, 0.0, 800.0, 600.0)) is None
         True
@@ -652,8 +652,8 @@ def fit_box(pixels: tuple[int, int], panel: BBox, fit: Fit) -> BBox:
         The picture's rectangle, in the panel's units.
 
     Example:
+        >>> from scenet import Fit
         >>> from scenet.geom import BBox
-        >>> from scenet.ir import Fit
         >>> from scenet.solve.backdrop import fit_box
         >>> fit_box((960, 640), BBox(0.0, 0.0, 1200.0, 600.0), Fit.COVER)
         BBox(x=0.0, y=-100.0, width=1200.0, height=800.0)

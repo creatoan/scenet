@@ -192,7 +192,7 @@ def _indentation_hint(error: yaml.YAMLError) -> str | None:
 
     Example:
         >>> import yaml
-        >>> from scenet.safe_yaml import load
+        >>> from scenet.safe_yaml import _indentation_hint, load
         >>> try:
         ...     load("cast:\n  a: {x: 1}\n   b: {x: 2}\n")
         ... except yaml.YAMLError as exc:

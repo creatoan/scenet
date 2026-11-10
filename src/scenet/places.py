@@ -43,7 +43,7 @@ class Place(StrEnum):
     read as a place you are standing *in* rather than looking at.
 
     Example:
-        >>> from scenet.places import PLACES, Place
+        >>> from scenet import PLACES, Place
         >>> [mass.kind.value for mass in PLACES[Place.SHORE]]
         ['sky', 'water', 'ground']
     """
@@ -156,6 +156,8 @@ def place_of(masses: Sequence[Mass]) -> Place | None:
     list out by hand. The description reads it, and Panel Core records it.
 
     Example:
+        >>> from scenet import PLACES, Place
+        >>> from scenet.places import place_of
         >>> place_of(PLACES[Place.DOCKS])
         <Place.DOCKS: 'docks'>
         >>> place_of(()) is None

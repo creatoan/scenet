@@ -109,7 +109,7 @@ def typeface_for(spec: LetteringSpec, base: Folder | None) -> Lettering:
         PanelSyntaxError: Rule `font-file`, for the first face that cannot be read.
 
     Example:
-        >>> from scenet.ir import LetteringSpec
+        >>> from scenet import LetteringSpec
         >>> from scenet.lettering import typeface_for
         >>> typeface_for(LetteringSpec(), None).declared
         frozenset()

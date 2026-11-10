@@ -110,6 +110,7 @@ def embedding(fs_type: int | None) -> Embedding:
         What goes in.
 
     Example:
+        >>> from scenet.emit.pdf_fonts import embedding
         >>> [embedding(bits).value for bits in (0x0004, 0x0002, 0x0006, 0x0100)]
         ['subset', 'none', 'subset', 'whole']
     """

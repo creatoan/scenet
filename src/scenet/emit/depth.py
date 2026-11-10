@@ -51,6 +51,7 @@ def grey(value: int) -> str:
     """A grey of one value, `#rrggbb`.
 
     Example:
+        >>> from scenet.emit.depth import grey
         >>> grey(255), grey(0)
         ('#ffffff', '#000000')
     """
@@ -75,6 +76,7 @@ def recedes(core: PanelCore, region: Region) -> tuple[float, float] | None:
     Example:
         >>> from scenet import compile_source
         >>> from scenet.emit.conditioning import regions
+        >>> from scenet.emit.depth import recedes
         >>> core = compile_source(
         ...     "{panel: {size: [900, 560]}, setting: {place: street},"
         ...     " cast: {a: {reference: alice}}}"

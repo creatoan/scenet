@@ -218,6 +218,7 @@ def contract_path(image: str) -> str:
         The contract's path, relative to the document as the picture's is.
 
     Example:
+        >>> from scenet.assets.artwork import contract_path
         >>> contract_path("art/p01-street.png")
         'art/p01-street.art.yaml'
         >>> contract_path("cover.final.jpg")

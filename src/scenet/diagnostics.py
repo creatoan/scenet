@@ -1105,6 +1105,7 @@ def word_count(text: str) -> int:
     emphasis are not lettered at all.
 
     Example:
+        >>> from scenet.diagnostics import word_count
         >>> word_count("I _told_ you -- twice ...")
         4
     """
