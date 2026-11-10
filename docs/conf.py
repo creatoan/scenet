@@ -9,6 +9,7 @@
 
 import enum
 import importlib
+import importlib.util
 import os
 import re
 import sys
@@ -17,6 +18,7 @@ from collections.abc import Collection, Iterator
 from datetime import UTC, datetime
 from importlib.metadata import version as package_version
 from pathlib import Path
+from types import ModuleType
 
 from docutils import nodes
 from docutils.utils import get_source_line
@@ -231,6 +233,24 @@ html_context = {
 _PLAYGROUND = f"{html_baseurl}playground/"
 
 
+#: Where the Markdown links the package's source: on main, the only one GitHub can show.
+_SOURCE = "https://github.com/creatoan/scenet/blob/main/src/"
+
+
+def _source_at(documented: str, target: str) -> str:
+    """A source link at the release a build documents: its tag, or main for `dev`."""
+    if documented == "dev" or not target.startswith(_SOURCE):
+        return target
+    return target.replace("/blob/main/", f"/blob/v{documented}/", 1)
+
+
+def _source_links_follow_their_version(app: Sphinx, doctree: nodes.document, docname: str) -> None:
+    for reference in doctree.findall(nodes.reference):
+        target = reference.get("refuri")
+        if target:
+            reference["refuri"] = _source_at(release, target)
+
+
 def _playground_links_stay_in_their_version(
     app: Sphinx, doctree: nodes.document, docname: str
 ) -> None:
@@ -372,6 +392,30 @@ def _every_public_name_is_documented(app: Sphinx, exception: BaseException | Non
 
 
 # -- Which members are API -----------------------------------------------------
+#
+# Each public name has a page of its own, which `scripts/build_api_pages.py` writes: its
+# card, then its autodoc entry. The module pages document the internals, and leave each of
+# those names off, so that no object is described twice.
+
+
+def _load_api_pages() -> ModuleType:
+    path = Path(__file__).parent.parent / "scripts" / "build_api_pages.py"
+    spec = importlib.util.spec_from_file_location("build_api_pages", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("build_api_pages", module)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _publicly_documented() -> set[int]:
+    """The identity of every object a public page documents, but the version string."""
+    documented: list[str] = _load_api_pages().documented_publicly()
+    return {id(_resolve(name)) for name in documented if not isinstance(_resolve(name), str)}
+
+
+_PUBLIC_PAGES = _publicly_documented()
 
 #: What pydantic runs on a model and nobody calls: validators and serializers. A model's
 #: computed fields are not among them; they are read like any other field.
@@ -403,8 +447,11 @@ def _api_members_only(  # noqa: PLR0917 -- the signature Sphinx calls it with
 
     An enum's members are its values -- `BalloonKind.SHOUT` is the `shout` an author
     writes -- so they are listed whether documented or not. What a `StrEnum` gets from
-    `enum` for building its members, and the validators pydantic calls, are not API.
+    `enum` for building its members, and the validators pydantic calls, are not API. A
+    module page leaves off what a public page documents.
     """
+    if what == "module" and id(member) in _PUBLIC_PAGES:
+        return True
     if isinstance(member, enum.Enum) and type(member).__members__.get(name) is member:
         return False
     if name == "__new__" and member is enum.Enum.__new__:
@@ -457,5 +504,6 @@ def setup(app: Sphinx) -> None:
     # and it is shown as text, which is what a script is.
     app.add_lexer("scenet-script", TextLexer)
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
+    app.connect("doctree-resolved", _source_links_follow_their_version)
     app.connect("doctree-resolved", _no_raw_markup)
     app.connect("build-finished", _every_public_name_is_documented)

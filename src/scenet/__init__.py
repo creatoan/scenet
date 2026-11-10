@@ -164,6 +164,7 @@ from scenet.pipeline import (
     compile_source,
 )
 from scenet.places import PLACES, Place
+from scenet.solve.text import FontMetrics
 
 try:
     #: This package's version, as its installed metadata gives it: `"0.12.0"`, say.
@@ -204,6 +205,8 @@ __all__ = [
     "render_pages",
     "render_pdf",
     "render_strip",
+    # -- measuring lettering -------------------------------------------------
+    "FontMetrics",
     # -- the intermediate tiers ----------------------------------------------
     "PageCore",
     "PanelCore",

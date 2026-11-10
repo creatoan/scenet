@@ -48,8 +48,14 @@ _PAGES = {
     "index.md": "# Reference\n\n```{toctree}\nraw\nrendered\nquoted\n```\n",
     # The mistake as it shipped: autodoc called from a MyST fence.
     "raw.md": "# Raw\n\n```{automodule} scenet.places\n```\n",
-    # Its fix: autodoc inside an {eval-rst} fence, so reStructuredText reads its output.
-    "rendered.md": "# Rendered\n\n```{eval-rst}\n.. automodule:: scenet.errors\n```\n",
+    # Its fix: autodoc inside an {eval-rst} fence, so reStructuredText reads its output. A
+    # module page leaves a public name to its own page, which documents it as these do.
+    "rendered.md": (
+        "# Rendered\n\n```{eval-rst}\n.. automodule:: scenet.errors\n\n"
+        ".. autoexception:: scenet.errors.ScenetError\n\n"
+        ".. autoexception:: scenet.errors.LayoutError\n\n"
+        ".. autoexception:: scenet.errors.UnknownPuppetError\n```\n"
+    ),
     # Markup a page shows as code, on purpose.
     "quoted.md": (
         "# Quoted\n\n"
