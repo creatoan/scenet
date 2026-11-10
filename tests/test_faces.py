@@ -27,6 +27,7 @@ from scenet.assets.face import MIN_FEATURE_RADIUS, FaceMark, ResolvedDisc, build
 from scenet.assets.kinematics import resolve
 from scenet.core import CoreActor, FaceDisc, PanelCore
 from scenet.core import FaceMark as CoreFaceMark
+from scenet.errors import CoreSyntaxError
 from scenet.geom import Point, Vector
 from scenet.ir import ShotType
 from scenet.pipeline import compile_source
@@ -373,9 +374,10 @@ class TestDeterminism:
         marks = payload["actors"][0]["face_marks"]
         index = next(i for i, mark in enumerate(marks) if mark["mark"] == "disc")
         marks[index]["radius"] = "wide"
-        with pytest.raises(ValidationError) as caught:
+        with pytest.raises(CoreSyntaxError) as caught:
             PanelCore.from_json(json.dumps(payload))
-        (error,) = caught.value.errors()
+        assert isinstance(caught.value.__cause__, ValidationError)
+        (error,) = caught.value.__cause__.errors()
         assert error["loc"] == ("actors", 0, "face_marks", index, "disc", "radius")
 
     def test_a_core_mark_without_its_tag_still_resolves(self):
