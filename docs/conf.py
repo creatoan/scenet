@@ -8,11 +8,16 @@
 # missing from a toctree fails the build rather than quietly producing a worse site.
 
 import enum
+import functools
 import importlib
 import importlib.util
+import inspect
+import operator
 import os
 import re
 import sys
+import types
+import typing
 import zlib
 from collections.abc import Collection, Iterator
 from datetime import UTC, datetime
@@ -489,6 +494,67 @@ def _no_inline_types(  # noqa: PLR0917 -- the signature Sphinx calls it with
         lines[:0] = ["..", ""]
 
 
+# -- Type aliases ----------------------------------------------------------------
+#
+# Autodoc writes an alias as "alias of" what it stands for. A discriminated union, as
+# `scenet.core.FaceMark` is, stands for `Annotated[Annotated[FaceStroke, Tag("stroke")] |
+# ..., Discriminator(...)]`: pydantic's machinery, which says nothing to a reader. Shown
+# without its metadata, it reads `FaceStroke | FaceDisc | ...`, what a value may be.
+
+
+def _without_metadata(annotation: object) -> object:
+    """An annotation with every `Annotated` layer taken off, inside unions as well."""
+    if typing.get_origin(annotation) is typing.Annotated:
+        return _without_metadata(typing.get_args(annotation)[0])
+    if typing.get_origin(annotation) in {typing.Union, types.UnionType}:
+        return functools.reduce(
+            operator.or_, (_without_metadata(arm) for arm in typing.get_args(annotation))
+        )
+    return annotation
+
+
+def _readable_aliases() -> None:
+    """Have autodoc write each alias it shows without pydantic's metadata."""
+    from sphinx.ext.autodoc import _generate  # noqa: PLC0415 -- only once autodoc is loaded
+
+    if getattr(_generate.restify, "_scenet", False):
+        return
+    shown = _generate.restify
+
+    def restify(annotation: object, *args: object, **kwargs: object) -> str:
+        return shown(_without_metadata(annotation), *args, **kwargs)  # type: ignore[arg-type]
+
+    restify._scenet = True  # type: ignore[attr-defined]
+    _generate.restify = restify  # type: ignore[assignment]
+
+
+# -- Fields pydantic describes -----------------------------------------------------
+#
+# A model's field is listed only when something describes it: an `Attributes:` entry or a
+# docstring under it. A field described with `Field(description=...)`, as the MCP server's
+# results are for the model that reads them, is described the same way on its page.
+
+
+def _field_descriptions(  # noqa: PLR0917 -- the signature Sphinx calls it with
+    app: Sphinx, what: str, name: str, obj: object, options: object, lines: list[str]
+) -> None:
+    """Add an `Attributes:` entry for each field only `Field(description=...)` describes."""
+    fields = getattr(obj, "model_fields", None)
+    if what != "class" or not isinstance(fields, dict):
+        return
+    own = inspect.get_annotations(obj)  # type: ignore[arg-type]
+    described = "\n".join(lines)
+    entries = [
+        f"    {field}: {info.description}"
+        for field, info in fields.items()
+        if field in own
+        and getattr(info, "description", None)
+        and not re.search(rf"^\s+{field}( \(.*\))?:", described, re.MULTILINE)
+    ]
+    if entries:
+        lines += ["", "Attributes:", *entries, ""]
+
+
 def setup(app: Sphinx) -> None:
     # The site tests' two-page build of this configuration leaves autodoc out, and then
     # its events do not exist to listen to.
@@ -497,6 +563,8 @@ def setup(app: Sphinx) -> None:
         # lower runs first: the docstring napoleon reads, and the bases before they become
         # text.
         app.connect("autodoc-process-docstring", _no_inline_types, priority=400)
+        app.connect("autodoc-process-docstring", _field_descriptions, priority=400)
+        _readable_aliases()
         app.connect("autodoc-process-bases", _public_bases, priority=400)
         app.connect("autodoc-skip-member", _api_members_only)
     # A comic script's fence names its language as the editor extension does, so that

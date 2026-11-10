@@ -59,7 +59,7 @@ def panel_schema() -> dict[str, Any]:
 
 
 def artwork_schema() -> dict[str, Any]:
-    """The schema for an artwork contract, a `*.art.yaml` file beside its picture (#71).
+    """The schema for an artwork contract, a `*.art.yaml` file beside its picture.
 
     A contract is written as the model reads it, with no conveniences to put back, so
     this is the model's own schema. What it cannot say -- every point on the picture,
@@ -80,7 +80,7 @@ def artwork_schema() -> dict[str, Any]:
 
 
 def puppet_schema() -> dict[str, Any]:
-    """The schema for a puppet file, a `*.puppet.yaml` a cast member names by its path (#242).
+    """The schema for a puppet file, a `*.puppet.yaml` a cast member names by its path.
 
     A puppet is written as the model reads it, so this is the model's own schema, plus
     what of its validators a schema can state: every landmark is there, `head_top` is

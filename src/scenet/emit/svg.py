@@ -92,7 +92,7 @@ def render(
     embed: Mapping[str, bytes] | None = None,
     mono: bool = False,
 ) -> str:
-    """Render a compiled panel as a standalone SVG document.
+    r"""Render a compiled panel as a standalone SVG document.
 
     Args:
         core: The compiled panel.
@@ -116,13 +116,36 @@ def render(
             out, it is linked by the path the document wrote, which a viewer reads from
             beside the SVG.
         mono: Draw every value as its grey and ignore its colour, as for a black-and-white
-            edition (#244). Every decision was made on the grey, so this draws exactly what
+            edition. Every decision was made on the grey, so this draws exactly what
             `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
+    Returns:
+        One SVG document, as text. The same Core and arguments give the same text.
+
     Raises:
-        RenderError: The Core names a font that was not handed over. Drawing its lettering
-            in another face would draw text that does not fit the balloons around it.
-            Or a picture is to be embedded and was not handed over.
+        RenderError: The Core was lettered in a font not handed back as `fonts`, or a supplied
+            picture is to be embedded and its bytes are not in `embed`.
+
+    Note:
+        The renderer makes no layout decision: everything it draws is in the Core. Glyph
+        outlines need no font where the SVG is shown; `live_text` letters in `<text>`, which
+        is smaller and selectable, and is only right where the font is installed.
+
+    Example:
+        >>> from scenet import compile_source, render
+        >>> result = compile_source(
+        ...     "cast: {a: {reference: alice}}\nscript: [{say: {by: a, text: Hello.}}]"
+        ... )
+        >>> svg = render(result.core, fonts=result.fonts)
+        >>> svg.splitlines()[0]
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        >>> svg == render(result.core, fonts=result.fonts)
+        True
+
+    See Also:
+        :func:`render_debug <scenet.emit.debug_svg.render_debug>`, for why it looks like that.
+        :func:`render_strip <scenet.emit.strip.render_strip>`, for several panels in one SVG.
+        :func:`render_pdf <scenet.emit.pdf.render_pdf>`, for print.
     """
     if mono:
         core = core.as_mono()
@@ -269,7 +292,7 @@ def panel_body(
 
 
 def _border(core: PanelCore, outline: str | None) -> list[str]:
-    """A panel's border: its frame, or the sides that keep one when it bleeds (#281)."""
+    """A panel's border: its frame, or the sides that keep one when it bleeds."""
     runs = geometry.border(core)
     if runs is not None:
         return [

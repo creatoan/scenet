@@ -1,8 +1,8 @@
-"""A supplied picture as a PDF image, pixels unchanged (#80).
+"""A supplied picture as a PDF image, pixels unchanged.
 
 The compiler only ever reads a picture's size (`scenet.images`); print has to carry the
 picture itself. The rule is to change nothing: no colour conversion -- an RGB picture
-stays RGB, which the printer's RIP converts, and the PDF writer tags it as sRGB (#283) --
+stays RGB, which the printer's RIP converts, and the PDF writer tags it as sRGB --
 and, wherever PDF can read the file's own data, the file's own bytes:
 
 - a JPEG Acrobat and every RIP decode (baseline, extended or progressive, 8-bit) goes in

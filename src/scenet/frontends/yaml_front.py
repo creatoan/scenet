@@ -98,7 +98,35 @@ def _validate_panel(
 
 
 def parse_panel(text: str, *, source: Path | None = None) -> PanelIR:
-    """Parse panel source into validated IR."""
+    """Parse panel source into validated IR, without compiling it.
+
+    What :func:`compile_source <scenet.pipeline.compile_source>` does first: everything an
+    author can get wrong is found here, and nothing is placed.
+
+    Args:
+        text: A single-panel document in the YAML surface syntax.
+        source: Path the text came from, prefixed to every error message.
+
+    Returns:
+        The validated scene graph. No coordinates yet -- that is the solver's job.
+
+    Raises:
+        PanelSyntaxError: The document is malformed or invalid, with each fault's place.
+
+    Note:
+        A puppet the cast names is not looked up here, and a file the document names is
+        not read: both are the compile's. A document with `panels:` is refused.
+
+    Example:
+        >>> from scenet import parse_panel
+        >>> panel = parse_panel("cast: {a: {reference: alice, at: left_third}}")
+        >>> panel.cast["a"].at
+        <AnchorX.LEFT_THIRD: 'left_third'>
+
+    See Also:
+        :func:`compile_ir <scenet.pipeline.compile_ir>`, to compile what it returns.
+        :func:`load_panel <scenet.frontends.yaml_front.load_panel>`, to read a file.
+    """
     return _validate_panel(_load_document(text, source), source)
 
 
@@ -115,8 +143,26 @@ def load_panel(path: Path) -> PanelIR:
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: The document is malformed or invalid. The path is included in
-            the message.
+        PanelSyntaxError: The document is malformed, invalid, or not UTF-8. The path is in the
+            message.
+
+    Note:
+        Only the document is read; files it names are read when it is compiled.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import load_panel
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "hello.panel.yaml"
+        ...     _ = path.write_text("cast: {a: {reference: alice}}", encoding="utf-8")
+        ...     panel = load_panel(path)
+        >>> list(panel.cast)
+        ['a']
+
+    See Also:
+        :func:`parse_panel <scenet.frontends.yaml_front.parse_panel>`, for text.
+        :func:`compile_file <scenet.pipeline.compile_file>`, to compile the file.
     """
     return parse_panel(read_document(path), source=path)
 
@@ -132,6 +178,16 @@ class SceneDocument:
             that lays nothing out, which is every document written before pages existed.
         notes: What reading it noticed that is worth saying but is no fault, each naming
             its line. Only a comic script has any yet.
+
+    Example:
+        >>> from scenet import SceneDocument, parse_scene_document
+        >>> document = parse_scene_document("cast: {a: {reference: alice}}")
+        >>> isinstance(document, SceneDocument), list(document.panels)
+        (True, ['panel'])
+
+    See Also:
+        :func:`parse_scene_document <scenet.frontends.yaml_front.parse_scene_document>`, which
+        returns one.
     """
 
     panels: dict[str, PanelIR]
@@ -158,12 +214,39 @@ def parse_scene(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
     Panel order follows declaration order, which is reading order. `page:` and `pages:`
     are read and checked, but only the panels come back: see
     :func:`parse_scene_document <scenet.frontends.yaml_front.parse_scene_document>`.
+
+    Args:
+        text: A `panels:` document.
+        source: Path the text came from, prefixed to every error message.
+
+    Returns:
+        Panel name to scene graph, each with its `over:` chain already resolved.
+
+    Raises:
+        PanelSyntaxError: The document is malformed, or a panel does not validate.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+
+    Note:
+        Pages are not read: :func:`parse_scene_document
+        <scenet.frontends.yaml_front.parse_scene_document>` keeps them.
+
+    Example:
+        >>> from scenet import parse_scene
+        >>> panels = parse_scene(
+        ...     "panels: {wide: {cast: {a: {reference: alice}}}, close: {over: wide}}"
+        ... )
+        >>> list(panels), list(panels["close"].cast)
+        (['wide', 'close'], ['a'])
+
+    See Also:
+        :func:`compile_scene <scenet.pipeline.compile_scene>`, to compile it.
     """
     return parse_scene_document(text, source=source).panels
 
 
 def parse_scene_document(text: str, *, source: Path | None = None) -> SceneDocument:
-    """Parse a scene and the pages it is laid out on.
+    r"""Parse a scene and the pages it is laid out on.
 
     `page:` and `pages:` are not panel defaults, unlike every other key beside `panels:`,
     so they are taken out before the defaults are applied.
@@ -179,6 +262,23 @@ def parse_scene_document(text: str, *, source: Path | None = None) -> SceneDocum
         PanelSyntaxError: A panel or the layout is malformed. A placement naming a panel
             that does not exist, or one placed twice, is rule `page-layout`.
         CompositionError: An `over:` chain is unresolvable or cyclic.
+
+    Note:
+        Composition is resolved and pages validated against the panels, but nothing is
+        laid out.
+
+    Example:
+        >>> from scenet import parse_scene_document
+        >>> document = parse_scene_document(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "panels: {one: {}}\n"
+        ...     "pages: [{tiers: [{panels: [one]}]}]"
+        ... )
+        >>> list(document.panels), len(document.layout.pages)
+        (['one'], 1)
+
+    See Also:
+        :func:`compile_book <scenet.pipeline.compile_book>`, to compile it.
     """
     data = _load_document(text, source)
 
@@ -271,7 +371,7 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
 
 
 def load_scene(path: Path) -> dict[str, PanelIR]:
-    """Read and validate a multi-panel document from disk.
+    r"""Read and validate a multi-panel document from disk.
 
     Args:
         path: A `*.scene.yaml` file. A single-panel document also works and comes back
@@ -284,14 +384,35 @@ def load_scene(path: Path) -> dict[str, PanelIR]:
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: A panel is malformed or invalid.
-        CompositionError: An `over:` chain is unresolvable or cyclic.
+        PanelSyntaxError: The document is malformed, invalid, or not UTF-8.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+
+    Note:
+        Pages are not read: :func:`load_scene_document
+        <scenet.frontends.yaml_front.load_scene_document>` keeps them.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import load_scene
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "two.scene.yaml"
+        ...     _ = path.write_text(
+        ...         "cast: {a: {reference: alice}}\npanels: {one: {}, two: {}}", encoding="utf-8"
+        ...     )
+        ...     panels = load_scene(path)
+        >>> list(panels)
+        ['one', 'two']
+
+    See Also:
+        :func:`parse_scene <scenet.frontends.yaml_front.parse_scene>`, for text.
     """
     return parse_scene(read_document(path), source=path)
 
 
 def load_scene_document(path: Path) -> SceneDocument:
-    """Read a scene and the pages it is laid out on, from disk.
+    r"""Read a scene and the pages it is laid out on, from disk.
 
     Args:
         path: A `*.scene.yaml` file, or any YAML document the frontend reads.
@@ -303,7 +424,29 @@ def load_scene_document(path: Path) -> SceneDocument:
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: A panel or the layout is malformed.
-        CompositionError: An `over:` chain is unresolvable or cyclic.
+        PanelSyntaxError: The document is malformed, invalid, or not UTF-8.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+
+    Note:
+        Nothing is laid out; the pages are validated against the panels only.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import load_scene_document
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "page.scene.yaml"
+        ...     _ = path.write_text(
+        ...         "cast: {a: {reference: alice}}\n"
+        ...         "panels: {one: {}}\npages: [{tiers: [{panels: [one]}]}]",
+        ...         encoding="utf-8",
+        ...     )
+        ...     document = load_scene_document(path)
+        >>> len(document.layout.pages)
+        1
+
+    See Also:
+        :func:`parse_scene_document <scenet.frontends.yaml_front.parse_scene_document>`, for text.
     """
     return parse_scene_document(read_document(path), source=path)

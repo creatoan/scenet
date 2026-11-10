@@ -68,7 +68,7 @@ __all__ = [
 ]
 
 #: What a puppet file's name ends in. A cast member's `reference` that ends in it names a
-#: file, relative to the document, rather than a shipped puppet (#242).
+#: file, relative to the document, rather than a shipped puppet.
 PUPPET_SUFFIX = ".puppet.yaml"
 
 #: The pose a cast member gets when it does not ask for one, which every puppet declares.
@@ -92,6 +92,16 @@ class Landmark(StrEnum):
     """Vertical body landmarks, measured downward from the top of the head.
 
     These are the crop lines a shot type names -- see docs/reference/shot_types.md.
+
+    Example:
+        >>> from scenet import Landmark, default_library
+        >>> alice = default_library().get("alice")
+        >>> alice.landmarks[Landmark.CHIN] < alice.landmarks[Landmark.FEET]
+        True
+
+    See Also:
+        :class:`ShotType <scenet.ir.ShotType>`, each of which crops at one of these.
+        :class:`PuppetSpec <scenet.assets.contract.PuppetSpec>`, which declares where each is.
     """
 
     HEAD_TOP = "head_top"
@@ -127,15 +137,20 @@ class JointSpec(Strict):
     """
 
     parent: str | None = None
+    """The joint it hangs from; `None` for the root."""
     offset: tuple[float, float] = (0.0, 0.0)
+    """Where it is from its parent in the rest pose, in the puppet's own units."""
 
 
 class BonePart(Strict):
     """A limb segment drawn as a capsule between two joints."""
 
     from_joint: str = Field(alias="from")
+    """The joint it starts at; `from` in a puppet file."""
     to_joint: str = Field(alias="to")
+    """The joint it ends at; `to` in a puppet file."""
     width: float = Field(gt=0)
+    """How thick it is drawn, in the puppet's own units."""
 
     model_config = ConfigDict(
         extra="forbid", frozen=True, populate_by_name=True, allow_inf_nan=False
@@ -146,8 +161,11 @@ class BlobPart(Strict):
     """A rounded mass -- the head, or a torso -- centred on a joint."""
 
     at: str
+    """The joint it is centred on."""
     radius: float = Field(gt=0)
+    """Its radius, in the puppet's own units."""
     offset: tuple[float, float] = (0.0, 0.0)
+    """Where its centre is from that joint, in the puppet's own units."""
 
 
 def _kind_of_part(value: object) -> str | None:
@@ -198,7 +216,9 @@ class AnchorSpec(Strict):
     """
 
     joint: str
+    """The joint it rides along with."""
     offset: tuple[float, float] = (0.0, 0.0)
+    """Where it is from that joint, in the puppet's own units, before posing."""
 
 
 class Feature(StrEnum):
@@ -322,8 +342,11 @@ class ExpressionSpec(Strict):
     """
 
     brow: BrowState = BrowState.NEUTRAL
+    """The brows' state."""
     eyes: EyeState = EyeState.OPEN
+    """The eyes' state."""
     mouth: MouthState = MouthState.NEUTRAL
+    """The mouth's state."""
 
 
 class FaceSpec(Strict):
@@ -340,9 +363,13 @@ class FaceSpec(Strict):
     """
 
     joint: str = "head"
+    """The joint the face is centred on: the head, unless the puppet says otherwise."""
     radius: float = Field(gt=0)
+    """The face's radius, in the puppet's own units: the circle no balloon covers."""
     offset: tuple[float, float] = (0.0, 0.0)
+    """Where the face's centre is from that joint, in the puppet's own units."""
     features: dict[Feature, FeatureSpec] = Field(default_factory=dict)
+    """What is drawn inside the face, by feature. Empty for a plain round head."""
 
 
 class GazeSpec(Strict):
@@ -360,24 +387,53 @@ class GazeSpec(Strict):
 
 
 class PuppetSpec(Strict):
-    """The complete geometric contract for one character."""
+    """The complete geometric contract for one character.
+
+    Everything the solver may know about a character, and nothing it draws: proportions in
+    head units, a skeleton, named anchors, the face, its poses and expressions. The asset
+    contract reference describes the file format, field by field.
+
+    Example:
+        >>> from scenet import PuppetSpec, default_library
+        >>> alice = default_library().get("alice")
+        >>> isinstance(alice, PuppetSpec), alice.name, "mouth" in alice.anchors
+        (True, 'alice', True)
+
+    See Also:
+        :func:`load_puppet <scenet.assets.contract.load_puppet>`, to read one from a file.
+        :class:`Landmark <scenet.assets.contract.Landmark>`, the crop lines it declares.
+    """
 
     name: str
+    """The name a cast member's `reference` uses."""
     units_per_head: float = Field(gt=0)
+    """How many of the puppet's own units one head height is."""
     landmarks: dict[Landmark, float]
+    """Each vertical body landmark, as a distance down from the top of the head, in head
+    units: the crop lines a shot type names.
+    """
     joints: dict[str, JointSpec]
+    """The skeleton, by joint name."""
     root: str = "root"
+    """The joint every other one hangs from."""
     # Which landmark the root joint physically sits at. The skeleton is built outward
     # from the root, while landmarks are measured downward from the top of the head;
     # this is what bridges the two frames. Declared rather than assumed, because a
     # puppet is free to root itself somewhere other than the waist.
     root_landmark: Landmark = Landmark.WAIST
+    """The landmark the root joint sits at."""
     parts: tuple[Part, ...] = ()
+    """The shapes the body is drawn from, back to front."""
     anchors: dict[str, AnchorSpec] = Field(default_factory=dict)
+    """Named attachment points, such as `mouth` and `eyes`, each on a joint."""
     face: FaceSpec
+    """Where the face is, and what is drawn in it."""
     gaze: GazeSpec = GazeSpec()
+    """Where the puppet looks from, and which way, when nothing directs it."""
     poses: dict[str, dict[str, float]] = Field(default_factory=dict)
+    """Named poses, each a set of joint angles."""
     expressions: dict[str, ExpressionSpec] = Field(default_factory=dict)
+    """Named expressions, each a state of brow, eyes and mouth."""
 
     @model_validator(mode="after")
     def check_landmarks_complete_and_ordered(self) -> Self:
@@ -652,7 +708,27 @@ class PuppetSpec(Strict):
 
 
 class PuppetLibrary:
-    """Puppets loaded from a directory of `*.puppet.yaml` files."""
+    """A set of puppets, by name: what a cast member's `reference` is looked up in.
+
+    Built by hand from a mapping, read from a directory of `*.puppet.yaml` files, or the two
+    shipped puppets from :func:`default_library <scenet.assets.contract.default_library>`.
+    Every compile takes one as `library=`.
+
+    Example:
+        >>> from scenet import PuppetLibrary, compile_source, default_library
+        >>> alice = default_library().get("alice")
+        >>> library = PuppetLibrary({"alice": alice})
+        >>> library.names()
+        ('alice',)
+        >>> compile_source("cast: {a: {reference: alice}}", library=library).core.actors[
+        ...     0
+        ... ].reference
+        'alice'
+
+    See Also:
+        :func:`load_puppet <scenet.assets.contract.load_puppet>`, to read one puppet.
+        :class:`PuppetSpec <scenet.assets.contract.PuppetSpec>`, what each puppet is.
+    """
 
     def __init__(self, puppets: dict[str, PuppetSpec]) -> None:
         """Wrap an already-loaded mapping of puppets.
@@ -756,6 +832,10 @@ def load_puppet(path: Path) -> PuppetSpec:
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
 
+    Note:
+        A puppet a document names by path is read by the compile instead, and a fault in it
+        is located in the document as well.
+
     Example:
         >>> from scenet import default_library, load_puppet
         >>> from scenet.assets.contract import DEFAULT_LIBRARY_PATH
@@ -790,7 +870,7 @@ def load_puppet(path: Path) -> PuppetSpec:
 
 
 class PuppetFileError(NamedFileError):
-    """A puppet file a cast member names, there and wrong: located in it (#242).
+    """A puppet file a cast member names, there and wrong: located in it.
 
     Its `file` is the path the member's `reference` writes, relative to the document, and
     its `loc` is that `reference`.
@@ -901,10 +981,18 @@ def default_library() -> PuppetLibrary:
     Returns:
         A library containing `alice` and `bob`.
 
+    Note:
+        It reads the shipped puppet files on every call, and caches nothing: call it once
+        and pass the library on. It raises nothing; the shipped puppets are checked when the
+        package is built.
+
     Example:
         >>> from scenet import default_library
         >>> library = default_library()
         >>> round(library.get("alice").heads_tall, 1)
         7.5
+
+    See Also:
+        :class:`PuppetLibrary <scenet.assets.contract.PuppetLibrary>`, to build one of your own.
     """
     return PuppetLibrary.from_directory(DEFAULT_LIBRARY_PATH)

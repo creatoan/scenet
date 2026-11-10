@@ -1,4 +1,4 @@
-"""Every export of a panel's staging for image models, at once (#72).
+"""Every export of a panel's staging for image models, at once.
 
 Five files, each another emitter reading Panel Core alone: the pose as OpenPose JSON, boxes
 with phrases, a depth map in painter's order, an instance mask, and the semantics as
@@ -41,6 +41,16 @@ class Conditioning:
         depth: The panel's planes as grey on black, white nearest, as SVG.
         mask: Each actor, figure and mass in its own colour, as SVG.
         semantics: What the panel holds, as JSON -- structure, not a prompt.
+
+    Example:
+        >>> import json
+        >>> from scenet import Conditioning, compile_source, render_conditioning
+        >>> exports = render_conditioning(compile_source("cast: {a: {reference: alice}}").core)
+        >>> isinstance(exports, Conditioning), sorted(json.loads(exports.semantics))[:2]
+        (True, ['actors', 'camera'])
+
+    See Also:
+        :func:`render_conditioning <scenet.emit.export.render_conditioning>`, which makes one.
     """
 
     pose: str
@@ -73,11 +83,18 @@ def render_conditioning(core: PanelCore) -> Conditioning:
     Returns:
         The five exports, as text.
 
+    Note:
+        Each image is drawn from the Core alone, and needs no font and no picture: it
+        raises nothing for any Core.
+
     Example:
         >>> from scenet import compile_source, render_conditioning
         >>> exports = render_conditioning(compile_source("{cast: {a: {reference: alice}}}").core)
         >>> 'id="actor-a"' in exports.mask, exports.depth.count('fill="#ffffff"')
         (True, 1)
+
+    See Also:
+        :class:`Conditioning <scenet.emit.export.Conditioning>`, what it returns.
     """
     return Conditioning(*(export(core) for _, export in EXPORTS))
 

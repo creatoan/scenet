@@ -1,4 +1,4 @@
-"""Figures a supplied picture draws, placed in the panel through the picture's fit (#71).
+"""Figures a supplied picture draws, placed in the panel through the picture's fit.
 
 An artwork contract declares each figure in the picture's own pixels. The picture is fitted
 to the panel -- centred, scaled, never stretched (:func:`fit_box

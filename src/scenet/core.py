@@ -69,9 +69,13 @@ class Transform(CoreModel):
     """Where a puppet's root joint lands, and how it is scaled and mirrored."""
 
     x: float
+    """Where the puppet's root joint lands, across, in panel units."""
     y: float
+    """Where it lands, down, in panel units."""
     scale: float
+    """Panel units per puppet unit."""
     mirrored: bool
+    """Whether the puppet is flipped to face left."""
 
 
 class Box(CoreModel):
@@ -162,8 +166,11 @@ class Capsule(CoreModel):
     """A limb segment, as a thick line with rounded ends."""
 
     start: tuple[float, float]
+    """One end's centre, in panel units."""
     end: tuple[float, float]
+    """The other end's centre, in panel units."""
     width: float
+    """How thick it is, in panel units."""
 
 
 class Blob(CoreModel):
@@ -253,7 +260,7 @@ class CoreMass(CoreModel):
         tone: The `#rrggbb` fill, already chosen from the value ladder. Always the grey,
             whatever the palette: it is the value, and every decision was made on it.
         polygon: The silhouette, in panel coordinates.
-        colour: The tone's twin in the panel's palette (#244), which is what is drawn when
+        colour: The tone's twin in the panel's palette, which is what is drawn when
             there is one. Left out of the JSON in `mono`.
     """
 
@@ -302,7 +309,9 @@ class CoreStreak(CoreModel):
     """
 
     start: tuple[float, float]
+    """Where the streak starts, in panel units."""
     end: tuple[float, float]
+    """Where it ends, in panel units."""
 
 
 class CoreAtmosphere(CoreModel):
@@ -354,7 +363,7 @@ def _puppet_reference(reference: str) -> str:
 
 
 class CoreImage(CoreModel):
-    """A supplied picture behind the cast, placed (#70).
+    """A supplied picture behind the cast, placed.
 
     Everything a renderer needs, resolved: where the picture is, what it is, and the
     rectangle it is drawn in. Nothing about its content -- the solver never saw any.
@@ -380,7 +389,7 @@ class CoreImage(CoreModel):
             under `cover` and cropped by it, inside it under `contain`. Change it and
             the picture moves.
         keep_out: The regions of the picture its artwork contract asks lettering to stay
-            off (#71), in panel units: what balloons, captions and sound effects paid to
+            off, in panel units: what balloons, captions and sound effects paid to
             cover, and were never forbidden to. Left out of the JSON when there are none.
     """
 
@@ -408,10 +417,10 @@ class CoreBackdrop(CoreModel):
         image: The supplied picture behind everything, or None. Left out of the JSON
             when unset.
         place: The named place these masses are -- `street`, `docks` -- whether `place:`
-            wrote them or an author wrote the same list out (#72). None for masses no place
+            wrote them or an author wrote the same list out. None for masses no place
             expands into, and over a picture. A name for what is here, never read to draw
             it. Left out of the JSON when None.
-        time: The hour the values were chosen for (#72), which `atmosphere` records too
+        time: The hour the values were chosen for, which `atmosphere` records too
             but only when something is in the air. None over a picture, whose hour is in
             the picture. Left out of the JSON when None.
 
@@ -441,7 +450,7 @@ class CoreActor(CoreModel):
     Attributes:
         id: The actor id from the panel source.
         reference: Which puppet was used, as the cast names it: a shipped puppet's name,
-            or a puppet file's path relative to the document, exactly as written (#242).
+            or a puppet file's path relative to the document, exactly as written.
             Two actors may share one.
         pose: Which named pose was applied.
         expression: Which named expression was applied.
@@ -473,14 +482,14 @@ class CoreActor(CoreModel):
         blobs: Rounded masses such as the head.
         depth: Painter's order. Lower is drawn first, so higher sits in front.
         joints: Where every joint of the skeleton landed, by the puppet's name for it, in
-            panel coordinates (#72). `_l` and `_r` are the sides of the screen in the
+            panel coordinates. `_l` and `_r` are the sides of the screen in the
             puppet's rest pose, so on a figure facing left `shoulder_l` is on the right.
             Nothing here draws from them; they are the posed skeleton, for an export.
         features: Where each face feature point sits -- `eye_l`, `nose`, `mouth` and the
-            rest the puppet declares -- in panel coordinates (#72). The anatomy, not the
+            rest the puppet declares -- in panel coordinates. The anatomy, not the
             marks: the same whatever the expression, and recorded when the face is too
             small to draw.
-        looking_at: Whom this character looks at (#72): an actor id, or the name of
+        looking_at: Whom this character looks at: an actor id, or the name of
             somebody heard from off panel. `gaze_aim` is the direction; this is who.
 
     The last three are left out of the JSON when empty, so an actor written before them
@@ -518,7 +527,7 @@ class CoreActor(CoreModel):
 
 
 class CoreFigure(CoreModel):
-    """A figure a supplied picture draws, as its artwork contract declares it (#71).
+    """A figure a supplied picture draws, as its artwork contract declares it.
 
     Not a :class:`CoreActor <scenet.core.CoreActor>`: nobody posed it, so it has no
     transform, no skeleton and nothing to draw -- the picture draws it. What is here is
@@ -558,9 +567,13 @@ class Tail(CoreModel):
     """
 
     start: tuple[float, float]
+    """Where it leaves the balloon, in panel units."""
     end: tuple[float, float]
+    """Its point, at the speaker's mouth, or on the frame for a speaker off panel."""
     control: tuple[float, float] | None = None
+    """The control point of the curve it bends along, or `None` when it is straight."""
     width: float = 14.0
+    """How wide it is where it leaves the balloon, in panel units."""
 
     @property
     def is_curved(self) -> bool:
@@ -631,6 +644,9 @@ class CoreBalloon(CoreModel):
             exactly as it did before emphasis existed. `lines` stays the plain text.
         label: Who says it, how, and the words -- `Bob, whispering: I know.` -- as
             accessible output reads it. Left out of the JSON when unset.
+        off_panel: The side of the frame an off-panel speaker is on, which the tail ends on;
+            then `speaker` names somebody who is not an actor. Left out of the JSON when
+            unset, so every Core written before it reads, and is written, as it was.
 
     Storing broken lines rather than the original string is deliberate. Wrapping is
     decided during compilation against real font metrics; if the emitter re-measured,
@@ -706,7 +722,7 @@ class CoreCaption(CoreModel):
         label: What the box says, and in whose voice -- `Caption: Midnight.` -- without
             the quotation marks a `spoken` caption is lettered with. Left out of the JSON
             when unset.
-        colour: The fill's twin in the panel's palette (#244): a `warm` caption's yellow,
+        colour: The fill's twin in the panel's palette: a `warm` caption's yellow,
             drawn in place of `fill` when there is one. `fill` stays the value, and `ink`
             was chosen against it. Left out of the JSON when there is none.
 
@@ -799,7 +815,7 @@ class CoreSfx(CoreModel):
 
 
 class CoreCamera(CoreModel):
-    """The camera's verdict for a panel, recorded (#72).
+    """The camera's verdict for a panel, recorded.
 
     Every position in a Core already follows from it, so nothing here is read to draw the
     panel; it says what framed it. The shot asked for and the angle are what a reader of
@@ -865,18 +881,18 @@ class PanelCore(CoreModel):
             author's, or generated from what it holds. With the labels in `order`, it is
             what accessible output reads. Left out of the JSON when unset.
         figures: The figures a supplied picture draws, as its artwork contract declares
-            them (#71), whether cast or not. Left out of the JSON when there are none, so
+            them, whether cast or not. Left out of the JSON when there are none, so
             every panel without them reads and writes as it always did.
-        direction: Which way the panel is read, which is why its lettering is where it is
-            (#68). Left out of the JSON for `ltr`, so every panel written before it reads
+        direction: Which way the panel is read, which is why its lettering is where it is.
+            Left out of the JSON for `ltr`, so every panel written before it reads
             and writes as it always did.
-        camera: What framed the panel (#72), or None when a supplied picture draws the
+        camera: What framed the panel, or None when a supplied picture draws the
             cast: the artist framed it, and the camera did not run. Left out of the JSON
             when None.
-        palette: What the panel is drawn in (#244). Each value it tints keeps its grey,
+        palette: What the panel is drawn in. Each value it tints keeps its grey,
             and gains its colour beside it. Left out of the JSON for `mono`, so every
             panel written before it reads and writes as it always did.
-        open: For a panel that bleeds past the trim (#281), the sides its frame runs out to
+        open: For a panel that bleeds past the trim, the sides its frame runs out to
             the bleed line on: no border is drawn there. Left out of the JSON when empty.
         lettering: For a panel that bleeds, the box its balloons, captions and sound effects
             keep inside: its frame as it was before bleeding, inset by its margin, so the
@@ -887,14 +903,19 @@ class PanelCore(CoreModel):
     a different path-rounding convention produces an enormous diff that means nothing.
 
     Example:
-        >>> from scenet import compile_source
+        >>> from scenet import PanelCore, compile_source
         >>> core = compile_source("{cast: {a: {reference: alice}}}").core
-        >>> core.width, core.height
-        (1000.0, 1000.0)
+        >>> isinstance(core, PanelCore), core.width, core.height
+        (True, 1000.0, 1000.0)
         >>> core.actor("a").reference
         'alice'
         >>> core.to_json().splitlines()[0]
         '{'
+
+    See Also:
+        :meth:`PanelCore.to_json <scenet.core.PanelCore.to_json>` and
+        :meth:`PanelCore.from_json <scenet.core.PanelCore.from_json>`, the format on disk.
+        :func:`render <scenet.emit.svg.render>`, to draw it.
     """
 
     format_version: int = CORE_FORMAT_VERSION
@@ -941,7 +962,7 @@ class PanelCore(CoreModel):
             actor_id: The id a balloon names as its `speaker`.
 
         Returns:
-            Their face, and where a tail to them aims: the mouth, or the face's centre
+            Their face, and where a tail to them aims -- the mouth, or the face's centre
             when there is none.
 
         Raises:
@@ -960,7 +981,7 @@ class PanelCore(CoreModel):
     def as_mono(self) -> "PanelCore":
         """The same panel in monochrome: every colour its palette added, taken back out.
 
-        Every value was decided on the grey and its colour only added beside it (#244), so
+        Every value was decided on the grey and its colour only added beside it, so
         this is exactly the panel compiled with `palette: mono`. It is what lets a tinted
         panel be drawn in grey -- a black-and-white edition -- without the emitter choosing
         anything.
@@ -1123,7 +1144,7 @@ class CoreFrame(CoreModel):
         outline: For a panel in a slanted tier, its four corners in page units, clockwise
             from the top left; the frame is their bounding box. Left out of the JSON for a
             rectangle.
-        bleed: The sides the frame runs out to the bleed line on, past the trim (#281):
+        bleed: The sides the frame runs out to the bleed line on, past the trim:
             its frame is then that larger box, partly off the page. Left out of the JSON
             when empty.
     """
@@ -1155,19 +1176,25 @@ class PageCore(CoreModel):
             place of its own -- so that a short panel and a tall one letter alike.
         frames: One per panel, in reading order: tier by tier, left to right, or right to
             left for a page read that way.
-        direction: Which way the page is read (#68). Left out of the JSON for `ltr`, so every
+        direction: Which way the page is read. Left out of the JSON for `ltr`, so every
             page written before it reads and writes as it always did.
-        bleed: How far the printed sheet runs past the trim on every side, in page units
-            (#80). Left out of the JSON when 0, as `direction` is when `ltr`.
+        bleed: How far the printed sheet runs past the trim on every side, in page units.
+            Left out of the JSON when 0, as `direction` is when `ltr`.
 
     Example:
-        >>> from scenet import compile_book
+        >>> from scenet import PageCore, compile_book
         >>> book = compile_book(
         ...     "cast: {a: {reference: alice}}\n"
         ...     "pages: [{tiers: [{panels: [one]}]}]\npanels: {one: {}}"
         ... )
+        >>> isinstance(book.pages[0], PageCore)
+        True
         >>> [(f.panel, f.width) for f in book.pages[0].frames]
         [('one', 1800.0)]
+
+    See Also:
+        :func:`render_page <scenet.emit.page.render_page>`, to draw it.
+        :class:`PanelCore <scenet.core.PanelCore>`, what each frame holds.
     """
 
     format_version: int = CORE_FORMAT_VERSION

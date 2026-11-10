@@ -15,7 +15,7 @@ do when a panel spanning the tier blocks the way across (Cohn, *Navigating Comic
 inset is where readers agree least, splitting about evenly between it and the panel it
 sits in, so it is read after its parent unless it says otherwise.
 
-**Read right to left** (#68), as manga are, a tier's first panel or column is at the right.
+**Read right to left**, as manga are, a tier's first panel or column is at the right.
 The tier is laid out by the same arithmetic over its panels in the other order, so each
 frame is exactly the one a left-to-right page gives that panel with the tier written the
 other way round. Nothing is mirrored: a slanted gutter leans the way its `slant` says, an
@@ -24,7 +24,7 @@ still read top to bottom. An end panel stays an end panel and keeps its width, s
 direction refuses, the other refuses too -- except a bleed on a side that, the other way
 round, is a gutter.
 
-**A panel can bleed** (#281): each side its placement's `bleed` names runs past the margin
+**A panel can bleed**: each side its placement's `bleed` names runs past the margin
 and the trim to the bleed line. The frame keeps two more boxes: what the reader sees, out to
 the trim, and the frame as it was, where its lettering keeps.
 """
@@ -78,7 +78,7 @@ class Frame:
             its parent's lettering keeps clear of it. `None` for a panel that is no inset.
         outline: For a panel in a slanted tier, its four corners, clockwise from the top
             left, in page units; the frame is their bounding box. `None` for a rectangle.
-        bleed: The sides the frame runs out to the bleed line on (#281): its frame is then
+        bleed: The sides the frame runs out to the bleed line on: its frame is then
             the larger box, partly past the page's edge.
         visible: For a panel that bleeds, its frame out to the trim only: what the reader
             sees, which its cast is staged and framed in.
@@ -280,7 +280,7 @@ def resolve_frames(
             column is at the right.
 
     Returns:
-        One frame per panel, in reading order: tier by tier, and within a tier left to
+        One frame per panel, in reading order -- tier by tier, and within a tier left to
         right -- right to left, for a page read that way -- or, for a tier of columns,
         column by column and top to bottom in each. An inset comes right after the panel
         it is set into, or right before it when it says `read: before`.

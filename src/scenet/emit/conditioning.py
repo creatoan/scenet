@@ -1,4 +1,4 @@
-"""What the exports for image models share: the canvas, fractions of it, and the JSON (#72).
+"""What the exports for image models share: the canvas, fractions of it, and the JSON.
 
 The exports hand a panel's staging to whatever a reader feeds it to -- ControlNet, GLIGEN, a
 tool of their own. **No model runs in Scenet**: each export is another emitter, reading Panel
@@ -142,7 +142,7 @@ class Region:
 
 @dataclass(frozen=True, slots=True)
 class Ramp:
-    """A fill that runs straight down or up the panel, from one colour to another (#227).
+    """A fill that runs straight down or up the panel, from one colour to another.
 
     A linear gradient in the panel's own units with no slant, so everything at one height is
     one colour; past either end, the colour is that end's. Its paint names `start` as the

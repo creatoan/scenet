@@ -383,7 +383,7 @@ class FontMetrics:
     renderer will not reproduce is worse than a slightly generous one. That holds for
     the SVG's `--live-text` and not for the default: outlines are positioned here, glyph by
     glyph, so no renderer has a say and every pair adjustment is reproduced exactly. So is
-    the print PDF's live text, whose glyphs are placed here too (#284).
+    the print PDF's live text, whose glyphs are placed here too.
 
     Attributes:
         path: The file it was read from, or the path a document wrote for bytes it was
@@ -397,6 +397,18 @@ class FontMetrics:
     Pyodide does not ship. HarfBuzz is the test oracle instead. Only pair adjustments are
     applied: no ligatures, no contextual alternates, no mark positioning, which is all a
     Latin line of lettering needs and all that measurement can promise to reproduce.
+
+    Example:
+        >>> from scenet import FontMetrics, compile_source, render
+        >>> from scenet.solve.text import DEFAULT_FONT_PATH
+        >>> font = FontMetrics(DEFAULT_FONT_PATH)
+        >>> font.family
+        'Source Sans Pro'
+        >>> result = compile_source("cast: {a: {reference: alice}}", metrics=font)
+        >>> svg = render(result.core, metrics=font)
+
+    See Also:
+        :class:`FontSpec <scenet.ir.FontSpec>`, a font a document declares instead.
     """
 
     def __init__(self, path: Path = DEFAULT_FONT_PATH, *, data: bytes | None = None) -> None:
@@ -481,7 +493,7 @@ class FontMetrics:
 
     @property
     def data(self) -> bytes:
-        """The font file's bytes, as they were read: what print embeds for live text (#284)."""
+        """The font file's bytes, as they were read: what print embeds for live text."""
         return self._data
 
     @property
@@ -559,7 +571,7 @@ class FontMetrics:
             font_size: Type size in panel units.
 
         Returns:
-            Width in panel units: the sum of every character's `step`, which is exactly
+            Width in panel units -- the sum of every character's `step`, which is exactly
             how far the outlines advance when they are drawn.
 
         Example:
@@ -600,7 +612,7 @@ class FontMetrics:
         the output genuinely self-contained: no font to embed, no font to be missing,
         and the rendered shapes are by construction the ones that were measured. The
         cost is that the text is no longer selectable, which is why `--live-text`
-        exists -- in the print PDF with the face embedded, so exactly (#284).
+        exists -- in the print PDF with the face embedded, so exactly.
         """
         glyph_set = self._font.getGlyphSet()
         outlines: list[tuple[str, float]] = []
@@ -619,7 +631,7 @@ class FontMetrics:
     def glyph_id(self, character: str) -> int | None:
         """The id of the glyph a character is drawn with, or `None` for one the face lacks.
 
-        What print letters live text by (#284): a face goes into the PDF with its glyphs at
+        What print letters live text by: a face goes into the PDF with its glyphs at
         their own ids, so the code for a glyph is its id.
         """
         name = self._cmap.get(ord(character))
@@ -632,7 +644,7 @@ class FontMetrics:
 
         The same outline :meth:`glyph_outlines` writes for SVG, drawn from the same glyph
         set -- so a composite glyph, an accented letter, is decomposed the same way -- for
-        the print emitter (#80). PDF has only cubic curves, so a TrueType outline's
+        the print emitter. PDF has only cubic curves, so a TrueType outline's
         quadratics are written as the cubics that draw exactly the same curves.
 
         Returns:
@@ -908,7 +920,7 @@ def layout_text(
         target_aspect: The width-to-height ratio the block aims for.
 
     Returns:
-        The best block: its lines as plain text, and its runs the faces they are set in.
+        The best block -- its lines as plain text, and its runs the faces they are set in.
     """
     family = typeface or Typeface()
     if metrics is not None:

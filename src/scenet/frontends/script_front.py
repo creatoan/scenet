@@ -1906,7 +1906,39 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
 
 
 def parse_script(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
-    """Parse comic script into one validated panel per PANEL heading."""
+    r"""Parse a comic script into validated IR, one scene graph per panel, without compiling it.
+
+    The comic-script format is the one writers already use: `PANEL` headings, a description,
+    then each speaker's name in capitals over their line. Its front matter, between `---`
+    lines, is YAML.
+
+    Args:
+        text: A comic script.
+        source: Path the text came from, prefixed to every error message.
+
+    Returns:
+        Panel name to scene graph, in the order the panels appear.
+
+    Raises:
+        ScriptSyntaxError: The script cannot be parsed -- no `PANEL` heading, or dialogue
+            before the first -- or a panel does not validate. Its `line` says where.
+
+    Note:
+        A page heading groups panels for reading only; a script has no page layout.
+
+    Example:
+        >>> from scenet import parse_script
+        >>> panels = parse_script(
+        ...     "---\ncast: {ALICE: {reference: alice}}\n---\n"
+        ...     "PANEL 1\n\nALICE\nYou forgot your umbrella!\n"
+        ... )
+        >>> [event.text for event in next(iter(panels.values())).script]
+        ['You forgot your umbrella!']
+
+    See Also:
+        :func:`compile_script <scenet.pipeline.compile_script>`, to compile it.
+        :func:`load_script <scenet.frontends.script_front.load_script>`, to read a file.
+    """
     return parse_script_document(text, source=source).panels
 
 
@@ -2120,7 +2152,7 @@ def _first_fault(
 
 
 def load_script(path: Path) -> dict[str, PanelIR]:
-    """Read and validate a comic script from disk.
+    r"""Read and validate a comic script from disk.
 
     Args:
         path: A `*.script` file in the comic-script format writers already use.
@@ -2132,7 +2164,28 @@ def load_script(path: Path) -> dict[str, PanelIR]:
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        ScriptSyntaxError: The script cannot be parsed -- dialogue before the first
-            `PANEL` heading, or no `PANEL` headings at all.
+        ScriptSyntaxError: The script cannot be parsed, a panel does not validate, or the file
+            is not UTF-8.
+
+    Note:
+        Only the script is read; files its front matter names are read when it is
+        compiled.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import load_script
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "one.script"
+        ...     _ = path.write_text(
+        ...         "---\ncast: {ALICE: {reference: alice}}\n---\nPANEL 1\n\nALICE\nHi.\n",
+        ...         encoding="utf-8",
+        ...     )
+        ...     panels = load_script(path)
+        >>> len(panels)
+        1
+
+    See Also:
+        :func:`parse_script <scenet.frontends.script_front.parse_script>`, for text.
     """
     return parse_script(read_document(path, error=ScriptSyntaxError), source=path)

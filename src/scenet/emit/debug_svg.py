@@ -29,7 +29,7 @@ IMAGE = "#2d7d4f"
 INSET = "#5a5a5a"
 SFX = "#d0451b"
 KEEP_OUT = "#8c6d1f"
-#: The trim of a page whose panels bleed, and the box their lettering keeps inside (#281).
+#: The trim of a page whose panels bleed, and the box their lettering keeps inside.
 TRIM = "#d0217a"
 
 
@@ -41,6 +41,22 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
         id_prefix: Put in front of every `id` the overlay writes, so a strip can hold
             several overlays in one document. Empty by default, as in
             :func:`render <scenet.emit.svg.render>`.
+
+    Returns:
+        One SVG document, as text -- the panel's geometry, with no art.
+
+    Note:
+        It draws no lettering and no picture, so it needs neither fonts nor bytes, and it
+        raises nothing for any Core.
+
+    Example:
+        >>> from scenet import compile_source, render_debug
+        >>> core = compile_source("cast: {a: {reference: alice}}").core
+        >>> render_debug(core).count("<svg")
+        1
+
+    See Also:
+        :func:`render <scenet.emit.svg.render>`, the panel itself.
     """
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -53,7 +69,7 @@ def render_debug(core: PanelCore, *, id_prefix: str = "") -> str:
 
 
 def lettering_box(box: Box) -> str:
-    """A bleeding panel's lettering box, dashed: what the trim will never cut (#281)."""
+    """A bleeding panel's lettering box, dashed: what the trim will never cut."""
     return (
         f'  <rect class="lettering-box" x="{fmt(box.x)}" y="{fmt(box.y)}" '
         f'width="{fmt(box.width)}" height="{fmt(box.height)}" fill="none" stroke="{TRIM}" '
@@ -233,7 +249,7 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
 
 
 def _picture(core: PanelCore, id_prefix: str) -> list[str]:
-    """What a picture's artwork contract declares, as the solver saw it (#71).
+    """What a picture's artwork contract declares, as the solver saw it.
 
     Each figure in the actors' colours -- its body as a hull, its face as the dashed disc
     lettering kept off, its mouth as an anchor -- because to lettering they are the same

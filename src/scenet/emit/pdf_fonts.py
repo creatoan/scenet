@@ -1,4 +1,4 @@
-"""A lettering face as a font in the print PDF, for live text (#284).
+"""A lettering face as a font in the print PDF, for live text.
 
 With `--live-text`, print letters in the faces themselves rather than in their outlines, so
 the words can be selected, searched and copied. The outlines' promise holds all the same:
@@ -232,7 +232,7 @@ def pdf_font(metrics: FontMetrics, characters: Iterable[str]) -> PdfFont:
             left out, as its outlines leave it out.
 
     Returns:
-        The font: the same for the same face and characters, whatever their order.
+        The font -- the same for the same face and characters, whatever their order.
     """
     return _pdf_font(metrics, tuple(sorted(set(characters))))
 

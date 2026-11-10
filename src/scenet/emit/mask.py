@@ -1,4 +1,4 @@
-"""A panel's regions as an instance mask, for region-conditioned image models (#72).
+"""A panel's regions as an instance mask, for region-conditioned image models.
 
 One flat fill per actor, figure and mass, under the id the panel's SVG gives it -- `actor-alice`,
 `mass-m0`, `figure-ana` -- so a segmentation keeps the labels the panel has. The colour of an id

@@ -46,6 +46,10 @@ class Place(StrEnum):
         >>> from scenet import PLACES, Place
         >>> [mass.kind.value for mass in PLACES[Place.SHORE]]
         ['sky', 'water', 'ground']
+
+    See Also:
+        :data:`PLACES <scenet.places.PLACES>`, what each place expands into.
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `place` takes one.
     """
 
     ALLEY = "alley"
@@ -65,8 +69,20 @@ def _mass(kind: MassKind, plane: Plane, spans: Spans = Spans.FULL) -> Mass:
     return Mass(kind=kind, plane=plane, spans=spans)
 
 
-#: What each place is made of. Every entry here is a plain mass list, and a test proves
-#: it: whatever a preset produces, an author could have typed.
+#: What each place is made of, as the masses a `setting: {place: ...}` expands into.
+#:
+#: Every entry here is a plain mass list, and a test proves it: whatever a preset produces,
+#: an author could have typed. The expansion happens in the frontend, so nothing downstream
+#: ever sees a place.
+#:
+#: Example:
+#:     >>> from scenet import PLACES, Place
+#:     >>> [mass.kind.value for mass in PLACES[Place.DOCKS]]
+#:     ['sky', 'building', 'water', 'structural', 'ground']
+#:
+#: See Also:
+#:     :class:`Place <scenet.places.Place>`, the names it is keyed by.
+#:     :class:`Mass <scenet.ir.Mass>`, what each entry lists.
 PLACES: dict[Place, tuple[Mass, ...]] = {
     Place.ALLEY: (
         # The walls make the slot of sky, rather than the sky being authored as a strip:

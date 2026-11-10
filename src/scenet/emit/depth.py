@@ -1,4 +1,4 @@
-"""A panel's planes as a depth map, for depth-conditioned image models (#72).
+"""A panel's planes as a depth map, for depth-conditioned image models.
 
 Scenet is orthographic and has no metric depth. What it has is a painter's order -- an integer
 `depth` actors and masses share -- so the map is grey planes in that order, and claims
@@ -16,7 +16,7 @@ a model handed them would read the panel inside out.
 - Figures a picture draws have no painter's order of their own. They share one plane, in front
   of the picture they are drawn against.
 
-**A surface that lies flat recedes** (#227). A ground, a floor or a stretch of water is not a
+**A surface that lies flat recedes**. A ground, a floor or a stretch of water is not a
 wall at one distance, and one flat grey tells a model it is: the floor comes out painted as a
 backdrop, with figures pasted on it. Depth models are trained on relative *inverse* depth, and
 through a pinhole camera a flat ground's inverse depth grows in proportion to how far below the

@@ -61,7 +61,7 @@ NOT_A_DEFAULT = (
 )
 
 
-#: The key a whole document's reading direction is written under (#68). Every panel takes
+#: The key a whole document's reading direction is written under. Every panel takes
 #: it from the document -- beside `panels:`, or in a comic script's front matter -- and
 #: none writes its own.
 DIRECTION_KEY = "direction"

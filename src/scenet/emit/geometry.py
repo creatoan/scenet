@@ -3,7 +3,7 @@
 Panel Core says a balloon is a shout in this box with its tail from here to there; it does
 not list a burst's spikes, the two corners where a tail leaves its balloon, or where each
 letter of a line lands. Those follow from the Core by arithmetic alone, and two emitters
--- the SVG and the print PDF (#80) -- must draw exactly the same ones. So they are worked
+-- the SVG and the print PDF -- must draw exactly the same ones. So they are worked
 out here, once, and each emitter only writes them down in its own format.
 
 Nothing here decides anything: every position was the solver's, and these are its shapes
@@ -202,7 +202,7 @@ def glyph_walk(
 
 
 def border(core: PanelCore) -> list[tuple[tuple[float, float], ...]] | None:
-    """The border of a panel that bleeds (#281): the sides that keep one, as open lines.
+    """The border of a panel that bleeds: the sides that keep one, as open lines.
 
     Each run of neighbouring sides that keep a border is one line, from corner to corner
     clockwise, so a border that turns a corner is drawn as one stroke round it.

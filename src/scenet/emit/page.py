@@ -57,14 +57,19 @@ def render_page(
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
             SVG. Left out, each picture is linked by the path its document wrote.
         mono: Draw every value as its grey and ignore its colour, as for a black-and-white
-            edition (#244). Every decision was made on the grey, so this draws exactly what
+            edition. Every decision was made on the grey, so this draws exactly what
             `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
         The page, as SVG.
 
     Raises:
-        RenderError: A frame names a panel that `panels` does not hold.
+        RenderError: A page places a panel `panels` does not hold, a Core names a font not given
+            as `fonts`, or a picture is to be embedded and its bytes are not in `embed`.
+
+    Note:
+        A page is drawn at its own size, in page units; each panel at its frame. Nothing is
+        laid out here: the frames are the Page Core's.
 
     Example:
         >>> from scenet import compile_book, render_page
@@ -75,6 +80,10 @@ def render_page(
         >>> cores = {name: result.core for name, result in book.panels.items()}
         >>> 'viewBox="0 0 2000 3000"' in render_page(book.pages[0], cores)
         True
+
+    See Also:
+        :func:`render_pages <scenet.emit.page.render_pages>`, for every page side by side.
+        :func:`render_pdf <scenet.emit.pdf.render_pdf>`, for print.
     """
     if mono:
         panels = {name: core.as_mono() for name, core in panels.items()}
@@ -118,7 +127,7 @@ def render_pages(
     embed: Mapping[str, bytes] | None = None,
     mono: bool = False,
 ) -> str:
-    """Render every page side by side, as one SVG document.
+    r"""Render every page side by side, as one SVG document.
 
     What a single view shows -- the playground's, for one. Each page sits in a group
     `page-<n>`, and panel positions count on across pages, so every id in the document
@@ -137,16 +146,34 @@ def render_pages(
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into the
             SVG. Left out, each picture is linked by the path its document wrote.
         mono: Draw every value as its grey and ignore its colour, as for a black-and-white
-            edition (#244). Every decision was made on the grey, so this draws exactly what
+            edition. Every decision was made on the grey, so this draws exactly what
             `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
-        Every page, side by side, as SVG: left to right, or for pages read right to left
-        (#68), from the right, as a manga's spread opens. They are written in reading order.
+        Every page, side by side, as SVG -- left to right, or for pages read right to left,
+        from the right, as a manga's spread opens. They are written in reading order.
 
     Raises:
-        RenderError: There are no pages, a frame names a panel `panels` does not hold, or
-            the pages are not all read the same way.
+        RenderError: There are no pages, a page places a panel `panels` does not hold, a
+            Core names a font not given as `fonts`, a picture is to be embedded and its
+            bytes are not in `embed`, or the pages are not all read the same way.
+
+    Note:
+        The spread opens as the pages are read: from the right for pages read right to left.
+
+    Example:
+        >>> from scenet import compile_book, render_pages
+        >>> book = compile_book(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "panels: {one: {}, two: {}}\n"
+        ...     "pages: [{tiers: [{panels: [one]}]}, {tiers: [{panels: [two]}]}]"
+        ... )
+        >>> cores = {name: result.core for name, result in book.panels.items()}
+        >>> render_pages(book.pages, cores, fonts=book.fonts).splitlines()[0]
+        '<?xml version="1.0" encoding="UTF-8"?>'
+
+    See Also:
+        :func:`render_page <scenet.emit.page.render_page>`, for one page.
     """
     if not pages:
         raise RenderError("there are no pages to render")

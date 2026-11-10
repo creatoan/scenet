@@ -1,7 +1,7 @@
 """Files a document names, found beside the document.
 
 A document may point at a file it does not contain -- a lettering face, or a picture to
-letter over (#70). Every such path is read **relative to the folder the document
+letter over. Every such path is read **relative to the folder the document
 is in**, the way a link in a web page is, and never as an absolute path. That is what
 lets a document and the files it names travel together and compile the same anywhere,
 and what stops a server compiling documents it was sent from being steered at files of
@@ -17,8 +17,8 @@ its own. Both are read the same way, `./art/a.png` and `art/a.png` alike.
 Nothing here reaches the output. A resolved path is used to open a file and is then
 forgotten; what a Core records about a font is what is in it.
 
-Some of those files are text an author writes: a picture's artwork contract (#71), a puppet
-a cast member names (#242). :func:`read_model <scenet.paths.read_model>` reads one the same
+Some of those files are text an author writes: a picture's artwork contract, a puppet
+a cast member names. :func:`read_model <scenet.paths.read_model>` reads one the same
 way for both, and a fault in it is a :exc:`NamedFileError <scenet.paths.NamedFileError>`,
 located in the file as well as where the document names it.
 """
@@ -102,7 +102,7 @@ def resolve_relative(
         loc: Where in the document the path was written.
 
     Returns:
-        The file's path. Not checked to exist: whoever opens it says what it found.
+        The file's path. Not checked to exist -- whoever opens it says what it found.
 
     Raises:
         PanelSyntaxError: The path is empty or absolute, has a backslash or a control

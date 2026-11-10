@@ -154,6 +154,18 @@ class SourceError(ScenetError, ValueError):
         detail: The message without that prefix, for a report that names the file
             separately -- a finding's location does, and the path as typed could be
             absolute.
+
+    Example:
+        >>> from scenet import SourceError, compile_source
+        >>> try:
+        ...     compile_source("panel: {size: [0, 100]}")
+        ... except SourceError as exc:
+        ...     print(exc.detail.splitlines()[0])
+        invalid panel:
+
+    See Also:
+        :exc:`PanelSyntaxError <scenet.errors.PanelSyntaxError>`, which most document faults are.
+        :exc:`SolverError <scenet.errors.SolverError>`, for a document that is valid and impossible.
     """
 
     def __init__(self, message: str, *, source: Path | None = None) -> None:
@@ -169,7 +181,7 @@ class SourceError(ScenetError, ValueError):
 
 
 class SolverError(ScenetError, ValueError):
-    """A document that is valid but cannot be laid out.
+    r"""A document that is valid but cannot be laid out.
 
     The distinction from :exc:`SourceError <scenet.errors.SourceError>` matters: nothing is
     misspelled and nothing is missing, but the panel as described has no solution --
@@ -177,6 +189,22 @@ class SolverError(ScenetError, ValueError):
     an editorial change to the panel, not a correction to its syntax.
 
     Also a `ValueError`.
+
+    Example:
+        >>> from scenet import SolverError, compile_source
+        >>> try:
+        ...     compile_source(
+        ...         "lettering: {size: 400}\ncast: {a: {reference: alice}}\n"
+        ...         "script: [{say: {by: a, text: Hello.}}]"
+        ...     )
+        ... except SolverError as exc:
+        ...     print(type(exc).__name__)
+        BalloonPlacementError
+
+    See Also:
+        :exc:`LayoutError <scenet.errors.LayoutError>`, :exc:`BalloonPlacementError
+        <scenet.errors.BalloonPlacementError>` and :exc:`SfxPlacementError
+        <scenet.errors.SfxPlacementError>`, its three kinds.
     """
 
 
@@ -187,6 +215,18 @@ class AssetError(ScenetError):
     :exc:`UnknownPuppetError`, a `KeyError`, and an `except ValueError` written for bad
     values should not catch a lookup miss. A file that is there and wrong is a
     :exc:`MalformedAssetError`, which is a `ValueError`.
+
+    Example:
+        >>> from scenet import AssetError, compile_source
+        >>> try:
+        ...     compile_source("cast: {a: {reference: nobody}}")
+        ... except AssetError as exc:
+        ...     print(type(exc).__name__)
+        UnknownPuppetError
+
+    See Also:
+        :exc:`UnknownPuppetError <scenet.errors.UnknownPuppetError>`, for a puppet not there.
+        :exc:`MalformedAssetError <scenet.errors.MalformedAssetError>`, for a file that is wrong.
     """
 
 
@@ -217,6 +257,11 @@ class MalformedAssetError(AssetError, ValueError):
     Attributes:
         source: The file at fault, or `None` for bytes read from no file.
         detail: The message without the path, for a report that names the file separately.
+
+    See Also:
+        :func:`load_puppet <scenet.assets.contract.load_puppet>`, which raises it.
+        :exc:`PanelSyntaxError <scenet.errors.PanelSyntaxError>`, what a malformed file a
+        *document* names is instead: the fault is then the document's.
     """
 
     def __init__(self, message: str, *, source: Path | None = None) -> None:
@@ -251,6 +296,9 @@ class FileReadError(ScenetError, OSError):
         ... except FileReadError as exc:
         ...     print(exc.filename, "--", exc.strerror)
         no-such.panel.yaml -- No such file or directory
+
+    See Also:
+        :exc:`MissingFileError <scenet.errors.MissingFileError>`, for a file that is not there.
     """
 
     @staticmethod
@@ -275,6 +323,18 @@ class MissingFileError(FileReadError, FileNotFoundError):
 
     Also a `FileNotFoundError`, which is what reading it raised before, so an
     `except FileNotFoundError` around a compile keeps working.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet import MissingFileError, load_panel
+        >>> try:
+        ...     load_panel(Path("no-such.panel.yaml"))
+        ... except FileNotFoundError as exc:
+        ...     print(isinstance(exc, MissingFileError), exc.filename)
+        True no-such.panel.yaml
+
+    See Also:
+        :exc:`FileReadError <scenet.errors.FileReadError>`, for any other reason a file is unread.
     """
 
 
@@ -303,6 +363,10 @@ class RenderError(ScenetError, ValueError):
         ... except RenderError as exc:
         ...     print(exc)
         a strip needs at least one panel
+
+    See Also:
+        :attr:`Book.fonts <scenet.pipeline.Book.fonts>` and
+        :attr:`Book.images <scenet.pipeline.Book.images>`, what a renderer is handed back.
     """
 
 
@@ -325,6 +389,9 @@ class UnknownActorError(ScenetError, KeyError):
         ... except UnknownActorError as exc:
         ...     print(exc.args[0])
         no actor 'b' in panel
+
+    See Also:
+        :attr:`PanelCore.actors <scenet.core.PanelCore.actors>`, every actor a panel holds.
     """
 
 
@@ -354,6 +421,10 @@ class PanelSyntaxError(SourceError):
         ...     print(exc)
         invalid panel:
           at panel: panel size must be positive
+
+    See Also:
+        :data:`RULES <scenet.diagnostics.RULES>`, the catalogue `rule` is from.
+        :exc:`ScriptSyntaxError <scenet.errors.ScriptSyntaxError>`, the same for a comic script.
     """
 
     def __init__(
@@ -391,6 +462,17 @@ class ScriptSyntaxError(PanelSyntaxError):
             editor drawing a squiggle. Structured diagnostics need it as a number.
             There is no column: a script line is prose, and pointing at a character
             within it would imply a precision the parser does not have.
+
+    Example:
+        >>> from scenet import ScriptSyntaxError, compile_script
+        >>> try:
+        ...     compile_script("No panel heading anywhere.")
+        ... except ScriptSyntaxError as exc:
+        ...     print(exc.line, exc.rule)
+        None None
+
+    See Also:
+        :func:`parse_script <scenet.frontends.script_front.parse_script>`, which raises it.
     """
 
     def __init__(
@@ -430,6 +512,9 @@ class CompositionError(SourceError):
     Attributes:
         loc: Path to the `over:` at fault, such as `("panels", "b", "over")`, so a
             finding can point at the key rather than the whole `panels:` block.
+
+    See Also:
+        :func:`compile_scene <scenet.pipeline.compile_scene>`, which resolves `over:`.
     """
 
     def __init__(
@@ -464,22 +549,39 @@ class CoreSyntaxError(SourceError):
         ...     print(exc)
         invalid Panel Core:
           at height: Field required
+
+    See Also:
+        :meth:`PanelCore.to_json <scenet.core.PanelCore.to_json>`, what reads back.
     """
 
 
 class LayoutError(SolverError):
-    """A panel whose required constraints cannot all be satisfied.
+    r"""A panel whose required constraints cannot all be satisfied.
 
     Actor placement runs a Cassowary solver in which non-overlap and declared
     left-to-right ordering are *required* constraints. If those genuinely conflict --
     two actors each required to be left of the other -- there is no solution and this
     is raised. Panel bounds are deliberately not required, so a merely crowded panel
     lets figures bleed off the edge instead of failing.
+
+    Example:
+        >>> from scenet import LayoutError, compile_source
+        >>> try:
+        ...     compile_source(
+        ...         "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+        ...         "staging: [a in_front_of b, b in_front_of a]"
+        ...     )
+        ... except LayoutError as exc:
+        ...     print(exc)
+        depth ordering is cyclic around 'a'
+
+    See Also:
+        :class:`Relation <scenet.ir.Relation>`, the staging a layout must satisfy.
     """
 
 
 class BalloonPlacementError(SolverError):
-    """No legal position exists for a balloon or a caption.
+    r"""No legal position exists for a balloon or a caption.
 
     Every candidate position was rejected: it covered a face, left the panel,
     overlapped a box already placed, or would have broken reading order. Usually this
@@ -489,6 +591,20 @@ class BalloonPlacementError(SolverError):
     Captions raise this too. They obey the same hard rules and are placed in the same
     pass, so the failure is the same failure; the name is kept because the rule id
     `balloon-placement` is stable across releases.
+
+    Example:
+        >>> from scenet import BalloonPlacementError, compile_source
+        >>> try:
+        ...     compile_source(
+        ...         "lettering: {size: 400}\ncast: {a: {reference: alice}}\n"
+        ...         "script: [{say: {by: a, text: Hello.}}]"
+        ...     )
+        ... except BalloonPlacementError as exc:
+        ...     print(type(exc).__name__)
+        BalloonPlacementError
+
+    See Also:
+        :exc:`SfxPlacementError <scenet.errors.SfxPlacementError>`, the same for a sound effect.
     """
 
 
@@ -498,6 +614,14 @@ class SfxPlacementError(SolverError):
     Every candidate covered a face, left the panel, lay under an inset or over another
     sound effect. Usually the effect is too big for the panel: make it `small`, shorten
     it, or give the panel more room. Rule `sfx-placement`.
+
+    Example:
+        >>> from scenet import SfxPlacementError, SolverError
+        >>> issubclass(SfxPlacementError, SolverError)
+        True
+
+    See Also:
+        :class:`SfxEvent <scenet.ir.SfxEvent>`, whose `size` is usually the fix.
     """
 
 
@@ -510,6 +634,18 @@ class UnknownPuppetError(AssetError, KeyError):
     Note:
         `KeyError` stringifies as `repr(args[0])`, so `str(exc)` comes out quoted.
         Read `exc.args[0]` for the bare message -- which is what the CLI does.
+
+    Example:
+        >>> from scenet import UnknownPuppetError, compile_source
+        >>> try:
+        ...     compile_source("cast: {a: {reference: nobody}}")
+        ... except UnknownPuppetError as exc:
+        ...     print(exc.args[0])
+        unknown character 'nobody'; the library has ['alice', 'bob']
+
+    See Also:
+        :meth:`PuppetLibrary.names <scenet.assets.contract.PuppetLibrary.names>`, the puppets
+        a library holds.
     """
 
 
@@ -525,6 +661,18 @@ class UnknownPoseError(AssetError, KeyError):
     Note:
         `KeyError` stringifies as `repr(args[0])`, so `str(exc)` comes out quoted.
         Read `exc.args[0]` for the bare message.
+
+    Example:
+        >>> from scenet import UnknownPoseError, compile_source
+        >>> try:
+        ...     compile_source("cast: {a: {reference: alice, pose: cartwheel}}")
+        ... except UnknownPoseError as exc:
+        ...     print(type(exc).__name__)
+        UnknownPoseError
+
+    See Also:
+        :meth:`PuppetSpec.pose_angles <scenet.assets.contract.PuppetSpec.pose_angles>`, which
+        raises it.
     """
 
 
@@ -538,4 +686,16 @@ class UnknownExpressionError(AssetError, KeyError):
     Note:
         `KeyError` stringifies as `repr(args[0])`, so `str(exc)` comes out quoted.
         Read `exc.args[0]` for the bare message.
+
+    Example:
+        >>> from scenet import UnknownExpressionError, compile_source
+        >>> try:
+        ...     compile_source("cast: {a: {reference: alice, expression: smug}}")
+        ... except UnknownExpressionError as exc:
+        ...     print(type(exc).__name__)
+        UnknownExpressionError
+
+    See Also:
+        :meth:`PuppetSpec.expression_states
+        <scenet.assets.contract.PuppetSpec.expression_states>`, which raises it.
     """

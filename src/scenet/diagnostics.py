@@ -989,7 +989,7 @@ def _diagnose_cast(
 
     Every actor is checked, not just the first, mirroring `_diagnose_scene`'s reasoning:
     a panel with three bad references should report three findings. A puppet file is read
-    once, however many members it draws, and a fault in it is one finding (#242).
+    once, however many members it draws, and a fault in it is one finding.
     """
     puppets = panel.puppets()
     if not puppets:
@@ -1116,7 +1116,7 @@ def _over_the_word_limits(panel: PanelIR) -> list[tuple[tuple[str | int, ...], s
     """Where a panel's lettering runs past Dark Horse's limits, and by how much.
 
     Returns:
-        Each place, as a path within the panel, with what to say about it: the panel as a
+        Each place, as a path within the panel, with what to say about it -- the panel as a
         whole first, then each balloon or caption over its own limit, in script order.
     """
     found: list[tuple[tuple[str | int, ...], str]] = []

@@ -1,4 +1,4 @@
-"""The artwork contract: what a supplied picture draws, declared in its own pixels (#71).
+"""The artwork contract: what a supplied picture draws, declared in its own pixels.
 
 A puppet's contract (:mod:`scenet.assets.contract`) declares everything the solver needs
 about a character, so it never has to look at the drawing. An artwork contract does the

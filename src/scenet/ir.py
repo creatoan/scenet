@@ -208,6 +208,10 @@ class ShotType(StrEnum):
         >>> from scenet import ShotType
         >>> ShotType("close_up")
         <ShotType.CLOSE_UP: 'close_up'>
+
+    See Also:
+        :class:`CameraSpec <scenet.ir.CameraSpec>`, whose `shot` takes one.
+        :class:`Landmark <scenet.assets.contract.Landmark>`, the crop lines a shot names.
     """
 
     LONG_SHOT = "long_shot"
@@ -223,7 +227,7 @@ class ShotType(StrEnum):
 
 
 class CameraAngle(StrEnum):
-    """The camera's height relative to the subject.
+    r"""The camera's height relative to the subject.
 
     Affects headroom rather than perspective: this is a flat, orthographic compiler, so
     a tilted camera does not foreshorten anything. What it changes is how much air sits
@@ -234,6 +238,16 @@ class CameraAngle(StrEnum):
     with little space above it. A **high** camera looks down, so the head sits lower and
     more space opens up above. See
     :func:`headroom_for <scenet.solve.camera.headroom_for>` for the exact factors.
+
+    Example:
+        >>> from scenet import CameraAngle, compile_source
+        >>> core = compile_source("camera: {angle: low}\ncast: {a: {reference: alice}}").core
+        >>> core.camera.angle is CameraAngle.LOW
+        True
+
+    See Also:
+        :class:`CameraSpec <scenet.ir.CameraSpec>`, whose `angle` takes one.
+        :class:`ShotType <scenet.ir.ShotType>`, the other half of the camera.
     """
 
     LOW = "low"
@@ -251,6 +265,18 @@ class AnchorX(StrEnum):
     These are *weak* preferences. Non-overlap and declared left-to-right ordering are
     required constraints and will override an anchor without complaint; two actors both
     asking for `center` will simply be pushed apart around it.
+
+    Example:
+        >>> from scenet import AnchorX, compile_source
+        >>> core = compile_source("cast: {a: {reference: alice, at: left_third}}").core
+        >>> AnchorX("left_third") is AnchorX.LEFT_THIRD
+        True
+        >>> core.actors[0].bounds.centre.x < core.width / 2
+        True
+
+    See Also:
+        :class:`CastMember <scenet.ir.CastMember>`, whose `at` takes one.
+        :class:`Predicate <scenet.ir.Predicate>`, to stage two actors against each other instead.
     """
 
     LEFT_EDGE = "left_edge"
@@ -261,12 +287,26 @@ class AnchorX(StrEnum):
 
 
 class TypeSize(StrEnum):
-    """How large a line of dialogue is lettered, against the panel's dialogue size.
+    r"""How large a line of dialogue is lettered, against the panel's dialogue size.
 
     Dark Horse lists "(small), (burst), and (weak)" among the common indications for
     modified lettering. Blambot, *Small Dialogue / Big Balloon*: "A reduced font size is
     used when a character mutters something, says something to him/herself, or speaks
     sheepishly" -- smaller type, in the room the balloon would have had.
+
+    Example:
+        >>> from scenet import TypeSize, compile_source
+        >>> def size(text):
+        ...     source = "cast: {a: {reference: alice}}\nscript: [{say: " + text + "}]"
+        ...     return compile_source(source).core.balloons[0].font_size
+        >>> size("{by: a, text: mm., size: small}") < size("{by: a, text: mm.}")
+        True
+        >>> TypeSize("small") is TypeSize.SMALL
+        True
+
+    See Also:
+        :class:`SayEvent <scenet.ir.SayEvent>`, whose `size` takes one.
+        :class:`LetteringSpec <scenet.ir.LetteringSpec>`, the panel's own dialogue size.
     """
 
     NORMAL = "normal"
@@ -274,11 +314,24 @@ class TypeSize(StrEnum):
 
 
 class Side(StrEnum):
-    """A side of the panel's frame: where an off-panel speaker is, or where it bleeds.
+    r"""A side of the panel's frame: where an off-panel speaker is, or where it bleeds.
 
     An off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel
     Dialogue*: "the tail of the balloon generally butts against the panel border". A panel
-    on a page bleeds past the trim on the sides its placement lists (#281).
+    on a page bleeds past the trim on the sides its placement lists.
+
+    Example:
+        >>> from scenet import Side, compile_source
+        >>> core = compile_source(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "script: [{say: {by: z, text: Over here!, off_panel: right}}]"
+        ... ).core
+        >>> core.balloons[0].off_panel is Side.RIGHT
+        True
+
+    See Also:
+        :class:`SayEvent <scenet.ir.SayEvent>`, whose `off_panel` takes one.
+        :class:`PanelPlacement <scenet.ir.PanelPlacement>`, whose `bleed` lists them.
     """
 
     LEFT = "left"
@@ -288,12 +341,27 @@ class Side(StrEnum):
 
 
 class PlacementZone(StrEnum):
-    """Where in the panel a balloon would prefer to sit.
+    r"""Where in the panel a balloon would prefer to sit.
 
     Two-dimensional, unlike `AnchorX`: an actor is placed along the ground line and
     so only needs a horizontal anchor, whereas a balloon floats and needs both axes.
     These are hints of the weakest priority -- occlusion and reading order override
     them freely.
+
+    Example:
+        >>> from scenet import PlacementZone, compile_source
+        >>> core = compile_source(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "script: [{say: {by: a, text: Up here., prefer: top_right}}]"
+        ... ).core
+        >>> PlacementZone("top_right").value
+        'top_right'
+        >>> core.balloons[0].box.x > core.width / 2
+        True
+
+    See Also:
+        :class:`SayEvent <scenet.ir.SayEvent>`, whose `prefer` takes one: a preference, which a
+        hard rule such as reading order may overrule.
     """
 
     TOP_LEFT = "top_left"
@@ -316,7 +384,7 @@ class PlacementZone(StrEnum):
 
 
 class Direction(StrEnum):
-    """Which way a comic is read: its progression, not the direction of its text.
+    r"""Which way a comic is read: its progression, not the direction of its text.
 
     `ltr` reads from the top left, as Western comics do; `rtl` from the top right, as manga
     do -- the panels on a page and in a strip, the pages side by side, and the balloons and
@@ -328,6 +396,16 @@ class Direction(StrEnum):
     mirrored: figures, gaze, staging, tails and sound effects stay as staged, and every
     word that names a place on the panel -- `at:`, `left_of`, `facing:`, `prefer:`, a side
     for `off_panel`, an inset's corner -- means the same place either way.
+
+    Example:
+        >>> from scenet import Direction, compile_source
+        >>> core = compile_source("direction: rtl\ncast: {a: {reference: alice}}").core
+        >>> core.direction is Direction.RTL
+        True
+
+    See Also:
+        :func:`render_strip <scenet.emit.strip.render_strip>` and
+        :func:`render_pages <scenet.emit.page.render_pages>`, which lay panels out in it.
     """
 
     LTR = "ltr"
@@ -335,7 +413,7 @@ class Direction(StrEnum):
 
 
 class Palette(StrEnum):
-    """What a panel is drawn in: the value ladder in grey, or its twin in colour (#244).
+    r"""What a panel is drawn in: the value ladder in grey, or its twin in colour.
 
     +----------+----------------------------------------------------------------------------+
     | Palette  | What it draws                                                              |
@@ -357,6 +435,16 @@ class Palette(StrEnum):
     A closed set of names, not a colour field, for the reason `CaptionTone` is one: an
     open colour would be the language's one open vocabulary, and would let a value break
     the ladder. See :func:`colour_for <scenet.solve.backdrop.colour_for>`.
+
+    Example:
+        >>> from scenet import Palette, compile_source
+        >>> core = compile_source("palette: tinted\ncast: {a: {reference: alice}}").core
+        >>> core.palette is Palette.TINTED, core.as_mono().palette is Palette.MONO
+        (True, True)
+
+    See Also:
+        :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`, the same panel in greys.
+        :class:`CaptionTone <scenet.ir.CaptionTone>`, whose `warm` a palette colours.
     """
 
     MONO = "mono"
@@ -368,6 +456,15 @@ class Facing(StrEnum):
 
     Mirroring the whole puppet, gaze vector included. Defaults to `right`, so a cast
     written left to right ends up looking into the panel rather than out of it.
+
+    Example:
+        >>> from scenet import Facing, compile_source
+        >>> core = compile_source("cast: {a: {reference: alice, facing: left}}").core
+        >>> Facing("left") is Facing.LEFT, core.actors[0].transform.mirrored
+        (True, True)
+
+    See Also:
+        :class:`CastMember <scenet.ir.CastMember>`, whose `facing` takes one.
     """
 
     LEFT = "left"
@@ -406,6 +503,15 @@ class Mark(StrEnum):
     All four are drawn **outside** the head circle, in the space balloons are placed
     in. They never move a character. A balloon prefers not to cover them, and covers
     them anyway rather than fail when a panel is too crowded to oblige.
+
+    Example:
+        >>> from scenet import Mark, compile_source
+        >>> core = compile_source("cast: {a: {reference: alice, marks: [plewds]}}").core
+        >>> core.actors[0].marks == (Mark.PLEWDS,)
+        True
+
+    See Also:
+        :class:`CastMember <scenet.ir.CastMember>`, whose `marks` lists them.
     """
 
     PLEWDS = "plewds"
@@ -415,7 +521,7 @@ class Mark(StrEnum):
 
 
 class Predicate(StrEnum):
-    """How one actor stands in relation to another.
+    r"""How one actor stands in relation to another.
 
     Drawn from the spatial subset of the Visual Genome vocabulary rather than invented,
     so a scene stays convertible to and from the scene-graph representations used
@@ -424,6 +530,19 @@ class Predicate(StrEnum):
     `left_of` and `right_of` are the load-bearing ones: they are resolved at parse time
     into a linear ordering, because Cassowary cannot express the disjunction "A left of
     B *or* B left of A".
+
+    Example:
+        >>> from scenet import Predicate, compile_source
+        >>> core = compile_source(
+        ...     "cast: {a: {reference: alice}, b: {reference: bob}}\nstaging: [b left_of a]"
+        ... ).core
+        >>> Predicate("left_of") is Predicate.LEFT_OF
+        True
+        >>> core.actor("b").bounds.centre.x < core.actor("a").bounds.centre.x
+        True
+
+    See Also:
+        :class:`Relation <scenet.ir.Relation>`, one predicate between two actors.
     """
 
     LEFT_OF = "left_of"
@@ -435,7 +554,7 @@ class Predicate(StrEnum):
 
 
 class BalloonKind(StrEnum):
-    """What kind of balloon carries a line, which is how it gets drawn.
+    r"""What kind of balloon carries a line, which is how it gets drawn.
 
     The kind changes the outline and the tail, never the placement: a whisper is
     subject to exactly the same face-avoidance and reading-order rules as a shout.
@@ -451,6 +570,18 @@ class BalloonKind(StrEnum):
     +-----------+--------------------------+------------------+
     | `shout`   | jagged burst             | tapered pointer  |
     +-----------+--------------------------+------------------+
+
+    Example:
+        >>> from scenet import BalloonKind, compile_source
+        >>> core = compile_source(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "script: [{say: {by: a, text: Psst., kind: whisper}}]"
+        ... ).core
+        >>> core.balloons[0].kind is BalloonKind.WHISPER
+        True
+
+    See Also:
+        :class:`SayEvent <scenet.ir.SayEvent>`, whose `kind` takes one.
     """
 
     SPEECH = "speech"
@@ -483,6 +614,15 @@ class CaptionKind(StrEnum):
     has two ways to render an inner voice: this and
     :attr:`BalloonKind.THOUGHT <scenet.ir.BalloonKind>`. Both are correct. They are
     different eras of the same convention, not a duplication.
+
+    Example:
+        >>> from scenet import CaptionKind
+        >>> CaptionKind.LOCALE.is_italic, CaptionKind.SPOKEN.is_italic
+        (True, False)
+
+    See Also:
+        :class:`CaptionEvent <scenet.ir.CaptionEvent>`, whose `kind` takes one.
+        :class:`CaptionTone <scenet.ir.CaptionTone>`, the box a caption is lettered on.
     """
 
     LOCALE = "locale"
@@ -568,7 +708,7 @@ class CaptionTone(StrEnum):
     Which mark reads is resolved by the solver -- see
     :attr:`CoreCaption.ink <scenet.core.CoreCaption>` -- exactly as falling rain's is.
 
-    `warm` is the classic yellow `locale` caption (#244), under the colour policy: its
+    `warm` is the classic yellow `locale` caption, under the colour policy: its
     value is the grey above, and in a palette with colour it is drawn in that grey's twin,
     a pale yellow of the same lightness. In `mono` it is the grey, which is what a
     black-and-white reprint does to a yellow caption. The other three are neutral in every
@@ -576,6 +716,15 @@ class CaptionTone(StrEnum):
 
     There is no free-form colour here. A `fill:` taking any string would be the language's
     one open vocabulary, and would let an author produce an unreadable box.
+
+    Example:
+        >>> from scenet import CaptionEvent, CaptionTone
+        >>> CaptionEvent(text="Later.", tone="ink").tone is CaptionTone.INK
+        True
+
+    See Also:
+        :class:`CaptionEvent <scenet.ir.CaptionEvent>`, whose `tone` takes one.
+        :class:`Palette <scenet.ir.Palette>`, which decides what `warm` is printed in.
     """
 
     PAPER = "paper"
@@ -608,6 +757,14 @@ class MassKind(StrEnum):
     A kind decides the **shape** a mass takes, never its value. Value comes from the
     plane, which is what keeps the notan reading honest -- see
     :class:`Plane <scenet.ir.Plane>`.
+
+    Example:
+        >>> from scenet import Mass, MassKind
+        >>> Mass(kind="wall").kind is MassKind.WALL
+        True
+
+    See Also:
+        :class:`Mass <scenet.ir.Mass>`, whose `kind` takes one.
     """
 
     BUILDING = "building"
@@ -638,6 +795,14 @@ class Plane(StrEnum):
     parametric: with distance, contrast drops toward the atmosphere. Reading front to
     back, a mass never gets darker. See
     :func:`tone_for <scenet.solve.backdrop.tone_for>`.
+
+    Example:
+        >>> from scenet import Mass, Plane
+        >>> Mass(kind="building", plane="far").plane is Plane.FAR
+        True
+
+    See Also:
+        :class:`Mass <scenet.ir.Mass>`, whose `plane` takes one.
     """
 
     FOREGROUND = "foreground"
@@ -654,6 +819,14 @@ class Spans(StrEnum):
     before the solver, because Cassowary cannot express "A left of B *or* B left of A".
     A span is an absolute extent rather than a relation, which is what stops masses
     becoming an unordered `beside`.
+
+    Example:
+        >>> from scenet import Mass, Spans
+        >>> Mass(kind="building", spans="left").spans is Spans.LEFT
+        True
+
+    See Also:
+        :class:`Mass <scenet.ir.Mass>`, whose `spans` takes one.
     """
 
     FULL = "full"
@@ -689,6 +862,15 @@ class Horizon(StrEnum):
     ground sort start at it and run down, masses that stand in the world rise from it.
     Named rather than given as a number for the same reason `at:` is -- the author is
     saying how the panel is composed, not typing a coordinate.
+
+    Example:
+        >>> from scenet import Horizon, SettingSpec
+        >>> SettingSpec(horizon="low").horizon is Horizon.LOW
+        True
+
+    See Also:
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `horizon` takes one.
+        :class:`Mass <scenet.ir.Mass>`, which is composed against it.
     """
 
     HIGH = "high"
@@ -718,6 +900,14 @@ class TimeOfDay(StrEnum):
     blue filter over a daytime panel: it is a darker, more compressed ladder, which is
     what night actually does to a drawn scene. The ladder stays monotonic in depth at
     every time of day, by construction rather than by tuning.
+
+    Example:
+        >>> from scenet import SettingSpec, TimeOfDay
+        >>> SettingSpec(time="night").time is TimeOfDay.NIGHT
+        True
+
+    See Also:
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `time` takes one.
     """
 
     DAWN = "dawn"
@@ -733,6 +923,14 @@ class Weather(StrEnum):
     have to be invented either. `fog` renders as a turbulence veil over the backdrop;
     `rain` and `snow` add that veil as cloud and put falling marks over everything,
     because weather is between the reader and the figures rather than behind them.
+
+    Example:
+        >>> from scenet import SettingSpec, Weather
+        >>> SettingSpec(weather="rain").weather is Weather.RAIN
+        True
+
+    See Also:
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `weather` takes one.
     """
 
     CLEAR = "clear"
@@ -755,6 +953,14 @@ class Fit(StrEnum):
 
     Centred either way. A picture is never stretched: its shape is a fact about it, and
     a figure drawn into it would be stretched with it.
+
+    Example:
+        >>> from scenet import Fit, SettingSpec
+        >>> SettingSpec(image="art/street.png", fit="contain").fit is Fit.CONTAIN
+        True
+
+    See Also:
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `fit` takes one.
     """
 
     COVER = "cover"
@@ -774,6 +980,9 @@ class PanelSpec(Strict):
         >>> from scenet import PanelSpec
         >>> PanelSpec(size=(1200.0, 600.0)).width
         1200.0
+
+    See Also:
+        :class:`PanelIR <scenet.ir.PanelIR>`, whose `panel` it is.
     """
 
     size: tuple[float, float] = (1000.0, 1000.0)
@@ -819,6 +1028,15 @@ class CameraSpec(Strict):
     implies. Scaling each actor to its own crop landmark instead would make everybody
     the same apparent height and erase the body differences a comic uses to tell
     characters apart.
+
+    Example:
+        >>> from scenet import CameraSpec, ShotType
+        >>> CameraSpec(shot="close_up").shot is ShotType.CLOSE_UP
+        True
+
+    See Also:
+        :class:`ShotType <scenet.ir.ShotType>` and :class:`CameraAngle <scenet.ir.CameraAngle>`,
+        what it takes.
     """
 
     shot: ShotType = ShotType.MEDIUM_SHOT
@@ -847,6 +1065,10 @@ class Mass(Strict):
         >>> from scenet import Mass, MassKind
         >>> Mass(kind=MassKind.SKY).plane.value
         'mid'
+
+    See Also:
+        :class:`SettingSpec <scenet.ir.SettingSpec>`, whose `masses` holds them.
+        :class:`MassKind <scenet.ir.MassKind>`, every kind there is.
     """
 
     kind: MassKind
@@ -871,9 +1093,14 @@ class FontSpec(Strict):
     document is in, and an absolute one is refused; see :mod:`scenet.paths`.
 
     Example:
-        >>> from scenet import parse_panel
-        >>> parse_panel("lettering: {font: fonts/Comic.ttf}").lettering.font.regular
-        'fonts/Comic.ttf'
+        >>> from scenet import FontSpec, parse_panel
+        >>> font = parse_panel("lettering: {font: fonts/Comic.ttf}").lettering.font
+        >>> isinstance(font, FontSpec), font.regular
+        (True, 'fonts/Comic.ttf')
+
+    See Also:
+        :class:`LetteringSpec <scenet.ir.LetteringSpec>`, whose `font` takes one.
+        :class:`FontMetrics <scenet.solve.text.FontMetrics>`, a font read for measuring.
     """
 
     regular: str
@@ -902,9 +1129,13 @@ class LetteringSpec(Strict):
     --deep` reports as `balloon-placement`.
 
     Example:
-        >>> from scenet import parse_panel
-        >>> parse_panel("lettering: {size: 30}").lettering.size
-        30.0
+        >>> from scenet import LetteringSpec, parse_panel
+        >>> lettering = parse_panel("lettering: {size: 30}").lettering
+        >>> isinstance(lettering, LetteringSpec), lettering.size
+        (True, 30.0)
+
+    See Also:
+        :class:`FontSpec <scenet.ir.FontSpec>`, the files it letters in.
     """
 
     size: float | None = Field(default=None, gt=0.0)
@@ -936,10 +1167,16 @@ class SettingSpec(Strict):
     panel written before this block existed still gets.
 
     Example:
-        >>> from scenet import parse_panel
+        >>> from scenet import SettingSpec, parse_panel
         >>> panel = parse_panel("setting: {place: docks, time: night}")
+        >>> isinstance(panel.setting, SettingSpec)
+        True
         >>> panel.setting.time.value, len(panel.setting.masses) > 0
         ('night', True)
+
+    See Also:
+        :class:`Mass <scenet.ir.Mass>`, one shape in it.
+        :class:`Place <scenet.places.Place>`, a setting by name.
     """
 
     horizon: Horizon = Horizon.MID
@@ -1004,7 +1241,7 @@ class CastMember(Strict):
         at: Preferred horizontal anchor.
         facing: Which way the figure is turned.
         figure: Instead of `reference`: a figure the panel's supplied picture draws, by
-            the name its artwork contract gives it (#71). Nobody poses or places it --
+            the name its artwork contract gives it. Nobody poses or places it --
             the artist did -- so none of the keys above applies to it, and every one
             is refused beside it.
 
@@ -1016,6 +1253,16 @@ class CastMember(Strict):
         cast:
           guard_left:  {reference: bob, pose: arms_crossed}
           guard_right: {reference: bob, pose: standing_neutral, facing: left}
+
+    Example:
+        >>> from scenet import CastMember, Facing
+        >>> member = CastMember(reference="alice", at="left_third", facing="left")
+        >>> member.facing is Facing.LEFT
+        True
+
+    See Also:
+        :class:`PanelIR <scenet.ir.PanelIR>`, whose `cast` holds them.
+        :class:`AnchorX <scenet.ir.AnchorX>` and :class:`Facing <scenet.ir.Facing>`, what it takes.
     """
 
     reference: str | None = None
@@ -1108,6 +1355,15 @@ class Relation(Strict):
     Raises:
         ~pydantic_core.ValidationError: The subject and object are the same actor. No
             predicate here is meaningful reflexively.
+
+    Example:
+        >>> from scenet import Predicate, Relation
+        >>> relation = Relation(subject="a", predicate="left_of", object="b")
+        >>> relation.predicate is Predicate.LEFT_OF
+        True
+
+    See Also:
+        :class:`Predicate <scenet.ir.Predicate>`, every relation there is.
     """
 
     subject: str
@@ -1156,6 +1412,16 @@ class SayEvent(Strict):
 
     Script order **is** reading order, and reading order is a hard constraint. Reorder
     these and you reorder the panel.
+
+    Example:
+        >>> from scenet import BalloonKind, SayEvent
+        >>> line = SayEvent(by="alice", text="Psst.", kind="whisper")
+        >>> line.kind is BalloonKind.WHISPER
+        True
+
+    See Also:
+        :class:`CaptionEvent <scenet.ir.CaptionEvent>`, words no character says.
+        :class:`SfxEvent <scenet.ir.SfxEvent>`, a sound.
     """
 
     verb: Literal["say"] = "say"
@@ -1215,6 +1481,11 @@ class CaptionEvent(Strict):
         >>> from scenet import CaptionEvent
         >>> CaptionEvent(text="Midnight. The docks.").kind.value
         'locale'
+
+    See Also:
+        :class:`SayEvent <scenet.ir.SayEvent>`, words a character says.
+        :class:`CaptionKind <scenet.ir.CaptionKind>` and :class:`CaptionTone
+        <scenet.ir.CaptionTone>`, what it takes.
     """
 
     verb: Literal["caption"] = "caption"
@@ -1268,6 +1539,14 @@ class SfxSize(StrEnum):
     `long_shot` as well as at `close_up`: a sound does not get quieter because the
     camera stepped back. Three steps, not a number, for the reason every other size in
     the language is named -- the author says how loud, the compiler says how big.
+
+    Example:
+        >>> from scenet import SfxEvent, SfxSize
+        >>> SfxEvent(text="BAM", size="large").size is SfxSize.LARGE
+        True
+
+    See Also:
+        :class:`SfxEvent <scenet.ir.SfxEvent>`, whose `size` takes one.
     """
 
     SMALL = "small"
@@ -1307,6 +1586,9 @@ class SfxEvent(Strict):
         >>> from scenet import SfxEvent
         >>> SfxEvent.model_validate({"text": "BLAM", "from": "bob"}).source
         'bob'
+
+    See Also:
+        :class:`SfxSize <scenet.ir.SfxSize>`, how large it is.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -1385,6 +1667,8 @@ class PanelIR(Strict):
             a comic script's take it from the document, and none may write its own.
         palette: What the panel is drawn in. A scene's panels inherit it like any default,
             and unlike `direction` a panel may write its own.
+        setting: Where and when it happens: the place, the masses that stand in it, the
+            time of day, the weather, or a picture to letter over.
 
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
@@ -1393,8 +1677,10 @@ class PanelIR(Strict):
     precise is the worst possible failure.
 
     Example:
-        >>> from scenet import parse_panel
+        >>> from scenet import PanelIR, parse_panel
         >>> panel = parse_panel("panel: {size: [800.0, 600.0]}")
+        >>> isinstance(panel, PanelIR)
+        True
         >>> panel.panel.width, panel.camera.shot.value
         (800.0, 'medium_shot')
 
@@ -1739,7 +2025,7 @@ class PanelIR(Strict):
 class PageFormat(Strict):
     """The page every panel on it is laid out on.
 
-    In the same units a panel uses, and a unit prints as a tenth of a millimetre (#80):
+    In the same units a panel uses, and a unit prints as a tenth of a millimetre:
     the default page prints at 200 x 300 mm, and a US comic's 6.625 x 10.25 inches is
     `size: [1682.75, 2603.5]`.
 
@@ -1758,6 +2044,9 @@ class PageFormat(Strict):
         >>> from scenet import PageFormat
         >>> PageFormat().size
         (2000.0, 3000.0)
+
+    See Also:
+        :class:`PageLayout <scenet.ir.PageLayout>`, which holds it.
     """
 
     size: tuple[float, float] = (2000.0, 3000.0)
@@ -1791,7 +2080,16 @@ class PageFormat(Strict):
 
 
 class Corner(StrEnum):
-    """Which corner of its parent an inset sits in."""
+    """Which corner of its parent an inset sits in.
+
+    Example:
+        >>> from scenet import Corner, Inset
+        >>> Inset(use="detail", at="top_right", size=0.3).at is Corner.TOP_RIGHT
+        True
+
+    See Also:
+        :class:`Inset <scenet.ir.Inset>`, whose `at` takes one.
+    """
 
     TOP_LEFT = "top_left"
     TOP_RIGHT = "top_right"
@@ -1800,7 +2098,16 @@ class Corner(StrEnum):
 
 
 class InsetOrder(StrEnum):
-    """Whether an inset is read before the panel it sits in, or after it."""
+    """Whether an inset is read before the panel it sits in, or after it.
+
+    Example:
+        >>> from scenet import Inset, InsetOrder
+        >>> Inset(use="detail", at="top_right", size=0.3).read is InsetOrder.AFTER
+        True
+
+    See Also:
+        :class:`Inset <scenet.ir.Inset>`, whose `read` takes one.
+    """
 
     BEFORE = "before"
     AFTER = "after"
@@ -1819,6 +2126,16 @@ class Inset(Strict):
         size: Its width and height, as a fraction of its parent's: more than 0, at most
             0.5.
         read: Whether it is read before its parent or after it.
+
+    Example:
+        >>> from scenet import Inset
+        >>> inset = Inset(use="detail", at="bottom_left", size=0.25)
+        >>> inset.read.value
+        'after'
+
+    See Also:
+        :class:`Corner <scenet.ir.Corner>` and :class:`InsetOrder <scenet.ir.InsetOrder>`,
+        what it takes.
     """
 
     use: str
@@ -1839,6 +2156,15 @@ class PanelPlacement(Strict):
         insets: Panels set into its corners.
         bleed: Whether its frame runs past the trim to the bleed line, with no border there:
             `true` on every side that reaches the page's margin, or a list of those sides.
+
+    Example:
+        >>> from scenet import PanelPlacement
+        >>> PanelPlacement(use="one", width=2).width
+        2.0
+
+    See Also:
+        :class:`Tier <scenet.ir.Tier>`, whose `panels` holds them.
+        :class:`Inset <scenet.ir.Inset>`, a panel set into this one.
     """
 
     use: str
@@ -1859,6 +2185,14 @@ class StackedPanel(Strict):
         insets: Panels set into its corners.
         bleed: Whether its frame runs past the trim to the bleed line, with no border there:
             `true` on every side that reaches the page's margin, or a list of those sides.
+
+    Example:
+        >>> from scenet import StackedPanel
+        >>> StackedPanel(use="top", height=2).height
+        2.0
+
+    See Also:
+        :class:`Column <scenet.ir.Column>`, whose `panels` holds them.
     """
 
     use: str
@@ -1885,6 +2219,15 @@ class Column(Strict):
     Attributes:
         width: Its share of the tier's width, relative to the other columns.
         panels: The panels in it, top to bottom.
+
+    Example:
+        >>> from scenet import Column
+        >>> column = Column(width=1, panels=[{"use": "top"}, {"use": "bottom"}])
+        >>> [panel.use for panel in column.panels]
+        ['top', 'bottom']
+
+    See Also:
+        :class:`StackedPanel <scenet.ir.StackedPanel>`, one panel in it.
     """
 
     width: float = Field(default=1.0, gt=0.0)
@@ -1910,6 +2253,16 @@ class Tier(Strict):
             or `columns`.
         slant: How far the gutters between its panels lean from upright, in degrees,
             from -30 to 30. Positive leans the top of each gutter to the right.
+
+    Example:
+        >>> from scenet import Tier
+        >>> tier = Tier(panels=[{"use": "wide"}, {"use": "narrow", "width": 0.5}])
+        >>> [placement.width for placement in tier.panels]
+        [1.0, 0.5]
+
+    See Also:
+        :class:`Column <scenet.ir.Column>`, panels stacked within a tier.
+        :class:`PageSpec <scenet.ir.PageSpec>`, whose `tiers` holds them.
     """
 
     height: float = Field(default=1.0, gt=0.0)
@@ -1978,13 +2331,22 @@ class PageSpec(Strict):
 
     Attributes:
         tiers: The tiers, top to bottom.
+
+    Example:
+        >>> from scenet import PageSpec, Tier
+        >>> page = PageSpec(tiers=[Tier(panels=[{"use": "one"}, {"use": "two"}])])
+        >>> [placement.use for placement in page.tiers[0].panels]
+        ['one', 'two']
+
+    See Also:
+        :class:`Tier <scenet.ir.Tier>`, one row of it.
     """
 
     tiers: tuple[Tier, ...] = Field(min_length=1)
 
 
 class PageLayout(Strict):
-    """Every page of a scene, and the format they share.
+    r"""Every page of a scene, and the format they share.
 
     Attributes:
         page: The format.
@@ -1993,6 +2355,19 @@ class PageLayout(Strict):
     The panels themselves are not part of it: a page names them, and
     :func:`check_placements <scenet.ir.check_placements>` checks the names against the
     panels the document defines.
+
+    Example:
+        >>> from scenet import PageLayout, parse_scene_document
+        >>> document = parse_scene_document(
+        ...     "cast: {a: {reference: alice}}\npanels: {one: {}}\n"
+        ...     "pages: [{tiers: [{panels: [one]}]}]"
+        ... )
+        >>> isinstance(document.layout, PageLayout), len(document.layout.pages)
+        (True, 1)
+
+    See Also:
+        :class:`PageSpec <scenet.ir.PageSpec>`, one page.
+        :class:`PageFormat <scenet.ir.PageFormat>`, the page's size and margins.
     """
 
     page: PageFormat = PageFormat()

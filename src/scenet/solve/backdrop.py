@@ -309,7 +309,7 @@ def _luminance(tone: str) -> float:
     is neutral, and would be wrong the moment a tone had a hue.
 
     So a tone with a hue is refused rather than measured wrongly. Colour is a twin of a
-    grey (#244), and every decision made from a value is made on the grey: this is where
+    grey, and every decision made from a value is made on the grey: this is where
     that stops being a convention.
     """
     red, green, blue = (tone[index : index + 2].lower() for index in (1, 3, 5))
@@ -359,7 +359,7 @@ def colour_for(tone: str, time: TimeOfDay, palette: Palette) -> str:
     """The colour a resolved grey is drawn in: its twin on the same rung of the same hour.
 
     Called on a value the solver has **already decided**, never in place of the decision.
-    That order is the colour policy (#244): which rung a mass takes, and whether rain is
+    That order is the colour policy: which rung a mass takes, and whether rain is
     inked or papered, are settled on the grey, and the palette only says what the settled
     grey looks like. So a tinted panel with its colours taken out is the mono one.
 
@@ -470,11 +470,17 @@ class ResolvedVeil:
     """
 
     tone: str
+    """The grey it is painted in."""
     opacity: float
+    """How opaque it is at its densest, from 0 to 1."""
     frequency: float
+    """The noise's base frequency, per panel unit."""
     octaves: int
+    """How many octaves of noise are summed."""
     seed: int
+    """The noise's seed, fixed so the SVG text is the same every time."""
     colour: str = ""
+    """The tone's twin in the panel's palette, or empty in `mono`."""
 
 
 @dataclass(frozen=True, slots=True)

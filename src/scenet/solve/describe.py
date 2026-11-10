@@ -279,7 +279,7 @@ def traits(pose: str, expression: str, marks: Sequence[Mark]) -> list[str]:
     """How a figure stands, its face and its marks, as a description says them.
 
     What goes without saying -- standing, a neutral face -- is left out. The one phrasing
-    of a figure: the description reads it, and so does the boxes export (#72).
+    of a figure: the description reads it, and so does the boxes export.
 
     Example:
         >>> from scenet import Mark

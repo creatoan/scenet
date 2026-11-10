@@ -1,4 +1,4 @@
-"""The pose and the boxes exports, drawn to be looked at (#238).
+"""The pose and the boxes exports, drawn to be looked at.
 
 The pose and the boxes are JSON, which a model reads and a person cannot. These draw each as
 a picture on the exports' own canvas, for the playground to show beside the depth map and the
@@ -89,7 +89,7 @@ def render_pose_preview(core: PanelCore) -> str:
         core: The compiled panel.
 
     Returns:
-        An SVG on the exports' canvas: one group per actor, `pose-<id>`, its limbs then its
+        An SVG on the exports' canvas -- one group per actor, `pose-<id>`, its limbs then its
         points. Figures a picture draws were never posed and have none.
     """
     width, height = canvas(core)
@@ -130,7 +130,7 @@ def render_boxes_preview(core: PanelCore) -> str:
         core: The compiled panel.
 
     Returns:
-        An SVG on the exports' canvas: one group per box, `box-<region>` -- `box-actor-alice`,
+        An SVG on the exports' canvas -- one group per box, `box-<region>` -- `box-actor-alice`,
         `box-figure-ana` -- in the export's order.
     """
     width, height = canvas(core)

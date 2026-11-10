@@ -14,12 +14,14 @@ reader.
 
 import ast
 import dataclasses
+import doctest
 import enum
 import importlib
 import inspect
 import itertools
 import pkgutil
 import re
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -40,7 +42,18 @@ SECTION = re.compile(r"^([A-Z][A-Za-z ]*):\s*$", re.MULTILINE)
 
 
 def _doc(name: str) -> str:
-    return inspect.getdoc(getattr(scenet, name)) or ""
+    obj = getattr(scenet, name)
+    if inspect.isclass(obj) or callable(obj):
+        return inspect.getdoc(obj) or ""
+    # A value's doc is the `#:` comment above it, which is what autodoc reads: in the
+    # module that defines it, the one that comments it.
+    for module in sorted(sys.modules):
+        if module.startswith("scenet.") and getattr(sys.modules[module], name, None) is obj:
+            analyzer = ModuleAnalyzer.for_module(module)
+            analyzer.analyze()
+            if ("", name) in analyzer.attr_docs:
+                return "\n".join(analyzer.attr_docs[("", name)]).strip()
+    return ""
 
 
 def _sections(doc: str) -> set[str]:
@@ -229,3 +242,13 @@ def test_no_docstring_cites_an_issue_number():
             if line.lstrip().startswith("#:") and ISSUE.search(line):
                 offenders.append(f"{path.relative_to(ROOT).as_posix()}:{number}")
     assert offenders == []
+
+
+@pytest.mark.parametrize("name", [name for name in PUBLIC if _kind(name) == "data"])
+def test_a_value_s_example_runs(name: str):
+    """Doctest collects no `#:` comment, so a value's example is run here."""
+    parser = doctest.DocTestParser()
+    test = parser.get_doctest(_doc(name), {}, name, None, 0)
+    runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS)
+    assert test.examples
+    assert runner.run(test).failed == 0

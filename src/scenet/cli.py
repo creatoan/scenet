@@ -318,7 +318,7 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         dependencies: Optional set to populate with compilation inputs for watch mode.
 
     Returns:
-        A process exit status: `0` on success, `1` when the document could not be
+        A process exit status -- `0` on success, `1` when the document could not be
         compiled, `2` when the source file does not exist or has an extension no
         frontend reads.
 
@@ -648,7 +648,7 @@ def run_check(args: argparse.Namespace) -> int:
         args: Parsed arguments from :func:`build_parser <scenet.cli.build_parser>`.
 
     Returns:
-        A process exit status: `0` when no document has an error (notes may have been
+        A process exit status -- `0` when no document has an error (notes may have been
         printed), `1` when any has one, `2` when a file does not exist or has an
         extension no frontend reads.
 
@@ -772,7 +772,7 @@ def run_mcp(args: argparse.Namespace) -> int:
         args: Parsed arguments from :func:`build_parser <scenet.cli.build_parser>`.
 
     Returns:
-        A process exit status: `0` once the client has gone, `2` when the optional `mcp`
+        A process exit status -- `0` once the client has gone, `2` when the optional `mcp`
         dependency is not installed.
 
     Nothing is printed to stdout, before or after: on the stdio transport stdout is the

@@ -1,4 +1,4 @@
-"""Each figure's extent with a phrase, for box-conditioned image models (#72).
+"""Each figure's extent with a phrase, for box-conditioned image models.
 
 "This entity, here", as GLIGEN takes it: a phrase and a box per actor and per figure a picture
 draws, the box as `[xmin, ymin, xmax, ymax]` fractions of the panel -- what diffusers' GLIGEN

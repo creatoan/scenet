@@ -1,13 +1,13 @@
 """A panel as the marks drawn in it: what each is, where, and in which order.
 
-The SVG emitter writes a panel as text as it goes. A print emitter (#80) needs the same
+The SVG emitter writes a panel as text as it goes. A print emitter needs the same
 drawing as data: every shape, the order it is painted in, and what it *is* -- a line of
 ink, the paper showing through, a grey -- because a printer is told inks, not colours.
 `marks` lists exactly what the SVG paints, one mark per painted element, in the same
 order, from the same numbers (`scenet.emit.geometry`); `tests/test_marks.py` holds the
 two to each other for every gallery panel.
 
-Each paint keeps the colour the SVG draws and the grey it is the twin of (#244): a tinted
+Each paint keeps the colour the SVG draws and the grey it is the twin of: a tinted
 mass draws its colour on screen and prints its grey.
 """
 
@@ -71,7 +71,7 @@ class Paint:
     Attributes:
         colour: What the SVG draws: a colour when the palette gave one, a grey otherwise.
         role: What it is.
-        grey: The grey `colour` is the twin of, which is what print uses (#244).
+        grey: The grey `colour` is the twin of, which is what print uses.
         opacity: Below 1 only for falling weather.
     """
 
@@ -177,7 +177,7 @@ class Glyph:
 
 @dataclass(frozen=True, slots=True)
 class Text:
-    """One line of lettering set as text, with `--live-text` (#284).
+    """One line of lettering set as text, with `--live-text`.
 
     The SVG writes it as one `<text>`; print sets each run in its embedded face. Its glyphs
     land where their outlines would, each run's origins worked out by
@@ -205,7 +205,7 @@ class Picture:
 
 @dataclass(frozen=True, slots=True)
 class Veil:
-    """The fog or cloud over a backdrop: the atmosphere's noise, over the panel (#282)."""
+    """The fog or cloud over a backdrop: the atmosphere's noise, over the panel."""
 
     tag: ClassVar[str] = "rect"
     width: float
@@ -321,7 +321,7 @@ def marks(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list
 
 
 def _border(core: PanelCore) -> list[Mark]:
-    """A panel's border: its frame, or the sides that keep one when it bleeds (#281)."""
+    """A panel's border: its frame, or the sides that keep one when it bleeds."""
     runs = geometry.border(core)
     if runs is not None:
         return [

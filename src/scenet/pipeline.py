@@ -85,7 +85,7 @@ from scenet.solve.staging import Placement, solve_staging
 from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
 #: What each kind of compile note is called: a stable name, as a check's rule has one, by
-#: which a gallery entry's `notes:` declares it (#240) while the sentence stays free to be
+#: which a gallery entry's `notes:` declares it while the sentence stays free to be
 #: reworded. One name per sentence; `docs/howto/debug_a_layout.md` explains each.
 CompileNoteRule = Literal[
     "camera-retreated",
@@ -107,6 +107,19 @@ class CompileNote:
         rule: What kind of decision it was, by its stable name.
         message: The sentence that says so, as
             :attr:`CompileResult.notes <scenet.pipeline.CompileResult.notes>` gives it.
+
+    Example:
+        >>> from scenet import CompileNote, compile_source
+        >>> result = compile_source(
+        ...     "{panel: {size: [600.0, 400.0]}, camera: {shot: close_up},"
+        ...     " cast: {a: {reference: alice, at: left_edge},"
+        ...     " b: {reference: bob, at: right_edge}}}"
+        ... )
+        >>> [note.rule for note in result.compile_notes][:1]
+        ['camera-retreated']
+
+    See Also:
+        :attr:`CompileResult.notes <scenet.pipeline.CompileResult.notes>`, the messages alone.
     """
 
     rule: CompileNoteRule
@@ -115,15 +128,28 @@ class CompileNote:
 
 @dataclass(frozen=True, slots=True)
 class CompileResult:
-    """The compiled panel, with the intermediate results kept for inspection.
+    r"""The compiled panel, with the intermediate results kept for inspection.
 
     Diagnostics -- notably whether the camera had to retreat to fit the cast -- are
     part of the result rather than log output, so tooling can surface them.
+
+    Example:
+        >>> from scenet import CompileResult, compile_source, render
+        >>> result = compile_source(
+        ...     "cast: {a: {reference: alice}}\nscript: [{say: {by: a, text: Hi.}}]"
+        ... )
+        >>> isinstance(result, CompileResult), result.notes
+        (True, ())
+        >>> svg = render(result.core, fonts=result.fonts, embed=result.images)
+
+    See Also:
+        :class:`PanelCore <scenet.core.PanelCore>`, what `core` holds.
+        :class:`CompileNote <scenet.pipeline.CompileNote>`, each note with its rule.
     """
 
     core: PanelCore
     #: The framing the camera chose, or None for a panel whose cast a supplied picture
-    #: draws (#71): the artist framed it, and the camera does not run.
+    #: draws: the artist framed it, and the camera does not run.
     camera: CameraSolution | None
     placements: tuple[Placement, ...]
     posed: dict[str, ResolvedPuppet]
@@ -576,7 +602,7 @@ def compile_ir(
         outline: The panel's border when it is not a rectangle -- on a page, a panel in a
             slanted tier -- in panel units. The panel is staged and framed in its bounding
             box as usual, and cropped to this; lettering stays inside it, a margin in.
-        staged_in: For a panel that bleeds past the trim (#281), the part of it the reader
+        staged_in: For a panel that bleeds past the trim, the part of it the reader
             sees, in panel units: its cast is staged and framed there, as in a panel that
             size, so the trim never cuts a shot. Its art covers the whole panel.
         lettering_box: For a panel that bleeds, the box its lettering keeps inside, a
@@ -592,6 +618,29 @@ def compile_ir(
             picture whose figures the panel casts, `unknown-figure`, for a figure the
             picture does not draw, or `puppet-file`, for a puppet file a cast member
             names.
+
+    Note:
+        The IR is taken as validated: build it with the frontends, or with the models'
+        own constructors, which validate as pydantic does. The keyword arguments after `base`
+        are what laying out a page passes in; a single panel leaves them out.
+
+        Deterministic: the same text, puppets and fonts give the same Core, byte for byte. A
+        compile reads no file but those the document names, and those only from `base` or the
+        folder of `source`; text with neither can name none. It is safe to call from several
+        threads; see the Guarantees page for the caches they share.
+
+    Example:
+        >>> from scenet import CastMember, PanelIR, SayEvent, compile_ir
+        >>> panel = PanelIR(
+        ...     cast={"a": CastMember(reference="alice")},
+        ...     script=[SayEvent(by="a", text="Built in Python.")],
+        ... )
+        >>> compile_ir(panel).core.balloons[0].lines
+        ('Built in', 'Python.')
+
+    See Also:
+        :class:`PanelIR <scenet.ir.PanelIR>`, the scene graph it compiles.
+        :func:`parse_panel <scenet.frontends.yaml_front.parse_panel>`, to make one from text.
     """
     # Read first: a font that cannot be read is the author's to fix, and is better said
     # before the solver spends anything on a panel it could not letter.
@@ -931,10 +980,24 @@ def compile_source(
         The compiled panel, with the intermediate results kept for inspection.
 
     Raises:
-        PanelSyntaxError: The document is malformed or invalid.
-        UnknownPuppetError: A cast member references a character the library lacks.
-        LayoutError: The required constraints cannot all be satisfied.
-        BalloonPlacementError: A balloon has no legal position.
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        Deterministic: the same text, puppets and fonts give the same Core, byte for byte. A
+        compile reads no file but those the document names, and those only from `base` or the
+        folder of `source`; text with neither can name none. It is safe to call from several
+        threads; see the Guarantees page for the caches they share.
+
+        One panel only: a document with `panels:` or `pages:` is refused. Compile it
+        with :func:`compile_book <scenet.pipeline.compile_book>`.
 
     Example:
         >>> from scenet import compile_source, render
@@ -981,15 +1044,43 @@ def compile_file(
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: The document is malformed or invalid. The path is included
-            in the message.
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        Files the document names are read from the folder it is in, whatever the working
+        directory. One panel only, as :func:`compile_source
+        <scenet.pipeline.compile_source>`.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import compile_file
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "hello.panel.yaml"
+        ...     _ = path.write_text("cast: {a: {reference: alice}}", encoding="utf-8")
+        ...     result = compile_file(path)
+        >>> [actor.id for actor in result.core.actors]
+        ['a']
+
+    See Also:
+        :func:`compile_source <scenet.pipeline.compile_source>`, for text.
+        :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for any document and
+        its pages.
     """
     return compile_ir(load_panel(path), library=library, metrics=metrics, base=path.parent)
 
 
 @dataclass(frozen=True, slots=True)
 class Book:
-    """A scene compiled: every panel, and the pages they are laid out on.
+    r"""A scene compiled: every panel, and the pages they are laid out on.
 
     Attributes:
         panels: Panel name to compiled panel, in reading order. A panel on a page was
@@ -1000,6 +1091,20 @@ class Book:
             in a comic script, a cue with nothing said under it, or a page whose stated
             count its panels do not match. Each names its line. A panel's own notes, on
             what the compiler decided, are on its `CompileResult`.
+
+    Example:
+        >>> from scenet import Book, compile_book
+        >>> book = compile_book(
+        ...     "cast: {a: {reference: alice}}\n"
+        ...     "panels: {one: {}, two: {}}\n"
+        ...     "pages: [{tiers: [{panels: [one, two]}]}]"
+        ... )
+        >>> isinstance(book, Book), list(book.panels), len(book.pages)
+        (True, ['one', 'two'], 1)
+
+    See Also:
+        :func:`compile_book <scenet.pipeline.compile_book>`, which returns one.
+        :func:`render_pages <scenet.emit.page.render_pages>`, to draw its pages.
     """
 
     panels: dict[str, CompileResult]
@@ -1052,9 +1157,26 @@ def compile_book(
         The compiled panels and pages.
 
     Raises:
-        PanelSyntaxError: A panel or the layout is malformed, including rule
-            `page-layout` for a placement naming no panel, or a panel placed twice.
-        CompositionError: An `over:` chain is unresolvable or cyclic.
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        Every panel is compiled, whether a page places it or not. A panel a page places is
+        compiled at its frame's shape, so it can differ from the same panel compiled alone.
+
+        Deterministic: the same text, puppets and fonts give the same Core, byte for byte. A
+        compile reads no file but those the document names, and those only from `base` or the
+        folder of `source`; text with neither can name none. It is safe to call from several
+        threads; see the Guarantees page for the caches they share.
 
     Example:
         >>> from scenet import compile_book
@@ -1066,6 +1188,12 @@ def compile_book(
         [('a', 880.0), ('b', 880.0)]
         >>> book.panels["a"].core.width
         880.0
+
+    See Also:
+        :func:`render_pages <scenet.emit.page.render_pages>` and
+        :func:`render_pdf <scenet.emit.pdf.render_pdf>`, to draw its pages.
+        :func:`compile_book_file <scenet.pipeline.compile_book_file>`, to read a file of any kind.
+        :func:`compile_script <scenet.pipeline.compile_script>`, for a comic script.
     """
     return _compile_document(
         parse_scene_document(text, source=source), library, metrics, _folder(source, base)
@@ -1216,13 +1344,63 @@ def compile_scene(
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
-    """Compile every panel in a multi-panel document.
+    r"""Compile every panel in a multi-panel document.
 
     Each panel is compiled independently. A panel's composition must not depend on
     what sits beside it, or the same source would compile differently in isolation --
     which would make panels non-reusable and golden tests meaningless. A panel that a
     page lays out is compiled at its frame's size; see
     :func:`compile_book <scenet.pipeline.compile_book>`, which also returns the pages.
+
+    Args:
+        text: A `panels:` document, each panel optionally inheriting another with `over:`.
+        source: Path the text came from, prefixed to error messages and used to find the
+            files it names beside it.
+        base: The folder files the document names are read from, when it is not the one
+            `source` is in -- or when there is no `source` at all.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against. Defaults to the shipped one.
+
+    Returns:
+        Panel name to its compiled result, in the order the document wrote them.
+
+    Raises:
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        A scene's `pages:` are not laid out here: :func:`compile_book
+        <scenet.pipeline.compile_book>` does that, and returns these panels too.
+
+        Deterministic: the same text, puppets and fonts give the same Core, byte for byte. A
+        compile reads no file but those the document names, and those only from `base` or the
+        folder of `source`; text with neither can name none. It is safe to call from several
+        threads; see the Guarantees page for the caches they share.
+
+    Example:
+        >>> from scenet import compile_scene
+        >>> panels = compile_scene(
+        ...     "panels:\n"
+        ...     "  wide: {cast: {a: {reference: alice}}, camera: {shot: full_shot}}\n"
+        ...     "  close: {over: wide, camera: {shot: close_up}}"
+        ... )
+        >>> list(panels)
+        ['wide', 'close']
+        >>> panels["close"].core.camera.shot
+        <ShotType.CLOSE_UP: 'close_up'>
+
+    See Also:
+        :func:`compile_book <scenet.pipeline.compile_book>`, for the panels and their pages.
+        :func:`parse_scene <scenet.frontends.yaml_front.parse_scene>`, to stop at the IR.
     """
     return compile_book(text, source=source, base=base, library=library, metrics=metrics).panels
 
@@ -1233,7 +1411,7 @@ def compile_scene_file(
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
-    """Compile every panel in a multi-panel file.
+    r"""Compile every panel in a multi-panel file.
 
     Args:
         path: A `*.scene.yaml` document. A single-panel document also works and comes
@@ -1248,9 +1426,38 @@ def compile_scene_file(
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: A panel is malformed or invalid.
-        CompositionError: An `over:` chain refers to a panel that does not exist, or
-            forms a cycle.
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        Files the document names are read from the folder it is in. Its pages are not laid
+        out: :func:`compile_book_file <scenet.pipeline.compile_book_file>` does that.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import compile_scene_file
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "two.scene.yaml"
+        ...     _ = path.write_text(
+        ...         "cast: {a: {reference: alice}}\npanels: {one: {}, two: {}}", encoding="utf-8"
+        ...     )
+        ...     panels = compile_scene_file(path)
+        >>> list(panels)
+        ['one', 'two']
+
+    See Also:
+        :func:`compile_scene <scenet.pipeline.compile_scene>`, for text.
+        :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for its pages too.
     """
     return _compile_document(load_scene_document(path), library, metrics, path.parent).panels
 
@@ -1306,13 +1513,36 @@ def compile_script(
         Every panel, and the pages they are laid out on -- none yet, for a script.
 
     Raises:
-        ScriptSyntaxError: The script cannot be read, or a panel does not validate.
+        ScriptSyntaxError: The script cannot be parsed -- no `PANEL` heading, dialogue
+            before the first -- or a panel does not validate.
+        PanelSyntaxError: The script is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        A script is written in the comic-script format writers already use; its front
+        matter is YAML. It has no pages: a page heading groups panels for reading.
+
+        Deterministic: the same text, puppets and fonts give the same Core, byte for byte. A
+        compile reads no file but those the document names, and those only from `base` or the
+        folder of `source`; text with neither can name none. It is safe to call from several
+        threads; see the Guarantees page for the caches they share.
 
     Example:
         >>> from scenet import compile_script
         >>> book = compile_script("---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n")
         >>> list(book.panels)
         ['1']
+
+    See Also:
+        :func:`parse_script <scenet.frontends.script_front.parse_script>`, to stop at the IR.
+        :func:`compile_book <scenet.pipeline.compile_book>`, for a YAML scene.
     """
     return _compile_document(
         _script_document(text, source=source), library, metrics, _folder(source, base)
@@ -1334,7 +1564,7 @@ def compile_book_file(
     metrics: FontMetrics | None = None,
     dependencies: set[Path] | None = None,
 ) -> Book:
-    """Compile any supported document and its pages, choosing the frontend by extension.
+    r"""Compile any supported document and its pages, choosing the frontend by extension.
 
     Args:
         path: A `*.panel.yaml`, `*.scene.yaml` or `*.script` file.
@@ -1351,7 +1581,46 @@ def compile_book_file(
         FileReadError: The file cannot be read: a
             :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
             `FileNotFoundError`, when it is not there.
-        PanelSyntaxError: The document is malformed or invalid.
+        PanelSyntaxError: The document -- a :exc:`ScriptSyntaxError
+            <scenet.errors.ScriptSyntaxError>` for a script -- is malformed or invalid, or
+            a file it names cannot be read or is not what it says.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        The frontend is chosen by extension alone: `.script` is a comic script, and any
+        `.yaml` or `.yml` a panel or a scene by what it holds. This is what `scenet build`
+        calls.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import compile_book_file
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "page.scene.yaml"
+        ...     _ = path.write_text(
+        ...         "cast: {a: {reference: alice}}\n"
+        ...         "panels: {one: {}, two: {}}\n"
+        ...         "pages: [{tiers: [{panels: [one, two]}]}]",
+        ...         encoding="utf-8",
+        ...     )
+        ...     read = set()
+        ...     book = compile_book_file(path, dependencies=read)
+        >>> list(book.panels), len(book.pages)
+        (['one', 'two'], 1)
+        >>> path in read
+        True
+
+    See Also:
+        :func:`compile_book <scenet.pipeline.compile_book>`, for text.
+        :func:`compile_document <scenet.pipeline.compile_document>`, for its panels alone.
     """
     loader = DOCUMENT_LOADERS.get(path.suffix.lower())
     if loader is None:
@@ -1370,5 +1639,53 @@ def compile_document(
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
 ) -> dict[str, CompileResult]:
-    """Compile any supported document, choosing the frontend by extension."""
+    """Compile any supported file's panels, choosing the frontend by extension.
+
+    The panels of :func:`compile_book_file <scenet.pipeline.compile_book_file>`, without its
+    pages: what to reach for when the syntax is the user's choice and the panels are what you
+    draw.
+
+    Args:
+        path: A `*.panel.yaml`, `*.scene.yaml` or `*.script` file.
+        library: Characters to draw from. Defaults to the two shipped puppets.
+        metrics: Font to measure lettering against. Defaults to the shipped one.
+
+    Returns:
+        Panel name to its compiled result. A single panel is named `panel`.
+
+    Raises:
+        SourceError: The extension is not one any frontend reads.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
+        PanelSyntaxError: The document is malformed or invalid, or a file it names cannot be
+            read or is not what it says.
+        CompositionError: An `over:` names a panel that does not exist, or the chain is a
+            cycle.
+        UnknownPuppetError: A cast member references a puppet the library lacks.
+        UnknownPoseError: A cast member's `pose` is one its puppet does not declare.
+        UnknownExpressionError: A cast member's `expression` is one its puppet does not declare.
+        LayoutError: The staging cannot be satisfied: a depth order that is a cycle, or a panel
+            with no cast to place.
+        BalloonPlacementError: A balloon or a caption has no legal position.
+        SfxPlacementError: A sound effect has no legal position.
+
+    Note:
+        Pages are compiled and dropped. Call :func:`compile_book_file
+        <scenet.pipeline.compile_book_file>` to keep them.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import compile_document
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "hello.panel.yaml"
+        ...     _ = path.write_text("cast: {a: {reference: alice}}", encoding="utf-8")
+        ...     panels = compile_document(path)
+        >>> list(panels)
+        ['panel']
+
+    See Also:
+        :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for the pages too.
+    """
     return compile_book_file(path, library=library, metrics=metrics).panels

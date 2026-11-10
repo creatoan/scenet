@@ -1,4 +1,4 @@
-"""What a panel holds, as structure, for whatever writes a prompt from it (#72).
+"""What a panel holds, as structure, for whatever writes a prompt from it.
 
 **Not a prompt.** Prompt dialects differ per model and change every few months, and turning
 structure into prose is the language step that prior art leaves to whatever is in the loop,
@@ -7,7 +7,7 @@ reference, pose, expression, marks, facing, whom they look at, depth -- every fi
 draws, and every balloon, caption and sound effect in reading order with its box.
 
 Where Panel Core already has words, they are copied, never phrased again: the panel's
-`description` and each entry's `label`, which accessible output reads (#76).
+`description` and each entry's `label`, which accessible output reads.
 
 Each actor and figure also carries its `mask` colour: the mask export's own, taken from its code
 rather than worked out again, so a tool can map a colour of the mask to a character without
@@ -95,7 +95,7 @@ def render_semantics(core: PanelCore) -> str:
     Facing is read from the mirror: a mirrored puppet faces left. Each actor and figure has
     its mask colour.
 
-    The palette is named only when it is not `mono` (#244), so the semantics of every panel
+    The palette is named only when it is not `mono`, so the semantics of every panel
     drawn in grey is what it was before palettes existed. It is the one export a palette
     reaches: colour never changes a value, so the pose, boxes, depth and mask are the
     same in every palette.

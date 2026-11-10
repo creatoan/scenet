@@ -1,4 +1,4 @@
-"""Each actor's skeleton as OpenPose JSON, for pose-conditioned image models (#72).
+"""Each actor's skeleton as OpenPose JSON, for pose-conditioned image models.
 
 The `OpenPose output format <https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md>`__
 as ControlNet's tooling reads it: `people[].pose_keypoints_2d`, flat `x, y, confidence`

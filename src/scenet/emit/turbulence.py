@@ -1,4 +1,4 @@
-"""The fog and cloud veil's noise, computed for print (#282).
+"""The fog and cloud veil's noise, computed for print.
 
 The SVG draws the veil with `feTurbulence`, and a browser computes its noise. A PDF has no
 such filter, so print computes the same noise itself and carries it as a raster: SVG 1.1's

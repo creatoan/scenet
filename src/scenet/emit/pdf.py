@@ -1,4 +1,4 @@
-"""Panel Core into a PDF a printer takes (#80).
+"""Panel Core into a PDF a printer takes.
 
 The SVG is for screens; this is for print. It draws exactly what the SVG draws -- the same
 marks, from the same numbers (`scenet.emit.marks`) -- but says it in inks rather than
@@ -12,13 +12,13 @@ drift out of register. So every paint is set by what it *is*, never by convertin
 - a grey is black alone, at the K that prints its lightness under the condition the colours
   print under (:func:`black_for`); a mass dark enough to be near black prints rich black
   instead, C40 K100, for even coverage;
-- a tinted colour prints its CMYK twin under one printing condition (#280,
-  `scenet.emit.cmyk`), and in `mono` its grey, the twin every colour was chosen against.
+- a tinted colour prints its CMYK twin under one printing condition
+  (`scenet.emit.cmyk`), and in `mono` its grey, the twin every colour was chosen against.
 
 Nothing is decided here that the SVG does not already show. A page unit prints as a tenth
 of a millimetre. The fog and cloud veil, which the SVG draws with a noise filter PDF does not
 have, is the same noise computed here (`scenet.emit.turbulence`) and drawn as a soft mask over
-the veil's ink (#282).
+the veil's ink.
 
 Deterministic, like every other output: objects in a fixed order, nothing compressed (zlib
 implementations differ from one platform to the next), no dates, and an `/ID` taken from
@@ -90,12 +90,12 @@ KAPPA = 4 * (math.sqrt(2) - 1) / 3
 #: What a PDF reader is told made the file. No version: a release would change every byte.
 PRODUCER = "Scenet"
 
-#: The ICC's sRGB profile, which every RGB picture is tagged with (#283): what a browser reads
+#: The ICC's sRGB profile, which every RGB picture is tagged with: what a browser reads
 #: an untagged picture as, said to a print workflow rather than left to its guess.
 SRGB_PROFILE = files("scenet").joinpath("profiles", "sRGB2014.icc").read_bytes()
 
-#: The printing condition the CMYK twins were made for, named by its ICC registry identifier
-#: (#283). A registered condition needs no profile in a plain PDF, and none is embedded: the
+#: The printing condition the CMYK twins were made for, named by its ICC registry identifier.
+#: A registered condition needs no profile in a plain PDF, and none is embedded: the
 #: file claims no PDF/X, which would.
 OUTPUT_INTENT = (
     f"<< /Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier ({CONDITION}) "
@@ -104,7 +104,7 @@ OUTPUT_INTENT = (
 )
 
 #: Every page blends its transparency in CMYK, the space it prints in, rather than in one a
-#: reader or a RIP picks (#283).
+#: reader or a RIP picks.
 PAGE_GROUP = "/Group << /Type /Group /S /Transparency /CS /DeviceCMYK >>"
 
 INK = (0.0, 0.0, 0.0, 1.0)
@@ -259,7 +259,7 @@ def print_notes(
             into is said.
 
     Returns:
-        The notes: the pages' first, in order, then the panels', in the panels' order.
+        The notes -- the pages' first, in order, then the panels', in the panels' order.
     """
     notes = [
         f"page {number} has panels that bleed but no bleed of its own, so they stop at the "
@@ -339,7 +339,7 @@ def render_pdf(
             :attr:`Book.images <scenet.pipeline.Book.images>` holds. A picture is always
             carried inside the PDF, pixels unchanged; see `scenet.emit.pdf_images`.
         live_text: Letter balloons and captions in text, their faces embedded, rather than
-            in outlines (#284). Each glyph lands where its outline would; a face whose
+            in outlines. Each glyph lands where its outline would; a face whose
             licence forbids embedding stays in outlines, as :func:`print_notes` says.
         mono: Print a tinted panel in its greys, as `--mono` draws it, rather than in its
             colours' CMYK twins: the same file as the panel's `palette: mono` twin.
@@ -352,12 +352,19 @@ def render_pdf(
             not, a picture's bytes were not handed over, or a picture is one no PDF reader
             decodes.
 
+    Note:
+        A page unit prints as 0.1 mm, and lettering is on the black plate. No PDF/X
+        conformance is claimed. The same pages and arguments give the same bytes.
+
     Example:
         >>> from scenet import compile_book, render_pdf
         >>> book = compile_book("cast: {a: {reference: alice}}\npanels: {one: {}}")
         >>> cores = {name: result.core for name, result in book.panels.items()}
         >>> render_pdf(book.pages, cores)[:8]
         b'%PDF-1.6'
+
+    See Also:
+        :func:`render_pages <scenet.emit.page.render_pages>`, the same pages as SVG.
     """
     if mono:
         panels = {name: core.as_mono() for name, core in panels.items()}
@@ -935,7 +942,7 @@ class _Document:
 
         Each picture and its soft mask, then each veil's two objects, then each face's five,
         then the sRGB profile, when an RGB picture is drawn: it comes after every other, so
-        nothing before it is renumbered (#283).
+        nothing before it is renumbered.
         """
         numbers: dict[str, int] = {}
         pictures: list[bytes] = []

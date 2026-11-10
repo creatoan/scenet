@@ -89,11 +89,11 @@ def render_strip(
     embed: Mapping[str, bytes] | None = None,
     mono: bool = False,
 ) -> str:
-    """Lay panels side by side in reading order: left to right, or right to left.
+    r"""Lay panels side by side in reading order: left to right, or right to left.
 
     Each panel is rendered independently and then placed, rather than being
     re-solved: a panel's composition must not depend on what sits beside it, or the
-    same source would compile differently in isolation. Panels read right to left (#68)
+    same source would compile differently in isolation. Panels read right to left
     are laid from the right; they are still written in reading order, which is the order
     a screen reader follows.
 
@@ -112,7 +112,7 @@ def render_strip(
             :attr:`Book.images <scenet.pipeline.Book.images>` holds -- to write into
             the SVG. Left out, each picture is linked by the path its document wrote.
         mono: Draw every value as its grey and ignore its colour, as for a black-and-white
-            edition (#244). Every decision was made on the grey, so this draws exactly what
+            edition. Every decision was made on the grey, so this draws exactly what
             `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Returns:
@@ -120,6 +120,20 @@ def render_strip(
 
     Raises:
         RenderError: There are no panels, or they are not all read the same way.
+
+    Note:
+        Panels are scaled to one height and set side by side in the order given -- from
+        the right when they are read right to left. A strip is not a page: it has no trim.
+
+    Example:
+        >>> from scenet import compile_scene, render_strip
+        >>> panels = compile_scene("cast: {a: {reference: alice}}\npanels: {one: {}, two: {}}")
+        >>> strip = render_strip([(name, result.core) for name, result in panels.items()])
+        >>> strip.splitlines()[0]
+        '<?xml version="1.0" encoding="UTF-8"?>'
+
+    See Also:
+        :func:`render_pages <scenet.emit.page.render_pages>`, for panels laid out on pages.
     """
     if not panels:
         raise RenderError("a strip needs at least one panel")

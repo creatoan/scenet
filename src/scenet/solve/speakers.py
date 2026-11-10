@@ -5,7 +5,7 @@ need far less than a puppet carries: a face no box may cover, a point a tail aim
 silhouette that is costly to cover, and -- for a puppet -- where its eyes are and which
 way it is looking. That is the whole interface, and this module is it.
 
-It is what lets a figure that a supplied picture draws (#71) be lettered by the same
+It is what lets a figure that a supplied picture draws be lettered by the same
 rules as a puppet Scenet posed: its contract declares a face, a mouth and a body in the
 picture's pixels, and once those are mapped into the panel the placer cannot tell the
 two apart. Nobody here ever sees artwork, the picture's or a puppet's.
