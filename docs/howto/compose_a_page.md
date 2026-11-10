@@ -6,7 +6,9 @@ the page turns. A scene can say that. Its panels stay exactly as you write them,
 
 ## Tiers, by weight
 
-```yaml
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
 page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
 
 pages:
@@ -37,7 +39,9 @@ in the wrong order.
 A manga is read from the top right. Say so once, beside `panels:`, and write the page exactly as
 before, in reading order:
 
-```yaml
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
 direction: rtl
 pages:
   - tiers:
@@ -54,7 +58,9 @@ The gallery's *Read right to left* page and its left-to-right twin show the diff
 
 ## A tall panel beside a stack
 
-```yaml
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
 pages:
   - tiers:
       - panels: [arrival]
@@ -78,7 +84,9 @@ tiers instead.
 
 ## An inset
 
-```yaml
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
 pages:
   - tiers:
       - height: 2
@@ -107,7 +115,9 @@ covers nothing that matters: when an inset covers a face, the compiler says so i
 
 ## A slanted tier
 
-```yaml
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
 pages:
   - tiers:
       - panels: [standoff]

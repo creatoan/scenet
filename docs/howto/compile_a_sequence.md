@@ -116,6 +116,8 @@ when Carol speaks `off_panel` in that panel, and Bob turns toward her side of th
 ends on the side she was written to stand on, as a comic script's `CAROL (OP)` does.
 
 ```python
+from scenet import compile_scene
+
 panels = compile_scene("""
 cast:
   bob:   {reference: bob,   at: right_third}

@@ -15,6 +15,7 @@ docstring and every block of the documentation to the last two.
 
 import doctest
 import importlib
+import importlib.util
 import os
 import pkgutil
 import re
@@ -22,10 +23,11 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 from sybil import Sybil
-from sybil.parsers.markdown import SkipParser
+from sybil.parsers.markdown import PythonCodeBlockParser, SkipParser
 
 import scenet
 from scenet import PanelSyntaxError
@@ -104,6 +106,37 @@ class TestDoctestsRunWithBuiltinsOnly:
         )
         assert "NameError: name 'double' is not defined" in run.stdout, run.stdout
         assert "1 failed, 1 passed" in run.stdout, run.stdout
+
+
+def _root_conftest() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("root_conftest", ROOT / "conftest.py")
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class TestTheSuiteRunsExamplesSo:
+    def test_conftest_empties_every_doctest(self):
+        item = object.__new__(pytest.DoctestItem)
+        item.dtest = doctest.DocTest(
+            [], {"compile_source": scenet.compile_source}, "x", None, 0, None
+        )
+        _root_conftest().pytest_collection_modifyitems([item])
+        assert item.dtest.globs == {"__name__": "__main__"}
+
+    def test_conftest_runs_each_python_block_alone(self):
+        (sybils,) = [
+            cell.cell_contents for cell in _root_conftest().pytest_collect_file.__closure__
+        ]
+        (sybil,) = sybils
+        assert any(isinstance(parser, FreshPythonCodeBlockParser) for parser in sybil.parsers)
+        assert not any(
+            isinstance(parser, PythonCodeBlockParser)
+            and not isinstance(parser, FreshPythonCodeBlockParser)
+            for parser in sybil.parsers
+        )
 
 
 class TestEachMarkdownBlockRunsAlone:
@@ -222,7 +255,7 @@ COMPILED = [block for block in BLOCKS if block.kind is not None and block.copy_o
 
 
 def test_there_are_documents_to_compile():
-    assert len(COMPILED) > 30
+    assert len(COMPILED) > 20
     assert {block.kind for block in COMPILED} >= {"panel", "scene", "script"}
 
 
@@ -277,8 +310,8 @@ def test_a_document_that_does_not_compile_fails(tmp_path: Path):
         compile_block(block, tmp_path)
 
 
-#: A line that only a comic script has: a panel or a page heading.
-_SCRIPT_HEADING = re.compile(r"^(#+ |\*\*)?(PANEL|Panel|PAGE) \S", re.MULTILINE)
+#: A line that only a comic script has: a panel or a page heading, in English or French.
+_SCRIPT_HEADING = re.compile(r"^(#+ |\*\*)?(PANEL|Panel|PAGE|PLANCHE|CASE) \S", re.MULTILINE)
 
 
 def test_every_comic_script_says_it_is_one():

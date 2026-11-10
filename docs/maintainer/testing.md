@@ -138,6 +138,49 @@ A block that needs a file the reader creates along the way is marked `<!--- skip
 A new rule needs a corpus document; a new option needs a definition in the reference. The
 tests say which.
 
+## Examples a reader can paste
+
+A reader copies an example into a fresh file and runs it, and it must work. The suite runs
+every example that way (#317), and fails on each way it could not:
+
+- **A missing import.** `--doctest-modules` runs a docstring's examples in a copy of its
+  module's globals, where an example could call the function it documents without importing
+  it. A hook in the root `conftest.py` empties them first: each docstring runs with builtins
+  only, as a pasted script does.
+- **A block that leans on an earlier one.** Sybil runs every example of a page in one
+  namespace. The root `conftest.py` gives each Python block a namespace of its own; the
+  `>>>` lines of one block still share it, as the lines of one session do.
+- **A public name imported from a submodule.** `from scenet.ir import Mass` works, and teaches
+  an import path the API does not promise. A name in `scenet.__all__` is imported from
+  `scenet`; any other class or function from the module that defines it, not one that only
+  imports it.
+- **A document that does not compile.** Every `yaml` and `scenet-script` block in `docs/` and
+  `README.md` is compiled as the kind of document it shows: a scene when it holds `panels:` or
+  `pages:`, a script when it is a `scenet-script` block, and a panel otherwise. A comic script
+  in a `text` or untagged block fails, since it would never be compiled.
+
+A block that is only a part of a document says so where the reader sees it, in a caption:
+
+````markdown
+```{code-block} yaml
+:caption: Part of story.scene.yaml
+
+pages:
+  - tiers: [{panels: [arrival, door]}]
+```
+````
+
+A caption of `Part of <document>` is not compiled, on purpose; a YAML part is still read as
+YAML. A caption that is a file name says what the block is when its contents cannot: a
+`*.puppet.yaml` is loaded as a puppet, a `*.art.yaml` as an artwork contract, and a file
+Scenet does not read, such as `.github/workflows/comic.yml`, is only read as YAML. Any other
+caption is an error. The README holds no caption, since GitHub and PyPI render no MyST: every
+block of it is complete. A block that is an example file word for word, as each one on the
+gallery page is, is compiled by `tests/test_gallery.py` beside the files it names.
+
+`tests/doc_examples.py` holds the mechanisms and `tests/test_doc_examples.py` the tests,
+including one per mistake above, on an example written to make it.
+
 ## Profiles
 
 A property failure has to replay identically, so **the default is derandomized

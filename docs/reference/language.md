@@ -102,6 +102,7 @@ Where and when the panel happens, drawn as **tonal masses** rather than as geome
 picture drawn elsewhere.
 
 ```yaml
+cast: {alice: {reference: alice}}
 setting:
   place: docks       # a named place, which expands into masses
   horizon: mid       # high | mid | low
@@ -109,7 +110,9 @@ setting:
   weather: rain      # clear | rain | fog | snow
 ```
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside art/p01-street.png
+
 setting:
   image: art/p01-street.png   # a PNG or JPEG, relative to this document
   fit: cover                  # cover | contain; left out, cover
@@ -149,6 +152,7 @@ A place is a convenience. Underneath it is a list of masses, which stays authora
 want control — and which is *exactly* what a place expands into:
 
 ```yaml
+cast: {alice: {reference: alice}}
 setting:
   horizon: mid
   masses:
@@ -362,7 +366,9 @@ mouth — while drawing nothing of them: the picture already has.
 
 **In the gallery:** [From puppets to figures](../gallery.md#from-puppets-to-figures).
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside art/p01-street.png and art/p01-street.art.yaml
+
 setting: {image: art/p01-street.png}
 cast:
   ana: {figure: ana}          # in place of reference:
@@ -505,7 +511,9 @@ A cast member may instead be a figure the panel's picture draws, written `figure
 parts drawn on it, a face, and the poses and expressions it can take — and a cast member names it by
 its path:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside puppets/pip.puppet.yaml
+
 cast:
   alice: {reference: alice}
   pip:   {reference: puppets/pip.puppet.yaml, pose: waving}
@@ -581,6 +589,9 @@ There are three verbs. `say` puts a line in a balloon; `caption` puts one in a b
 letters a sound effect into the picture.
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 script:
   - caption: {text: "Midnight. The docks.", kind: locale, prefer: top_left}
   - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
@@ -763,6 +774,7 @@ a balloon mildly dislikes hugging the panel edge, and a caption is looking for e
 A word written between underscores is stressed, and lettered in **bold italic**:
 
 ```yaml
+cast: {alice: {reference: alice}}
 script:
   - caption: {text: "_Later._ The same corner.", kind: locale}
   - say: {by: alice, text: "I _told_ you it would rain."}
@@ -812,6 +824,9 @@ angled and outlined, near where it happens, with no balloon.
 **In the gallery:** [Sound effects](../gallery.md#sound-effects) and [A sound pulled to a zone](../gallery.md#a-sound-pulled-to-a-zone).
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 script:
   - say: {by: alice, text: "Get down!"}
   - sfx: {text: BLAM, from: bob, size: large, rotate: -14}
@@ -881,6 +896,9 @@ What the panel shows, in words, for a reader who cannot see it.
 **In the gallery:** [A description](../gallery.md#a-description).
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 description: Alice and Bob face each other on a rainy street corner. She is exasperated.
 ```
 
@@ -914,7 +932,9 @@ How the lettering is set: its size, and the face it is set in.
 
 **In the gallery:** [How lines break](../gallery.md#how-lines-break) and [Type size](../gallery.md#type-size).
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside fonts/
+
 lettering:
   size: 30
   font: {regular: fonts/Comic-Regular.ttf, italic: fonts/Comic-Italic.ttf}
@@ -949,8 +969,17 @@ same document would letter differently on two computers.
 
 **In the gallery:** [Your own font](../gallery.md#your-own-font).
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside fonts/
+
 lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
+```
+
+Or a file for each face:
+
+```{code-block} yaml
+:caption: Part of a panel beside fonts/
+
 lettering:
   font:
     regular: fonts/Comic-Regular.ttf                 # dialogue, and spoken captions
@@ -1052,6 +1081,7 @@ order a screen reader follows.
 What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
 
 ```yaml
+cast: {alice: {reference: alice}}
 palette: tinted
 setting: {place: docks, time: dusk}
 ```
@@ -1132,7 +1162,9 @@ not `pages:`. See [Write a panel as a comic script](../howto/write_a_comic_scrip
 A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
 unquoted `1:` as a number, so a panel named by its number is written `'1':`.
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene document
+
 page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
 pages:
   - tiers:
@@ -1179,7 +1211,9 @@ border on that side, so its art goes to the edge of the cut page.
 
 ![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](../images/gallery/73-panels-that-bleed.page-1.svg)
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene document
+
 page: {size: [1600, 2400], margin: 80, bleed: 30}
 pages:
   - tiers:
@@ -1209,7 +1243,9 @@ A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel
 of short ones is written: the tier is split across into columns, and each column down into its
 panels, with `tier_gutter` between them.
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene's tiers
+
 - height: 2
   columns:
     - {width: 2, panels: [above, {use: below, height: 2}]}
@@ -1224,7 +1260,9 @@ between them blocking the way, and readers go across those instead, so they are 
 
 An **inset** is a small panel set into a corner of another and drawn over it:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene's tiers
+
 - panels:
     - use: street
       insets:
@@ -1246,7 +1284,9 @@ in from its corner, must fit inside its panel.
 
 A tier of panels can **slant**, for a beat that should not sit square:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene's tiers
+
 - {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
 ```
 

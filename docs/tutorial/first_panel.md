@@ -169,7 +169,9 @@ differences a comic uses to tell characters apart.
 
 ## Dialogue
 
-```yaml
+```{code-block} yaml
+:caption: Part of hello.panel.yaml
+
 script:
   - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
   - say: {by: bob,   text: "I know."}

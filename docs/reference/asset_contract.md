@@ -25,7 +25,9 @@ path — see [a puppet of your own](language.md#a-puppet-of-your-own) and
 Its schema is `scenet schema --puppet` ([editor support](../howto/editor_support.md) associates it
 with `*.puppet.yaml`).
 
-```yaml
+```{code-block} yaml
+:caption: sketch.puppet.yaml
+
 name: sketch
 units_per_head: 100
 
@@ -139,7 +141,9 @@ would have no geometry to move. Saying so is better than leaving a group silentl
 
 ### The expression vocabulary is a drawing convention
 
-```yaml
+```{code-block} yaml
+:caption: Part of a puppet file
+
 expressions:
   neutral:  {}
   happy:    {mouth: smile}
@@ -206,7 +210,9 @@ solver needs the same things about them — where each face is, where each mouth
 covers — without looking at the picture any more than it looks at a puppet. An **artwork contract**
 declares them, once, beside the picture.
 
-```yaml
+```{code-block} yaml
+:caption: art/p01-street.art.yaml
+
 # art/p01-street.art.yaml, beside art/p01-street.png
 size: [3000, 2000]            # the picture's own size, in pixels
 figures:

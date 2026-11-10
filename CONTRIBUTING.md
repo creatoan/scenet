@@ -39,6 +39,14 @@ and how to add a generator.
   wall-clock time, no unseeded randomness, no dictionary-ordering dependence, no absolute paths in
   output.
 - **Tests before implementation.** Each module's tests land first.
+- **Every example works pasted into a fresh file.** A docstring example or a Python block in the
+  docs imports every name it uses, a public one from `scenet` (`from scenet import Mass`, not
+  `from scenet.ir import Mass`) and anything else from the module that defines it. It leans on no
+  other block. Every `yaml` and `scenet-script` block in `docs/` and the README compiles as the
+  document it shows, or carries a caption that says it is a part of one:
+  ```` ```{code-block} yaml ```` with `:caption: Part of story.scene.yaml`. `pytest` fails on
+  each; [the testing guide](docs/maintainer/testing.md#examples-a-reader-can-paste) has the
+  details.
 - **No personal information in committed files.** Package metadata is attributed to
   "Scenet contributors"; keep real names, emails and local machine paths out of the tree.
 

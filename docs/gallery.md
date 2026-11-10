@@ -3058,7 +3058,7 @@ The same kind of panel written as a comic script, in the plain-text form writers
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 panel:
   size: [900, 640]
@@ -3107,7 +3107,7 @@ A script in the format Dark Horse asks for: a title page, counts, and captions w
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 panel:
   size: [900, 640]
@@ -3172,7 +3172,7 @@ A script written in French: planche, cases, récitatif, pensée, hors champ and 
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 panel:
   size: [900, 640]
@@ -3231,7 +3231,7 @@ A script kept in Markdown, with headings after #, labels in bold, rules between 
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A comic script kept in Markdown, as many writers keep one: in a notes app, in a README,
 # in any editor that shows it formatted. Headings start with #, a label may be in bold, a
@@ -3304,7 +3304,7 @@ A manga read right to left over two pages: a splash in colour, panels numbered a
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A manga script, read right to left. `direction: rtl` makes the whole script read from the
 # top right, as a manga is read: the panels of a page, and the balloons of a panel. Nothing
@@ -3402,7 +3402,7 @@ A French planche of nine cases that walks the shot ladder in abbreviations, from
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A French script, its shots abbreviated as a French découpage writes them: PE for plan
 # d'ensemble, PM, PA, PRT, PMM, PRP, PR, GP and TGP for très gros plan. Case, accents and
@@ -3487,7 +3487,7 @@ A French planche of eight vignettes, each shot named in full, from plan moyen to
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A French script written vignette by vignette, its shots named in full: plan moyen, plan
 # mi-moyen and plan rapproché taille, plan rapproché, plan rapproché épaule and plan épaule,
@@ -3558,7 +3558,7 @@ A script written as a screenwriter writes: sluglines, voices over and off screen
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A comic script written the way a screenwriter writes one: a slugline opens each scene, and
 # a cue is a name in capitals alone on its line, with the screenplay's extensions after it.
@@ -3643,7 +3643,7 @@ A script as a letterer reads it: numbered items, every kind of caption, voices o
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A script as a letterer reads it, after Blambot's comic script basics: every item to letter
 # in a panel is numbered in reading order -- 1. or 2) -- so that writer and letterer can
@@ -3811,7 +3811,7 @@ A script whose page says three panels where two follow: it compiles, and the che
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A page that says how many panels it holds, and miscounts: a note, not an error.
 #
@@ -3869,7 +3869,7 @@ A speaker's name misspelled in a script makes the line prose, not dialogue, and 
 <details>
 <summary>Source</summary>
 
-```text
+```scenet-script
 ---
 # A line set like dialogue that is not read as dialogue: a note, not an error.
 #

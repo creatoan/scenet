@@ -120,6 +120,29 @@ def _absolute_links(text: str, page: str) -> str:
     return LINK.sub(rewrite, text)
 
 
+#: A MyST code block with a caption, ```` ```{code-block} yaml ```` and `:caption: ...`.
+CAPTIONED = re.compile(
+    r"^(?P<indent> *)(?P<ticks>`{3,})\{code-block\} (?P<language>\S+)\n"
+    r"(?P=indent):caption: (?P<caption>.+)\n(?: *\n)?",
+    re.MULTILINE,
+)
+
+
+def _plain_captions(text: str) -> str:
+    """Write each captioned code block as plain Markdown: the caption, then a plain fence.
+
+    The pack is read as Markdown, by models and by GitHub, neither of which knows MyST's
+    directives. A caption says what a block is -- `Part of story.scene.yaml` (#317) -- so it
+    is kept, as a line of its own above the block.
+    """
+
+    def plain(match: re.Match[str]) -> str:
+        indent = match["indent"]
+        return f"{indent}*{match['caption']}:*\n\n{indent}{match['ticks']}{match['language']}\n"
+
+    return CAPTIONED.sub(plain, text)
+
+
 def _title(page: str) -> str:
     """The first top-level heading of a documentation page."""
     for line in (DOCS / f"{page}.md").read_text(encoding="utf-8").splitlines():
@@ -423,7 +446,8 @@ def _alt(picture: Path) -> str:
 
 def _gallery_entry(entry: dict[str, Any]) -> str:
     path = GALLERY / entry["file"]
-    language = "text" if path.suffix == ".script" else "yaml"
+    # The editor extension's language id for a comic script, which the tests compile.
+    language = "scenet-script" if path.suffix == ".script" else "yaml"
     images = "\n".join(
         f"![{_alt(picture)}]({picture.relative_to(DOCS).as_posix()})"
         for picture in pictures_of(entry)
@@ -452,7 +476,7 @@ def parts() -> dict[str, str]:
     built = {
         "preamble": _preamble(),
         **{
-            name: _absolute_links((DOCS / page).read_text(encoding="utf-8"), page)
+            name: _plain_captions(_absolute_links((DOCS / page).read_text(encoding="utf-8"), page))
             for name, page in DOCUMENT_PARTS.items()
         },
         "characters": _characters(),

@@ -10,7 +10,9 @@ A page unit prints as a tenth of a millimetre. Write the trim, the size the page
 `page.size`, and how far the printed sheet runs past it on every side as `page.bleed`, in the same
 units:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a scene document
+
 # A US comic: 6.625 x 10.25 in, with the 0.125 in bleed US printers ask for.
 page: {size: [1682.75, 2603.5], bleed: 31.75, margin: 90, gutter: 30, tier_gutter: 45}
 ```

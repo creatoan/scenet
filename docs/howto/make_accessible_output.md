@@ -75,6 +75,9 @@ A generated description says what is there; only you can say what is happening. 
 panel:
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 description: Alice tells Bob off on a rainy street corner. He will not meet her eye.
 ```
 

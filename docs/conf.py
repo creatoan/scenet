@@ -20,6 +20,7 @@ from pathlib import Path
 
 from docutils import nodes
 from docutils.utils import get_source_line
+from pygments.lexers.special import TextLexer
 from sphinx.application import Sphinx
 from sphinx.util import logging
 
@@ -451,6 +452,10 @@ def setup(app: Sphinx) -> None:
         app.connect("autodoc-process-docstring", _no_inline_types, priority=400)
         app.connect("autodoc-process-bases", _public_bases, priority=400)
         app.connect("autodoc-skip-member", _api_members_only)
+    # A comic script's fence names its language as the editor extension does, so that
+    # `tests/test_doc_examples.py` knows to compile it (#317). Pygments has no lexer for it,
+    # and it is shown as text, which is what a script is.
+    app.add_lexer("scenet-script", TextLexer)
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
     app.connect("doctree-resolved", _no_raw_markup)
     app.connect("build-finished", _every_public_name_is_documented)

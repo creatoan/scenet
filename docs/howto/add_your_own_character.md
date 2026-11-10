@@ -21,7 +21,9 @@ Your editor can check a puppet file as you write it, as it checks a panel: the
 [VS Code extension](editor_support.md#the-vs-code-extension) does for every `*.puppet.yaml`, and
 any editor with a YAML language server does with this on the first line:
 
-```yaml
+```{code-block} yaml
+:caption: Part of puppets/pip.puppet.yaml
+
 # yaml-language-server: $schema=https://creatoan.github.io/scenet/schemas/puppet.schema.json
 ```
 
@@ -88,7 +90,9 @@ A cast member names a puppet file by its path, relative to the folder the docume
 exactly as a document names a [font](../reference/language.md#font) or a
 [picture](../reference/language.md#an-image-behind-the-cast):
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel beside puppets/pip.puppet.yaml
+
 cast:
   alice: {reference: alice, at: left_third}
   pip:   {reference: puppets/pip.puppet.yaml, pose: waving, expression: happy}

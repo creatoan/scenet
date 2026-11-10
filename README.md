@@ -77,9 +77,16 @@ panels:
     camera: {shot: close_up}  # move in
 ```
 
-Or in comic script, the format writers already use:
+Or in comic script, the format writers already use, under a few lines of YAML that say who
+`ALICE` and `BOB` are:
 
-```
+```scenet-script
+---
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB:   {reference: bob,   at: right_third, facing: left}
+---
+
 PANEL 1
 @shot: full_shot
 Alice and Bob face each other on a rainy street corner.

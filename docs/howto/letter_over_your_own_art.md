@@ -20,7 +20,9 @@ from. An absolute path is refused, and so is a backslash.
 
 ## Name it
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel in comic/chapter-one.scene.yaml
+
 setting:
   image: art/p01-street.png
   fit: cover        # or contain
@@ -75,7 +77,9 @@ A screen reader reads each panel as one image, named by its description and then
 picture, so a generated description says nothing about it — not the place, not the hour, only the
 weather it drew on top. Write the description yourself:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel in comic/chapter-one.scene.yaml
+
 description: A brick street at dusk, every window lit. Alice points up at them; Bob shrugs.
 ```
 

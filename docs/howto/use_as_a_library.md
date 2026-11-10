@@ -111,7 +111,7 @@ The interesting information is in `result.core`, not in the SVG. Panel Core is f
 resolved and entirely numeric, but every name you wrote survives:
 
 ```python
-from scenet import compile_source
+from scenet import PanelCore, compile_source
 
 result = compile_source("""
 cast:
@@ -135,11 +135,6 @@ assert alice.depth >= 0
 
 # And it serialises to something you can diff, edit, and read back.
 document = result.core.to_json()
-```
-
-```python
-from scenet import PanelCore
-
 restored = PanelCore.from_json(document)
 assert restored == result.core
 ```

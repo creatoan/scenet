@@ -224,6 +224,17 @@ below 1.0 means.
   members stay; `__new__` on every `StrEnum` and pydantic's validators go. `Side`,
   `TypeSize`, `CoreImage` and `CoreModel` join their modules' `__all__`, and the ten modules no
   page documented are on the reference.
+- **Every example works pasted into a fresh file, and every document shown compiles** (#317).
+  Docstring examples ran in their module's globals, so 37 called what they document without
+  importing it; each now runs with builtins only, and imports what it uses. Each Python block of
+  a page runs in a namespace of its own, where two leaned on the block before. A public name is
+  imported from `scenet`, which 19 docstrings imported from the module defining it. Every `yaml`
+  and comic-script block in the documentation and the README is compiled as the document it
+  shows: the README's comic script, and the how-to's first one, which named a cast they never
+  declared, now carry their front matter, and the language reference's short examples are
+  complete panels. A block that is only a part of a document says so in a caption, `Part of
+  story.scene.yaml`, and comic scripts are fenced as `scenet-script`. A test fails on each of
+  the four mistakes; `CONTRIBUTING.md` and the testing guide state the rule.
 - **A right-to-left document without pages prints right to left** (#296). Its print PDF, one
   page per panel, did not say `/Direction /R2L`, which only pages read right to left wrote, so
   a reader laid it out left to right.

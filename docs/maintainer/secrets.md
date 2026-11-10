@@ -55,7 +55,9 @@ left behind in `.git/config` for a later step — or a compromised dependency's 
 
 ## Actions are pinned to commit SHAs
 
-```yaml
+```{code-block} yaml
+:caption: Part of .github/workflows/ci.yml
+
 - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 ```
 

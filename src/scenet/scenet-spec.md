@@ -184,12 +184,15 @@ Where and when the panel happens, drawn as **tonal masses** rather than as geome
 picture drawn elsewhere.
 
 ```yaml
+cast: {alice: {reference: alice}}
 setting:
   place: docks       # a named place, which expands into masses
   horizon: mid       # high | mid | low
   time: night        # dawn | day | dusk | night
   weather: rain      # clear | rain | fog | snow
 ```
+
+*Part of a panel beside art/p01-street.png:*
 
 ```yaml
 setting:
@@ -231,6 +234,7 @@ A place is a convenience. Underneath it is a list of masses, which stays authora
 want control — and which is *exactly* what a place expands into:
 
 ```yaml
+cast: {alice: {reference: alice}}
 setting:
   horizon: mid
   masses:
@@ -444,6 +448,8 @@ mouth — while drawing nothing of them: the picture already has.
 
 **In the gallery:** [From puppets to figures](https://creatoan.github.io/scenet/gallery.html#from-puppets-to-figures).
 
+*Part of a panel beside art/p01-street.png and art/p01-street.art.yaml:*
+
 ```yaml
 setting: {image: art/p01-street.png}
 cast:
@@ -587,6 +593,8 @@ A cast member may instead be a figure the panel's picture draws, written `figure
 parts drawn on it, a face, and the poses and expressions it can take — and a cast member names it by
 its path:
 
+*Part of a panel beside puppets/pip.puppet.yaml:*
+
 ```yaml
 cast:
   alice: {reference: alice}
@@ -663,6 +671,9 @@ There are three verbs. `say` puts a line in a balloon; `caption` puts one in a b
 letters a sound effect into the picture.
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 script:
   - caption: {text: "Midnight. The docks.", kind: locale, prefer: top_left}
   - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
@@ -845,6 +856,7 @@ a balloon mildly dislikes hugging the panel edge, and a caption is looking for e
 A word written between underscores is stressed, and lettered in **bold italic**:
 
 ```yaml
+cast: {alice: {reference: alice}}
 script:
   - caption: {text: "_Later._ The same corner.", kind: locale}
   - say: {by: alice, text: "I _told_ you it would rain."}
@@ -894,6 +906,9 @@ angled and outlined, near where it happens, with no balloon.
 **In the gallery:** [Sound effects](https://creatoan.github.io/scenet/gallery.html#sound-effects) and [A sound pulled to a zone](https://creatoan.github.io/scenet/gallery.html#a-sound-pulled-to-a-zone).
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 script:
   - say: {by: alice, text: "Get down!"}
   - sfx: {text: BLAM, from: bob, size: large, rotate: -14}
@@ -963,6 +978,9 @@ What the panel shows, in words, for a reader who cannot see it.
 **In the gallery:** [A description](https://creatoan.github.io/scenet/gallery.html#a-description).
 
 ```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
 description: Alice and Bob face each other on a rainy street corner. She is exasperated.
 ```
 
@@ -995,6 +1013,8 @@ How the lettering is set: its size, and the face it is set in.
 ![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](https://creatoan.github.io/scenet/images/gallery/14-lettering.svg)
 
 **In the gallery:** [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break) and [Type size](https://creatoan.github.io/scenet/gallery.html#type-size).
+
+*Part of a panel beside fonts/:*
 
 ```yaml
 lettering:
@@ -1031,8 +1051,17 @@ same document would letter differently on two computers.
 
 **In the gallery:** [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font).
 
+*Part of a panel beside fonts/:*
+
 ```yaml
 lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
+```
+
+Or a file for each face:
+
+*Part of a panel beside fonts/:*
+
+```yaml
 lettering:
   font:
     regular: fonts/Comic-Regular.ttf                 # dialogue, and spoken captions
@@ -1134,6 +1163,7 @@ order a screen reader follows.
 What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
 
 ```yaml
+cast: {alice: {reference: alice}}
 palette: tinted
 setting: {place: docks, time: dusk}
 ```
@@ -1214,6 +1244,8 @@ not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/s
 A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
 unquoted `1:` as a number, so a panel named by its number is written `'1':`.
 
+*Part of a scene document:*
+
 ```yaml
 page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
 pages:
@@ -1261,6 +1293,8 @@ border on that side, so its art goes to the edge of the cut page.
 
 ![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
 
+*Part of a scene document:*
+
 ```yaml
 page: {size: [1600, 2400], margin: 80, bleed: 30}
 pages:
@@ -1291,6 +1325,8 @@ A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel
 of short ones is written: the tier is split across into columns, and each column down into its
 panels, with `tier_gutter` between them.
 
+*Part of a scene's tiers:*
+
 ```yaml
 - height: 2
   columns:
@@ -1305,6 +1341,8 @@ between them blocking the way, and readers go across those instead, so they are 
 `page-layout`; write them as tiers, or put a panel that spans the tier between them.
 
 An **inset** is a small panel set into a corner of another and drawn over it:
+
+*Part of a scene's tiers:*
 
 ```yaml
 - panels:
@@ -1327,6 +1365,8 @@ notes it. Two insets in one panel must stay a gutter clear of each other, and an
 in from its corner, must fit inside its panel.
 
 A tier of panels can **slant**, for a beat that should not sit square:
+
+*Part of a scene's tiers:*
 
 ```yaml
 - {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
@@ -1554,7 +1594,13 @@ asking someone to abandon it in order to try a compiler is a poor trade.
 
 So Scenet reads it.
 
-```
+```scenet-script
+---
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB:   {reference: bob,   at: right_third, facing: left}
+---
+
 PAGE ONE
 
 PANEL 1
@@ -1579,6 +1625,8 @@ ALICE (shouting)
 You what?!
 ```
 
+The lines between the `---` fences are the [front matter](#front-matter): who `ALICE` and `BOB`
+are, which a script has no way to say. Everything under them is the script as a writer writes it.
 Save that as `umbrella.script` and compile it exactly like any other document:
 
 ```bash
@@ -1675,7 +1723,9 @@ defines `CAPTION (VOICE OVER)` as a character "speaking, but … not in the loca
 [Dark Horse's script format](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
 is the reference house format, and Scenet reads its layout as written:
 
-```
+*Part of a script in Dark Horse's format, less its front matter:*
+
+```scenet-script
 Margo Wren
 14 Harbour Lane, Port Ellis
 
@@ -1718,7 +1768,9 @@ Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `
 it or around a label, and a horizontal rule are tolerated: the markers are stripped and the
 convention read. It is not a second format: the text of a line is never rewritten.
 
-```text
+*Part of a comic script kept in Markdown:*
+
+```scenet-script
 ## PAGE ONE
 
 ### PANEL 2
@@ -1804,7 +1856,9 @@ panel takes a tier of its own in the middle, where a beat sits best.
 
 **Say otherwise with `@tiers:`**, written right after the PAGE heading and before its first panel:
 
-```
+*Part of a comic script:*
+
+```scenet-script
 PAGE TWO
 @tiers: 1 2
 
@@ -1838,7 +1892,9 @@ is read: the panels of each page, and the balloons of each panel. Nothing is mir
 character written at `right_third` stands on the right; only what reading decides follows the
 direction, as [`direction`](https://creatoan.github.io/scenet/reference/language.html#direction) explains.
 
-```text
+*Part of a manga script:*
+
+```scenet-script
 ---
 direction: rtl
 page: {size: [1280, 1820], margin: 64, gutter: 24, tier_gutter: 36}
@@ -1944,7 +2000,9 @@ Consecutive panels share nearly everything — the place, the weather, who stand
 restating it is where continuity errors get in. `@over:` writes a panel as a change to another,
 exactly as [`over:`](https://creatoan.github.io/scenet/howto/compile_a_sequence.html) does in a YAML scene:
 
-```
+*Part of a comic script:*
+
+```scenet-script
 PANEL 1
 @shot: full_shot
 @setting: {place: docks, weather: rain}
@@ -1977,7 +2035,9 @@ who cannot see the panel. Its lines become one paragraph, and Markdown's markers
 `NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
 directive, which is kept exactly as written and wins over the prose:
 
-```text
+*Part of a comic script:*
+
+```scenet-script
 PANEL 1
 @description: Alice waits on a corner in the rain.
 NOTE: redraw the rain, heavier.
@@ -1993,7 +2053,9 @@ A script is dialogue and camera direction. It has no way to say who `ALICE` *is*
 puppet she uses, or where she stands. That comes from a YAML preamble between `---`
 fences:
 
-```
+*Part of examples/umbrella.script:*
+
+```scenet-script
 ---
 panel:
   size: [900, 700]
@@ -2400,7 +2462,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CaptionEvent": {
       "additionalProperties": false,
-      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit, a place on the panel. Unwritten, it is\n        `None`, and the caption sits where a `locale` caption conventionally goes:\n        where reading starts, `top_left`, or `top_right` in a comic read right to left.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet.ir import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
+      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit, a place on the panel. Unwritten, it is\n        `None`, and the caption sits where a `locale` caption conventionally goes:\n        where reading starts, `top_left`, or `top_right` in a comic read right to left.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.\n\nExample:\n    >>> from scenet import CaptionEvent\n    >>> CaptionEvent(text=\"Midnight. The docks.\").kind.value\n    'locale'",
       "properties": {
         "by": {
           "anyOf": [
@@ -2756,7 +2818,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "Mass": {
       "additionalProperties": false,
-      "description": "One tonal mass in the backdrop: what it is, how far back, how wide.\n\nAttributes:\n    kind: What the mass is made of, which decides its silhouette.\n    plane: How far back it sits, which decides its value and its draw order.\n    spans: How much of the panel's width it covers.\n\n**Backdrops are never author-drawn**, and there are two reasons. The structural one:\ncrisp architecture needs a vanishing point, and this is deliberately a flat,\northographic compiler, so drawn buildings would fight the compiler's own model.\nSoft tonal masses have no perspective to get wrong.\n\nThe second is that this is how comics actually establish place. Notan -- the\nJapanese light/dark mass principle, which reached Western art teaching through\nArthur Wesley Dow's *Composition* (1899) -- says place is read from the arrangement\nof masses rather than from rendered detail.\n\nExample:\n    >>> from scenet.ir import Mass, MassKind\n    >>> Mass(kind=MassKind.SKY).plane.value\n    'mid'",
+      "description": "One tonal mass in the backdrop: what it is, how far back, how wide.\n\nAttributes:\n    kind: What the mass is made of, which decides its silhouette.\n    plane: How far back it sits, which decides its value and its draw order.\n    spans: How much of the panel's width it covers.\n\n**Backdrops are never author-drawn**, and there are two reasons. The structural one:\ncrisp architecture needs a vanishing point, and this is deliberately a flat,\northographic compiler, so drawn buildings would fight the compiler's own model.\nSoft tonal masses have no perspective to get wrong.\n\nThe second is that this is how comics actually establish place. Notan -- the\nJapanese light/dark mass principle, which reached Western art teaching through\nArthur Wesley Dow's *Composition* (1899) -- says place is read from the arrangement\nof masses rather than from rendered detail.\n\nExample:\n    >>> from scenet import Mass, MassKind\n    >>> Mass(kind=MassKind.SKY).plane.value\n    'mid'",
       "properties": {
         "kind": {
           "$ref": "#/$defs/MassKind"
@@ -2837,7 +2899,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "Place": {
-      "description": "A named setting, expanded into masses by the frontend.\n\nTen to start with, chosen to span the distinctions that change how a backdrop is\nbuilt rather than to be a catalogue: exterior and interior, built and natural, open\nand enclosed. `alley` is the one with a foreground mass, which is what makes it\nread as a place you are standing *in* rather than looking at.\n\nExample:\n    >>> from scenet.places import PLACES, Place\n    >>> [mass.kind.value for mass in PLACES[Place.SHORE]]\n    ['sky', 'water', 'ground']",
+      "description": "A named setting, expanded into masses by the frontend.\n\nTen to start with, chosen to span the distinctions that change how a backdrop is\nbuilt rather than to be a catalogue: exterior and interior, built and natural, open\nand enclosed. `alley` is the one with a foreground mass, which is what makes it\nread as a place you are standing *in* rather than looking at.\n\nExample:\n    >>> from scenet import PLACES, Place\n    >>> [mass.kind.value for mass in PLACES[Place.SHORE]]\n    ['sky', 'water', 'ground']",
       "enum": [
         "alley",
         "desert",
@@ -3138,7 +3200,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SfxEvent": {
       "additionalProperties": false,
-      "description": "A sound effect: letters that are part of the picture.\n\n`BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near\nwhere the sound is -- in a display face, not in the balloon face, and with no balloon.\n\nAttributes:\n    verb: Always `sfx`, written as `- sfx: {...}`.\n    text: The sound, lettered exactly as written. No exclamation mark is added --\n        Comicraft's glossary: sound effects are not exclamations -- and an underscore\n        is not emphasis here, just an underscore.\n    source: Written `from:`. The actor the sound comes from; the effect is placed near\n        them. Must be in the cast.\n    prefer: Where it would like to sit, for an effect with no source -- or as a pull\n        on one that has.\n    size: How loud: `small`, `medium` or `large`.\n    rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the\n        default is level, and the angle is the author's to choose.\n    arc: Degrees the line of letters bends through, -120 to 120. Positive bows the\n        middle up, negative bows it down.\n    hollow: Outline only, no fill, so the art shows through the letters -- what\n        letterers call an open effect.\n\n**Placed by candidates and cost, never at a coordinate.** It never covers a face,\nand balloons pay to cover it, as they pay to cover emanata. It takes its number in\nthe script's one reading order, which is what a reader of the text follows, but it\nis exempt from the geometric reading-order rule: a sound sits where the sound is.\n\nExample:\n    >>> from scenet.ir import SfxEvent\n    >>> SfxEvent.model_validate({\"text\": \"BLAM\", \"from\": \"bob\"}).source\n    'bob'",
+      "description": "A sound effect: letters that are part of the picture.\n\n`BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near\nwhere the sound is -- in a display face, not in the balloon face, and with no balloon.\n\nAttributes:\n    verb: Always `sfx`, written as `- sfx: {...}`.\n    text: The sound, lettered exactly as written. No exclamation mark is added --\n        Comicraft's glossary: sound effects are not exclamations -- and an underscore\n        is not emphasis here, just an underscore.\n    source: Written `from:`. The actor the sound comes from; the effect is placed near\n        them. Must be in the cast.\n    prefer: Where it would like to sit, for an effect with no source -- or as a pull\n        on one that has.\n    size: How loud: `small`, `medium` or `large`.\n    rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the\n        default is level, and the angle is the author's to choose.\n    arc: Degrees the line of letters bends through, -120 to 120. Positive bows the\n        middle up, negative bows it down.\n    hollow: Outline only, no fill, so the art shows through the letters -- what\n        letterers call an open effect.\n\n**Placed by candidates and cost, never at a coordinate.** It never covers a face,\nand balloons pay to cover it, as they pay to cover emanata. It takes its number in\nthe script's one reading order, which is what a reader of the text follows, but it\nis exempt from the geometric reading-order rule: a sound sits where the sound is.\n\nExample:\n    >>> from scenet import SfxEvent\n    >>> SfxEvent.model_validate({\"text\": \"BLAM\", \"from\": \"bob\"}).source\n    'bob'",
       "properties": {
         "arc": {
           "default": 0.0,

@@ -22,14 +22,18 @@ and so is a backslash: write `/` between folders, on Windows too.
 
 One file for every face:
 
-```yaml
+```{code-block} yaml
+:caption: Part of comic/chapter-one.scene.yaml
+
 lettering: {font: fonts/Comic-Regular.ttf}
 ```
 
 Or a file per face — `regular` for dialogue, `italic` for captions, `bold_italic` for
 [emphasis](../reference/language.md#emphasis):
 
-```yaml
+```{code-block} yaml
+:caption: Part of comic/chapter-one.scene.yaml
+
 lettering:
   font:
     regular: fonts/Comic-Regular.ttf

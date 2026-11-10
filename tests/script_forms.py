@@ -170,6 +170,7 @@ def fold(word: str) -> str:
     without its spaces.
 
     Example:
+        >>> from tests.script_forms import fold
         >>> [fold(word) for word in ("O.S.", "os", "Voice-Over", "voiceover", "pensée")]
         ['os', 'os', 'voiceover', 'voiceover', 'pensee']
     """
@@ -190,6 +191,8 @@ def keywords(pattern: re.Pattern[str]) -> tuple[str, ...]:
     letter made optional is kept: `panels?` is `panels`.
 
     Example:
+        >>> import re
+        >>> from tests.script_forms import keywords
         >>> keywords(re.compile(r"^(?:SFX|ONOMATOP[EÉ]E)\s*:"))
         ('SFX', 'ONOMATOPÉE')
     """
@@ -205,6 +208,7 @@ def _spelled(entries: Iterable[str], where: str) -> dict[str, str]:
     """A table's entries by their fold, each as the form it is: its spellings, and where.
 
     Example:
+        >>> from tests.script_forms import _spelled
         >>> _spelled(["o.s.", "os", "op"], "on a cue")["os"]
         '(o.s.) or (os) on a cue'
     """

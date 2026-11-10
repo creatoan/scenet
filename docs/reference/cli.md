@@ -378,7 +378,9 @@ scenet check --deep examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml
 Uploading to GitHub code scanning, which is how findings become annotations on a pull
 request:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a GitHub Actions workflow
+
 - run: >-
     uv run scenet check --format sarif -o results.sarif
     examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml

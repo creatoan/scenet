@@ -286,7 +286,8 @@ root = "src"
 [tool.pytest.ini_options]
 # `--doctest-modules` is what makes every example in a docstring executable rather than
 # decorative. An example that forgets an import fails here, which is the single most
-# common complaint about Python library documentation.
+# common complaint about Python library documentation: `conftest.py` runs each with
+# builtins only, not in its module's globals (#317).
 testpaths = ["tests", "src", "docs", "README.md"]
 addopts = """    -q --strict-markers --strict-config --doctest-modules     --cov=scenet --cov-report=term-missing --cov-fail-under=90"""
 xfail_strict = true

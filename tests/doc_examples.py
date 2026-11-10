@@ -72,7 +72,8 @@ _OPTION = re.compile(r"^:(?P<key>[\w-]+):\s*(?P<value>.*)$")
 
 def markdown_pages() -> list[Path]:
     """Every page of the documentation, and the README, in a stable order."""
-    return [ROOT / "README.md", *sorted((ROOT / "docs").rglob("*.md"))]
+    pages = sorted((ROOT / "docs").rglob("*.md"))
+    return [ROOT / "README.md", *(page for page in pages if "_build" not in page.parts)]
 
 
 # --- Doctests ------------------------------------------------------------------------------

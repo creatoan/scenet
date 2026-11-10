@@ -25,7 +25,9 @@ they move together.
 Open the picture in any image editor that shows pixel coordinates, `x` rightward and `y` downward
 from the top left, and write down what it draws:
 
-```yaml
+```{code-block} yaml
+:caption: comic/art/p01-street.art.yaml
+
 # art/p01-street.art.yaml
 size: [3000, 2000]                     # the picture's size, exactly
 figures:
@@ -59,7 +61,9 @@ format is in the [asset contract](../reference/asset_contract.md#artwork-contrac
 
 ## Cast them
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel in comic/chapter-one.scene.yaml
+
 setting: {image: art/p01-street.png}
 cast:
   ana: {figure: ana}

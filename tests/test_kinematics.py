@@ -210,7 +210,10 @@ class TestTheReferenceExampleIsAPuppet:
     DOC = Path(__file__).parent.parent / "docs" / "reference" / "asset_contract.md"
 
     def test_it_loads(self):
-        block = re.search(r"```yaml\n(.*?)```", self.DOC.read_text(encoding="utf-8"), re.DOTALL)
+        # Its caption names it as a puppet file (#317), which is what loads it as one.
+        source = self.DOC.read_text(encoding="utf-8")
+        caption = r"```\{code-block\} yaml\n:caption: sketch\.puppet\.yaml\n\n(.*?)```"
+        block = re.search(caption, source, re.DOTALL)
         assert block is not None
         spec = PuppetSpec.model_validate(yaml.safe_load(block.group(1)))
         assert spec.heads_tall == 7.5

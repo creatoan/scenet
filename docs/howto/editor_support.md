@@ -30,7 +30,9 @@ That URL always serves the schema of the **latest release**. To validate against
 you have installed instead, put its minor version in the path — each release's schemas stay
 online under it:
 
-```yaml
+```{code-block} yaml
+:caption: Part of a panel document
+
 # yaml-language-server: $schema=https://creatoan.github.io/scenet/v0.11/schemas/panel.schema.json
 ```
 

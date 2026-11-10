@@ -5,7 +5,13 @@ asking someone to abandon it in order to try a compiler is a poor trade.
 
 So Scenet reads it.
 
-```
+```scenet-script
+---
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB:   {reference: bob,   at: right_third, facing: left}
+---
+
 PAGE ONE
 
 PANEL 1
@@ -30,6 +36,8 @@ ALICE (shouting)
 You what?!
 ```
 
+The lines between the `---` fences are the [front matter](#front-matter): who `ALICE` and `BOB`
+are, which a script has no way to say. Everything under them is the script as a writer writes it.
 Save that as `umbrella.script` and compile it exactly like any other document:
 
 ```bash
@@ -126,7 +134,9 @@ defines `CAPTION (VOICE OVER)` as a character "speaking, but … not in the loca
 [Dark Horse's script format](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
 is the reference house format, and Scenet reads its layout as written:
 
-```
+```{code-block} scenet-script
+:caption: Part of a script in Dark Horse's format, less its front matter
+
 Margo Wren
 14 Harbour Lane, Port Ellis
 
@@ -169,7 +179,9 @@ Writers keep scripts in Markdown, so `#` to `######` before a heading, `**` or `
 it or around a label, and a horizontal rule are tolerated: the markers are stripped and the
 convention read. It is not a second format: the text of a line is never rewritten.
 
-```text
+```{code-block} scenet-script
+:caption: Part of a comic script kept in Markdown
+
 ## PAGE ONE
 
 ### PANEL 2
@@ -255,7 +267,9 @@ panel takes a tier of its own in the middle, where a beat sits best.
 
 **Say otherwise with `@tiers:`**, written right after the PAGE heading and before its first panel:
 
-```
+```{code-block} scenet-script
+:caption: Part of a comic script
+
 PAGE TWO
 @tiers: 1 2
 
@@ -289,7 +303,9 @@ is read: the panels of each page, and the balloons of each panel. Nothing is mir
 character written at `right_third` stands on the right; only what reading decides follows the
 direction, as [`direction`](../reference/language.md#direction) explains.
 
-```text
+```{code-block} scenet-script
+:caption: Part of a manga script
+
 ---
 direction: rtl
 page: {size: [1280, 1820], margin: 64, gutter: 24, tier_gutter: 36}
@@ -395,7 +411,9 @@ Consecutive panels share nearly everything — the place, the weather, who stand
 restating it is where continuity errors get in. `@over:` writes a panel as a change to another,
 exactly as [`over:`](compile_a_sequence.md) does in a YAML scene:
 
-```
+```{code-block} scenet-script
+:caption: Part of a comic script
+
 PANEL 1
 @shot: full_shot
 @setting: {place: docks, weather: rain}
@@ -428,7 +446,9 @@ who cannot see the panel. Its lines become one paragraph, and Markdown's markers
 `NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
 directive, which is kept exactly as written and wins over the prose:
 
-```text
+```{code-block} scenet-script
+:caption: Part of a comic script
+
 PANEL 1
 @description: Alice waits on a corner in the rain.
 NOTE: redraw the rain, heavier.
@@ -444,7 +464,9 @@ A script is dialogue and camera direction. It has no way to say who `ALICE` *is*
 puppet she uses, or where she stands. That comes from a YAML preamble between `---`
 fences:
 
-```
+```{code-block} scenet-script
+:caption: Part of examples/umbrella.script
+
 ---
 panel:
   size: [900, 700]

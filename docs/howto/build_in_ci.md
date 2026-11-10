@@ -4,7 +4,9 @@ Keep the source comic in your repository, then have GitHub Actions check it, upl
 findings as pull-request annotations, build SVGs and retain them as an artifact. This
 example assumes the source is `comics/issue-01.scene.yaml`; replace that path with yours.
 
-```yaml
+```{code-block} yaml
+:caption: .github/workflows/comic.yml
+
 name: Check and build comic
 
 on:
@@ -126,7 +128,9 @@ findings without interpreting `note` as a rule name.
 Replace the SARIF check and upload steps with these steps; keep the final failure step
 above unchanged:
 
-```yaml
+```{code-block} yaml
+:caption: Part of .github/workflows/comic.yml
+
       - name: Register Scenet problem matcher
         run: echo "::add-matcher::.github/scenet-problem-matcher.json"
 
