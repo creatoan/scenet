@@ -8,7 +8,16 @@ build**.
 
 It is aimed squarely at the commonest complaint about Python library documentation --
 snippets that omit their imports, or that were correct against a version three releases
-ago. Neither can survive here, because the example in the docs is the example that ran.
+ago. Neither can survive here, because the example in the docs is the example that ran, and
+it ran the way a reader runs it: pasted into a fresh file (#317).
+
+- Each Python block runs in a namespace of its own, not one the page shares, so a block
+  cannot lean on the names an earlier block made.
+- Each docstring example runs with builtins only, not in its module's globals, so it cannot
+  call the function it documents without importing it.
+
+`tests/doc_examples.py` has both, and `tests/test_doc_examples.py` holds the rest of the
+rule: public names imported from `scenet`, and every YAML and comic-script block compiled.
 
 A block that genuinely cannot execute (a shell transcript, a deliberately broken sample)
 is marked with an HTML comment:
@@ -16,14 +25,16 @@ is marked with an HTML comment:
     <!--- skip: next -->
 """
 
+import pytest
 from sybil import Sybil
-from sybil.parsers.markdown import CodeBlockParser, PythonCodeBlockParser, SkipParser
+from sybil.parsers.markdown import CodeBlockParser, SkipParser
 
+from tests.doc_examples import FreshPythonCodeBlockParser, clean_doctest_globals
 from tests.shell_examples import run_bash_block
 
 pytest_collect_file = Sybil(
     parsers=[
-        PythonCodeBlockParser(),
+        FreshPythonCodeBlockParser(),
         # The `scenet` lines of every `bash` block are run too: a documented command
         # that stopped working fails the build, exactly as a Python example does.
         CodeBlockParser(language="bash", evaluator=run_bash_block),
@@ -31,3 +42,8 @@ pytest_collect_file = Sybil(
     ],
     patterns=["*.md"],
 ).pytest()
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Run every docstring example with builtins only, as a fresh file would."""
+    clean_doctest_globals(items)
