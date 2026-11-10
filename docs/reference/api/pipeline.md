@@ -8,10 +8,12 @@ read from the environment.
 
 ## `scenet.pipeline`
 
-```{automodule} scenet.pipeline
+```{eval-rst}
+.. automodule:: scenet.pipeline
 ```
 
 ## `scenet.compose`
 
-```{automodule} scenet.compose
+```{eval-rst}
+.. automodule:: scenet.compose
 ```

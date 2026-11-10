@@ -736,7 +736,7 @@ def load_puppet(path: Path) -> PuppetSpec:
     Raises:
         AssetError: The file is not valid YAML -- including a key written twice in one
             mapping -- or is not a mapping.
-        pydantic.ValidationError: The mapping is not a well-formed puppet -- an
+        ~pydantic_core.ValidationError: The mapping is not a well-formed puppet -- an
             out-of-order landmark, a skeleton that is not a tree, a joint referring
             to a parent that does not exist.
 

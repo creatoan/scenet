@@ -8,10 +8,12 @@ for connecting one.
 
 ## `scenet.mcp`
 
-```{automodule} scenet.mcp
+```{eval-rst}
+.. automodule:: scenet.mcp
 ```
 
 ## `scenet.spec_pack`
 
-```{automodule} scenet.spec_pack
+```{eval-rst}
+.. automodule:: scenet.spec_pack
 ```

@@ -6,10 +6,30 @@ more than one.
 
 ## `scenet.frontends.yaml_front`
 
-```{automodule} scenet.frontends.yaml_front
+```{eval-rst}
+.. automodule:: scenet.frontends.yaml_front
 ```
 
 ## `scenet.frontends.script_front`
 
-```{automodule} scenet.frontends.script_front
+```{eval-rst}
+.. automodule:: scenet.frontends.script_front
+```
+
+## `scenet.frontends.common`
+
+```{eval-rst}
+.. automodule:: scenet.frontends.common
+```
+
+## `scenet.frontends.positions`
+
+```{eval-rst}
+.. automodule:: scenet.frontends.positions
+```
+
+## `scenet.safe_yaml`
+
+```{eval-rst}
+.. automodule:: scenet.safe_yaml
 ```

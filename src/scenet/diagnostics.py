@@ -6,17 +6,17 @@ squiggle under it, and an agent repairing its own output cannot tell which of fi
 things went wrong.
 
 **This matters more here than the published JSON Schema does.** The checks that catch
-what a generator actually gets wrong are `model_validator`s in
+what a generator actually gets wrong are `model_validator` methods in
 :mod:`scenet.ir <scenet.ir>` -- every actor id resolving to a cast member, the
 `left_of`/`right_of` graph being acyclic -- and neither is expressible in JSON Schema at
 all. Structured diagnostics are what make a generate/validate/repair loop work, whether
 the thing doing the repairing is a person pasting an error back into a chat window or a
 tool call.
 
-## Why SARIF
+.. rubric:: Why SARIF
 
-[SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) is an
-OASIS standard. GCC emits it under `-fdiagnostics-format=sarif`, MSVC and Clang emit it,
+`SARIF 2.1.0 <https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html>`__ is
+an OASIS standard. GCC emits it under `-fdiagnostics-format=sarif`, MSVC and Clang emit it,
 and GitHub code scanning ingests it directly. A bespoke `{"errors": [...]}` shape would
 be one nobody else can read.
 
@@ -28,7 +28,7 @@ of results; the object model would be a runtime dependency and a licence-gate en
 build a few nested dicts. `cli.py` already assembles JSON Schema by hand for the same
 reason. If the emitted subset grows past a page of code, revisit it.
 
-## Determinism
+.. rubric:: Determinism
 
 Byte-identical output for identical input is a project non-negotiable, and it reaches
 this module: results come back in source order, rules are emitted sorted by id, and
@@ -982,7 +982,7 @@ def _diagnose_cast(
     """Resolve every cast member against the puppet library, or the puppet file it names.
 
     The IR does not know the puppet library exists -- `CastMember.reference`, `.pose`
-    and `.expression` are plain `str`s, and validating them is what tells `pointing`
+    and `.expression` are plain strings, and validating them is what tells `pointing`
     from `smirking`. This runs after `PanelIR.model_validate` succeeds, so it only sees
     a cast that is otherwise well-formed. A check is handed the library its document
     resolved once; called alone, it reads the shipped one itself.

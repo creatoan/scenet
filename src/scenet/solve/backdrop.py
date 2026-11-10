@@ -4,7 +4,7 @@ The solver still never sees artwork. A backdrop reaches it as the same kind of
 geometric contract everything else does -- polygons, a value, an integer depth -- and
 the emitter is left with nothing to decide.
 
-## Why masses rather than drawn geometry
+.. rubric:: Why masses rather than drawn geometry
 
 Crisp architecture needs a vanishing point, and this is deliberately a flat,
 orthographic compiler, so drawn buildings would fight the compiler's own model. Soft
@@ -19,7 +19,7 @@ perspective** supplies the parametric rule for free -- with distance, value cont
 drops toward the atmosphere colour. Three numbers per plane, monotonic in depth. That is
 notation, not interpretation, which is what makes it belong in a compiler.
 
-## Shape grammars, as a formalism rather than a library
+.. rubric:: Shape grammars, as a formalism rather than a library
 
 Silhouette profiles are generated with the split/repeat/subdivide operations of CGA
 shape grammar (Mueller et al., *Procedural Modeling of Buildings*, SIGGRAPH 2006). It is
@@ -32,7 +32,7 @@ derived from the geometry -- a wider span gets more bays -- and only **how big**
 is comes from the seed. Random counts make a backdrop flicker between panels that ought
 to look related.
 
-## Determinism
+.. rubric:: Determinism
 
 Every profile is seeded from the declared content and the panel size, through
 `blake2b` -- never a clock, never `hash()`, which is salted per process and would agree

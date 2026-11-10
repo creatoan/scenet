@@ -5,5 +5,6 @@ describing a character.
 
 ## `scenet.geom`
 
-```{automodule} scenet.geom
+```{eval-rst}
+.. automodule:: scenet.geom
 ```

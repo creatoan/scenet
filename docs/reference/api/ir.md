@@ -5,7 +5,8 @@ definition of the language. Nothing here carries a coordinate.
 
 ## `scenet.ir`
 
-```{automodule} scenet.ir
+```{eval-rst}
+.. automodule:: scenet.ir
 ```
 
 ## `scenet.places`
@@ -14,7 +15,16 @@ The named-place library. A preset expands into a mass list an author could have 
 themselves, which is what keeps it a library rather than a second, opaque format -- and
 the expansion happens in the frontend, so nothing downstream ever sees a `place`.
 
-```{automodule} scenet.places
+```{eval-rst}
+.. automodule:: scenet.places
+```
+
+## `scenet.schema`
+
+The JSON Schema an editor validates a document against, made from the IR itself.
+
+```{eval-rst}
+.. automodule:: scenet.schema
 ```
 
 ## `scenet.emphasis`
@@ -23,7 +33,8 @@ How a stressed word is written: between underscores, by Markdown's rules for the
 the IR to refuse emphasis that is never closed, and by the solver to decide which face each
 character is measured and drawn in -- one function, so the two cannot disagree.
 
-```{automodule} scenet.emphasis
+```{eval-rst}
+.. automodule:: scenet.emphasis
 ```
 
 ## `scenet.lettering`
@@ -31,19 +42,22 @@ character is measured and drawn in -- one function, so the two cannot disagree.
 An author's lettering face: reading the font files a document declares, and what stands in
 for a face it does not name.
 
-```{automodule} scenet.lettering
+```{eval-rst}
+.. automodule:: scenet.lettering
 ```
 
 ## `scenet.paths`
 
 Files a document names, found beside the document -- never by an absolute path.
 
-```{automodule} scenet.paths
+```{eval-rst}
+.. automodule:: scenet.paths
 ```
 
 ## `scenet.images`
 
 A picture to letter over: how big it is, read from its PNG or JPEG header, and nothing else.
 
-```{automodule} scenet.images
+```{eval-rst}
+.. automodule:: scenet.images
 ```

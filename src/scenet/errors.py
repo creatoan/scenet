@@ -2,14 +2,14 @@
 
 A library that scatters its exception types across the modules that happen to raise
 them forces callers to import from six places to write one `except` clause. Everything
-Scenet can raise is defined here instead, under a single root, so that
+Scenet can raise is defined here instead, under a single root, so that ::
 
     except ScenetError:
 
 catches all of it and nothing else.
 
 The hierarchy is three deep and the middle tier answers the question a caller actually
-has, which is *whose fault is it*:
+has, which is *whose fault is it*::
 
     ScenetError
     |-- SourceError    the document is wrong -- report it to whoever wrote the panel
@@ -45,7 +45,7 @@ class ScenetError(Exception):
     """Root of every error Scenet raises.
 
     Catch this to handle anything the compiler can go wrong with, without having to
-    enumerate the specific cases or accidentally swallowing unrelated `ValueError`s
+    enumerate the specific cases or accidentally swallowing an unrelated `ValueError`
     from elsewhere in your program.
 
     Example:

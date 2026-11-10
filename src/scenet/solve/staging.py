@@ -6,7 +6,7 @@ asked to stand centre must be pushed apart; a crowded panel must let figures ble
 the edge rather than overlap. Expressed as priorities, that resolves itself. Written
 by hand it becomes an ever-growing cascade of special cases.
 
-Priorities used:
+Priorities used::
 
   required  actors never overlap, and keep their declared left-to-right order
   strong    actors stay inside the panel

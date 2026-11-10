@@ -6,45 +6,60 @@ because their signatures are promised to stay put.
 
 ## `scenet.solve.camera`
 
-```{automodule} scenet.solve.camera
+```{eval-rst}
+.. automodule:: scenet.solve.camera
 ```
 
 ## `scenet.solve.staging`
 
-```{automodule} scenet.solve.staging
+```{eval-rst}
+.. automodule:: scenet.solve.staging
 ```
 
 ## `scenet.solve.backdrop`
 
-```{automodule} scenet.solve.backdrop
+```{eval-rst}
+.. automodule:: scenet.solve.backdrop
 ```
 
 ## `scenet.solve.text`
 
-```{automodule} scenet.solve.text
+```{eval-rst}
+.. automodule:: scenet.solve.text
 ```
 
 ## `scenet.solve.sfx`
 
-```{automodule} scenet.solve.sfx
+```{eval-rst}
+.. automodule:: scenet.solve.sfx
 ```
 
 ## `scenet.solve.speakers`
 
-```{automodule} scenet.solve.speakers
+```{eval-rst}
+.. automodule:: scenet.solve.speakers
 ```
 
 ## `scenet.solve.figures`
 
-```{automodule} scenet.solve.figures
+```{eval-rst}
+.. automodule:: scenet.solve.figures
 ```
 
 ## `scenet.solve.balloons`
 
-```{automodule} scenet.solve.balloons
+```{eval-rst}
+.. automodule:: scenet.solve.balloons
 ```
 
 ## `scenet.solve.page`
 
-```{automodule} scenet.solve.page
+```{eval-rst}
+.. automodule:: scenet.solve.page
+```
+
+## `scenet.solve.describe`
+
+```{eval-rst}
+.. automodule:: scenet.solve.describe
 ```

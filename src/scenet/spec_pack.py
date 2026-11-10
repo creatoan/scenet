@@ -13,7 +13,7 @@ here cannot go stale.
 
 The pack is split into named parts, each opened by a marker comment, so a client that
 can ask for one part at a time -- a tool call, an agent skill -- need not pay for the
-other seven:
+other seven::
 
     <!-- scenet-spec:part=language -->
 """

@@ -1,6 +1,6 @@
 """Each actor's skeleton as OpenPose JSON, for pose-conditioned image models (#72).
 
-The [OpenPose output format](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md)
+The `OpenPose output format <https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md>`__
 as ControlNet's tooling reads it: `people[].pose_keypoints_2d`, flat `x, y, confidence`
 triplets in the COCO-18 body order, in pixels of a canvas `canvas_width` by `canvas_height`.
 

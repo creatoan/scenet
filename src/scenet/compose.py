@@ -8,6 +8,8 @@ mostly identical -- the same cast, the same staging, the same camera -- with one
 changed. Restating all of it per panel is both tedious and a place for inconsistencies
 to creep in, which is exactly the continuity error comics readers notice.
 
+.. code-block:: yaml
+
     panels:
       p1:
         camera: {shot: medium_shot}
@@ -233,7 +235,7 @@ def on_their_side(event: object, cast: dict[str, Any]) -> object:
 def settle(
     document: dict[str, Any], *, beneath: dict[str, Any] | None = None
 ) -> tuple[dict[str, Any], tuple[Dropped, ...]]:
-    """Apply the removals a complete document's `null`s ask for.
+    """Apply the removals a complete document's `null` values ask for.
 
     Every key whose value is `null` goes, in mappings at any depth -- not inside lists,
     which Merge Patch treats as values. A cast member who goes takes with them every

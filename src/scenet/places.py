@@ -3,6 +3,8 @@
 The thing an author wants to write is *where the scene is*, not a list of shapes. So
 the headline surface is a named place:
 
+.. code-block:: yaml
+
     setting:
       place: docks
 

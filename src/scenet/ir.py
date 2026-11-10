@@ -73,11 +73,13 @@ __all__ = [
     "SfxEvent",
     "SfxSize",
     "ShotType",
+    "Side",
     "Spans",
     "StackedPanel",
     "Strict",
     "Tier",
     "TimeOfDay",
+    "TypeSize",
     "Weather",
     "check_placements",
 ]
@@ -335,10 +337,13 @@ class Direction(StrEnum):
 class Palette(StrEnum):
     """What a panel is drawn in: the value ladder in grey, or its twin in colour (#244).
 
-    | Palette | What it draws |
-    |---|---|
-    | `mono` | Every value as the grey it is -- **the default**, and what every panel was |
-    | `tinted` | Every value on the ladder in its twin colour: same rung, same hour |
+    +----------+----------------------------------------------------------------------------+
+    | Palette  | What it draws                                                              |
+    +==========+============================================================================+
+    | `mono`   | Every value as the grey it is -- **the default**, and what every panel was |
+    +----------+----------------------------------------------------------------------------+
+    | `tinted` | Every value on the ladder in its twin colour: same rung, same hour         |
+    +----------+----------------------------------------------------------------------------+
 
     **Colour is a twin of value, never a replacement.** A tinted colour has the OKLab
     lightness of the grey it stands for, so in monochrome a tinted panel is the mono one,
@@ -378,12 +383,17 @@ class Mark(StrEnum):
     own names for comics' own conventions. So the set is closed and citable, and nothing
     in it is invented here.
 
-    | Mark | What it is | What it says |
-    |---|---|---|
-    | `plewds` | Droplets flying off the head | sweating: effort, heat, nerves |
-    | `squeans` | Little starbursts and circles over the head | dizzy, drunk, or sick |
-    | `grawlixes` | Symbols over the head standing in for words | swearing |
-    | `briffits` | A dust cloud left at the feet | gone, fast |
+    +-------------+---------------------------------------------+--------------------------------+
+    | Mark        | What it is                                  | What it says                   |
+    +=============+=============================================+================================+
+    | `plewds`    | Droplets flying off the head                | sweating: effort, heat, nerves |
+    +-------------+---------------------------------------------+--------------------------------+
+    | `squeans`   | Little starbursts and circles over the head | dizzy, drunk, or sick          |
+    +-------------+---------------------------------------------+--------------------------------+
+    | `grawlixes` | Symbols over the head standing in for words | swearing                       |
+    +-------------+---------------------------------------------+--------------------------------+
+    | `briffits`  | A dust cloud left at the feet               | gone, fast                     |
+    +-------------+---------------------------------------------+--------------------------------+
 
     "Emanata" is Walker's general term for these, which is why it names the module that
     draws them and the Core field that holds them.
@@ -430,12 +440,17 @@ class BalloonKind(StrEnum):
     The kind changes the outline and the tail, never the placement: a whisper is
     subject to exactly the same face-avoidance and reading-order rules as a shout.
 
-    | Kind | Outline | Tail |
-    |---|---|---|
-    | `speech` | rounded rectangle | tapered pointer |
-    | `thought` | ellipse | trail of bubbles |
-    | `whisper` | dashed rounded rectangle | tapered pointer |
-    | `shout` | jagged burst | tapered pointer |
+    +-----------+--------------------------+------------------+
+    | Kind      | Outline                  | Tail             |
+    +===========+==========================+==================+
+    | `speech`  | rounded rectangle        | tapered pointer  |
+    +-----------+--------------------------+------------------+
+    | `thought` | ellipse                  | trail of bubbles |
+    +-----------+--------------------------+------------------+
+    | `whisper` | dashed rounded rectangle | tapered pointer  |
+    +-----------+--------------------------+------------------+
+    | `shout`   | jagged burst             | tapered pointer  |
+    +-----------+--------------------------+------------------+
     """
 
     SPEECH = "speech"
@@ -452,12 +467,17 @@ class CaptionKind(StrEnum):
     were taken from Visual Genome. Note that "narration", the obvious guess, is not
     among them.
 
-    | Kind | What it is | How it is set |
-    |---|---|---|
-    | `locale` | Location and time -- "Midnight. The docks." | Italic |
-    | `monologue` | A character's inner voice | Italic |
-    | `spoken` | Off-panel dialogue | Roman, in quotation marks |
-    | `editorial` | The voice of the writer or editor | Italic |
+    +-------------+---------------------------------------------+---------------------------+
+    | Kind        | What it is                                  | How it is set             |
+    +=============+=============================================+===========================+
+    | `locale`    | Location and time -- "Midnight. The docks." | Italic                    |
+    +-------------+---------------------------------------------+---------------------------+
+    | `monologue` | A character's inner voice                   | Italic                    |
+    +-------------+---------------------------------------------+---------------------------+
+    | `spoken`    | Off-panel dialogue                          | Roman, in quotation marks |
+    +-------------+---------------------------------------------+---------------------------+
+    | `editorial` | The voice of the writer or editor           | Italic                    |
+    +-------------+---------------------------------------------+---------------------------+
 
     `monologue` has largely replaced the thought balloon in modern comics, so a panel
     has two ways to render an inner voice: this and
@@ -491,12 +511,17 @@ class Face(StrEnum):
     and a word written between underscores is set in bold italic. It is recorded in
     Panel Core, run by run, so the emitter draws each run in the face it was measured in.
 
-    | Face | Used for |
-    |---|---|
-    | `regular` | Dialogue, and `spoken` captions |
-    | `italic` | Every other caption kind |
+    +---------------+-----------------------------------------------------------+
+    | Face          | Used for                                                  |
+    +===============+===========================================================+
+    | `regular`     | Dialogue, and `spoken` captions                           |
+    +---------------+-----------------------------------------------------------+
+    | `italic`      | Every other caption kind                                  |
+    +---------------+-----------------------------------------------------------+
     | `bold_italic` | Emphasis, in either -- Blambot's rule for a stressed word |
-    | `display` | Sound effects: letters that are part of the picture |
+    +---------------+-----------------------------------------------------------+
+    | `display`     | Sound effects: letters that are part of the picture       |
+    +---------------+-----------------------------------------------------------+
 
     Each is a real font file of the same family. A synthetic slant or a stroked-out bold
     would measure as the roman face and draw as neither, which is the disagreement between
@@ -517,12 +542,17 @@ class CaptionTone(StrEnum):
     clear day the atmosphere is `#eeeeee` and a white box on it is 1.16:1 -- legible,
     and invisible. The failing case is the pale end, not the dark one.
 
-    | Tone | Fill | Where it comes from | Lettered in |
-    |---|---|---|---|
-    | `paper` | `#ffffff` | the paper the panel is printed on | ink |
-    | `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
-    | `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
-    | `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere | ink |
+    +---------+-----------+-----------------------------------------------+-------------+
+    | Tone    | Fill      | Where it comes from                           | Lettered in |
+    +=========+===========+===============================================+=============+
+    | `paper` | `#ffffff` | the paper the panel is printed on             | ink         |
+    +---------+-----------+-----------------------------------------------+-------------+
+    | `pale`  | `#adadad` | the `day` row of the value ladder, far plane  | ink         |
+    +---------+-----------+-----------------------------------------------+-------------+
+    | `ink`   | `#090909` | the `day` row of the value ladder, foreground | paper       |
+    +---------+-----------+-----------------------------------------------+-------------+
+    | `warm`  | `#eeeeee` | the `day` row of the value ladder, atmosphere | ink         |
+    +---------+-----------+-----------------------------------------------+-------------+
 
     **Drawn from the ladder in `solve/backdrop.py`, not from a second palette.** Three of
     the four are rungs of it, taken by index rather than restated, which is what keeps
@@ -558,7 +588,7 @@ class MassKind(StrEnum):
     """What a tonal mass in the backdrop is made of.
 
     Subsetted from the **supercategories** of
-    [COCO-Stuff](https://arxiv.org/pdf/1612.03716), the canonical taxonomy of *stuff* --
+    `COCO-Stuff <https://arxiv.org/pdf/1612.03716>`__, the canonical taxonomy of *stuff* --
     "amorphous background regions" as opposed to *things* with a well-defined shape.
     Its own argument is that stuff classes explain scene type and the geometric
     properties of a scene, which is exactly the job here. Taken from an existing
@@ -604,7 +634,7 @@ class Plane(StrEnum):
     foreground mass draws over the cast the way a silhouetted doorway does.
 
     Value follows from the plane and from nothing else, which is what makes the
-    [aerial perspective](https://en.wikipedia.org/wiki/Aerial_perspective) rule
+    `aerial perspective <https://en.wikipedia.org/wiki/Aerial_perspective>`__ rule
     parametric: with distance, contrast drops toward the atmosphere. Reading front to
     back, a mass never gets darker. See
     :func:`tone_for <scenet.solve.backdrop.tone_for>`.
@@ -714,10 +744,14 @@ class Weather(StrEnum):
 class Fit(StrEnum):
     """How a supplied picture fills the panel, keeping its own proportions.
 
-    | Fit | The picture | SVG's word |
-    |---|---|---|
-    | `cover` | Fills the panel; what overhangs it is cropped, equally on both sides | `slice` |
-    | `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet` |
+    +-----------+--------------------------------------------------------------------+------------+
+    | Fit       | The picture                                                        | SVG's word |
+    +===========+====================================================================+============+
+    | `cover`   | Fills the panel; what overhangs it is cropped, equally on both     | `slice`    |
+    |           | sides                                                              |            |
+    +-----------+--------------------------------------------------------------------+------------+
+    | `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet`     |
+    +-----------+--------------------------------------------------------------------+------------+
 
     Centred either way. A picture is never stretched: its shape is a fact about it, and
     a figure drawn into it would be stretched with it.
@@ -977,6 +1011,8 @@ class CastMember(Strict):
     The split between actor id and `reference` is what lets one puppet appear twice in
     a panel as two different people:
 
+    .. code-block:: yaml
+
         cast:
           guard_left:  {reference: bob, pose: arms_crossed}
           guard_right: {reference: bob, pose: standing_neutral, facing: left}
@@ -1070,7 +1106,7 @@ class Relation(Strict):
     read far more often than it is written, and a sentence is legible at a glance.
 
     Raises:
-        pydantic.ValidationError: The subject and object are the same actor. No
+        ~pydantic_core.ValidationError: The subject and object are the same actor. No
             predicate here is meaningful reflexively.
     """
 
@@ -1218,11 +1254,15 @@ class CaptionEvent(Strict):
 class SfxSize(StrEnum):
     """How big a sound effect is lettered, as a multiple of the dialogue type size.
 
-    | Size | Times the dialogue size |
-    |---|---|
-    | `small` | 1.6 |
-    | `medium` | 2.6 |
-    | `large` | 4 |
+    +----------+-------------------------+
+    | Size     | Times the dialogue size |
+    +==========+=========================+
+    | `small`  | 1.6                     |
+    +----------+-------------------------+
+    | `medium` | 2.6                     |
+    +----------+-------------------------+
+    | `large`  | 4                       |
+    +----------+-------------------------+
 
     A multiple of the type size rather than of the figure, so an effect reads at
     `long_shot` as well as at `close_up`: a sound does not get quieter because the

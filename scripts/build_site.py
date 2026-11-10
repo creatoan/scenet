@@ -99,6 +99,10 @@ def documented(*, dev: bool) -> tuple[str, str]:
 
 def build_docs(*, dev: bool) -> None:
     """Build the documentation with warnings as errors, labelled with its version."""
+    # From scratch. viewcode writes a module's `_modules/` page only when the page is older
+    # than the module, so a page an earlier build wrote for another version is kept as it
+    # was -- saying that version -- and `check_docs` then refuses the build.
+    shutil.rmtree(DOCS_BUILD, ignore_errors=True)
     run(
         [
             sys.executable,

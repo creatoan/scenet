@@ -5,5 +5,12 @@ this page documents the functions behind it.
 
 ## `scenet.cli`
 
-```{automodule} scenet.cli
+```{eval-rst}
+.. automodule:: scenet.cli
+```
+
+## `scenet.watch`
+
+```{eval-rst}
+.. automodule:: scenet.watch
 ```

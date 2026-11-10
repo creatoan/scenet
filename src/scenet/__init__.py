@@ -35,11 +35,17 @@ Compiling one panel, end to end:
 
 Three tiers, and all three are yours to use:
 
-| Tier | Type | What it is |
-|---|---|---|
-| Source | `str` / file | What an author writes -- YAML or comic script |
-| IR | :class:`PanelIR <scenet.ir.PanelIR>` | Validated scene graph. No coordinates yet |
-| Panel Core | :class:`PanelCore <scenet.core.PanelCore>` | Resolved, numeric, still named |
++------------+--------------------------------------------+----------------------------------------+
+| Tier       | Type                                       | What it is                             |
++============+============================================+========================================+
+| Source     | `str` / file                               | What an author writes -- YAML or comic |
+|            |                                            | script                                 |
++------------+--------------------------------------------+----------------------------------------+
+| IR         | :class:`PanelIR <scenet.ir.PanelIR>`       | Validated scene graph. No coordinates  |
+|            |                                            | yet                                    |
++------------+--------------------------------------------+----------------------------------------+
+| Panel Core | :class:`PanelCore <scenet.core.PanelCore>` | Resolved, numeric, still named         |
++------------+--------------------------------------------+----------------------------------------+
 
 Panel Core is a real, writable format rather than a hidden data structure, so a layout
 can be inspected, hand-adjusted and diffed independently of how it is drawn. Reach for
@@ -152,6 +158,7 @@ from scenet.pipeline import (
 from scenet.places import PLACES, Place
 
 try:
+    #: This package's version, as its installed metadata gives it: `"0.12.0"`, say.
     __version__: str = version("scenet")
 except PackageNotFoundError:  # pragma: no cover -- only when running from a source tree
     __version__ = "0.0.0+unknown"

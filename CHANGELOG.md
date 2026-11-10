@@ -211,6 +211,19 @@ below 1.0 means.
 
 ### Fixed
 
+- **The Python API reference renders** (#316). Every version of the site since v0.8 showed it
+  as raw reStructuredText: `.. py:class::` as text, `sphinx_autodoc_typehints` noise, and
+  doctests run together into one paragraph. Its pages called autodoc from MyST fences, which
+  read autodoc's output as Markdown, so `objects.inv` held no Python object, none of the
+  guides' `{func}` links went anywhere, and no page linked its source. Autodoc now runs in
+  `{eval-rst}` fences, and docstrings are reStructuredText throughout: their nine Markdown
+  tables are grid tables, and their Markdown headings, links and indented examples are rST.
+  The documentation build now fails on a reference that reaches nothing (`nitpicky`), on raw
+  markup on any built page, and on a name in `scenet.__all__` that `objects.inv` lacks. Each
+  field is documented once: `undoc-members: False`, which Sphinx reads as on, is gone. Enum
+  members stay; `__new__` on every `StrEnum` and pydantic's validators go. `Side`,
+  `TypeSize`, `CoreImage` and `CoreModel` join their modules' `__all__`, and the ten modules no
+  page documented are on the reference.
 - **A right-to-left document without pages prints right to left** (#296). Its print PDF, one
   page per panel, did not say `/Direction /R2L`, which only pages read right to left wrote, so
   a reader laid it out left to right.

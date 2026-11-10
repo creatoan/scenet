@@ -15,7 +15,7 @@ language understanding, and guessing would produce panels that are confidently w
 -- far worse than refusing. So descriptions are preserved but not interpreted -- each one
 is its panel's `description`, read out as written by accessible output -- and anything the
 compiler must know is declared explicitly: cast and staging in a front-matter block,
-per-panel settings as `@` directives.
+per-panel settings as `@` directives. ::
 
     ---
     cast:

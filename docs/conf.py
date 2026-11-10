@@ -7,6 +7,7 @@
 # Warnings are errors in CI (`sphinx-build -W`). A broken cross-reference or a page
 # missing from a toctree fails the build rather than quietly producing a worse site.
 
+import enum
 import importlib
 import os
 import re
@@ -101,7 +102,12 @@ autodoc_default_options = {
     "members": True,
     "member-order": "bysource",  # source order is meaningful; alphabetical is not
     "show-inheritance": True,
-    "undoc-members": False,
+    # No "undoc-members", so a member without a docstring is left out. Sphinx reads any
+    # value given for a flag as on, `False` included, and this file once said `False`:
+    # every field was then documented twice -- by its class's `Attributes:` section and
+    # again bare -- and `__new__` and `__init__` always showed. An enum's members, which
+    # never have a docstring of their own, are kept by `_api_members_only` below.
+    #
     # Pydantic adds a dozen machinery members to every model. They are noise in a
     # reference page and none of them are part of this project's API.
     "exclude-members": (
@@ -125,6 +131,27 @@ napoleon_use_admonition_for_examples = True
 napoleon_use_admonition_for_notes = True
 napoleon_use_rtype = False
 
+# -- Cross-references ------------------------------------------------------------
+#
+# A reference that reaches nothing is a warning, so `-W` fails the build on it. With this
+# off, the API reference shipped from v0.8 on with no Python object in it, and not one
+# warning said so (#316). What is left out below cannot be linked at all.
+
+nitpicky = True
+nitpick_ignore = [
+    # Shapely documents each kind of geometry, not the base class they share, which is
+    # the type `scenet.solve.sfx.place_effects` takes.
+    ("py:class", "shapely.geometry.base.BaseGeometry"),
+]
+nitpick_ignore_regex = [
+    # A function defined inside another has no page. One shows in a type alias, as the
+    # discriminator `scenet.ir.tag_by` builds: `FaceMark` is "alias of Annotated[...]".
+    (r"py:.*", r".*\.<locals>\..*"),
+    # PyYAML publishes no inventory to link into, so none of its names can be linked:
+    # `scenet.safe_yaml` is written against its loader, nodes and errors.
+    (r"py:.*", r"yaml\..*"),
+]
+
 # -- intersphinx ---------------------------------------------------------------
 #
 # Cross-project links, so a `dict[str, PuppetSpec]` in a signature reaches the standard
@@ -136,6 +163,10 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pydantic": ("https://docs.pydantic.dev/latest", None),
     "shapely": ("https://shapely.readthedocs.io/en/stable", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    # The MCP SDK, for `scenet.mcp`. Its site is not Sphinx, but it publishes the same
+    # inventory, filed under each name's defining module.
+    "mcp": ("https://py.sdk.modelcontextprotocol.io", None),
 }
 # Resolving these needs network access. CI has it; a local build without it should warn
 # rather than fail, so the timeout is short.
@@ -339,7 +370,87 @@ def _every_public_name_is_documented(app: Sphinx, exception: BaseException | Non
         )
 
 
+# -- Which members are API -----------------------------------------------------
+
+#: What pydantic runs on a model and nobody calls: validators and serializers. A model's
+#: computed fields are not among them; they are read like any other field.
+_PYDANTIC_MACHINERY = (
+    "validators",
+    "field_validators",
+    "root_validators",
+    "field_serializers",
+    "model_serializers",
+    "model_validators",
+)
+
+
+def _pydantic_machinery(member: object, name: str) -> bool:
+    """Whether a member is a validator or a serializer of the model that defines it."""
+    function = getattr(member, "__func__", member)
+    module = sys.modules.get(getattr(function, "__module__", None) or "")
+    owner: object = module
+    for part in getattr(function, "__qualname__", "").split(".")[:-1]:
+        owner = getattr(owner, part, None)
+    decorators = getattr(owner, "__pydantic_decorators__", None)
+    return any(name in getattr(decorators, kind, {}) for kind in _PYDANTIC_MACHINERY)
+
+
+def _api_members_only(  # noqa: PLR0917 -- the signature Sphinx calls it with
+    app: Sphinx, what: str, name: str, member: object, skip: bool, options: object
+) -> bool | None:
+    """Keep an enum's members, which carry no docstring of their own, and drop machinery.
+
+    An enum's members are its values -- `BalloonKind.SHOUT` is the `shout` an author
+    writes -- so they are listed whether documented or not. What a `StrEnum` gets from
+    `enum` for building its members, and the validators pydantic calls, are not API.
+    """
+    if isinstance(member, enum.Enum) and type(member).__members__.get(name) is member:
+        return False
+    if name == "__new__" and member is enum.Enum.__new__:
+        return True
+    if _pydantic_machinery(member, name):
+        return True
+    return None
+
+
+def _public_bases(
+    app: Sphinx, name: str, obj: object, options: object, bases: list[object]
+) -> None:
+    """Show a private base as what it is built on: `_Strict` as pydantic's `BaseModel`."""
+    bases[:] = [shown for base in bases for shown in _shown_as(base)]
+
+
+def _shown_as(base: object) -> list[object]:
+    if isinstance(base, type) and base.__name__.startswith("_"):
+        return [shown for parent in base.__bases__ for shown in _shown_as(parent)]
+    return [base]
+
+
+def _no_inline_types(  # noqa: PLR0917 -- the signature Sphinx calls it with
+    app: Sphinx, what: str, name: str, obj: object, options: object, lines: list[str]
+) -> None:
+    """Keep napoleon from reading an attribute's first line as `type: description`.
+
+    Google style lets `#: int: The count.` give a type inline, so napoleon reads the first
+    line of every attribute, constant and property docstring that way: `#: How a drop is
+    sampled: ...` became a type called "How a drop is sampled". Types here come from the
+    annotations, and a docstring is a description only. So this runs before napoleon and
+    puts an empty comment first, the one line it reads for a type, which holds none.
+    """
+    if what in {"attribute", "data", "property"} and any(line.strip() for line in lines):
+        lines[:0] = ["..", ""]
+
+
 def setup(app: Sphinx) -> None:
+    # The site tests' two-page build of this configuration leaves autodoc out, and then
+    # its events do not exist to listen to.
+    if "sphinx.ext.autodoc" in app.extensions:
+        # Napoleon and sphinx-autodoc-typehints listen at the default priority, 500, and
+        # lower runs first: the docstring napoleon reads, and the bases before they become
+        # text.
+        app.connect("autodoc-process-docstring", _no_inline_types, priority=400)
+        app.connect("autodoc-process-bases", _public_bases, priority=400)
+        app.connect("autodoc-skip-member", _api_members_only)
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
     app.connect("doctree-resolved", _no_raw_markup)
     app.connect("build-finished", _every_public_name_is_documented)

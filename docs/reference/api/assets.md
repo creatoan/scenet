@@ -5,20 +5,30 @@ coordinates. The solver sees only this contract, never artwork.
 
 ## `scenet.assets.contract`
 
-```{automodule} scenet.assets.contract
+```{eval-rst}
+.. automodule:: scenet.assets.contract
 ```
 
 ## `scenet.assets.kinematics`
 
-```{automodule} scenet.assets.kinematics
+```{eval-rst}
+.. automodule:: scenet.assets.kinematics
+```
+
+## `scenet.assets.face`
+
+```{eval-rst}
+.. automodule:: scenet.assets.face
 ```
 
 ## `scenet.assets.emanata`
 
-```{automodule} scenet.assets.emanata
+```{eval-rst}
+.. automodule:: scenet.assets.emanata
 ```
 
 ## `scenet.assets.artwork`
 
-```{automodule} scenet.assets.artwork
+```{eval-rst}
+.. automodule:: scenet.assets.artwork
 ```

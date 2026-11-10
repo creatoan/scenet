@@ -5,5 +5,6 @@ rather than a private data structure.
 
 ## `scenet.core`
 
-```{automodule} scenet.core
+```{eval-rst}
+.. automodule:: scenet.core
 ```

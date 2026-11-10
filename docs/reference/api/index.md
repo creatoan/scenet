@@ -33,6 +33,13 @@ Scenet ships a `py.typed` marker, so mypy, pyright, ty and basedpyright read the
 annotations directly from the installed package. No stubs to install, nothing to
 configure.
 
+## The version
+
+```{eval-rst}
+.. autodata:: scenet.__version__
+   :no-value:
+```
+
 ## By module
 
 ```{toctree}

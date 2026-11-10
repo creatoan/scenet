@@ -8,13 +8,15 @@ agent-facing surface that closes that loop.
 
 Install it with the extra, and start it with the `scenet mcp` command:
 
+.. code-block:: bash
+
     pip install 'scenet[mcp]'
     scenet mcp                             # stdio, for a local client
     scenet mcp --transport streamable-http # for a remote one
 
-## The official SDK, and only as an extra
+.. rubric:: The official SDK, and only as an extra
 
-Built on the official [`mcp`](https://github.com/modelcontextprotocol/python-sdk)
+Built on the official `mcp <https://github.com/modelcontextprotocol/python-sdk>`__
 package, which already speaks protocol revision 2026-07-28 -- the stateless core, the
 extensions framework, cacheable list results -- and adds nothing FastMCP would have to
 supply. It is an extra rather than a dependency because it brings an HTTP stack the
@@ -25,11 +27,11 @@ their own licence review.
 Transports are stdio and Streamable HTTP. Not SSE: the protocol has deprecated it, and
 Streamable HTTP replaced it.
 
-## Five tools, shaped after compilers that are already served this way
+.. rubric:: Five tools, shaped after compilers that are already served this way
 
-[typst-mcp](https://github.com/johannesbrandenburger/typst-mcp) serves its
+`typst-mcp <https://github.com/johannesbrandenburger/typst-mcp>`__ serves its
 documentation one chapter at a time, checks a snippet, and renders one;
-[d2-mcp](https://github.com/h0rv/d2-mcp) has a cheat sheet, `compile` to validate and
+`d2-mcp <https://github.com/h0rv/d2-mcp>`__ has a cheat sheet, `compile` to validate and
 `render` to draw. The same shapes, rather than new ones:
 
 - `get_spec` -- the spec pack, one part at a time, so a model need not read all of it
@@ -49,7 +51,7 @@ its own -- is sent with it: `files` maps the path the document writes to the fil
 bytes, in base64. They stand in for the document's folder and are read in memory; the
 server never reads a folder of its own, and never writes one.
 
-## Keeping stdout clean
+.. rubric:: Keeping stdout clean
 
 On stdio, stdout *is* the protocol stream, and one stray line corrupts it. That is why
 nothing here goes through `cli.run_build`, which prints `wrote` and `note:` lines --
@@ -363,7 +365,8 @@ def compile_panel(
         Every panel, in reading order, with its notes and its Panel Core, then the pages.
 
     Raises:
-        ToolError: The document does not compile. The message lists every finding.
+        ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile. The
+            message lists every finding.
     """
     book = _compile(source, syntax, _files(files))
     return CompileReport(
@@ -446,7 +449,8 @@ def render_panel(
         then, when asked, each panel's exports for image models.
 
     Raises:
-        ToolError: The document does not compile. The message lists every finding.
+        ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile. The
+            message lists every finding.
     """
     book = _compile(source, syntax, _files(files))
     results = book.panels

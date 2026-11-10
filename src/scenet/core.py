@@ -1063,7 +1063,7 @@ class PanelCore(CoreModel):
             The parsed panel.
 
         Raises:
-            pydantic.ValidationError: The document is not a valid Core panel.
+            ~pydantic_core.ValidationError: The document is not a valid Core panel.
             json.JSONDecodeError: The text is not JSON at all.
         """
         return cls.model_validate(json.loads(text))
@@ -1175,7 +1175,7 @@ class PageCore(CoreModel):
             The parsed page.
 
         Raises:
-            pydantic.ValidationError: The document is not a valid Page Core.
+            ~pydantic_core.ValidationError: The document is not a valid Page Core.
             json.JSONDecodeError: The text is not JSON at all.
         """
         return cls.model_validate(json.loads(text))
@@ -1212,7 +1212,9 @@ __all__ = [
     "CoreFont",
     "CoreFrame",
     "CoreGlyph",
+    "CoreImage",
     "CoreMass",
+    "CoreModel",
     "CoreRun",
     "CoreSfx",
     "CoreStreak",
