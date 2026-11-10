@@ -12,6 +12,21 @@ below 1.0 means.
 
 ### Added
 
+- **Every public name explains itself as a reference entry** (#318). Each name in
+  `scenet.__all__` has a summary, an example that imports it from `scenet` and shows its
+  output, and See also; each function its parameters, what it returns, exactly which public
+  errors it raises and when, and a note on its limits. A test over `__all__` holds each to it.
+  Issue numbers are gone from every docstring, which says what the thing does instead.
+  `CompileResult`'s `core`, `placements` and `posed` are described, so the reference lists
+  them, as are 68 other fields no description reached, and a test fails on a field of an
+  exported model left undescribed; a field described with `Field(description=...)` is shown
+  with it. Fourteen `Returns:` sections no longer render their first words as a type, and a
+  test keeps them so. An alias such as `FaceMark` reads `FaceStroke | FaceDisc`, without
+  pydantic's metadata. `panel_core.md` has a table of every Panel and Page Core field, made
+  from the models. The library guide covers all seven renderers, books and pages, `fonts=`,
+  `embed=` and `metrics=`, building a panel in Python, the Core object model, and threads,
+  caches and the files a compile reads. The editor's JSON Schemas leave a docstring's Python
+  sections out of a description, which an author writing YAML has no use for.
 - **The Python reference has a page for every public name** (#318). Each opens on a card -- its
   import line, the module that defines it with a link to its source, what to install, the
   release it appeared in and how stable it is -- then its signature and docstring. A function

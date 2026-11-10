@@ -139,7 +139,7 @@ import json
 from scenet import compile_source, render_conditioning
 
 exports = render_conditioning(compile_source("cast: {a: {reference: alice}}").core)
-pose = json.loads(exports.pose)           # OpenPose COCO-18 keypoints
+pose = json.loads(exports.pose)  # OpenPose COCO-18 keypoints
 semantics = json.loads(exports.semantics)  # what the panel holds, as structure
 assert exports.depth.lstrip().startswith("<")
 ```

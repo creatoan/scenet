@@ -25,6 +25,7 @@ Example:
 """
 
 import inspect
+import re
 from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
@@ -36,6 +37,27 @@ from scenet.places import Place
 __all__ = ["artwork_schema", "panel_schema", "puppet_schema", "scene_schema"]
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
+
+#: Docstring sections written for the Python reference, which an editor showing a
+#: description to someone writing YAML leaves out: everything from the first of them on.
+PYTHON_SECTIONS = re.compile(
+    r"^(?:Args|Returns|Raises|Example|Examples|See Also):\s*$", re.MULTILINE
+)
+
+
+def _for_authors(node: object) -> None:
+    """Cut every description in a schema at its first Python-only section."""
+    if isinstance(node, dict):
+        description = node.get("description")
+        if isinstance(description, str):
+            found = PYTHON_SECTIONS.search(description)
+            if found:
+                node["description"] = description[: found.start()].rstrip()
+        for value in node.values():
+            _for_authors(value)
+    elif isinstance(node, list):
+        for value in node:
+            _for_authors(value)
 
 
 def panel_schema() -> dict[str, Any]:
@@ -53,6 +75,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_one_font_file(definitions)
     _accept_cast_removal(schema)
     _puppet_or_figure(definitions)
+    _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
     return schema
@@ -74,6 +97,7 @@ def artwork_schema() -> dict[str, Any]:
         ['figures', 'keep_out', 'size']
     """
     schema = ArtworkContract.model_json_schema()
+    _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet artwork contract"
     return schema
@@ -99,6 +123,7 @@ def puppet_schema() -> dict[str, Any]:
     schema = PuppetSpec.model_json_schema()
     _every_landmark(schema)
     _default_pose(schema)
+    _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet puppet"
     return schema
@@ -144,7 +169,7 @@ def scene_schema() -> dict[str, Any]:
     definitions.update(layout.pop("$defs"))
     _accept_panel_names(definitions)
 
-    return {
+    scene = {
         "$schema": DIALECT,
         "title": "Scenet scene",
         "$defs": definitions,
@@ -163,6 +188,8 @@ def scene_schema() -> dict[str, Any]:
         },
         "additionalProperties": False,
     }
+    _for_authors(scene)
+    return scene
 
 
 def _puppet_or_figure(definitions: dict[str, Any]) -> None:

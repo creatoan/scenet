@@ -88,6 +88,7 @@ from scenet.spec_pack import part
 
 __all__ = [
     "CompileReport",
+    "CompiledPage",
     "CompiledPanel",
     "Finding",
     "Puppet",

@@ -325,7 +325,7 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "The complete geometric contract for one character.",
+  "description": "The complete geometric contract for one character.\n\nEverything the solver may know about a character, and nothing it draws: proportions in\nhead units, a skeleton, named anchors, the face, its poses and expressions. The asset\ncontract reference describes the file format, field by field.",
   "properties": {
     "anchors": {
       "additionalProperties": {

@@ -220,7 +220,7 @@ def parse_scene(text: str, *, source: Path | None = None) -> dict[str, PanelIR]:
         source: Path the text came from, prefixed to every error message.
 
     Returns:
-        Panel name to scene graph, each with its `over:` chain already resolved.
+        Panel name to scene graph, each with the chain of `over` it names already resolved.
 
     Raises:
         PanelSyntaxError: The document is malformed, or a panel does not validate.
