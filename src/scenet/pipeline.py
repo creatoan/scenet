@@ -147,11 +147,17 @@ class CompileResult:
         :class:`CompileNote <scenet.pipeline.CompileNote>`, each note with its rule.
     """
 
+    #: The panel, resolved: the Panel Core every renderer draws.
     core: PanelCore
     #: The framing the camera chose, or None for a panel whose cast a supplied picture
-    #: draws: the artist framed it, and the camera does not run.
+    #: draws: the artist framed it, and the camera does not run. Its type is internal,
+    #: outside semantic versioning.
     camera: CameraSolution | None
+    #: Where the solver stood each actor, before posing, in cast order. Its type is
+    #: internal, outside semantic versioning.
     placements: tuple[Placement, ...]
+    #: Each actor's puppet, posed, scaled and placed, by actor id. Its type is internal,
+    #: outside semantic versioning.
     posed: dict[str, ResolvedPuppet]
     #: The fonts the lettering was measured in, other than the shipped family's, by the
     #: digest `PanelCore.fonts` names them by. Hand them to the renderer.

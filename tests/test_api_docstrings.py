@@ -147,7 +147,11 @@ class TestEveryPublicFunction:
 
 
 def _documented_types() -> Iterator[type]:
-    """Every model and dataclass a module exports, which its page documents."""
+    """Every model and dataclass `scenet` or a module exports, which a page documents."""
+    for name in PUBLIC:
+        obj = getattr(scenet, name)
+        if inspect.isclass(obj) and (issubclass(obj, BaseModel) or dataclasses.is_dataclass(obj)):
+            yield obj
     for info in pkgutil.walk_packages(scenet.__path__, "scenet."):
         module = importlib.import_module(info.name)
         for name in getattr(module, "__all__", ()):
