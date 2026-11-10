@@ -1,24 +1,44 @@
 """Every exception Scenet raises, in one place.
 
 A library that scatters its exception types across the modules that happen to raise
-them forces callers to import from six places to write one `except` clause. Everything
-Scenet can raise is defined here instead, under a single root, so that ::
+them forces callers to import from six places to write one `except` clause. Every error
+Scenet raises is a :exc:`ScenetError`, and every one a caller can catch by name is
+imported from `scenet`, so that ::
 
     except ScenetError:
 
-catches all of it and nothing else.
+catches every error a public function raises for bad input, a bad file or a call that
+cannot be honoured, and nothing that is not Scenet's: a `ValueError` from elsewhere in
+your program goes past it.
 
-The hierarchy is three deep and the middle tier answers the question a caller actually
-has, which is *whose fault is it*::
+Two things are not covered, by design:
+
+- Building a model yourself -- `PanelIR(...)`, `CameraSpec(...)` -- validates it as
+  pydantic does, and raises pydantic's `ValidationError`, a `ValueError`. Scenet's own
+  frontends turn that into a :exc:`PanelSyntaxError` with a location.
+- A bug in Scenet -- an invariant of its own that fails -- is not your input's fault, and
+  is not dressed up as if it were.
+
+The hierarchy answers the question a caller actually has, which is *whose fault is it*::
 
     ScenetError
-    |-- SourceError    the document is wrong -- report it to whoever wrote the panel
-    |-- SolverError    the document is fine, but no layout satisfies it
-    `-- AssetError     a puppet is missing or malformed
+    |-- SourceError        the document is wrong -- report it to whoever wrote the panel
+    |   |-- PanelSyntaxError, ScriptSyntaxError, CompositionError
+    |   `-- CoreSyntaxError    a Panel or Page Core document that does not read back
+    |-- SolverError        the document is fine, but no layout satisfies it
+    |   `-- LayoutError, BalloonPlacementError, SfxPlacementError
+    |-- AssetError         a puppet or a font is missing or malformed
+    |   |-- UnknownPuppetError, UnknownPoseError, UnknownExpressionError
+    |   `-- MalformedAssetError
+    |-- FileReadError      a file a call names cannot be read
+    |   `-- MissingFileError
+    |-- RenderError        a renderer was not handed what the drawing needs
+    `-- UnknownActorError  a Panel Core asked for an actor it does not hold
 
 Each also inherits the built-in exception a caller would have reached for before this
-module existed -- `SourceError` is a `ValueError`, `UnknownPuppetError` is a `KeyError`
--- so pre-existing `except ValueError` handlers keep working unchanged.
+module existed -- `SourceError` is a `ValueError`, `UnknownPuppetError` a `KeyError`,
+`MissingFileError` a `FileNotFoundError` -- so pre-existing `except ValueError` handlers
+keep working unchanged.
 """
 
 from pathlib import Path
@@ -27,14 +47,20 @@ __all__ = [
     "AssetError",
     "BalloonPlacementError",
     "CompositionError",
+    "CoreSyntaxError",
+    "FileReadError",
     "LayoutError",
+    "MalformedAssetError",
+    "MissingFileError",
     "PanelSyntaxError",
+    "RenderError",
     "RuleViolationError",
     "ScenetError",
     "ScriptSyntaxError",
     "SfxPlacementError",
     "SolverError",
     "SourceError",
+    "UnknownActorError",
     "UnknownExpressionError",
     "UnknownPoseError",
     "UnknownPuppetError",
@@ -155,7 +181,151 @@ class SolverError(ScenetError, ValueError):
 
 
 class AssetError(ScenetError):
-    """A puppet asset that is missing, unreadable or self-inconsistent."""
+    """A puppet or a font that is missing, unreadable or self-inconsistent.
+
+    Not itself a `ValueError`: a puppet the library does not hold is a
+    :exc:`UnknownPuppetError`, a `KeyError`, and an `except ValueError` written for bad
+    values should not catch a lookup miss. A file that is there and wrong is a
+    :exc:`MalformedAssetError`, which is a `ValueError`.
+    """
+
+
+class MalformedAssetError(AssetError, ValueError):
+    """A puppet or a font file that is there, and is not what it says it is.
+
+    Raised for a puppet file that is not YAML, not a mapping, or not a well-formed puppet
+    -- an out-of-order landmark, a skeleton that is not a tree; for a folder of puppets
+    that declares one name twice; and for a font file that cannot be measured, because it
+    is not a TrueType or OpenType font or has no Unicode character map.
+
+    Also a `ValueError`, as each of those was before it had a name: a malformed puppet was
+    pydantic's `ValidationError`, and a font with no character map a plain `ValueError`.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> from scenet import MalformedAssetError, load_puppet
+        >>> with TemporaryDirectory() as folder:
+        ...     path = Path(folder) / "x.puppet.yaml"
+        ...     _ = path.write_text("name: x", encoding="utf-8")
+        ...     try:
+        ...         load_puppet(path)
+        ...     except MalformedAssetError as exc:
+        ...         print(exc.detail.splitlines()[0])
+        invalid puppet:
+
+    Attributes:
+        source: The file at fault, or `None` for bytes read from no file.
+        detail: The message without the path, for a report that names the file separately.
+    """
+
+    def __init__(self, message: str, *, source: Path | None = None) -> None:
+        """Build the error, prefixing the file's path when there is one.
+
+        Args:
+            message: What is wrong with the file.
+            source: The file, if it was read from disk.
+        """
+        self.source = source
+        self.detail = message
+        super().__init__(f"{source}: {message}" if source else message)
+
+
+class FileReadError(ScenetError, OSError):
+    """A file a call names that cannot be read: a document, a puppet, a font.
+
+    Raised by the functions that take a path -- `compile_file`, `load_panel`,
+    `load_puppet` and the rest -- when the system refuses to read it. A file a *document*
+    names, beside it, is the document's fault instead: a
+    :exc:`PanelSyntaxError <scenet.errors.PanelSyntaxError>` that says where it was named.
+
+    Also an `OSError`, carrying what the system said: `errno`, `strerror` and `filename`
+    are those of the system's own error, which is kept as `__cause__`. A file that is not
+    there at all is a :exc:`MissingFileError`, which is also a `FileNotFoundError`.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet import FileReadError, compile_file
+        >>> try:
+        ...     compile_file(Path("no-such.panel.yaml"))
+        ... except FileReadError as exc:
+        ...     print(exc.filename, "--", exc.strerror)
+        no-such.panel.yaml -- No such file or directory
+    """
+
+    @staticmethod
+    def of(error: OSError) -> "FileReadError":
+        """The Scenet error for one the system raised, keeping what it said.
+
+        Args:
+            error: What reading the file raised.
+
+        Returns:
+            A :exc:`MissingFileError` for a file that is not there, and a
+            :exc:`FileReadError` for any other reason.
+        """
+        kind = MissingFileError if isinstance(error, FileNotFoundError) else FileReadError
+        if error.errno is None:
+            return kind(str(error))
+        return kind(error.errno, error.strerror, error.filename)
+
+
+class MissingFileError(FileReadError, FileNotFoundError):
+    """A file a call names that is not there.
+
+    Also a `FileNotFoundError`, which is what reading it raised before, so an
+    `except FileNotFoundError` around a compile keeps working.
+    """
+
+
+class RenderError(ScenetError, ValueError):
+    """A renderer that was not handed what the drawing needs.
+
+    The Core is fine; the call is not. Raised when:
+
+    - the Core was lettered in a font of the document's own, and that font was not
+      handed back as `fonts=` -- drawing its lettering in another face would draw text
+      that does not fit the balloons measured for it;
+    - a supplied picture is to be embedded or printed, and its bytes were not handed
+      over as `embed=` or `images=`;
+    - a page places a panel that was not given;
+    - there is nothing to draw: no panels for a strip, no pages for a spread;
+    - panels or pages read in two directions are laid side by side;
+    - a picture is one the print PDF cannot carry: a lossless or 12-bit JPEG, or a PNG
+      whose data is cut short.
+
+    Also a `ValueError`, as each of these was before it had a name.
+
+    Example:
+        >>> from scenet import RenderError, render_strip
+        >>> try:
+        ...     render_strip([])
+        ... except RenderError as exc:
+        ...     print(exc)
+        a strip needs at least one panel
+    """
+
+
+class UnknownActorError(ScenetError, KeyError):
+    """A Panel Core asked for an actor or a speaker it does not hold.
+
+    Raised by :meth:`PanelCore.actor <scenet.core.PanelCore.actor>` and
+    :meth:`PanelCore.speaker <scenet.core.PanelCore.speaker>`. Also a `KeyError`, as a
+    lookup miss has always been.
+
+    Note:
+        `KeyError` stringifies as `repr(args[0])`, so `str(exc)` comes out quoted.
+        Read `exc.args[0]` for the bare message.
+
+    Example:
+        >>> from scenet import UnknownActorError, compile_source
+        >>> core = compile_source("cast: {a: {reference: alice}}").core
+        >>> try:
+        ...     core.actor("b")
+        ... except UnknownActorError as exc:
+        ...     print(exc.args[0])
+        no actor 'b' in panel
+    """
 
 
 class PanelSyntaxError(SourceError):
@@ -274,6 +444,27 @@ class CompositionError(SourceError):
         """
         self.loc = loc
         super().__init__(message, source=source)
+
+
+class CoreSyntaxError(SourceError):
+    """A Panel Core or Page Core document that does not read back.
+
+    Raised by :meth:`PanelCore.from_json <scenet.core.PanelCore.from_json>` and
+    :meth:`PageCore.from_json <scenet.core.PageCore.from_json>` for text that is not
+    JSON, or JSON that is not a Core of that kind. The message names each field at fault.
+
+    Also a `ValueError`, as both of those were: `json.JSONDecodeError` and pydantic's
+    `ValidationError`.
+
+    Example:
+        >>> from scenet import CoreSyntaxError, PanelCore
+        >>> try:
+        ...     PanelCore.from_json('{"width": 100}')
+        ... except CoreSyntaxError as exc:
+        ...     print(exc)
+        invalid Panel Core:
+          at height: Field required
+    """
 
 
 class LayoutError(SolverError):

@@ -34,7 +34,7 @@ from typing import ClassVar
 import yaml
 from pydantic import BaseModel, ValidationError
 
-from scenet.errors import PanelSyntaxError, RuleViolationError
+from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.positions import Position, Region, locate
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
@@ -42,6 +42,8 @@ __all__ = [
     "Folder",
     "NamedFileError",
     "check_relative",
+    "read_document",
+    "read_file",
     "read_model",
     "read_relative",
     "record_dependency",
@@ -117,6 +119,55 @@ def resolve_relative(
     if base is None:
         raise _no_folder(declared, what=what, rule=rule, loc=loc)
     return base / declared
+
+
+def read_file(path: Path) -> bytes:
+    """Read a file a caller names -- not one a document names -- whole.
+
+    Args:
+        path: The file, as the caller gave it.
+
+    Returns:
+        Its bytes.
+
+    Raises:
+        FileReadError: The system will not read it. A :exc:`MissingFileError
+            <scenet.errors.MissingFileError>` when it is not there; either keeps the
+            system's `errno`, `strerror` and `filename`, and is an `OSError`.
+    """
+    try:
+        return path.read_bytes()
+    except OSError as exc:
+        raise FileReadError.of(exc) from exc
+
+
+def read_document(path: Path, *, error: type[PanelSyntaxError] = PanelSyntaxError) -> str:
+    """Read a document a caller names, as UTF-8 text.
+
+    Args:
+        path: The document.
+        error: What a document that is not UTF-8 is: a
+            :exc:`ScriptSyntaxError <scenet.errors.ScriptSyntaxError>` for a script.
+
+    Returns:
+        Its text, read as :meth:`pathlib.Path.read_text` reads it.
+
+    Raises:
+        FileReadError: The system will not read it.
+        PanelSyntaxError: Rule `syntax`: it is not UTF-8, so it is no document at all.
+            Raised as `error`.
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise error(
+            f"not UTF-8 text: byte {exc.start} is {exc.object[exc.start]:#04x}; save the "
+            "file as UTF-8",
+            source=path,
+            rule="syntax",
+        ) from exc
+    except OSError as exc:
+        raise FileReadError.of(exc) from exc
 
 
 def read_relative(

@@ -12,10 +12,20 @@ different path-rounding convention produces a huge diff that means nothing.
 import json
 from typing import Annotated, Any, Literal, NamedTuple, Self
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, Tag, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    Tag,
+    ValidationError,
+    model_validator,
+)
 from pydantic.json_schema import SkipJsonSchema
 
 from scenet.assets.contract import PUPPET_RULE, is_puppet_file
+from scenet.errors import CoreSyntaxError, UnknownActorError
+from scenet.frontends.common import summarise
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
 from scenet.images import MediaType
 from scenet.ir import (
@@ -935,7 +945,7 @@ class PanelCore(CoreModel):
             when there is none.
 
         Raises:
-            KeyError: Nobody in this panel plays that part.
+            UnknownActorError: Nobody in this panel plays that part. Also a `KeyError`.
         """
         for actor in self.actors:
             if actor.id == actor_id:
@@ -945,7 +955,7 @@ class PanelCore(CoreModel):
             if figure.actor == actor_id:
                 face = figure.face_exclusion
                 return Speaking(face, figure.mouth or (face.cx, face.cy))
-        raise KeyError(f"nobody in panel plays '{actor_id}'")
+        raise UnknownActorError(f"nobody in panel plays '{actor_id}'")
 
     def as_mono(self) -> "PanelCore":
         """The same panel in monochrome: every colour its palette added, taken back out.
@@ -995,12 +1005,12 @@ class PanelCore(CoreModel):
             That actor.
 
         Raises:
-            KeyError: No actor in this panel has that id.
+            UnknownActorError: No actor in this panel has that id. Also a `KeyError`.
         """
         for actor in self.actors:
             if actor.id == actor_id:
                 return actor
-        raise KeyError(f"no actor '{actor_id}' in panel")
+        raise UnknownActorError(f"no actor '{actor_id}' in panel")
 
     def to_json(self) -> str:
         """Serialise deterministically.
@@ -1063,10 +1073,22 @@ class PanelCore(CoreModel):
             The parsed panel.
 
         Raises:
-            ~pydantic_core.ValidationError: The document is not a valid Core panel.
-            json.JSONDecodeError: The text is not JSON at all.
+            CoreSyntaxError: The text is not JSON, or not a Panel Core. Also a
+                `ValueError`.
         """
-        return cls.model_validate(json.loads(text))
+        return _read_back(cls, text, "Panel Core")
+
+
+def _read_back[M: CoreModel](model: type[M], text: str, what: str) -> M:
+    """A Core document read back as `model`, or the reason it cannot be, located."""
+    try:
+        return model.model_validate(json.loads(text))
+    except json.JSONDecodeError as exc:
+        raise CoreSyntaxError(
+            f"not JSON: {exc.msg} at line {exc.lineno}, column {exc.colno}"
+        ) from exc
+    except ValidationError as exc:
+        raise CoreSyntaxError(summarise(exc, what=what)) from exc
 
 
 def _drop_unused(payload: dict[str, Any], **unused: object) -> None:
@@ -1175,10 +1197,10 @@ class PageCore(CoreModel):
             The parsed page.
 
         Raises:
-            ~pydantic_core.ValidationError: The document is not a valid Page Core.
-            json.JSONDecodeError: The text is not JSON at all.
+            CoreSyntaxError: The text is not JSON, or not a Page Core. Also a
+                `ValueError`.
         """
-        return cls.model_validate(json.loads(text))
+        return _read_back(cls, text, "Page Core")
 
 
 def point_pair(point: Point) -> tuple[float, float]:

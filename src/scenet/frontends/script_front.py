@@ -82,6 +82,7 @@ from scenet.ir import (
     Side,
     unholdable,
 )
+from scenet.paths import read_document
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
@@ -2128,8 +2129,10 @@ def load_script(path: Path) -> dict[str, PanelIR]:
         Panel name to scene graph, in the order the panels appear.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         ScriptSyntaxError: The script cannot be parsed -- dialogue before the first
             `PANEL` heading, or no `PANEL` headings at all.
     """
-    return parse_script(path.read_text(encoding="utf-8"), source=path)
+    return parse_script(read_document(path, error=ScriptSyntaxError), source=path)

@@ -235,6 +235,32 @@ below 1.0 means.
   complete panels. A block that is only a part of a document says so in a caption, `Part of
   story.scene.yaml`, and comic scripts are fenced as `scenet-script`. A test fails on each of
   the four mistakes; `CONTRIBUTING.md` and the testing guide state the rule.
+- **`except ScenetError` catches every error a public call raises** (#318), as `scenet.errors`
+  promised and 34 plain built-in raises denied. Each keeps the built-in it was, so an `except`
+  written for that still works. New, all importable from `scenet`:
+  - `RenderError`, a `ValueError`: a renderer was not handed a font the Core was lettered in,
+    a picture's bytes, or a panel a page places; was handed nothing to draw, or panels read two
+    ways; or a picture print cannot carry.
+  - `UnknownActorError`, a `KeyError`: `PanelCore.actor` and `PanelCore.speaker`, for a name
+    the panel does not hold.
+  - `FileReadError`, an `OSError` with the system's `errno`, `strerror` and `filename`, and
+    `MissingFileError`, also a `FileNotFoundError`: every function that takes a path, for a
+    file it cannot read.
+  - `MalformedAssetError`, an `AssetError` and a `ValueError`: `load_puppet` for a file that
+    is not a well-formed puppet, which was pydantic's `ValidationError`;
+    `PuppetLibrary.from_directory` for a name declared twice; a font file that cannot be
+    measured.
+  - `CoreSyntaxError`, a `SourceError`: `PanelCore.from_json` and `PageCore.from_json`, which
+    raised `json.JSONDecodeError` or `ValidationError`.
+
+  `compile_book_file` and `compile_document` raise `SourceError` for an extension no frontend
+  reads, and a document that is not UTF-8 is a `PanelSyntaxError` under rule `syntax`, where it
+  was a `UnicodeDecodeError`. `UnknownPoseError` and `UnknownExpressionError`, which
+  `PuppetSpec` already raised, are importable from `scenet` too. An `except
+  pydantic.ValidationError` around `load_puppet`, or `except json.JSONDecodeError` around
+  `from_json`, no longer catches; `except ValueError` does. Building a model yourself, such as
+  `PanelIR(...)`, still raises pydantic's `ValidationError`, as `scenet.errors` now says. A test
+  fails on any plain built-in raised where a caller could see it.
 - **A right-to-left document without pages prints right to left** (#296). Its print PDF, one
   page per panel, did not say `/Direction /R2L`, which only pages read right to left wrote, so
   a reader laid it out left to right.

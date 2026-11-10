@@ -16,6 +16,7 @@ from scenet.core import PageCore, PanelCore
 from scenet.emit.debug_svg import TRIM
 from scenet.emit.strip import GROUP, HIDDEN, counted, placed_panel, reading_direction
 from scenet.emit.svg import fmt
+from scenet.errors import RenderError
 from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
@@ -63,7 +64,7 @@ def render_page(
         The page, as SVG.
 
     Raises:
-        ValueError: A frame names a panel that `panels` does not hold.
+        RenderError: A frame names a panel that `panels` does not hold.
 
     Example:
         >>> from scenet import compile_book, render_page
@@ -144,11 +145,11 @@ def render_pages(
         (#68), from the right, as a manga's spread opens. They are written in reading order.
 
     Raises:
-        ValueError: There are no pages, a frame names a panel `panels` does not hold, or
+        RenderError: There are no pages, a frame names a panel `panels` does not hold, or
             the pages are not all read the same way.
     """
     if not pages:
-        raise ValueError("there are no pages to render")
+        raise RenderError("there are no pages to render")
     if mono:
         panels = {name: core.as_mono() for name, core in panels.items()}
     rtl = reading_direction([page.direction for page in pages], "pages") is Direction.RTL
@@ -247,7 +248,7 @@ def _frames(
     for position, frame in enumerate(page.frames, start=first_position):
         core = panels.get(frame.panel)
         if core is None:
-            raise ValueError(f"the page places panel '{frame.panel}', which was not given")
+            raise RenderError(f"the page places panel '{frame.panel}', which was not given")
         if frame.clearance is not None:
             ring = frame.clearance
             lines.append(

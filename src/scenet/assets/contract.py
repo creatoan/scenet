@@ -16,15 +16,25 @@ from pathlib import Path
 from typing import Annotated, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Discriminator,
+    Field,
+    Tag,
+    ValidationError,
+    model_validator,
+)
 
 from scenet.errors import (
-    AssetError,
+    FileReadError,
+    MalformedAssetError,
     RuleViolationError,
     UnknownExpressionError,
     UnknownPoseError,
     UnknownPuppetError,
 )
+from scenet.frontends.common import summarise
 from scenet.paths import Folder, NamedFileError, read_model, record_dependency
 from scenet.safe_yaml import load
 
@@ -666,8 +676,9 @@ class PuppetLibrary:
             A library containing every puppet found.
 
         Raises:
-            ValueError: Two files declare the same puppet name.
-            AssetError: A file is not a YAML mapping.
+            MalformedAssetError: Two files declare the same puppet name, or one is not a
+                well-formed puppet. Also a `ValueError`.
+            FileReadError: A file cannot be read.
 
         Files are visited in sorted order so that a duplicate-name collision reports the
         same offender on every platform, whatever order the filesystem hands them back.
@@ -679,7 +690,10 @@ class PuppetLibrary:
         for path in sorted(directory.glob("*.puppet.yaml")):
             spec = load_puppet(path)
             if spec.name in puppets:
-                raise ValueError(f"duplicate puppet name '{spec.name}' in {path}")
+                raise MalformedAssetError(
+                    f"duplicate puppet name '{spec.name}': an earlier file declares it too",
+                    source=path,
+                )
             puppets[spec.name] = spec
         return cls(puppets)
 
@@ -734,11 +748,13 @@ def load_puppet(path: Path) -> PuppetSpec:
         The validated puppet, ready to be posed.
 
     Raises:
-        AssetError: The file is not valid YAML -- including a key written twice in one
-            mapping -- or is not a mapping.
-        ~pydantic_core.ValidationError: The mapping is not a well-formed puppet -- an
-            out-of-order landmark, a skeleton that is not a tree, a joint referring
-            to a parent that does not exist.
+        MalformedAssetError: The file is not UTF-8, not valid YAML -- including a key
+            written twice in one mapping -- or not a mapping; or the mapping is not a
+            well-formed puppet: an out-of-order landmark, a skeleton that is not a tree, a
+            joint referring to a parent that does not exist. Also a `ValueError`.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
 
     Example:
         >>> from scenet import default_library, load_puppet
@@ -755,13 +771,22 @@ def load_puppet(path: Path) -> PuppetSpec:
     """
     record_dependency(path)
     try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise MalformedAssetError("not UTF-8 text", source=path) from exc
+    except OSError as exc:
+        raise FileReadError.of(exc) from exc
+    try:
         # A second `pointing:` used to replace the first without a word.
-        data = load(path.read_text(encoding="utf-8"))
+        data = load(text)
     except yaml.YAMLError as exc:
-        raise AssetError(f"{path}: {exc}") from exc
+        raise MalformedAssetError(str(exc), source=path) from exc
     if not isinstance(data, dict):
-        raise AssetError(f"{path}: expected a mapping at the top level")
-    return PuppetSpec.model_validate(data)
+        raise MalformedAssetError("expected a mapping at the top level", source=path)
+    try:
+        return PuppetSpec.model_validate(data)
+    except ValidationError as exc:
+        raise MalformedAssetError(summarise(exc, what="puppet"), source=path) from exc
 
 
 class PuppetFileError(NamedFileError):

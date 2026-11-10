@@ -211,15 +211,16 @@ def lettered() -> PanelCore:
     ).core
 
 
-@pytest.mark.parametrize(
-    "draw",
-    [render, render_debug, render_conditioning],
-    ids=lambda draw: draw.__name__,
-)
-def test_a_font_not_handed_back_is_a_render_error(
+def test_a_font_not_handed_back_is_a_render_error(lettered: PanelCore):
+    _promised(lambda: render(lettered), RenderError, ValueError)
+
+
+@pytest.mark.parametrize("draw", [render_debug, render_conditioning], ids=lambda d: d.__name__)
+def test_a_drawing_with_no_lettering_needs_no_font(
     lettered: PanelCore, draw: Callable[[PanelCore], object]
 ):
-    _promised(lambda: draw(lettered), RenderError, ValueError)
+    """The debug overlay draws boxes, and conditioning images draw shapes: no glyph."""
+    assert draw(lettered)
 
 
 def test_so_it_is_on_a_strip_a_page_and_in_print(lettered: PanelCore):

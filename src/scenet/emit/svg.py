@@ -38,6 +38,7 @@ from scenet.emit.geometry import (
     STROKE,
     WEATHER_OPACITY,
 )
+from scenet.errors import RenderError
 from scenet.ir import BalloonKind, Face
 from scenet.solve.text import FontMetrics, Typeface
 
@@ -119,7 +120,7 @@ def render(
             `palette: mono` would; see :meth:`PanelCore.as_mono <scenet.core.PanelCore.as_mono>`.
 
     Raises:
-        ValueError: The Core names a font that was not handed over. Drawing its lettering
+        RenderError: The Core names a font that was not handed over. Drawing its lettering
             in another face would draw text that does not fit the balloons around it.
             Or a picture is to be embedded and was not handed over.
     """
@@ -343,7 +344,7 @@ def image_href(image: CoreImage, embed: Mapping[str, bytes] | None = None) -> st
         The value of `xlink:href`.
 
     Raises:
-        ValueError: There is something to embed from, and not these bytes.
+        RenderError: There is something to embed from, and not these bytes.
 
     Example:
         >>> from scenet.core import Box, CoreImage
@@ -366,7 +367,7 @@ def image_href(image: CoreImage, embed: Mapping[str, bytes] | None = None) -> st
         return quote(image.href, safe="/")
     data = embed.get(image.sha256)
     if data is None:
-        raise ValueError(
+        raise RenderError(
             f"the panel is drawn over {image.href!r} (sha256 {image.sha256[:12]}...), and those "
             "bytes were not handed over to embed; pass CompileResult.images"
         )
@@ -588,7 +589,7 @@ def typeface_of(
         The shipped family, with each face the Core names in its declared font.
 
     Raises:
-        ValueError: A face the Core names is in none of the fonts given.
+        RenderError: A face the Core names is in none of the fonts given.
     """
     family = Typeface(regular=metrics)
     available = dict(fonts or {})
@@ -597,7 +598,7 @@ def typeface_of(
     for face, font in core.fonts.items():
         found = available.get(font.sha256)
         if found is None:
-            raise ValueError(
+            raise RenderError(
                 f"this panel was lettered in {font.family} {font.style} (sha256 "
                 f"{font.sha256[:12]}), and that font was not given to the renderer; pass "
                 "the fonts its compile returned as `fonts=`"

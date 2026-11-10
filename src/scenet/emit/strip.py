@@ -31,6 +31,7 @@ from collections.abc import Mapping, Sequence
 from scenet.core import Box, PanelCore
 from scenet.emit.debug_svg import debug_body
 from scenet.emit.svg import accessible_name, attr, fmt, panel_body, typeface_of
+from scenet.errors import RenderError
 from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
@@ -53,12 +54,12 @@ def reading_direction(directions: Sequence[Direction], what: str) -> Direction:
     """The one way a set of panels or pages is read, which laying them out side by side needs.
 
     Raises:
-        ValueError: They are not all read the same way. Every panel and page of one
+        RenderError: They are not all read the same way. Every panel and page of one
             document is, so this is panels gathered from documents read differently.
     """
     distinct = sorted(set(directions))
     if len(distinct) > 1:
-        raise ValueError(
+        raise RenderError(
             f"{what} are read in one direction, and these are read {' and '.join(distinct)}"
         )
     return distinct[0] if distinct else Direction.LTR
@@ -118,10 +119,10 @@ def render_strip(
         One SVG document holding every panel.
 
     Raises:
-        ValueError: There are no panels, or they are not all read the same way.
+        RenderError: There are no panels, or they are not all read the same way.
     """
     if not panels:
-        raise ValueError("a strip needs at least one panel")
+        raise RenderError("a strip needs at least one panel")
     if mono:
         panels = [(name, core.as_mono()) for name, core in panels]
     rtl = reading_direction([core.direction for _, core in panels], "a strip's panels") is (

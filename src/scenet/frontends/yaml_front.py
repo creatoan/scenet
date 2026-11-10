@@ -32,6 +32,7 @@ from scenet.frontends.common import (
     summarise,
 )
 from scenet.ir import Direction, PageLayout, PanelIR, check_placements
+from scenet.paths import read_document
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 
 
@@ -111,11 +112,13 @@ def load_panel(path: Path) -> PanelIR:
         The validated scene graph. No coordinates yet -- that is the solver's job.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: The document is malformed or invalid. The path is included in
             the message.
     """
-    return parse_panel(path.read_text(encoding="utf-8"), source=path)
+    return parse_panel(read_document(path), source=path)
 
 
 @dataclass(frozen=True, slots=True)
@@ -278,11 +281,13 @@ def load_scene(path: Path) -> dict[str, PanelIR]:
         Panel name to scene graph, in declaration order -- which is reading order.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: A panel is malformed or invalid.
         CompositionError: An `over:` chain is unresolvable or cyclic.
     """
-    return parse_scene(path.read_text(encoding="utf-8"), source=path)
+    return parse_scene(read_document(path), source=path)
 
 
 def load_scene_document(path: Path) -> SceneDocument:
@@ -295,8 +300,10 @@ def load_scene_document(path: Path) -> SceneDocument:
         The panels and the layout.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: A panel or the layout is malformed.
         CompositionError: An `over:` chain is unresolvable or cyclic.
     """
-    return parse_scene_document(path.read_text(encoding="utf-8"), source=path)
+    return parse_scene_document(read_document(path), source=path)

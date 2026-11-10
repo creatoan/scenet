@@ -59,6 +59,7 @@ from scenet.emit.pdf_fonts import width as advance_width
 from scenet.emit.pdf_images import Embedded, embed
 from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt, typeface_of
 from scenet.emit.turbulence import VEIL_STEP, veil_alpha
+from scenet.errors import RenderError
 from scenet.ir import Direction
 from scenet.solve.text import FontMetrics
 
@@ -347,7 +348,7 @@ def render_pdf(
         The PDF's bytes.
 
     Raises:
-        ValueError: A page places a panel that was not given, a Core names a font that was
+        RenderError: A page places a panel that was not given, a Core names a font that was
             not, a picture's bytes were not handed over, or a picture is one no PDF reader
             decodes.
 
@@ -403,7 +404,7 @@ def _picture_name(image: CoreImage) -> str:
 def _embedded(image: CoreImage, images: Mapping[str, bytes] | None) -> Embedded:
     data = (images or {}).get(image.sha256)
     if data is None:
-        raise ValueError(
+        raise RenderError(
             f"the panel is drawn over {image.href!r} (sha256 {image.sha256[:12]}...), and those "
             "bytes were not handed over to print; pass Book.images"
         )
@@ -441,7 +442,7 @@ def _page_content(
     for frame in page.frames:
         core = panels.get(frame.panel)
         if core is None:
-            raise ValueError(f"the page places panel '{frame.panel}', which was not given")
+            raise RenderError(f"the page places panel '{frame.panel}', which was not given")
         if frame.clearance is not None:
             ring = frame.clearance
             lines += _painted(
@@ -489,7 +490,7 @@ def panel_content(
         The content lines, in the panel's own units.
 
     Raises:
-        ValueError: The panel is drawn over a supplied picture, or names a font not given.
+        RenderError: The panel is drawn over a supplied picture, or names a font not given.
     """
     return _content(core, _Resources(fonts, live_text, {}, {}))
 

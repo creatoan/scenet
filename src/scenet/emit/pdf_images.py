@@ -23,6 +23,8 @@ import struct
 import zlib
 from dataclasses import dataclass
 
+from scenet.errors import RenderError
+
 #: The PNG signature, and the colour types by their number.
 SIGNATURE = bytes.fromhex("89504e470d0a1a0a")
 GREY, RGB, PALETTE, GREY_ALPHA, RGBA = 0, 2, 3, 4, 6
@@ -71,7 +73,7 @@ def embed(data: bytes, media_type: str, name: str) -> Embedded:
         name: The path the document wrote, for an error message.
 
     Raises:
-        ValueError: A JPEG no PDF reader decodes, or a file whose data is cut short.
+        RenderError: A JPEG no PDF reader decodes, or a file whose data is cut short.
     """
     if media_type == "image/jpeg":
         return _jpeg(data, name)
@@ -94,7 +96,7 @@ def _jpeg(data: bytes, name: str) -> Embedded:
             adobe = True
         if marker in FRAMES:
             if marker not in READABLE_FRAMES or not body or body[0] != 8:
-                raise ValueError(
+                raise RenderError(
                     f"{name} is a JPEG print cannot carry: only baseline, extended and "
                     "progressive 8-bit JPEGs are read by every PDF reader"
                 )
@@ -102,7 +104,7 @@ def _jpeg(data: bytes, name: str) -> Embedded:
             components = body[5]
             space = SPACES.get(components)
             if space is None:
-                raise ValueError(f"{name} is a JPEG with {components} colour components")
+                raise RenderError(f"{name} is a JPEG with {components} colour components")
             decode = " /Decode [1 0 1 0 1 0 1 0]" if components == 4 and adobe else ""
             return Embedded(
                 f"/Type /XObject /Subtype /Image /Width {width} /Height {height} "
@@ -110,7 +112,7 @@ def _jpeg(data: bytes, name: str) -> Embedded:
                 data,
             )
         offset += 2 + length
-    raise ValueError(f"{name} is a JPEG whose data ends before its frame")
+    raise RenderError(f"{name} is a JPEG whose data ends before its frame")
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,7 +129,7 @@ class _Png:
 
 def _chunks(data: bytes, name: str) -> _Png:
     if not data.startswith(SIGNATURE):
-        raise ValueError(f"{name} is not a PNG")
+        raise RenderError(f"{name} is not a PNG")
     offset = len(SIGNATURE)
     header: tuple[int, ...] | None = None
     palette = b""
@@ -148,7 +150,7 @@ def _chunks(data: bytes, name: str) -> _Png:
             break
         offset += 12 + length
     if header is None or not image:
-        raise ValueError(f"{name} is a PNG with no image data in it")
+        raise RenderError(f"{name} is a PNG with no image data in it")
     width, height, depth, colour, _, _, interlace = header
     return _Png(width, height, depth, colour, interlace == 1, palette, transparency, bytes(image))
 
@@ -156,7 +158,7 @@ def _chunks(data: bytes, name: str) -> _Png:
 def _png(data: bytes, name: str) -> Embedded:
     png = _chunks(data, name)
     if png.kind == PALETTE and not png.palette:
-        raise ValueError(f"{name} is a palette PNG with no palette")
+        raise RenderError(f"{name} is a palette PNG with no palette")
     alpha = png.kind in {GREY_ALPHA, RGBA} or (png.kind == PALETTE and png.transparency)
     if not png.interlaced and not alpha:
         return Embedded(_passed(png), png.data)
@@ -193,7 +195,7 @@ def _decoded(png: _Png, name: str) -> Embedded:
     try:
         raw = zlib.decompress(png.data)
     except zlib.error as exc:
-        raise ValueError(f"{name} is a PNG whose image data cannot be read: {exc}") from exc
+        raise RenderError(f"{name} is a PNG whose image data cannot be read: {exc}") from exc
     channels = CHANNELS[png.kind]
     rows = (
         _deinterlaced(raw, png, channels)

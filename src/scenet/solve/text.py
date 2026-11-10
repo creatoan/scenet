@@ -34,7 +34,9 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 
 from scenet.emphasis import parse
+from scenet.errors import MalformedAssetError
 from scenet.ir import Face
+from scenet.paths import read_file
 
 # Comic balloons are markedly wider than they are tall. Wrapping searches for the
 # measure whose block lands nearest this ratio.
@@ -409,18 +411,41 @@ class FontMetrics:
                 to its stem, so one font names itself the same from a file or from memory.
 
         Raises:
-            OSError: The file cannot be read.
-            ValueError: The font has no usable Unicode character map, so no text could
-                be measured against it at all.
+            FileReadError: The file cannot be read: a
+                :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+                `FileNotFoundError`, when it is not there.
+            MalformedAssetError: The file is not a TrueType or OpenType font, or has no
+                usable Unicode character map, so no text could be measured against it at
+                all. Also a `ValueError`.
         """
         self.path = path
         # Read whole, once. What a font *is* is its bytes: Panel Core names a face by
         # their digest, so a drawing can be refused a file that merely shares a name.
         # It also means no file stays open behind a lazily read font.
         if data is None:
-            data = Path(path).read_bytes()
+            data = read_file(Path(path))
         self.sha256 = self.digest(data)
         self._data = data
+        try:
+            self._open(data)
+        # A file that is not a font can fail inside fontTools in more ways than it
+        # documents. Whatever the failure, it is the same answer: this is no font.
+        except MalformedAssetError:
+            raise
+        except Exception as exc:
+            raise MalformedAssetError(
+                "not a TrueType or OpenType font that can be measured", source=Path(path)
+            ) from exc
+        # Read on first use, then answered pair by pair: expanding every class pair up
+        # front would be millions of entries for a font with a full Latin set.
+        self._kerning: list[tuple[_PairTable, ...]] | None = None
+        self._pdf_paths: dict[str, str] = {}
+        self._kerned: dict[tuple[str, str], int] = {}
+        self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
+        self.style = _name(self._font, STYLE_NAME) or "Regular"
+
+    def _open(self, data: bytes) -> None:
+        """Parse the font and read the tables every measurement needs."""
         self._font = TTFont(io.BytesIO(data), lazy=True)
         # fontTools builds table objects dynamically, so `unitsPerEm` exists at runtime
         # but not in any stub. Both checkers are told, each in its own dialect.
@@ -432,19 +457,12 @@ class FontMetrics:
         # returning None, so that case is asked about first.
         cmap = self._font.getBestCmap() if "cmap" in self._font else None
         if cmap is None:
-            raise ValueError(f"{path}: font has no usable Unicode character map")
+            raise MalformedAssetError("font has no usable Unicode character map", source=self.path)
         self._cmap: dict[int, str] = cmap
         self._widths: dict[str, int] = {
             name: advance for name, (advance, _lsb) in self._font["hmtx"].metrics.items()
         }
         self._missing = self._widths.get(".notdef", 0)
-        # Read on first use, then answered pair by pair: expanding every class pair up
-        # front would be millions of entries for a font with a full Latin set.
-        self._kerning: list[tuple[_PairTable, ...]] | None = None
-        self._pdf_paths: dict[str, str] = {}
-        self._kerned: dict[tuple[str, str], int] = {}
-        self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
-        self.style = _name(self._font, STYLE_NAME) or "Regular"
 
     @property
     def extent(self) -> tuple[float, float]:

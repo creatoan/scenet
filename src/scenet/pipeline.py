@@ -50,7 +50,13 @@ from scenet.core import (
     round_pairs,
     vector_pair,
 )
-from scenet.errors import PanelSyntaxError, RuleViolationError, ScenetError
+from scenet.errors import (
+    PanelSyntaxError,
+    RuleViolationError,
+    ScenetError,
+    ScriptSyntaxError,
+    SourceError,
+)
 from scenet.frontends.script_front import load_script, parse_script_document
 from scenet.frontends.yaml_front import (
     SceneDocument,
@@ -65,7 +71,7 @@ from scenet.geom import Point as GeomPoint
 from scenet.images import SuppliedImage, load_image
 from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, SettingSpec, Side
 from scenet.lettering import Lettering, typeface_for
-from scenet.paths import Folder, record_dependency, track_dependencies
+from scenet.paths import Folder, read_document, record_dependency, track_dependencies
 from scenet.places import place_of
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
@@ -972,7 +978,9 @@ def compile_file(
         The compiled panel.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: The document is malformed or invalid. The path is included
             in the message.
     """
@@ -1237,7 +1245,9 @@ def compile_scene_file(
         Panel name to compiled panel, in declaration order -- which is reading order.
 
     Raises:
-        OSError: The file cannot be read.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: A panel is malformed or invalid.
         CompositionError: An `over:` chain refers to a panel that does not exist, or
             forms a cycle.
@@ -1266,7 +1276,7 @@ def _script_document(text: str, *, source: Path | None) -> SceneDocument:
 
 def _load_script_document(path: Path) -> SceneDocument:
     """A comic script read from disk, as `compile_script` reads one handed over as text."""
-    return _script_document(path.read_text(encoding="utf-8"), source=path)
+    return _script_document(read_document(path, error=ScriptSyntaxError), source=path)
 
 
 def compile_script(
@@ -1337,15 +1347,17 @@ def compile_book_file(
         comic script.
 
     Raises:
-        ValueError: The extension is not one any frontend reads.
-        OSError: The file cannot be read.
+        SourceError: The extension is not one any frontend reads.
+        FileReadError: The file cannot be read: a
+            :exc:`MissingFileError <scenet.errors.MissingFileError>`, also a
+            `FileNotFoundError`, when it is not there.
         PanelSyntaxError: The document is malformed or invalid.
     """
     loader = DOCUMENT_LOADERS.get(path.suffix.lower())
     if loader is None:
         supported = ", ".join(sorted(FRONTENDS))
-        raise ValueError(
-            f"{path}: unsupported extension '{path.suffix}'; expected one of {supported}"
+        raise SourceError(
+            f"unsupported extension '{path.suffix}'; expected one of {supported}", source=path
         )
     with track_dependencies(dependencies):
         record_dependency(path)

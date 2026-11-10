@@ -434,7 +434,7 @@ def rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]:
     return PYDANTIC_RULES.get(str(error["type"]), "invalid-field"), tuple(error["loc"])
 
 
-def summarise(exc: ValidationError) -> str:
+def summarise(exc: ValidationError, *, what: str = "panel") -> str:
     """Flatten pydantic's error list into something a human can act on.
 
     pydantic's default rendering is accurate but verbose; for a language error the useful
@@ -442,6 +442,7 @@ def summarise(exc: ValidationError) -> str:
 
     Args:
         exc: The validation error pydantic raised.
+        what: What failed to validate, for the first line: `panel`, or `Panel Core`.
 
     Returns:
         A multi-line diagnostic, one line per problem, each naming where it is.
@@ -464,7 +465,7 @@ def summarise(exc: ValidationError) -> str:
         # which is noise to somebody reading a language diagnostic.
         message = error["msg"].removeprefix("Value error, ")
         lines.append(f"  at {location}: {message}")
-    return "invalid panel:\n" + "\n".join(lines)
+    return f"invalid {what}:\n" + "\n".join(lines)
 
 
 #: Keys a scene may carry beside `panels:` that lay its panels out rather than being a
