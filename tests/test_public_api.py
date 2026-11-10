@@ -7,6 +7,7 @@ that stops being catchable, or the PEP 561 marker going missing from the wheel.
 
 import importlib
 import pkgutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,16 @@ class TestPublicNames:
     def test_version_is_a_string(self):
         assert isinstance(scenet.__version__, str)
         assert scenet.__version__
+
+    def test_every_exported_name_is_in_its_own_module_s_all(self):
+        """Autodoc documents what a module's `__all__` names, where it has one. A public
+        name left out of it is documented on no page of the API reference."""
+        left_out: list[str] = []
+        for name in scenet.__all__:
+            module = sys.modules.get(getattr(getattr(scenet, name), "__module__", None) or "")
+            if module is not None and name not in getattr(module, "__all__", (name,)):
+                left_out.append(f"{module.__name__}.{name}")
+        assert left_out == []
 
     def test_every_exported_name_is_documented(self):
         """A name a user can reach must explain itself. No exceptions."""

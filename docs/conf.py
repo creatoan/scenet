@@ -7,14 +7,20 @@
 # Warnings are errors in CI (`sphinx-build -W`). A broken cross-reference or a page
 # missing from a toctree fails the build rather than quietly producing a worse site.
 
+import importlib
 import os
+import re
 import sys
+import zlib
+from collections.abc import Collection, Iterator
 from datetime import UTC, datetime
 from importlib.metadata import version as package_version
 from pathlib import Path
 
 from docutils import nodes
+from docutils.utils import get_source_line
 from sphinx.application import Sphinx
+from sphinx.util import logging
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -203,5 +209,137 @@ def _playground_links_stay_in_their_version(
             reference["refuri"] = f"{root}playground/{target.removeprefix(_PLAYGROUND)}"
 
 
+# -- What a build must show ----------------------------------------------------
+#
+# `-W` fails a build on what Sphinx warns about, and Sphinx does not warn about a page that
+# renders the wrong thing. From v0.8 on, every version of the API reference showed
+# autodoc's reStructuredText as text -- MyST had read it as Markdown -- and published an
+# `objects.inv` with no Python object in it, while every build passed (#316). Both checks
+# below warn, so `-W` fails such a build.
+
+_logger = logging.getLogger("scenet.docs")
+
+#: What autodoc, napoleon and sphinx-autodoc-typehints write for reStructuredText to read.
+#: Found as text on a built page, it is markup that never rendered.
+_RAW_MARKUP = (".. py:", ":py:", ".. admonition::", ".. seealso::", "sphinx_autodoc_typehints")
+
+#: Elements that show their text exactly as it is written. Markup quoted in code is meant.
+_AS_WRITTEN = (nodes.literal, nodes.literal_block, nodes.raw, nodes.comment)
+
+
+def _raw_markup(doctree: nodes.Node) -> Iterator[tuple[nodes.Text, str]]:
+    """Each text node on a page that holds raw markup, with the markup it holds."""
+    for text in doctree.findall(nodes.Text):
+        if _shown_as_written(text):
+            continue
+        for marker in _RAW_MARKUP:
+            if marker in text:
+                yield text, marker
+                break
+
+
+def _shown_as_written(node: nodes.Node) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, _AS_WRITTEN):
+            return True
+        parent = parent.parent
+    return False
+
+
+def _no_raw_markup(app: Sphinx, doctree: nodes.document, docname: str) -> None:
+    for text, marker in _raw_markup(doctree):
+        source, _ = get_source_line(text)
+        _logger.warning(
+            "%s shows raw markup %r, in %r: reStructuredText that was read as something "
+            "else. Autodoc runs inside an {eval-rst} fence, and docstrings are "
+            "reStructuredText.",
+            docname,
+            marker,
+            text.astext()[:60],
+            location=text if source else docname,
+            type="scenet",
+            subtype="raw_markup",
+        )
+
+
+#: A line of a version 2 inventory: name, `domain:role`, priority, address, display name.
+_INVENTORY_LINE = re.compile(r"(.+?)\s+(\S+)\s+(-?\d+)\s+?(\S*)\s+(.*)")
+
+
+def _python_objects(inventory: Path) -> set[str]:
+    """The full name of every Python object a built `objects.inv` holds.
+
+    Read here rather than through Sphinx's loader, whose result is a private class. The
+    format is four lines of header and the rest compressed: one object to a line.
+    """
+    header, _, body = inventory.read_bytes().partition(b"compressed using zlib.\n")
+    if not header.startswith(b"# Sphinx inventory version 2\n"):
+        raise ValueError(f"{inventory} is not a version 2 inventory")
+    found: set[str] = set()
+    for line in zlib.decompress(body).decode("utf-8").splitlines():
+        match = _INVENTORY_LINE.fullmatch(line)
+        if match is not None and match.group(2).startswith("py:"):
+            found.add(match.group(1))
+    return found
+
+
+_ABSENT = object()
+
+
+def _resolve(name: str) -> object:
+    """The object a documented full name stands for: a module, and attributes from it."""
+    parts = name.split(".")
+    for split in range(len(parts), 0, -1):
+        try:
+            found: object = importlib.import_module(".".join(parts[:split]))
+        except ImportError:
+            continue
+        for part in parts[split:]:
+            found = getattr(found, part, _ABSENT)
+        return found
+    return _ABSENT
+
+
+def _undocumented(documented: Collection[str]) -> list[str]:
+    """Each name in `scenet.__all__` that no documented object is.
+
+    A public name is documented under the module that defines it -- `compile_source` as
+    `scenet.pipeline.compile_source` -- so a full name counts when it ends in the public
+    name and stands for the same object. The same last name alone is not enough: two
+    modules may each have a class called the same.
+    """
+    scenet = importlib.import_module("scenet")
+    by_last_name: dict[str, list[str]] = {}
+    for full_name in documented:
+        by_last_name.setdefault(full_name.rpartition(".")[2], []).append(full_name)
+    return [
+        name
+        for name in scenet.__all__
+        if not any(
+            _resolve(full_name) is getattr(scenet, name) for full_name in by_last_name.get(name, ())
+        )
+    ]
+
+
+def _every_public_name_is_documented(app: Sphinx, exception: BaseException | None) -> None:
+    # A build that documents no Python has nothing to hold to `__all__`: the site tests'
+    # two-page build of this configuration, which leaves autodoc out.
+    if exception is not None or app.builder.format != "html":
+        return
+    if "sphinx.ext.autodoc" not in app.extensions:
+        return
+    for name in _undocumented(_python_objects(Path(app.outdir) / "objects.inv")):
+        _logger.warning(
+            "scenet.%s is public, in scenet.__all__, and objects.inv holds no Python object "
+            "for it: the API reference does not document it.",
+            name,
+            type="scenet",
+            subtype="undocumented",
+        )
+
+
 def setup(app: Sphinx) -> None:
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
+    app.connect("doctree-resolved", _no_raw_markup)
+    app.connect("build-finished", _every_public_name_is_documented)
