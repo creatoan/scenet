@@ -64,6 +64,12 @@ class TestErrorHierarchy:
         errors.PanelSyntaxError,
         errors.ScriptSyntaxError,
         errors.UnknownPuppetError,
+        errors.RenderError,
+        errors.UnknownActorError,
+        errors.FileReadError,
+        errors.MissingFileError,
+        errors.MalformedAssetError,
+        errors.CoreSyntaxError,
     ]
 
     @pytest.mark.parametrize("error", CONCRETE)
@@ -79,6 +85,12 @@ class TestErrorHierarchy:
             (errors.LayoutError, ValueError),
             (errors.BalloonPlacementError, ValueError),
             (errors.UnknownPuppetError, KeyError),
+            (errors.RenderError, ValueError),
+            (errors.UnknownActorError, KeyError),
+            (errors.FileReadError, OSError),
+            (errors.MissingFileError, FileNotFoundError),
+            (errors.MalformedAssetError, ValueError),
+            (errors.CoreSyntaxError, ValueError),
         ],
     )
     def test_builtin_bases_are_preserved(self, error: type[Exception], builtin: type[Exception]):
@@ -93,6 +105,26 @@ class TestErrorHierarchy:
     def test_a_bad_document_raises_a_source_error(self):
         with pytest.raises(errors.SourceError):
             scenet.compile_source("panel: {size: [0, 100]}")
+
+    def test_a_missing_file_is_one_that_cannot_be_read(self):
+        assert issubclass(errors.MissingFileError, errors.FileReadError)
+
+    def test_a_malformed_asset_is_an_asset_error(self):
+        assert issubclass(errors.MalformedAssetError, errors.AssetError)
+
+    def test_an_unknown_puppet_is_still_no_value_error(self):
+        """`AssetError` stays off `ValueError`, or `except ValueError` would catch a miss."""
+        assert not issubclass(errors.AssetError, ValueError)
+        assert not issubclass(errors.UnknownPuppetError, ValueError)
+
+    def test_every_public_error_is_public(self):
+        """Each error a caller can catch is named in `scenet.__all__`, so it imports from
+        `scenet` like the rest."""
+        public = {
+            name for name in errors.__all__ if issubclass(getattr(errors, name), errors.ScenetError)
+        }
+        internal = {"UnknownPoseError", "UnknownExpressionError"}
+        assert sorted(public - internal - set(scenet.__all__)) == []
 
     def test_errors_module_exports_match_its_contents(self):
         for name in errors.__all__:
