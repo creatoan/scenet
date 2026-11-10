@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from scenet.core import PanelCore
 from scenet.diagnostics import diagnose_source
-from scenet.errors import PanelSyntaxError, RuleViolationError
+from scenet.errors import CoreSyntaxError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.yaml_front import parse_panel, parse_scene_document
 from scenet.ir import (
     AnchorX,
@@ -410,7 +410,7 @@ class TestNonFiniteNumbers:
         """A Core is a format people hand-edit, and `json.loads` reads `NaN`."""
         payload = json.loads(compile_source(self.PANEL).core.to_json())
         payload["width"] = float("nan")
-        with pytest.raises(ValidationError):
+        with pytest.raises(CoreSyntaxError, match="width"):
             PanelCore.from_json(json.dumps(payload))
 
 
