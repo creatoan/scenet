@@ -12,6 +12,19 @@ below 1.0 means.
 
 ### Added
 
+- **The Python reference has a page for every public name** (#318). Each opens on a card -- its
+  import line, the module that defines it with a link to its source, what to install, the
+  release it appeared in and how stable it is -- then its signature and docstring. A function
+  or main class has a page of its own; enumerations share one per group, and so do the errors.
+  `scripts/build_api_pages.py` writes them, and the index's overview, from `__all__`'s own
+  groups, where the hand-kept table had left out 25 names; `--check` and a test fail on a
+  stale page. "Since" is mined from `__all__` at each release tag into
+  `docs/reference/api/since.toml`, with each parameter a function gained later marked
+  `versionadded`; a test fails on a public name without one. The module pages now document the
+  internals alone, marked as outside semantic versioning. A Guarantees page says what stays
+  stable, what determinism covers, what threads may share and which caches they do, which files
+  a compile reads, and how long it takes. `FontMetrics`, which `metrics=` and `fonts=` take, is
+  importable from `scenet`.
 - **The print PDF says what its colours are** (#283). RGB pictures are tagged with the ICC's
   sRGB profile, shipped in the package and written once per file; grey pictures and CMYK JPEGs
   keep their device space. An output intent names the printing condition the CMYK twins were
