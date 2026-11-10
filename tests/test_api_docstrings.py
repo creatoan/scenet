@@ -24,6 +24,7 @@ import re
 import sys
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from pydantic import BaseModel
@@ -221,7 +222,9 @@ def _docstrings() -> Iterator[tuple[str, str]]:
 
 def test_no_returns_section_reads_as_a_type():
     """Napoleon reads `Returns: A thing: more` as a type, "A thing", in italics."""
-    config = Config(napoleon_use_rtype=False)
+    # Napoleon's own `Config` is what it reads, though its signature names Sphinx's: a build
+    # hands it Sphinx's, which carries the same `napoleon_*` values.
+    config = cast("Any", Config(napoleon_use_rtype=False))
     offenders = [
         where
         for where, docstring in _docstrings()

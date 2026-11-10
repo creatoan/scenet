@@ -1,10 +1,10 @@
 # Emitting
 
-Panel Core to SVG, to a print PDF (#80), and to the exports for image models (#72). No emitter makes a layout
+Panel Core to SVG, to a print PDF, and to the exports for image models. No emitter makes a layout
 decision: everything it draws or says was already decided. The shapes Panel Core names but
 does not spell out -- a burst's spikes, a tail's corners, where each letter lands -- are worked
 out once in `scenet.emit.geometry`, and the order a panel is painted in is `scenet.emit.marks`,
-so that every emitter draws the same thing (#80).
+so that every emitter draws the same thing.
 
 ## `scenet.emit.svg`
 
