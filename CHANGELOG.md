@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **Every key a document can write says what it means on hover** (#319). The editor's four JSON
+  Schemas -- panel, scene, artwork contract and puppet -- give each key a description of its
+  own, one paragraph, where 4 of 77 had one: the meaning now sits under each field in the
+  models, which the Python reference shows too. A definition's description is its summary
+  alone, and no description carries a Sphinx role, a docstring section, a doctest, an issue
+  number or the repository's own agent instructions. A test fails on a key without a
+  description, and on any of those. `llms.txt` and the spec pack's schema part list all four
+  schemas, and the line describing the command line names `scenet schema`. The copies the site
+  serves for one version link that version's pages, pictures and schemas, `/dev/` or `/vX.Y/`;
+  the committed copies link the root, as before.
 - **Every public name explains itself as a reference entry** (#318). Each name in
   `scenet.__all__` has a summary, an example that imports it from `scenet` and shows its
   output, and See also; each function its parameters, what it returns, exactly which public
@@ -239,6 +249,14 @@ below 1.0 means.
 
 ### Fixed
 
+- **The language reference states what the compiler does** (#319). `panel.size` was called
+  required; it is `[1000, 1000]` when left out. The caption key table left out the `warm` tone.
+  The shot-type reference said a panel may raise its footroom, which no key does: each shot
+  sets its own. "Five authored layers" left out `lettering`, `palette`, `direction` and
+  `description`, which the opening table now lists. The spec pack and the skill said two
+  figures *need* a left-to-right order; the compiler orders them by `at:`, then by actor id,
+  and the reference now says so and recommends stating the order with `left_of`. Issue
+  numbers are gone from the page, and a test keeps them out.
 - **The Python API reference renders** (#316). Every version of the site since v0.8 showed it
   as raw reStructuredText: `.. py:class::` as text, `sphinx_autodoc_typehints` noise, and
   doctests run together into one paragraph. Its pages called autodoc from MyST fences, which

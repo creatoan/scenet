@@ -2,9 +2,10 @@
   "$defs": {
     "ArtworkFace": {
       "additionalProperties": false,
-      "description": "A face, as a disc no lettering may cover.\n\nAttributes:\n    center: Its centre, in the picture's pixels.\n    radius: How far it reaches, in pixels. Generous is safer than tight: a balloon may\n        not overlap this disc at all, and a tail stops on its edge.",
+      "description": "A face, as a disc no lettering may cover.",
       "properties": {
         "center": {
+          "description": "The face's centre, `[x, y]` in the picture's pixels, from its top left.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -19,6 +20,7 @@
           "type": "array"
         },
         "radius": {
+          "description": "How far the face reaches, in pixels. Generous is safer than tight: no lettering overlaps this disc, and a tail stops on its edge.",
           "exclusiveMinimum": 0,
           "title": "Radius",
           "type": "number"
@@ -33,7 +35,7 @@
     },
     "ArtworkFigure": {
       "additionalProperties": false,
-      "description": "One figure the picture draws.\n\nAttributes:\n    face: The disc no balloon, caption or sound effect may cover.\n    mouth: Where the tail of a line they speak ends -- or whatever the sound comes\n        from. Without one, a tail aims at the face's centre, and stops on its edge.\n    body: The silhouette a balloon pays to cover, as a polygon, or `None`. Covering a\n        speaker's own body costs half, as covering a puppet's does.",
+      "description": "One figure the picture draws.",
       "properties": {
         "body": {
           "anyOf": [
@@ -59,10 +61,12 @@
             }
           ],
           "default": null,
+          "description": "The figure's silhouette, a polygon in pixels, which a balloon pays to cover: half as much over its own speaker.",
           "title": "Body"
         },
         "face": {
-          "$ref": "#/$defs/ArtworkFace"
+          "$ref": "#/$defs/ArtworkFace",
+          "description": "The figure's face: a disc no balloon, caption or sound effect may cover."
         },
         "mouth": {
           "anyOf": [
@@ -84,6 +88,7 @@
             }
           ],
           "default": null,
+          "description": "Where the tail of a line the figure speaks ends, or the place a sound it makes comes from, in pixels. Left out, a tail aims at the face's centre.",
           "title": "Mouth"
         }
       },
@@ -96,12 +101,13 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Everything the solver may know about a supplied picture's content.\n\nAttributes:\n    size: The picture's size in pixels, `[width, height]`, as it was measured. It must\n        be the picture's own.\n    figures: Each figure the picture draws, by name. Every face here is kept clear of\n        lettering, whether or not the panel casts that figure.\n    keep_out: Regions lettering should stay off -- a sign, a hand, something the\n        panel is about. A cost, not a rule: a balloon covers one before it fails.",
+  "description": "Everything the solver may know about a supplied picture's content.",
   "properties": {
     "figures": {
       "additionalProperties": {
         "$ref": "#/$defs/ArtworkFigure"
       },
+      "description": "Each figure the picture draws, by the name a cast member's `figure` gives it. Every face here is kept clear of lettering, cast or not.",
       "propertyNames": {
         "minLength": 1
       },
@@ -110,6 +116,7 @@
     },
     "keep_out": {
       "default": [],
+      "description": "Regions lettering should stay off, each a polygon in pixels: a sign, a hand, what the panel is about. A cost, not a rule.",
       "items": {
         "items": {
           "maxItems": 2,
@@ -131,6 +138,7 @@
       "type": "array"
     },
     "size": {
+      "description": "The picture's size in pixels, `[width, height]`, as it was measured. It must be the picture's own.",
       "maxItems": 2,
       "minItems": 2,
       "prefixItems": [

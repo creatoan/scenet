@@ -29,7 +29,8 @@ scale                 = available_height / visible_height_native
 ```
 
 The scaled figure is then anchored so its crop line meets the bottom of the available area.
-`footroom` defaults to `0.0`; a panel may raise it to lift figures off the lower edge.
+`footroom` is the shot's own, from the [table](#table): `0.0` unless the shot lists one. No key
+sets it; a panel chooses it by choosing the shot.
 
 This anchoring rule is right whenever the crop landmark sits at the **edge** of what the shot
 frames -- feet at the bottom of a long shot, chin at the bottom of a big close-up. It goes wrong at

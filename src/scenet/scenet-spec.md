@@ -59,8 +59,10 @@ so always check.
   its path, `reference: puppets/pip.puppet.yaml`.** The shipped puppets are `alice`, `bob`.
   `pose` and `expression` must be names that puppet declares; see the `characters`
   part. Do not invent them.
-- **Two figures need a left-to-right order**, from `at:` or from an explicit
-  `a left_of b`. There is no unordered "beside".
+- **Say who stands left of whom.** `a left_of b` in `staging` fixes it. Where staging
+  says nothing, figures stand in the order of their `at:` anchors, and two at the same
+  anchor by actor id, in code-point order: the same on every run, but seldom what was
+  meant. State the order. There is no unordered "beside".
 - **Script order is reading order.** A balloon may never sit above-and-left of the one
   before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
   they are read.
@@ -97,25 +99,29 @@ character or a panel. A merge key's override (`<<: *base`, then the key again) i
 
 ## The layers
 
-A panel description has five authored layers. A sixth — resolution — is computed, and a seventh —
-rendering — is emitted.
+A panel is written in blocks, each saying one kind of thing about it. What the compiler
+makes of them — every coordinate, then the picture — is computed and emitted, never written.
 
 ![A page of three panels lettered over painted pictures: Alice and Bob in the rain on a street at dusk, Alice worrying in an inset, and Ana and Ben, whom the picture draws, on a station platform](https://creatoan.github.io/scenet/images/gallery/38-tour.page-1.svg)
 
 **In the gallery:** [A tour of Scenet](https://creatoan.github.io/scenet/gallery.html#a-tour-of-scenet).
 
-| Layer | Block | What it says |
-|---|---|---|
-| Frame | `panel` | Size and margins of the panel |
-| Camera | `camera` | How the scene is framed |
-| Setting | `setting` | Where and when it happens |
-| Cast and staging | `cast`, `staging` | Who is present, and how they relate |
-| Narrative | `script` | What is said, and in what order |
+| Block | What it says |
+|---|---|
+| [`panel`](#panel) | The size and margin of the panel |
+| [`camera`](#camera) | How the cast is framed |
+| [`setting`](#setting) | Where and when it happens |
+| [`cast`](#cast), [`staging`](#staging) | Who is present, and how they stand to each other |
+| [`script`](#script) | What is said and heard, in the order it is read |
+| [`lettering`](#lettering) | The type size, and the font files |
+| [`palette`](#palette) | Whether the panel is drawn in grey or in colour |
+| [`direction`](#direction) | Which way the comic is read: the whole document's, never one panel's |
+| [`description`](#description) | What the panel shows, in words, for a reader who cannot see it. Nothing is drawn from it |
 
-A panel may also carry a [`description`](#description): what it shows, in words, for a reader who
-cannot see it. It is not a layer: nothing is drawn from it.
+A scene document holds several panels under `panels:`, and lays them out with
+[`page` and `pages`](#page-and-pages).
 
-Layers are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
+Blocks are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
 
 ## A complete example
@@ -155,7 +161,7 @@ script:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `size` | `[width, height]` | required | Panel dimensions in panel units; printed, a unit is 0.1 mm |
+| `size` | `[width, height]` | `[1000, 1000]` | Panel dimensions in panel units; printed, a unit is 0.1 mm |
 | `margin` | number | `0` | Inset all content by this much |
 
 ![Alice and Bob in a medium close-up, their figures running off the panel's edges while both balloons keep inside its margin](https://creatoan.github.io/scenet/images/gallery/15-margin.svg)
@@ -657,9 +663,12 @@ scene-graph representations used elsewhere in computer vision.
 constraint solver, and "A and B must not overlap" is a *disjunction*: A is left of B, **or** B is
 left of A. Linear solvers cannot express that choice.
 
-So the language resolves it instead. By the time the solver runs, ordering is already decided — by
-`at`, or by an explicit `left_of` — and what reaches the solver is a linear system it can always
-solve. This is the reason there is no unordered `beside` predicate, and why any future construct
+So the language resolves it instead. By the time the solver runs, ordering is already decided, and
+what reaches the solver is a linear system it can always solve. A `left_of` or `right_of` in
+`staging` decides first. Where staging says nothing, figures stand in the order of their `at:`
+anchors, and two at the same anchor by actor id, in code-point order, so `Bob` stands left of
+`alice`. That is the same on every run, but seldom what was meant: when the order matters, state it
+with `left_of`. This is the reason there is no unordered `beside` predicate, and why any future construct
 must resolve its own ordering in the frontend.
 
 ## `script`
@@ -771,7 +780,7 @@ to do. Comics solved this long before they had reliable backgrounds.
 |---|---|---|
 | `text` | string | What the box says. Line breaking is computed, as for dialogue |
 | `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
-| `tone` | `paper`, `pale`, `ink` | What the box is filled with. Defaults to `paper` |
+| `tone` | `paper`, `pale`, `ink`, `warm` | What the box is filled with. Defaults to `paper` |
 | `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
 | `by` | any name | Who is speaking, for a `spoken` caption only |
 
@@ -1281,14 +1290,14 @@ panels:
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
 
-**Printed, a unit is a tenth of a millimetre** (#80). The default page prints at 200 × 300 mm; a US
+**Printed, a unit is a tenth of a millimetre.** The default page prints at 200 × 300 mm; a US
 comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6 is
 `size: [1280, 1820]`. `bleed` is in the same units: `30` is 3 mm, `31.75` is the 0.125 in US
 printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
 page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
 before.
 
-**A panel can bleed** (#281): its frame runs past the trim, out to the bleed line, and has no
+**A panel can bleed**: its frame runs past the trim, out to the bleed line, and has no
 border on that side, so its art goes to the edge of the cut page.
 
 ![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
@@ -1459,8 +1468,8 @@ noise built in, the specification includes reference code, and the `seed` is fix
 on what to paint from it. That is fine, and it was already true of every glyph outline and every
 antialiased edge in the file.
 
-Print has no such filter, so it computes the same noise from that reference code (#282) and
-carries it in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
+Print has no such filter, so it computes the same noise from that reference code and carries it
+in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
 viewer paints from them is not.
 
 Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
@@ -1503,7 +1512,8 @@ scale                 = available_height / visible_height_native
 ```
 
 The scaled figure is then anchored so its crop line meets the bottom of the available area.
-`footroom` defaults to `0.0`; a panel may raise it to lift figures off the lower edge.
+`footroom` is the shot's own, from the [table](#table): `0.0` unless the shot lists one. No key
+sets it; a panel chooses it by choosing the shot.
 
 This anchoring rule is right whenever the crop landmark sits at the **edge** of what the shot
 frames -- feet at the bottom of a long shot, chin at the bottom of a big close-up. It goes wrong at
@@ -2404,15 +2414,20 @@ A balloon, caption or panel holds more words than a letterer fits well. Dark Hor
 <!-- scenet-spec:part=schema -->
 # JSON Schema
 
-The schema for a single-panel YAML document, generated from the compiler's own models. It describes the syntax people write, including staging sentences such as `alice left_of bob`. The multi-panel scene schema is at <https://creatoan.github.io/scenet/schemas/scene.schema.json>.
+The schemas are generated from the compiler's own models, and describe the syntax people write, including staging sentences such as `alice left_of bob`. Four are published:
 
-Conforming to it is necessary, not sufficient: see the note on schema validity in the preamble.
+- <https://creatoan.github.io/scenet/schemas/panel.schema.json>: a single-panel YAML document, `*.panel.yaml`
+- <https://creatoan.github.io/scenet/schemas/scene.schema.json>: a multi-panel YAML document, `*.scene.yaml`: panels, sequences and pages
+- <https://creatoan.github.io/scenet/schemas/artwork.schema.json>: an artwork contract, the `*.art.yaml` beside a supplied picture
+- <https://creatoan.github.io/scenet/schemas/puppet.schema.json>: a puppet file, a `*.puppet.yaml` a cast member names by its path
+
+The panel schema follows. Conforming to a schema is necessary, not sufficient: see the note on schema validity in the preamble.
 
 ```json
 {
   "$defs": {
     "AnchorX": {
-      "description": "Where along the panel width an actor would like to stand.\n\nHorizontal only. Actors stand on a ground line, so their vertical position is\nderived from the camera rather than requested -- which is why this has no vertical\ncounterpart and :class:`PlacementZone <scenet.ir.PlacementZone>`, used for balloons, does.\n\nThese are *weak* preferences. Non-overlap and declared left-to-right ordering are\nrequired constraints and will override an anchor without complaint; two actors both\nasking for `center` will simply be pushed apart around it.",
+      "description": "Where along the panel width an actor would like to stand.",
       "enum": [
         "left_edge",
         "left_third",
@@ -2424,7 +2439,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "BalloonKind": {
-      "description": "What kind of balloon carries a line, which is how it gets drawn.\n\nThe kind changes the outline and the tail, never the placement: a whisper is\nsubject to exactly the same face-avoidance and reading-order rules as a shout.\n\n+-----------+--------------------------+------------------+\n| Kind      | Outline                  | Tail             |\n+===========+==========================+==================+\n| `speech`  | rounded rectangle        | tapered pointer  |\n+-----------+--------------------------+------------------+\n| `thought` | ellipse                  | trail of bubbles |\n+-----------+--------------------------+------------------+\n| `whisper` | dashed rounded rectangle | tapered pointer  |\n+-----------+--------------------------+------------------+\n| `shout`   | jagged burst             | tapered pointer  |\n+-----------+--------------------------+------------------+",
+      "description": "What kind of balloon carries a line, which is how it gets drawn.",
       "enum": [
         "speech",
         "thought",
@@ -2435,7 +2450,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "CameraAngle": {
-      "description": "The camera's height relative to the subject.\n\nAffects headroom rather than perspective: this is a flat, orthographic compiler, so\na tilted camera does not foreshorten anything. What it changes is how much air sits\nabove the head -- which is the compositional cue readers actually take from an\nangle, and one that survives being drawn flat.\n\nA **low** camera looks up and the subject looms, so the head rides high in the frame\nwith little space above it. A **high** camera looks down, so the head sits lower and\nmore space opens up above. See\n:func:`headroom_for <scenet.solve.camera.headroom_for>` for the exact factors.",
+      "description": "The camera's height relative to the subject.",
       "enum": [
         "low",
         "eye_level",
@@ -2446,15 +2461,17 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CameraSpec": {
       "additionalProperties": false,
-      "description": "How the panel is framed.\n\nAttributes:\n    shot: Requested framing; an upper bound on tightness, see\n        :class:`ShotType <scenet.ir.ShotType>`.\n    angle: Camera height, see :class:`CameraAngle <scenet.ir.CameraAngle>`.\n\nThere is exactly **one camera per panel**, and every actor is drawn at the scale it\nimplies. Scaling each actor to its own crop landmark instead would make everybody\nthe same apparent height and erase the body differences a comic uses to tell\ncharacters apart.",
+      "description": "How the panel is framed.",
       "properties": {
         "angle": {
           "$ref": "#/$defs/CameraAngle",
-          "default": "eye_level"
+          "default": "eye_level",
+          "description": "The camera's height: `low` looks up, leaving little air above the head; `high` looks down, leaving more."
         },
         "shot": {
           "$ref": "#/$defs/ShotType",
-          "default": "medium_shot"
+          "default": "medium_shot",
+          "description": "How tightly the camera frames the cast, named by where the frame cuts the body, from `long_shot` to `extreme_close_up`. The tightest it may go: the camera steps back when the cast does not fit."
         }
       },
       "title": "CameraSpec",
@@ -2462,7 +2479,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "CaptionEvent": {
       "additionalProperties": false,
-      "description": "One caption box: the panel speaking in its own voice.\n\nA caption is what lets a panel say where and when it happens without a character\nhaving to explain it out loud. `MIDNIGHT. THE DOCKS.` in the corner does the work\nof an establishing shot with no artwork at all, which is how comics established\nplace long before they had reliable backgrounds.\n\nAttributes:\n    verb: Always `caption`, written as `- caption: {...}`.\n    text: What the box says. As with dialogue, line breaking is computed, and a\n        word between underscores is stressed.\n    kind: What the box is doing, which decides how it is set.\n    tone: What the box is filled with. Defaults to `paper`, the white every caption\n        has been since captions shipped, so no existing panel moves.\n    prefer: Where it would like to sit, a place on the panel. Unwritten, it is\n        `None`, and the caption sits where a `locale` caption conventionally goes:\n        where reading starts, `top_left`, or `top_right` in a comic read right to left.\n    by: Who is speaking, for a `spoken` caption only.\n\n**A caption is not a fifth balloon kind.** It has no speaker to point at and no\ntail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a\nfifth kind would mean inventing a speaker and leaving a field dead.\n\n`by` is the one place where the rule that every actor id resolves does not hold,\nand deliberately: an off-panel speaker is not in the panel, so requiring them to be\nin the cast would defeat the point of saying they are off panel.",
+      "description": "One caption box: the panel speaking in its own voice.",
       "properties": {
         "by": {
           "anyOf": [
@@ -2474,11 +2491,13 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "Who is speaking, for a `spoken` caption only: any name, in the cast or not.",
           "title": "By"
         },
         "kind": {
           "$ref": "#/$defs/CaptionKind",
-          "default": "locale"
+          "default": "locale",
+          "description": "What the box is doing: `locale` for a place and time, `monologue` for an inner voice, `spoken` for speech from off panel, `editorial` for the writer's voice."
         },
         "prefer": {
           "anyOf": [
@@ -2489,16 +2508,19 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left."
         },
         "text": {
+          "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.",
           "minLength": 1,
           "title": "Text",
           "type": "string"
         },
         "tone": {
           "$ref": "#/$defs/CaptionTone",
-          "default": "paper"
+          "default": "paper",
+          "description": "What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`."
         }
       },
       "required": [
@@ -2508,7 +2530,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "CaptionKind": {
-      "description": "What a caption box is doing, which is how it gets set.\n\nThese four are the letterers' own vocabulary, taken from Blambot's *Comic Book\nGrammar & Tradition* rather than invented -- for the same reason the predicates\nwere taken from Visual Genome. Note that \"narration\", the obvious guess, is not\namong them.\n\n+-------------+---------------------------------------------+---------------------------+\n| Kind        | What it is                                  | How it is set             |\n+=============+=============================================+===========================+\n| `locale`    | Location and time -- \"Midnight. The docks.\" | Italic                    |\n+-------------+---------------------------------------------+---------------------------+\n| `monologue` | A character's inner voice                   | Italic                    |\n+-------------+---------------------------------------------+---------------------------+\n| `spoken`    | Off-panel dialogue                          | Roman, in quotation marks |\n+-------------+---------------------------------------------+---------------------------+\n| `editorial` | The voice of the writer or editor           | Italic                    |\n+-------------+---------------------------------------------+---------------------------+\n\n`monologue` has largely replaced the thought balloon in modern comics, so a panel\nhas two ways to render an inner voice: this and\n:attr:`BalloonKind.THOUGHT <scenet.ir.BalloonKind>`. Both are correct. They are\ndifferent eras of the same convention, not a duplication.",
+      "description": "What a caption box is doing, which is how it gets set.",
       "enum": [
         "locale",
         "monologue",
@@ -2519,7 +2541,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "CaptionTone": {
-      "description": "The value a caption box is filled with.\n\nA caption box is opaque, so its lettering is never at risk: the text sits on the\nfill whatever is behind it. What a tone changes is whether the *box* reads. On a\nclear day the atmosphere is `#eeeeee` and a white box on it is 1.16:1 -- legible,\nand invisible. The failing case is the pale end, not the dark one.\n\n+---------+-----------+-----------------------------------------------+-------------+\n| Tone    | Fill      | Where it comes from                           | Lettered in |\n+=========+===========+===============================================+=============+\n| `paper` | `#ffffff` | the paper the panel is printed on             | ink         |\n+---------+-----------+-----------------------------------------------+-------------+\n| `pale`  | `#adadad` | the `day` row of the value ladder, far plane  | ink         |\n+---------+-----------+-----------------------------------------------+-------------+\n| `ink`   | `#090909` | the `day` row of the value ladder, foreground | paper       |\n+---------+-----------+-----------------------------------------------+-------------+\n| `warm`  | `#eeeeee` | the `day` row of the value ladder, atmosphere | ink         |\n+---------+-----------+-----------------------------------------------+-------------+\n\n**Drawn from the ladder in `solve/backdrop.py`, not from a second palette.** Three of\nthe four are rungs of it, taken by index rather than restated, which is what keeps\nlettering and backdrop from drifting apart as either is tuned. The `day` row is the\nladder at its widest, so tones taken from it span the most ground.\n\n**A tone is fixed, not a function of the panel's hour.** A caption's value is a\nproperty of the caption; letting it drift with `time` would make the contrast table\na function of the panel and the legibility floor unenforceable.\n\n`ink` produces what letterers call reversed type: the lettering inverts to paper,\nbecause black type on a near-black box is not lettering, it is a filled rectangle.\nWhich mark reads is resolved by the solver -- see\n:attr:`CoreCaption.ink <scenet.core.CoreCaption>` -- exactly as falling rain's is.\n\n`warm` is the classic yellow `locale` caption, under the colour policy: its\nvalue is the grey above, and in a palette with colour it is drawn in that grey's twin,\na pale yellow of the same lightness. In `mono` it is the grey, which is what a\nblack-and-white reprint does to a yellow caption. The other three are neutral in every\npalette.\n\nThere is no free-form colour here. A `fill:` taking any string would be the language's\none open vocabulary, and would let an author produce an unreadable box.",
+      "description": "The value a caption box is filled with.",
       "enum": [
         "paper",
         "pale",
@@ -2543,7 +2565,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           ]
         }
       ],
-      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.\n\nAttributes:\n    reference: Name of a puppet in the library. This is what gets drawn; the key\n        this member is filed under in `cast` is the actor id used everywhere else.\n        None for a figure.\n    pose: Named pose from that puppet's declared set.\n    expression: Named expression from that puppet's declared set. Selected by name\n        exactly as a pose is, because a face is the same kind of thing as a body:\n        a small closed set of arrangements the character can be in.\n    marks: Emanata drawn around the character -- sweat, dizziness, swearing, a\n        hasty exit. A list, because they compose with each other and with the\n        expression. Kept sorted, so the order they were written in never\n        changes the output.\n    at: Preferred horizontal anchor.\n    facing: Which way the figure is turned.\n    figure: Instead of `reference`: a figure the panel's supplied picture draws, by\n        the name its artwork contract gives it. Nobody poses or places it --\n        the artist did -- so none of the keys above applies to it, and every one\n        is refused beside it.\n\nThe split between actor id and `reference` is what lets one puppet appear twice in\na panel as two different people:\n\n.. code-block:: yaml\n\n    cast:\n      guard_left:  {reference: bob, pose: arms_crossed}\n      guard_right: {reference: bob, pose: standing_neutral, facing: left}",
+      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.",
       "if": {
         "properties": {
           "figure": {
@@ -2572,36 +2594,39 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "at": {
           "anyOf": [
             {
-              "$ref": "#/$defs/AnchorX",
-              "default": "center"
+              "$ref": "#/$defs/AnchorX"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": "center",
+          "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
         },
         "expression": {
           "anyOf": [
             {
-              "default": "neutral",
-              "title": "Expression",
               "type": "string"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": "neutral",
+          "description": "An expression the puppet declares, by name.",
+          "title": "Expression"
         },
         "facing": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Facing",
-              "default": "right"
+              "$ref": "#/$defs/Facing"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": "right",
+          "description": "Which way the figure is turned, `left` or `right`, gaze and all."
         },
         "figure": {
           "anyOf": [
@@ -2613,34 +2638,37 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.",
           "title": "Figure"
         },
         "marks": {
           "anyOf": [
             {
-              "default": [],
               "items": {
                 "$ref": "#/$defs/Mark"
               },
-              "title": "Marks",
               "type": "array"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": [],
+          "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.",
+          "title": "Marks"
         },
         "pose": {
           "anyOf": [
             {
-              "default": "standing_neutral",
-              "title": "Pose",
               "type": "string"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": "standing_neutral",
+          "description": "A pose the puppet declares, by name.",
+          "title": "Pose"
         },
         "reference": {
           "anyOf": [
@@ -2652,6 +2680,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.",
           "title": "Reference"
         }
       },
@@ -2678,7 +2707,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "Direction": {
-      "description": "Which way a comic is read: its progression, not the direction of its text.\n\n`ltr` reads from the top left, as Western comics do; `rtl` from the top right, as manga\ndo -- the panels on a page and in a strip, the pages side by side, and the balloons and\ncaptions in a panel. The words in a balloon are not touched: a manga translated into\nEnglish still reads right to left while each line reads left to right.\n\nIt is the whole document's, written once, as EPUB's `page-progression-direction` is per\nbook, whose words these are. Only what reading decides follows it. The scene is never\nmirrored: figures, gaze, staging, tails and sound effects stay as staged, and every\nword that names a place on the panel -- `at:`, `left_of`, `facing:`, `prefer:`, a side\nfor `off_panel`, an inset's corner -- means the same place either way.",
+      "description": "Which way a comic is read: its progression, not the direction of its text.",
       "enum": [
         "ltr",
         "rtl"
@@ -2687,7 +2716,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Facing": {
-      "description": "Which way an actor is turned.\n\nMirroring the whole puppet, gaze vector included. Defaults to `right`, so a cast\nwritten left to right ends up looking into the panel rather than out of it.",
+      "description": "Which way an actor is turned.",
       "enum": [
         "left",
         "right"
@@ -2696,7 +2725,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Fit": {
-      "description": "How a supplied picture fills the panel, keeping its own proportions.\n\n+-----------+--------------------------------------------------------------------+------------+\n| Fit       | The picture                                                        | SVG's word |\n+===========+====================================================================+============+\n| `cover`   | Fills the panel; what overhangs it is cropped, equally on both     | `slice`    |\n|           | sides                                                              |            |\n+-----------+--------------------------------------------------------------------+------------+\n| `contain` | Is shown whole; the panel shows round it where their shapes differ | `meet`     |\n+-----------+--------------------------------------------------------------------+------------+\n\nCentred either way. A picture is never stretched: its shape is a fact about it, and\na figure drawn into it would be stretched with it.",
+      "description": "How a supplied picture fills the panel, keeping its own proportions.",
       "enum": [
         "cover",
         "contain"
@@ -2723,6 +2752,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
                 }
               ],
               "default": null,
+              "description": "The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic`, or `regular` when there is no italic, and a note says so.",
               "title": "Bold Italic"
             },
             "display": {
@@ -2735,6 +2765,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
                 }
               ],
               "default": null,
+              "description": "The font file sound effects are lettered in. Left out, the shipped display face, Bangers, whatever the other faces are.",
               "title": "Display"
             },
             "italic": {
@@ -2747,9 +2778,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
                 }
               ],
               "default": null,
+              "description": "The font file every caption but a `spoken` one is lettered in. Left out, they are set in `regular`.",
               "title": "Italic"
             },
             "regular": {
+              "description": "The font file dialogue and `spoken` captions are lettered in, relative to the document. Written alone, as `font: fonts/Comic.ttf`, it letters every face.",
               "title": "Regular",
               "type": "string"
             }
@@ -2760,11 +2793,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           "type": "object"
         }
       ],
-      "description": "The font files a panel is lettered in, each a path relative to the document.\n\nAttributes:\n    regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is\n        the only face, and stands in for the others.\n    italic: Every other caption kind. Left out, captions are set in `regular`.\n    display: Sound effects. Left out, they are lettered in the shipped display face,\n        Bangers, whatever the other faces are: a sound effect is not text.\n    bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,\n        in `regular` when there is not -- and a note says so when it happens.\n\nPaths, never names: a font is a declared file and never a system lookup, so a\ndocument letters the same on every machine. They are read relative to the folder the\ndocument is in, and an absolute one is refused; see :mod:`scenet.paths`.",
+      "description": "The font files a panel is lettered in, each a path relative to the document.",
       "title": "FontSpec"
     },
     "Horizon": {
-      "description": "Where the ground meets whatever is behind it.\n\nOne line for the whole panel, which every mass is composed against: masses of the\nground sort start at it and run down, masses that stand in the world rise from it.\nNamed rather than given as a number for the same reason `at:` is -- the author is\nsaying how the panel is composed, not typing a coordinate.",
+      "description": "Where the ground meets whatever is behind it.",
       "enum": [
         "high",
         "mid",
@@ -2775,7 +2808,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "LetteringSpec": {
       "additionalProperties": false,
-      "description": "How a panel is lettered.\n\nAttributes:\n    size: The dialogue type size, in panel units -- the units `panel.size` is given\n        in, which on a page are the page's, since a panel there is compiled at its\n        frame's size. Captions keep their proportion to it: 30 parts in 35, as they\n        are by default. Left out, a panel letters at 3.5% of the height it letters\n        against: its own alone, one tier of a three-tier page on a page.\n    font: The font files to letter in, in place of the shipped Source Sans Pro.\n\nA size or a font set beside `panels:` is a default every panel inherits, which is how a page\nletters at one size of the author's choosing. Set on one panel, it letters that panel\nalone -- the author's call to make, and not one the compiler second-guesses.\n\nThe type is measured at exactly this size, so it decides how big every balloon is. A\nsize too large for the panel leaves a balloon nowhere to go, which `scenet check\n--deep` reports as `balloon-placement`.",
+      "description": "How a panel is lettered.",
       "properties": {
         "font": {
           "anyOf": [
@@ -2786,7 +2819,8 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "The font files to letter in, relative to the document: one file for every face, or one for each. Left out, Source Sans Pro."
         },
         "size": {
           "anyOf": [
@@ -2799,6 +2833,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left out, 3.5% of the height the panel letters against: its own, or one tier of a three-tier page.",
           "title": "Size"
         }
       },
@@ -2806,7 +2841,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "Mark": {
-      "description": "Something drawn around a character, rather than on them, to say how they are.\n\nThe vocabulary is Mort Walker's, from *The Lexicon of Comicana* (1980), which grew\nout of his 1964 National Cartoonists Society piece \"Let's Get Down to Grawlixes\".\nThe book is tongue-in-cheek, but the terms entered real use, and they are comics'\nown names for comics' own conventions. So the set is closed and citable, and nothing\nin it is invented here.\n\n+-------------+---------------------------------------------+--------------------------------+\n| Mark        | What it is                                  | What it says                   |\n+=============+=============================================+================================+\n| `plewds`    | Droplets flying off the head                | sweating: effort, heat, nerves |\n+-------------+---------------------------------------------+--------------------------------+\n| `squeans`   | Little starbursts and circles over the head | dizzy, drunk, or sick          |\n+-------------+---------------------------------------------+--------------------------------+\n| `grawlixes` | Symbols over the head standing in for words | swearing                       |\n+-------------+---------------------------------------------+--------------------------------+\n| `briffits`  | A dust cloud left at the feet               | gone, fast                     |\n+-------------+---------------------------------------------+--------------------------------+\n\n\"Emanata\" is Walker's general term for these, which is why it names the module that\ndraws them and the Core field that holds them.\n\nA mark is not an expression. A character can be angry *and* sweating, so marks are\na list that composes with `expression:` rather than a second one. Grawlixes are\ndrawn as symbols -- a jarn (spiral), a nittle (bursting star), a bolt and a hash --\nrather than typed: an oath written as `@#$%!` already works, as dialogue.\n\nAll four are drawn **outside** the head circle, in the space balloons are placed\nin. They never move a character. A balloon prefers not to cover them, and covers\nthem anyway rather than fail when a panel is too crowded to oblige.",
+      "description": "Something drawn around a character, rather than on them, to say how they are.",
       "enum": [
         "plewds",
         "squeans",
@@ -2818,18 +2853,21 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "Mass": {
       "additionalProperties": false,
-      "description": "One tonal mass in the backdrop: what it is, how far back, how wide.\n\nAttributes:\n    kind: What the mass is made of, which decides its silhouette.\n    plane: How far back it sits, which decides its value and its draw order.\n    spans: How much of the panel's width it covers.\n\n**Backdrops are never author-drawn**, and there are two reasons. The structural one:\ncrisp architecture needs a vanishing point, and this is deliberately a flat,\northographic compiler, so drawn buildings would fight the compiler's own model.\nSoft tonal masses have no perspective to get wrong.\n\nThe second is that this is how comics actually establish place. Notan -- the\nJapanese light/dark mass principle, which reached Western art teaching through\nArthur Wesley Dow's *Composition* (1899) -- says place is read from the arrangement\nof masses rather than from rendered detail.",
+      "description": "One tonal mass in the backdrop: what it is, how far back, how wide.",
       "properties": {
         "kind": {
-          "$ref": "#/$defs/MassKind"
+          "$ref": "#/$defs/MassKind",
+          "description": "What the mass is made of, which decides its silhouette: seven outdoor kinds of stuff and five indoor."
         },
         "plane": {
           "$ref": "#/$defs/Plane",
-          "default": "mid"
+          "default": "mid",
+          "description": "How far back the mass sits, which decides its value and its draw order. A `foreground` mass is drawn over the cast."
         },
         "spans": {
           "$ref": "#/$defs/Spans",
-          "default": "full"
+          "default": "full",
+          "description": "How much of the panel's width the mass covers: all of it, or its `left`, `center` or `right` part."
         }
       },
       "required": [
@@ -2839,7 +2877,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "MassKind": {
-      "description": "What a tonal mass in the backdrop is made of.\n\nSubsetted from the **supercategories** of\n`COCO-Stuff <https://arxiv.org/pdf/1612.03716>`__, the canonical taxonomy of *stuff* --\n\"amorphous background regions\" as opposed to *things* with a well-defined shape.\nIts own argument is that stuff classes explain scene type and the geometric\nproperties of a scene, which is exactly the job here. Taken from an existing\nvocabulary for the same reason the predicates were taken from Visual Genome.\n\n**Deliberately not the leaf names.** COCO-Stuff's actual classes are\n`building-other`, `sky-other`, `wall-brick`, `water-other` and so on, where the\n`-other` suffix marks the catch-all inside a supercategory. `building-other` is not\na word anyone should have to type.\n\nSeven are outdoor -- `building`, `ground`, `plant`, `sky`, `solid`, `structural`,\n`water` -- and five indoor: `ceiling`, `floor`, `furniture`, `wall`, `window`.\nCOCO-Stuff's own indoor/outdoor split is where that distinction comes from, so it\ndid not have to be invented either. Its `textile`, `food` and `rawmaterial`\nsupercategories are left out: drapery and objects, not scene-defining masses.\n\nA kind decides the **shape** a mass takes, never its value. Value comes from the\nplane, which is what keeps the notan reading honest -- see\n:class:`Plane <scenet.ir.Plane>`.",
+      "description": "What a tonal mass in the backdrop is made of.",
       "enum": [
         "building",
         "ceiling",
@@ -2858,7 +2896,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Palette": {
-      "description": "What a panel is drawn in: the value ladder in grey, or its twin in colour.\n\n+----------+----------------------------------------------------------------------------+\n| Palette  | What it draws                                                              |\n+==========+============================================================================+\n| `mono`   | Every value as the grey it is -- **the default**, and what every panel was |\n+----------+----------------------------------------------------------------------------+\n| `tinted` | Every value on the ladder in its twin colour: same rung, same hour         |\n+----------+----------------------------------------------------------------------------+\n\n**Colour is a twin of value, never a replacement.** A tinted colour has the OKLab\nlightness of the grey it stands for, so in monochrome a tinted panel is the mono one,\nand every decision the compiler makes from a value -- which rung a mass takes, whether\nrain is inked or papered, how a caption is lettered -- is made on the grey. Panel Core\nkeeps the grey where it always did and adds the colour beside it.\n\nOnly the ladder is tinted: the masses of a setting, the veil and the falling rain.\nSnow, the paper, the figures and all lettering stay as they are in every palette.\n\nA closed set of names, not a colour field, for the reason `CaptionTone` is one: an\nopen colour would be the language's one open vocabulary, and would let a value break\nthe ladder. See :func:`colour_for <scenet.solve.backdrop.colour_for>`.",
+      "description": "What a panel is drawn in: the value ladder in grey, or its twin in colour.",
       "enum": [
         "mono",
         "tinted"
@@ -2868,10 +2906,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "PanelSpec": {
       "additionalProperties": false,
-      "description": "The panel's own dimensions.\n\nAttributes:\n    size: `(width, height)` in panel units. Everything else in the language is\n        expressed relative to these, so they set what a unit means.\n    margin: Inset on all four sides. Balloons are kept inside it; actors may bleed\n        past it, which is ordinary comics practice.",
+      "description": "The panel's own dimensions.",
       "properties": {
         "margin": {
           "default": 0.0,
+          "description": "An inset on all four sides, in panel units. Balloons, captions and sound effects keep inside it; figures may run past it, as comics let them.",
           "minimum": 0.0,
           "title": "Margin",
           "type": "number"
@@ -2881,6 +2920,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             1000.0,
             1000.0
           ],
+          "description": "The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -2899,7 +2939,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "Place": {
-      "description": "A named setting, expanded into masses by the frontend.\n\nTen to start with, chosen to span the distinctions that change how a backdrop is\nbuilt rather than to be a catalogue: exterior and interior, built and natural, open\nand enclosed. `alley` is the one with a foreground mass, which is what makes it\nread as a place you are standing *in* rather than looking at.",
+      "description": "A named setting, expanded into masses by the frontend.",
       "enum": [
         "alley",
         "desert",
@@ -2916,7 +2956,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "PlacementZone": {
-      "description": "Where in the panel a balloon would prefer to sit.\n\nTwo-dimensional, unlike `AnchorX`: an actor is placed along the ground line and\nso only needs a horizontal anchor, whereas a balloon floats and needs both axes.\nThese are hints of the weakest priority -- occlusion and reading order override\nthem freely.",
+      "description": "Where in the panel a balloon would prefer to sit.",
       "enum": [
         "top_left",
         "top_center",
@@ -2932,7 +2972,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Plane": {
-      "description": "How far back a mass sits, which decides both its draw order and its value.\n\nFour planes, ordered from the back of the panel forward. They map onto the existing\ninteger :attr:`CoreActor.depth <scenet.core.CoreActor.depth>` painter's order rather\nthan introducing a second ordering mechanism: the three backdrop planes take\nnegative depths, and `foreground` takes one above the frontmost actor, so a\nforeground mass draws over the cast the way a silhouetted doorway does.\n\nValue follows from the plane and from nothing else, which is what makes the\n`aerial perspective <https://en.wikipedia.org/wiki/Aerial_perspective>`__ rule\nparametric: with distance, contrast drops toward the atmosphere. Reading front to\nback, a mass never gets darker. See\n:func:`tone_for <scenet.solve.backdrop.tone_for>`.",
+      "description": "How far back a mass sits, which decides both its draw order and its value.",
       "enum": [
         "foreground",
         "near",
@@ -2943,7 +2983,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Predicate": {
-      "description": "How one actor stands in relation to another.\n\nDrawn from the spatial subset of the Visual Genome vocabulary rather than invented,\nso a scene stays convertible to and from the scene-graph representations used\nelsewhere in computer vision.\n\n`left_of` and `right_of` are the load-bearing ones: they are resolved at parse time\ninto a linear ordering, because Cassowary cannot express the disjunction \"A left of\nB *or* B left of A\".",
+      "description": "How one actor stands in relation to another.",
       "enum": [
         "left_of",
         "right_of",
@@ -2967,13 +3007,16 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           "additionalProperties": false,
           "properties": {
             "object": {
+              "description": "The other actor id. For `looking_at`, it may be somebody heard from off panel.",
               "title": "Object",
               "type": "string"
             },
             "predicate": {
-              "$ref": "#/$defs/Predicate"
+              "$ref": "#/$defs/Predicate",
+              "description": "How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at` or `ground_shared_with`."
             },
             "subject": {
+              "description": "The actor id the relation is about.",
               "title": "Subject",
               "type": "string"
             }
@@ -2986,20 +3029,22 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           "type": "object"
         }
       ],
-      "description": "One staging fact, written as a sentence.\n\nAttributes:\n    subject: Actor id the sentence is about.\n    predicate: What relation holds.\n    object: The other actor id.\n\nAuthored as `alice left_of bob` rather than a three-key mapping because staging is\nread far more often than it is written, and a sentence is legible at a glance.",
+      "description": "One staging fact, written as a sentence.",
       "title": "Relation"
     },
     "SayEvent": {
       "additionalProperties": false,
-      "description": "One line of dialogue.\n\nAttributes:\n    verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,\n        carried into the model so that a script entry knows which sort of event it\n        is without the frontend having to remember.\n    by: Actor id of the speaker; must be in the cast, unless they speak from off\n        panel, when it is the name of somebody who is not drawn.\n    text: What is said. Line breaking is the compiler's job, so write it as one\n        string and do not insert newlines yourself. A word between underscores is\n        stressed, and lettered in bold italic: `I _told_ you`.\n    prefer: Optional hint about where the balloon should sit. The weakest of all\n        the placement terms -- face avoidance and reading order override it.\n    kind: Which sort of balloon carries it.\n    off_panel: Whether the speaker is off panel: `true`, or the side of the frame\n        they are on. The tail then ends on the frame -- on that side, or, with none\n        named, on the nearer of left and right to where the balloon is put.\n    size: `small` for a line muttered, said under the breath or weakly: smaller type,\n        in a balloon with the room it would have had.\n\nScript order **is** reading order, and reading order is a hard constraint. Reorder\nthese and you reorder the panel.",
+      "description": "One line of dialogue.",
       "properties": {
         "by": {
+          "description": "Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.",
           "title": "By",
           "type": "string"
         },
         "kind": {
           "$ref": "#/$defs/BalloonKind",
-          "default": "speech"
+          "default": "speech",
+          "description": "The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`."
         },
         "off_panel": {
           "anyOf": [
@@ -3011,6 +3056,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": false,
+          "description": "The speaker is outside the panel: `true`, or the side of the frame they are on. The tail ends on the frame there.",
           "title": "Off Panel"
         },
         "prefer": {
@@ -3022,13 +3068,16 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it."
         },
         "size": {
           "$ref": "#/$defs/TypeSize",
-          "default": "normal"
+          "default": "normal",
+          "description": "`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room."
         },
         "text": {
+          "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.",
           "minLength": 1,
           "title": "Text",
           "type": "string"
@@ -3048,7 +3097,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           "image"
         ]
       },
-      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.\n\nAttributes:\n    horizon: Where the ground meets what is behind it.\n    masses: The backdrop, back to front. Written directly, or produced by naming a\n        place in the surface syntax.\n    time: When it happens, which shifts the value ladder.\n    weather: What the air is doing.\n    image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,\n        relative to the folder the document is in, as a font is. The compiler reads\n        how many pixels it has and nothing else; see :mod:`scenet.images`.\n    fit: How the picture fills the panel. Left out, it is `cover`.\n\n**There is no `place` field here, deliberately.** `place: docks` is surface syntax\nthat the frontend expands into exactly the mass list an author could have written\nthemselves -- the same treatment `alice left_of bob` gets, which reaches the IR as a\n:class:`Relation <scenet.ir.Relation>` and never as text. That is what keeps a\npreset a library for convenience rather than a second, opaque format: by the time\nanything downstream sees a backdrop, there is one representation of it.\n\nA panel with no masses and clear weather has no backdrop at all, which is what every\npanel written before this block existed still gets.",
+      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.",
       "not": {
         "anyOf": [
           {
@@ -3135,18 +3184,20 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "How the picture fills the panel: `cover` fills it and crops what overhangs, equally on both sides; `contain` shows the whole picture. Left out, `cover`."
         },
         "horizon": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Horizon",
-              "default": "mid"
+              "$ref": "#/$defs/Horizon"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": "mid",
+          "description": "Where the ground meets what is behind it, which every mass is composed against: `high` shows more ground, `low` less."
         },
         "image": {
           "anyOf": [
@@ -3158,22 +3209,24 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the document. Only its size is read. Written instead of `place` and `masses`.",
           "title": "Image"
         },
         "masses": {
           "anyOf": [
             {
-              "default": [],
               "items": {
                 "$ref": "#/$defs/Mass"
               },
-              "title": "Masses",
               "type": "array"
             },
             {
               "type": "null"
             }
-          ]
+          ],
+          "default": [],
+          "description": "The backdrop as tonal masses, back to front: what a `place` expands into, written out. Write this, `place` or `image`, never two of them.",
+          "title": "Masses"
         },
         "place": {
           "anyOf": [
@@ -3188,11 +3241,13 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         },
         "time": {
           "$ref": "#/$defs/TimeOfDay",
-          "default": "day"
+          "default": "day",
+          "description": "When the panel happens, which sets the two ends of the value ladder: the foreground's value and the atmosphere's."
         },
         "weather": {
           "$ref": "#/$defs/Weather",
-          "default": "clear"
+          "default": "clear",
+          "description": "What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cloud, and fall over everything, the cast included."
         }
       },
       "title": "SettingSpec",
@@ -3200,10 +3255,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
     },
     "SfxEvent": {
       "additionalProperties": false,
-      "description": "A sound effect: letters that are part of the picture.\n\n`BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near\nwhere the sound is -- in a display face, not in the balloon face, and with no balloon.\n\nAttributes:\n    verb: Always `sfx`, written as `- sfx: {...}`.\n    text: The sound, lettered exactly as written. No exclamation mark is added --\n        Comicraft's glossary: sound effects are not exclamations -- and an underscore\n        is not emphasis here, just an underscore.\n    source: Written `from:`. The actor the sound comes from; the effect is placed near\n        them. Must be in the cast.\n    prefer: Where it would like to sit, for an effect with no source -- or as a pull\n        on one that has.\n    size: How loud: `small`, `medium` or `large`.\n    rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the\n        default is level, and the angle is the author's to choose.\n    arc: Degrees the line of letters bends through, -120 to 120. Positive bows the\n        middle up, negative bows it down.\n    hollow: Outline only, no fill, so the art shows through the letters -- what\n        letterers call an open effect.\n\n**Placed by candidates and cost, never at a coordinate.** It never covers a face,\nand balloons pay to cover it, as they pay to cover emanata. It takes its number in\nthe script's one reading order, which is what a reader of the text follows, but it\nis exempt from the geometric reading-order rule: a sound sits where the sound is.",
+      "description": "A sound effect: letters that are part of the picture.",
       "properties": {
         "arc": {
           "default": 0.0,
+          "description": "How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle up, negative down.",
           "maximum": 120.0,
           "minimum": -120.0,
           "title": "Arc",
@@ -3219,10 +3275,12 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             }
           ],
           "default": null,
+          "description": "Written `from`: the actor id the sound comes from, which it is placed near.",
           "title": "From"
         },
         "hollow": {
           "default": false,
+          "description": "`true` letters the effect as an outline with no fill, so the art shows through: an open effect.",
           "title": "Hollow",
           "type": "boolean"
         },
@@ -3235,10 +3293,12 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "Where the effect would like to sit, one of nine zones of the panel: on its own, or as a pull on an effect that has a `from`."
         },
         "rotate": {
           "default": 0.0,
+          "description": "How far the effect is turned clockwise, in degrees, from -45 to 45.",
           "maximum": 45.0,
           "minimum": -45.0,
           "title": "Rotate",
@@ -3246,9 +3306,11 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         },
         "size": {
           "$ref": "#/$defs/SfxSize",
-          "default": "medium"
+          "default": "medium",
+          "description": "How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size."
         },
         "text": {
+          "description": "The sound, lettered exactly as written, in the display face.",
           "minLength": 1,
           "title": "Text",
           "type": "string"
@@ -3261,7 +3323,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "object"
     },
     "SfxSize": {
-      "description": "How big a sound effect is lettered, as a multiple of the dialogue type size.\n\n+----------+-------------------------+\n| Size     | Times the dialogue size |\n+==========+=========================+\n| `small`  | 1.6                     |\n+----------+-------------------------+\n| `medium` | 2.6                     |\n+----------+-------------------------+\n| `large`  | 4                       |\n+----------+-------------------------+\n\nA multiple of the type size rather than of the figure, so an effect reads at\n`long_shot` as well as at `close_up`: a sound does not get quieter because the\ncamera stepped back. Three steps, not a number, for the reason every other size in\nthe language is named -- the author says how loud, the compiler says how big.",
+      "description": "How big a sound effect is lettered, as a multiple of the dialogue type size.",
       "enum": [
         "small",
         "medium",
@@ -3271,7 +3333,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "ShotType": {
-      "description": "How tightly the camera frames the cast.\n\nOrdered from widest to tightest, and the order is enforced by a test: reading down\nthe ladder, the figure never gets smaller.\n\nA shot type is defined by two things in two different units. The **crop landmark**\nis anatomical -- the waist, the chest, the shoulders -- which is what stops a shot\ntype baking in one body and one pose; naming a fraction of panel height instead\nwould do exactly that. The **headroom** is a plain fraction of panel height, because\nit is about composition within the frame rather than anatomy.\n`docs/reference/shot_types.md` is normative.\n\nThe requested shot is an *upper bound on tightness*, not a promise. If the cast\ncannot fit across the panel at that framing the camera retreats, and says so in\n:attr:`CompileResult.notes <scenet.pipeline.CompileResult.notes>`.",
+      "description": "How tightly the camera frames the cast.",
       "enum": [
         "long_shot",
         "wide",
@@ -3288,7 +3350,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Side": {
-      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.\n\nAn off-panel balloon's tail ends on the frame on this side -- Blambot, *Off-Panel\nDialogue*: \"the tail of the balloon generally butts against the panel border\". A panel\non a page bleeds past the trim on the sides its placement lists.",
+      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.",
       "enum": [
         "left",
         "right",
@@ -3299,7 +3361,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Spans": {
-      "description": "How much of the panel's width a mass covers.\n\nResolved to an extent in the frontend, and that is **not cosmetic**. `CLAUDE.md`\nrequires any construct that would reintroduce a left/right disjunction to resolve it\nbefore the solver, because Cassowary cannot express \"A left of B *or* B left of A\".\nA span is an absolute extent rather than a relation, which is what stops masses\nbecoming an unordered `beside`.",
+      "description": "How much of the panel's width a mass covers.",
       "enum": [
         "full",
         "left",
@@ -3310,7 +3372,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "TimeOfDay": {
-      "description": "When the panel happens, which shifts the whole value ladder.\n\nEach time supplies two numbers -- the value of the foreground and the value of the\natmosphere -- and the planes are spaced evenly between them. So `night` is not a\nblue filter over a daytime panel: it is a darker, more compressed ladder, which is\nwhat night actually does to a drawn scene. The ladder stays monotonic in depth at\nevery time of day, by construction rather than by tuning.",
+      "description": "When the panel happens, which shifts the whole value ladder.",
       "enum": [
         "dawn",
         "day",
@@ -3321,7 +3383,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "TypeSize": {
-      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.\n\nDark Horse lists \"(small), (burst), and (weak)\" among the common indications for\nmodified lettering. Blambot, *Small Dialogue / Big Balloon*: \"A reduced font size is\nused when a character mutters something, says something to him/herself, or speaks\nsheepishly\" -- smaller type, in the room the balloon would have had.",
+      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.",
       "enum": [
         "normal",
         "small"
@@ -3330,7 +3392,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "type": "string"
     },
     "Weather": {
-      "description": "What the air is doing between the reader and the panel.\n\n`clouds` and `fog` are first-class *stuff* in COCO-Stuff, so this vocabulary did not\nhave to be invented either. `fog` renders as a turbulence veil over the backdrop;\n`rain` and `snow` add that veil as cloud and put falling marks over everything,\nbecause weather is between the reader and the figures rather than behind them.",
+      "description": "What the air is doing between the reader and the panel.",
       "enum": [
         "clear",
         "rain",
@@ -3343,14 +3405,15 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "A complete, validated panel: the language's real definition.\n\nEvery frontend produces one of these and nothing else, which is what lets the YAML\nsyntax and the comic-script syntax coexist without the solver knowing either exists.\n**Nothing here carries a coordinate** -- computing those is the solver's job, and\nkeeping them out is what makes a panel reusable at any size.\n\nAttributes:\n    panel: Dimensions and margin.\n    camera: Framing and angle.\n    cast: Actor id to character. Declaration order is not significant; `staging`\n        decides left-to-right order.\n    staging: Spatial and attentional relations between actors.\n    script: Dialogue and captions, in reading order.\n    lettering: How the lettering is set: its type size, when the author chooses one.\n    description: What the panel shows, in words, for a reader who cannot see it: the\n        author's, or a comic script's prose. Carried and never interpreted -- nothing\n        is drawn from it. Without one, accessible output says what the panel holds.\n    direction: Which way the comic is read. The whole document's: a scene's panels and\n        a comic script's take it from the document, and none may write its own.\n    palette: What the panel is drawn in. A scene's panels inherit it like any default,\n        and unlike `direction` a panel may write its own.\n    setting: Where and when it happens: the place, the masses that stand in it, the\n        time of day, the weather, or a picture to letter over.\n\nValidation is strict and total: unknown keys are rejected, every actor id mentioned\nin `staging` or `script` must exist in `cast`, and the ordering relations must not\ncontain a cycle. A misspelled key that was silently ignored would produce a panel\nthat is subtly wrong with no indication of why, which for a language meant to be\nprecise is the worst possible failure.",
+  "description": "A complete, validated panel: the language's real definition.",
   "properties": {
     "camera": {
       "$ref": "#/$defs/CameraSpec",
       "default": {
         "angle": "eye_level",
         "shot": "medium_shot"
-      }
+      },
+      "description": "How the cast is framed: the shot, and the camera's height."
     },
     "cast": {
       "additionalProperties": {
@@ -3364,6 +3427,7 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           }
         ]
       },
+      "description": "Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing.",
       "title": "Cast",
       "type": "object"
     },
@@ -3390,7 +3454,8 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
       "default": {
         "font": null,
         "size": null
-      }
+      },
+      "description": "How the lettering is set: the dialogue type size, and the font files."
     },
     "palette": {
       "$ref": "#/$defs/Palette",
@@ -3405,17 +3470,20 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
           1000.0,
           1000.0
         ]
-      }
+      },
+      "description": "The panel's frame: its size and margin, in panel units."
     },
     "script": {
       "default": [],
+      "description": "What is said and heard, in the order it is read: `say` for a balloon, `caption` for a box, `sfx` for a sound effect.",
       "items": {
         "anyOf": [
           {
             "additionalProperties": false,
             "properties": {
               "say": {
-                "$ref": "#/$defs/SayEvent"
+                "$ref": "#/$defs/SayEvent",
+                "description": "A line of dialogue, in a balloon whose tail points at the speaker."
               }
             },
             "required": [
@@ -3427,7 +3495,8 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             "additionalProperties": false,
             "properties": {
               "caption": {
-                "$ref": "#/$defs/CaptionEvent"
+                "$ref": "#/$defs/CaptionEvent",
+                "description": "A caption: a box in which the panel speaks in its own voice, with no tail."
               }
             },
             "required": [
@@ -3439,7 +3508,8 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
             "additionalProperties": false,
             "properties": {
               "sfx": {
-                "$ref": "#/$defs/SfxEvent"
+                "$ref": "#/$defs/SfxEvent",
+                "description": "A sound effect: letters lettered into the picture, with no balloon."
               }
             },
             "required": [
@@ -3461,10 +3531,12 @@ Conforming to it is necessary, not sufficient: see the note on schema validity i
         "masses": [],
         "time": "day",
         "weather": "clear"
-      }
+      },
+      "description": "Where and when the panel happens: a named place, tonal masses or a picture behind the cast, with the time of day and the weather."
     },
     "staging": {
       "default": [],
+      "description": "How the cast stand to each other, as sentences: `alice left_of bob`. One relation each.",
       "items": {
         "$ref": "#/$defs/Relation"
       },

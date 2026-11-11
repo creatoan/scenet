@@ -97,6 +97,20 @@ def documented(*, dev: bool) -> tuple[str, str]:
     return site_versions.Version.parse(release).minor_name, release
 
 
+def served_at(*, dev: bool) -> str:
+    """The address the version being built is served at: `/dev/`, or `/vX.Y/` for a release.
+
+    Its spec pack and `llms.txt` link it. A release is served at the root as well while it
+    is the latest, and its links stay right once it is not.
+    """
+    directory = (
+        site_versions.DEV
+        if dev
+        else site_versions.Version.parse(package_version("scenet")).directory
+    )
+    return f"{build_spec.SITE}/{directory}"
+
+
 def build_docs(*, dev: bool) -> None:
     """Build the documentation with warnings as errors, labelled with its version."""
     # From scratch. viewcode writes a module's `_modules/` page only when the page is older
@@ -161,7 +175,7 @@ def compose(out: Path, *, dev: bool) -> None:
 
     # Generated fresh from the sources rather than copied from the committed spec pack,
     # so the published one is current even on a branch that forgot to regenerate.
-    build_spec.write_site_files(out)
+    build_spec.write_site_files(out, served_at(dev=dev))
 
     # Sphinx writes .nojekyll itself for _static/, but a site served from a branch also
     # needs it at the root or every directory beginning with an underscore is dropped.

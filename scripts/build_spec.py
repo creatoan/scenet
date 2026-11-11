@@ -75,7 +75,7 @@ LLMS_DOCUMENTS = {
     "reference/language": "every construct of the YAML language",
     "howto/write_a_comic_script": "the comic-script format, which a chat model can write unaided",
     "reference/shot_types": "normative: what each camera shot frames",
-    "reference/cli": "`scenet build`, `scenet check` and `scenet mcp`",
+    "reference/cli": "`scenet build`, `scenet check`, `scenet schema` and `scenet mcp`",
     "reference/mcp": "the MCP server's tools",
     "howto/drive_from_a_model": "using Scenet from a chat app, an agent or an MCP client",
     "tutorial/first_panel": "one panel built from nothing",
@@ -94,12 +94,13 @@ GENERATED_NOTICE = (
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 
 
-def _absolute_links(text: str, page: str) -> str:
+def _absolute_links(text: str, page: str, site: str = SITE) -> str:
     """Rewrite every relative link in a documentation page to its published URL.
 
     Args:
         text: The page's Markdown.
         page: Its path under `docs/`, such as `reference/language.md`.
+        site: The version of the site to link: the root, or `<root>/dev`.
 
     Returns:
         The same Markdown, with `shot_types.md#x` become `<site>/reference/shot_types.html#x`.
@@ -115,7 +116,7 @@ def _absolute_links(text: str, page: str) -> str:
         resolved = posixpath.normpath(posixpath.join(posixpath.dirname(page), path))
         if resolved.endswith(".md"):
             resolved = resolved.removesuffix(".md") + ".html"
-        return f"]({SITE}/{resolved}{'#' + anchor if anchor else ''})"
+        return f"]({site}/{resolved}{'#' + anchor if anchor else ''})"
 
     return LINK.sub(rewrite, text)
 
@@ -168,14 +169,14 @@ def _named_files(entry: dict[str, Any]) -> list[str]:
     return list(entry.get("files", []))
 
 
-def _preamble() -> str:
+def _preamble(site: str) -> str:
     puppets = ", ".join(f"`{name}`" for name in default_library().names())
     contents = "\n".join(f"- `{name}` — {description}" for name, description in SPEC_PARTS.items())
     return f"""\
 # Scenet specification pack
 
 Everything needed to write a Scenet panel, in one file. Published at
-<{SITE}/scenet-spec.md> and regenerated from the project's own sources on every build,
+<{site}/scenet-spec.md> and regenerated from the project's own sources on every build,
 so it describes the language the compiler actually accepts.
 
 > This project is deliberately AI-generated: the compiler, its documentation and this
@@ -230,8 +231,10 @@ so always check.
   its path, `reference: puppets/pip.puppet.yaml`.** The shipped puppets are {puppets}.
   `pose` and `expression` must be names that puppet declares; see the `characters`
   part. Do not invent them.
-- **Two figures need a left-to-right order**, from `at:` or from an explicit
-  `a left_of b`. There is no unordered "beside".
+- **Say who stands left of whom.** `a left_of b` in `staging` fixes it. Where staging
+  says nothing, figures stand in the order of their `at:` anchors, and two at the same
+  anchor by actor id, in code-point order: the same on every run, but seldom what was
+  meant. State the order. There is no unordered "beside".
 - **Script order is reading order.** A balloon may never sit above-and-left of the one
   before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
   they are read.
@@ -250,7 +253,7 @@ def _default(field: str) -> str:
     return str(CastMember.model_fields[field].default)
 
 
-def _characters() -> str:
+def _characters(site: str) -> str:
     library = default_library()
     rows = []
     for name in library.names():
@@ -274,8 +277,8 @@ def _characters() -> str:
         "declares its own poses and expressions, and a member names those. Over MCP, send "
         "it in `files` by that path, and `list_puppets` given the same `files` lists it "
         "with them. A fault in it is `puppet-file`. What a puppet file holds is in "
-        f"[the asset contract]({SITE}/reference/asset_contract.html) and "
-        f"[Add your own character]({SITE}/howto/add_your_own_character.html); the gallery's "
+        f"[the asset contract]({site}/reference/asset_contract.html) and "
+        f"[Add your own character]({site}/howto/add_your_own_character.html); the gallery's "
         "`69-a-puppet-of-your-own.scene.yaml` casts one, printed after it.\n\n"
         "## Figures a picture draws\n\n"
         "A cast member may instead be `figure: <name>`: somebody a supplied picture "
@@ -285,7 +288,7 @@ def _characters() -> str:
         "Over MCP, send the contract in `files` with the picture. A figure takes no `pose`, "
         "`expression`, `marks`, `at` or `facing`, no staging names it, and a panel whose "
         "cast is all figures has no `camera`; a cast does not mix figures and puppets. See "
-        f"[the artwork contract]({SITE}/reference/asset_contract.html#artwork-contracts) and "
+        f"[the artwork contract]({site}/reference/asset_contract.html#artwork-contracts) and "
         "the gallery's `35-figures.scene.yaml`.\n"
     )
 
@@ -305,16 +308,27 @@ def _diagnostics() -> str:
     )
 
 
-def _schema() -> str:
+#: Every schema the site publishes at `schemas/<name>.schema.json`, with what it checks.
+SCHEMAS = {
+    "panel": "a single-panel YAML document, `*.panel.yaml`",
+    "scene": "a multi-panel YAML document, `*.scene.yaml`: panels, sequences and pages",
+    "artwork": "an artwork contract, the `*.art.yaml` beside a supplied picture",
+    "puppet": "a puppet file, a `*.puppet.yaml` a cast member names by its path",
+}
+
+
+def _schema(site: str) -> str:
     document = json.dumps(panel_schema(), indent=2, sort_keys=True)
+    published = "\n".join(
+        f"- <{site}/schemas/{name}.schema.json>: {what}" for name, what in SCHEMAS.items()
+    )
     return (
         "# JSON Schema\n\n"
-        "The schema for a single-panel YAML document, generated from the compiler's own "
-        "models. It describes the syntax people write, including staging sentences such "
-        "as `alice left_of bob`. The multi-panel scene schema is at "
-        f"<{SITE}/schemas/scene.schema.json>.\n\n"
-        "Conforming to it is necessary, not sufficient: see the note on schema validity "
-        "in the preamble.\n\n" + _fence(document, "json")
+        "The schemas are generated from the compiler's own models, and describe the syntax "
+        "people write, including staging sentences such as `alice left_of bob`. Four are "
+        f"published:\n\n{published}\n\n"
+        "The panel schema follows. Conforming to a schema is necessary, not sufficient: see "
+        "the note on schema validity in the preamble.\n\n" + _fence(document, "json")
     )
 
 
@@ -471,35 +485,54 @@ def gallery_page() -> str:
     return f"{notice}# Gallery\n\n{GALLERY_INTRO}\n{groups}"
 
 
-def parts() -> dict[str, str]:
-    """Every part of the pack, in order, each ending in exactly one newline."""
+def parts(site: str = SITE) -> dict[str, str]:
+    """Every part of the pack, in order, each ending in exactly one newline.
+
+    Args:
+        site: The version of the site the pack links: the root, which serves the latest
+            release, or one version's own, `<root>/dev` or `<root>/v0.12`.
+    """
     built = {
-        "preamble": _preamble(),
+        "preamble": _preamble(site),
         **{
-            name: _plain_captions(_absolute_links((DOCS / page).read_text(encoding="utf-8"), page))
+            name: _plain_captions(
+                _absolute_links((DOCS / page).read_text(encoding="utf-8"), page, site)
+            )
             for name, page in DOCUMENT_PARTS.items()
         },
-        "characters": _characters(),
+        "characters": _characters(site),
         "diagnostics": _diagnostics(),
-        "schema": _schema(),
+        "schema": _schema(site),
         "gallery": _gallery(),
     }
     return {name: built[name].rstrip("\n") + "\n" for name in SPEC_PARTS}
 
 
-def spec_pack() -> str:
+def spec_pack(site: str = SITE) -> str:
     """The whole spec pack, as committed and as published."""
-    body = "\n".join(f"{MARKER.format(name=name)}\n{text}" for name, text in parts().items())
+    body = "\n".join(f"{MARKER.format(name=name)}\n{text}" for name, text in parts(site).items())
     return GENERATED_NOTICE.format(source="docs/, examples/gallery/ and the package") + body
 
 
-def llms_txt() -> str:
-    """An index of the documentation, in the shape https://llmstxt.org proposes."""
+def llms_txt(site: str = SITE) -> str:
+    """An index of the documentation, in the shape https://llmstxt.org proposes.
+
+    Args:
+        site: The version of the site it links, as for :func:`parts`.
+
+    Returns:
+        The file's text.
+    """
 
     def links(pages: dict[str, str]) -> str:
         return "\n".join(
-            f"- [{_title(page)}]({SITE}/{page}.html): {note}" for page, note in pages.items()
+            f"- [{_title(page)}]({site}/{page}.html): {note}" for page, note in pages.items()
         )
+
+    schemas = "\n".join(
+        f"- [{name.capitalize()} JSON Schema]({site}/schemas/{name}.schema.json): {what}"
+        for name, what in SCHEMAS.items()
+    )
 
     return f"""\
 # Scenet
@@ -515,9 +548,8 @@ the characters, the diagnostics, the JSON Schema and every example in one file.
 
 ## Specification
 
-- [Spec pack]({SITE}/scenet-spec.md): everything needed to write a panel, in one file
-- [Panel JSON Schema]({SITE}/schemas/panel.schema.json): a single-panel YAML document
-- [Scene JSON Schema]({SITE}/schemas/scene.schema.json): a multi-panel YAML document
+- [Spec pack]({site}/scenet-spec.md): everything needed to write a panel, in one file
+{schemas}
 
 ## Documentation
 
@@ -526,7 +558,7 @@ the characters, the diagnostics, the JSON Schema and every example in one file.
 ## Optional
 
 {links(LLMS_OPTIONAL)}
-- [Playground]({SITE}/playground/): the compiler running in a browser
+- [Playground]({site}/playground/): the compiler running in a browser
 - [Source](https://github.com/creatoan/scenet): the repository
 """
 
@@ -564,15 +596,18 @@ def committed_files() -> dict[Path, bytes]:
     }
 
 
-def write_site_files(site: Path) -> None:
+def write_site_files(site: Path, base: str = SITE) -> None:
     """Write the two files only the published site carries.
 
     Args:
         site: The assembled site directory; both files land at its root.
+        base: The address that version of the site is served at, which both files link:
+            `<root>/dev` for main, `<root>/v0.12` for a release. The committed copies link
+            the root, which serves the latest release.
     """
     site.mkdir(parents=True, exist_ok=True)
-    (site / "scenet-spec.md").write_text(spec_pack(), encoding="utf-8", newline="\n")
-    (site / "llms.txt").write_text(llms_txt(), encoding="utf-8", newline="\n")
+    (site / "scenet-spec.md").write_text(spec_pack(base), encoding="utf-8", newline="\n")
+    (site / "llms.txt").write_text(llms_txt(base), encoding="utf-8", newline="\n")
 
 
 def _stale() -> list[Path]:

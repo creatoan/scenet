@@ -101,7 +101,9 @@ class Strict(BaseModel):
     without an exception to report.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, allow_inf_nan=False, use_attribute_docstrings=True
+    )
 
 
 #: Characters XML 1.0 cannot hold at all, escaped or not: the C0 controls other than tab,
@@ -814,9 +816,9 @@ class Plane(StrEnum):
 class Spans(StrEnum):
     """How much of the panel's width a mass covers.
 
-    Resolved to an extent in the frontend, and that is **not cosmetic**. `CLAUDE.md`
-    requires any construct that would reintroduce a left/right disjunction to resolve it
-    before the solver, because Cassowary cannot express "A left of B *or* B left of A".
+    Resolved to an extent in the frontend, and that is **not cosmetic**. Any construct that
+    would reintroduce a left/right disjunction has to resolve it before the solver, because
+    Cassowary cannot express "A left of B *or* B left of A".
     A span is an absolute extent rather than a relation, which is what stops masses
     becoming an unordered `beside`.
 
@@ -970,12 +972,6 @@ class Fit(StrEnum):
 class PanelSpec(Strict):
     """The panel's own dimensions.
 
-    Attributes:
-        size: `(width, height)` in panel units. Everything else in the language is
-            expressed relative to these, so they set what a unit means.
-        margin: Inset on all four sides. Balloons are kept inside it; actors may bleed
-            past it, which is ordinary comics practice.
-
     Example:
         >>> from scenet import PanelSpec
         >>> PanelSpec(size=(1200.0, 600.0)).width
@@ -986,7 +982,13 @@ class PanelSpec(Strict):
     """
 
     size: tuple[float, float] = (1000.0, 1000.0)
+    """The panel's width and height, `[width, height]`, in panel units: everything else is
+    measured against them. Printed, a unit is a tenth of a millimetre.
+    """
     margin: float = Field(default=0.0, ge=0.0)
+    """An inset on all four sides, in panel units. Balloons, captions and sound effects keep
+    inside it; figures may run past it, as comics let them.
+    """
 
     @property
     def width(self) -> float:
@@ -1019,11 +1021,6 @@ class PanelSpec(Strict):
 class CameraSpec(Strict):
     """How the panel is framed.
 
-    Attributes:
-        shot: Requested framing; an upper bound on tightness, see
-            :class:`ShotType <scenet.ir.ShotType>`.
-        angle: Camera height, see :class:`CameraAngle <scenet.ir.CameraAngle>`.
-
     There is exactly **one camera per panel**, and every actor is drawn at the scale it
     implies. Scaling each actor to its own crop landmark instead would make everybody
     the same apparent height and erase the body differences a comic uses to tell
@@ -1040,16 +1037,18 @@ class CameraSpec(Strict):
     """
 
     shot: ShotType = ShotType.MEDIUM_SHOT
+    """How tightly the camera frames the cast, named by where the frame cuts the body, from
+    `long_shot` to `extreme_close_up`. The tightest it may go: the camera steps back when the
+    cast does not fit.
+    """
     angle: CameraAngle = CameraAngle.EYE_LEVEL
+    """The camera's height: `low` looks up, leaving little air above the head; `high` looks
+    down, leaving more.
+    """
 
 
 class Mass(Strict):
     """One tonal mass in the backdrop: what it is, how far back, how wide.
-
-    Attributes:
-        kind: What the mass is made of, which decides its silhouette.
-        plane: How far back it sits, which decides its value and its draw order.
-        spans: How much of the panel's width it covers.
 
     **Backdrops are never author-drawn**, and there are two reasons. The structural one:
     crisp architecture needs a vanishing point, and this is deliberately a flat,
@@ -1072,21 +1071,21 @@ class Mass(Strict):
     """
 
     kind: MassKind
+    """What the mass is made of, which decides its silhouette: seven outdoor kinds of stuff and
+    five indoor.
+    """
     plane: Plane = Plane.MID
+    """How far back the mass sits, which decides its value and its draw order. A `foreground`
+    mass is drawn over the cast.
+    """
     spans: Spans = Spans.FULL
+    """How much of the panel's width the mass covers: all of it, or its `left`, `center` or
+    `right` part.
+    """
 
 
 class FontSpec(Strict):
     """The font files a panel is lettered in, each a path relative to the document.
-
-    Attributes:
-        regular: Dialogue, and `spoken` captions. Written alone -- `font: path` -- it is
-            the only face, and stands in for the others.
-        italic: Every other caption kind. Left out, captions are set in `regular`.
-        display: Sound effects. Left out, they are lettered in the shipped display face,
-            Bangers, whatever the other faces are: a sound effect is not text.
-        bold_italic: Emphasis. Left out, emphasis is set in `italic` when there is one,
-            in `regular` when there is not -- and a note says so when it happens.
 
     Paths, never names: a font is a declared file and never a system lookup, so a
     document letters the same on every machine. They are read relative to the folder the
@@ -1104,21 +1103,25 @@ class FontSpec(Strict):
     """
 
     regular: str
+    """The font file dialogue and `spoken` captions are lettered in, relative to the document.
+    Written alone, as `font: fonts/Comic.ttf`, it letters every face.
+    """
     italic: str | None = None
+    """The font file every caption but a `spoken` one is lettered in. Left out, they are set in
+    `regular`.
+    """
     bold_italic: str | None = None
+    """The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic`, or
+    `regular` when there is no italic, and a note says so.
+    """
     display: str | None = None
+    """The font file sound effects are lettered in. Left out, the shipped display face, Bangers,
+    whatever the other faces are.
+    """
 
 
 class LetteringSpec(Strict):
     """How a panel is lettered.
-
-    Attributes:
-        size: The dialogue type size, in panel units -- the units `panel.size` is given
-            in, which on a page are the page's, since a panel there is compiled at its
-            frame's size. Captions keep their proportion to it: 30 parts in 35, as they
-            are by default. Left out, a panel letters at 3.5% of the height it letters
-            against: its own alone, one tier of a three-tier page on a page.
-        font: The font files to letter in, in place of the shipped Source Sans Pro.
 
     A size or a font set beside `panels:` is a default every panel inherits, which is how a page
     letters at one size of the author's choosing. Set on one panel, it letters that panel
@@ -1139,22 +1142,17 @@ class LetteringSpec(Strict):
     """
 
     size: float | None = Field(default=None, gt=0.0)
+    """The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left out,
+    3.5% of the height the panel letters against: its own, or one tier of a three-tier page.
+    """
     font: FontSpec | None = None
+    """The font files to letter in, relative to the document: one file for every face, or one
+    for each. Left out, Source Sans Pro.
+    """
 
 
 class SettingSpec(Strict):
     """Where and when the panel happens: tonal masses, or a picture drawn elsewhere.
-
-    Attributes:
-        horizon: Where the ground meets what is behind it.
-        masses: The backdrop, back to front. Written directly, or produced by naming a
-            place in the surface syntax.
-        time: When it happens, which shifts the value ladder.
-        weather: What the air is doing.
-        image: A picture to draw behind the cast instead of masses: a PNG or JPEG file,
-            relative to the folder the document is in, as a font is. The compiler reads
-            how many pixels it has and nothing else; see :mod:`scenet.images`.
-        fit: How the picture fills the panel. Left out, it is `cover`.
 
     **There is no `place` field here, deliberately.** `place: docks` is surface syntax
     that the frontend expands into exactly the mass list an author could have written
@@ -1180,11 +1178,29 @@ class SettingSpec(Strict):
     """
 
     horizon: Horizon = Horizon.MID
+    """Where the ground meets what is behind it, which every mass is composed against: `high`
+    shows more ground, `low` less.
+    """
     masses: tuple[Mass, ...] = ()
+    """The backdrop as tonal masses, back to front: what a `place` expands into, written out.
+    Write this, `place` or `image`, never two of them.
+    """
     time: TimeOfDay = TimeOfDay.DAY
+    """When the panel happens, which sets the two ends of the value ladder: the foreground's
+    value and the atmosphere's.
+    """
     weather: Weather = Weather.CLEAR
+    """What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cloud, and
+    fall over everything, the cast included.
+    """
     image: SvgText | None = None
+    """A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the document.
+    Only its size is read. Written instead of `place` and `masses`.
+    """
     fit: Fit | None = None
+    """How the picture fills the panel: `cover` fills it and crops what overhangs, equally on
+    both sides; `contain` shows the whole picture. Left out, `cover`.
+    """
 
     @model_validator(mode="after")
     def check_backdrop(self) -> Self:
@@ -1226,25 +1242,6 @@ class SettingSpec(Strict):
 class CastMember(Strict):
     """One character present in the panel: a puppet Scenet poses, or a figure a picture draws.
 
-    Attributes:
-        reference: Name of a puppet in the library. This is what gets drawn; the key
-            this member is filed under in `cast` is the actor id used everywhere else.
-            None for a figure.
-        pose: Named pose from that puppet's declared set.
-        expression: Named expression from that puppet's declared set. Selected by name
-            exactly as a pose is, because a face is the same kind of thing as a body:
-            a small closed set of arrangements the character can be in.
-        marks: Emanata drawn around the character -- sweat, dizziness, swearing, a
-            hasty exit. A list, because they compose with each other and with the
-            expression. Kept sorted, so the order they were written in never
-            changes the output.
-        at: Preferred horizontal anchor.
-        facing: Which way the figure is turned.
-        figure: Instead of `reference`: a figure the panel's supplied picture draws, by
-            the name its artwork contract gives it. Nobody poses or places it --
-            the artist did -- so none of the keys above applies to it, and every one
-            is refused beside it.
-
     The split between actor id and `reference` is what lets one puppet appear twice in
     a panel as two different people:
 
@@ -1266,12 +1263,27 @@ class CastMember(Strict):
     """
 
     reference: str | None = None
+    """The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file,
+    relative to the document. Written instead of `figure`.
+    """
     pose: str = "standing_neutral"
+    """A pose the puppet declares, by name."""
     expression: str = "neutral"
+    """An expression the puppet declares, by name."""
     marks: tuple[Mark, ...] = ()
+    """Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in
+    any order, each once. They compose with the expression.
+    """
     at: AnchorX = AnchorX.CENTRE
+    """Where along the panel's width the figure would like to stand. A preference: non-overlap
+    and `left_of` override it.
+    """
     facing: Facing = Facing.RIGHT
+    """Which way the figure is turned, `left` or `right`, gaze and all."""
     figure: SvgText | None = None
+    """A figure the panel's picture draws, by the name its artwork contract gives it. Written
+    instead of `reference`, and with none of the keys that pose or place a puppet.
+    """
 
     @model_validator(mode="wrap")
     @classmethod
@@ -1344,11 +1356,6 @@ PUPPET_KEYS: tuple[str, ...] = ("pose", "expression", "marks", "at", "facing")
 class Relation(Strict):
     """One staging fact, written as a sentence.
 
-    Attributes:
-        subject: Actor id the sentence is about.
-        predicate: What relation holds.
-        object: The other actor id.
-
     Authored as `alice left_of bob` rather than a three-key mapping because staging is
     read far more often than it is written, and a sentence is legible at a glance.
 
@@ -1367,8 +1374,13 @@ class Relation(Strict):
     """
 
     subject: str
+    """The actor id the relation is about."""
     predicate: Predicate
+    """How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `behind`,
+    `looking_at` or `ground_shared_with`.
+    """
     object: str
+    """The other actor id. For `looking_at`, it may be somebody heard from off panel."""
 
     @model_validator(mode="after")
     def check_not_reflexive(self) -> Self:
@@ -1392,24 +1404,6 @@ class Relation(Strict):
 class SayEvent(Strict):
     """One line of dialogue.
 
-    Attributes:
-        verb: Always `say`. The tag the surface syntax writes as `- say: {...}`,
-            carried into the model so that a script entry knows which sort of event it
-            is without the frontend having to remember.
-        by: Actor id of the speaker; must be in the cast, unless they speak from off
-            panel, when it is the name of somebody who is not drawn.
-        text: What is said. Line breaking is the compiler's job, so write it as one
-            string and do not insert newlines yourself. A word between underscores is
-            stressed, and lettered in bold italic: `I _told_ you`.
-        prefer: Optional hint about where the balloon should sit. The weakest of all
-            the placement terms -- face avoidance and reading order override it.
-        kind: Which sort of balloon carries it.
-        off_panel: Whether the speaker is off panel: `true`, or the side of the frame
-            they are on. The tail then ends on the frame -- on that side, or, with none
-            named, on the nearer of left and right to where the balloon is put.
-        size: `small` for a line muttered, said under the breath or weakly: smaller type,
-            in a balloon with the room it would have had.
-
     Script order **is** reading order, and reading order is a hard constraint. Reorder
     these and you reorder the panel.
 
@@ -1425,12 +1419,29 @@ class SayEvent(Strict):
     """
 
     verb: Literal["say"] = "say"
+    """Always `say`: the key the entry is written under in a script."""
     by: SvgText
+    """Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`,
+    the name of somebody nobody draws.
+    """
     text: LetteredText = Field(min_length=1)
+    """The line, as one string; the compiler breaks it into lines. A word between underscores,
+    `_word_`, is stressed, and lettered in bold italic.
+    """
     prefer: PlacementZone | None = None
+    """Where the balloon would like to sit, one of nine zones of the panel. The weakest
+    placement term: face avoidance and reading order override it.
+    """
     kind: BalloonKind = BalloonKind.SPEECH
+    """The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`."""
     off_panel: bool | Side = False
+    """The speaker is outside the panel: `true`, or the side of the frame they are on. The tail
+    ends on the frame there.
+    """
     size: TypeSize = TypeSize.NORMAL
+    """`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon
+    that keeps its room.
+    """
 
     @field_validator("off_panel", mode="before")
     @classmethod
@@ -1457,18 +1468,6 @@ class CaptionEvent(Strict):
     of an establishing shot with no artwork at all, which is how comics established
     place long before they had reliable backgrounds.
 
-    Attributes:
-        verb: Always `caption`, written as `- caption: {...}`.
-        text: What the box says. As with dialogue, line breaking is computed, and a
-            word between underscores is stressed.
-        kind: What the box is doing, which decides how it is set.
-        tone: What the box is filled with. Defaults to `paper`, the white every caption
-            has been since captions shipped, so no existing panel moves.
-        prefer: Where it would like to sit, a place on the panel. Unwritten, it is
-            `None`, and the caption sits where a `locale` caption conventionally goes:
-            where reading starts, `top_left`, or `top_right` in a comic read right to left.
-        by: Who is speaking, for a `spoken` caption only.
-
     **A caption is not a fifth balloon kind.** It has no speaker to point at and no
     tail, and :attr:`CoreBalloon.tail <scenet.core.CoreBalloon.tail>` is required -- a
     fifth kind would mean inventing a speaker and leaving a field dead.
@@ -1489,11 +1488,25 @@ class CaptionEvent(Strict):
     """
 
     verb: Literal["caption"] = "caption"
+    """Always `caption`: the key the entry is written under in a script."""
     text: LetteredText = Field(min_length=1)
+    """What the box says, as one string; line breaks are computed. A word between underscores,
+    `_word_`, is stressed.
+    """
     kind: CaptionKind = CaptionKind.LOCALE
+    """What the box is doing: `locale` for a place and time, `monologue` for an inner voice,
+    `spoken` for speech from off panel, `editorial` for the writer's voice.
+    """
     tone: CaptionTone = CaptionTone.PAPER
+    """What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or
+    `warm`, yellow under `palette: tinted`.
+    """
     prefer: PlacementZone | None = None
+    """Where the box would like to sit, one of nine zones of the panel. Left out, where reading
+    starts: `top_left`, or `top_right` read right to left.
+    """
     by: SvgText | None = None
+    """Who is speaking, for a `spoken` caption only: any name, in the cast or not."""
 
     @field_validator("by")
     @classmethod
@@ -1560,23 +1573,6 @@ class SfxEvent(Strict):
     `BLAM` is not dialogue. Comics letter sound as art -- big, angled, outlined, near
     where the sound is -- in a display face, not in the balloon face, and with no balloon.
 
-    Attributes:
-        verb: Always `sfx`, written as `- sfx: {...}`.
-        text: The sound, lettered exactly as written. No exclamation mark is added --
-            Comicraft's glossary: sound effects are not exclamations -- and an underscore
-            is not emphasis here, just an underscore.
-        source: Written `from:`. The actor the sound comes from; the effect is placed near
-            them. Must be in the cast.
-        prefer: Where it would like to sit, for an effect with no source -- or as a pull
-            on one that has.
-        size: How loud: `small`, `medium` or `large`.
-        rotate: Degrees, clockwise, -45 to 45. Comics angle their sound effects; the
-            default is level, and the angle is the author's to choose.
-        arc: Degrees the line of letters bends through, -120 to 120. Positive bows the
-            middle up, negative bows it down.
-        hollow: Outline only, no fill, so the art shows through the letters -- what
-            letterers call an open effect.
-
     **Placed by candidates and cost, never at a coordinate.** It never covers a face,
     and balloons pay to cover it, as they pay to cover emanata. It takes its number in
     the script's one reading order, which is what a reader of the text follows, but it
@@ -1594,13 +1590,29 @@ class SfxEvent(Strict):
     model_config = ConfigDict(populate_by_name=True)
 
     verb: Literal["sfx"] = "sfx"
+    """Always `sfx`: the key the entry is written under in a script."""
     text: SvgText = Field(min_length=1)
+    """The sound, lettered exactly as written, in the display face."""
     source: str | None = Field(default=None, alias="from")
+    """Written `from`: the actor id the sound comes from, which it is placed near."""
     prefer: PlacementZone | None = None
+    """Where the effect would like to sit, one of nine zones of the panel: on its own, or as a
+    pull on an effect that has a `from`.
+    """
     size: SfxSize = SfxSize.MEDIUM
+    """How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type
+    size.
+    """
     rotate: float = Field(default=0.0, ge=-45.0, le=45.0)
+    """How far the effect is turned clockwise, in degrees, from -45 to 45."""
     arc: float = Field(default=0.0, ge=-120.0, le=120.0)
+    """How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle
+    up, negative down.
+    """
     hollow: bool = False
+    """`true` letters the effect as an outline with no fill, so the art shows through: an open
+    effect.
+    """
 
 
 #: The tag a union member is chosen by when its input carries none.
@@ -1652,24 +1664,6 @@ class PanelIR(Strict):
     **Nothing here carries a coordinate** -- computing those is the solver's job, and
     keeping them out is what makes a panel reusable at any size.
 
-    Attributes:
-        panel: Dimensions and margin.
-        camera: Framing and angle.
-        cast: Actor id to character. Declaration order is not significant; `staging`
-            decides left-to-right order.
-        staging: Spatial and attentional relations between actors.
-        script: Dialogue and captions, in reading order.
-        lettering: How the lettering is set: its type size, when the author chooses one.
-        description: What the panel shows, in words, for a reader who cannot see it: the
-            author's, or a comic script's prose. Carried and never interpreted -- nothing
-            is drawn from it. Without one, accessible output says what the panel holds.
-        direction: Which way the comic is read. The whole document's: a scene's panels and
-            a comic script's take it from the document, and none may write its own.
-        palette: What the panel is drawn in. A scene's panels inherit it like any default,
-            and unlike `direction` a panel may write its own.
-        setting: Where and when it happens: the place, the masses that stand in it, the
-            time of day, the weather, or a picture to letter over.
-
     Validation is strict and total: unknown keys are rejected, every actor id mentioned
     in `staging` or `script` must exist in `cast`, and the ordering relations must not
     contain a cycle. A misspelled key that was silently ignored would produce a panel
@@ -1689,12 +1683,25 @@ class PanelIR(Strict):
     """
 
     panel: PanelSpec = PanelSpec()
+    """The panel's frame: its size and margin, in panel units."""
     camera: CameraSpec = CameraSpec()
+    """How the cast is framed: the shot, and the camera's height."""
     setting: SettingSpec = SettingSpec()
+    """Where and when the panel happens: a named place, tonal masses or a picture behind the
+    cast, with the time of day and the weather.
+    """
     lettering: LetteringSpec = LetteringSpec()
+    """How the lettering is set: the dialogue type size, and the font files."""
     cast: dict[SvgText, CastMember] = Field(default_factory=dict)
+    """Who is in the panel: each actor id, chosen by the author, and the puppet that plays them
+    or the figure a picture draws. Their order means nothing.
+    """
     staging: tuple[Relation, ...] = ()
+    """How the cast stand to each other, as sentences: `alice left_of bob`. One relation each."""
     script: tuple[ScriptEvent, ...] = ()
+    """What is said and heard, in the order it is read: `say` for a balloon, `caption` for a
+    box, `sfx` for a sound effect.
+    """
     description: Description | None = Field(
         default=None,
         description=(
@@ -2029,17 +2036,6 @@ class PageFormat(Strict):
     the default page prints at 200 x 300 mm, and a US comic's 6.625 x 10.25 inches is
     `size: [1682.75, 2603.5]`.
 
-    Attributes:
-        size: `(width, height)`: the trim, the size the printed page is cut to.
-        margin: The blank border inside the page edge, on all four sides.
-        gutter: The gap between two panels side by side in a tier.
-        tier_gutter: The gap between two tiers. Wider than `gutter` by default, as it
-            usually is in print: a narrower gap within a tier binds its panels into one
-            row, which is the direction they are read in.
-        bleed: How far the printed sheet runs past the trim on every side, so that art reaching
-            the edge can be cut cleanly: 30 is 3 mm, 31.75 is 0.125 in. Paper around the page;
-            nothing on it moves. 0, the default, prints the page at its trim.
-
     Example:
         >>> from scenet import PageFormat
         >>> PageFormat().size
@@ -2050,10 +2046,21 @@ class PageFormat(Strict):
     """
 
     size: tuple[float, float] = (2000.0, 3000.0)
+    """The page's width and height: the trim, the size the printed page is cut to, in the units
+    a panel uses. Printed, a unit is a tenth of a millimetre.
+    """
     margin: float = Field(default=100.0, ge=0.0)
+    """The blank border inside the page's edge, on all four sides."""
     gutter: float = Field(default=40.0, ge=0.0)
+    """The gap between two panels, or two columns, side by side in a tier."""
     tier_gutter: float = Field(default=60.0, ge=0.0)
+    """The gap between two tiers, and between two panels stacked in a column. Wider than
+    `gutter`, as in print, so a tier reads as one row.
+    """
     bleed: float = Field(default=0.0, ge=0.0)
+    """How far the printed sheet runs past the trim on every side, so art that reaches the edge
+    can be cut cleanly: 30 is 3 mm. Paper around the page; nothing on it moves.
+    """
 
     @property
     def width(self) -> float:
@@ -2120,13 +2127,6 @@ class Inset(Strict):
     split them about evenly between the inset and the panel under it. So the order is
     stated rather than guessed -- after its parent, unless `read: before`.
 
-    Attributes:
-        use: The name of a panel under `panels:`.
-        at: The corner of its parent it sits in, a gutter in from both edges.
-        size: Its width and height, as a fraction of its parent's: more than 0, at most
-            0.5.
-        read: Whether it is read before its parent or after it.
-
     Example:
         >>> from scenet import Inset
         >>> inset = Inset(use="detail", at="bottom_left", size=0.25)
@@ -2139,9 +2139,13 @@ class Inset(Strict):
     """
 
     use: str
+    """The name of a panel under `panels:`, set into this one."""
     at: Corner
+    """The corner of its parent the inset sits in, a gutter in from both edges."""
     size: float = Field(gt=0.0, le=0.5)
+    """The inset's width and height, as a fraction of its parent's: above 0, at most 0.5."""
     read: InsetOrder = InsetOrder.AFTER
+    """When the inset is read: `after` its parent, or `before` it."""
 
 
 class PanelPlacement(Strict):
@@ -2149,13 +2153,6 @@ class PanelPlacement(Strict):
 
     Written as the panel's name alone, or as `{use: name, width: 2}` to give it a larger
     share of the tier.
-
-    Attributes:
-        use: The name of a panel under `panels:`.
-        width: Its share of the tier's width, relative to the other panels in the tier.
-        insets: Panels set into its corners.
-        bleed: Whether its frame runs past the trim to the bleed line, with no border there:
-            `true` on every side that reaches the page's margin, or a list of those sides.
 
     Example:
         >>> from scenet import PanelPlacement
@@ -2168,9 +2165,15 @@ class PanelPlacement(Strict):
     """
 
     use: str
+    """The name of a panel under `panels:`. Writing the name alone means `{use: name}`."""
     width: float = Field(default=1.0, gt=0.0)
+    """The panel's share of its tier's width, relative to its neighbours."""
     insets: tuple[Inset, ...] = ()
+    """Panels set into its corners, and drawn over it."""
     bleed: bool | tuple[Side, ...] = False
+    """Run the frame past the trim to the bleed line, with no border there: `true` on every side
+    that reaches the page's margin, or a list of those sides.
+    """
 
 
 class StackedPanel(Strict):
@@ -2178,13 +2181,6 @@ class StackedPanel(Strict):
 
     Written as the panel's name alone, or as `{use: name, height: 2}` to give it a larger
     share of the column.
-
-    Attributes:
-        use: The name of a panel under `panels:`.
-        height: Its share of the column's height, relative to the other panels in it.
-        insets: Panels set into its corners.
-        bleed: Whether its frame runs past the trim to the bleed line, with no border there:
-            `true` on every side that reaches the page's margin, or a list of those sides.
 
     Example:
         >>> from scenet import StackedPanel
@@ -2196,9 +2192,15 @@ class StackedPanel(Strict):
     """
 
     use: str
+    """The name of a panel under `panels:`. Writing the name alone means `{use: name}`."""
     height: float = Field(default=1.0, gt=0.0)
+    """The panel's share of its column's height, relative to the others in it."""
     insets: tuple[Inset, ...] = ()
+    """Panels set into its corners, and drawn over it."""
     bleed: bool | tuple[Side, ...] = False
+    """Run the frame past the trim to the bleed line, with no border there: `true` on every side
+    that reaches the page's margin, or a list of those sides.
+    """
 
 
 def _read_with_insets(
@@ -2216,10 +2218,6 @@ def _read_with_insets(
 class Column(Strict):
     """Panels stacked top to bottom, beside the other columns of a tier.
 
-    Attributes:
-        width: Its share of the tier's width, relative to the other columns.
-        panels: The panels in it, top to bottom.
-
     Example:
         >>> from scenet import Column
         >>> column = Column(width=1, panels=[{"use": "top"}, {"use": "bottom"}])
@@ -2231,7 +2229,9 @@ class Column(Strict):
     """
 
     width: float = Field(default=1.0, gt=0.0)
+    """The column's share of its tier's width, relative to the other columns."""
     panels: tuple[StackedPanel, ...] = Field(min_length=1)
+    """The panels in the column, read top to bottom."""
 
 
 class Tier(Strict):
@@ -2245,15 +2245,6 @@ class Tier(Strict):
     should not sit square: each gutter tilts about its centre at the tier's mid-height,
     neighbours share the cut, and the tier's outer edges stay upright.
 
-    Attributes:
-        height: Its share of the page's height, relative to the other tiers.
-        panels: The panels in it, in reading order: left to right, or right to left for a
-            document read that way.
-        columns: The columns in it, in reading order, as `panels` are. A tier has `panels`
-            or `columns`.
-        slant: How far the gutters between its panels lean from upright, in degrees,
-            from -30 to 30. Positive leans the top of each gutter to the right.
-
     Example:
         >>> from scenet import Tier
         >>> tier = Tier(panels=[{"use": "wide"}, {"use": "narrow", "width": 0.5}])
@@ -2266,9 +2257,19 @@ class Tier(Strict):
     """
 
     height: float = Field(default=1.0, gt=0.0)
+    """The tier's share of the page's height, relative to the other tiers."""
     panels: tuple[PanelPlacement, ...] = ()
+    """The panels in the tier, in reading order: left to right, or right to left for a comic
+    read that way.
+    """
     columns: tuple[Column, ...] = ()
+    """In place of `panels`: columns side by side, each a stack of panels read top to bottom
+    before the next.
+    """
     slant: float = Field(default=0.0, ge=-30.0, le=30.0)
+    """How far the gutters between the tier's panels lean, in degrees, from -30 to 30. Positive
+    leans the top of each gutter to the right.
+    """
 
     @model_validator(mode="after")
     def check_one_kind(self) -> Self:
@@ -2329,9 +2330,6 @@ class PageSpec(Strict):
     columns that readers would not read down are refused by
     :class:`PageLayout <scenet.ir.PageLayout>`.
 
-    Attributes:
-        tiers: The tiers, top to bottom.
-
     Example:
         >>> from scenet import PageSpec, Tier
         >>> page = PageSpec(tiers=[Tier(panels=[{"use": "one"}, {"use": "two"}])])
@@ -2343,14 +2341,11 @@ class PageSpec(Strict):
     """
 
     tiers: tuple[Tier, ...] = Field(min_length=1)
+    """The page's tiers, top to bottom."""
 
 
 class PageLayout(Strict):
     r"""Every page of a scene, and the format they share.
-
-    Attributes:
-        page: The format.
-        pages: The pages, in order.
 
     The panels themselves are not part of it: a page names them, and
     :func:`check_placements <scenet.ir.check_placements>` checks the names against the
@@ -2371,7 +2366,9 @@ class PageLayout(Strict):
     """
 
     page: PageFormat = PageFormat()
+    """The format every page shares: its size, margin, gutters and bleed."""
     pages: tuple[PageSpec, ...] = ()
+    """The pages, in order, each a list of tiers top to bottom."""
 
     @model_validator(mode="after")
     def check_room(self) -> Self:

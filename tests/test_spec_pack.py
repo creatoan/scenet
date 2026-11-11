@@ -383,5 +383,5 @@ class TestTheOrderingRule:
     def test_it_says_how_a_tie_is_broken(self, text: str):
         flat = " ".join(text.split())
         assert "need a left-to-right order" not in flat
-        assert "actor id" in flat
+        assert "by actor id" in flat
         assert "left_of" in flat

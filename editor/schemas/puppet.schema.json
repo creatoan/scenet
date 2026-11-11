@@ -2,9 +2,10 @@
   "$defs": {
     "AnchorSpec": {
       "additionalProperties": false,
-      "description": "A named point that rides along with a joint.\n\nAnchors are how the solver addresses anatomy without knowing anatomy: the balloon\ntail terminates at `mouth`, and it neither knows nor cares how the head is drawn.",
+      "description": "A named point that rides along with a joint.",
       "properties": {
         "joint": {
+          "description": "The joint it rides along with.",
           "title": "Joint",
           "type": "string"
         },
@@ -13,6 +14,7 @@
             0.0,
             0.0
           ],
+          "description": "Where it is from that joint, in the puppet's own units, before posing.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -38,6 +40,7 @@
       "description": "A rounded mass -- the head, or a torso -- centred on a joint.",
       "properties": {
         "at": {
+          "description": "The joint it is centred on.",
           "title": "At",
           "type": "string"
         },
@@ -46,6 +49,7 @@
             0.0,
             0.0
           ],
+          "description": "Where its centre is from that joint, in the puppet's own units.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -60,6 +64,7 @@
           "type": "array"
         },
         "radius": {
+          "description": "Its radius, in the puppet's own units.",
           "exclusiveMinimum": 0,
           "title": "Radius",
           "type": "number"
@@ -77,14 +82,17 @@
       "description": "A limb segment drawn as a capsule between two joints.",
       "properties": {
         "from": {
+          "description": "The joint the bone starts at.",
           "title": "From",
           "type": "string"
         },
         "to": {
+          "description": "The joint the bone ends at.",
           "title": "To",
           "type": "string"
         },
         "width": {
+          "description": "How thick it is drawn, in the puppet's own units.",
           "exclusiveMinimum": 0,
           "title": "Width",
           "type": "number"
@@ -99,7 +107,7 @@
       "type": "object"
     },
     "BrowState": {
-      "description": "What the eyebrows are doing.\n\n`angled_in` puts the inner ends down, which is the anger brow; `angled_out` puts\nthem up, which is the sad or frightened one. Inner and outer are resolved against\nthe face centre rather than the screen, so both survive mirroring.",
+      "description": "What the eyebrows are doing.",
       "enum": [
         "neutral",
         "raised",
@@ -112,26 +120,29 @@
     },
     "ExpressionSpec": {
       "additionalProperties": false,
-      "description": "One named expression, as a state per feature.\n\nAn expression is to features what a pose is to joints: a record the panel selects\nby name. A face **deforms** rather than rotating about bones, which is why this is\na set of states and not a set of angles -- a nose joint would swing a nose.\n\nEvery field defaults, so a `neutral` expression is `{}` and a happy one is\n`{mouth: smile}`. Unknown keys are rejected, so `mouth: raised` -- a real state,\non the wrong feature -- is an error rather than a silently ignored line.",
+      "description": "One named expression, as a state per feature.",
       "properties": {
         "brow": {
           "$ref": "#/$defs/BrowState",
-          "default": "neutral"
+          "default": "neutral",
+          "description": "The brows' state."
         },
         "eyes": {
           "$ref": "#/$defs/EyeState",
-          "default": "open"
+          "default": "open",
+          "description": "The eyes' state."
         },
         "mouth": {
           "$ref": "#/$defs/MouthState",
-          "default": "neutral"
+          "default": "neutral",
+          "description": "The mouth's state."
         }
       },
       "title": "ExpressionSpec",
       "type": "object"
     },
     "EyeState": {
-      "description": "How open the eyes are.\n\n`half` is the heavy-lidded eye of boredom, distinct from `narrowed`, which is the\nsquint of anger or suspicion: one is drooping, the other is tightened.",
+      "description": "How open the eyes are.",
       "enum": [
         "open",
         "wide",
@@ -144,12 +155,13 @@
     },
     "FaceSpec": {
       "additionalProperties": false,
-      "description": "The region a balloon may never cover, and what is drawn inside it.\n\nA circle rather than a polygon: faces are roughly round, the test is cheap, and\nthe cost of being slightly generous here is a balloon placed a little further\naway, which is never wrong.\n\n`features` is optional. A puppet that declares none is drawn exactly as it was\nbefore faces existed -- a head is a filled circle -- and a puppet that declares\nsome has those drawn and no others. There is no requirement to declare all of\nthem, because a stylised character genuinely may have no eyebrows.",
+      "description": "The region a balloon may never cover, and what is drawn inside it.",
       "properties": {
         "features": {
           "additionalProperties": {
             "$ref": "#/$defs/FeatureSpec"
           },
+          "description": "What is drawn inside the face, by feature. Empty for a plain round head.",
           "propertyNames": {
             "$ref": "#/$defs/Feature"
           },
@@ -158,6 +170,7 @@
         },
         "joint": {
           "default": "head",
+          "description": "The joint the face is centred on: the head, unless the puppet says otherwise.",
           "title": "Joint",
           "type": "string"
         },
@@ -166,6 +179,7 @@
             0.0,
             0.0
           ],
+          "description": "Where the face's centre is from that joint, in the puppet's own units.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -180,6 +194,7 @@
           "type": "array"
         },
         "radius": {
+          "description": "The face's radius, in the puppet's own units: the circle no balloon covers.",
           "exclusiveMinimum": 0,
           "title": "Radius",
           "type": "number"
@@ -192,7 +207,7 @@
       "type": "object"
     },
     "Feature": {
-      "description": "The points on a face that an expression can move.\n\nNamed after the **groups** of the MPEG-4 FBA facial definition parameters -- brow,\neye, nose, mouth -- rather than its full point set. The standard defines 66\ndisplacements over dozens of points, which is a measurement rather than a\nnotation; the grouping is the part worth reusing, and it lands at about the right\nsize for a drawn face. `docs/reference/asset_contract.md` records the mapping to\nMediaPipe landmark indices, which is what buys convertibility later without\nimporting 478 points into the language now.\n\nTwo omissions are deliberate. **Pupils are derived, not declared** -- they are\noffset inside the eye by where the character is looking, so authoring them would\nbe authoring something the compiler already knows. And there is **no jaw**: the\nhead is a circle that does not deform, so a jaw group would have no geometry to\nmove.",
+      "description": "The points on a face that an expression can move.",
       "enum": [
         "brow_l",
         "brow_r",
@@ -206,10 +221,11 @@
     },
     "FeatureSpec": {
       "additionalProperties": false,
-      "description": "Where one facial feature sits, and how big it is.\n\nStructurally an :class:`AnchorSpec <scenet.assets.contract.AnchorSpec>` with a size,\nand resolved through exactly the same forward kinematics -- but declared under\n`face` rather than in `anchors`, deliberately. Anchors are how the *solver*\naddresses anatomy: the balloon tail terminates at `mouth` and the solver never\nlearns how a head is drawn. Features are artwork. Mixing them would put drawing\nlandmarks into the one namespace that is supposed to be free of them.\n\nAttributes:\n    joint: Which joint this feature rides. Practically always `head`.\n    offset: Rest-pose displacement from that joint, in native units.\n    size: What the number means depends on the feature -- an eye's radius, a\n        brow's half-width, a mouth's half-width, a nose's length. Zero means the\n        feature has no extent and is drawn as a bare point, which is rarely what\n        anybody wants.",
+      "description": "Where one facial feature sits, and how big it is.",
       "properties": {
         "joint": {
           "default": "head",
+          "description": "The joint the feature rides, practically always `head`.",
           "title": "Joint",
           "type": "string"
         },
@@ -218,6 +234,7 @@
             0.0,
             0.0
           ],
+          "description": "Where the feature is from that joint, in the puppet's own units, before posing.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -233,6 +250,7 @@
         },
         "size": {
           "default": 0.0,
+          "description": "How big the feature is drawn, in the puppet's own units: an eye's radius, a brow's or a mouth's half-width, a nose's length.",
           "minimum": 0.0,
           "title": "Size",
           "type": "number"
@@ -243,10 +261,11 @@
     },
     "GazeSpec": {
       "additionalProperties": false,
-      "description": "Where a character's line of sight starts.\n\nAttributes:\n    origin: Name of a declared anchor, conventionally `eyes`. Validated to exist.\n\nThe *direction* is not stored: it is derived at solve time from whom the character\nis looking at, so a `looking_at` relation is enough and nobody has to compute an\nangle by hand.",
+      "description": "Where a character's line of sight starts.",
       "properties": {
         "origin": {
           "default": "eyes",
+          "description": "The anchor the line of sight starts at, conventionally `eyes`. It must be declared.",
           "title": "Origin",
           "type": "string"
         }
@@ -256,13 +275,14 @@
     },
     "JointSpec": {
       "additionalProperties": false,
-      "description": "One joint in the skeleton.\n\n`offset` is the rest-pose displacement from the parent joint, in native units.\nA joint's pose angle rotates the bone arriving at it *and* everything below it,\nwhich is the formulation that makes posing read naturally: bending `elbow_l`\nswings the upper arm and takes the forearm and hand with it.",
+      "description": "One joint in the skeleton.",
       "properties": {
         "offset": {
           "default": [
             0.0,
             0.0
           ],
+          "description": "Where it is from its parent in the rest pose, in the puppet's own units.",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -286,6 +306,7 @@
             }
           ],
           "default": null,
+          "description": "The joint it hangs from. Left out for the root.",
           "title": "Parent"
         }
       },
@@ -293,7 +314,7 @@
       "type": "object"
     },
     "Landmark": {
-      "description": "Vertical body landmarks, measured downward from the top of the head.\n\nThese are the crop lines a shot type names -- see docs/reference/shot_types.md.",
+      "description": "Vertical body landmarks, measured downward from the top of the head.",
       "enum": [
         "head_top",
         "eyes",
@@ -309,7 +330,7 @@
       "type": "string"
     },
     "MouthState": {
-      "description": "What the mouth is doing.\n\n`grin` is an open smile, `smile` a closed one, and `small` the reticent little\nmouth that does most of the work in a coy face.",
+      "description": "What the mouth is doing.",
       "enum": [
         "neutral",
         "flat",
@@ -325,12 +346,13 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "The complete geometric contract for one character.\n\nEverything the solver may know about a character, and nothing it draws: proportions in\nhead units, a skeleton, named anchors, the face, its poses and expressions. The asset\ncontract reference describes the file format, field by field.",
+  "description": "The complete geometric contract for one character.",
   "properties": {
     "anchors": {
       "additionalProperties": {
         "$ref": "#/$defs/AnchorSpec"
       },
+      "description": "Named attachment points, such as `mouth` and `eyes`, each on a joint.",
       "title": "Anchors",
       "type": "object"
     },
@@ -338,22 +360,26 @@
       "additionalProperties": {
         "$ref": "#/$defs/ExpressionSpec"
       },
+      "description": "Named expressions, each a state of brow, eyes and mouth.",
       "title": "Expressions",
       "type": "object"
     },
     "face": {
-      "$ref": "#/$defs/FaceSpec"
+      "$ref": "#/$defs/FaceSpec",
+      "description": "Where the face is, and what is drawn in it."
     },
     "gaze": {
       "$ref": "#/$defs/GazeSpec",
       "default": {
         "origin": "eyes"
-      }
+      },
+      "description": "Where the puppet's line of sight starts."
     },
     "joints": {
       "additionalProperties": {
         "$ref": "#/$defs/JointSpec"
       },
+      "description": "The skeleton, by joint name.",
       "title": "Joints",
       "type": "object"
     },
@@ -361,6 +387,7 @@
       "additionalProperties": {
         "type": "number"
       },
+      "description": "Each vertical body landmark, as a distance down from the top of the head, in head units: the crop lines a shot type names.",
       "properties": {
         "head_top": {
           "const": 0,
@@ -385,11 +412,13 @@
       "type": "object"
     },
     "name": {
+      "description": "The name a cast member's `reference` uses.",
       "title": "Name",
       "type": "string"
     },
     "parts": {
       "default": [],
+      "description": "The shapes the body is drawn from, back to front.",
       "items": {
         "oneOf": [
           {
@@ -410,6 +439,7 @@
         },
         "type": "object"
       },
+      "description": "Named poses, each a set of joint angles.",
       "required": [
         "standing_neutral"
       ],
@@ -418,14 +448,17 @@
     },
     "root": {
       "default": "root",
+      "description": "The joint every other one hangs from.",
       "title": "Root",
       "type": "string"
     },
     "root_landmark": {
       "$ref": "#/$defs/Landmark",
-      "default": "waist"
+      "default": "waist",
+      "description": "The landmark the root joint sits at."
     },
     "units_per_head": {
+      "description": "How many of the puppet's own units one head height is.",
       "exclusiveMinimum": 0,
       "title": "Units Per Head",
       "type": "number"

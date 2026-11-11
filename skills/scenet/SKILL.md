@@ -67,9 +67,10 @@ If `scenet` is not installed: `pip install scenet`, or run it once with
   its path (`reference: puppets/pip.puppet.yaml`), and `pose` and `expression` must be
   names it declares.** The shipped ones are listed in `references/characters.md`, with
   how to cast your own. Do not invent them.
-- **Two figures need a left-to-right order**: `at:` (`left_third`, `center`,
-  `right_third`, `left_edge`, `right_edge`) or `a left_of b` in `staging`. There is no
-  "beside".
+- **Say who stands left of whom**, with `a left_of b` in `staging`. Without it, figures
+  stand in the order of their `at:` (`left_edge`, `left_third`, `center`, `right_third`,
+  `right_edge`), and two at the same anchor by actor id, which is seldom what was meant.
+  There is no "beside".
 - **Script order is reading order.** A balloon can never sit above-and-left of the one
   before it (above-and-right in a manga, `direction: rtl`), so write lines in the order they
   are read.

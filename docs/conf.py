@@ -29,6 +29,7 @@ from docutils import nodes
 from docutils.utils import get_source_line
 from pygments.lexers.special import TextLexer
 from sphinx.application import Sphinx
+from sphinx.pycode import ModuleAnalyzer
 from sphinx.util import logging
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -532,7 +533,16 @@ def _readable_aliases() -> None:
 #
 # A model's field is listed only when something describes it: an `Attributes:` entry or a
 # docstring under it. A field described with `Field(description=...)`, as the MCP server's
-# results are for the model that reads them, is described the same way on its page.
+# results are for the model that reads them, is described the same way on its page. A
+# docstring under a field is its description too (`use_attribute_docstrings`), and autodoc
+# lists the field by it already, so it is not listed twice.
+
+
+def _documented_attributes(cls: type) -> set[str]:
+    """The fields of a class that have a docstring under them."""
+    analyzer = ModuleAnalyzer.for_module(cls.__module__)
+    analyzer.analyze()
+    return {attribute for (owner, attribute) in analyzer.attr_docs if owner == cls.__qualname__}
 
 
 def _field_descriptions(  # noqa: PLR0917 -- the signature Sphinx calls it with
@@ -540,14 +550,16 @@ def _field_descriptions(  # noqa: PLR0917 -- the signature Sphinx calls it with
 ) -> None:
     """Add an `Attributes:` entry for each field only `Field(description=...)` describes."""
     fields = getattr(obj, "model_fields", None)
-    if what != "class" or not isinstance(fields, dict):
+    if what != "class" or not isinstance(fields, dict) or not isinstance(obj, type):
         return
-    own = inspect.get_annotations(obj)  # type: ignore[arg-type]
+    own = inspect.get_annotations(obj)
+    documented = _documented_attributes(obj)
     described = "\n".join(lines)
     entries = [
         f"    {field}: {info.description}"
         for field, info in fields.items()
         if field in own
+        and field not in documented
         and getattr(info, "description", None)
         and not re.search(rf"^\s+{field}( \(.*\))?:", described, re.MULTILINE)
     ]

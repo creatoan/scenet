@@ -45,19 +45,61 @@ PYTHON_SECTIONS = re.compile(
 )
 
 
+#: A Sphinx role, `` :class:`CameraSpec <scenet.ir.CameraSpec>` `` or `` :attr:`x` ``: the
+#: text it shows, or else its target's last name, is what a reader of YAML is shown.
+ROLE = re.compile(r":[a-z]+:`~?(?:(?P<text>[^`<]+?)\s*<[^>]+>|(?P<target>[^`]+))`")
+
+#: A blank line, which ends a paragraph.
+PARAGRAPH_BREAK = re.compile(r"\n\s*\n")
+
+
+def _plain(description: str) -> str:
+    """A description as a reader of YAML sees it: no Sphinx role, and one line per paragraph.
+
+    The text a role shows is kept as code. A docstring's own line breaks are not the
+    author's, and an editor's hover would keep them, so each paragraph is joined into one.
+    """
+    text = ROLE.sub(
+        lambda match: f"`{(match['text'] or match['target'].rsplit('.', 1)[-1]).strip()}`",
+        description,
+    )
+    paragraphs = PARAGRAPH_BREAK.split(text.strip())
+    return "\n\n".join(" ".join(paragraph.split()) for paragraph in paragraphs)
+
+
 def _for_authors(node: object) -> None:
-    """Cut every description in a schema at its first Python-only section."""
+    """Make every description in a schema one an author can read.
+
+    Each is cut at its first Python-only section, and its roles and line breaks are made
+    plain (`_plain`).
+    """
     if isinstance(node, dict):
         description = node.get("description")
         if isinstance(description, str):
             found = PYTHON_SECTIONS.search(description)
             if found:
-                node["description"] = description[: found.start()].rstrip()
+                description = description[: found.start()]
+            node["description"] = _plain(description)
         for value in node.values():
             _for_authors(value)
     elif isinstance(node, list):
         for value in node:
             _for_authors(value)
+
+
+def _summaries(schema: dict[str, Any]) -> None:
+    """Cut each definition's description, and the document's, to its first paragraph.
+
+    A definition's description is its model's or its enumeration's docstring, written for
+    the Python reference: past its summary it argues the design, tabulates the values and
+    names Python's types. An editor shows a key's own description, which says what the key
+    means to an author; a definition's summary says what kind of thing it holds.
+    """
+    nodes: list[dict[str, Any]] = [schema, *schema.get("$defs", {}).values()]
+    for node in nodes:
+        description = node.get("description")
+        if isinstance(description, str):
+            node["description"] = PARAGRAPH_BREAK.split(description.strip(), maxsplit=1)[0]
 
 
 def panel_schema() -> dict[str, Any]:
@@ -75,6 +117,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_one_font_file(definitions)
     _accept_cast_removal(schema)
     _puppet_or_figure(definitions)
+    _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
@@ -97,6 +140,7 @@ def artwork_schema() -> dict[str, Any]:
         ['figures', 'keep_out', 'size']
     """
     schema = ArtworkContract.model_json_schema()
+    _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet artwork contract"
@@ -123,6 +167,7 @@ def puppet_schema() -> dict[str, Any]:
     schema = PuppetSpec.model_json_schema()
     _every_landmark(schema)
     _default_pose(schema)
+    _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet puppet"
@@ -166,6 +211,7 @@ def scene_schema() -> dict[str, Any]:
     # `page:` and `pages:` lay the panels out. They are not panel defaults, so they are
     # added whole rather than loosened like the inherited keys above.
     layout = PageLayout.model_json_schema(ref_template="#/$defs/{model}")
+    _summaries(layout)
     definitions.update(layout.pop("$defs"))
     _accept_panel_names(definitions)
 
@@ -213,7 +259,7 @@ def _puppet_or_figure(definitions: dict[str, Any]) -> None:
     # -- over an inherited puppet that becomes a figure -- is accepted, as it compiles.
     properties: dict[str, Any] = member["properties"]
     for key in PUPPET_KEYS:
-        properties[key] = {"anyOf": [properties[key], {"type": "null"}]}
+        properties[key] = _removable(properties[key])
 
 
 def _every_landmark(schema: dict[str, Any]) -> None:
@@ -333,12 +379,22 @@ def _accept_verb_tagged_script(schema: dict[str, Any], definitions: dict[str, An
         branches.append(
             {
                 "type": "object",
-                "properties": {verb: {"$ref": f"#/$defs/{name}"}},
+                "properties": {
+                    verb: {"$ref": f"#/$defs/{name}", "description": VERB_MEANINGS[verb]}
+                },
                 "required": [verb],
                 "additionalProperties": False,
             }
         )
     script["items"] = {"anyOf": branches}
+
+
+#: What each script verb puts on the panel: the hover over `say:` in `- say: {...}`.
+VERB_MEANINGS = {
+    "say": "A line of dialogue, in a balloon whose tail points at the speaker.",
+    "caption": "A caption: a box in which the panel speaks in its own voice, with no tail.",
+    "sfx": "A sound effect: letters lettered into the picture, with no balloon.",
+}
 
 
 #: The setting keys that cannot be written together, mirroring `expand_place`: a place
@@ -376,7 +432,7 @@ def _accept_named_places(definitions: dict[str, Any]) -> None:
         ),
     }
     for key in ("masses", "horizon"):
-        properties[key] = {"anyOf": [properties[key], {"type": "null"}]}
+        properties[key] = _removable(properties[key])
     setting["not"] = {
         "anyOf": [
             {

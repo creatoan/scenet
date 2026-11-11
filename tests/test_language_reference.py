@@ -67,5 +67,5 @@ def test_it_counts_no_layers_it_leaves_out():
 def test_it_says_how_a_tie_between_two_figures_is_broken():
     """Ordering with no `left_of` falls to `at`, then to the actor id (`horizontal_order`)."""
     flat = " ".join(_text().split())
-    assert "actor id" in flat
-    assert "alphabetical" in flat.lower() or "by id" in flat
+    assert "by actor id" in flat
+    assert "`left_of`" in flat

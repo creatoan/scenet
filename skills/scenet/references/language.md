@@ -17,25 +17,29 @@ character or a panel. A merge key's override (`<<: *base`, then the key again) i
 
 ## The layers
 
-A panel description has five authored layers. A sixth — resolution — is computed, and a seventh —
-rendering — is emitted.
+A panel is written in blocks, each saying one kind of thing about it. What the compiler
+makes of them — every coordinate, then the picture — is computed and emitted, never written.
 
 ![A page of three panels lettered over painted pictures: Alice and Bob in the rain on a street at dusk, Alice worrying in an inset, and Ana and Ben, whom the picture draws, on a station platform](https://creatoan.github.io/scenet/images/gallery/38-tour.page-1.svg)
 
 **In the gallery:** [A tour of Scenet](https://creatoan.github.io/scenet/gallery.html#a-tour-of-scenet).
 
-| Layer | Block | What it says |
-|---|---|---|
-| Frame | `panel` | Size and margins of the panel |
-| Camera | `camera` | How the scene is framed |
-| Setting | `setting` | Where and when it happens |
-| Cast and staging | `cast`, `staging` | Who is present, and how they relate |
-| Narrative | `script` | What is said, and in what order |
+| Block | What it says |
+|---|---|
+| [`panel`](#panel) | The size and margin of the panel |
+| [`camera`](#camera) | How the cast is framed |
+| [`setting`](#setting) | Where and when it happens |
+| [`cast`](#cast), [`staging`](#staging) | Who is present, and how they stand to each other |
+| [`script`](#script) | What is said and heard, in the order it is read |
+| [`lettering`](#lettering) | The type size, and the font files |
+| [`palette`](#palette) | Whether the panel is drawn in grey or in colour |
+| [`direction`](#direction) | Which way the comic is read: the whole document's, never one panel's |
+| [`description`](#description) | What the panel shows, in words, for a reader who cannot see it. Nothing is drawn from it |
 
-A panel may also carry a [`description`](#description): what it shows, in words, for a reader who
-cannot see it. It is not a layer: nothing is drawn from it.
+A scene document holds several panels under `panels:`, and lays them out with
+[`page` and `pages`](#page-and-pages).
 
-Layers are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
+Blocks are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
 
 ## A complete example
@@ -75,7 +79,7 @@ script:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `size` | `[width, height]` | required | Panel dimensions in panel units; printed, a unit is 0.1 mm |
+| `size` | `[width, height]` | `[1000, 1000]` | Panel dimensions in panel units; printed, a unit is 0.1 mm |
 | `margin` | number | `0` | Inset all content by this much |
 
 ![Alice and Bob in a medium close-up, their figures running off the panel's edges while both balloons keep inside its margin](https://creatoan.github.io/scenet/images/gallery/15-margin.svg)
@@ -577,9 +581,12 @@ scene-graph representations used elsewhere in computer vision.
 constraint solver, and "A and B must not overlap" is a *disjunction*: A is left of B, **or** B is
 left of A. Linear solvers cannot express that choice.
 
-So the language resolves it instead. By the time the solver runs, ordering is already decided — by
-`at`, or by an explicit `left_of` — and what reaches the solver is a linear system it can always
-solve. This is the reason there is no unordered `beside` predicate, and why any future construct
+So the language resolves it instead. By the time the solver runs, ordering is already decided, and
+what reaches the solver is a linear system it can always solve. A `left_of` or `right_of` in
+`staging` decides first. Where staging says nothing, figures stand in the order of their `at:`
+anchors, and two at the same anchor by actor id, in code-point order, so `Bob` stands left of
+`alice`. That is the same on every run, but seldom what was meant: when the order matters, state it
+with `left_of`. This is the reason there is no unordered `beside` predicate, and why any future construct
 must resolve its own ordering in the frontend.
 
 ## `script`
@@ -691,7 +698,7 @@ to do. Comics solved this long before they had reliable backgrounds.
 |---|---|---|
 | `text` | string | What the box says. Line breaking is computed, as for dialogue |
 | `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
-| `tone` | `paper`, `pale`, `ink` | What the box is filled with. Defaults to `paper` |
+| `tone` | `paper`, `pale`, `ink`, `warm` | What the box is filled with. Defaults to `paper` |
 | `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
 | `by` | any name | Who is speaking, for a `spoken` caption only |
 
@@ -1201,14 +1208,14 @@ panels:
 Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
 proportion to the weights. A splash page is one tier holding one panel.
 
-**Printed, a unit is a tenth of a millimetre** (#80). The default page prints at 200 × 300 mm; a US
+**Printed, a unit is a tenth of a millimetre.** The default page prints at 200 × 300 mm; a US
 comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6 is
 `size: [1280, 1820]`. `bleed` is in the same units: `30` is 3 mm, `31.75` is the 0.125 in US
 printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
 page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
 before.
 
-**A panel can bleed** (#281): its frame runs past the trim, out to the bleed line, and has no
+**A panel can bleed**: its frame runs past the trim, out to the bleed line, and has no
 border on that side, so its art goes to the edge of the cut page.
 
 ![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
@@ -1379,8 +1386,8 @@ noise built in, the specification includes reference code, and the `seed` is fix
 on what to paint from it. That is fine, and it was already true of every glyph outline and every
 antialiased edge in the file.
 
-Print has no such filter, so it computes the same noise from that reference code (#282) and
-carries it in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
+Print has no such filter, so it computes the same noise from that reference code and carries it
+in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
 viewer paints from them is not.
 
 Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a

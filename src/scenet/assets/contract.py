@@ -124,7 +124,9 @@ class Strict(BaseModel):
     it is a valid YAML float, and nothing downstream can draw it.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, allow_inf_nan=False, use_attribute_docstrings=True
+    )
 
 
 class JointSpec(Strict):
@@ -137,7 +139,7 @@ class JointSpec(Strict):
     """
 
     parent: str | None = None
-    """The joint it hangs from; `None` for the root."""
+    """The joint it hangs from. Left out for the root."""
     offset: tuple[float, float] = (0.0, 0.0)
     """Where it is from its parent in the rest pose, in the puppet's own units."""
 
@@ -146,9 +148,9 @@ class BonePart(Strict):
     """A limb segment drawn as a capsule between two joints."""
 
     from_joint: str = Field(alias="from")
-    """The joint it starts at; `from` in a puppet file."""
+    """The joint the bone starts at."""
     to_joint: str = Field(alias="to")
-    """The joint it ends at; `to` in a puppet file."""
+    """The joint the bone ends at."""
     width: float = Field(gt=0)
     """How thick it is drawn, in the puppet's own units."""
 
@@ -269,19 +271,16 @@ class FeatureSpec(Strict):
     addresses anatomy: the balloon tail terminates at `mouth` and the solver never
     learns how a head is drawn. Features are artwork. Mixing them would put drawing
     landmarks into the one namespace that is supposed to be free of them.
-
-    Attributes:
-        joint: Which joint this feature rides. Practically always `head`.
-        offset: Rest-pose displacement from that joint, in native units.
-        size: What the number means depends on the feature -- an eye's radius, a
-            brow's half-width, a mouth's half-width, a nose's length. Zero means the
-            feature has no extent and is drawn as a bare point, which is rarely what
-            anybody wants.
     """
 
     joint: str = "head"
+    """The joint the feature rides, practically always `head`."""
     offset: tuple[float, float] = (0.0, 0.0)
+    """Where the feature is from that joint, in the puppet's own units, before posing."""
     size: float = Field(default=0.0, ge=0.0)
+    """How big the feature is drawn, in the puppet's own units: an eye's radius, a brow's or a
+    mouth's half-width, a nose's length.
+    """
 
 
 class BrowState(StrEnum):
@@ -375,15 +374,13 @@ class FaceSpec(Strict):
 class GazeSpec(Strict):
     """Where a character's line of sight starts.
 
-    Attributes:
-        origin: Name of a declared anchor, conventionally `eyes`. Validated to exist.
-
     The *direction* is not stored: it is derived at solve time from whom the character
     is looking at, so a `looking_at` relation is enough and nobody has to compute an
     angle by hand.
     """
 
     origin: str = "eyes"
+    """The anchor the line of sight starts at, conventionally `eyes`. It must be declared."""
 
 
 class PuppetSpec(Strict):
@@ -429,7 +426,7 @@ class PuppetSpec(Strict):
     face: FaceSpec
     """Where the face is, and what is drawn in it."""
     gaze: GazeSpec = GazeSpec()
-    """Where the puppet looks from, and which way, when nothing directs it."""
+    """Where the puppet's line of sight starts."""
     poses: dict[str, dict[str, float]] = Field(default_factory=dict)
     """Named poses, each a set of joint angles."""
     expressions: dict[str, ExpressionSpec] = Field(default_factory=dict)

@@ -89,53 +89,52 @@ class _Strict(BaseModel):
     to report, not a key to ignore while the tail aims somewhere else.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, allow_inf_nan=False, use_attribute_docstrings=True
+    )
 
 
 class ArtworkFace(_Strict):
-    """A face, as a disc no lettering may cover.
-
-    Attributes:
-        center: Its centre, in the picture's pixels.
-        radius: How far it reaches, in pixels. Generous is safer than tight: a balloon may
-            not overlap this disc at all, and a tail stops on its edge.
-    """
+    """A face, as a disc no lettering may cover."""
 
     center: Pixel
+    """The face's centre, `[x, y]` in the picture's pixels, from its top left."""
     radius: Annotated[float, Field(gt=0)]
+    """How far the face reaches, in pixels. Generous is safer than tight: no lettering overlaps
+    this disc, and a tail stops on its edge.
+    """
 
 
 class ArtworkFigure(_Strict):
-    """One figure the picture draws.
-
-    Attributes:
-        face: The disc no balloon, caption or sound effect may cover.
-        mouth: Where the tail of a line they speak ends -- or whatever the sound comes
-            from. Without one, a tail aims at the face's centre, and stops on its edge.
-        body: The silhouette a balloon pays to cover, as a polygon, or `None`. Covering a
-            speaker's own body costs half, as covering a puppet's does.
-    """
+    """One figure the picture draws."""
 
     face: ArtworkFace
+    """The figure's face: a disc no balloon, caption or sound effect may cover."""
     mouth: Pixel | None = None
+    """Where the tail of a line the figure speaks ends, or the place a sound it makes comes
+    from, in pixels. Left out, a tail aims at the face's centre.
+    """
     body: Outline | None = None
+    """The figure's silhouette, a polygon in pixels, which a balloon pays to cover: half as much
+    over its own speaker.
+    """
 
 
 class ArtworkContract(_Strict):
-    """Everything the solver may know about a supplied picture's content.
-
-    Attributes:
-        size: The picture's size in pixels, `[width, height]`, as it was measured. It must
-            be the picture's own.
-        figures: Each figure the picture draws, by name. Every face here is kept clear of
-            lettering, whether or not the panel casts that figure.
-        keep_out: Regions lettering should stay off -- a sign, a hand, something the
-            panel is about. A cost, not a rule: a balloon covers one before it fails.
-    """
+    """Everything the solver may know about a supplied picture's content."""
 
     size: tuple[Annotated[int, Field(gt=0)], Annotated[int, Field(gt=0)]]
+    """The picture's size in pixels, `[width, height]`, as it was measured. It must be the
+    picture's own.
+    """
     figures: dict[FigureName, ArtworkFigure] = Field(default_factory=dict)
+    """Each figure the picture draws, by the name a cast member's `figure` gives it. Every face
+    here is kept clear of lettering, cast or not.
+    """
     keep_out: tuple[Outline, ...] = ()
+    """Regions lettering should stay off, each a polygon in pixels: a sign, a hand, what the
+    panel is about. A cost, not a rule.
+    """
 
     @model_validator(mode="after")
     def check_inside_the_picture(self) -> Self:
