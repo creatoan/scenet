@@ -18,7 +18,6 @@ import importlib.util
 import json
 import re
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -258,132 +257,47 @@ class TestTheReferenceIsInTheGallery:
 #: The language reference: a page per block, and an overview.
 LANGUAGE = DOCS / "reference" / "language"
 
-#: Sections of the language reference that explain rather than define, and so show no
-#: construct of their own: why each has no picture, by page and anchor. An entry whose heading
-#: goes, or which an example's `doc:` comes to name, fails `test_every_excuse_is_current`.
-EXPLAINED = {
-    "index#the-scenet-language": "the overview: its sections show the language whole",
-    "setting#backdrops-are-never-author-drawn": (
-        "why no backdrop is drawn in the language; `masses`, `place` and the image behind "
-        "the cast show what there is"
-    ),
-    "staging#why-ordering-must-be-explicit": "why the solver needs `left_of`; `staging` shows it",
-    "lettering#capitals-are-yours-to-set": (
-        "what Scenet does not do to lettering, so nothing to draw"
-    ),
-    "index#determinism": "a promise about bytes, which a picture cannot show",
-    "index#the-contract-is-on-the-svg-text-not-on-pixels": "the same promise, and which bytes",
-}
-
 #: A link from the language reference to an example on the Gallery page.
 GALLERY_LINK = re.compile(r"\[([^\]]+)\]\(\.\./\.\./gallery\.md#([\w-]+)\)")
 
-
-@dataclass(frozen=True)
-class Part:
-    """A section of one page of the language reference, its title's included."""
-
-    page: str
-    section: myst.Section
-
-    @property
-    def name(self) -> str:
-        """`page#anchor`, as `EXPLAINED` and a test id name it."""
-        return f"{self.page}#{self.section.heading.anchor}"
-
-    @property
-    def doc(self) -> str:
-        """What an example's `doc:` says to name it."""
-        return f"reference/language/{self.page}.md#{self.section.heading.anchor}"
+#: Pages of the language reference that show no gallery picture, and why.
+UNPICTURED = {"keys": "the A-Z index: a table, whose cards show the pictures"}
 
 
-def _examples_of(part: Part) -> list[dict[str, Any]]:
-    """The examples whose `doc:` is this section, as the menu orders them."""
+def _examples_on(page: str) -> list[dict[str, Any]]:
+    """The examples whose `doc:` names a heading of this page, as the menu orders them."""
+    prefix = f"reference/language/{page}.md"
     return [
-        entry for _, members in _display_order() for entry in members if entry["doc"] == part.doc
+        entry
+        for _, members in _display_order()
+        for entry in members
+        if entry["doc"] == prefix or entry["doc"].startswith(f"{prefix}#")
     ]
 
 
-def _language_parts() -> list[Part]:
-    return [
-        Part(page.stem, section)
-        for page in sorted(LANGUAGE.glob("*.md"))
-        for section in myst.sections(page.read_text(encoding="utf-8"), titles=True)
-    ]
-
-
-def _subsections(part: Part) -> list[Part]:
-    """The sections nested in this one: those after it on its page, up to one at its level."""
-    found = [other for other in _language_parts() if other.page == part.page]
-    after = found[found.index(part) + 1 :]
-    nested: list[Part] = []
-    for other in after:
-        if other.section.heading.level <= part.section.heading.level:
-            break
-        nested.append(other)
-    return nested
-
-
-def _shows_its_examples(part: Part) -> bool:
-    return bool(_examples_of(part))
-
-
-class TestEveryConstructIsShown:
-    """Every section of the language reference shows its construct (#243): a picture of a
-    gallery example whose `doc:` names the section, and a link to each of those examples on
-    the Gallery page, in the playground menu's order. A section no example names is shown by
-    its subsections when one of them shows its own and the rest explain; a section that only
-    explains says why, in `EXPLAINED`."""
+class TestEveryPageIsShown:
+    """Each page of the language reference shows its block as the gallery draws it (#243): a
+    picture of an example whose `doc:` names the page. A card names its own examples in its
+    facts (`scripts/build_language_pages.py`), and ends on a document of its own, compiled."""
 
     @pytest.mark.parametrize(
-        "part",
-        [part for part in _language_parts() if _shows_its_examples(part)],
-        ids=lambda part: part.name,
+        "page", sorted(path.stem for path in LANGUAGE.glob("*.md") if path.stem not in UNPICTURED)
     )
-    def test_it_shows_a_picture_of_an_example(self, part: Part):
-        examples = _examples_of(part)
+    def test_it_shows_a_picture_of_its_examples(self, page: str):
+        examples = _examples_on(page)
         theirs = {
             f"../../{picture.relative_to(DOCS).as_posix()}"
             for entry in examples
             for picture in _pictures_of(entry)
         }
-        shown = [source for source, alt in _images(part.section.text) if alt.strip()]
+        text = (LANGUAGE / f"{page}.md").read_text(encoding="utf-8")
+        shown = [source for source, alt in _images(text) if alt.strip()]
         assert set(shown) & theirs, f"no picture of {[entry['file'] for entry in examples]}"
-        assert set(shown) <= theirs, "a picture of an example that names another section"
-
-    @pytest.mark.parametrize(
-        "part",
-        [part for part in _language_parts() if _shows_its_examples(part)],
-        ids=lambda part: part.name,
-    )
-    def test_it_links_its_examples_in_the_gallery(self, part: Part):
-        examples = _examples_of(part)
-        assert GALLERY_LINK.findall(part.section.text) == [
-            (entry["title"], myst.slug(entry["title"])) for entry in examples
-        ]
-
-    @pytest.mark.parametrize(
-        "part",
-        [part for part in _language_parts() if not _shows_its_examples(part)],
-        ids=lambda part: part.name,
-    )
-    def test_one_with_no_example_explains_or_has_sections_that_show(self, part: Part):
-        if part.name in EXPLAINED:
-            return
-        nested = _subsections(part)
-        assert nested, f"{part.name} has no example: name it in an example's doc:"
-        shown = [other for other in nested if _shows_its_examples(other)]
-        assert shown, f"{part.name} and its sections show nothing"
-        assert all(_shows_its_examples(other) or other.name in EXPLAINED for other in nested), (
-            f"a section of {part.name} shows nothing and does not say why"
-        )
+        assert set(shown) <= theirs, "a picture of an example whose doc: names another page"
 
     def test_every_excuse_is_current(self):
-        parts = {part.name: part for part in _language_parts()}
-        assert sorted(EXPLAINED.keys() - parts.keys()) == [], "a heading that is gone"
-        assert [name for name in EXPLAINED if _examples_of(parts[name])] == [], (
-            "an example names it now: show it"
-        )
+        pages = {path.stem for path in LANGUAGE.glob("*.md")}
+        assert sorted(UNPICTURED.keys() - pages) == []
 
     def test_a_link_names_an_example_on_the_gallery_page(self):
         """Its anchor is the example's title, so a link cannot name an example that is not

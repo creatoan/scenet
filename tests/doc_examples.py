@@ -192,6 +192,10 @@ class Fence:
     #: The directive's `:caption:`, when the block is written as a `{code-block}`.
     caption: str | None
     text: str
+    #: The directive the block is written as, `code-block` or `scenet-example`, if any.
+    directive: str | None = None
+    #: Its options, `:beside: examples/gallery`, by name.
+    options: tuple[tuple[str, str], ...] = ()
 
     @property
     def where(self) -> str:
@@ -203,7 +207,9 @@ def fences(path: Path) -> list[Fence]:
     """Every fenced block of a page, as MyST reads it.
 
     A ```` ```{code-block} yaml ```` directive is a block in `yaml`; its option lines are
-    read off the top of it, and its `:caption:` kept.
+    read off the top of it, and its `:caption:` kept. A ```` ```{scenet-example} ```` is a
+    document the build compiles and pictures: in `yaml`, or a comic script with
+    `:kind: script`.
     """
     tokens = MarkdownIt("commonmark").parse(path.read_text(encoding="utf-8"))
     found: list[Fence] = []
@@ -214,17 +220,27 @@ def fences(path: Path) -> list[Fence]:
         language = info[0] if info else ""
         text = token.content
         caption: str | None = None
-        if language == "{code-block}":
-            language = info[1] if len(info) > 1 else ""
+        directive: str | None = None
+        options: list[tuple[str, str]] = []
+        if language in ("{code-block}", "{scenet-example}"):
+            directive = language.strip("{}")
             lines = text.splitlines(keepends=True)
             while lines and (option := _OPTION.match(lines[0].strip())):
+                options.append((option["key"], option["value"].strip()))
                 if option["key"] == "caption":
                     caption = option["value"].strip()
                 lines.pop(0)
             if lines and not lines[0].strip():
                 lines.pop(0)
             text = "".join(lines)
-        found.append(Fence(path, token.map[0] + 1, language, caption, text))
+            if directive == "code-block":
+                language = info[1] if len(info) > 1 else ""
+            else:
+                kind = dict(options).get("kind")
+                language = "scenet-script" if kind == "script" else "yaml"
+        found.append(
+            Fence(path, token.map[0] + 1, language, caption, text, directive, tuple(options))
+        )
     return found
 
 
@@ -261,7 +277,13 @@ def _kind_of_name(name: str) -> str | None:
 
 
 def _inferred_kind(fence: Fence) -> str:
-    """A panel, unless it is a script or holds panels or pages: a scene."""
+    """A panel, unless it is a script or holds panels or pages: a scene.
+
+    A `scenet-example` may say which with `:kind:`, as its directive reads it.
+    """
+    kind = dict(fence.options).get("kind")
+    if kind:
+        return kind
     if fence.language == "scenet-script":
         return "script"
     if re.search(r"^(panels|pages):", fence.text, re.MULTILINE):
@@ -302,15 +324,21 @@ def document_blocks() -> list[DocumentBlock]:
 
 
 def compile_block(block: DocumentBlock, tmp_path: Path) -> Any:
-    """Compile a block as the kind of document it is said to be, and return the result."""
+    """Compile a block as the kind of document it is said to be, and return the result.
+
+    A `scenet-example` compiled `:beside:` a folder of the repository finds the files it
+    names there, as the documentation's build does.
+    """
     text = block.fence.text
+    beside = dict(block.fence.options).get("beside")
+    base = ROOT / beside if beside else None
     match block.kind:
         case "panel":
-            return compile_source(text)
+            return compile_source(text, base=base)
         case "scene":
-            return compile_book(text)
+            return compile_book(text, base=base)
         case "script":
-            return compile_script(text)
+            return compile_script(text, base=base)
         case "puppet":
             path = tmp_path / "shown.puppet.yaml"
             path.write_text(text, encoding="utf-8")
