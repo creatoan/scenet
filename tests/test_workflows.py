@@ -364,6 +364,28 @@ def test_every_python_the_package_claims_is_tested():
     assert tested == claimed
 
 
+def test_coverage_is_measured_on_the_newest_python_only():
+    """The 90% branch gate is one number, and one leg is enough to hold the suite to it.
+
+    Before 3.14, coverage cannot use `sys.monitoring` for branches and falls back to its
+    tracer: the tests took 11 to 14 minutes on 3.12, against 4 to 7 on 3.14, and 3.12 is a
+    required check. The older legs keep everything else -- doctests, the documentation
+    examples, the strict options -- and drop only the measurement.
+    """
+    job = _load("ci.yml")["jobs"]["check"]
+    matrix = job["strategy"]["matrix"]
+    newest = max(matrix["python"], key=lambda version: tuple(map(int, version.split("."))))
+    args = {entry["python"]: entry.get("pytest-args", "") for entry in matrix["include"]}
+    assert {python: args.get(python, "") for python in matrix["python"]} == {
+        python: "" if python == newest else "--no-cov" for python in matrix["python"]
+    }
+    runs = [str(step.get("run", "")) for step in job["steps"]]
+    assert "uv run pytest ${{ matrix.pytest-args }}" in runs
+
+    windows = [str(step.get("run", "")) for step in _load("ci.yml")["jobs"]["windows"]["steps"]]
+    assert "uv run pytest --no-cov" in windows
+
+
 def test_every_pull_request_checks_the_docs_say_their_version():
     """The switcher, the banner and canonical links rest on settings a build carries."""
     steps = _load("ci.yml")["jobs"]["docs"]["steps"]

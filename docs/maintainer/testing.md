@@ -13,6 +13,12 @@ that prompted these tests were in code the suite already ran, at 95% coverage; n
 written the input that broke it. The properties exist for that gap: the checks that used to run on five hand-written panels now
 run on every panel `tests/strategies.py` can draw.
 
+Coverage, branches included, is measured by `uv run pytest` and must reach 90%. In CI only
+the Linux Python 3.14 job measures it; the 3.12, 3.13 and Windows jobs run the same tests
+with `--no-cov`. Before 3.14, coverage cannot use `sys.monitoring` for branches and falls
+back to a tracer, which made the 3.12 job, a required check, the slowest of every pull
+request. Pass `--no-cov` locally too when the number is not what you are after.
+
 ## The properties
 
 `tests/properties/test_panel_properties.py` compiles generated single-panel documents and

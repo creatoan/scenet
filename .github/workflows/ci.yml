@@ -45,6 +45,16 @@ jobs:
         # lists it to PyPI as supported, and a promise is only kept if something checks it.
         # tests/test_workflows.py holds this list to the classifiers.
         python: ["3.12", "3.13", "3.14"]
+        # Coverage, and its 90% branch gate, is measured on 3.14 alone. Before 3.14 it
+        # cannot use sys.monitoring for branches and falls back to its tracer, which took
+        # the tests from about 4-7 minutes to 11-14 on 3.12 -- a required check, so every
+        # pull request waited on it. The older legs still run every test, doctest and
+        # documentation example; they drop only the measurement.
+        include:
+          - python: "3.12"
+            pytest-args: --no-cov
+          - python: "3.13"
+            pytest-args: --no-cov
     # Every uv command in the job, not only the sync. Left to itself, `uv run` reads
     # .python-version (3.14), finds the 3.12 environment the sync made, and replaces it
     # with a 3.14 one holding the default groups only -- so this job ran its tests on
@@ -91,7 +101,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends ghostscript qpdf
 
       - name: Tests, doctests and documentation examples
-        run: uv run pytest
+        run: uv run pytest ${{ matrix.pytest-args }}
         env:
           SCENET_REQUIRE_PRINT_TOOLS: ${{ matrix.python == '3.14' && '1' || '' }}
           SCENET_PLATES_DIR: ${{ matrix.python == '3.14' && 'print-plates' || '' }}
@@ -123,8 +133,10 @@ jobs:
 
       - run: uv sync --frozen --all-groups
 
+      # Without coverage: the Linux 3.14 leg measures it, and this job is here for the
+      # bytes a platform can change, not for a second copy of the same number.
       - name: Tests, doctests and documentation examples
-        run: uv run pytest
+        run: uv run pytest --no-cov
 
   docs:
     name: Documentation

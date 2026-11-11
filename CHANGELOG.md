@@ -290,6 +290,11 @@ below 1.0 means.
 
 ### Changed
 
+- **CI measures coverage on Python 3.14 only.** The 90% branch-coverage gate stays on the Linux
+  3.14 job; the 3.12, 3.13 and Windows jobs run every test, doctest and documentation example
+  with `--no-cov`. Before 3.14, coverage cannot use `sys.monitoring` for branches, and its
+  tracer made the required 3.12 job the one every pull request waited for. A test holds the
+  workflow to it.
 - **The fix for `puppet-file` names `scenet schema --puppet`** (#271), as the fix for
   `artwork-contract` names `--artwork`, and the asset-contract reference names the schema
   beside the puppet it shows. A test runs every `scenet schema` command a fix names, so a fix
