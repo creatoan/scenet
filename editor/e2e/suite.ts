@@ -31,9 +31,9 @@ const CORPUS: readonly Expected[] = [
   // A line and a column.
   { file: "unknown-actor.panel.yaml", rule: "scenet/unknown-actor", range: [3, 14, 3, 17] },
   // A YAML parse error, beside the YAML extension's own diagnostic for it.
-  { file: "syntax.panel.yaml", rule: "scenet/syntax", range: [2, 23, 2, 24] },
+  { file: "syntax.panel.yaml", rule: "scenet/syntax", range: [2, 27, 2, 28] },
   // A comic script: the whole line.
-  { file: "duplicate-panel.script", rule: "scenet/duplicate-panel", range: [9, 0, 9, 7] },
+  { file: "duplicate-panel.script", rule: "scenet/duplicate-panel", range: [10, 0, 10, 7] },
   // A finding about the whole document, spanning lines.
   { file: "not-a-mapping.panel.yaml", rule: "scenet/not-a-mapping", range: [1, 0, 3, 0] },
   // A scene document.
