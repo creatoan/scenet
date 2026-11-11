@@ -47,7 +47,7 @@ jobs:
         python: ["3.12", "3.13", "3.14"]
         # Coverage, and its 90% branch gate, is measured on 3.14 alone. Before 3.14 it
         # cannot use sys.monitoring for branches and falls back to its tracer, which took
-        # the tests from about 4-7 minutes to 11-14 on 3.12 -- a required check, so every
+        # the tests on 3.12 from about 5 minutes to 11-14 -- a required check, so every
         # pull request waited on it. The older legs still run every test, doctest and
         # documentation example; they drop only the measurement.
         include:

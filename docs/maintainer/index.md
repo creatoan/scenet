@@ -30,7 +30,7 @@ them.
 
 Coverage is gated at 90%, branches included. `pytest` measures it on every run, locally
 as in CI's Python 3.14 job. The 3.12, 3.13 and Windows jobs pass `--no-cov`: before 3.14,
-coverage cannot use `sys.monitoring` for branches, and its tracer tripled the time of the
+coverage cannot use `sys.monitoring` for branches, and its tracer doubled the time of the
 required 3.12 check. They run everything else.
 
 The documentation build is a separate gate:
