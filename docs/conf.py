@@ -33,6 +33,8 @@ from sphinx.pycode import ModuleAnalyzer
 from sphinx.util import logging
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# The documentation's own extensions: `scenet-example`, which compiles a key card's document.
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
 # The MCP SDK is imported here, before any extension runs, and not left for autodoc to
 # reach. sphinx-autodoc-typehints executes the `if TYPE_CHECKING:` block of each module
@@ -78,9 +80,10 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_design",
     "sphinx_copybutton",
+    "scenet_examples",
 ]
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "_ext", "Thumbs.db", ".DS_Store"]
 
 # Single backticks mean "code", matching how the docstrings read in source and in
 # `help()`. Without this, rST's default turns them into title references.
@@ -265,6 +268,31 @@ def _playground_links_stay_in_their_version(
         target = reference.get("refuri", "")
         if target.startswith(_PLAYGROUND):
             reference["refuri"] = f"{root}playground/{target.removeprefix(_PLAYGROUND)}"
+
+
+# -- A heading's address -------------------------------------------------------
+#
+# A heading is linked by its slug, as MyST and GitHub make it: `camera.md#camerashot`. MyST
+# resolves such a link inside the documentation, but Sphinx's HTML names the section after
+# docutils' id, `camera-shot`, so the same address typed elsewhere -- the playground's "Read
+# about it", a rule's help, a link on GitHub -- landed at the top of the page (#319).
+
+
+def _heading_slug(title: str) -> str:
+    """A heading's anchor as MyST makes it, by `mdit_py_plugins.anchors`' rule."""
+    return re.sub(r"[^\w\- ]", "", title.strip().lower().replace(" ", "-"))
+
+
+def _heading_slugs_are_ids(app: Sphinx | None, doctree: nodes.document) -> None:
+    """Give every section its heading's slug as an id too, unless something has it already."""
+    for section in doctree.findall(nodes.section):
+        title = section.next_node(nodes.title)
+        if title is None:
+            continue
+        slug = _heading_slug(title.astext())
+        if slug and slug not in section["ids"] and slug not in doctree.ids:
+            section["ids"].append(slug)
+            doctree.ids[slug] = section
 
 
 # -- What a build must show ----------------------------------------------------
@@ -583,6 +611,7 @@ def setup(app: Sphinx) -> None:
     # `tests/test_doc_examples.py` knows to compile it (#317). Pygments has no lexer for it,
     # and it is shown as text, which is what a script is.
     app.add_lexer("scenet-script", TextLexer)
+    app.connect("doctree-read", _heading_slugs_are_ids)
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
     app.connect("doctree-resolved", _source_links_follow_their_version)
     app.connect("doctree-resolved", _no_raw_markup)

@@ -91,7 +91,7 @@ had to stay modest: with nothing behind the figure, air is just white, and a sma
 a page reads as a full shot with a generous margin rather than as a long shot. Now the air is the
 environment — which is what a long shot is *about* — so the gap is a real rung, and a long shot
 frames the figure at roughly two thirds the size a full shot does. The environment may be masses or
-a [supplied picture](language/setting.md#an-image-behind-the-cast): the camera reads neither, so a shot
+a [supplied picture](language/setting.md#settingimage): the camera reads neither, so a shot
 frames the cast the same in front of either.
 
 ## Angle

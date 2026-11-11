@@ -74,7 +74,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   those attributes and elements. Debug overlays never carry it.
 
 `--embed-images`
-: Write each [supplied picture](language/setting.md#an-image-behind-the-cast) into the SVG as a
+: Write each [supplied picture](language/setting.md#settingimage) into the SVG as a
   `data:` URI, so the file stands alone. By default a picture is linked by the path the
   document wrote, which a viewer reads from beside the SVG: that finds it when the SVG is
   written beside the document, as it is by default. Written anywhere else, the build says so

@@ -123,6 +123,49 @@ def _absolute_links(text: str, page: str) -> str:
     return LINK.sub(rewrite, text)
 
 
+#: A key card's example, ```` ```{scenet-example} ````, its option lines and the document.
+EXAMPLE = re.compile(
+    r"^(?P<ticks>`{3,})\{scenet-example\}\n(?P<options>(?::[\w-]+:.*\n)*)(?: *\n)?",
+    re.MULTILINE,
+)
+
+#: A file a page includes, ```` ```{literalinclude} path ```` and its option lines.
+INCLUDE = re.compile(
+    r"^(?P<ticks>`{3,})\{literalinclude\} (?P<path>\S+)\n"
+    r"(?P<options>(?::[\w-]+:.*\n)*)(?P=ticks)\n",
+    re.MULTILINE,
+)
+
+#: A glossary term, ``{term}`text` `` or ``{term}`text <target>` ``: its text is what reads.
+TERM = re.compile(r"\{term\}`(?P<text>[^`<]+?)(?:\s*<[^>]+>)?`")
+
+
+def _options(lines: str) -> dict[str, str]:
+    return dict(re.findall(r"^:([\w-]+):\s*(.*)$", lines, re.MULTILINE))
+
+
+def _plain_directives(text: str, page: str) -> str:
+    """Write a page's MyST as the Markdown it stands for, for a reader that knows no MyST.
+
+    A key card's example is the document it shows, in a plain fence; a file the page includes
+    is printed, under its caption; a glossary term is its text.
+    """
+
+    def example(match: re.Match[str]) -> str:
+        kind = _options(match["options"]).get("kind")
+        return f"{match['ticks']}{'text' if kind == 'script' else 'yaml'}\n"
+
+    def include(match: re.Match[str]) -> str:
+        options = _options(match["options"])
+        path = posixpath.normpath(posixpath.join(posixpath.dirname(page), match["path"]))
+        content = (DOCS / path).read_text(encoding="utf-8")
+        caption = f"*{options['caption']}:*\n\n" if "caption" in options else ""
+        return caption + _fence(content, options.get("language", "text"))
+
+    text = INCLUDE.sub(include, EXAMPLE.sub(example, text))
+    return TERM.sub(lambda match: match["text"], text)
+
+
 #: A MyST code block with a caption, ```` ```{code-block} yaml ```` and `:caption: ...`.
 CAPTIONED = re.compile(
     r"^(?P<indent> *)(?P<ticks>`{3,})\{code-block\} (?P<language>\S+)\n"
@@ -204,9 +247,14 @@ def _within_the_part(text: str, page: str, titles: dict[str, str]) -> str:
     return LINK.sub(rewrite, text)
 
 
+#: Pages of the language reference the pack leaves out: the A-Z index repeats, one line each,
+#: what every card in the part already says.
+NOT_IN_THE_PACK = ("reference/language/keys.md",)
+
+
 def _language() -> str:
     """The `language` part: every page of the language reference, in its own order."""
-    pages = language_pages()
+    pages = [page for page in language_pages() if page not in NOT_IN_THE_PACK]
     texts = {page: (DOCS / page).read_text(encoding="utf-8") for page in pages}
     titles = {
         page: _slug(next(line for line in text.splitlines() if line.startswith("# "))[2:])
@@ -214,7 +262,8 @@ def _language() -> str:
     }
     joined = []
     for page in pages:
-        text = _absolute_links(_within_the_part(texts[page], page, titles), page)
+        text = _plain_directives(texts[page], page)
+        text = _absolute_links(_within_the_part(text, page, titles), page)
         # The overview's toctree lists the pages that follow it, which is what the part does.
         text = TOCTREE.sub("", text)
         joined.append(text if page.endswith("/index.md") else _demoted(text))
@@ -578,7 +627,11 @@ def parts(site: str = SITE) -> dict[str, str]:
         "preamble": _preamble(),
         "language": _language(),
         **{
-            name: _plain_captions(_absolute_links((DOCS / page).read_text(encoding="utf-8"), page))
+            name: _plain_captions(
+                _absolute_links(
+                    _plain_directives((DOCS / page).read_text(encoding="utf-8"), page), page
+                )
+            )
             for name, page in DOCUMENT_PARTS.items()
         },
         "characters": _characters(),

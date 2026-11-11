@@ -34,27 +34,27 @@ Now at [Backdrops are never author-drawn](language/setting.md#backdrops-are-neve
 
 ## `masses`
 
-Now at [`masses`](language/setting.md#masses).
+Now at [`masses`](language/setting.md#settingmasses).
 
 ## `place`
 
-Now at [`place`](language/setting.md#place).
+Now at [`place`](language/setting.md#settingplace).
 
 ## `horizon`
 
-Now at [`horizon`](language/setting.md#horizon).
+Now at [`horizon`](language/setting.md#settinghorizon).
 
 ## `time` and `weather`
 
-Now at [`time` and `weather`](language/setting.md#time-and-weather).
+Now at [`time` and `weather`](language/setting.md#settingtime).
 
 ## An image behind the cast
 
-Now at [An image behind the cast](language/setting.md#an-image-behind-the-cast).
+Now at [An image behind the cast](language/setting.md#settingimage).
 
 ## Figures the picture draws
 
-Now at [Figures the picture draws](language/setting.md#figures-the-picture-draws).
+Now at [Figures the picture draws](language/cast.md#castidfigure).
 
 ## `cast`
 
@@ -62,11 +62,11 @@ Now at [`cast`](language/cast.md#cast).
 
 ## `marks`
 
-Now at [`marks`](language/cast.md#marks).
+Now at [`marks`](language/cast.md#castidmarks).
 
 ## A puppet of your own
 
-Now at [A puppet of your own](language/cast.md#a-puppet-of-your-own).
+Now at [A puppet of your own](language/cast.md#castidreference).
 
 ## `staging`
 
@@ -86,7 +86,7 @@ Now at [`say`](language/script.md#say).
 
 ## Off-panel speech
 
-Now at [Off-panel speech](language/script.md#off-panel-speech).
+Now at [Off-panel speech](language/script.md#sayoff_panel).
 
 ## `caption`
 
@@ -94,7 +94,7 @@ Now at [`caption`](language/script.md#caption).
 
 ## Emphasis
 
-Now at [Emphasis](language/script.md#emphasis).
+Now at [Emphasis](language/script.md#saytext).
 
 ## `sfx`
 
@@ -102,7 +102,7 @@ Now at [`sfx`](language/script.md#sfx).
 
 ## Reading order is enforced, not suggested
 
-Now at [Reading order is enforced, not suggested](language/script.md#reading-order-is-enforced-not-suggested).
+Now at [Reading order is enforced, not suggested](language/script.md#script).
 
 ## `description`
 
@@ -114,7 +114,7 @@ Now at [`lettering`](language/lettering.md#lettering).
 
 ## `font`
 
-Now at [`font`](language/lettering.md#font).
+Now at [`font`](language/lettering.md#letteringfont).
 
 ## Capitals are yours to set
 

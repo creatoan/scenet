@@ -38,7 +38,7 @@ A cast member is a puppet and a figure, or a cast mixes the two. A cast member i
 
 A setting says what is behind the cast twice. A place *is* a mass list -- the preset expands into exactly what an author could have written -- so naming one and listing the other asks two questions at once, and the compiler will not guess which was meant. A supplied `image` is a whole backdrop of its own, so it stands alone too: beside a place, masses, or a horizon, which only says where masses meet the ground.
 
-**Fix:** Keep one of the place, the masses and the image. On a panel that inherits one, write it as `null` to leave it out. What each place expands into is at https://creatoan.github.io/scenet/reference/language/setting.html#place.
+**Fix:** Keep one of the place, the masses and the image. On a panel that inherits one, write it as `null` to leave it out. What each place expands into is at https://creatoan.github.io/scenet/reference/language/setting.html#settingplace.
 
 ### `scenet/dropped-relation`
 
@@ -86,7 +86,7 @@ The compiler failed in a way it does not have a rule for. A Scenet error reached
 
 A field has the wrong shape or value. The key is known but what it holds is not what the language accepts there -- a string where a number belongs, or a value outside the allowed set.
 
-**Fix:** Check the field's type and permitted values in the language reference, https://creatoan.github.io/scenet/reference/language/.
+**Fix:** Check the field's type and permitted values on its card, from https://creatoan.github.io/scenet/reference/language/keys.html.
 
 ### `scenet/layout`
 
@@ -200,13 +200,13 @@ A figure the panel's picture does not draw. A cast member's `figure` names a fig
 
 Unknown key. Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure.
 
-**Fix:** Check the spelling against the language reference, https://creatoan.github.io/scenet/reference/language/.
+**Fix:** Check the spelling against every key there is: https://creatoan.github.io/scenet/reference/language/keys.html.
 
 ### `scenet/unknown-place`
 
 Reference to a place the library does not have. `setting.place` names a preset that does not exist. The counterpart of `unknown-pose`: the key is a real field and the value is a perfectly good string, it just does not resolve to a place the compiler can expand.
 
-**Fix:** Check the name against the list of places: https://creatoan.github.io/scenet/reference/language/setting.html#place.
+**Fix:** Check the name against the list of places: https://creatoan.github.io/scenet/reference/language/setting.html#settingplace.
 
 ### `scenet/unknown-pose`
 

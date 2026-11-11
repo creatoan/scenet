@@ -43,3 +43,14 @@ img[src$="two-characters.svg"] {
   max-width: calc(50% - 0.5rem);
   margin: 1rem 0 1.5rem;
 }
+
+/* A key card's own example (#319), compiled when the documentation is built: smaller than a
+   gallery picture, since it shows one key, and set right under the document it is. */
+.bd-article .scenet-example-picture img {
+  display: block;
+  height: auto;
+  max-width: min(100%, 24rem);
+  margin: 0.5rem 0 0.5rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgb(16 24 40 / 14%);
+}

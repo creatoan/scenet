@@ -205,7 +205,7 @@ RULES: dict[str, Rule] = {
             "that is subtly wrong with no indication of why, which for a language meant "
             "to be precise is the worst possible failure."
         ),
-        help=f"Check the spelling against the language reference, {LANGUAGE_REFERENCE}.",
+        help=f"Check the spelling against every key there is: {LANGUAGE_REFERENCE}keys.html.",
     ),
     "missing-field": Rule(
         summary="A required field is missing",
@@ -219,8 +219,8 @@ RULES: dict[str, Rule] = {
             "-- a string where a number belongs, or a value outside the allowed set."
         ),
         help=(
-            "Check the field's type and permitted values in the language reference, "
-            f"{LANGUAGE_REFERENCE}."
+            "Check the field's type and permitted values on its card, from "
+            f"{LANGUAGE_REFERENCE}keys.html."
         ),
     ),
     "panel-geometry": Rule(
@@ -346,7 +346,10 @@ RULES: dict[str, Rule] = {
             "`unknown-pose`: the key is a real field and the value is a perfectly good "
             "string, it just does not resolve to a place the compiler can expand."
         ),
-        help=f"Check the name against the list of places: {LANGUAGE_REFERENCE}setting.html#place.",
+        help=(
+            "Check the name against the list of places: "
+            f"{LANGUAGE_REFERENCE}setting.html#settingplace."
+        ),
     ),
     "conflicting-setting": Rule(
         summary="A setting says what is behind the cast twice",
@@ -361,7 +364,7 @@ RULES: dict[str, Rule] = {
         help=(
             "Keep one of the place, the masses and the image. On a panel that inherits "
             "one, write it as `null` to leave it out. What each place expands into is at "
-            f"{LANGUAGE_REFERENCE}setting.html#place."
+            f"{LANGUAGE_REFERENCE}setting.html#settingplace."
         ),
     ),
     "unknown-puppet": Rule(

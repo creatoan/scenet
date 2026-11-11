@@ -143,7 +143,7 @@ def expand_place(setting: object) -> object:
         raise PanelSyntaxError(
             "'setting' names a place and lists masses; a place *is* a mass list, so "
             "this asks two questions at once. Write one or the other -- "
-            f"{LANGUAGE_REFERENCE}setting.html#place prints what each place expands into",
+            f"{LANGUAGE_REFERENCE}setting.html#settingplace prints what each place expands into",
             rule="conflicting-setting",
             loc=("setting", "place"),
         )

@@ -42,11 +42,13 @@ def test_a_panels_size_is_not_required():
     assert "`[1000, 1000]`" in flat
 
 
-def test_every_caption_tone_is_in_the_key_table():
+def test_every_caption_tone_is_on_its_card():
     tones = [tone.value for tone in CaptionTone]
-    rows = [line for line in _text().splitlines() if line.startswith("| `tone` |")]
-    assert rows, "the caption key table has a row for tone"
-    assert all(f"`{tone}`" in row for row in rows for tone in tones)
+    card = re.search(r"<!-- facts: caption\.tone -->(.*?)<!-- /facts -->", _text(), re.DOTALL)
+    assert card, "caption.tone has a card"
+    values = [line for line in card.group(1).splitlines() if line.startswith("| Values |")]
+    assert values
+    assert all(f"`{tone}`" in values[0] for tone in tones)
 
 
 def test_footroom_is_the_shots_and_not_a_key():
@@ -143,13 +145,19 @@ PUBLISHED = re.compile(
 )
 
 
+#: The same, written after the constant that holds the reference's address.
+AFTER_THE_CONSTANT = re.compile(r"\{LANGUAGE_REFERENCE\}([\w-]*\.html)?(#[\w-]+)?")
+
+
 def test_every_link_the_package_gives_to_the_reference_lands():
     """A finding's help, a message and the command line's epilogue name the published pages."""
     found = [
         match
         for path in sorted((ROOT / "src" / "scenet").rglob("*.py"))
-        for match in PUBLISHED.finditer(path.read_text(encoding="utf-8"))
+        for pattern in (PUBLISHED, AFTER_THE_CONSTANT)
+        for match in pattern.finditer(path.read_text(encoding="utf-8"))
     ]
+    assert any(match.re is AFTER_THE_CONSTANT and match.group(1) for match in found)
     assert found
     for match in found:
         page = (match.group(1) or "index.html").removesuffix(".html") + ".md"

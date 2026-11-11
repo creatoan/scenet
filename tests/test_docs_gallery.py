@@ -246,7 +246,9 @@ class TestTheReferenceIsInTheGallery:
     def test_one_example_sets_every_horizon_in_one_place(self):
         """`horizon` has an example of its own: the same place under each horizon."""
         (entry,) = [
-            entry for entry in ENTRIES if entry["doc"] == "reference/language/setting.md#horizon"
+            entry
+            for entry in ENTRIES
+            if entry["doc"] == "reference/language/setting.md#settinghorizon"
         ]
         document = yaml.safe_load((GALLERY / entry["file"]).read_text(encoding="utf-8"))
         settings = [panel["setting"] for panel in document["panels"].values()]
@@ -261,7 +263,11 @@ LANGUAGE = DOCS / "reference" / "language"
 GALLERY_LINK = re.compile(r"\[([^\]]+)\]\(\.\./\.\./gallery\.md#([\w-]+)\)")
 
 #: Pages of the language reference that show no gallery picture, and why.
-UNPICTURED = {"keys": "the A-Z index: a table, whose cards show the pictures"}
+UNPICTURED = {
+    "keys": "the A-Z index: a table, whose cards show the pictures",
+    "puppet": "a file a cast names: its example casts the gallery's puppet, compiled",
+    "artwork": "a file beside a picture: its example letters the gallery's, compiled",
+}
 
 
 def _examples_on(page: str) -> list[dict[str, Any]]:

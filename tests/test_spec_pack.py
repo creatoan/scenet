@@ -145,6 +145,8 @@ class TestSpecPack:
         body = part("language")
         found = []
         for page in pages[1:]:
+            if page in build_spec.NOT_IN_THE_PACK:
+                continue
             title = next(
                 line
                 for line in (ROOT / "docs" / page).read_text(encoding="utf-8").splitlines()
@@ -154,8 +156,14 @@ class TestSpecPack:
         assert found == sorted(found)
 
     def test_a_link_between_its_pages_stays_in_the_part(self):
+        """A page the part leaves out, the A-Z index, is linked on the site instead."""
         body = part("language")
-        assert f"{build_spec.SITE}/reference/language/" not in body
+        inside = [
+            page.removesuffix(".md")
+            for page in build_spec.language_pages()
+            if page not in build_spec.NOT_IN_THE_PACK
+        ]
+        assert [page for page in inside if f"{build_spec.SITE}/{page}.html" in body] == []
         assert "](#camera)" in body
 
     def test_the_schema_is_the_published_one(self):
@@ -407,3 +415,23 @@ class TestTheOrderingRule:
         assert "need a left-to-right order" not in flat
         assert "by actor id" in flat
         assert "left_of" in flat
+
+
+class TestThePackIsPlainMarkdown:
+    """The pack is read as Markdown, by models and by GitHub, and neither knows MyST: a key
+    card's compiled example, an included file and a glossary term are written out plainly."""
+
+    @pytest.mark.parametrize("markup", ["{scenet-example}", "{literalinclude}", "{term}"])
+    def test_no_directive_or_role_survives(self, pack: str, markup: str):
+        assert markup not in pack
+
+    def test_a_cards_example_is_a_yaml_block(self):
+        assert "```yaml\ncamera: {shot: close_up}\n" in part("language")
+
+    def test_an_included_file_is_printed(self):
+        pip = (GALLERY / "puppets" / "pip.puppet.yaml").read_text(encoding="utf-8")
+        assert pip.splitlines()[0] in part("language")
+
+    def test_a_term_is_its_text(self):
+        assert "a {term}" not in part("language")
+        assert "every actor is drawn at the scale" in " ".join(part("language").split())

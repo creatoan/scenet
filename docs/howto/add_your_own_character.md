@@ -87,8 +87,8 @@ must declare that one. The states each feature can take are in the
 ## Cast it in a document
 
 A cast member names a puppet file by its path, relative to the folder the document is in —
-exactly as a document names a [font](../reference/language/lettering.md#font) or a
-[picture](../reference/language/setting.md#an-image-behind-the-cast):
+exactly as a document names a [font](../reference/language/lettering.md#letteringfont) or a
+[picture](../reference/language/setting.md#settingimage):
 
 ```{code-block} yaml
 :caption: Part of a panel beside puppets/pip.puppet.yaml

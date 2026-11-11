@@ -1,23 +1,25 @@
 # `palette`
 
+<!-- facts: palette -->
+What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each value in a colour with the same lightness. Colour never changes a value, so a tinted panel is, in monochrome, the mono one. Inherited like any default; a panel may have its own.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@palette:` in a panel, or `palette:` in the front matter |
+| Type | a name |
+| Values | `mono`, `tinted` |
+| Default | `mono` |
+| Since | 0.13 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Every hour in colour](../../gallery.md#every-hour-in-colour), [A flashback in grey](../../gallery.md#a-flashback-in-grey) |
+<!-- /facts -->
+
 What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
-
-```yaml
-cast: {alice: {reference: alice}}
-palette: tinted
-setting: {place: docks, time: dusk}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `palette` | `mono` or `tinted` | `mono` |
 
 ![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](../../images/gallery/40-tinted-hours.page-1.svg)
 
-**In the gallery:** [Every hour in colour](../../gallery.md#every-hour-in-colour) and [A flashback in grey](../../gallery.md#a-flashback-in-grey).
-
 **Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
-[ladder](setting.md#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
+[ladder](setting.md#settingtime) is drawn in a colour with the same OKLab lightness, on the same rung, at
 the same hour. In monochrome a tinted panel is the mono one, value for value: the ladder stays
 monotonic in depth, and every contrast floor still holds — checked on the colours themselves, which
 weigh a little less than their greys in WCAG's luminance.
@@ -38,7 +40,7 @@ Chroma is capped at what a screen can show at each lightness, and that cap, not 
 drains the colour out of the dark end of night and out of a noon sky.
 
 **What it tints:** the masses of a setting, the veil of fog or cloud, falling rain, and the box of a
-[`warm` caption](script.md#caption). **What it never tints:** snow, which is white by convention, the paper, the
+[`warm` caption](script.md#captiontone). **What it never tints:** snow, which is white by convention, the paper, the
 puppets, a supplied picture, and all lettering — balloons, the words in captions, and sound effects.
 Lettering stays on the black plate a printer wants it on.
 
@@ -65,3 +67,13 @@ document invalid.
 **`mono` is the default**, so no panel written before palettes existed draws any differently.
 **There is no free-form colour.** `palette` is a closed set of names for the same reason `tone` is:
 an open colour would be the language's one open vocabulary, and would let a value break the ladder.
+
+```{scenet-example}
+palette: tinted
+setting: {place: docks, time: dusk}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.time`](setting.md#settingtime), whose hour each palette colours;
+[`caption.tone`](script.md#captiontone); `scenet build --mono` in the
+[command line](../cli.md#scenet-build).

@@ -20,7 +20,7 @@ one image per pose per expression per facing direction.
 A complete puppet, cut down to one arm so it fits on a screen. It loads as it stands, and a test
 keeps it that way; the shipped characters in `src/scenet/assets/library/` are the full-size
 versions. One of your own is a file like it beside the document, which a cast member names by its
-path — see [a puppet of your own](language/cast.md#a-puppet-of-your-own) and
+path — see [a puppet of your own](language/cast.md#castidreference) and
 [Add your own character](../howto/add_your_own_character.md), which walks through the gallery's.
 Its schema is `scenet schema --puppet` ([editor support](../howto/editor_support.md) associates it
 with `*.puppet.yaml`).
@@ -172,7 +172,7 @@ shot type onto one page, which is the only way to decide where that threshold be
 ## Emanata
 
 Marks drawn **around** a character — plewds, squeans, grawlixes, briffits; see
-[the language reference](language/cast.md#marks). A puppet declares nothing for them. Each is placed from
+[the language reference](language/cast.md#castidmarks). A puppet declares nothing for them. Each is placed from
 three things every puppet already exposes: the face circle, the facing direction, and the `feet`
 landmark. So hand-drawn artwork meets this part of the contract for free.
 
@@ -205,7 +205,7 @@ the shot ladder, which is where the first threshold was set.
 ## Artwork contracts
 
 A puppet is drawn by Scenet, so everything the solver needs about it comes from its skeleton. A
-[supplied picture](language/setting.md#an-image-behind-the-cast) may draw its own people, and then the
+[supplied picture](language/setting.md#settingimage) may draw its own people, and then the
 solver needs the same things about them — where each face is, where each mouth is, what each body
 covers — without looking at the picture any more than it looks at a puppet. An **artwork contract**
 declares them, once, beside the picture.

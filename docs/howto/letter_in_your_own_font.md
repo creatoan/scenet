@@ -29,7 +29,7 @@ lettering: {font: fonts/Comic-Regular.ttf}
 ```
 
 Or a file per face — `regular` for dialogue, `italic` for captions, `bold_italic` for
-[emphasis](../reference/language/script.md#emphasis):
+[emphasis](../reference/language/script.md#saytext):
 
 ```{code-block} yaml
 :caption: Part of comic/chapter-one.scene.yaml

@@ -92,7 +92,7 @@ and starts the next, so two speeches need no blank line between them.
 **Underline a word by writing it between underscores**: `I _told_ you.` Scripts underline the
 words to stress, and a letterer sets them in bold italic, which is what the compiler does — in
 dialogue and in captions alike. The rules are in
-[the language reference](https://creatoan.github.io/scenet/reference/language/script.html#emphasis).
+[the language reference](https://creatoan.github.io/scenet/reference/language/script.html#saytext).
 
 **Panel numbers may start again on each page**, as publishers' script formats ask. When they
 do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
@@ -389,7 +389,7 @@ The nearest shots letter nothing: the head fills the panel, and no balloon may c
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
 `(OFF)`, and screenplays `(O.S.)` or the older `(O.C.)`. All four mean the same here: the line is
 spoken by somebody who is not drawn, and the balloon's tail ends on the frame, on their side —
-see [off-panel speech](https://creatoan.github.io/scenet/reference/language/script.html#off-panel-speech).
+see [off-panel speech](https://creatoan.github.io/scenet/reference/language/script.html#sayoff_panel).
 
 Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
 `ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation

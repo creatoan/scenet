@@ -34,8 +34,15 @@ makes of them — every coordinate, then the picture — is computed and emitted
 | [`direction`](direction.md#direction) | Which way the comic is read: the whole document's, never one panel's |
 | [`description`](description.md#description) | What the panel shows, in words, for a reader who cannot see it. Nothing is drawn from it |
 
-A scene document holds several panels under `panels:`, and lays them out with
-[`page` and `pages`](page.md#page-and-pages).
+A [scene document](scene.md) holds several panels under `panels:`, and lays them out with
+[`page` and `pages`](page.md#page-and-pages). Two more kinds of file sit beside a document and are
+named by it: a [puppet file](puppet.md), a character of your own, and an
+[artwork contract](artwork.md), which says where the people in a supplied picture are.
+
+Every key has a card on its block's page: where it is written, its type, its values and default,
+the release it appeared in, the findings it can give, what it means and how it resolves against
+everything else, and a document that shows it, compiled. [All keys, A to Z](keys.md) lists them in
+one table, and the [glossary](../glossary.md) says what the words the cards use mean.
 
 Blocks are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
@@ -84,9 +91,8 @@ priority rather than by failing:
 | **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
 | **Weak** | `at:` anchors, `prefer:` balloon hints |
 
-![Four characters asked for in a close-up, the camera stepped back so that all four fit](../../images/gallery/10-crowd-pullback.svg)
-
-**In the gallery:** [The camera retreats](../../gallery.md#the-camera-retreats).
+The shot is a bound, not a constraint: when the cast does not fit across the panel at the framing
+asked for, [the camera retreats](camera.md#camerashot) until it does, and says so.
 
 So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
 required non-overlap wins and the weak anchors yield. This is why `at` is documented as a
@@ -146,5 +152,9 @@ description
 lettering
 direction
 palette
+scene
 page
+puppet
+artwork
+keys
 ```

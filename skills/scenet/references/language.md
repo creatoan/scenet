@@ -36,8 +36,15 @@ makes of them — every coordinate, then the picture — is computed and emitted
 | [`direction`](#direction) | Which way the comic is read: the whole document's, never one panel's |
 | [`description`](#description) | What the panel shows, in words, for a reader who cannot see it. Nothing is drawn from it |
 
-A scene document holds several panels under `panels:`, and lays them out with
-[`page` and `pages`](#page-and-pages).
+A [scene document](#scene-documents) holds several panels under `panels:`, and lays them out with
+[`page` and `pages`](#page-and-pages). Two more kinds of file sit beside a document and are
+named by it: a [puppet file](#puppet-files), a character of your own, and an
+[artwork contract](#artwork-contracts), which says where the people in a supplied picture are.
+
+Every key has a card on its block's page: where it is written, its type, its values and default,
+the release it appeared in, the findings it can give, what it means and how it resolves against
+everything else, and a document that shows it, compiled. [All keys, A to Z](https://creatoan.github.io/scenet/reference/language/keys.html) lists them in
+one table, and the [glossary](https://creatoan.github.io/scenet/reference/glossary.html) says what the words the cards use mean.
 
 Blocks are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
 anything else, exactly as transposing a score changes its key without rewriting the melody.
@@ -86,9 +93,8 @@ priority rather than by failing:
 | **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
 | **Weak** | `at:` anchors, `prefer:` balloon hints |
 
-![Four characters asked for in a close-up, the camera stepped back so that all four fit](https://creatoan.github.io/scenet/images/gallery/10-crowd-pullback.svg)
-
-**In the gallery:** [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats).
+The shot is a bound, not a constraint: when the cast does not fit across the panel at the framing
+asked for, [the camera retreats](#camerashot) until it does, and says so.
 
 So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
 required non-overlap wins and the weak anchors yield. This is why `at` is documented as a
@@ -137,60 +143,243 @@ making resvg's the practical conformance reference.
 
 ## `panel`
 
-| Key | Type | Default | Meaning |
-|---|---|---|---|
-| `size` | `[width, height]` | `[1000, 1000]` | Panel dimensions in panel units; printed, a unit is 0.1 mm |
-| `margin` | number | `0` | Inset all content by this much |
+<!-- facts: panel -->
+The panel's frame: its size and margin, in panel units.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@panel:` in a panel, or `panel:` in the front matter |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+<!-- /facts -->
+
+The frame everything else is measured against. A panel has a size and a margin, in
+panel units, and nothing in it is ever given a coordinate: the size says
+what a unit is, and the compiler works out the rest.
 
 ![Alice and Bob in a medium close-up, their figures running off the panel's edges while both balloons keep inside its margin](https://creatoan.github.io/scenet/images/gallery/15-margin.svg)
 
-**In the gallery:** [Margins and bleed](https://creatoan.github.io/scenet/gallery.html#margins-and-bleed).
+On a [page](#page-and-pages), a panel is compiled at the size of its frame, and its own
+`size` is not used: the page decides how big the frame is and nothing about what goes in it.
+Its margin is kept, and a margin the frame has no room for is a `page-layout` error.
 
-Panel units are arbitrary and internally consistent; they become SVG user units.
+```yaml
+panel: {size: [1200, 600]}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`camera`](#camera), which frames the cast inside the panel;
+[`page.size`](#pagesize), the size of a page of panels.
+
+### `panel.size`
+
+<!-- facts: panel.size -->
+The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@panel:` in a panel, or `panel:` in the front matter |
+| Type | `[number, number]` |
+| Default | `[1000, 1000]` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `panel-geometry` |
+<!-- /facts -->
+
+Panel units are arbitrary and consistent: every length in the language -- a margin, a type size,
+a gutter -- is in them, and they become the SVG's user units. Printed, a unit is a tenth of a
+millimetre, so the default panel prints as a square 10 cm on a side.
+
+A size must be positive in both directions. A long, low panel and a tall, narrow one are both
+ordinary; what changes is how much of the cast the camera can fit across, so a narrow panel
+may make the camera step back from the shot it was asked for.
+
+```yaml
+panel: {size: [1400, 500]}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+```
+
+**See also:** [`panel.margin`](#panelmargin), [`camera.shot`](#camerashot).
+
+### `panel.margin`
+
+<!-- facts: panel.margin -->
+An inset on all four sides, in panel units. Balloons, captions and sound effects keep inside it; figures may run past it, as comics let them.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@panel:` in a panel, or `panel:` in the front matter |
+| Type | a number |
+| Values | 0 or more |
+| Default | `0` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `panel-geometry` |
+| In the gallery | [Margins and bleed](https://creatoan.github.io/scenet/gallery.html#margins-and-bleed) |
+<!-- /facts -->
+
+The margin is where lettering stops. Every balloon, caption and sound effect keeps inside it,
+and so does each tail. Figures do not: a figure framed tightly runs past the margin, and past
+the frame itself, which is ordinary comics practice -- the frame crops it.
+
+A margin may not leave the panel without an inside: twice the margin must be less than the
+shorter side, or the panel is refused as `panel-geometry`.
+
+```yaml
+panel: {size: [1000, 700], margin: 60}
+camera: {shot: medium_close_up}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+script:
+  - say: {by: alice, text: "Inside the margin."}
+  - say: {by: bob, text: "Every word of it."}
+```
+
+**See also:** [`panel.size`](#panelsize), [`panels[].bleed`](#panelsbleed), a frame
+that runs past the page's trim.
 
 ## `camera`
 
-| Key | Values | Default |
-|---|---|---|
-| `shot` | see [shot types](https://creatoan.github.io/scenet/reference/shot_types.html) | `medium_shot` |
-| `angle` | `low`, `eye_level`, `high` | `eye_level` |
+<!-- facts: camera -->
+How the cast is framed: the shot, and the camera's height.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@shot:` and `@angle:` in a panel; `camera:` in the front matter |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `figure-staging` |
+<!-- /facts -->
+
+There is exactly **one camera per panel**, and every actor is drawn at the scale it
+implies. That is what keeps body differences readable: a short character stays shorter than a
+tall one, because both are framed by one shot.
 
 ![Bob in a medium close-up three times: from a low angle, at eye level and from a high angle, with less air above his head each time](https://creatoan.github.io/scenet/images/gallery/03-camera-angles.strip.svg)
 
-**In the gallery:** [Camera angles](https://creatoan.github.io/scenet/gallery.html#camera-angles).
+A cast of figures a picture draws has no camera: the picture is already framed,
+and a `camera:` beside them is refused as `figure-staging`. A panel that inherits one writes
+`camera: null`.
 
-`shot` determines the **scale** of every actor, by naming where the frame cuts the body rather than
-what fraction of the panel a figure fills. This is the single most consequential value in a panel.
+```yaml
+camera: {shot: full_shot, angle: high}
+cast: {bob: {reference: bob}}
+```
+
+**See also:** [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html), which is normative; [`cast.<id>.at`](#castidat).
+
+### `camera.shot`
+
+<!-- facts: camera.shot -->
+How tightly the camera frames the cast, named by where the frame cuts the body, from `long_shot` to `extreme_close_up`. The tightest it may go: the camera steps back when the cast does not fit.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@shot: close_up` in a panel, or a French *échelle des plans* name |
+| Type | a name |
+| Values | `long_shot`, `wide`, `full_shot`, `medium_full`, `cowboy`, `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
+| Default | `medium_shot` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats) |
+<!-- /facts -->
+
+`shot` decides the **scale** of every actor, by naming where the frame cuts the body rather than
+what fraction of the panel a figure fills: `medium_shot` cuts at the waist, `close_up` at the
+shoulders. It is the single most consequential value in a panel. What each shot frames, in head
+heights, is in [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html); `wide` is another name for `long_shot`.
+
+**The camera retreats.** The shot is the tightest the camera may go, not a promise. When the
+cast does not fit across the panel at that framing, the camera moves back just far enough for
+it to: everyone is drawn smaller, by one factor, and more of each body comes into view.
+`scenet build` says so in a `camera-retreated` note, and Panel Core records the factor as the
+camera's `pullback`. Non-overlap is required and the shot is not, so the shot is what gives way.
+
+![Four characters asked for in a close-up, the camera stepped back so that all four fit](https://creatoan.github.io/scenet/images/gallery/10-crowd-pullback.svg)
+
+```yaml
+camera: {shot: close_up}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+```
+
+**See also:** [`camera.angle`](#cameraangle), [When constraints conflict](#when-constraints-conflict).
+
+### `camera.angle`
+
+<!-- facts: camera.angle -->
+The camera's height: `low` looks up, leaving little air above the head; `high` looks down, leaving more.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@angle: low` in a panel |
+| Type | a name |
+| Values | `low`, `eye_level`, `high` |
+| Default | `eye_level` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Camera angles](https://creatoan.github.io/scenet/gallery.html#camera-angles) |
+<!-- /facts -->
+
+The angle changes **headroom**, not perspective. Scenet is a flat, orthographic compiler, so a
+tilted camera foreshortens nothing; what it changes is how much air sits above the head, which
+is the cue a reader takes from an angle and one that survives being drawn flat. A `low` camera
+looks up, and the head rides high with little above it; a `high` camera looks down, and more
+space opens above. The factors are in [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html#angle).
+
+```yaml
+camera: {shot: medium_close_up, angle: low}
+cast: {bob: {reference: bob}}
+```
+
+**See also:** [`camera.shot`](#camerashot).
 
 ## `setting`
 
+<!-- facts: setting -->
+Where and when the panel happens: a named place, tonal masses or a picture behind the cast, with the time of day and the weather.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.6 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+<!-- /facts -->
+
 Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
-picture drawn elsewhere.
+picture drawn elsewhere. A panel with no `setting` renders exactly as it always did: figures on
+white.
+
+![Alice in each of the ten places, one panel each: docks, street, alley, room, office, forest, field, shore, desert and mountain](https://creatoan.github.io/scenet/images/gallery/20-places.strip.svg)
+
+What is behind the cast is said once, in one of three ways, and never two of them: a named
+[`place`](#settingplace), a list of [`masses`](#settingmasses), or an [`image`](#settingimage).
+`scenet check` reports two of them together as `conflicting-setting`, at the key other than
+`image`. A panel that inherits one of them, from a scene's defaults or from the panel it is
+`over`, leaves it out with `null`: `place: null` beside its own `image`. The
+[`horizon`](#settinghorizon) composes masses, so it goes with a place or masses, and never with a
+picture, which has its own. [`time`](#settingtime) and [`weather`](#settingweather) go with any of
+them.
 
 ```yaml
+setting: {place: docks, horizon: mid, time: night, weather: rain}
 cast: {alice: {reference: alice}}
-setting:
-  place: docks       # a named place, which expands into masses
-  horizon: mid       # high | mid | low
-  time: night        # dawn | day | dusk | night
-  weather: rain      # clear | rain | fog | snow
 ```
 
-*Part of a panel beside art/p01-street.png:*
-
-```yaml
-setting:
-  image: art/p01-street.png   # a PNG or JPEG, relative to this document
-  fit: cover                  # cover | contain; left out, cover
-  weather: rain               # drawn over the picture, as over masses
-```
-
-A panel with no `setting` renders exactly as it always did: figures on white.
+**See also:** [Letter over your own art](https://creatoan.github.io/scenet/howto/letter_over_your_own_art.html),
+[`palette`](#palette).
 
 ### Backdrops are never author-drawn
 
 Two reasons, and the first is structural. Crisp architecture needs a vanishing point, and this is
-deliberately a flat, orthographic compiler — a tilted camera does not foreshorten anything — so
+deliberately a flat, orthographic compiler -- a tilted camera does not foreshorten anything -- so
 drawn buildings would fight the compiler's own model. Soft tonal masses have no perspective to get
 wrong.
 
@@ -201,91 +390,36 @@ The second is that this is how comics actually establish place:
   place is read from the *arrangement of masses*, not from rendered detail.
 - **Layered silhouette depth**: foreground near-black, each receding plane paler.
 - **[Aerial perspective](https://en.wikipedia.org/wiki/Aerial_perspective)** supplies the
-  parametric rule for free — with distance, value contrast drops toward the atmosphere. Two numbers
-  per hour, monotonic in depth. That is notation, not interpretation, which is why it belongs in a
-  compiler.
+  parametric rule for free -- with distance, value contrast drops toward the atmosphere. Two
+  numbers per hour, monotonic in depth. That is notation, not interpretation, which is why it
+  belongs in a compiler.
 
 **Received art is another matter.** The rule is about *drawing* a backdrop in the language, not
-about receiving one. A picture drawn elsewhere — painted, pencilled, photographed, rendered — can
-stand behind the cast with `image:` ([An image behind the cast](#an-image-behind-the-cast)). Its
-perspective is the artist's, and the compiler neither reads nor imitates it: what it takes from the
-file is its size, so the solver still never sees artwork, and the
-[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html)'s promise — the same layout whatever draws it — holds.
+about receiving one. A picture drawn elsewhere -- painted, pencilled, photographed, rendered -- can
+stand behind the cast with [`image`](#settingimage). Its perspective is the artist's, and the
+compiler neither reads nor imitates it: what it takes from the file is its size, so the solver
+still never sees artwork, and the [asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html)'s promise -- the same
+layout whatever draws it -- holds.
 
-### `masses`
+### `setting.place`
 
-A place is a convenience. Underneath it is a list of masses, which stays authorable whenever you
-want control — and which is *exactly* what a place expands into:
+<!-- facts: setting.place -->
+A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them.
 
-```yaml
-cast: {alice: {reference: alice}}
-setting:
-  horizon: mid
-  masses:
-    - {kind: building, plane: far,  spans: full}
-    - {kind: plant,    plane: mid,  spans: left}
-    - {kind: ground,   plane: near, spans: full}
-```
-
-![Two panels of masses written by hand: outdoors, seven kinds of stuff four planes deep, and a room at dusk with its window](https://creatoan.github.io/scenet/images/gallery/19-setting.strip.svg)
-
-**In the gallery:** [Masses and planes](https://creatoan.github.io/scenet/gallery.html#masses-and-planes) and [In front of the cast](https://creatoan.github.io/scenet/gallery.html#in-front-of-the-cast).
-
-| Key | Values | Default | Meaning |
-|---|---|---|---|
-| `kind` | see below | required | What the mass is made of, which decides its silhouette |
-| `plane` | `foreground`, `near`, `mid`, `far` | `mid` | How far back it sits |
-| `spans` | `full`, `left`, `center`, `right` | `full` | How much of the width it covers |
-
-**`kind`** is subsetted from the *supercategories* of
-[COCO-Stuff](https://arxiv.org/pdf/1612.03716), the canonical taxonomy of **stuff** — "amorphous
-background regions" as opposed to *things* with a well-defined shape. Taken from an existing
-vocabulary for the same reason the predicates were taken from Visual Genome. Twelve of them, seven
-outdoor and five indoor:
-
-| | Kinds |
+| | |
 |---|---|
-| Outdoor | `building` `ground` `plant` `sky` `solid` `structural` `water` |
-| Indoor | `ceiling` `floor` `furniture` `wall` `window` |
-
-Deliberately *not* COCO-Stuff's leaf names. Its actual classes are `building-other`, `sky-other`,
-`wall-brick`, `water-other`; the `-other` suffix marks the catch-all inside a supercategory, and
-`building-other` is not a word anyone should have to type. Its `textile`, `food` and `rawmaterial`
-supercategories are left out: drapery and objects, not scene-defining masses.
-
-**`plane`** decides two things at once, and neither is a new mechanism. It maps onto the same
-integer painter's order `in_front_of` already uses — the three backdrop planes take negative
-depths, and `foreground` takes one above the frontmost actor, so a foreground mass draws over the
-cast the way a silhouetted doorway does. And it decides **value**: reading front to back, a mass
-never gets darker.
-
-Value comes from the plane and from **nothing else** — not from the kind. That is what keeps the
-notan reading literal: masses at one distance read as one mass, and their arrangement is what
-carries the place. Two kinds sit off their own plane's rung, and both stay on the ladder rather
-than beside it: `sky` is at infinite distance so it always takes the atmosphere's value, and
-`window` is a hole showing a more distant plane so it takes the rung one step farther back.
-
-A **nearer plane is also drawn larger**, which is size perspective alongside aerial perspective: a
-near hill is not merely darker than a far one, it is bigger.
-
-**`spans`** is an absolute extent, and that is not cosmetic. Any construct that would reintroduce a
-left/right *disjunction* has to resolve it before the solver — see
-[why ordering must be explicit](#why-ordering-must-be-explicit). A span is an extent rather than a
-relation, which is what stops masses becoming an unordered `beside`. `left` and `right` overlap
-slightly in the middle so that using both leaves no seam down the centre of the panel.
-
-One authored mass may resolve to **several polygons**: furniture is a few separate blocks, a wall
-holds several windows. Joining them into one comb with a zero-height baseline would be a lie about
-the shape.
-
-### `place`
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `alley`, `desert`, `docks`, `field`, `forest`, `mountain`, `office`, `room`, `shore`, `street` |
+| Default | none |
+| Since | 0.6 |
+| Diagnostics | `invalid-field`, `unknown-place`, `conflicting-setting` |
+| In the gallery | [Ten places](https://creatoan.github.io/scenet/gallery.html#ten-places) |
+<!-- /facts -->
 
 The headline surface, because the thing an author wants to write is *where the scene is*, not a
-list of shapes.
-
-![Alice in each of the ten places, one panel each: docks, street, alley, room, office, forest, field, shore, desert and mountain](https://creatoan.github.io/scenet/images/gallery/20-places.strip.svg)
-
-**In the gallery:** [Ten places](https://creatoan.github.io/scenet/gallery.html#ten-places).
+list of shapes. Each place expands into masses, which are what a plane and a
+mass mean:
 
 | Place | Expands into |
 |---|---|
@@ -301,86 +435,310 @@ list of shapes.
 | `street` | sky·far, building·far, building·mid·left, building·mid·right, ground·near |
 
 **The rule that keeps `place:` honest**: a preset expands into a mass list the author could have
-written themselves, and is never a second opaque format. A library for convenience, not a parallel
-language. The expansion happens in the frontend, exactly as `alice left_of bob` is expanded into a
-relation — so by the time anything downstream sees a backdrop, there is one representation of it.
-
-`place` and `masses` are **mutually exclusive**. A place *is* a mass list; writing both asks two
-questions at once, and the compiler will not guess which was meant. An `image` is a backdrop of
-its own, so it is written instead of either, never beside one — and never beside a `horizon`,
-which says where masses meet the ground; a picture has its own. A panel that inherits a place
-from a scene's defaults, or from the panel it is `over`, leaves it out with `place: null`
-beside its image. `scenet check` reports any of these pairs as `conflicting-setting`, at the
-key other than `image`, and a `fit` with no image as `invalid-field`. See
-[An image behind the cast](#an-image-behind-the-cast).
+written themselves, and is never a second opaque format. The expansion happens in the frontend,
+exactly as `alice left_of bob` is expanded into a relation -- so by the time anything downstream
+sees a backdrop, there is one representation of it.
 
 **Free prose is deliberately not offered.** `setting: "a rainy street corner at midnight"` needs
-language understanding, and the comic-script frontend already refuses to interpret prose on the
-grounds that guessing produces panels that are confidently wrong. A named place is the honest
-middle: it reads like a description and resolves deterministically. `scenet check` reports an
-unmatched name as `unknown-place`, listing the ones that exist.
+language understanding, and guessing produces panels that are confidently wrong. A named place is
+the honest middle: it reads like a description and resolves deterministically. `scenet check`
+reports an unmatched name as `unknown-place`, listing the ones that exist.
 
-### `horizon`
+```yaml
+setting: {place: forest}
+cast: {alice: {reference: alice}}
+```
 
-One line for the whole panel, which every mass is composed against: masses of the ground sort start
-at it and run down, masses that stand in the world rise from it. A **high** horizon sits nearer the
-top of the frame, so more ground is in view.
+**See also:** [`setting.masses`](#settingmasses), what a place is made of.
+
+### `setting.masses`
+
+<!-- facts: setting.masses -->
+The backdrop as tonal masses, back to front: what a `place` expands into, written out. Write this, `place` or `image`, never two of them.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.6 |
+| Diagnostics | `invalid-field`, `conflicting-setting` |
+| In the gallery | [Masses and planes](https://creatoan.github.io/scenet/gallery.html#masses-and-planes) |
+<!-- /facts -->
+
+A place is a convenience. Underneath it is a list of masses, which stays authorable whenever you
+want control -- and which is *exactly* what a place expands into. Each mass is a kind of stuff, on
+a plane, across a span of the panel; they are drawn back to front.
+
+![Two panels of masses written by hand: outdoors, seven kinds of stuff four planes deep, and a room at dusk with its window](https://creatoan.github.io/scenet/images/gallery/19-setting.strip.svg)
+
+One authored mass may resolve to **several polygons**: furniture is a few separate blocks, a wall
+holds several windows. Backdrop silhouettes are generated, and seeded from the setting and the
+panel's size, so the same masses always draw the same shapes.
+
+```yaml
+setting:
+  horizon: mid
+  masses:
+    - {kind: building, plane: far, spans: full}
+    - {kind: plant, plane: mid, spans: left}
+    - {kind: ground, plane: near, spans: full}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.place`](#settingplace).
+
+### `setting.masses[].kind`
+
+<!-- facts: setting.masses[].kind -->
+What the mass is made of, which decides its silhouette: seven outdoor kinds of stuff and five indoor.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `building`, `ceiling`, `floor`, `furniture`, `ground`, `plant`, `sky`, `solid`, `structural`, `wall`, `water`, `window` |
+| Default | none: required |
+| Since | 0.6 |
+| Diagnostics | `invalid-field`, `missing-field` |
+<!-- /facts -->
+
+**`kind`** is subsetted from the *supercategories* of
+[COCO-Stuff](https://arxiv.org/pdf/1612.03716), the canonical taxonomy of **stuff** -- "amorphous
+background regions" as opposed to *things* with a well-defined shape. Twelve of them, seven outdoor
+and five indoor:
+
+| | Kinds |
+|---|---|
+| Outdoor | `building` `ground` `plant` `sky` `solid` `structural` `water` |
+| Indoor | `ceiling` `floor` `furniture` `wall` `window` |
+
+Deliberately *not* COCO-Stuff's leaf names. Its actual classes are `building-other`, `sky-other`,
+`wall-brick`, `water-other`; the `-other` suffix marks the catch-all inside a supercategory, and
+`building-other` is not a word anyone should have to type. Its `textile`, `food` and `rawmaterial`
+supercategories are left out: drapery and objects, not scene-defining masses.
+
+A kind decides the **shape** a mass takes, never its value, which is the plane's. Two kinds sit off
+their own plane's rung, and both stay on the ladder rather than beside it: `sky` is at infinite
+distance, so it always takes the atmosphere's value, and `window` is a hole showing a more distant
+plane, so it takes the rung one step farther back.
+
+```yaml
+setting:
+  masses:
+    - {kind: wall, plane: far}
+    - {kind: window, plane: far, spans: center}
+    - {kind: floor, plane: near}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.masses[].plane`](#settingmassesplane).
+
+### `setting.masses[].plane`
+
+<!-- facts: setting.masses[].plane -->
+How far back the mass sits, which decides its value and its draw order. A `foreground` mass is drawn over the cast.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `foreground`, `near`, `mid`, `far` |
+| Default | `mid` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [In front of the cast](https://creatoan.github.io/scenet/gallery.html#in-front-of-the-cast) |
+<!-- /facts -->
+
+**`plane`** decides two things at once, and neither is a new mechanism. It maps onto the same
+integer painter's order `in_front_of` uses -- the three backdrop planes take negative depths, and
+`foreground` takes one above the frontmost actor, so a foreground mass draws over the cast the way
+a silhouetted doorway does. And it decides **value**: reading front to back, a mass never gets
+darker.
+
+![Alice and Bob outdoors at dusk, a dark mass on the foreground plane drawn over them like a doorway in silhouette](https://creatoan.github.io/scenet/images/gallery/47-in-front-of-the-cast.svg)
+
+Value comes from the plane and from **nothing else** -- not from the kind. That is what keeps the
+notan reading literal: masses at one distance read as one mass, and their arrangement is what
+carries the place. A **nearer plane is also drawn larger**, which is size perspective alongside
+aerial perspective: a near hill is not merely darker than a far one, it is bigger.
+
+```yaml
+setting:
+  masses:
+    - {kind: sky, plane: far}
+    - {kind: building, plane: foreground, spans: left}
+cast: {alice: {reference: alice, at: right_third}}
+```
+
+**See also:** [`setting.time`](#settingtime), which sets the ladder the planes are spaced on.
+
+### `setting.masses[].spans`
+
+<!-- facts: setting.masses[].spans -->
+How much of the panel's width the mass covers: all of it, or its `left`, `center` or `right` part.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `full`, `left`, `center`, `right` |
+| Default | `full` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+**`spans`** is an absolute extent, and that is not cosmetic. Any construct that would reintroduce
+a left/right *disjunction* has to resolve it before the solver -- see
+[why ordering must be explicit](#why-ordering-must-be-explicit). A span is an extent
+rather than a relation, which is what stops masses becoming an unordered `beside`. `left` and
+`right` overlap slightly in the middle so that using both leaves no seam down the centre of the
+panel.
+
+```yaml
+setting:
+  masses:
+    - {kind: plant, plane: mid, spans: left}
+    - {kind: plant, plane: mid, spans: right}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.masses[].kind`](#settingmasseskind).
+
+### `setting.horizon`
+
+<!-- facts: setting.horizon -->
+Where the ground meets what is behind it, which every mass is composed against: `high` shows more ground, `low` less.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `high`, `mid`, `low` |
+| Default | `mid` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field`, `conflicting-setting` |
+| In the gallery | [Three horizons](https://creatoan.github.io/scenet/gallery.html#three-horizons) |
+<!-- /facts -->
+
+One line for the whole panel, which every mass is composed against: masses of the ground sort
+start at it and run down, masses that stand in the world rise from it. A **high** horizon sits
+nearer the top of the frame, so more ground is in view. Named rather than given as a number for the
+reason `at:` is: the author says how the panel is composed, not where a line goes.
 
 ![The same shore three times, its horizon high, in the middle and low](https://creatoan.github.io/scenet/images/gallery/72-three-horizons.strip.svg)
-
-**In the gallery:** [Three horizons](https://creatoan.github.io/scenet/gallery.html#three-horizons).
 
 Ground, floor and water all run to the bottom edge, so a near quayside drawn from the horizon would
 bury the water behind it. Each starts lower than the plane behind it, and that stack of receding
 bands is the depth cue. The exception is the *farthest* one in a panel, which meets the horizon
-itself: there is nothing behind it to reveal.
+itself: there is nothing behind it to reveal. A picture has a horizon of its own, so a `horizon`
+beside an `image` is `conflicting-setting`.
 
-### `time` and `weather`
+```yaml
+setting: {place: shore, horizon: high}
+cast: {alice: {reference: alice}}
+```
 
-`time` sets a panel's values. In `mono` it adds no colour, and under [`palette: tinted`](#palette)
-each value takes the hour's colour without changing. It supplies the two ends of the value ladder —
-the value of the foreground and the value of the atmosphere — and the planes are spaced evenly between them in
+**See also:** [`setting.masses`](#settingmasses).
+
+### `setting.time`
+
+<!-- facts: setting.time -->
+When the panel happens, which sets the two ends of the value ladder: the foreground's value and the atmosphere's.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `dawn`, `day`, `dusk`, `night` |
+| Default | `day` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Time and weather](https://creatoan.github.io/scenet/gallery.html#time-and-weather) |
+<!-- /facts -->
+
+`time` sets a panel's values. It supplies the two ends of the value ladder -- the value of the
+foreground and the value of the atmosphere -- and the planes are spaced evenly between them in
 [OKLab](https://bottosson.github.io/posts/oklab/) lightness, which predicts perceived lightness
 well. So `night` is a darker, *narrower* ladder, which is what night does to a drawn scene, and the
-ladder stays monotonic in depth at every hour by construction rather than by tuning.
+ladder stays monotonic in depth at every hour by construction rather than by tuning. In `mono` it
+adds no colour; under [`palette: tinted`](#palette) each value takes the hour's colour
+without changing.
 
 ![The docks four times: at midnight in the rain, at dawn in fog, at noon, and in snow](https://creatoan.github.io/scenet/images/gallery/21-atmosphere.strip.svg)
 
-**In the gallery:** [Time and weather](https://creatoan.github.io/scenet/gallery.html#time-and-weather).
+Over a picture, `time` chooses the tint of the veil and of falling weather, and whether rain is
+inked or papered; the value ladder has nothing to apply to, since a picture's values are the
+artist's.
 
-`weather` adds a layer over that. `clouds` and `fog` are first-class stuff in COCO-Stuff, so this
-vocabulary did not have to be invented either:
+```yaml
+setting: {place: street, time: dusk}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.weather`](#settingweather), [`caption.tone`](#captiontone).
+
+### `setting.weather`
+
+<!-- facts: setting.weather -->
+What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cloud, and fall over everything, the cast included.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `clear`, `rain`, `fog`, `snow` |
+| Default | `clear` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+`weather` adds a layer over the backdrop. `clouds` and `fog` are first-class stuff in COCO-Stuff,
+so this vocabulary did not have to be invented either:
 
 | `weather` | What it does |
 |---|---|
 | `clear` | Nothing. The panel has no atmosphere layer at all |
 | `fog` | A dense, low-frequency noise veil, tinted with the atmosphere itself |
-| `rain` | The same veil as cloud — nearer, so darker than the sky — plus slanted streaks |
+| `rain` | The same veil as cloud -- nearer, so darker than the sky -- plus slanted streaks |
 | `snow` | The same veil, plus flecks |
 
 The veil sits over the backdrop and *under* the cast: fog between the reader and the figures would
 be the more literal reading and would bury them. Falling weather goes over everything, because it
-**is** between the reader and the panel — which is why it crosses the figures.
+**is** between the reader and the panel -- which is why it crosses the figures.
 
 Rain flips to ink over a bright sky and to paper over a dark one, as inkers do, because a white
 streak over noon is invisible and a black one over midnight is too. Snow never flips: snow is
-white, and the overcast veil is what gives it something to read against.
+white, and the overcast veil is what gives it something to read against. Over a picture, the veil
+and falling weather are drawn exactly as over masses.
 
-### An image behind the cast
+```yaml
+setting: {place: shore, time: day, weather: snow}
+cast: {alice: {reference: alice}}
+```
 
-`image` names a picture drawn elsewhere — painted, pencilled, photographed or rendered — and the
+**See also:** [`setting.time`](#settingtime), [Determinism](#determinism), on how the
+noise is drawn.
+
+### `setting.image`
+
+<!-- facts: setting.image -->
+A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the document. Only its size is read. Written instead of `place` and `masses`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `invalid-field`, `image-file`, `conflicting-setting`, `artwork-contract` |
+| In the gallery | [A JPEG behind the cast](https://creatoan.github.io/scenet/gallery.html#a-jpeg-behind-the-cast) |
+<!-- /facts -->
+
+`image` names a picture drawn elsewhere -- painted, pencilled, photographed or rendered -- and the
 cast is drawn in front of it, lettered by the same rules as on any other backdrop.
 
 ![Alice and Bob in front of a photograph of a harbour, supplied as a JPEG](https://creatoan.github.io/scenet/images/gallery/52-a-jpeg.svg)
-
-**In the gallery:** [A JPEG behind the cast](https://creatoan.github.io/scenet/gallery.html#a-jpeg-behind-the-cast).
-
-| Key | Values | Default |
-|---|---|---|
-| `image` | A PNG or JPEG file, relative to the folder the document is in | — |
-| `fit` | `cover`: fill the panel, cropping what overhangs, equally on both sides. `contain`: show the whole picture, the panel showing round it | `cover` |
-
-The picture is centred either way and never stretched.
 
 - **The path is read as a font's is**: relative to the folder the document is in, wherever
   `scenet` was run from, with `/` between folders. An absolute path is refused. Text compiled with
@@ -391,149 +749,249 @@ The picture is centred either way and never stretched.
 - **Only the size is read.** The compiler takes from the file how many pixels it has across and
   down, from its header, and decodes nothing: the solver never sees artwork, here as everywhere.
   Only the print PDF carries the pixels, unchanged, into the file it writes.
-- **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag —
-  Chromium turns an SVG `<image>` by it, others do not — so such a picture would be upright in
+- **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag --
+  Chromium turns an SVG `<image>` by it, others do not -- so such a picture would be upright in
   one viewer and on its side in the next. Save it with the pixels turned instead.
 
 `scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
 on, without running the solver. In the [playground](https://creatoan.github.io/scenet/playground/),
 **Image…** adds a picture to the document's `art/` folder for as long as the tab is open.
 
-**Time and weather over a picture.** The veil sits over the picture and under the cast, and
-falling rain or snow over everything, exactly as over masses; `time` chooses their tint, and
-whether rain is drawn in ink or paper. The value ladder — aerial perspective — has nothing to apply
-to: a picture's values are the artist's.
-
 **Nothing else moves.** The picture costs a balloon nothing. The compiler does not know what is in
 it, so a balloon may sit anywhere on it; the cast's faces are what lettering keeps clear of. The
 camera frames the cast exactly as it would in front of masses. When the people are in the picture,
-its artwork contract says where — see [Figures the picture draws](#figures-the-picture-draws).
+its artwork contract says where -- see [`cast.<id>.figure`](#castidfigure).
 
 **Linked or embedded.** The SVG names the picture by the path exactly as written, percent-encoded,
-so it is found when the SVG sits beside the document — which is where `scenet build` writes it.
+so it is found when the SVG sits beside the document -- which is where `scenet build` writes it.
 `scenet build --embed-images` writes the picture's bytes in as a `data:` URI instead, which an SVG
-shown as an `<img>`, turned into a PNG or written anywhere else needs; the playground always embeds.
-Either is byte-identical for the same picture. The link is `xlink:href` rather than SVG 2's plain
-`href`, because Inkscape still does not load a resource named by plain `href`; see
+shown as an `<img>`, turned into a PNG or written anywhere else needs; the playground always
+embeds. Either is byte-identical for the same picture. The link is `xlink:href` rather than SVG 2's
+plain `href`, because Inkscape still does not load a resource named by plain `href`; see
 [prior art](https://creatoan.github.io/scenet/explanation/prior_art.html#image-in-svg-renderers-and-editors).
 
-**Read aloud.** The picture is part of the panel's one image, `role="img"`, so it adds nothing to the
-accessible name and has no title of its own. A generated description names neither the place nor
-the hour over a picture — the compiler has not seen it — only the weather it drew. Write
-`description:` to say what the picture shows.
-
-### Figures the picture draws
-
-A picture can draw its own people. Cast them with `figure:` in place of `reference:`, and Scenet
-letters them as it letters puppets — balloons in reading order, never over a face, tails to the
-mouth — while drawing nothing of them: the picture already has.
-
-![Two panels: Ana and Ben as puppets in a street at night, then the same two as a picture draws them, lettered from its artwork contract](https://creatoan.github.io/scenet/images/gallery/51-puppets-to-figures.strip.svg)
-
-**In the gallery:** [From puppets to figures](https://creatoan.github.io/scenet/gallery.html#from-puppets-to-figures).
-
-*Part of a panel beside art/p01-street.png and art/p01-street.art.yaml:*
+**Read aloud.** The picture is part of the panel's one image, `role="img"`, so it adds nothing to
+the accessible name and has no title of its own. A generated description names neither the place
+nor the hour over a picture -- the compiler has not seen it -- only the weather it drew. Write
+[`description`](#description) to say what the picture shows.
 
 ```yaml
-setting: {image: art/p01-street.png}
-cast:
-  ana: {figure: ana}          # in place of reference:
-  ben: {figure: ben}
-script:
-  - say: {by: ana, text: "Where are we?"}
-  - say: {by: ben, text: "Somewhere they won't look."}
+setting: {image: art/harbour.jpg, weather: rain}
+cast: {alice: {reference: alice}}
 ```
 
-Where each face, mouth and body is, the panel does not say — it never writes a coordinate. The
-picture's [artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) does: a file beside the picture,
-named after it, `art/p01-street.art.yaml`, measured once in the picture's own pixels and
-committed with it. `figure:` names a figure it declares. The contract is read only for a panel
-whose cast names a figure, and its geometry goes through the picture's `fit`, so a face is
-excluded exactly where the picture draws it, under `cover` and `contain` alike.
+**See also:** [`setting.fit`](#settingfit), [Letter over your own art](https://creatoan.github.io/scenet/howto/letter_over_your_own_art.html).
 
-**Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
-lettering as a speaker's, and a body as costly to cover: a crowd of five can be declared and two of
-them cast. The other way round, a cast figure the panel's picture does not draw is simply not in
-that panel — as a member written `(OP)` is not — so a script's front matter or a scene's defaults
-can cast every figure of a chapter, and each panel holds those its own picture draws. A line spoken
-there by one it does not draw is `unknown-figure`, listing who the picture does draw; that is where
-a misspelt name is caught. A figure in a panel with no picture is `unknown-figure` too.
+### `setting.fit`
 
-**What does not apply.** The artist already framed, posed and staged everybody in the picture:
+<!-- facts: setting.fit -->
+How the picture fills the panel: `cover` fills it and crops what overhangs, equally on both sides; `contain` shows the whole picture. Left out, `cover`.
 
-- **No camera.** The shot is whatever the picture shows. `camera:` on a panel whose cast is all
-  figures is refused, as `figure-staging`, a key with no effect; a panel that inherits one writes
-  `camera: null`. A generated description says no shot.
-- **No staging.** A relation naming a figure — `left_of`, `looking_at` and the rest — is refused,
-  as `figure-staging`.
-- **No posing.** `pose`, `expression`, `marks`, `at` and `facing` are a puppet's, and refused beside
-  `figure`, as is `reference`: a member is one or the other (`conflicting-cast`). A member inherited
-  as a puppet becomes a figure with `reference: null` beside its `figure`.
-- **No gaze.** A contract declares none, so nothing keeps a balloon out of a figure's line of sight.
-- **No mixed casts.** A cast is all puppets or all figures (`conflicting-cast`): staging and the
-  camera would place a puppet over a painted face they cannot see. One figure is one person, played
-  by one member.
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@setting:` in a panel, or `setting:` in the front matter |
+| Type | a name |
+| Values | `cover`, `contain` |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
 
-**Keep-out regions** in the contract are ground lettering pays to cover, weighted as emanata are —
-a sign, a hand, what the panel is about — and never forbidden: a crowded panel covers one before it
-fails.
+The picture is centred either way and never stretched: its shape is a fact about it, and a figure
+drawn into it would be stretched with it. `cover` fills the panel and crops what overhangs, equally
+on both sides; `contain` shows the whole picture, the panel showing round it where their shapes
+differ -- SVG's `slice` and `meet`. A `fit` with no `image` is `invalid-field`; in a scene, the
+image may be inherited and the fit given alone.
 
-**A `cover` crop** can push a face or a mouth out of the panel. Lettering stays inside the panel as
-always, and a face is kept clear for whatever part of it is in view. A tail to a mouth cropped
-away ends on the frame, aimed at it, and `scenet build` says so in a note; `fit: contain` shows the
-whole picture.
+A `cover` crop can push a figure's face or mouth out of the panel. Lettering stays inside the panel
+as always; a tail to a mouth cropped away ends on the frame, aimed at it, and `scenet build` says
+so in a note.
 
-`scenet check` reads the contract without running the solver, and reports a missing or malformed one
-as `artwork-contract`: in the contract itself, at the line of the fault, when the document is checked
-as a file; at the line naming the picture when it is checked as text, as in the playground or over
-MCP. The debug overlay (`scenet build --debug`) draws every face, mouth, body and keep-out over the
-panel, which is how a contract is checked against its picture.
+```yaml
+panel: {size: [700, 900]}
+setting: {image: art/street.png, fit: contain}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.image`](#settingimage).
 
 ## `cast`
 
-A mapping of actor id to properties. Ids are chosen by the author and referenced everywhere else.
+<!-- facts: cast -->
+Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | a mapping |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `conflicting-cast`, `layout` |
+<!-- /facts -->
+
+A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
+`ALICE` -- and every other block names the cast by them: the staging, the script, a sound's source.
+Ids are case-sensitive, and their order means nothing: [`staging`](#staging) and
+[`at`](#castidat) decide who stands where.
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
 
-**In the gallery:** [Poses and facing](https://creatoan.github.io/scenet/gallery.html#poses-and-facing), [Ten expressions](https://creatoan.github.io/scenet/gallery.html#ten-expressions) and [A face](https://creatoan.github.io/scenet/gallery.html#a-face).
+A cast member is one of two things, never both, and a cast is all of one:
 
-| Key | Type | Meaning |
-|---|---|---|
-| `reference` | asset name, or a `.puppet.yaml` path | Which puppet to pull from the library, or a [puppet file of your own](#a-puppet-of-your-own), relative to the document |
-| `figure` | figure name | Instead of `reference`: a figure the panel's picture draws, as its [artwork contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts) names it. See [Figures the picture draws](#figures-the-picture-draws) |
-| `pose` | pose name | A named joint configuration declared by that puppet |
-| `expression` | expression name | A named face declared by that puppet |
-| `marks` | list of marks | Emanata drawn around the character: `plewds`, `squeans`, `grawlixes`, `briffits` |
-| `at` | anchor | Horizontal placement preference |
-| `facing` | `left`, `right` | Which way the figure is turned |
+- **a puppet**, which Scenet poses and draws: `reference:` names it, and `pose`,
+  `expression`, `marks`, `at` and `facing` say how it stands;
+- **a figure** a supplied picture already draws: `figure:` names it, and nothing else
+  applies, since the artist framed, posed and staged it.
 
-`at` accepts `left_third`, `center`, `right_third`, `left_edge`, `right_edge`. It is a
-**preference, not a command** — see [conflicts](#when-constraints-conflict).
-
-`expression` is selected by name exactly as `pose` is, because a face is the same kind of thing as a
-body: a small closed set of arrangements a character can be in. The shipped puppets declare ten —
-`neutral`, `happy`, `laughing`, `coy`, `bored`, `scared`, `sad`, `angry`, `shouting`, `surprise` —
-and it defaults to `neutral`. They are a **drawing convention**, the small closed set of faces comics
-actually draw, and not a claim about what a person feeling anger looks like. What a face is made of,
-and how to give your own puppet one, is in the [asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#faces).
-
-A character's pupils follow whoever they are `looking_at`. Nothing else about the face depends on the
-rest of the panel, and nothing about the face changes the layout: to the solver a face is still one
-disc that balloons may not cover.
-
-### `marks`
+A cast that mixes the two is `conflicting-cast`: staging and the camera would place a puppet over
+a painted face they cannot see. In a scene, `cast: {bob: null}` leaves a member out of a panel
+that would inherit them, and every relation that names them goes too; see
+[`null`](#null-leaves-something-out). The split between id and `reference` is what lets one
+puppet play two people:
 
 ```yaml
 cast:
-  alice: {reference: alice, expression: angry, marks: [grawlixes, plewds]}
+  guard_left: {reference: bob, pose: arms_crossed, at: left_third}
+  guard_right: {reference: bob, at: right_third, facing: left}
 ```
 
+**See also:** [`staging`](#staging), [`say.by`](#sayby).
+
+### `cast.<id>.reference`
+
+<!-- facts: cast.<id>.reference -->
+The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-puppet`, `puppet-file`, `conflicting-cast` |
+| In the gallery | [A puppet of your own](https://creatoan.github.io/scenet/gallery.html#a-puppet-of-your-own) |
+<!-- /facts -->
+
+`alice` and `bob` ship with Scenet. A character of your own is a `*.puppet.yaml` file -- a
+skeleton, the parts drawn on it, a face, and the poses and expressions it can take -- and a
+member names it by its path. Every key of such a file is on the [puppet files](#puppet-files) page.
+
+![A page of five panels: Pip, a puppet five heads tall from a file beside the document, beside Alice on the docks at dusk](https://creatoan.github.io/scenet/images/gallery/69-a-puppet-of-your-own.page-1.svg)
+
+- **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A
+  path is never a name, so no file shadows `alice` or `bob`.
+- **The path is read as a font's is**: relative to the folder the document is in, wherever
+  `scenet` was run from, with `/` between folders, never absolute -- so a document and its
+  puppets travel together, and `../puppets/` reads a folder of characters several documents
+  share. Text compiled with no file behind it names a puppet only when its caller says which
+  folder it belongs to, or hands the file over with it.
+- **Only what the cast names is read**, once however many members it draws.
+- **A puppet of another height shares the ground only when staging says so**, with
+  [`ground_shared_with`](#staging): framed alone, each figure's head is under the top
+  of the panel.
+- **Panel Core records the reference as written**, for the actor and for the camera composed on
+  it. Nothing else of the file reaches the output but the figure drawn.
+
+A name the library lacks is `unknown-puppet`, naming the ones it has. A file that is absolute,
+missing or not a puppet is `puppet-file`: in the puppet file, at the key that is wrong, when the
+document is checked as a file, and on the line naming it otherwise. In the
+[playground](https://creatoan.github.io/scenet/playground/), **Puppet…** adds a file to the
+document's `puppets/` folder for as long as the tab is open; over MCP it is sent in `files`.
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: puppets/pip.puppet.yaml, pose: waving, at: right_third, facing: left}
+staging: [alice ground_shared_with pip]
+```
+
+**See also:** [Puppet files](#puppet-files), [Add your own character](https://creatoan.github.io/scenet/howto/add_your_own_character.html).
+
+### `cast.<id>.pose`
+
+<!-- facts: cast.<id>.pose -->
+A pose the puppet declares, by name.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | `standing_neutral` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-pose`, `conflicting-cast` |
+| In the gallery | [Poses and facing](https://creatoan.github.io/scenet/gallery.html#poses-and-facing) |
+<!-- /facts -->
+
+A pose is a named set of joint angles the puppet declares. `alice` and `bob` declare
+`standing_neutral`, `arms_crossed`, `pointing` and `hands_on_hips`; a puppet file declares its
+own, and `standing_neutral` is required of every puppet, since it is what a member gets unasked.
+A name the puppet does not declare is `unknown-pose`, listing the ones it does: a misspelt pose
+is a perfectly good string to the grammar, so only the library can tell `pointing` from
+`smirking`.
+
+```yaml
+cast:
+  alice: {reference: alice, pose: hands_on_hips}
+```
+
+**See also:** [`cast.<id>.expression`](#castidexpression), [`poses`](#poses).
+
+### `cast.<id>.expression`
+
+<!-- facts: cast.<id>.expression -->
+An expression the puppet declares, by name.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | `neutral` |
+| Since | 0.5 |
+| Diagnostics | `invalid-field`, `unknown-expression`, `conflicting-cast` |
+| In the gallery | [Ten expressions](https://creatoan.github.io/scenet/gallery.html#ten-expressions), [A face](https://creatoan.github.io/scenet/gallery.html#a-face) |
+<!-- /facts -->
+
+`expression` is selected by name exactly as `pose` is, because a face is the same kind of thing as
+a body: a small closed set of arrangements a character can be in. The shipped puppets declare ten
+-- `neutral`, `happy`, `laughing`, `coy`, `bored`, `scared`, `sad`, `angry`, `shouting`,
+`surprise`. They are a **drawing convention**, the small closed set of faces comics actually draw,
+and not a claim about what a person feeling anger looks like. A name the puppet does not declare
+is `unknown-expression`.
+
+![Every expression of a shipped puppet, one panel each](https://creatoan.github.io/scenet/images/gallery/17-expressions.strip.svg)
+
+A character's pupils follow whoever they are `looking_at`. Nothing else about the face depends on
+the rest of the panel, and nothing about the face changes the layout: to the solver a face is one
+disc that balloons may not cover. What a face is made of is in the
+[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#faces).
+
+```yaml
+camera: {shot: close_up}
+cast: {alice: {reference: alice, expression: laughing}}
+```
+
+**See also:** [`expressions`](#expressions), [`cast.<id>.marks`](#castidmarks).
+
+### `cast.<id>.marks`
+
+<!-- facts: cast.<id>.marks -->
+Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | a list of names |
+| Values | `plewds`, `squeans`, `grawlixes`, `briffits` |
+| Default | none |
+| Since | 0.8 |
+| Diagnostics | `invalid-field`, `conflicting-cast` |
+| In the gallery | [Emanata](https://creatoan.github.io/scenet/gallery.html#emanata) |
+<!-- /facts -->
+
+Emanata are what a comic draws *around* a character rather than on them. The vocabulary is
+Mort Walker's, from *The Lexicon of Comicana*, and it is closed:
+
 ![Alice and Bob in four panels with marks drawn round them: sweat, an oath, dizziness, and dust where one has gone](https://creatoan.github.io/scenet/images/gallery/23-emanata.strip.svg)
-
-**In the gallery:** [Emanata](https://creatoan.github.io/scenet/gallery.html#emanata).
-
-`marks` are what a comic draws *around* a character rather than on them. The vocabulary is Mort
-Walker's, from *The Lexicon of Comicana*, and it is closed:
 
 | Mark | What is drawn | What it says |
 |---|---|---|
@@ -542,98 +1000,205 @@ Walker's, from *The Lexicon of Comicana*, and it is closed:
 | `grawlixes` | A spiral, a star, a bolt and a `#` over the head | swearing |
 | `briffits` | Puffs of dust at the feet, behind the figure | gone, fast |
 
-They are a **list**, not a second `expression:`, because they compose: a character can be angry *and*
-sweating. Order does not matter, and a mark listed twice is an error. They need nothing from the
-puppet — every mark is placed from the face circle, the facing and the feet — so every character can
-have every mark. In a scene, `marks: []` under `over:` clears the ones a panel inherited, because
-lists replace rather than merge.
+They are a **list**, not a second `expression:`, because they compose: a character can be angry
+*and* sweating. Order does not matter, and a mark listed twice is an error. They need nothing from
+the puppet -- every mark is placed from the face circle, the facing and the feet -- so every
+character can have every mark. In a scene, `marks: []` under `over:` clears the ones a panel
+inherited, because lists replace rather than merge.
 
 Emanata are drawn **outside** the head, in the space balloons are placed in, so unlike a face they
-matter to the layout — but only softly:
+matter to the layout -- but only softly:
 
-- **They never move anybody.** They stay out of the hull, so staging, the camera and every figure are
-  exactly where they would be without them.
-- **A balloon prefers not to cover them.** Each mark has a zone the solver reads as a cost, weighted
-  above covering a body, with no forgiveness for the speaker. A crowded panel still compiles: a balloon
-  covers a mark before it fails.
-- **The camera makes no room for them.** It frames by body landmarks, so a tight shot — or the head of
-  the tallest character, which the frame is fitted to — can crop marks over the head, and a shot that
-  cuts at the waist leaves briffits below the frame. `scenet build` reports any mark that runs off the
-  panel.
+- **They never move anybody.** Staging, the camera and every figure are exactly where they would
+  be without them.
+- **A balloon prefers not to cover them.** Each mark has a zone the solver reads as a cost,
+  weighted above covering a body. A crowded panel still compiles: a balloon covers a mark before
+  it fails.
+- **The camera makes no room for them.** It frames by body landmarks, so a tight shot can crop
+  marks over the head, and a shot that cuts at the waist leaves briffits below the frame.
+  `scenet build` reports any mark that runs off the panel.
 
-At a wide framing a plewd is a dot: below a head size, each mark collapses to a dot where it would
-have been drawn, and a character too small to have a face has no marks at all. See the
-[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#emanata).
-
-An oath written in a balloon — `"@#$%!"` — is dialogue, and already works. `grawlixes` is the other
+At a wide framing a plewd is a dot: below a head size, each mark collapses to a dot where it
+would have been drawn, and a character too small to have a face has no marks at all. An oath
+written in a balloon -- `"@#$%!"` -- is dialogue, and already works; `grawlixes` is the other
 convention, the symbols over a head.
 
-A cast member may instead be a figure the panel's picture draws, written `figure:`; see
-[Figures the picture draws](#figures-the-picture-draws) for what applies to it and what does not.
+```yaml
+camera: {shot: medium_close_up}
+cast: {alice: {reference: alice, expression: angry, marks: [grawlixes, plewds]}}
+```
 
-### A puppet of your own
+**See also:** [Emanata in the asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#emanata).
 
-`alice` and `bob` are shipped. A character of your own is a `*.puppet.yaml` file — a skeleton, the
-parts drawn on it, a face, and the poses and expressions it can take — and a cast member names it by
-its path:
+### `cast.<id>.at`
 
-*Part of a panel beside puppets/pip.puppet.yaml:*
+<!-- facts: cast.<id>.at -->
+Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | a name |
+| Values | `left_edge`, `left_third`, `center`, `right_third`, `right_edge` |
+| Default | `center` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `conflicting-cast` |
+<!-- /facts -->
+
+Where along the panel's width the figure would like to stand, horizontally only: figures stand on
+the ground, and their height comes from the camera. It is a **weak preference, not a command**.
+Non-overlap and declared ordering are required and override it without complaint: two actors both
+asked to stand at `center` are pushed apart around it. Where staging gives no order, `at` decides
+it, and two at the same anchor stand in the order of their actor ids; see
+[Why ordering must be explicit](#why-ordering-must-be-explicit).
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_edge}
+  bob: {reference: bob, at: right_third, facing: left}
+```
+
+**See also:** [`staging`](#staging), [When constraints conflict](#when-constraints-conflict).
+
+### `cast.<id>.facing`
+
+<!-- facts: cast.<id>.facing -->
+Which way the figure is turned, `left` or `right`, gaze and all.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | a name |
+| Values | `left`, `right` |
+| Default | `right` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `conflicting-cast` |
+<!-- /facts -->
+
+Facing mirrors the whole puppet, its gaze included. It defaults to `right`, so a cast written
+left to right faces into the panel from the left; give the one on the right `facing: left`. A
+`looking_at` relation turns its subject toward the object whatever `facing` says.
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+```
+
+**See also:** [`staging[].predicate`](#stagingpredicate).
+
+### `cast.<id>.figure`
+
+<!-- facts: cast.<id>.figure -->
+A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `invalid-field`, `unknown-figure`, `conflicting-cast`, `artwork-contract` |
+| In the gallery | [From puppets to figures](https://creatoan.github.io/scenet/gallery.html#from-puppets-to-figures) |
+<!-- /facts -->
+
+A picture can draw its own people. Cast them with `figure:` in place of `reference:`, and Scenet
+letters them as it letters puppets -- balloons in reading order, never over a face, tails to the
+mouth -- while drawing nothing of them: the picture already has.
+
+![Two panels: Ana and Ben as puppets in a street at night, then the same two as a picture draws them, lettered from its artwork contract](https://creatoan.github.io/scenet/images/gallery/51-puppets-to-figures.strip.svg)
+
+Where each face, mouth and body is, the panel does not say -- it never writes a coordinate. The
+picture's [artwork contract](#artwork-contracts) does: a file beside the picture, named after it,
+`art/p01-street.art.yaml`, measured once in the picture's own pixels and committed with it.
+`figure:` names a figure it declares. The contract is read only for a panel whose cast names a
+figure, and its geometry goes through the picture's `fit`, so a face is excluded exactly where the
+picture draws it, under `cover` and `contain` alike.
+
+**Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
+lettering as a speaker's, and a body as costly to cover. The other way round, a cast figure the
+panel's picture does not draw is simply not in that panel -- as a member written `(OP)` is not --
+so a script's front matter or a scene's defaults can cast every figure of a chapter, and each panel
+holds those its own picture draws. A line spoken by one it does not draw is `unknown-figure`,
+listing who the picture does draw; so is a figure in a panel with no picture.
+
+**What does not apply.** The artist already framed, posed and staged everybody in the picture:
+
+- **No camera.** `camera:` on a panel whose cast is all figures is `figure-staging`; a panel that
+  inherits one writes `camera: null`. A generated description says no shot.
+- **No staging.** A relation naming a figure is `figure-staging`.
+- **No posing.** `pose`, `expression`, `marks`, `at` and `facing` are a puppet's, and refused
+  beside `figure`, as is `reference` (`conflicting-cast`). A member inherited as a puppet becomes a
+  figure with `reference: null` beside its `figure`.
+- **No gaze.** A contract declares none, so nothing keeps a balloon out of a figure's line of sight.
+
+```yaml
+panel: {size: [900, 600]}
+setting: {image: art/figures.png}
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+script:
+  - say: {by: ana, text: "Is it always this late?"}
+  - say: {by: ben, text: "Only when it rains somewhere else."}
+```
+
+**See also:** [Artwork contracts](#artwork-contracts), [`setting.image`](#settingimage),
+[Letter the figures in your art](https://creatoan.github.io/scenet/howto/letter_the_figures_in_your_art.html).
+
+## `staging`
+
+<!-- facts: staging -->
+How the cast stand to each other, as sentences: `alice left_of bob`. One relation each.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
+| Type | a list, each text or a mapping |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-actor`, `ordering-cycle`, `reflexive-relation`, `figure-staging`, `dropped-relation`, `layout` |
+| In the gallery | [Gaze steers balloons](https://creatoan.github.io/scenet/gallery.html#gaze-steers-balloons), [Feet align, heads do not](https://creatoan.github.io/scenet/gallery.html#feet-align-heads-do-not), [Depth and overlap](https://creatoan.github.io/scenet/gallery.html#depth-and-overlap) |
+<!-- /facts -->
+
+A list of relations between actors, each written as a sentence, `subject predicate
+object`: `alice left_of bob`. This is a scene graph: the cast are nodes, these are the edges.
+Predicates come from the spatial subset of the Visual Genome vocabulary rather than being invented
+here, so a Scenet scene remains convertible to and from the scene-graph representations used
+elsewhere in computer vision.
+
+![Alice points at Bob and the two look at each other; their balloons keep clear of the space in front of their eyes](https://creatoan.github.io/scenet/images/gallery/07-gaze.svg)
+
+| Predicate | Effect | Strength |
+|---|---|---|
+| `left_of`, `right_of` | Fixes the order across the panel | Required |
+| `in_front_of`, `behind` | Fixes the draw order, so the nearer figure covers the other | Required |
+| `looking_at` | Turns the subject's gaze toward the object -- who may be somebody heard [from off panel](#sayoff_panel) | Required |
+| `ground_shared_with` | Stands both on one ground line, so a short figure and a tall one stand on the same floor | Required |
+
+Every actor a relation names must be in the cast (`unknown-actor`), except the object of a
+`looking_at`, who may speak from off panel. A relation of an actor to itself means nothing and is
+refused (`reflexive-relation`); `left_of` relations that loop are `ordering-cycle`. A
+figure a picture draws is never staged: a relation naming one is `figure-staging`.
+
+In a scene, a panel shares the staging of the panel it is `over`, or of the scene's defaults. A
+relation naming a member that panel leaves out with `null` is dropped from it, and a
+`dropped-relation` note says so -- except `looking_at` somebody who now speaks from off panel,
+which holds.
 
 ```yaml
 cast:
   alice: {reference: alice}
-  pip:   {reference: puppets/pip.puppet.yaml, pose: waving}
+  bob: {reference: bob, facing: left}
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - bob looking_at alice
+  - alice ground_shared_with bob
 ```
 
-![A page of five panels: Pip, a puppet five heads tall from a file beside the document, beside Alice on the docks at dusk](https://creatoan.github.io/scenet/images/gallery/69-a-puppet-of-your-own.page-1.svg)
-
-**In the gallery:** [A puppet of your own](https://creatoan.github.io/scenet/gallery.html#a-puppet-of-your-own).
-
-- **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A path
-  is never a name, so no file shadows `alice` or `bob`.
-- **The path is read as a font's is**: relative to the folder the document is in, wherever `scenet`
-  was run from, with `/` between folders, never absolute — so a document and its puppets travel
-  together, and `../puppets/` reads a folder of characters several documents share. Text compiled
-  with no file behind it names a puppet only when its caller says which folder it belongs to, or
-  hands the file over with it.
-- **Only what the cast names is read**, once however many members it draws.
-- **`pose` and `expression` are the file's own** names, held to it exactly as a shipped puppet's are.
-- **A puppet of another height shares the ground only when staging says so**, with
-  `ground_shared_with`: framed alone, each figure's head is under the top of the panel.
-- **Panel Core records the reference as written**, for the actor and for the camera composed on
-  it. Nothing else of the file reaches the output but the figure drawn.
-
-A file that is absolute, missing or not a puppet is `puppet-file`: in the puppet file, at the key
-that is wrong, when the document is checked as a file, and on the line naming it otherwise. In the
-[playground](https://creatoan.github.io/scenet/playground/), **Puppet…** adds a file to the
-document's `puppets/` folder for as long as the tab is open; over MCP it is sent in `files`. What the
-file holds is in [Add your own character](https://creatoan.github.io/scenet/howto/add_your_own_character.html), and the gallery's
-`69-a-puppet-of-your-own.scene.yaml` casts one.
-
-`reference`, `pose` and `expression` are validated against the puppet library, not just against the
-language's own grammar — a misspelled pose is a perfectly good string as far as the grammar is
-concerned, so nothing at that level can tell `pointing` from `smirking`. `scenet check` resolves the
-library and reports an unmatched name as `unknown-puppet`, `unknown-pose` or `unknown-expression`,
-each naming the field and, for `pose` and `expression`, listing the names that puppet does declare.
-A puppet file is read to resolve them the same way. See [`scenet check`](https://creatoan.github.io/scenet/reference/cli.html#scenet-check).
-
-## `staging`
-
-A list of relations between actors, written `subject predicate object`. This is a scene graph: the
-cast are nodes, these are the edges. Predicates come from the spatial subset of the Visual Genome
-vocabulary rather than being invented here, so a Scenet scene remains convertible to and from the
-scene-graph representations used elsewhere in computer vision.
-
-![Alice points at Bob and the two look at each other; their balloons keep clear of the space in front of their eyes](https://creatoan.github.io/scenet/images/gallery/07-gaze.svg)
-
-**In the gallery:** [Gaze steers balloons](https://creatoan.github.io/scenet/gallery.html#gaze-steers-balloons), [Feet align, heads do not](https://creatoan.github.io/scenet/gallery.html#feet-align-heads-do-not), [Depth and overlap](https://creatoan.github.io/scenet/gallery.html#depth-and-overlap) and [Staging, spelled out](https://creatoan.github.io/scenet/gallery.html#staging-spelled-out).
-
-| Predicate | Effect |
-|---|---|
-| `left_of`, `right_of` | Fixes horizontal ordering |
-| `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
-| `ground_shared_with` | Places both actors on the same ground line |
+**See also:** [`cast.<id>.at`](#castidat), the weak wish a relation overrides;
+[When constraints conflict](#when-constraints-conflict).
 
 ### Why ordering must be explicit
 
@@ -646,229 +1211,249 @@ what reaches the solver is a linear system it can always solve. A `left_of` or `
 `staging` decides first. Where staging says nothing, figures stand in the order of their `at:`
 anchors, and two at the same anchor by actor id, in code-point order, so `Bob` stands left of
 `alice`. That is the same on every run, but seldom what was meant: when the order matters, state it
-with `left_of`. This is the reason there is no unordered `beside` predicate, and why any future construct
-must resolve its own ordering in the frontend.
+with `left_of`. This is the reason there is no unordered `beside` predicate, and why any future
+construct must resolve its own ordering in the frontend.
+
+### The mapping form
+
+A relation is a sentence for people, and three keys for a program: `{subject: alice, predicate:
+left_of, object: bob}` is the same relation as `alice left_of bob`, and the two forms mix in one
+list. A program that writes Scenet -- a model, an exporter from a scene graph -- can write the
+mapping without building a sentence and splitting it again. The three keys are the three words of
+the sentence.
+
+### `staging[].subject`
+
+<!-- facts: staging[].subject -->
+The actor id the relation is about.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+| In the gallery | [Staging, spelled out](https://creatoan.github.io/scenet/gallery.html#staging-spelled-out) |
+<!-- /facts -->
+
+The actor the sentence is about: the one placed left of, in front of, or looking at, the other.
+
+```yaml
+cast:
+  alice: {reference: alice}
+  bob: {reference: bob, facing: left}
+staging:
+  - {subject: alice, predicate: left_of, object: bob}
+```
+
+**See also:** [`staging[].object`](#stagingobject).
+
+### `staging[].predicate`
+
+<!-- facts: staging[].predicate -->
+How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at` or `ground_shared_with`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Type | a name |
+| Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
+| Default | none: required |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `missing-field`, `ordering-cycle` |
+<!-- /facts -->
+
+The relation itself, one of the six in the [table above](#staging). Each is required, and none
+is reflexive. `right_of` is `left_of` the other way round, and `behind` is `in_front_of` the
+other way round; write whichever reads as the panel does.
+
+```yaml
+cast:
+  alice: {reference: alice}
+  bob: {reference: bob}
+staging:
+  - {subject: bob, predicate: in_front_of, object: alice}
+```
+
+**See also:** [`staging[].subject`](#stagingsubject).
+
+### `staging[].object`
+
+<!-- facts: staging[].object -->
+The other actor id. For `looking_at`, it may be somebody heard from off panel.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+<!-- /facts -->
+
+The other actor. For `looking_at`, the object may be somebody heard from off panel and drawn
+nowhere: the subject turns toward the side of the frame the voice comes from.
+
+```yaml
+cast: {bob: {reference: bob, at: center}}
+staging:
+  - {subject: bob, predicate: looking_at, object: carol}
+script:
+  - say: {by: carol, text: "Over here!", off_panel: left}
+```
+
+**See also:** [`say.off_panel`](#sayoff_panel).
 
 ## `script`
 
-An ordered list of narrative events, each tagged by a verb. **Order is meaningful**: it is the order
-the reader reads them, and it constrains where the boxes may be placed.
+<!-- facts: script -->
+What is said and heard, in the order it is read: `say` for a balloon, `caption` for a box, `sfx` for a sound effect.
 
-There are three verbs. `say` puts a line in a balloon; `caption` puts one in a box; `sfx`
-letters a sound effect into the picture.
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the panel's cues, captions and sound effects, in the order written |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `balloon-placement`, `word-limit` |
+| In the gallery | [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order) |
+<!-- /facts -->
+
+An ordered list of what is said and heard, each entry tagged by a verb: [`say`](#say) puts a line
+in a balloon, [`caption`](#caption) puts one in a box, and [`sfx`](#sfx) letters a sound effect
+into the picture. **Order is meaningful**: it is the order the reader reads them, and it
+constrains where each box may be placed.
+
+![Four balloons, First, Second, Third and Fourth, placed so that they read in that order](https://creatoan.github.io/scenet/images/gallery/06-reading-order.svg)
+
+**Reading order is enforced, not suggested.** Balloons and captions are placed in script order, in
+one pass, and a box may never sit above-and-left of the one before it -- above-and-*right* in a
+comic read right to left (see [`direction`](#direction)). Violating this is not a
+cosmetic flaw: it makes the panel read in the wrong order, which is a correctness bug in a comic.
+The constraint is therefore hard, and a panel whose boxes cannot be placed without breaking it is
+refused as `balloon-placement` rather than rendered wrongly. That is the reading order.
+
+Captions take their turn in that sequence rather than being placed first as a layer: a caption
+written between two lines of dialogue is read between them. A sound effect takes its number in the
+same sequence -- the order a reader of the text, or a screen reader, follows -- but is exempt from
+the geometric rule: a sound sits where the sound is, and holding it to above-and-left would make
+many panels impossible to letter. Read right to left, it stays exempt, and stays where it was: a
+sound is part of the picture, which is not mirrored.
+
+That sequence is what a screen reader hears. Every SVG names each panel with its
+[description](#description) and then every balloon, caption and sound effect in this
+order -- `Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` --
+whatever order they are painted in; see [accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html).
+A panel with more words than a letterer fits well gives a `word-limit` note.
 
 ```yaml
 cast:
   alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
+  bob: {reference: bob, at: right_third, facing: left}
 script:
-  - caption: {text: "Midnight. The docks.", kind: locale, prefer: top_left}
-  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
-  - say: {by: bob,   text: "I know.", kind: whisper}
+  - caption: {text: "Midnight. The docks.", kind: locale}
+  - say: {by: alice, text: "You forgot your umbrella!"}
+  - say: {by: bob, text: "I know.", kind: whisper}
 ```
+
+**See also:** [When constraints conflict](#when-constraints-conflict),
+[Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html).
 
 ### `say`
 
-| Key | Type | Meaning |
-|---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
-| `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
-| `prefer` | zone | A hint about placement, honoured when possible |
-| `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
-| `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
-| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
+<!-- facts: say -->
+A line of dialogue, in a balloon whose tail points at the speaker.
 
-![Alice and Bob in four balloons: a dashed whisper, a spiked shout, a speech balloon and a cloud for a thought](https://creatoan.github.io/scenet/images/gallery/04-balloon-kinds.svg)
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a cue in capitals, `ALICE`, with the line under it or after a colon |
+| Type | a mapping |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+<!-- /facts -->
 
-**In the gallery:** [Every balloon kind](https://creatoan.github.io/scenet/gallery.html#every-balloon-kind), [Placement zones](https://creatoan.github.io/scenet/gallery.html#placement-zones) and [The other five zones](https://creatoan.github.io/scenet/gallery.html#the-other-five-zones).
-
-`text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
-compilation, because a balloon's size determines whether it fits where it is wanted — so the
-compiler must decide the line breaks before it can place anything.
-
-A double dash, a dash or an ellipsis written as a word of its own — `out --`, `... maybe` — is
-never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
-space before or after it, so it belongs to its word: it stays on the line of the word before
-it, or of the word after it when it opens the balloon. The space is still lettered as written.
-
-A line of text, a caption and an actor id may not contain a control character other than tab, line
-feed and carriage return. Each one is written into the SVG, and XML has no way to write those
-characters at all, not even escaped, so a panel holding one is refused with the character named.
-
-### Off-panel speech
-
-```yaml
-cast:
-  bob: {reference: bob}
-script:
-  - say: {by: caller, text: "Open up!", off_panel: left}
-  - say: {by: bob, text: "Who is it?"}
-```
-
-![Bob in a room at night, answering voices from off panel whose balloons' tails run to the edge of the frame](https://creatoan.github.io/scenet/images/gallery/32-off-panel.strip.svg)
-
-**In the gallery:** [Off-panel speech](https://creatoan.github.io/scenet/gallery.html#off-panel-speech) and [Looking off panel](https://creatoan.github.io/scenet/gallery.html#looking-off-panel).
-
-A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
-on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
-the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
-put the balloon — which it puts high on the side reading starts from, top left, or top right in a
-comic read right to left. A side you name is a side of the panel, whichever way it is read. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
-aim most tails at the top border, which reads as a speaker above.
-
-An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
-panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
-balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
-face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
-to the panel's outline when it is slanted.
-
-**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
-staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
-frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
-`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
-look agree.
-
-```yaml
-cast:
-  bob: {reference: bob, at: center}
-staging: [bob looking_at carol]
-script:
-  - say: {by: carol, text: Over here!, off_panel: left}
-```
-
-A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
-`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
-Of the relations the panel shares that name her, `bob looking_at carol` still holds while she does,
-and her `off_panel: true` ends on the side she was written to stand on, `at: left_third` being the
-left, unless her line names one; every other relation goes. See
-[Leaving something out](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#leaving-something-out). A comic script does
-it with `(OP)`.
-
-### `caption`
-
-A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
-happens without a character having to explain it out loud — which is the thing writers are told not
-to do. Comics solved this long before they had reliable backgrounds.
-
-![Alice and Bob on the docks with four captions: a place and time, an inner voice, a line spoken off panel, and an editor's note](https://creatoan.github.io/scenet/images/gallery/16-captions.svg)
-
-**In the gallery:** [Captions](https://creatoan.github.io/scenet/gallery.html#captions).
-
-| Key | Type | Meaning |
-|---|---|---|
-| `text` | string | What the box says. Line breaking is computed, as for dialogue |
-| `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
-| `tone` | `paper`, `pale`, `ink`, `warm` | What the box is filled with. Defaults to `paper` |
-| `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
-| `by` | any name | Who is speaking, for a `spoken` caption only |
-
-The four kinds are the letterers' own vocabulary, taken from Blambot's *Comic Book Grammar &
-Tradition* rather than invented — for the same reason the predicates were taken from Visual Genome.
-Note that "narration", the obvious guess, is not one of them.
-
-| Kind | What it is | How it is set |
-|---|---|---|
-| `locale` | Location and time — "Midnight. The docks." | Italic |
-| `monologue` | A character's inner voice | Italic |
-| `spoken` | Off-panel dialogue | Roman, in quotation marks |
-| `editorial` | The voice of the writer or editor | Italic |
-
-`monologue` has largely replaced the thought balloon in modern comics, so a panel has two ways to
-render an inner voice: a `monologue` caption and a `thought` balloon. Both are correct. They are
-different eras of the same convention, not a duplication.
-
-**Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
-captions by one speaker, each opens with a quote and only the last one closes — the run is one
-continuous line of off-panel speech, and closing every box would read as a series of interruptions.
-A change of speaker (`by`) ends the run, so each speaker's last box closes, as Blambot asks: end
-quotes "should appear as each speaker finishes". Write the words; the marks are lettering.
-
-**`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
-who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
-requiring them to be cast would defeat the purpose. It is accepted only on `spoken`; on any other
-kind it is a mistake and is rejected.
-
-#### `tone`
-
-![Alice in a field under a noon sky, with three captions in three corners: a white box that all but vanishes into the sky, a grey one, and a black one lettered in white](https://creatoan.github.io/scenet/images/gallery/22-caption-tones.svg)
-
-**In the gallery:** [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones) and [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption).
-
-A caption box is opaque, so its lettering is never the thing at risk — the text sits on the fill
-whatever is behind it. What a tone changes is whether the **box** reads. Against the value ladder
-the `setting` block produces, a white box on a noon sky is 1.16:1: legible, and invisible.
-
-| Tone | Fill | Where it comes from | Lettered in |
-|---|---|---|---|
-| `paper` | `#ffffff` | the paper the panel is printed on — **the default** | ink |
-| `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
-| `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
-| `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere — yellow under `tinted` | ink |
-
-Three of the four are rungs of the ladder in `solve/backdrop.py`, taken by index rather than restated
-as literals, so lettering and backdrop cannot drift apart as either is tuned. A tone is **fixed, not
-a function of the panel's `time`**: a caption's value is a property of the caption, and letting it
-follow the hour would make the table below a function of the panel.
-
-`ink` produces what letterers call reversed type. **The inversion is decided by the compiler**, by
-contrast, and travels in Panel Core as a resolved value — the same rule and the same reason as
-falling rain, which is inked over a bright sky and papered over a dark one.
-
-Two floors, and only the first is a rule every tone must meet:
-
-- **Lettering, 4.5:1.** A caption's text against its own fill, WCAG AA for body text. This is the
-  contrast a reader actually gets, and every tone in the palette clears it with room — 18.9:1,
-  8.4:1, 19.9:1 and 16.3:1 respectively, and `warm` 16.4:1 on its yellow.
-- **Separation, 3:1.** The box against the plane behind it. *No tone is required to clear this on
-  every rung*, and the default does not: white on a noon sky is the case that motivated the feature.
-  What the palette owes you is an escape from every background the compiler can produce — at least
-  one tone above 3:1 for every rung of every hour — and that is what the test suite checks.
-
-`warm` is the classic yellow `locale` caption. Its value is a rung of the ladder like the others,
-and its lettering is chosen on that grey; under [`palette: tinted`](#palette) its box is drawn in the
-grey's twin, the pale yellow `#fef0a1`, of the same lightness. In `mono` it is the grey, which is
-what a black-and-white reprint does to a yellow caption. `paper`, `pale` and `ink` stay neutral in
-every palette. There is no free-form `fill:`: an open colour field would be this language's one open
-vocabulary and would let you produce an unreadable box.
-
-**Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
-lettering references describe left alignment as the norm while calling it a house preference. It is
-the default because it is what letterers do, and it is recorded here as a choice rather than a law —
-unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text. Both hold
-in a comic read right to left: its text still reads left to right.
-
-Captions are placed by the same machinery as balloons — the same face avoidance, the same silhouette
-occlusion cost, the same hard reading-order rule — because the placement principles for floating
-text are the ones the balloon solver already implements. What differs is the pull toward the frame:
-a balloon mildly dislikes hugging the panel edge, and a caption is looking for exactly that corner.
-
-### Emphasis
-
-A word written between underscores is stressed, and lettered in **bold italic**:
+A line of dialogue: a balloon, with a tail to the speaker's mouth. Its keys say who speaks, what,
+how, and from where.
 
 ```yaml
 cast: {alice: {reference: alice}}
 script:
-  - caption: {text: "_Later._ The same corner.", kind: locale}
-  - say: {by: alice, text: "I _told_ you it would rain."}
+  - say: {by: alice, text: "Hello."}
 ```
+
+**See also:** [`caption`](#caption), words nobody in the panel says.
+
+### `say.by`
+
+<!-- facts: say.by -->
+Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the cue's name, `ALICE` |
+| Type | text |
+| Default | none: required |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `off-panel-speaker` |
+<!-- /facts -->
+
+The tail of the balloon points at this actor's mouth -- the `mouth` anchor of their puppet, or of
+the figure in a picture's contract. A name not in the cast is `unknown-actor`, unless the line is
+spoken [from off panel](#sayoff_panel), when it must **not** be in the cast: a line marked
+`off_panel` by somebody who is drawn is `off-panel-speaker`.
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+script:
+  - say: {by: bob, text: "It was me."}
+```
+
+**See also:** [`cast`](#cast), [`caption.by`](#captionby).
+
+### `say.text`
+
+<!-- facts: say.text -->
+The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the lines under the cue, or after `ALICE:` |
+| Type | text |
+| Default | none: required |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+| In the gallery | [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break), [Emphasis](https://creatoan.github.io/scenet/gallery.html#emphasis) |
+<!-- /facts -->
+
+`text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
+compilation, because a balloon's size determines whether it fits where it is wanted -- so the
+compiler must decide the line breaks before it can place anything.
+
+![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](https://creatoan.github.io/scenet/images/gallery/14-lettering.svg)
+
+A double dash, a dash or an ellipsis written as a word of its own -- `out --`, `... maybe` -- is
+never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+space before or after it, so it belongs to its word: it stays on the line of the word before it,
+or of the word after it when it opens the balloon. The space is still lettered as written. A line
+of text, a caption and an actor id may not contain a control character other than tab, line feed
+and carriage return: XML has no way to write one, so a panel holding one is refused with the
+character named.
+
+**Emphasis.** A word written between underscores is stressed, and lettered in **bold italic**, the
+letterers' convention: Blambot's *Comic Book Grammar & Tradition* notes there is almost no plain
+bold in comics dialogue. The underscore stands in for the underline a script uses, as Dark
+Horse's script format asks. It works the same in `say` and `caption`, in YAML and in a comic
+script; in an italic caption the stressed word is bold italic too.
 
 ![Alice, angry, says: I told you it would rain, with told lettered in bold italic](https://creatoan.github.io/scenet/images/gallery/28-emphasis.svg)
 
-**In the gallery:** [Emphasis](https://creatoan.github.io/scenet/gallery.html#emphasis).
-
-Bold italic is the letterers' convention for a stressed word: Blambot's *Comic Book Grammar &
-Tradition* notes there is almost no plain bold in comics dialogue. The underscore stands in for
-the underline a script uses, as Dark Horse's script format asks. It works the same in `say` and
-`caption`, in YAML and in a comic script; in an italic caption the stressed word is bold italic
-too.
-
-The stressed word is **measured** in bold italic, not just drawn in it. Bold italic is wider than
-roman, so a stressed word widens its balloon, or pushes the next word onto another line, by
-exactly as much as it is drawn wider. Bold italic is a real font file of the same family, never a
-slant applied to the roman, for the reason the italic caption face is one.
-
-The rules are Markdown's for an underscore:
+The stressed word is **measured** in bold italic, not just drawn in it, so it widens its balloon,
+or pushes the next word onto another line, by exactly as much as it is drawn wider. The rules are
+Markdown's for an underscore:
 
 - An underscore **opens** emphasis when nothing alphanumeric is before it and something other
   than a space is after it. Inside emphasis, one **closes** it when something other than a space
@@ -879,114 +1464,655 @@ The rules are Markdown's for an underscore:
 - Emphasis opened and never closed is refused as `unbalanced-emphasis`, located at the line,
   rather than guessed at.
 
-Panel Core keeps each line as the plain text it reads as, and records where the face changes
-beside it; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html).
-
 **Why not `*told*`.** Markdown's other marker starts an alias when it opens a YAML value:
 `text: *told* you` does not parse at all. A document that trips on it is told to quote the value
 and use underscores, but `*` is never read as emphasis, because it is also what a typed grawlix
-such as `@#*%!` is made of.
+such as `@#*%!` is made of. Panel Core keeps each line as the plain text it reads as, and records
+where the face changes beside it; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html).
+
+```yaml
+cast: {alice: {reference: alice, expression: angry}}
+script:
+  - say: {by: alice, text: "I _told_ you it would rain."}
+```
+
+**See also:** [`lettering.font.bold_italic`](#letteringfontbold_italic),
+[`lettering.size`](#letteringsize).
+
+### `say.prefer`
+
+<!-- facts: say.prefer -->
+Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a name |
+| Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Placement zones](https://creatoan.github.io/scenet/gallery.html#placement-zones), [The other five zones](https://creatoan.github.io/scenet/gallery.html#the-other-five-zones) |
+<!-- /facts -->
+
+A zone is one of nine places in the panel: three across -- `left`, `center`, `right` -- in three
+rows, `top`, `middle` and `bottom`. It is the **weakest** of all the placement terms: face avoidance,
+the margin and reading order override it freely, and a balloon is placed elsewhere rather than
+cover a face to sit in its zone. Left out, a balloon sits where its speaker and the line before it
+leave room, which is usually high.
+
+![Alice in a full shot with four balloons, each in the corner it asked for: top left, top right, bottom left and bottom right](https://creatoan.github.io/scenet/images/gallery/05-placement-zones.svg)
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Down here.", prefer: bottom_right}
+```
+
+**See also:** [`caption.prefer`](#captionprefer), [`sfx.prefer`](#sfxprefer).
+
+### `say.kind`
+
+<!-- facts: say.kind -->
+The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `BOB (whisper)`, `(shout)`, `(thought)` |
+| Type | a name |
+| Values | `speech`, `thought`, `whisper`, `shout` |
+| Default | `speech` |
+| Since | 0.1 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Every balloon kind](https://creatoan.github.io/scenet/gallery.html#every-balloon-kind) |
+<!-- /facts -->
+
+The kind changes the outline and the tail, never the placement: a whisper is held to exactly the
+same face avoidance and reading order as a shout.
+
+![Alice and Bob in four balloons: a dashed whisper, a spiked shout, a speech balloon and a cloud for a thought](https://creatoan.github.io/scenet/images/gallery/04-balloon-kinds.svg)
+
+| Kind | Outline | Tail |
+|---|---|---|
+| `speech` | rounded rectangle | tapered pointer |
+| `thought` | ellipse | trail of bubbles |
+| `whisper` | dashed rounded rectangle | tapered pointer |
+| `shout` | jagged burst | tapered pointer |
+
+A `monologue` caption is the other way to letter an inner voice, and has largely replaced the
+thought balloon in modern comics. Both are correct: they are different eras of one convention.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Watch out!", kind: shout}
+```
+
+**See also:** [`caption.kind`](#captionkind).
+
+### `say.size`
+
+<!-- facts: say.size -->
+`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `BOB (small)` or `BOB (weak)` |
+| Type | a name |
+| Values | `normal`, `small` |
+| Default | `normal` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+Dark Horse lists "(small)" and "(weak)" among the common indications for modified lettering.
+Blambot: a reduced size is used when a character mutters, says something to themself, or speaks
+sheepishly. So `small` is smaller type in the balloon the line would have had, which reads as
+quieter rather than as a smaller balloon.
+
+```yaml
+cast: {bob: {reference: bob}}
+script:
+  - say: {by: bob, text: "...sorry.", size: small}
+```
+
+**See also:** [`lettering.size`](#letteringsize), the size `small` is smaller than.
+
+### `say.off_panel`
+
+<!-- facts: say.off_panel -->
+The speaker is outside the panel: `true`, or the side of the frame they are on. The tail ends on the frame there.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `ALICE (OP)`, or `ALICE (OP, left)` with a side |
+| Type | `true` or `false`, or a name |
+| Values | `left`, `right`, `top`, `bottom` |
+| Default | `false` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `off-panel-speaker` |
+| In the gallery | [Off-panel speech](https://creatoan.github.io/scenet/gallery.html#off-panel-speech), [Looking off panel](https://creatoan.github.io/scenet/gallery.html#looking-off-panel) |
+<!-- /facts -->
+
+A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame, on
+their side -- Blambot: "the tail of the balloon generally butts against the panel border". Name the
+side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
+put the balloon -- which it puts high on the side reading starts from, top left, or top right in a
+comic read right to left. A side you name is a side of the panel, whichever way it is read. Top and
+bottom are only ever named: balloons sit high, so "the nearest edge" would aim most tails at the
+top border, which reads as a speaker above.
+
+![Bob in a room at night, answering voices from off panel whose balloons' tails run to the edge of the frame](https://creatoan.github.io/scenet/images/gallery/32-off-panel.strip.svg)
+
+The balloon is placed as a caption is -- no mouth to stay near -- under the same rules: never over
+a face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself,
+or to the panel's outline when it is slanted.
+
+**Somebody heard from off panel may be looked at**, and by `looking_at` only -- nothing else can be
+staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
+frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
+`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
+look agree.
+
+A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with `null`:
+`cast: {carol: null}`, and Carol is not drawn there -- so she may speak from off panel in it. Of the
+relations the panel shares that name her, `bob looking_at carol` still holds while she does, and her
+`off_panel: true` ends on the side she was written to stand on, `at: left_third` being the left,
+unless her line names one; every other relation goes. A comic script does it with `(OP)`.
+
+```yaml
+cast: {bob: {reference: bob}}
+script:
+  - say: {by: caller, text: "Open up!", off_panel: left}
+  - say: {by: bob, text: "Who is it?"}
+```
+
+**See also:** [`staging[].object`](#stagingobject), [`null`](#null-leaves-something-out).
+
+### `caption`
+
+<!-- facts: caption -->
+A caption: a box in which the panel speaks in its own voice, with no tail.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAPTION:` or `CAP:` |
+| Type | a mapping |
+| Default | none |
+| Since | 0.4 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+<!-- /facts -->
+
+A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
+happens without a character having to explain it out loud -- which is the thing writers are told
+not to do. Comics solved this long before they had reliable backgrounds.
+
+It is placed by the same machinery as balloons -- the same face avoidance, the same silhouette
+cost, the same hard reading order -- because the placement principles for floating text are the
+ones the balloon solver already implements. What differs is the pull toward the frame: a balloon
+mildly dislikes hugging the panel edge, and a caption is looking for exactly that corner. A caption
+has no tail and no speaker to point at, which is why it is not a fifth kind of balloon.
+
+**Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
+lettering references describe left alignment as the norm while calling it a house preference.
+Balloons, by contrast, centre their text. Both hold in a comic read right to left: its text still
+reads left to right.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Midnight. The docks."}
+```
+
+**See also:** [`say`](#say).
+
+### `caption.text`
+
+<!-- facts: caption.text -->
+What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `CAPTION:`, or the lines under `CAP:` |
+| Type | text |
+| Default | none: required |
+| Since | 0.4 |
+| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+<!-- /facts -->
+
+As for dialogue, line breaking is computed, and a word between underscores is stressed; see
+[`say.text`](#saytext). Captions are lettered at 30 parts in 35 of the dialogue size.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "_Later._ The same corner."}
+```
+
+**See also:** [`lettering.size`](#letteringsize).
+
+### `caption.kind`
+
+<!-- facts: caption.kind -->
+What the box is doing: `locale` for a place and time, `monologue` for an inner voice, `spoken` for speech from off panel, `editorial` for the writer's voice.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `CAPTION (monologue):` |
+| Type | a name |
+| Values | `locale`, `monologue`, `spoken`, `editorial` |
+| Default | `locale` |
+| Since | 0.4 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Captions](https://creatoan.github.io/scenet/gallery.html#captions) |
+<!-- /facts -->
+
+The four kinds are the letterers' own vocabulary, taken from Blambot's *Comic Book Grammar &
+Tradition* rather than invented -- for the same reason the predicates were taken from Visual
+Genome. Note that "narration", the obvious guess, is not one of them.
+
+![Alice and Bob on the docks with four captions: a place and time, an inner voice, a line spoken off panel, and an editor's note](https://creatoan.github.io/scenet/images/gallery/16-captions.svg)
+
+| Kind | What it is | How it is set |
+|---|---|---|
+| `locale` | Location and time -- "Midnight. The docks." | Italic |
+| `monologue` | A character's inner voice | Italic |
+| `spoken` | Off-panel dialogue | Roman, in quotation marks |
+| `editorial` | The voice of the writer or editor | Italic |
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "She had walked since dawn.", kind: monologue}
+```
+
+**See also:** [`caption.by`](#captionby), [`say.kind`](#saykind).
+
+### `caption.tone`
+
+<!-- facts: caption.tone -->
+What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a name |
+| Values | `paper`, `pale`, `ink`, `warm` (since 0.13) |
+| Default | `paper` |
+| Since | 0.6 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones), [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption) |
+<!-- /facts -->
+
+A caption box is opaque, so its lettering is never the thing at risk -- the text sits on the fill
+whatever is behind it. What a tone changes is whether the **box** reads. Against the value ladder
+the `setting` block produces, a white box on a noon sky is 1.16:1: legible, and invisible.
+
+![Alice in a field under a noon sky, with three captions in three corners: a white box that all but vanishes into the sky, a grey one, and a black one lettered in white](https://creatoan.github.io/scenet/images/gallery/22-caption-tones.svg)
+
+| Tone | Fill | Where it comes from | Lettered in |
+|---|---|---|---|
+| `paper` | `#ffffff` | the paper the panel is printed on -- **the default** | ink |
+| `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
+| `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
+| `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere -- yellow under `tinted` | ink |
+
+Three of the four are rungs of the ladder in `solve/backdrop.py`, taken by index rather than
+restated as literals, so lettering and backdrop cannot drift apart as either is tuned. A tone is
+**fixed, not a function of the panel's `time`**: a caption's value is a property of the caption.
+`ink` produces what letterers call reversed type, and **the inversion is decided by the compiler**,
+by contrast, and travels in Panel Core as a resolved value -- the same rule as falling rain, which
+is inked over a bright sky and papered over a dark one.
+
+Two floors, and only the first is a rule every tone must meet:
+
+- **Lettering, 4.5:1.** A caption's text against its own fill, WCAG AA for body text. Every tone
+  clears it with room -- 18.9:1, 8.4:1, 19.9:1 and 16.3:1 respectively, and `warm` 16.4:1 on its
+  yellow.
+- **Separation, 3:1.** The box against the plane behind it. *No tone is required to clear this on
+  every rung*, and the default does not: white on a noon sky is the case that motivated the
+  feature. What the palette owes you is an escape from every background the compiler can produce
+  -- at least one tone above 3:1 for every rung of every hour -- and that is what the test suite
+  checks.
+
+`warm` is the classic yellow `locale` caption. Its value is a rung of the ladder like the others,
+and its lettering is chosen on that grey; under [`palette: tinted`](#palette) its box is
+drawn in the grey's twin, the pale yellow `#fef0a1`, of the same lightness. In `mono` it is the
+grey, which is what a black-and-white reprint does to a yellow caption. `paper`, `pale` and `ink`
+stay neutral in every palette. There is no free-form `fill:`: an open colour field would be this
+language's one open vocabulary and would let you produce an unreadable box.
+
+```yaml
+setting: {place: field, time: day}
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Noon. Nothing for miles.", tone: ink}
+```
+
+**See also:** [`setting.time`](#settingtime), [`palette`](#palette).
+
+### `caption.prefer`
+
+<!-- facts: caption.prefer -->
+Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a name |
+| Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
+| Default | none |
+| Since | 0.4 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+The same nine zones as a balloon's [`prefer`](#sayprefer), and as weak. Left out, a caption goes
+where a `locale` caption conventionally does: where reading starts, the top left, or the top right
+in a comic read right to left.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Continued next issue.", kind: editorial, prefer: bottom_right}
+```
+
+**See also:** [`direction`](#direction).
+
+### `caption.by`
+
+<!-- facts: caption.by -->
+Who is speaking, for a `spoken` caption only: any name, in the cast or not.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAP/ALICE`, or `ALICE (V.O.)` |
+| Type | text |
+| Default | none |
+| Since | 0.4 |
+| Diagnostics | `invalid-field`, `caption-speaker` |
+<!-- /facts -->
+
+**`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
+who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
+requiring them to be cast would defeat the purpose. It is accepted only on `spoken`; on any other
+kind it is `caption-speaker`.
+
+**Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
+captions by one speaker, each opens with a quote and only the last one closes -- the run is one
+continuous line of off-panel speech, and closing every box would read as a series of
+interruptions. A change of speaker ends the run, so each speaker's last box closes, as Blambot
+asks. Write the words; the marks are lettering.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Don't look back.", kind: spoken, by: mother}
+```
+
+**See also:** [`say.off_panel`](#sayoff_panel), a balloon spoken from off panel.
 
 ### `sfx`
 
+<!-- facts: sfx -->
+A sound effect: letters lettered into the picture, with no balloon.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX: BLAM` |
+| Type | a mapping |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `sfx-placement` |
+| In the gallery | [Sound effects](https://creatoan.github.io/scenet/gallery.html#sound-effects) |
+<!-- /facts -->
+
 A sound effect is letters treated as picture. `BLAM` is not dialogue: comics letter sound big,
-angled and outlined, near where it happens, with no balloon.
+angled and outlined, near where it happens, with no balloon. It is lettered in the **display
+face**, Bangers unless [`lettering.font.display`](#letteringfontdisplay) names
+another. A solid effect is ink with a paper outline around every letter, so it reads over light art
+and dark alike. The arc and the rotation are applied to the glyph outlines, so they come out the
+same in every viewer.
 
 ![Alice and Bob with three sound effects lettered into the picture: KRAK, tok tok tok and WHOOSH](https://creatoan.github.io/scenet/images/gallery/30-sound-effects.svg)
 
-**In the gallery:** [Sound effects](https://creatoan.github.io/scenet/gallery.html#sound-effects) and [A sound pulled to a zone](https://creatoan.github.io/scenet/gallery.html#a-sound-pulled-to-a-zone).
+**It is placed, never positioned.** As with every box, the compiler tries candidate positions --
+around the actor it comes from, around the zone it prefers, the middle of every zone -- and keeps
+the cheapest. It **never covers a face**, never leaves the panel or lies under an inset, and two
+effects never overlap; it may cover a figure, and prefers its own source's to anyone else's. When
+nothing fits, it is `sfx-placement`.
+
+**Balloons pay to cover it, and nobody moves for it.** Effects are placed before any balloon or
+caption, since they are part of the picture; a balloon or caption then pays to cover one, exactly
+as it pays to cover emanata, and is never forbidden to. No figure and no framing changes.
 
 ```yaml
 cast:
   alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
+  bob: {reference: bob, at: right_third, facing: left}
 script:
   - say: {by: alice, text: "Get down!"}
   - sfx: {text: BLAM, from: bob, size: large, rotate: -14}
-  - sfx: {text: tok tok tok, prefer: top_right, size: small, arc: 30}
 ```
 
-| Key | Type | Meaning |
-|---|---|---|
-| `text` | string | The sound, lettered exactly as written |
-| `from` | actor id | Who or what it comes from; it is placed near them |
-| `prefer` | zone | Where it would like to sit, with no source, or as a pull with one |
-| `size` | `small`, `medium`, `large` | How loud: 1.6, 2.6 or 4 times the dialogue type size. Defaults to `medium` |
-| `rotate` | degrees, -45 to 45 | Turned clockwise. Defaults to level |
-| `arc` | degrees, -120 to 120 | Bent along a curve: positive bows the middle up, negative down |
-| `hollow` | `true` or `false` | All outline and no fill, so the art shows through |
+**See also:** [`cast.<id>.marks`](#castidmarks), the other picture a balloon pays to cover.
 
-It is lettered in the **display face**, Bangers, which ships with Scenet; `lettering.font` can name
-another as `display:`. A solid effect is ink with a paper outline around every letter, so it reads
-over light art and dark alike; a hollow one is the outline alone, in ink. The arc and the rotation
-are applied to the glyph outlines, not handed to a renderer, so they come out the same everywhere.
+### `sfx.text`
 
-**It is placed, never positioned.** As with every box, the compiler tries candidate positions —
-around the actor it comes from, around the zone it prefers, the middle of every zone — and keeps the
-cheapest. It **never covers a face**, never leaves the panel or lies under an inset, and two effects
-never overlap; it may cover a figure, and prefers its own source's to anyone else's. When nothing
-fits, it is reported as `sfx-placement`.
+<!-- facts: sfx.text -->
+The sound, lettered exactly as written, in the display face.
 
-**Balloons pay to cover it, and nobody moves for it.** Effects are placed before any balloon or
-caption, since they are part of the picture; a balloon or caption then pays to cover one, exactly as
-it pays to cover emanata, and is never forbidden to. No figure and no framing changes.
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `SFX:`, or the line under it |
+| Type | text |
+| Default | none: required |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `missing-field` |
+<!-- /facts -->
 
-Size is a multiple of the type size, not of the figure, so an effect reads at a long shot as well as
-at a close-up. Nothing is added to the text: no exclamation mark, since sound effects are not
-exclamations, and no emphasis — an underscore here is just an underscore.
+Nothing is added to the text: no exclamation mark, since sound effects are not exclamations, and no
+emphasis -- an underscore here is just an underscore. Write it in capitals or not, as the sound
+should read.
 
-### Reading order is enforced, not suggested
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: tok tok tok, size: small}
+```
 
-Balloons and captions are placed in script order, in one pass, and a box may never sit
-above-and-left of the one before it — above-and-*right*, in a comic read right to left (see
-[`direction`](#direction)). Violating this is not a cosmetic flaw: it makes the panel read
-in the wrong order, which is a correctness bug in a comic. The constraint is therefore hard, and a
-panel whose boxes cannot be placed without breaking it is rejected rather than rendered wrongly.
+**See also:** [`sfx.size`](#sfxsize).
 
-![Four balloons, First, Second, Third and Fourth, placed so that they read in that order](https://creatoan.github.io/scenet/images/gallery/06-reading-order.svg)
+### `sfx.from`
 
-**In the gallery:** [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order).
+<!-- facts: sfx.from -->
+Written `from`: the actor id the sound comes from, which it is placed near.
 
-Captions take their turn in that sequence rather than being placed first as a layer. A caption
-written between two lines of dialogue is read between them; one written last is read last.
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (BOB): KRAK` |
+| Type | text |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `unknown-actor` |
+<!-- /facts -->
 
-A sound effect takes its number in the same sequence — which is the order a reader of the text, or a
-screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
-holding it to above-and-left would make many panels impossible to letter. Read right to left, it
-stays exempt, and stays where it was: a sound is part of the picture, which is not mirrored.
+Written `from`, the actor the sound comes from. The effect is tried around them first, and prefers
+to cover its own source's figure over anyone else's. Left out, the effect is placed by its
+`prefer`, or anywhere it fits.
 
-That sequence is what a screen reader hears. Every SVG names each panel with its
-[description](#description) and then every balloon, caption and sound effect in this order —
-`Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` — whatever order
-they are painted in; see [accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html).
+```yaml
+cast: {bob: {reference: bob}}
+script:
+  - sfx: {text: KRAK, from: bob}
+```
+
+**See also:** [`sfx.prefer`](#sfxprefer).
+
+### `sfx.prefer`
+
+<!-- facts: sfx.prefer -->
+Where the effect would like to sit, one of nine zones of the panel: on its own, or as a pull on an effect that has a `from`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a name |
+| Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [A sound pulled to a zone](https://creatoan.github.io/scenet/gallery.html#a-sound-pulled-to-a-zone) |
+<!-- /facts -->
+
+With no `from`, the zone the effect would like to sit in. With one, a pull: the effect stays near
+its source and leans toward the zone.
+
+![A sound placed by who makes it but pulled toward the zone it prefers, turned clockwise or the other way](https://creatoan.github.io/scenet/images/gallery/43-sound-pulled-to-a-zone.svg)
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: WHOOSH, from: alice, prefer: top_right}
+```
+
+**See also:** [`say.prefer`](#sayprefer), every zone.
+
+### `sfx.size`
+
+<!-- facts: sfx.size -->
+How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (large): KRAK` |
+| Type | a name |
+| Values | `small`, `medium`, `large` |
+| Default | `medium` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+A multiple of the type size, not of the figure, so an effect reads at a long shot as well as at a
+close-up: a sound does not get quieter because the camera stepped back. Three steps, not a number,
+for the reason every other size in the language is named -- the author says how loud, the compiler
+says how big.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: BOOM, size: large}
+```
+
+**See also:** [`lettering.size`](#letteringsize).
+
+### `sfx.rotate`
+
+<!-- facts: sfx.rotate -->
+How far the effect is turned clockwise, in degrees, from -45 to 45.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a number |
+| Values | -45 to 45 |
+| Default | `0` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+Comics angle their sound effects; the default is level, and the angle is the author's. Positive
+turns the effect clockwise, negative the other way.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: SLAM, rotate: 20}
+```
+
+**See also:** [`sfx.arc`](#sfxarc).
+
+### `sfx.arc`
+
+<!-- facts: sfx.arc -->
+How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle up, negative down.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | a number |
+| Values | -120 to 120 |
+| Default | `0` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+The line of letters bends through this many degrees: positive bows its middle up, negative down.
+The letters are bent as outlines, each set along the curve.
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: BOING, arc: 60}
+```
+
+**See also:** [`sfx.rotate`](#sfxrotate).
+
+### `sfx.hollow`
+
+<!-- facts: sfx.hollow -->
+`true` letters the effect as an outline with no fill, so the art shows through: an open effect.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Type | `true` or `false` |
+| Default | `false` |
+| Since | 0.11 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+An open effect is all outline, in ink, and no fill, so the art behind shows through the letters --
+what letterers draw for a sound that should not hide the picture.
+
+```yaml
+setting: {place: street, time: night}
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: WHOOSH, hollow: true}
+```
+
+**See also:** [`sfx`](#sfx).
 
 ## `description`
 
-What the panel shows, in words, for a reader who cannot see it.
+<!-- facts: description -->
+What the panel shows, in words, for a reader who cannot see it. Carried into the SVG as its accessible name and never interpreted. Not inherited: a panel drawn `over:` another is a different picture. Left out, one is generated from the shot, the setting and the cast.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the panel's prose, or `@description:` |
+| Type | text |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `invalid-field`, `unknown-key` |
+| In the gallery | [A description](https://creatoan.github.io/scenet/gallery.html#a-description) |
+<!-- /facts -->
+
+What the panel shows, in words, for a reader who cannot see it: one paragraph of prose. Runs of
+whitespace, line breaks included, are read as one space.
 
 ![Late at night, Bob points at something off to the side, beaming, while Alice watches him, bored](https://creatoan.github.io/scenet/images/gallery/45-a-description.svg)
 
-**In the gallery:** [A description](https://creatoan.github.io/scenet/gallery.html#a-description).
+**It is carried, never interpreted.** Nothing is drawn from it -- the rain comes from `setting`,
+the exasperation from `expression` -- exactly as a comic script's prose is never read by the
+compiler. What it is for is accessible output: it is the panel's accessible name, the first thing
+a screen reader says about it, before what is said in it, in
+[reading order](#script).
 
-```yaml
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
-description: Alice and Bob face each other on a rainy street corner. She is exasperated.
-```
-
-| Key | Type | Meaning |
-|---|---|---|
-| `description` | text | One paragraph of prose. Runs of whitespace, line breaks included, are read as one space |
-
-**It is carried, never interpreted.** Nothing is drawn from it — the rain comes from `setting`, the
-exasperation from `expression` — exactly as a comic script's prose is never read by the compiler.
-What it is for is accessible output: it is the first thing a screen reader says about the panel,
-before what is said in it.
-
-In a [comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#prose-is-never-interpreted) a panel's prose is
-its description, unless an `@description:` directive says something else. Left out, accessible
-output says what the panel holds — the shot, the setting, and who is where, doing what.
+In a [comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#prose-is-never-interpreted) a panel's
+prose is its description, unless an `@description:` directive says something else. Left out,
+accessible output says what the panel holds -- the shot, the setting, and who is where, doing
+what.
 
 **It describes one panel**, so it is never inherited:
 
@@ -994,98 +2120,264 @@ output says what the panel holds — the shot, the setting, and who is where, do
 - a panel drawn `over:` another does not take its parent's. It is a different picture, and the
   parent's words would be wrong to exactly the reader who cannot see that they are.
 
-An empty one is refused, since it would describe the panel with nothing; leave it out instead. Like
-dialogue, it may not hold a character an SVG cannot hold.
+An empty one is refused, since it would describe the panel with nothing; leave it out instead.
+Like dialogue, it may not hold a character an SVG cannot hold.
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_third, expression: bored}
+  bob: {reference: bob, at: right_third, facing: left, pose: pointing}
+description: Bob points at something out of the frame. Alice has heard it all before.
+```
+
+**See also:** [Make accessible output](https://creatoan.github.io/scenet/howto/make_accessible_output.html),
+[`direction`](#direction), which orders who the generated description names first.
 
 ## `lettering`
 
-How the lettering is set: its size, and the face it is set in.
+<!-- facts: lettering -->
+How the lettering is set: the dialogue type size, and the font files.
 
-![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](https://creatoan.github.io/scenet/images/gallery/14-lettering.svg)
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+<!-- /facts -->
 
-**In the gallery:** [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break) and [Type size](https://creatoan.github.io/scenet/gallery.html#type-size).
+How the lettering is set: its size, and the face it is set in. Both are the author's to choose,
+and the compiler measures every line against exactly what was chosen, because a balloon's size
+decides where it can go.
 
-*Part of a panel beside fonts/:*
+![A page of two panels of Alice and Bob in the rain, a long shot and a medium shot, every balloon and the caption lettered at the one type size the page sets](https://creatoan.github.io/scenet/images/gallery/29-type-size.page-1.svg)
+
+Set beside `panels:`, lettering is a default every panel inherits, which is how a whole page
+letters at one size you chose. Set on one panel, it letters that panel alone. In a comic script,
+put it in the front matter for every panel, or in an `@lettering:` directive for one.
 
 ```yaml
-lettering:
-  size: 30
-  font: {regular: fonts/Comic-Regular.ttf, italic: fonts/Comic-Italic.ttf}
+lettering: {size: 46}
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Big type, for a children's comic."}
 ```
 
-| Key | Type | Meaning |
-|---|---|---|
-| `size` | number above 0 | The dialogue type size, in panel units. Captions keep their proportion to it, 30 parts in 35 |
-| `font` | path, or `regular`, `italic`, `bold_italic`, `display` | The font files to letter in, relative to the document |
+**See also:** [`say.text`](#saytext), which line breaking is measured for;
+[Letter in your own font](https://creatoan.github.io/scenet/howto/letter_in_your_own_font.html).
+
+### `lettering.size`
+
+<!-- facts: lettering.size -->
+The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left out, 3.5% of the height the panel letters against: its own, or one tier of a three-tier page.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | a number |
+| Values | above 0 |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `balloon-placement` |
+| In the gallery | [Type size](https://creatoan.github.io/scenet/gallery.html#type-size) |
+<!-- /facts -->
 
 Left out, dialogue is lettered at 3.5% of the height the panel letters against and captions at
-3% — the panel's own height alone, one tier of a three-tier page on a page. That is a good default
-and a bad only choice: a page of tight panels wants smaller type, a children's comic larger, and
-neither is something the compiler should guess.
+3% -- the panel's own height when it stands alone, and one tier of a three-tier page when it is
+on a page, so that no letterer's short panel and tall panel are set at two sizes. That is a good
+default and a bad only choice: a page of tight panels wants smaller type, a children's comic
+larger, and neither is something the compiler should guess.
 
-`size` is in the same units as `panel.size`, which on a page are the page's, since a panel there is
-compiled at its frame's size. Set beside `panels:`, it is a default every panel inherits, which is
-how a whole page letters at one size you chose. Set on one panel, it letters that panel alone. In a
-comic script, put it in the front matter for every panel, or in an `@lettering:` directive for one.
+`size` is in the units of `panel.size`, which on a page are the page's, since a panel there is
+compiled at its frame's size. Captions keep their proportion to it, 30 parts in 35; a line
+written `size: small` and a sound effect are measured from it too.
 
-The type is measured at exactly this size, so it decides how big every balloon is. A size too large
-for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
+The type is measured at exactly this size, so it decides how big every balloon is. A size too
+large for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
 `balloon-placement`.
 
-### `font`
+```yaml
+lettering: {size: 24}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+script:
+  - say: {by: alice, text: "Small type leaves the picture room to breathe."}
+  - say: {by: bob, text: "And the balloons room to move."}
+```
 
-Scenet letters in Source Sans Pro unless you name a face of your own. A font is always a **file you
-name**, never a font installed on the machine: what is measured has to be the same everywhere, or the
-same document would letter differently on two computers.
+**See also:** [`say.size`](#saysize), [`sfx.size`](#sfxsize).
+
+### `lettering.font`
+
+<!-- facts: lettering.font -->
+The font files to letter in, relative to the document: one file for every face, or one for each. Left out, Source Sans Pro.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | text, or a mapping |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `font-file` |
+| In the gallery | [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font) |
+<!-- /facts -->
+
+Scenet letters in Source Sans Pro unless you name a face of your own. A font is always a **file
+you name**, never a font installed on the machine: what is measured has to be the same
+everywhere, or the same document would letter differently on two computers. Write one file for
+every face, `font: fonts/Comic-Regular.ttf`, or a mapping with a file for each.
 
 ![Two panels of Alice and Bob lettered in Comic Neue: dialogue, a caption and the sound CLUNK](https://creatoan.github.io/scenet/images/gallery/42-your-own-font.strip.svg)
 
-**In the gallery:** [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font).
+- **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
+  `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out
+  of it. An absolute path is refused, so a document and its fonts move together, and a server
+  compiling documents it is sent cannot be pointed at its own files. Folders are separated by `/`,
+  never `\`, which only Windows reads as a separator: a backslash is refused, so a document finds
+  its files on every system or on none. Text compiled with no file behind it -- by the MCP
+  server, say -- has no folder, so it can name a font only when its caller says which folder it
+  belongs to, or sends the file with it.
+- **TrueType or OpenType**, with a Unicode character map, since every line is measured against
+  it -- kerning included. A path that is absolute, missing, or not such a font is reported as
+  `font-file`, at the face that names it.
+- **A face you do not name stands in from one you do**, and the compiler says so when a stand-in
+  is used; see each face's card below. A family from one file stays one family, rather than
+  mixing your face with the shipped one.
 
-*Part of a panel beside fonts/:*
+Panel Core records each face by its family, style and a digest of its bytes, never by where the
+file was; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html). Rendering needs the same files, and refuses a panel
+whose fonts it was not given rather than draw its lettering in a face it was not measured in.
+`scenet build` and the playground hand them over for you. `--live-text` names your font's family.
+
+The faces letterers use are mostly commercial, or free only on their own terms. You can name one;
+Scenet can only ship a face whose licence allows it, which is why Source Sans Pro, under the SIL
+Open Font License, is the default. In the
+[playground](https://creatoan.github.io/scenet/playground/), **Font…** adds a file to the
+document's `fonts/` folder for as long as the tab is open.
 
 ```yaml
-lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
+lettering: {font: fonts/ComicNeue-Regular.ttf}
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "One file, every face."}
 ```
 
-Or a file for each face:
+**See also:** [Letter in your own font](https://creatoan.github.io/scenet/howto/letter_in_your_own_font.html).
 
-*Part of a panel beside fonts/:*
+### `lettering.font.regular`
+
+<!-- facts: lettering.font.regular -->
+The font file dialogue and `spoken` captions are lettered in, relative to the document. Written alone, as `font: fonts/Comic.ttf`, it letters every face.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `missing-field`, `font-file` |
+<!-- /facts -->
+
+The face italic and bold italic stand in from, when they are not named. It is the only face a
+mapping must name, and writing `font:` as one path is writing this one.
+
+```yaml
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf}
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Dialogue in Comic Neue."}
+```
+
+**See also:** [`lettering.font.italic`](#letteringfontitalic).
+
+### `lettering.font.italic`
+
+<!-- facts: lettering.font.italic -->
+The font file every caption but a `spoken` one is lettered in. Left out, they are set in `regular`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `font-file` |
+<!-- /facts -->
+
+Italic is what `locale`, `monologue` and `editorial` captions are set in, and what emphasis falls
+back to when there is no bold italic. A real italic file, never a slant applied to the roman: a
+synthetic slant would be measured as the roman and drawn as neither.
+
+```yaml
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf, italic: fonts/ComicNeue-Italic.ttf}
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Later. The same corner."}
+```
+
+**See also:** [`caption.kind`](#captionkind), which decides which captions are italic.
+
+### `lettering.font.bold_italic`
+
+<!-- facts: lettering.font.bold_italic -->
+The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic`, or `regular` when there is no italic, and a note says so.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `font-file` |
+<!-- /facts -->
+
+A word written between underscores is stressed, and lettered in bold italic, the letterers'
+convention for it. The stressed word is measured in this face too, so it widens its balloon by
+exactly as much as it is drawn wider.
 
 ```yaml
 lettering:
   font:
-    regular: fonts/Comic-Regular.ttf                 # dialogue, and spoken captions
-    italic: fonts/Comic-Italic.ttf                   # every other caption kind
-    bold_italic: fonts/Comic-BoldItalic.ttf          # emphasis
-    display: fonts/Shout.ttf                         # sound effects
+    regular: fonts/ComicNeue-Regular.ttf
+    bold_italic: fonts/ComicNeue-BoldItalic.ttf
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "I _told_ you."}
 ```
 
-- **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
-  `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out of
-  it. An absolute path is refused, so a document and its fonts move together, and a server compiling
-  documents it is sent cannot be pointed at its own files. Folders are separated by `/`, never `\`,
-  which only Windows reads as a separator: a backslash is refused, so a document finds its files
-  on every system or on none. Text compiled with no file behind it — by
-  the MCP server, say — has no folder, so it can name a font only when its caller says which
-  folder it belongs to, or sends the file with it.
-- **A face you do not name stands in from one you do.** Italic captions are set in `regular`;
-  emphasis in `italic`, or in `regular` when there is no italic. A family from one file stays one
-  family, rather than mixing your face with the shipped one. When a stand-in is actually used, the
-  compiler says so.
-- **TrueType or OpenType**, with a Unicode character map, since every line is measured against it
-  — kerning included. A path that is absolute, missing, or not such a font is reported as
-  `font-file`, at the face that names it.
+**See also:** [`say.text`](#saytext), where emphasis is written.
 
-Panel Core records each face by its family, style and a digest of its bytes, never by where the file
-was; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html). Rendering needs the same files, and refuses a panel whose
-fonts it was not given rather than draw its lettering in a face it was not measured in. `scenet
-build` and the playground hand them over for you. `--live-text` names your font's family.
+### `lettering.font.display`
 
-The faces letterers use are mostly commercial, or free only on their own terms. You can name one;
-Scenet can only ship a face whose licence allows it, which is why Source Sans Pro, under the SIL
-Open Font License, is the default. In the [playground](https://creatoan.github.io/scenet/playground/),
-**Font…** adds a file to the document's `fonts/` folder for as long as the tab is open.
+<!-- facts: lettering.font.display -->
+The font file sound effects are lettered in. Left out, the shipped display face, Bangers, whatever the other faces are.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@lettering:` in a panel, or `lettering:` in the front matter |
+| Type | text |
+| Default | none |
+| Since | 0.11 |
+| Diagnostics | `invalid-field`, `font-file` |
+<!-- /facts -->
+
+Sound effects are letters that are part of the picture, so they have a face of their own, and it
+does not stand in from `regular`: left out, effects are lettered in Bangers, which ships with
+Scenet, whatever the dialogue is set in.
+
+```yaml
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf, display: fonts/ComicNeue-Bold.ttf}
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: CLUNK, from: alice}
+```
+
+**See also:** [`sfx`](#sfx).
 
 ### Capitals are yours to set
 
@@ -1098,28 +2390,26 @@ not pick it here either. Write in capitals if you want them.
 
 ## `direction`
 
+<!-- facts: direction -->
+Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; beside `panels:`, for every panel. In a comic script: the front matter only |
+| Type | a name |
+| Values | `ltr`, `rtl` |
+| Default | `ltr` |
+| Since | 0.12 |
+| Diagnostics | `invalid-field`, `panel-direction` |
+| In the gallery | [Right to left](https://creatoan.github.io/scenet/gallery.html#right-to-left), [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right) |
+<!-- /facts -->
+
 Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the
 top right, as manga are. It is the comic's **progression**, not the direction of its text: a manga
 translated into English still reads right to left, while the words in each balloon read left to
 right. Vertical Japanese lettering is not part of it.
 
 ![A page of eight panels read from the top right: Hana and Ken on a street at night, in the rain](https://creatoan.github.io/scenet/images/gallery/36-right-to-left.page-1.svg)
-
-**In the gallery:** [Right to left](https://creatoan.github.io/scenet/gallery.html#right-to-left) and [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right).
-
-```yaml
-direction: rtl
-cast:
-  hana: {reference: alice, at: right_third, facing: left}
-  ken: {reference: bob, at: left_third}
-script:
-  - say: {by: hana, text: You came.}
-  - say: {by: ken, text: You called.}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `direction` | `ltr` or `rtl` | `ltr` |
 
 The words are EPUB's, whose `page-progression-direction` says the same thing about a book. Like
 EPUB's, it is said **once, for the whole document**: at the top of a single panel, beside
@@ -1135,10 +2425,10 @@ panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`
 
 What follows it, in a panel:
 
-- **[Reading order](#reading-order-is-enforced-not-suggested)**: a box may never sit above and
+- **[Reading order](#script)**: a box may never sit above and
   *right* of one before it.
 - **Where an unplaced box would rather start**: a caption with no `prefer`, and a voice from
-  [off panel](#off-panel-speech) with no side named, go top right — where reading starts.
+  [off panel](#sayoff_panel) with no side named, go top right — where reading starts.
 - **Every tiebreak reading decides.** When two places cost exactly the same, the one tried first
   wins, and right to left they are tried in the mirrored order. So the mirror image of a panel,
   read right to left, is lettered as the exact mirror of the original read left to right.
@@ -1149,26 +2439,41 @@ And on a [page](#page-and-pages): each tier's panels from the right, the pages o
 by side from the right, and a strip from the right — each still written in reading order, the
 order a screen reader follows.
 
+```yaml
+direction: rtl
+cast:
+  hana: {reference: alice, at: right_third, facing: left}
+  ken: {reference: bob, at: left_third}
+script:
+  - say: {by: hana, text: You came.}
+  - say: {by: ken, text: You called.}
+```
+
+**See also:** [A manga, right to left](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#a-manga-right-to-left),
+the reading order of a [script](#script).
+
 ## `palette`
+
+<!-- facts: palette -->
+What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each value in a colour with the same lightness. Colour never changes a value, so a tinted panel is, in monochrome, the mono one. Inherited like any default; a panel may have its own.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@palette:` in a panel, or `palette:` in the front matter |
+| Type | a name |
+| Values | `mono`, `tinted` |
+| Default | `mono` |
+| Since | 0.13 |
+| Diagnostics | `invalid-field` |
+| In the gallery | [Every hour in colour](https://creatoan.github.io/scenet/gallery.html#every-hour-in-colour), [A flashback in grey](https://creatoan.github.io/scenet/gallery.html#a-flashback-in-grey) |
+<!-- /facts -->
 
 What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
 
-```yaml
-cast: {alice: {reference: alice}}
-palette: tinted
-setting: {place: docks, time: dusk}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `palette` | `mono` or `tinted` | `mono` |
-
 ![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](https://creatoan.github.io/scenet/images/gallery/40-tinted-hours.page-1.svg)
 
-**In the gallery:** [Every hour in colour](https://creatoan.github.io/scenet/gallery.html#every-hour-in-colour) and [A flashback in grey](https://creatoan.github.io/scenet/gallery.html#a-flashback-in-grey).
-
 **Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
-[ladder](#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
+[ladder](#settingtime) is drawn in a colour with the same OKLab lightness, on the same rung, at
 the same hour. In monochrome a tinted panel is the mono one, value for value: the ladder stays
 monotonic in depth, and every contrast floor still holds — checked on the colours themselves, which
 weigh a little less than their greys in WCAG's luminance.
@@ -1189,7 +2494,7 @@ Chroma is capped at what a screen can show at each lightness, and that cap, not 
 drains the colour out of the dark end of night and out of a noon sky.
 
 **What it tints:** the masses of a setting, the veil of fog or cloud, falling rain, and the box of a
-[`warm` caption](#caption). **What it never tints:** snow, which is white by convention, the paper, the
+[`warm` caption](#captiontone). **What it never tints:** snow, which is white by convention, the paper, the
 puppets, a supplied picture, and all lettering — balloons, the words in captions, and sound effects.
 Lettering stays on the black plate a printer wants it on.
 
@@ -1217,187 +2522,1842 @@ document invalid.
 **There is no free-form colour.** `palette` is a closed set of names for the same reason `tone` is:
 an open colour would be the language's one open vocabulary, and would let a value break the ladder.
 
+```yaml
+palette: tinted
+setting: {place: docks, time: dusk}
+cast: {alice: {reference: alice}}
+```
+
+**See also:** [`setting.time`](#settingtime), whose hour each palette colours;
+[`caption.tone`](#captiontone); `scenet build --mono` in the
+[command line](https://creatoan.github.io/scenet/reference/cli.html#scenet-build).
+
+## Scene documents
+
+A `.scene.yaml` holds several panels. Each is written under `panels:`, by a name, with the keys a
+`.panel.yaml` takes; and anything written beside `panels:` is a default every panel inherits. A
+panel may also be written `over` another, and state only what differs from it. A scene may then lay
+its panels out on [pages](#page-and-pages).
+
+![Three panels of Alice and Bob, the camera moving in from a full shot to a close-up as Bob answers her, each panel written as what changes from the one before](https://creatoan.github.io/scenet/images/gallery/12-sequence.strip.svg)
+
+What a panel is, then, is three layers, each over the one before: the scene's defaults, the panel it
+is `over` (and that panel's own parent, as far as the chain goes), and the panel's own keys. A chain
+that names a panel that does not exist, or comes back to where it started, is `composition`.
+
+### How a panel inherits
+
+Two rules, and they are worth knowing precisely, with a third that takes something away:
+
+- **Mappings merge recursively.** Overriding one actor's pose leaves the rest of that actor, and
+  every other actor, alone: `cast: {alice: {pose: arms_crossed}}` keeps Alice's `reference` and
+  `at`.
+- **Lists replace wholesale.** Give a panel its own `staging:` and you replace the parent's entirely
+  -- there is no appending. A list has no keys to merge on, and guessing at identity by position
+  would be worse than a clear rule. So `marks: []` clears the marks a member inherited.
+- **`null` leaves something out**; see [below](#null-leaves-something-out).
+
+Two keys do not follow the rules. A [`description`](#description) says what one
+picture shows, so it is never a default and never inherited: beside `panels:` it is `unknown-key`,
+and a panel drawn `over` another writes its own or has one generated. And
+[`direction`](#direction) is only ever the document's: on a panel it is
+`panel-direction`, since a sequence is read one way throughout.
+
+### `null` leaves something out
+
+A `null` removes what a panel would have inherited, as JSON Merge Patch
+([RFC 7386](https://www.rfc-editor.org/rfc/rfc7386)) has it -- "If the value is null, remove". It
+reaches whatever lies beneath, the panel it is `over` and the scene's defaults alike, at any depth
+reached through mappings: `camera: null`, `cast: {bob: null}`, `setting: {place: null}`.
+
+A cast member who goes takes every staging relation that names them along, since none can hold in a
+panel they are not in, and `scenet check` notes each one as `dropped-relation`. All but one, while
+the member left out is heard from off panel: `bob looking_at carol` still holds when Carol speaks
+`off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
+merged into.
+
+```yaml
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+staging: [alice left_of bob]
+panels:
+  both: {}
+  alone:
+    cast: {bob: null}
+```
+
+### `panels`
+
+<!-- facts: panels -->
+Panels in reading order. Each may inherit from another with `over`.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. In a comic script: the script's `PANEL` headings |
+| Type | a mapping |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `composition` |
+<!-- /facts -->
+
+The panels, in reading order: the order they are written in is the order a strip draws them and a
+screen reader reads them, unless pages lay them out. A name is text, as an actor id is, and is
+written once: two panels of one name are `duplicate-key`. Everything a `.panel.yaml` takes may be
+written under each, and `over` besides.
+
+```yaml
+panel: {size: [700, 500]}
+cast: {alice: {reference: alice}}
+panels:
+  first: {camera: {shot: full_shot}}
+  second: {camera: {shot: close_up}}
+```
+
+**See also:** [`pages`](#pages), [Compile a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html).
+
+### `over`
+
+<!-- facts: over -->
+Name of a panel to inherit from. Only the differences need stating: mappings merge recursively and lists replace.
+
+| | |
+|---|---|
+| Where | A panel under `panels:`. In a comic script: `@over:` in a panel |
+| Type | text |
+| Default | none |
+| Since | 0.1 |
+| Diagnostics | `invalid-field`, `composition` |
+| In the gallery | [A sequence](https://creatoan.github.io/scenet/gallery.html#a-sequence) |
+<!-- /facts -->
+
+The keyword is borrowed from [OpenUSD's composition arcs](https://creatoan.github.io/scenet/explanation/prior_art.html), where
+`over` means exactly this: name a parent, then state the difference. A comic script writes it as an
+`@over:` directive. The parent need not be earlier in the document, nor on a page: a panel may
+exist only to be inherited from.
+
+```yaml
+panels:
+  establishing:
+    camera: {shot: full_shot}
+    cast:
+      alice: {reference: alice, at: left_third}
+      bob: {reference: bob, at: right_third, facing: left}
+    staging: [alice left_of bob]
+  reaction:
+    over: establishing
+    camera: {shot: close_up}
+```
+
+**See also:** [How a panel inherits](#how-a-panel-inherits),
+[One panel over another](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#one-panel-over-another).
+
 ## `page` and `pages`
 
 A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
-**tiers**, top to bottom; each tier is a list of panels, in reading order — left to right, or right
-to left for a comic read that way. `page:` is the
-format they share.
+tiers, top to bottom; each tier is a list of panels, in reading order -- left to
+right, or right to left for a comic read that way. `page:` is the format they share.
 
 ![The first of two pages: three panels of Alice and Bob in a street, laid out in tiers](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-1.svg)
 ![The second page of the same document, its panels named by page and number, one with an inset](https://creatoan.github.io/scenet/images/gallery/48-two-pages.page-2.svg)
 
-**In the gallery:** [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages), [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) and [Panels that bleed](https://creatoan.github.io/scenet/gallery.html#panels-that-bleed).
+A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but not
+`pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
 
-A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
-not `pages:`. See [Write a panel as a comic script](https://creatoan.github.io/scenet/howto/write_a_comic_script.html#pages).
+Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is
+divided in proportion to the weights. A splash page is one tier holding one panel.
 
-A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
-unquoted `1:` as a number, so a panel named by its number is written `'1':`.
+**A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at
+that size: the page decides how big the frame is and nothing about what goes in it. The one other
+thing it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on
+a page every panel letters at the same size, as if each were one tier of a three-tier page, because
+no letterer sets a short panel and a tall one at different sizes. A size you set with
+[`lettering`](#lettering) takes its place.
 
-*Part of a scene document:*
+A page is read tier by tier, left to right, and down each column, so the order panels are written
+in is the order they are read in; that holds by construction. A panel can be on one page once. A
+panel on no page is allowed, and compiles as it always did; it may exist only to be inherited from
+with `over:`. Everything a page cannot lay out is `page-layout`, naming what and where.
+
+Not yet: frames of any other shape, such as round panels or ones without borders.
+
+### `page`
+
+<!-- facts: page -->
+The format every page shares: its size, margin, gutters and bleed.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. In a comic script: `page:` in the front matter |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `page-layout` |
+<!-- /facts -->
+
+The format is the document's: written once beside `panels:`, it is every page's. It is not a
+panel's default, so a panel under `panels:` does not write it.
 
 ```yaml
-page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+page: {size: [1000, 700], margin: 50}
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
 pages:
   - tiers:
-      - panels: [{use: establishing, width: 2}, reply]
-      - {height: 1.2, panels: [closer]}
-      - panels: [her, him]
-panels:
-  establishing: {...}
-  reply: {...}
+      - panels: [one, two]
 ```
 
-| Key | Means | Default |
-|---|---|---|
-| `page.size` | Width and height, in the units a panel uses: the trim, the size the printed page is cut to | `[2000, 3000]` |
-| `page.margin` | The blank border inside the page edge | `100` |
-| `page.gutter` | The gap between two panels side by side in a tier | `40` |
-| `page.tier_gutter` | The gap between two tiers; wider than `gutter`, as in print | `60` |
-| `page.bleed` | How far the printed sheet runs past the trim on every side, so art reaching the edge can be cut cleanly | `0` |
-| `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
-| `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
-| `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
-| `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
-| `tiers[].slant` | How far the gutters between its panels lean, in degrees, -30 to 30; positive leans the top right | `0` |
-| `columns[].width` | The column's share of its tier's width | `1` |
-| `columns[].panels[].height` | The panel's share of its column's height | `1` |
-| `insets[].use` | On any panel in a tier or column: a panel set into one of its corners | |
-| `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
-| `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
-| `insets[].read` | `after` its parent, or `before` it | `after` |
-| `panels[].bleed`, `columns[].panels[].bleed` | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of sides, such as `[top, left]` | `false` |
+**See also:** [`pages`](#pages), [Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
 
-Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
-proportion to the weights. A splash page is one tier holding one panel.
+### `page.size`
+
+<!-- facts: page.size -->
+The page's width and height: the trim, the size the printed page is cut to, in the units a panel uses. Printed, a unit is a tenth of a millimetre.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[2000, 3000]` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) |
+<!-- /facts -->
 
 **Printed, a unit is a tenth of a millimetre.** The default page prints at 200 × 300 mm; a US
 comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6 is
-`size: [1280, 1820]`. `bleed` is in the same units: `30` is 3 mm, `31.75` is the 0.125 in US
-printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
-page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
-before.
+`size: [1280, 1820]`. It is the trim: the size the printed page is cut to. The SVG page is drawn at
+its trim.
 
-**A panel can bleed**: its frame runs past the trim, out to the bleed line, and has no
-border on that side, so its art goes to the edge of the cut page.
-
-![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
-
-*Part of a scene document:*
+![A page of three panels of Alice and Bob in the street and an alley, at the size of a US comic page with its bleed](https://creatoan.github.io/scenet/images/gallery/70-a-page-for-print.page-1.svg)
 
 ```yaml
-page: {size: [1600, 2400], margin: 80, bleed: 30}
+page: {size: [1280, 1820]}
+cast: {alice: {reference: alice}}
+panels: {splash: {}}
 pages:
   - tiers:
-      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - panels: [splash]
+```
+
+**See also:** [`page.bleed`](#pagebleed), [Print a comic](https://creatoan.github.io/scenet/howto/print_a_comic.html).
+
+### `page.margin`
+
+<!-- facts: page.margin -->
+The blank border inside the page's edge, on all four sides.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | 0 or more |
+| Default | `100` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The blank border inside the page's edge. Panels are laid out inside it, and it is the safe area
+for words: a panel that [bleeds](#panelsbleed) keeps its lettering inside it.
+
+```yaml
+page: {size: [1000, 700], margin: 120}
+cast: {alice: {reference: alice}}
+panels: {one: {}}
+pages:
+  - tiers:
+      - panels: [one]
+```
+
+**See also:** [`panel.margin`](#panelmargin), a panel's own.
+
+### `page.gutter`
+
+<!-- facts: page.gutter -->
+The gap between two panels, or two columns, side by side in a tier.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | 0 or more |
+| Default | `40` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The gap between two panels side by side, or between two columns. An inset sits a gutter in
+from its corner, ringed by a gutter's width of white, and a slanted gutter stays a gutter wide
+measured across the cut.
+
+```yaml
+page: {size: [1000, 700], gutter: 80}
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+pages:
+  - tiers:
+      - panels: [one, two]
+```
+
+**See also:** [`page.tier_gutter`](#pagetier_gutter).
+
+### `page.tier_gutter`
+
+<!-- facts: page.tier_gutter -->
+The gap between two tiers, and between two panels stacked in a column. Wider than `gutter`, as in print, so a tier reads as one row.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | 0 or more |
+| Default | `60` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The gap between two tiers, and between two panels stacked in a column. Wider than `gutter` by
+default, as it usually is in print: a narrower gap within a tier binds its panels into one row,
+which is the direction they are read in.
+
+```yaml
+page: {size: [800, 1000], tier_gutter: 100}
+cast: {alice: {reference: alice}}
+panels: {top: {}, bottom: {}}
+pages:
+  - tiers:
+      - panels: [top]
+      - panels: [bottom]
+```
+
+**See also:** [`page.gutter`](#pagegutter).
+
+### `page.bleed`
+
+<!-- facts: page.bleed -->
+How far the printed sheet runs past the trim on every side, so art that reaches the edge can be cut cleanly: 30 is 3 mm. Paper around the page; nothing on it moves.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | 0 or more |
+| Default | `0` |
+| Since | 0.13 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+`bleed` is in the units of the page: `30` is 3 mm, `31.75` is the 0.125 in US printers ask for. It
+is paper around the page and moves nothing on it: the PDF's TrimBox is the page, its BleedBox the
+page grown by `bleed` on every side. A page needs a bleed of its own for its panels to
+[bleed](#panelsbleed) into; with `bleed: 0`, they stop at the trim, and print says so.
+
+```yaml
+page: {size: [1000, 700], margin: 60, bleed: 30}
+cast: {alice: {reference: alice}}
+panels: {wide: {}}
+pages:
+  - tiers:
+      - panels: [{use: wide, bleed: true}]
+```
+
+**See also:** [`panels[].bleed`](#panelsbleed), [Print a comic](https://creatoan.github.io/scenet/howto/print_a_comic.html).
+
+### `pages`
+
+<!-- facts: pages -->
+The pages, in order, each a list of tiers top to bottom.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. In a comic script: the script's `PAGE` headings, and `@tiers: 2 1 2` under each |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) |
+<!-- /facts -->
+
+The pages, in order. A document of several pages is drawn as a spread, side by side -- from the
+right in a comic read right to left -- and each page is a page of the print PDF.
+
+A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an unquoted
+`1:` as a number, so a panel named by its number is written `'1':`. A placement naming a panel
+`panels:` does not define, or a panel placed twice, is `page-layout`.
+
+```yaml
+page: {size: [800, 600]}
+cast: {alice: {reference: alice}}
+panels: {first: {}, second: {}}
+pages:
+  - tiers:
+      - panels: [first]
+  - tiers:
+      - panels: [second]
+```
+
+**See also:** [`panels`](#panels), [Compose a page](https://creatoan.github.io/scenet/howto/compose_a_page.html).
+
+### `pages[].tiers`
+
+<!-- facts: pages[].tiers -->
+The page's tiers, top to bottom.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. In a comic script: `@tiers: 2 1 2` under a `PAGE` heading |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [A page in tiers](https://creatoan.github.io/scenet/gallery.html#a-page-in-tiers) |
+<!-- /facts -->
+
+The tiers of one page, top to bottom; a page has at least one. Margins and tier gutters that leave
+no height for the tiers are `page-layout`.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {a: {}, b: {}, c: {}}
+pages:
+  - tiers:
+      - panels: [a, b]
+      - panels: [c]
+```
+
+**See also:** [`tiers[].height`](#tiersheight).
+
+### `tiers[].height`
+
+<!-- facts: tiers[].height -->
+The tier's share of the page's height, relative to the other tiers.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | `1` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+A tier's share of the page's height: two tiers of `height: 2` and `1` take two thirds and one
+third of what the margins and tier gutters leave.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {tall: {}, short: {}}
+pages:
+  - tiers:
+      - {height: 2, panels: [tall]}
+      - panels: [short]
+```
+
+**See also:** [`panels[].width`](#panelswidth).
+
+### `tiers[].panels`
+
+<!-- facts: tiers[].panels -->
+The panels in the tier, in reading order: left to right, or right to left for a comic read that way.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. In a comic script: `@tiers:`, which counts each tier's panels from the top |
+| Type | a list, each text or a mapping |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The panels of a tier, in reading order: left to right, or right to left for a comic read that way.
+Each is a panel's name, or a mapping that names it with `use` and gives it a share, insets or a
+bleed. A tier holds `panels` or `columns`, never both and never neither.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+pages:
+  - tiers:
+      - panels: [one, {use: two, width: 2}]
+```
+
+**See also:** [`tiers[].columns`](#tierscolumns).
+
+### `tiers[].columns`
+
+<!-- facts: tiers[].columns -->
+In place of `panels`: columns side by side, each a stack of panels read top to bottom before the next.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [Columns](https://creatoan.github.io/scenet/gallery.html#columns) |
+<!-- /facts -->
+
+**Columns** are how a tall panel beside a stack of short ones is written: the tier is split across
+into columns, and each column down into its panels, with `tier_gutter` between them. A tier of
+columns is read column by column and top to bottom in each. That is the order readers take when a
+panel spanning the tier blocks the way across (about nine in ten of them, in Cohn's 2013
+experiments). Two stacks side by side have nothing between them blocking the way, and readers go
+across those instead, so they are refused as `page-layout`; write them as tiers, or put a panel
+that spans the tier between them.
+
+![A page of five panels in which Alice shouts a warning to Bob in the street, one tall panel beside a stack of smaller ones](https://creatoan.github.io/scenet/images/gallery/25-columns.page-1.svg)
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {above: {}, below: {}, falling: {}}
+pages:
+  - tiers:
       - columns:
-          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
-          - {panels: [far]}
+          - {panels: [above, below]}
+          - {panels: [falling]}
 ```
 
-`bleed: true` bleeds every side of the frame that reaches the page's margin; a list bleeds those
-sides only, and a listed side that does not reach the margin is a `page-layout` error. The sides
-are the page's, `top`, `bottom`, `left` and `right`, whichever way it is read: the page is never
-mirrored. An inset sits inside its parent, so it cannot bleed.
+**See also:** [`columns[].width`](#columnswidth), [A tall panel beside a stack](https://creatoan.github.io/scenet/howto/compose_a_page.html#a-tall-panel-beside-a-stack).
 
-A bleeding panel is three boxes. Its **frame** runs to the bleed line: that is its size in its
-Core, and what its art, picture, veil and weather cover. What the reader sees stops at the trim,
-so its cast is staged and its camera framed in **the frame out to the trim**, and the trim never
-cuts a shot. Its lettering keeps inside **the frame as it was** before bleeding, inside the panel
-margin, so the page margin stays the safe area for words. Its insets stay where they were. The SVG
-page is drawn at its trim, as it will look once cut; its debug view shows the whole sheet, the trim
-and each bleeding panel's lettering box.
+### `tiers[].slant`
 
-A page needs a `bleed` of its own for its panels to bleed into; with `bleed: 0`, they stop at the
-trim, and print says so.
+<!-- facts: tiers[].slant -->
+How far the gutters between the tier's panels lean, in degrees, from -30 to 30. Positive leans the top of each gutter to the right.
 
-A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
-of short ones is written: the tier is split across into columns, and each column down into its
-panels, with `tier_gutter` between them.
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | -30 to 30 |
+| Default | `0` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [Slanted tiers](https://creatoan.github.io/scenet/gallery.html#slanted-tiers) |
+<!-- /facts -->
 
-*Part of a scene's tiers:*
-
-```yaml
-- height: 2
-  columns:
-    - {width: 2, panels: [above, {use: below, height: 2}]}
-    - {width: 1, panels: [falling]}   # spans the tier's whole height
-```
-
-A tier of columns is read column by column and top to bottom in each: `above`, `below`, then
-`falling`. That is the order readers take when a panel spanning the tier blocks the way across
-(about nine in ten of them, in Cohn's 2013 experiments). Two stacks side by side have nothing
-between them blocking the way, and readers go across those instead, so they are refused as
-`page-layout`; write them as tiers, or put a panel that spans the tier between them.
-
-An **inset** is a small panel set into a corner of another and drawn over it:
-
-*Part of a scene's tiers:*
-
-```yaml
-- panels:
-    - use: street
-      insets:
-        - {use: clock, at: top_left, size: 0.2, read: before}
-        - {use: face, at: bottom_right, size: 0.3}
-```
-
-It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
-split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
-2013), so it is never guessed: an inset is read right after its parent unless it says
-`read: before`. Here that is `clock`, `street`, `face` — and that is the order the page's SVG writes
-them in, which is the order a screen reader follows. The parent is cut around each inset's ring
-rather than painted under it, so an inset read first is still on top.
-
-The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
-words under an inset could not be read. When an inset covers a character's face, the compiler
-notes it. Two insets in one panel must stay a gutter clear of each other, and an inset, a gutter
-in from its corner, must fit inside its panel.
-
-A tier of panels can **slant**, for a beat that should not sit square:
-
-*Part of a scene's tiers:*
-
-```yaml
-- {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
-```
-
-Every gutter in the tier leans by that many degrees about its centre at the tier's mid-height, so
-the weights share the width out exactly as they would upright, and neighbours share one cut. A
-gutter stays a gutter wide measured across the cut, as paneling tools keep it, and the tier's outer
-edges stay upright. Each frame is then a four-sided shape, convex by construction.
+A tier of panels can slant, for a beat that should not sit square. Every gutter in the tier
+leans by that many degrees about its centre at the tier's mid-height, so the weights share the
+width out exactly as they would upright, and neighbours share one cut. A gutter stays a gutter wide
+measured across the cut, and the tier's outer edges stay upright. Each frame is then a four-sided
+shape, convex by construction.
 
 A slanted panel is staged and framed in its bounding box, as a rectangle would be, and cropped to
 its outline the way a margin crops; its lettering stays inside the outline. When the cut runs
 through a character's face, the compiler notes it. A slant needs gutters to lean, so a tier of
-columns, a tier of one panel, and a slanted panel with insets are refused, as is a slant so steep
-that a panel would have no width left at its top or bottom.
+columns, a tier of one panel, and a slanted panel with insets are `page-layout`, as is a slant so
+steep that a panel would have no width left at its top or bottom.
 
-**A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
-size: the page decides how big the frame is and nothing about what goes in it. The one other thing
-it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
-every panel letters at the same size, as if each were one tier of a three-tier page, because no
-letterer sets a short panel and a tall one at different sizes. A size you set with
-[`lettering`](#lettering) takes its place.
+```yaml
+cast: {alice: {reference: alice}}
+panels: {wind_up: {}, swing: {}}
+pages:
+  - tiers:
+      - {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
+```
 
-A page is read tier by tier, left to right, and down each column, so the order panels are written
-in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
-on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
-`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, an inset
-too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not
-reach the page's margin, or margins and gutters that leave no room are reported as `page-layout`.
+**See also:** [A slanted tier](https://creatoan.github.io/scenet/howto/compose_a_page.html#a-slanted-tier).
 
-**Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
-right. Panels are still written in reading order, so the first panel of a tier is at its right and
-the last at its left; the first column of a tier of columns is at the right, and each column is
-still read top to bottom — a stack beside a tall panel is read down before across, on the right.
-Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
-way round, so every panel keeps its size, and its art is the art it has read left to right. What
-names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
-positive `slant` leans the top of each gutter right, as written, and a `bleed` names the page's
-own sides, so `bleed: [left]` on a tier's first panel, which right to left is at the right, is
-refused. Any other layout one direction refuses, the other refuses too.
+### `panels[].use`
 
-Not yet: frames of any other shape, such as round panels or ones without borders.
+<!-- facts: panels[].use -->
+The name of a panel under `panels:`. Writing the name alone means `{use: name}`.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The panel a placement puts on the page, by its name under `panels:`. Writing the name alone, `one`,
+means `{use: one}`; the mapping is for a share, insets or a bleed. In a column, the same key names
+a panel stacked in it.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {one: {}}
+pages:
+  - tiers:
+      - panels: [{use: one}]
+```
+
+**See also:** [`panels`](#panels).
+
+### `panels[].width`
+
+<!-- facts: panels[].width -->
+The panel's share of its tier's width, relative to its neighbours.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | `1` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+A panel's share of its tier's width, relative to its neighbours: `width: 2` beside a panel of the
+default `1` takes two thirds of what the gutters leave.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {establishing: {}, reply: {}}
+pages:
+  - tiers:
+      - panels: [{use: establishing, width: 2}, reply]
+```
+
+**See also:** [`tiers[].height`](#tiersheight).
+
+### `panels[].bleed`
+
+<!-- facts: panels[].bleed -->
+Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of those sides.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | `true` or `false`, or a list of names |
+| Values | `left`, `right`, `top`, `bottom` |
+| Default | `false` |
+| Since | 0.13 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [Panels that bleed](https://creatoan.github.io/scenet/gallery.html#panels-that-bleed) |
+<!-- /facts -->
+
+**A panel can bleed**: its frame runs past the trim, out to the bleed line, and has no border on
+that side, so its art goes to the edge of the cut page. `bleed: true` bleeds every side of the
+frame that reaches the page's margin; a list bleeds those sides only, and a listed side that does
+not reach the margin is a `page-layout` error. The sides are the page's, `top`, `bottom`, `left`
+and `right`, whichever way it is read: the page is never mirrored. An inset sits inside its parent,
+so it cannot bleed.
+
+![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](https://creatoan.github.io/scenet/images/gallery/73-panels-that-bleed.page-1.svg)
+
+A bleeding panel is three boxes. Its **frame** runs to the bleed line: that is its size in its
+Core, and what its art, picture, veil and weather cover. What the reader sees stops at the trim, so
+its cast is staged and its camera framed in **the frame out to the trim**, and the trim never cuts
+a shot. Its lettering keeps inside **the frame as it was** before bleeding, inside the panel margin,
+so the page margin stays the safe area for words. Its insets stay where they were. The SVG page is
+drawn at its trim, as it will look once cut; its debug view shows the whole sheet, the trim and
+each bleeding panel's lettering box.
+
+```yaml
+page: {size: [1600, 2400], margin: 80, bleed: 30}
+cast: {alice: {reference: alice}}
+panels: {wide: {}, look: {}, far: {}}
+pages:
+  - tiers:
+      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
+      - panels: [far]
+```
+
+**See also:** [`page.bleed`](#pagebleed), the bleed itself.
+
+### `panels[].insets`
+
+<!-- facts: panels[].insets -->
+Panels set into its corners, and drawn over it.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+| In the gallery | [Insets](https://creatoan.github.io/scenet/gallery.html#insets) |
+<!-- /facts -->
+
+An **inset** is a small panel set into a corner of another and drawn over it. It sits a gutter in
+from both edges of its corner, ringed by a gutter's width of white. The parent is cut around each
+inset's ring rather than painted under it, so an inset read first is still on top. The parent's art
+is drawn exactly as if the inset were not there; only its lettering moves, since words under an
+inset could not be read. When an inset covers a character's face, the compiler notes it.
+
+![A page of five panels outside a cinema, one small panel set into the corner of another](https://creatoan.github.io/scenet/images/gallery/26-insets.page-1.svg)
+
+Two insets in one panel must stay a gutter clear of each other, and an inset, a gutter in from its
+corner, must fit inside its panel; either is `page-layout` otherwise.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {street: {}, clock: {}}
+pages:
+  - tiers:
+      - panels:
+          - use: street
+            insets:
+              - {use: clock, at: top_left, size: 0.3}
+```
+
+**See also:** [`insets[].read`](#insetsread).
+
+### `columns[].width`
+
+<!-- facts: columns[].width -->
+The column's share of its tier's width, relative to the other columns.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | `1` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+A column's share of its tier's width, relative to the other columns, as a panel's `width` is in a
+tier of panels.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {above: {}, below: {}, falling: {}}
+pages:
+  - tiers:
+      - columns:
+          - {width: 2, panels: [above, below]}
+          - {width: 1, panels: [falling]}
+```
+
+**See also:** [`tiers[].columns`](#tierscolumns).
+
+### `columns[].panels`
+
+<!-- facts: columns[].panels -->
+The panels in the column, read top to bottom.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a list, each text or a mapping |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+The panels of a column, read top to bottom, each a name or a mapping, as a tier's panels are; a
+column holds at least one.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {above: {}, below: {}, falling: {}}
+pages:
+  - tiers:
+      - columns:
+          - {panels: [above, {use: below}]}
+          - {panels: [falling]}
+```
+
+**See also:** [`columns[].panels[].height`](#columnspanelsheight).
+
+### `columns[].panels[].height`
+
+<!-- facts: columns[].panels[].height -->
+The panel's share of its column's height, relative to the others in it.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | `1` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+A panel's share of its column's height, relative to the others in it.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {above: {}, below: {}, falling: {}}
+pages:
+  - tiers:
+      - columns:
+          - {panels: [above, {use: below, height: 2}]}
+          - {panels: [falling]}
+```
+
+**See also:** [`tiers[].height`](#tiersheight).
+
+### `insets[].use`
+
+<!-- facts: insets[].use -->
+The name of a panel under `panels:`, set into this one.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The panel set into the corner, by its name under `panels:`. Like any panel on a page, it is placed
+once.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {street: {}, face: {}}
+pages:
+  - tiers:
+      - panels: [{use: street, insets: [{use: face, at: bottom_right, size: 0.3}]}]
+```
+
+**See also:** [`panels[].insets`](#panelsinsets).
+
+### `insets[].at`
+
+<!-- facts: insets[].at -->
+The corner of its parent the inset sits in, a gutter in from both edges.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `top_left`, `top_right`, `bottom_left`, `bottom_right` |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+The corner of its parent. The corner is the parent's whichever way the page is read: an inset's
+`at` is never mirrored.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {street: {}, clock: {}}
+pages:
+  - tiers:
+      - panels: [{use: street, insets: [{use: clock, at: top_right, size: 0.25}]}]
+```
+
+**See also:** [`insets[].size`](#insetssize).
+
+### `insets[].size`
+
+<!-- facts: insets[].size -->
+The inset's width and height, as a fraction of its parent's: above 0, at most 0.5.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0, at most 0.5 |
+| Default | none |
+| Since | 0.10 |
+| Diagnostics | `invalid-field`, `page-layout` |
+<!-- /facts -->
+
+The inset's width and height, as one fraction of its parent's: `0.25` is a quarter as wide and a
+quarter as tall. More than half would leave the parent covered rather than inset.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {street: {}, clock: {}}
+pages:
+  - tiers:
+      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.45}]}]
+```
+
+**See also:** [`insets[].at`](#insetsat).
+
+### `insets[].read`
+
+<!-- facts: insets[].read -->
+When the inset is read: `after` its parent, or `before` it.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `before`, `after` |
+| Default | `after` |
+| Since | 0.10 |
+| Diagnostics | `invalid-field` |
+<!-- /facts -->
+
+Readers split about evenly over whether an inset comes before the panel it sits in or after it
+(Cohn, 2013), so it is never guessed: an inset is read right after its parent unless it says
+`read: before`. That is the order the page's SVG writes them in, which is the order a screen reader
+follows.
+
+```yaml
+cast: {alice: {reference: alice}}
+panels: {street: {}, clock: {}}
+pages:
+  - tiers:
+      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.25, read: before}]}]
+```
+
+**See also:** the reading order of a page, [`pages`](#pages).
+
+### Read right to left
+
+With [`direction: rtl`](#direction), the same page is read from the top right. Panels
+are still written in reading order, so the first panel of a tier is at its right and the last at its
+left; the first column of a tier of columns is at the right, and each column is still read top to
+bottom -- a stack beside a tall panel is read down before across, on the right. Each frame is
+exactly the one a left-to-right page gives that panel with the tier written the other way round, so
+every panel keeps its size, and its art is the art it has read left to right. What names a place on
+the page keeps naming it: an inset's `at:` is a corner of its parent, a positive `slant` leans the
+top of each gutter right, as written, and a `bleed` names the page's own sides, so `bleed: [left]`
+on a tier's first panel, which right to left is at the right, is refused. Any other layout one
+direction refuses, the other refuses too.
+
+## Puppet files
+
+A puppet of your own is a `*.puppet.yaml` file: a skeleton in its own units, the parts
+drawn on it, the landmarks a shot crops at, a face, and the poses and expressions it can take, by
+name. A [cast member](#castidreference) names it by its path, relative to the document, and
+the compiler reads only what that cast names. What the solver sees of it, and why, is in the
+[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#skeletal-puppets); this page has a card for every key.
+
+Every fault in a puppet file is `puppet-file`: at the key that is wrong, in the puppet file, when the
+document naming it is checked as a file, and on the line naming it otherwise. Its schema is
+`scenet schema --puppet`, which an editor associates with `*.puppet.yaml`; what no schema can say --
+landmarks increasing downward, a skeleton that is a tree, every joint a part or a pose names
+declared -- `scenet check` does.
+
+### A puppet file
+
+Every card below points here. This is Pip, the gallery's puppet, five heads tall; the panel after it
+casts Pip beside Alice.
+
+*puppets/pip.puppet.yaml:*
+
+```yaml
+# Pip: a child, five heads tall, and the gallery's own puppet -- Scenet does not ship it.
+#
+# A document casts it by its path, relative to the document, as it names a font or a
+# picture: `reference: puppets/pip.puppet.yaml`. The `name:` below is what a message calls it.
+#
+# What sets it apart from alice and bob, who are both seven and a half heads tall:
+#
+# - Five heads, not seven and a half. A head is the same 100 units as alice's, so the body
+#   below it is shorter, and the head is big for it -- a child's proportion. At the same
+#   shot, a camera that framed by fractions of the panel instead of by landmarks in heads
+#   would get pip visibly wrong.
+# - Big eyes, set low in the face, a small nose and a small mouth.
+# - A knot of hair on top of the head: a blob, as the head is, so pip reads as pip even at
+#   a distance, where a face is too small to draw.
+#
+# Values are native units, one head being 100; landmarks are measured down from the top of
+# the head, and each joint's offset from its parent's. The root sits at the waist.
+
+name: pip
+units_per_head: 100
+root: root
+root_landmark: waist
+
+landmarks:
+  head_top: 0
+  eyes: 50
+  chin: 100
+  shoulders: 120
+  chest: 165
+  waist: 245
+  mid_thigh: 320
+  knees: 375
+  feet: 500
+
+joints:
+  root: {parent: null, offset: [0, 0]}
+  spine: {parent: root, offset: [0, -80]}
+  neck: {parent: spine, offset: [0, -45]}
+  head: {parent: neck, offset: [0, -70]}
+
+  shoulder_l: {parent: neck, offset: [-26, 4]}
+  shoulder_r: {parent: neck, offset: [26, 4]}
+  elbow_l: {parent: shoulder_l, offset: [0, 62]}
+  elbow_r: {parent: shoulder_r, offset: [0, 62]}
+  wrist_l: {parent: elbow_l, offset: [0, 55]}
+  wrist_r: {parent: elbow_r, offset: [0, 55]}
+
+  hip_l: {parent: root, offset: [-20, 8]}
+  hip_r: {parent: root, offset: [20, 8]}
+  knee_l: {parent: hip_l, offset: [0, 122]}
+  knee_r: {parent: hip_r, offset: [0, 122]}
+  ankle_l: {parent: knee_l, offset: [0, 125]}
+  ankle_r: {parent: knee_r, offset: [0, 125]}
+
+parts:
+  - {from: neck, to: root, width: 64}
+  - {from: shoulder_l, to: elbow_l, width: 22}
+  - {from: elbow_l, to: wrist_l, width: 18}
+  - {from: shoulder_r, to: elbow_r, width: 22}
+  - {from: elbow_r, to: wrist_r, width: 18}
+  - {from: hip_l, to: knee_l, width: 28}
+  - {from: knee_l, to: ankle_l, width: 24}
+  - {from: hip_r, to: knee_r, width: 28}
+  - {from: knee_r, to: ankle_r, width: 24}
+  - {at: head, radius: 50}
+  - {at: head, radius: 16, offset: [0, -56]}   # the knot of hair
+
+anchors:
+  head_top: {joint: head, offset: [0, -50]}
+  eyes: {joint: head, offset: [0, 0]}
+  mouth: {joint: head, offset: [0, 26]}
+  feet: {joint: root, offset: [0, 255]}
+
+face:
+  joint: head
+  radius: 60
+  # Feature points ride the head joint, so they mirror and scale with it. `size` means an
+  # eye's radius, a brow's or mouth's half-width, a nose's length.
+  features:
+    brow_l: {offset: [-19, -22], size: 10}
+    brow_r: {offset: [19, -22], size: 10}
+    eye_l:  {offset: [-19, -2], size: 12}
+    eye_r:  {offset: [19, -2], size: 12}
+    nose:   {offset: [0, 12], size: 6}
+    mouth:  {offset: [0, 26], size: 12}
+
+gaze:
+  origin: eyes
+
+poses:
+  standing_neutral:
+    elbow_l: -5
+    elbow_r: 5
+
+  waving:
+    elbow_l: -5
+    elbow_r: -150
+    wrist_r: 35
+
+  arms_up:
+    elbow_l: 155
+    wrist_l: -20
+    elbow_r: -155
+    wrist_r: 20
+
+expressions:
+  neutral:  {}
+  happy:    {mouth: smile}
+  surprise: {brow: raised,     eyes: wide, mouth: open}
+  scared:   {brow: angled_out, eyes: wide, mouth: small}
+  sad:      {brow: angled_out, eyes: half, mouth: frown}
+```
+
+```yaml
+camera: {shot: full_shot}
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: puppets/pip.puppet.yaml, pose: arms_up, expression: happy, at: right_third, facing: left}
+staging: [alice ground_shared_with pip]
+```
+
+### `name`
+
+<!-- facts: name -->
+The name a cast member's `reference` uses.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The name the puppet goes by in messages and in Panel Core. A cast member names a puppet file by its
+path, not by this, so two files may share a name without either shadowing the other or a shipped
+puppet. See [the example](#a-puppet-file).
+
+### `units_per_head`
+
+<!-- facts: units_per_head -->
+How many of the puppet's own units one head height is.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The puppet's own unit, against the one measure every shot is defined in: a head height. Offsets,
+widths and radii are in the puppet's units; landmarks are in heads. A figure is as tall as its
+`feet` landmark says, in heads -- Pip is five, Alice seven and a half. See
+[the example](#a-puppet-file).
+
+### `landmarks`
+
+<!-- facts: landmarks -->
+Each vertical body landmark, as a distance down from the top of the head, in head units: the crop lines a shot type names.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The nine crop lines a shot names, each as a distance down from the top of the head, in heads:
+`head_top`, `eyes`, `chin`, `shoulders`, `chest`, `waist`, `mid_thigh`, `knees` and `feet`. All nine
+are required, because any shot may crop at any of them, and they must increase downward. What each
+shot does with them is in [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html). See [the example](#a-puppet-file).
+
+### `landmarks.head_top`
+
+<!-- facts: landmarks.head_top -->
+The origin every other landmark is measured down from.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `0` |
+| Values | `0` |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The origin every other landmark is measured down from, so it is `0`. See
+[the example](#a-puppet-file).
+
+### `joints`
+
+<!-- facts: joints -->
+The skeleton, by joint name.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The skeleton, by joint name: a tree rooted at [`root`](#root), every joint reaching it through its
+parents. A joint's pose angle rotates the bone arriving at it *and* everything below it, which is
+what makes posing read naturally: bending `elbow_l` swings the forearm and takes the hand with it.
+See [the example](#a-puppet-file).
+
+### `joints.<joint>.parent`
+
+<!-- facts: joints.<joint>.parent -->
+The joint it hangs from. Left out for the root.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint this one hangs from. The root has none, and every other joint must reach the root: a
+cycle, or a joint that hangs from nothing, is refused. See [the example](#a-puppet-file).
+
+### `joints.<joint>.offset`
+
+<!-- facts: joints.<joint>.offset -->
+Where it is from its parent in the rest pose, in the puppet's own units.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[0, 0]` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where the joint is from its parent in the rest pose, `[x, y]` in the puppet's units, with y
+downward. See [the example](#a-puppet-file).
+
+### `root`
+
+<!-- facts: root -->
+The joint every other one hangs from.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | `root` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint every other one hangs from. It must be declared, with no parent. See
+[the example](#a-puppet-file).
+
+### `root_landmark`
+
+<!-- facts: root_landmark -->
+The landmark the root joint sits at.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `head_top`, `eyes`, `chin`, `shoulders`, `chest`, `waist`, `mid_thigh`, `knees`, `feet` |
+| Default | `waist` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The landmark the root joint physically sits at. The skeleton is built outward from the root, while
+landmarks are measured downward from the top of the head; this is what bridges the two frames.
+Declared rather than assumed, because a puppet may root itself somewhere other than the waist. See
+[the example](#a-puppet-file).
+
+### `parts`
+
+<!-- facts: parts -->
+The shapes the body is drawn from, back to front.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a list of mappings |
+| Default | none |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+What is drawn, back to front: each part a **bone**, a capsule between two joints, or a **blob**, a
+disc at one. A part's keys say which kind it is: `from` and `to` make a bone, `at` makes a blob. A
+part is checked only as the kind it is written as, and one that uses the keys of both kinds, or of
+neither, is a single error saying so. See [the example](#a-puppet-file).
+
+### `parts[].from`
+
+<!-- facts: parts[].from -->
+The joint the bone starts at.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint a bone starts at. It must be declared. See [the example](#a-puppet-file).
+
+### `parts[].to`
+
+<!-- facts: parts[].to -->
+The joint the bone ends at.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint a bone ends at. It must be declared. See [the example](#a-puppet-file).
+
+### `parts[].width`
+
+<!-- facts: parts[].width -->
+How thick it is drawn, in the puppet's own units.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+How thick a bone is drawn, in the puppet's units, with round caps at both ends. See
+[the example](#a-puppet-file).
+
+### `parts[].at`
+
+<!-- facts: parts[].at -->
+The joint it is centred on.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint a blob is centred on -- the head, or the chest of a round torso. See
+[the example](#a-puppet-file).
+
+### `parts[].radius`
+
+<!-- facts: parts[].radius -->
+Its radius, in the puppet's own units.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+A blob's radius, in the puppet's units. See [the example](#a-puppet-file).
+
+### `parts[].offset`
+
+<!-- facts: parts[].offset -->
+Where its centre is from that joint, in the puppet's own units.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[0, 0]` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where a blob's centre is from its joint, before posing. See [the example](#a-puppet-file).
+
+### `anchors`
+
+<!-- facts: anchors -->
+Named attachment points, such as `mouth` and `eyes`, each on a joint.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Named points that ride along with a joint. They are how the solver addresses anatomy without
+knowing anatomy: a balloon's tail ends at `mouth`, and the line of sight starts at the
+[gaze](#gazeorigin) origin, conventionally `eyes`. See [the example](#a-puppet-file).
+
+### `anchors.<anchor>.joint`
+
+<!-- facts: anchors.<anchor>.joint -->
+The joint it rides along with.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint the anchor rides along with, through every pose. It must be declared. See
+[the example](#a-puppet-file).
+
+### `anchors.<anchor>.offset`
+
+<!-- facts: anchors.<anchor>.offset -->
+Where it is from that joint, in the puppet's own units, before posing.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[0, 0]` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where the anchor is from its joint, before posing. See [the example](#a-puppet-file).
+
+### `face`
+
+<!-- facts: face -->
+Where the face is, and what is drawn in it.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The disc no balloon, caption or sound effect may cover, and what is drawn inside it. A circle rather
+than a polygon: faces are roughly round, the test is cheap, and a slightly generous face only puts a
+balloon a little further away, which is never wrong. What a face is drawn from is in the
+[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#faces). See [the example](#a-puppet-file).
+
+### `face.joint`
+
+<!-- facts: face.joint -->
+The joint the face is centred on: the head, unless the puppet says otherwise.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | `head` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint the face is centred on. See [the example](#a-puppet-file).
+
+### `face.offset`
+
+<!-- facts: face.offset -->
+Where the face's centre is from that joint, in the puppet's own units.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[0, 0]` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where the face's centre is from its joint, before posing. See [the example](#a-puppet-file).
+
+### `face.radius`
+
+<!-- facts: face.radius -->
+The face's radius, in the puppet's own units: the circle no balloon covers.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The face's radius, in the puppet's units: the circle lettering may not overlap. See
+[the example](#a-puppet-file).
+
+### `face.features`
+
+<!-- facts: face.features -->
+What is drawn inside the face, by feature. Empty for a plain round head.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+What is drawn inside the face, by feature: `brow_l`, `brow_r`, `eye_l`, `eye_r`, `nose` and
+`mouth`, named after MPEG-4's facial feature groups. Each is optional -- a stylised character may
+have no eyebrows -- but a pair comes in pairs, since a face with one eyebrow is a typo far more often
+than it is a character. Pupils are not declared: they are placed inside each eye toward whoever the
+character is looking at. A puppet with no features is drawn as it was before faces existed, a
+filled circle, and may declare no expressions. See [the example](#a-puppet-file).
+
+### `face.features.<feature>.joint`
+
+<!-- facts: face.features.<feature>.joint -->
+The joint the feature rides, practically always `head`.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | `head` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The joint the feature rides, which is the head for practically every face. See
+[the example](#a-puppet-file).
+
+### `face.features.<feature>.offset`
+
+<!-- facts: face.features.<feature>.offset -->
+Where the feature is from that joint, in the puppet's own units, before posing.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | `[number, number]` |
+| Default | `[0, 0]` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where the feature is from its joint, before posing, mirrored with the puppet. See
+[the example](#a-puppet-file).
+
+### `face.features.<feature>.size`
+
+<!-- facts: face.features.<feature>.size -->
+How big the feature is drawn, in the puppet's own units: an eye's radius, a brow's or a mouth's half-width, a nose's length.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a number |
+| Values | 0 or more |
+| Default | `0` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+What the number means depends on the feature: an eye's radius, a brow's or a mouth's half-width, a
+nose's length. Zero draws the feature as a bare point. See [the example](#a-puppet-file).
+
+### `gaze`
+
+<!-- facts: gaze -->
+Where the puppet's line of sight starts.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | each key's own |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Where the puppet's line of sight starts. Its direction is not declared: it comes from staging, so a
+`looking_at` relation is enough and nobody computes an angle. See [the example](#a-puppet-file).
+
+### `gaze.origin`
+
+<!-- facts: gaze.origin -->
+The anchor the line of sight starts at, conventionally `eyes`. It must be declared.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | text |
+| Default | `eyes` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+The anchor the line of sight starts at, which must be one of the puppet's [anchors](#anchors). See
+[the example](#a-puppet-file).
+
+### `poses`
+
+<!-- facts: poses -->
+Named poses, each a set of joint angles.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none: required |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Named poses, each a mapping of joint to angle, in degrees, that a cast member selects with
+[`pose`](#castidpose). A joint a pose leaves out keeps its rest angle. `standing_neutral` is
+required of every puppet, since it is what a member gets when it names no pose, and every joint a
+pose names must be declared. See [the example](#a-puppet-file).
+
+### `expressions`
+
+<!-- facts: expressions -->
+Named expressions, each a state of brow, eyes and mouth.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a mapping |
+| Default | none |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+Named expressions, each a state of the brows, the eyes and the mouth, that a cast member selects
+with [`expression`](#castidexpression). An expression is to features what a pose is to
+joints, but a face deforms rather than rotating about bones, which is why it is a set of states and
+not of angles. A puppet that declares any declares `neutral`, which a member gets unasked, and has
+face features for them to move. See [the example](#a-puppet-file).
+
+### `expressions.<expression>.brow`
+
+<!-- facts: expressions.<expression>.brow -->
+The brows' state.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `neutral`, `raised`, `lowered`, `angled_in`, `angled_out` |
+| Default | `neutral` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+What the eyebrows are doing. `angled_in` puts the inner ends down, the anger brow; `angled_out` puts
+them up, the sad or frightened one. Inner and outer are taken against the face's centre rather than
+the page, so both survive mirroring. See [the example](#a-puppet-file).
+
+### `expressions.<expression>.eyes`
+
+<!-- facts: expressions.<expression>.eyes -->
+The eyes' state.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `open`, `wide`, `narrowed`, `half`, `closed` |
+| Default | `open` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+How open the eyes are. `half` is the heavy-lidded eye of boredom, distinct from `narrowed`, the
+squint of anger or suspicion: one droops, the other is tightened. See [the example](#a-puppet-file).
+
+### `expressions.<expression>.mouth`
+
+<!-- facts: expressions.<expression>.mouth -->
+The mouth's state.
+
+| | |
+|---|---|
+| Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
+| Type | a name |
+| Values | `neutral`, `flat`, `smile`, `grin`, `frown`, `open`, `small` |
+| Default | `neutral` |
+| Since | 0.13 |
+| Diagnostics | `puppet-file` |
+<!-- /facts -->
+
+What the mouth is doing. `grin` is an open smile, `smile` a closed one, and `small` the reticent
+little mouth that does most of the work in a coy face. See [the example](#a-puppet-file).
+
+## Artwork contracts
+
+A supplied picture can draw its own people. Where each face, mouth and body is, the panel never
+says -- it never writes a coordinate. The picture's **artwork contract** does: a file beside the
+picture, named after it, `art/p01-street.art.yaml` beside `art/p01-street.png`, measured once in
+the picture's own pixels and committed with it. A cast member names a figure it declares with
+[`figure:`](#castidfigure). What the solver does with it is in the
+[asset contract](https://creatoan.github.io/scenet/reference/asset_contract.html#artwork-contracts); this page has a card for every key.
+
+The contract is read only for a panel whose cast names a figure, and its geometry goes through the
+picture's [`fit`](#settingfit), so a face is excluded exactly where the picture draws it,
+under `cover` and `contain` alike. `scenet check` reads it without running the solver, and reports a
+missing or malformed one as `artwork-contract`: in the contract itself, at the line of the fault,
+when the document is checked as a file; at the line naming the picture when it is checked as text,
+as in the playground or over MCP. `scenet build --debug` draws every face, mouth, body and keep-out
+over the panel, which is how a contract is checked against its picture.
+
+### An artwork contract
+
+Every card below points here: the gallery's contract for `art/figures.png`, a station platform at
+night with three people on it, and a panel that casts two of them.
+
+*art/figures.art.yaml:*
+
+```yaml
+# The artwork contract for figures.png, written by scripts/make_gallery_figures.py
+# from the same constants the picture is painted from. Pixels, from the top left.
+size: [900, 600]
+figures:
+  ana:
+    face: {center: [230, 250], radius: 56}
+    mouth: [230, 273]
+    body: [[168, 296], [292, 296], [316, 600], [144, 600]]
+  ben:
+    face: {center: [410, 236], radius: 60}
+    mouth: [410, 261]
+    body: [[340, 286], [480, 286], [502, 600], [318, 600]]
+  carl:
+    face: {center: [720, 300], radius: 46}
+    mouth: [720, 319]
+    body: [[668, 338], [772, 338], [786, 600], [654, 600]]
+keep_out:
+  # The timetable board.
+  - [[560, 60], [860, 60], [860, 200], [560, 200]]
+```
+
+```yaml
+panel: {size: [900, 600]}
+setting: {image: art/figures.png, time: night}
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+script:
+  - say: {by: ana, text: "Is that ours?"}
+  - say: {by: ben, text: "No."}
+```
+
+### `size`
+
+<!-- facts: size -->
+The picture's size in pixels, `[width, height]`, as it was measured. It must be the picture's own.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | `[number, number]` |
+| Default | none: required |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+The picture's size in pixels, as the contract was measured against it. It must be the picture's
+own: a contract measured on another size of the picture would put every face somewhere else, so a
+mismatch is refused rather than scaled. See [the example](#an-artwork-contract).
+
+### `figures`
+
+<!-- facts: figures -->
+Each figure the picture draws, by the name a cast member's `figure` gives it. Every face here is kept clear of lettering, cast or not.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | a mapping |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+**Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
+lettering as a speaker's, and a body as costly to cover: a crowd of five can be declared and two of
+them cast. A figure a panel casts and the contract does not declare is `unknown-figure`, listing
+the ones it does. See [the example](#an-artwork-contract).
+
+### `figures.<name>.face`
+
+<!-- facts: figures.<name>.face -->
+The figure's face: a disc no balloon, caption or sound effect may cover.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | a mapping |
+| Default | none: required |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+The face, as a disc. A contract declares no gaze, so nothing keeps a balloon out of a figure's line
+of sight; the face is all lettering keeps clear of. See [the example](#an-artwork-contract).
+
+### `figures.<name>.face.center`
+
+<!-- facts: figures.<name>.face.center -->
+The face's centre, `[x, y]` in the picture's pixels, from its top left.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | `[number, number]` |
+| Default | none: required |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+The face's centre, in pixels from the picture's top left; it must lie on the picture. See
+[the example](#an-artwork-contract).
+
+### `figures.<name>.face.radius`
+
+<!-- facts: figures.<name>.face.radius -->
+How far the face reaches, in pixels. Generous is safer than tight: no lettering overlaps this disc, and a tail stops on its edge.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | a number |
+| Values | above 0 |
+| Default | none: required |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+Generous is safer than tight: no balloon may overlap the disc at all, and a tail stops on its edge.
+A `cover` crop that pushes part of a face out of the panel keeps clear whatever part is in view. See
+[the example](#an-artwork-contract).
+
+### `figures.<name>.mouth`
+
+<!-- facts: figures.<name>.mouth -->
+Where the tail of a line the figure speaks ends, or the place a sound it makes comes from, in pixels. Left out, a tail aims at the face's centre.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | `[number, number]` |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+Where a tail ends, and where a sound the figure makes comes from. A tail to a mouth that a `cover`
+crop cuts away ends on the frame, aimed at it, and `scenet build` says so in a note. See
+[the example](#an-artwork-contract).
+
+### `figures.<name>.body`
+
+<!-- facts: figures.<name>.body -->
+The figure's silhouette, a polygon in pixels, which a balloon pays to cover: half as much over its own speaker.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | a list of `[number, number]` |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+A polygon of at least three points, in pixels, simple -- no edge crossing another. Covering a
+figure's body costs a balloon, and covering its own speaker's costs half, as with a puppet. See
+[the example](#an-artwork-contract).
+
+### `keep_out`
+
+<!-- facts: keep_out -->
+Regions lettering should stay off, each a polygon in pixels: a sign, a hand, what the panel is about. A cost, not a rule.
+
+| | |
+|---|---|
+| Where | An artwork contract, the `.art.yaml` beside its picture. Not in a comic script |
+| Type | a list of a list of `[number, number]` |
+| Default | none |
+| Since | 0.12 |
+| Diagnostics | `artwork-contract` |
+<!-- /facts -->
+
+**Keep-out regions** are ground lettering pays to cover, weighted as emanata are -- a sign, a hand,
+what the panel is about -- and never forbidden: a crowded panel covers one before it fails. Each is
+a simple polygon on the picture. See [the example](#an-artwork-contract).

@@ -37,7 +37,6 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
 
 import yaml
 
@@ -217,6 +216,7 @@ class Card:
 
     @property
     def description(self) -> str:
+        """Its meaning in one paragraph: the schema's, which an editor shows on hover."""
         return str(self.node.get("description", "")).strip()
 
 
@@ -232,6 +232,7 @@ def _name(occurrence: Occurrence) -> str:
 
 @functools.cache
 def schemas() -> dict[str, dict[str, Any]]:
+    """The four published schemas, made once."""
     return {kind: make() for kind, make in SCHEMAS.items()}
 
 
@@ -269,7 +270,9 @@ def cards() -> dict[str, Card]:
 def _branches(node: dict[str, Any]) -> list[dict[str, Any]]:
     """The non-null alternatives a node allows, with every `$ref` resolved."""
     if "$ref" in node:
-        definitions = {name: d for schema in schemas().values() for name, d in schema.get("$defs", {}).items()}
+        definitions = {
+            name: d for schema in schemas().values() for name, d in schema.get("$defs", {}).items()
+        }
         name = node["$ref"].rsplit("/", 1)[1]
         merged = {**definitions[name], **{k: v for k, v in node.items() if k != "$ref"}}
         return _branches(merged)
@@ -374,6 +377,7 @@ def values_of(node: dict[str, Any]) -> list[str]:
 
 
 def ranges_of(node: dict[str, Any]) -> list[str]:
+    """The range a number may take, `-45 to 45`, for each numeric alternative of a node."""
     found = []
     for branch in _branches(node):
         if branch.get("type") in ("number", "integer") and _range(branch):
@@ -413,12 +417,19 @@ SCRIPT_FORMS: dict[str, str] = {
     "pages[].tiers": "`@tiers: 2 1 2` under a `PAGE` heading",
     "tiers[].panels": "`@tiers:`, which counts each tier's panels from the top",
     "panels": "the script's `PANEL` headings",
-    "panels.<name>.over": "`@over:` in a panel",
+    "over": "`@over:` in a panel",
 }
 
 #: Keys a comic script cannot write, by the first word of their name or the name itself.
-NOT_IN_A_SCRIPT = ("say.prefer", "caption.prefer", "caption.tone", "sfx.prefer", "sfx.rotate",
-                   "sfx.arc", "sfx.hollow")
+NOT_IN_A_SCRIPT = (
+    "say.prefer",
+    "caption.prefer",
+    "caption.tone",
+    "sfx.prefer",
+    "sfx.rotate",
+    "sfx.arc",
+    "sfx.hollow",
+)
 
 #: The findings a key can give besides `invalid-field`, which any key gives for a value of the
 #: wrong shape, and `missing-field`, which a required one gives when it is left out.
@@ -438,8 +449,14 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "cast.<id>.marks": ("conflicting-cast",),
     "cast.<id>.at": ("conflicting-cast",),
     "cast.<id>.facing": ("conflicting-cast",),
-    "staging": ("unknown-actor", "ordering-cycle", "reflexive-relation", "figure-staging",
-                "dropped-relation", "layout"),
+    "staging": (
+        "unknown-actor",
+        "ordering-cycle",
+        "reflexive-relation",
+        "figure-staging",
+        "dropped-relation",
+        "layout",
+    ),
     "staging[].subject": ("unknown-actor", "reflexive-relation"),
     "staging[].object": ("unknown-actor", "reflexive-relation"),
     "staging[].predicate": ("ordering-cycle",),
@@ -475,7 +492,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "insets[].use": ("page-layout",),
     "insets[].size": ("page-layout",),
     "panels": ("duplicate-key", "composition"),
-    "panels.<name>.over": ("composition",),
+    "over": ("composition",),
 }
 
 #: Every finding's id has this prefix in a report; the cards name the rule alone.
@@ -514,6 +531,7 @@ def _where(card: Card) -> str:
         if not places:
             places.append("a `.scene.yaml`")
     where = "; ".join(places)
+    where = where[0].upper() + where[1:]
     form = _script_form(card)
     return f"{where}. In a comic script: {form}" if form else f"{where}. Not in a comic script"
 
@@ -524,8 +542,10 @@ VERBS = ("say", "caption", "sfx")
 
 
 def _required(card: Card) -> bool:
-    """Whether a document that writes the key's parent must write it: a scene's panel may
-    inherit anything, so only the other documents say."""
+    """Whether a document that writes the key's parent must write it.
+
+    A scene's panel may inherit anything, so only the other documents say.
+    """
     if card.name in VERBS:
         return False
     return any(o.required for o in card.occurrences if o.kind != "scene")
@@ -547,7 +567,14 @@ def _default(card: Card) -> str:
     return "none"
 
 
+#: The one finding every fault in a file a document names is reported as, by its family: a
+#: puppet file's at the key that is wrong, an artwork contract's at the line of the fault.
+FILE_RULES = {"puppet": "puppet-file", "artwork": "artwork-contract"}
+
+
 def _diagnostics(card: Card) -> str:
+    if card.family in FILE_RULES:
+        return f"`{FILE_RULES[card.family]}`"
     rules = ["invalid-field"]
     if _required(card):
         rules.append("missing-field")
@@ -559,6 +586,7 @@ def _diagnostics(card: Card) -> str:
 
 @functools.cache
 def since() -> dict[str, Any]:
+    """`since.toml`: each key's release, and each value a key gained later."""
     if not SINCE.exists():
         return {"keys": {}, "values": {}}
     return tomllib.loads(SINCE.read_text(encoding="utf-8"))
@@ -568,7 +596,8 @@ def _values(card: Card) -> str:
     named = values_of(card.node)
     later = since().get("values", {})
     words = [
-        f"`{name}`" + (f" (since {later[f'{card.name}={name}']})" if f"{card.name}={name}" in later else "")
+        f"`{name}`"
+        + (f" (since {later[f'{card.name}={name}']})" if f"{card.name}={name}" in later else "")
         for name in named
     ]
     ranges = ranges_of(card.node)
@@ -579,6 +608,7 @@ def _values(card: Card) -> str:
 
 @functools.cache
 def gallery() -> list[dict[str, Any]]:
+    """The gallery's examples, in the manifest's order."""
     return yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["examples"]
 
 
@@ -618,6 +648,7 @@ def facts(card: Card) -> str:
 
 
 def pages() -> list[Path]:
+    """Every page of the language reference."""
     return sorted(LANGUAGE.glob("*.md"))
 
 
@@ -640,8 +671,10 @@ def index_table() -> str:
     rows = []
     for card in sorted(cards().values(), key=lambda c: (c.name.lower().lstrip("<"), c.name)):
         kinds = {o.kind for o in card.occurrences}
-        written = document[card.family] if card.family != "document" or "panel" in kinds else "scene"
-        first = re.split(r"(?<=[.:])\s", card.description, maxsplit=1)[0]
+        written = (
+            document[card.family] if card.family != "document" or "panel" in kinds else "scene"
+        )
+        first = card.description
         rows.append(
             f"| [`{card.name}`]({card.page}.md#{card.anchor}) | {written} | {first} | "
             f"{since()['keys'].get(card.name, '?')} |"
@@ -661,6 +694,7 @@ def expected() -> dict[Path, str]:
 
 
 def stale() -> list[Path]:
+    """The pages that differ from a fresh build."""
     return [page for page, text in expected().items() if page.read_text(encoding="utf-8") != text]
 
 
@@ -722,6 +756,23 @@ def _older(one: str, other: str) -> bool:
     )
 
 
+def _written_at(tag: str) -> dict[str, list[dict[str, Any]]]:
+    """Every key the schemas at a tag let a document write, by each identity it is known by.
+
+    By path, and by the model and key: until 0.7 the published schema was the IR's, where a
+    script entry is not under its verb (`script[].by`).
+    """
+    written: dict[str, list[dict[str, Any]]] = {}
+    for kind, schema in _schemas_at(tag):
+        for occurrence in occurrences(kind, schema):
+            entry = {"node": occurrence.node, "defs": schema.get("$defs", {})}
+            for found in _identities(
+                FAMILY[kind], occurrence.path, occurrence.owner, occurrence.key
+            ):
+                written.setdefault(found, []).append(entry)
+    return written
+
+
 def mine() -> str:
     """`since.toml`, from the schemas the editor shipped at every release tag."""
     minor = {tag: ".".join(tag[1:].split(".")[:2]) for tag in _tags()}
@@ -731,15 +782,7 @@ def mine() -> str:
     keys: dict[str, str] = {}
     values: dict[str, str] = {}
     for tag, version in minor.items():
-        written: dict[str, list[dict[str, Any]]] = {}
-        for kind, schema in _schemas_at(tag):
-            for occurrence in occurrences(kind, schema):
-                entry = {"node": occurrence.node, "defs": schema.get("$defs", {})}
-                # By path, and by the model and key: until 0.7 the published schema was the
-                # IR's, where a script entry is not under its verb (`script[].by`).
-                for found in _identities(FAMILY[kind], occurrence.path, occurrence.owner,
-                                         occurrence.key):
-                    written.setdefault(found, []).append(entry)
+        written = _written_at(tag)
         for card in cards().values():
             met = [
                 found
@@ -816,6 +859,7 @@ def _values_at(written: dict[str, list[dict[str, Any]]], met: list[str]) -> list
 
 
 def main() -> int:
+    """Rewrite the pages, or with `--check` report which are stale; `--mine-since` first."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="report stale pages")
     parser.add_argument("--mine-since", action="store_true", help="rewrite since.toml from tags")
@@ -824,8 +868,6 @@ def main() -> int:
         SINCE.write_text(mine(), encoding="utf-8", newline="\n")
         print(f"wrote {SINCE.relative_to(ROOT)}")
         since.cache_clear()
-        if not args.check:
-            pass
     found = stale()
     if args.check:
         for page in found:

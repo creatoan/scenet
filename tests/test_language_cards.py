@@ -49,7 +49,7 @@ NAMES = sorted(CARDS)
 def _section(card: Any) -> str:
     """A card's own text: from its heading to the next heading of its level or above."""
     page = LANGUAGE / f"{card.page}.md"
-    for section in myst.sections(page.read_text(encoding="utf-8")):
+    for section in myst.sections(page.read_text(encoding="utf-8"), titles=True):
         if section.heading.anchor == card.anchor:
             return section.text
     raise AssertionError(f"{page.name} has no heading for {card.name}")
@@ -72,10 +72,10 @@ class TestEveryKeyHasOneCard:
 
     @pytest.mark.parametrize("name", NAMES)
     def test_its_heading_is_its_name(self, name: str):
+        """A block's card is its page's title; every other card a section of the page."""
         text = (LANGUAGE / f"{CARDS[name].page}.md").read_text(encoding="utf-8")
-        assert re.search(
-            rf"^## `{re.escape(name)}`\n\n<!-- facts: {re.escape(name)} -->", text, re.M
-        )
+        heading = rf"^#{{1,2}} `{re.escape(name)}`\n\n<!-- facts: {re.escape(name)} -->"
+        assert re.search(heading, text, re.M)
 
 
 class TestTheFactsAreCurrent:
@@ -293,3 +293,48 @@ class TestTheGlossary:
         linked = " ".join(page.read_text(encoding="utf-8") for page in LANGUAGE.glob("*.md"))
         pattern = rf"\{{term\}}`(?:[^`<]*<)?{re.escape(term)}>?`"
         assert re.search(pattern, linked, re.I), f"no card links {{term}}`{term}`"
+
+
+def _titled_section(ids: list[str], title: str) -> Any:
+    from docutils import nodes  # noqa: PLC0415 -- only these tests build a doctree
+
+    section = nodes.section(ids=ids)
+    heading = nodes.title()
+    heading += nodes.literal(title, title)
+    section += heading
+    return section
+
+
+class TestAnAnchorIsTheSameEverywhere:
+    """A card is linked by its heading's slug -- `camera.md#camerashot` -- from the gallery's
+    manifest, the playground's "Read about it" and a rule's help. GitHub gives a heading that
+    id, and so does MyST when it resolves a link; Sphinx's HTML names the section `camera-shot`.
+    So the build gives every section its slug as an id too, and the address works on the site."""
+
+    @pytest.fixture(scope="class")
+    def conf(self) -> dict[str, Any]:
+        import runpy  # noqa: PLC0415
+
+        return runpy.run_path(str(ROOT / "docs" / "conf.py"))
+
+    def test_a_section_takes_its_headings_slug(self, conf: dict[str, Any]):
+        from docutils.utils import new_document  # noqa: PLC0415
+
+        document = new_document("test")
+        section = _titled_section(["camera-shot"], "camera.shot")
+        document += section
+        document.note_implicit_target(section)
+        conf["_heading_slugs_are_ids"](None, document)
+        assert section["ids"] == ["camera-shot", "camerashot"]
+
+    def test_an_id_already_taken_is_left_alone(self, conf: dict[str, Any]):
+        from docutils.utils import new_document  # noqa: PLC0415
+
+        document = new_document("test")
+        first = _titled_section(["camerashot"], "camerashot")
+        second = _titled_section(["camera-shot"], "camera.shot")
+        document += [first, second]
+        document.note_implicit_target(first)
+        document.note_implicit_target(second)
+        conf["_heading_slugs_are_ids"](None, document)
+        assert second["ids"] == ["camera-shot"]

@@ -241,7 +241,7 @@ The three camera heights at one shot type, told apart by the air they leave abov
 
 ![A strip of 3 panels. Medium close-up, from a low angle. Bob, centre, hands on hips. Medium close-up. Bob, centre, hands on hips. Medium close-up, from a high angle. Bob, centre, hands on hips.](images/gallery/03-camera-angles.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=03-camera-angles.scene.yaml) · [Read about it](reference/language/camera.md#camera)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=03-camera-angles.scene.yaml) · [Read about it](reference/language/camera.md#cameraangle)
 
 <details>
 <summary>Source</summary>
@@ -404,7 +404,7 @@ All four shipped poses, facing either way, and one puppet cast as two characters
 
 ![Full shot. A, left; B, centre, arms crossed; C, centre, pointing; D, right, hands on hips.](images/gallery/11-poses.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=11-poses.panel.yaml) · [Read about it](reference/language/cast.md#cast)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=11-poses.panel.yaml) · [Read about it](reference/language/cast.md#castidpose)
 
 <details>
 <summary>Source</summary>
@@ -446,7 +446,7 @@ Every expression the shipped puppets have, one panel each.
 
 ![A strip of 5 panels. Medium shot. Alice, left, arms crossed, angry, looking at Bob; Bob, right, hands on hips, shouting, looking at Alice. Medium shot. Alice, left, arms crossed, looking at Bob; Bob, right, hands on hips, surprised, looking at Alice. Medium shot. Alice, left, arms crossed, happy, looking at Bob; Bob, right, hands on hips, laughing, looking at Alice. Medium shot. Alice, left, arms crossed, coy, looking at Bob; Bob, right, hands on hips, bored, looking at Alice. Medium shot. Alice, left, arms crossed, sad, looking at Bob; Bob, right, hands on hips, scared, looking at Alice.](images/gallery/17-expressions.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=17-expressions.scene.yaml) · [Read about it](reference/language/cast.md#cast)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=17-expressions.scene.yaml) · [Read about it](reference/language/cast.md#castidexpression)
 
 <details>
 <summary>Source</summary>
@@ -514,7 +514,7 @@ A big close-up, where the head fills the panel and the face is drawn in full.
 
 ![Big close-up. Alice, centre, angry.](images/gallery/18-a-face.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=18-a-face.panel.yaml) · [Read about it](reference/language/cast.md#cast)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=18-a-face.panel.yaml) · [Read about it](reference/language/cast.md#castidexpression)
 
 <details>
 <summary>Source</summary>
@@ -548,7 +548,7 @@ Sweat, dizziness, oaths and dust drawn round a character, and the balloons that 
 
 ![A strip of 4 panels. Medium shot. Alice, left, scared, sweating, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Bob: Where is my umbrella? Medium shot. Alice, left, angry, swearing, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Alice: It was hideous! Medium shot. Alice, left, sad, dizzy, looking at Bob; Bob, right, arms crossed, bored, looking at Alice. Alice: I spun it round. Very fast. Then it was gone. Full shot. Alice, left, surprised; Bob, centre, pointing, shouting, dashing off. Alice: Bob?](images/gallery/23-emanata.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=23-emanata.scene.yaml) · [Read about it](reference/language/cast.md#marks)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=23-emanata.scene.yaml) · [Read about it](reference/language/cast.md#castidmarks)
 
 <details>
 <summary>Source</summary>
@@ -633,7 +633,7 @@ Staging written as subject, predicate and object, the form a program writes, mix
 
 ![Full shot. Alice, centre; Bob, centre, looking at Alice. Bob: Subject, predicate, object. Alice: Like a scene graph.](images/gallery/46-staging-spelled-out.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=46-staging-spelled-out.panel.yaml) · [Read about it](reference/language/staging.md#staging)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=46-staging-spelled-out.panel.yaml) · [Read about it](reference/language/staging.md#stagingsubject)
 
 <details>
 <summary>Source</summary>
@@ -675,7 +675,7 @@ Speech, whisper, shout and thought, each with the outline a letterer would give 
 
 ![Medium full shot. Alice, left, pointing; Bob, right, arms crossed. Alice, whispering: Did you take the last one? Bob, shouting: I did not! Alice: Then where is it? Bob, thinking: She is going to notice.](images/gallery/04-balloon-kinds.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=04-balloon-kinds.panel.yaml) · [Read about it](reference/language/script.md#say)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=04-balloon-kinds.panel.yaml) · [Read about it](reference/language/script.md#saykind)
 
 <details>
 <summary>Source</summary>
@@ -715,7 +715,7 @@ A balloon may prefer one of nine zones, the weakest rule there is: the compiler 
 
 ![Full shot. Alice, centre. Alice: Top left. Alice: Top right. Alice: Bottom left. Alice: Bottom right.](images/gallery/05-placement-zones.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=05-placement-zones.panel.yaml) · [Read about it](reference/language/script.md#say)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=05-placement-zones.panel.yaml) · [Read about it](reference/language/script.md#sayprefer)
 
 <details>
 <summary>Source</summary>
@@ -753,7 +753,7 @@ Balloons are placed so the page reads in script order, as a hard rule rather tha
 
 ![Medium full shot. Alice, centre; Bob, centre. Alice: First. Bob: Second. Alice: Third. Bob: Fourth.](images/gallery/06-reading-order.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=06-reading-order.panel.yaml) · [Read about it](reference/language/script.md#reading-order-is-enforced-not-suggested)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=06-reading-order.panel.yaml) · [Read about it](reference/language/script.md#script)
 
 <details>
 <summary>Source</summary>
@@ -796,7 +796,7 @@ Locale, monologue, spoken and editorial captions, placed like balloons but drawn
 
 ![Medium full shot. Alice, centre, arms crossed; Bob, right, pointing. Caption: Midnight. The docks. Alice: You said he would be here. Caption, inner voice: He had said a great many things. Harbourmaster, off panel: Put that down! Editor's note: Continued next issue.](images/gallery/16-captions.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=16-captions.panel.yaml) · [Read about it](reference/language/script.md#caption)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=16-captions.panel.yaml) · [Read about it](reference/language/script.md#captionkind)
 
 <details>
 <summary>Source</summary>
@@ -843,7 +843,7 @@ Three caption tones, over the pale noon sky that shows why a caption box needs o
 
 ![Long shot. A field by day. Alice, centre. Caption: Noon. Nothing for miles. Caption, inner voice: She had walked since dawn. Editor's note: Continued next issue.](images/gallery/22-caption-tones.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=22-caption-tones.panel.yaml) · [Read about it](reference/language/script.md#tone)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=22-caption-tones.panel.yaml) · [Read about it](reference/language/script.md#captiontone)
 
 <details>
 <summary>Source</summary>
@@ -892,7 +892,7 @@ Speech from somebody nobody draws, with a tail that runs to the edge of the fram
 
 ![A strip of 2 panels. Medium shot. A room at night. Bob, centre, arms crossed. Caller, off panel, shouting: Open up! Bob: Who is it? Neighbour, off panel: Keep it down in there. Close-up. A room at night. Bob, centre, arms crossed. Upstairs, off panel: Is everything all right? Bob, quietly: Fine. Go back to sleep. Caller, off panel: Then open the door. Caller, off panel: I know you're there.](images/gallery/32-off-panel.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=32-off-panel.scene.yaml) · [Read about it](reference/language/script.md#off-panel-speech)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=32-off-panel.scene.yaml) · [Read about it](reference/language/script.md#sayoff_panel)
 
 <details>
 <summary>Source</summary>
@@ -938,7 +938,7 @@ The yellow locale caption in a tinted panel: a pale yellow with the value of a g
 
 ![Long shot. The docks at night. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed, looking at Alice. Caption: Midnight. The docks. Alice: You came. Bob: You called.](images/gallery/39-warm-caption.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=39-warm-caption.panel.yaml) · [Read about it](reference/language/script.md#tone)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=39-warm-caption.panel.yaml) · [Read about it](reference/language/script.md#captiontone)
 
 <details>
 <summary>Source</summary>
@@ -992,7 +992,7 @@ The five zones between the corners, from the top center to the bottom center, ea
 
 ![Full shot. Alice, centre. Alice: Top center. Alice: Middle left. Alice: Middle center. Alice: Middle right. Alice: Bottom center.](images/gallery/44-the-other-zones.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=44-the-other-zones.panel.yaml) · [Read about it](reference/language/script.md#say)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=44-the-other-zones.panel.yaml) · [Read about it](reference/language/script.md#sayprefer)
 
 <details>
 <summary>Source</summary>
@@ -1083,7 +1083,7 @@ Somebody heard from off panel can be looked at: Bob turns toward the side the vo
 
 ![A strip of 2 panels. Medium shot. Bob, centre, looking off panel at Carol. Carol, off panel: Over here! Bob: Carol? Medium shot. Bob, centre, looking off panel at Carol. Carol, off panel: No, over here. Bob: Make up your mind.](images/gallery/50-looking-off-panel.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=50-looking-off-panel.scene.yaml) · [Read about it](reference/language/script.md#off-panel-speech)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=50-looking-off-panel.scene.yaml) · [Read about it](reference/language/script.md#sayoff_panel)
 
 <details>
 <summary>Source</summary>
@@ -1130,7 +1130,7 @@ Long lines are broken where a letterer would break them, measured against the re
 
 ![Medium shot. Alice, centre; Bob, centre. Alice: You forgot your umbrella! Bob: I know. Alice: It has been raining since six this morning and you knew that.](images/gallery/14-lettering.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=14-lettering.panel.yaml) · [Read about it](reference/language/lettering.md#lettering)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=14-lettering.panel.yaml) · [Read about it](reference/language/script.md#saytext)
 
 <details>
 <summary>Source</summary>
@@ -1172,7 +1172,7 @@ A stressed word lettered in bold italic, as letterers mark it.
 
 ![Cowboy shot. Alice, centre, angry; Bob, centre. Caption: Later. The same corner. Alice: I told you it would rain. Bob: You said it might.](images/gallery/28-emphasis.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=28-emphasis.panel.yaml) · [Read about it](reference/language/script.md#emphasis)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=28-emphasis.panel.yaml) · [Read about it](reference/language/script.md#saytext)
 
 <details>
 <summary>Source</summary>
@@ -1213,7 +1213,7 @@ One type size set for the whole page, so a short tier and a tall one letter alik
 
 ![A page of 2 panels. Long shot. Alice, centre; Bob, centre. Caption: The same evening. Alice: Can I come in? Medium shot. Alice, centre; Bob, centre. Bob: You're letting the rain in. Alice: Then let me in faster.](images/gallery/29-type-size.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=29-type-size.scene.yaml) · [Read about it](reference/language/lettering.md#lettering)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=29-type-size.scene.yaml) · [Read about it](reference/language/lettering.md#letteringsize)
 
 <details>
 <summary>Source</summary>
@@ -1315,7 +1315,7 @@ Lettering in a font you supply, Comic Neue: one file for every face, then a file
 
 ![A strip of 2 panels. Full shot. Alice, left, looking at Bob; Bob, right. Alice: Is that a new font? Bob: One file, for everything I say. Full shot. Alice, left, looking at Bob; Bob, right. Caption: Later, at the type foundry. Alice: Now every face is yours. Sound effect, from Bob: CLUNK.](images/gallery/42-your-own-font.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=42-your-own-font.scene.yaml) · [Read about it](reference/language/lettering.md#font)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=42-your-own-font.scene.yaml) · [Read about it](reference/language/lettering.md#letteringfont)
 
 <details>
 <summary>Source</summary>
@@ -1375,7 +1375,7 @@ A sound placed by who makes it but pulled toward the zone it prefers, turned clo
 
 ![Full shot. Alice, centre; Bob, centre, arms crossed. Sound effect, from Bob: RING RING. Alice: Your phone. Sound effect, from Alice: tap tap. Bob: Let it ring.](images/gallery/43-sound-pulled-to-a-zone.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=43-sound-pulled-to-a-zone.panel.yaml) · [Read about it](reference/language/script.md#sfx)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=43-sound-pulled-to-a-zone.panel.yaml) · [Read about it](reference/language/script.md#sfxprefer)
 
 <details>
 <summary>Source</summary>
@@ -1418,7 +1418,7 @@ The masses a place is made of, written by hand, on planes whose value reads as d
 
 ![A strip of 2 panels. Long shot. Outdoors by day. Alice, centre. Editor's note: Seven kinds of stuff, four planes deep. Long shot. A room at dusk. Bob, right. Caption: Indoors, at dusk.](images/gallery/19-setting.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=19-setting.scene.yaml) · [Read about it](reference/language/setting.md#masses)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=19-setting.scene.yaml) · [Read about it](reference/language/setting.md#settingmasses)
 
 <details>
 <summary>Source</summary>
@@ -1484,7 +1484,7 @@ The ten named places, one panel each, each a backdrop composed from masses.
 
 ![A strip of 10 panels. Long shot. The docks at night. Alice, centre. Long shot. A street by day. Alice, centre. Long shot. An alley at dusk. Alice, centre. Long shot. A room by day. Alice, centre. Long shot. An office by day. Alice, centre. Long shot. A forest at dawn. Alice, centre. Long shot. A field by day. Alice, centre. Long shot. A shore at dusk. Alice, centre. Long shot. A desert by day. Alice, centre. Long shot. A mountainside at dawn. Alice, centre.](images/gallery/20-places.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=20-places.scene.yaml) · [Read about it](reference/language/setting.md#place)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=20-places.scene.yaml) · [Read about it](reference/language/setting.md#settingplace)
 
 <details>
 <summary>Source</summary>
@@ -1532,7 +1532,7 @@ One place at different times of day and in different weather.
 
 ![A strip of 4 panels. Long shot. The docks at night, in the rain. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Midnight. The docks. Alice: You said you would be here at ten. Bob, whispering: I was. Long shot. The docks at dawn, in fog. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Six hours later. Long shot. The docks by day. Alice, centre, arms crossed, looking at Bob; Bob, centre. Editor's note: It never rains at noon. Long shot. The docks at dusk, in the snow. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: December.](images/gallery/21-atmosphere.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=21-atmosphere.scene.yaml) · [Read about it](reference/language/setting.md#time-and-weather)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=21-atmosphere.scene.yaml) · [Read about it](reference/language/setting.md#settingtime)
 
 <details>
 <summary>Source</summary>
@@ -1741,7 +1741,7 @@ A mass on the foreground plane, drawn over the cast like a doorway in silhouette
 
 ![Full shot. Outdoors at dusk. Alice, centre; Bob, centre. Alice: Are you coming in? Bob: When the sun is down.](images/gallery/47-in-front-of-the-cast.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=47-in-front-of-the-cast.panel.yaml) · [Read about it](reference/language/setting.md#masses)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=47-in-front-of-the-cast.panel.yaml) · [Read about it](reference/language/setting.md#settingmassesplane)
 
 <details>
 <summary>Source</summary>
@@ -1792,7 +1792,7 @@ The same shore with its horizon high, in the middle and low: the one line every 
 
 ![A strip of 3 panels. Long shot. A shore by day. Alice, centre. Editor's note: A high horizon: more ground in view. Long shot. A shore by day. Alice, centre. Editor's note: A horizon in the middle. Long shot. A shore by day. Alice, centre. Editor's note: A low horizon: the panel is mostly sky.](images/gallery/72-three-horizons.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=72-three-horizons.scene.yaml) · [Read about it](reference/language/setting.md#horizon)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=72-three-horizons.scene.yaml) · [Read about it](reference/language/setting.md#settinghorizon)
 
 <details>
 <summary>Source</summary>
@@ -1839,7 +1839,7 @@ Panels that follow one another, each written as what changes from the panel befo
 
 ![A strip of 3 panels. Full shot. Alice, left, pointing; Bob, right, arms crossed. Alice: We need to talk. Medium close-up. Alice, left, pointing; Bob, right, arms crossed. Bob, whispering: Do we. Close-up, from a low angle. Alice, left, pointing; Bob, right, hands on hips. Bob, shouting: Fine. Talk.](images/gallery/12-sequence.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=12-sequence.scene.yaml) · [Read about it](howto/compile_a_sequence.md)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=12-sequence.scene.yaml) · [Read about it](reference/language/scene.md#over)
 
 <details>
 <summary>Source</summary>
@@ -1891,7 +1891,7 @@ A margin keeps the lettering in, while the actors may bleed off the edge.
 
 ![Medium close-up. Alice, left; Bob, right. Alice: Room enough? Bob: Only just.](images/gallery/15-margin.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=15-margin.panel.yaml) · [Read about it](reference/language/panel.md#panel)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=15-margin.panel.yaml) · [Read about it](reference/language/panel.md#panelmargin)
 
 <details>
 <summary>Source</summary>
@@ -1932,7 +1932,7 @@ Panels laid out on a page in tiers, each panel compiled at the size of its frame
 
 ![A page of 5 panels. Long shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, right, arms crossed. Caption: Midnight. The corner of Fifth. Alice: You forgot your umbrella! Medium close-up. A street at night, in the rain. Bob, centre, arms crossed. Bob, whispering: I know. Full shot. A street at night, in the rain. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed. Alice: You know? Then why did you leave it? Bob: So you would come after me. Close-up. A street at night, in the rain. Alice, centre, surprised. Alice: Oh. Close-up. A street at night, in the rain. Bob, centre, happy. Bob, whispering: Shall we?](images/gallery/24-page.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=24-page.scene.yaml) · [Read about it](howto/compose_a_page.md#tiers-by-weight)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=24-page.scene.yaml) · [Read about it](reference/language/page.md#pagestiers)
 
 <details>
 <summary>Source</summary>
@@ -2008,7 +2008,7 @@ A tall panel beside a stack of smaller ones.
 
 ![A page of 5 panels. Long shot. A street at dusk. Alice, left, pointing, shouting; Bob, centre. Alice: Bob! Don't move! Close-up. A street at dusk. Bob, centre, scared. Bob: Why? What is it? Medium shot. A street at dusk. Alice, left, pointing, shouting. Alice, shouting: Right behind you! Full shot. A street at dusk. Bob, centre, hands on hips, surprised. Bob: ...A puddle? Full shot. A street at dusk. Alice, centre, laughing, looking at Bob; Bob, centre, angry. Alice: Your new shoes, Bob! Bob: Very funny.](images/gallery/25-columns.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=25-columns.scene.yaml) · [Read about it](howto/compose_a_page.md#a-tall-panel-beside-a-stack)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=25-columns.scene.yaml) · [Read about it](reference/language/page.md#tierscolumns)
 
 <details>
 <summary>Source</summary>
@@ -2093,7 +2093,7 @@ A small panel set into the corner of another, read before it or after it as it s
 
 ![A page of 5 panels. Close-up. A street by day. Bob, centre, bored. Caption: 9:14. Long shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, looking at Alice. Caption: Outside the cinema. Bob: The film started at nine. Close-up. A street by day. Alice, centre, scared. Alice, whispering: Oops. Medium shot. A street by day. Alice, left, hands on hips; Bob, right, arms crossed, looking at Alice. Alice: I brought popcorn? Full shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, laughing, looking at Alice. Bob: Then we watch the next one.](images/gallery/26-insets.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=26-insets.scene.yaml) · [Read about it](howto/compose_a_page.md#an-inset)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=26-insets.scene.yaml) · [Read about it](reference/language/page.md#panelsinsets)
 
 <details>
 <summary>Source</summary>
@@ -2179,7 +2179,7 @@ Tiers whose gutters lean, and the panels cut to fit them.
 
 ![A page of 6 panels. Long shot. A street at night. Alice, centre, hands on hips, angry, looking at Bob; Bob, centre, arms crossed, coy. Bob: You wouldn't dare. Medium shot. A street at night. Alice, left, pointing, shouting. Alice, shouting: Watch me! Full shot. A street at night. Bob, centre, arms crossed, surprised. Medium shot. A street at night. Alice, centre, surprised. Full shot. A street at night. Bob, centre, hands on hips, laughing. Bob: Missed. Medium shot. A street at night. Alice, centre, angry.](images/gallery/27-slant.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=27-slant.scene.yaml) · [Read about it](howto/compose_a_page.md#a-slanted-tier)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=27-slant.scene.yaml) · [Read about it](reference/language/page.md#tiersslant)
 
 <details>
 <summary>Source</summary>
@@ -2258,7 +2258,7 @@ A document of two pages, laid side by side, its panels named by page and number,
 ![A page of 3 panels. Long shot. A street by day. Alice, centre; Bob, centre. Caption: Page one. Alice: Where does this street go? Medium shot. A street by day. Alice, left; Bob, centre. Bob: On to the next page. Full shot. A street by day. Alice, centre; Bob, centre. Alice: Then turn it.](images/gallery/48-two-pages.page-1.svg)
 ![A page of 3 panels. Long shot. A street at dusk. Bob, centre; Alice, centre. Caption: Page two. Much later. Bob: Still walking. Close-up. A street by day. Alice, centre. Alice, whispering: My feet. Full shot. A street at night. Alice, centre; Bob, centre. Alice: Is this the end? Bob: Of the document, yes.](images/gallery/48-two-pages.page-2.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=48-two-pages.scene.yaml) · [Read about it](reference/language/page.md#page-and-pages)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=48-two-pages.scene.yaml) · [Read about it](reference/language/page.md#pages)
 
 <details>
 <summary>Source</summary>
@@ -2386,7 +2386,7 @@ A US comic page with its bleed, printed as a PDF: lettering on the black plate, 
 
 ![A page of 3 panels. Long shot. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed. Sound effect: HONK. Alice: Is that the press? Medium close-up. A street at dusk. Bob, centre, happy. Editor's note: Printed in black, every word. Bob: The last one tonight. Full shot. An alley at night. Alice, centre; Bob, centre, arms crossed. Sound effect: CLANG. Bob: Then it goes to the binders. Alice: And the plates?](images/gallery/70-a-page-for-print.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=70-a-page-for-print.scene.yaml) · [Read about it](reference/language/page.md#page-and-pages)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=70-a-page-for-print.scene.yaml) · [Read about it](reference/language/page.md#pagesize)
 
 <details>
 <summary>Source</summary>
@@ -2457,7 +2457,7 @@ Frames that run past the trim to the bleed line, with no border there: every edg
 
 ![A page of 5 panels. Long shot. The docks at dawn. Alice, centre; Bob, right. Caption: The docks, before the first ferry. Alice: Nobody here yet. Medium close-up. The docks at dawn. Bob, centre. Bob: Give it a minute. Full shot. The docks at dawn. Alice, centre, pointing. Alice: There! Medium shot. A shore at dawn. Bob, centre, happy. Sound effect: SKREE. Long shot. The docks by day. Alice, left; Bob, right. Editor's note: This one keeps its border.](images/gallery/73-panels-that-bleed.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=73-panels-that-bleed.scene.yaml) · [Read about it](reference/language/page.md#page-and-pages)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=73-panels-that-bleed.scene.yaml) · [Read about it](reference/language/page.md#panelsbleed)
 
 <details>
 <summary>Source</summary>
@@ -2650,7 +2650,7 @@ Two puppets in a street, then the same two people drawn by a picture, the place,
 
 ![A strip of 2 panels. Full shot. A street at night. Ana, centre; Ben, centre. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](images/gallery/51-puppets-to-figures.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=51-puppets-to-figures.scene.yaml) · [Read about it](reference/language/setting.md#figures-the-picture-draws)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=51-puppets-to-figures.scene.yaml) · [Read about it](reference/language/cast.md#castidfigure)
 
 <details>
 <summary>Source</summary>
@@ -2700,7 +2700,7 @@ A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for i
 
 ![Full shot. Alice, left, pointing, looking at Bob; Bob, centre. Alice: The first boat leaves at six. Bob: Then we have time for coffee.](images/gallery/52-a-jpeg.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=52-a-jpeg.panel.yaml) · [Read about it](reference/language/setting.md#an-image-behind-the-cast)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=52-a-jpeg.panel.yaml) · [Read about it](reference/language/setting.md#settingimage)
 
 <details>
 <summary>Source</summary>
@@ -2748,7 +2748,7 @@ Pip, a child five heads tall, is drawn from a puppet file beside the gallery, wh
 
 ![A page of 5 panels. Full shot. The docks at dusk. Alice, centre; Pip, centre, looking at Alice. Pip: Is that our boat? Alice: Not yet. Cowboy shot. The docks at dusk. Pip, centre, waving, happy. Pip: Hello, boat! Cowboy shot. The docks at dusk. Pip, centre, arms up, surprised. Pip: It's enormous! Cowboy shot. The docks at dusk. Pip, centre, scared. Pip, whispering: And so loud. Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.](images/gallery/69-a-puppet-of-your-own.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=69-a-puppet-of-your-own.scene.yaml) · [Read about it](reference/language/cast.md#a-puppet-of-your-own)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=69-a-puppet-of-your-own.scene.yaml) · [Read about it](reference/language/cast.md#castidreference)
 
 <details>
 <summary>Source</summary>
@@ -3704,7 +3704,7 @@ Four characters too wide for a close-up make the camera step back, and a note sa
 
 ![Close-up. Alice, left; Bob, left, arms crossed; Carol, centre, hands on hips; Dave, right, pointing. Alice: Is everyone here? Dave: Looks like it.](images/gallery/10-crowd-pullback.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=10-crowd-pullback.panel.yaml) · [Read about it](reference/language/index.md#when-constraints-conflict)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=10-crowd-pullback.panel.yaml) · [Read about it](reference/language/camera.md#camerashot)
 
 <details>
 <summary>Source</summary>

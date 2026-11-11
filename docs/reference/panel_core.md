@@ -106,7 +106,7 @@ compilation using real font metrics, so the emitter never re-measures and never 
 solver about how wide a balloon needs to be. For a `spoken` caption the quotation marks are part of
 those lines for the same reason: marks added afterwards would not fit the box drawn for them.
 
-A line with [emphasis](language/script.md#emphasis) in it is still plain text in `lines`, the text as it
+A line with [emphasis](language/script.md#saytext) in it is still plain text in `lines`, the text as it
 reads. Beside `lines`, the balloon or caption then carries `runs`: every line cut wherever its face
 changes, so the emitter draws each run in the face it was measured in. The runs of a line must
 spell it exactly, and a Core whose runs do not is refused.
@@ -123,7 +123,7 @@ spell it exactly, and a Core whose runs do not is refused.
 `runs` key at all, so every Core written before emphasis existed reads, and is written, byte for
 byte as before — which is why it needed no `format_version` bump.
 
-A panel lettered in an [author's face](language/lettering.md#font) carries `fonts`: each face set in a
+A panel lettered in an [author's face](language/lettering.md#letteringfont) carries `fonts`: each face set in a
 font other than the shipped one, by its family and style as the font names them, and the SHA-256 of
 the file. Never a path — where the file was is a fact about one machine.
 
@@ -150,7 +150,7 @@ script order, so a caption between two lines of dialogue takes the number betwee
 balloon list can have gaps in it. A panel with no captions is unaffected, which is why this did not
 need a `format_version` bump.
 
-**A balloon spoken from [off panel](language/script.md#off-panel-speech) carries `off_panel`**, the side
+**A balloon spoken from [off panel](language/script.md#sayoff_panel) carries `off_panel`**, the side
 of the frame its speaker is on, as the solver settled it: `left`, `right`, `top` or `bottom`. When
 it is set, `speaker` names somebody who is not an actor, so it is not looked up among `actors`, and
 the tail's `end` lies on the frame on that side — on `outline`, when the panel has one. A balloon
@@ -162,7 +162,7 @@ discipline as `capsules`, `blobs` and `face_marks`: the emitter is left with no 
 a backdrop can be read, diffed and hand-adjusted like everything else in this tier. `depth` is the
 same painter's order the actors use, so masses and figures sort into one sequence.
 
-A backdrop that is a [supplied picture](language/setting.md#an-image-behind-the-cast) has an `image` in
+A backdrop that is a [supplied picture](language/setting.md#settingimage) has an `image` in
 place of masses, and no `horizon`: the compiler does not know where the picture's horizon is, and
 does not pretend to. The solver was told the picture's size and nothing else; what it resolved is
 `box`, the rectangle the picture is drawn in — centred, overhanging the panel under `cover`,

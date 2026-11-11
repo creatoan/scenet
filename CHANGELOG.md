@@ -12,6 +12,25 @@ below 1.0 means.
 
 ### Added
 
+- **Every key of the language has a card** (#319), as a cppreference entry does: all 128 keys a
+  panel, a scene, an artwork contract or a puppet file can write. A card opens on the key's
+  meaning -- the line an editor shows on hover -- then a table of where it is written (in a
+  document and in a comic script), its type, values, default, the release it appeared in, the
+  findings it can give and the gallery examples that show it; then what it means, how it
+  resolves against everything else and its limits; then a minimal document, compiled when the
+  documentation is built by a new `{scenet-example}` directive and shown with its picture and an
+  "Open in the playground" link. The facts are generated from the published schemas by
+  `scripts/build_language_pages.py`, between markers, and a test fails on a key without a card,
+  a card for a key that does not exist, a stale table or an example that does not compile.
+  "Since" is mined from the editor's schemas at each release tag into
+  `docs/reference/language/since.toml`, values added later marked on their own (`warm`, 0.13).
+  Every default an audit found unstated is now stated, the nine placement zones are listed, and
+  the missing sections are written: the scene document (`panels`, `over`, the merge rules and
+  `null`), the staging mapping form, `setting`'s own keys, the camera's retreat, puppet files
+  and artwork contracts. An **All keys, A to Z** page lists every key, and a **glossary** says
+  what the reference's words mean. The gallery's "Read about it" opens the card of the key an
+  example shows, and `unknown-key` and `invalid-field` send a reader to the index. The spec pack
+  and the skill print each card's example as YAML and each included file in full.
 - **The language reference is a page per block** (#319). `docs/reference/language/` holds an
   overview, the blocks, a complete example, conflicts and determinism, then a page each for
   `panel`, `camera`, `setting`, `cast`, `staging`, `script`, `description`, `lettering`,
