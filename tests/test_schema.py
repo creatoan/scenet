@@ -570,3 +570,106 @@ class TestDescriptionsAreForAuthors:
     def test_what_comes_before_is_kept(self):
         anchor = panel_schema()["$defs"]["AnchorX"]["description"]
         assert anchor.startswith("Where along the panel width an actor would like to stand.")
+
+
+#: The four published schemas, by the name the editor ships each under.
+PUBLISHED = {
+    "panel": panel_schema,
+    "scene": scene_schema,
+    "artwork": artwork_schema,
+    "puppet": puppet_schema,
+}
+
+
+def _keys(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every key a schema lets a document write, by its path, with the node that defines it.
+
+    A path is written as the YAML is: `camera.shot`, `cast.*.pose` for a key under a name
+    the author chooses, `script[].say.by` for a key inside a list entry. A `$ref` is
+    followed once per path, so a definition reached twice is listed under both paths.
+    """
+    found: dict[str, dict[str, Any]] = {}
+
+    def walk(node: object, path: str, seen: frozenset[str]) -> None:
+        if not isinstance(node, dict):
+            return
+        if "$ref" in node:
+            name = node["$ref"].rsplit("/", 1)[1]
+            if name not in seen:
+                walk(schema["$defs"][name], path, seen | {name})
+        for combinator in ("anyOf", "oneOf", "allOf"):
+            for branch in node.get(combinator, []):
+                walk(branch, path, seen)
+        if isinstance(node.get("items"), dict):
+            walk(node["items"], f"{path}[]", seen)
+        if isinstance(node.get("additionalProperties"), dict):
+            walk(node["additionalProperties"], f"{path}.*", seen)
+        for key, value in node.get("properties", {}).items():
+            child = f"{path}.{key}" if path else key
+            if isinstance(value, dict):
+                found.setdefault(child, value)
+            walk(value, child, seen)
+
+    walk(schema, "", frozenset())
+    return found
+
+
+class TestEveryKeyIsDescribed:
+    """An editor shows a key's description on hover, so every key a document can write has
+    one of its own: the one-line meaning its card in the language reference opens with."""
+
+    @pytest.mark.parametrize("kind", sorted(PUBLISHED))
+    def test_every_key_has_a_description(self, kind: str):
+        undescribed = [
+            path
+            for path, node in _keys(PUBLISHED[kind]()).items()
+            if not str(node.get("description", "")).strip()
+        ]
+        assert undescribed == []
+
+    @pytest.mark.parametrize("kind", sorted(PUBLISHED))
+    def test_each_is_one_short_paragraph(self, kind: str):
+        long = [
+            path
+            for path, node in _keys(PUBLISHED[kind]()).items()
+            if "\n" in node.get("description", "") or len(node.get("description", "")) > 320
+        ]
+        assert long == []
+
+    def test_keys_were_found(self):
+        keys = _keys(panel_schema())
+        assert {"camera.shot", "cast.*.pose", "script[].say.by", "setting.masses[].kind"} <= set(
+            keys
+        )
+
+
+class TestTheSchemaTextIsForAuthors:
+    """Nothing in a description is Python's: no Sphinx role, no section of a docstring, no
+    issue number, nothing about the repository's own instructions."""
+
+    #: What a reader of a YAML file cannot use, by why.
+    FORBIDDEN: dict[str, re.Pattern[str]] = {
+        "a Sphinx role": re.compile(r":(?:class|func|attr|mod|data|meth|exc|ref|doc|term):`"),
+        "a docstring section": re.compile(r"^\s*(?:Attributes|Note|Notes):\s*$", re.M),
+        "a doctest": re.compile(r">>>"),
+        "an issue number": re.compile(r"(?<![\w&])#\d{1,4}\b(?![0-9a-fA-F])"),
+        "the agents' instructions": re.compile(r"CLAUDE\.md"),
+        "a reStructuredText table": re.compile(r"^\s*\+[-=+]+\+\s*$", re.M),
+        "a reStructuredText literal": re.compile(r"``|::\s*$", re.M),
+    }
+
+    @pytest.mark.parametrize("kind", sorted(PUBLISHED))
+    @pytest.mark.parametrize("what", sorted(FORBIDDEN))
+    def test_no_description_holds(self, kind: str, what: str):
+        pattern = self.FORBIDDEN[what]
+        offenders = [
+            description[:80]
+            for description in TestDescriptionsAreForAuthors._descriptions(PUBLISHED[kind]())
+            if pattern.search(description)
+        ]
+        assert offenders == []
+
+    def test_a_colour_is_not_an_issue_number(self):
+        pattern = self.FORBIDDEN["an issue number"]
+        assert not pattern.search("its fill is #090909")
+        assert pattern.search("added in (#71)")

@@ -46,6 +46,23 @@ def _load_generator() -> ModuleType:
 build_spec = _load_generator()
 
 
+def _load_script(name: str) -> ModuleType:
+    """Import another script from `scripts/`, with `scripts/` on the path as it runs there."""
+    if name in sys.modules:
+        return sys.modules[name]
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+        assert spec is not None
+        assert spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(str(ROOT / "scripts"))
+    return module
+
+
 @pytest.fixture(scope="module")
 def pack() -> str:
     return build_spec.spec_pack()
@@ -284,3 +301,87 @@ class TestSkill:
         for entry in _manifest():
             copy = SKILL / "assets" / "gallery" / entry["file"]
             assert copy.read_bytes() == (GALLERY / entry["file"]).read_bytes()
+
+
+#: The schemas the site publishes, at `schemas/<name>` beside each version's documentation.
+SCHEMAS = ("panel", "scene", "artwork", "puppet")
+
+#: Where the documentation of `main` is served, which a site build of this checkout says.
+DEV = f"{build_spec.SITE}/dev"
+
+
+class TestEveryCopyLinksItsOwnVersion:
+    """The committed copies link the site's root, which serves the latest release and sends
+    an old page's anchors on to their new home. A copy the site serves for one version links
+    that version's pages, pictures and schemas: a model reading `/dev/scenet-spec.md` is
+    reading about main, and `/v0.12/llms.txt` about 0.12."""
+
+    def test_the_committed_pack_links_the_root(self, pack: str):
+        assert f"{build_spec.SITE}/reference/shot_types.html" in pack
+        assert f"{DEV}/" not in pack
+
+    def test_a_versions_pack_links_that_version(self, tmp_path: Path):
+        build_spec.write_site_files(tmp_path, base=DEV)
+        served = (tmp_path / "scenet-spec.md").read_text(encoding="utf-8")
+        assert f"{DEV}/reference/shot_types.html" in served
+        assert f"{DEV}/images/gallery/" in served
+        root = re.escape(build_spec.SITE) + r"/(?!dev/)(?:reference|howto|images|schemas)/"
+        assert re.findall(root, served) == []
+
+    def test_a_versions_llms_txt_links_that_version(self, tmp_path: Path):
+        build_spec.write_site_files(tmp_path, base=DEV)
+        served = (tmp_path / "llms.txt").read_text(encoding="utf-8")
+        links = re.findall(r"\]\((\S+?)\)", served)
+        ours = [url for url in links if url.startswith(build_spec.SITE)]
+        assert ours
+        assert [url for url in ours if not url.startswith(f"{DEV}/")] == []
+
+    @pytest.mark.parametrize(
+        ("dev", "directory"), [(True, "dev"), (False, "v{minor}")], ids=["dev", "release"]
+    )
+    def test_the_site_build_says_which_version_it_is(self, dev: bool, directory: str):
+        minor = ".".join(__version__.split(".")[:2])
+        build_site = _load_script("build_site")
+        assert build_site.served_at(dev=dev) == f"{build_spec.SITE}/{directory.format(minor=minor)}"
+
+    def test_the_root_is_the_default(self, tmp_path: Path):
+        build_spec.write_site_files(tmp_path)
+        assert (tmp_path / "llms.txt").read_text(encoding="utf-8") == build_spec.llms_txt()
+
+
+class TestEverySchemaIsListed:
+    """Four schemas are published: a panel, a scene, an artwork contract and a puppet."""
+
+    @pytest.mark.parametrize("name", SCHEMAS)
+    def test_llms_txt_links_it(self, name: str):
+        assert f"]({build_spec.SITE}/schemas/{name}.schema.json)" in build_spec.llms_txt()
+
+    @pytest.mark.parametrize("name", SCHEMAS)
+    def test_the_schema_part_names_it(self, name: str):
+        assert f"{build_spec.SITE}/schemas/{name}.schema.json" in part("schema")
+
+
+class TestEveryPageIsDescribedAsItIs:
+    def test_the_command_line_page_names_every_command(self):
+        """`scenet schema` was missing from the line that describes the command line."""
+        cli = (ROOT / "docs" / "reference" / "cli.md").read_text(encoding="utf-8")
+        commands = re.findall(r"^## `scenet (\w+)`", cli, re.M)
+        assert commands
+        note = build_spec.LLMS_DOCUMENTS["reference/cli"]
+        assert [command for command in commands if f"`scenet {command}`" not in note] == []
+
+
+class TestTheOrderingRule:
+    """Two figures with no order between them are not an error: the compiler orders them by
+    `at`, then by actor id (`horizontal_order`). Say what happens, and recommend stating it."""
+
+    @pytest.mark.parametrize(
+        "text",
+        [part("preamble"), (SKILL / "SKILL.md").read_text(encoding="utf-8")],
+        ids=["preamble", "skill"],
+    )
+    def test_it_says_how_a_tie_is_broken(self, text: str):
+        flat = " ".join(text.split())
+        assert "need a left-to-right order" not in flat
+        assert "actor id" in flat
+        assert "left_of" in flat
