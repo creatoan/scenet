@@ -36,6 +36,28 @@ or
 pip install scenet
 ```
 
+## Extras
+
+Two features need a package the plain install leaves out. Ask for it as an extra, in square
+brackets, with any of the commands above:
+
+| Extra | Adds | For |
+|---|---|---|
+| `mcp` | the `mcp` package | [`scenet mcp`](../reference/mcp.md), which serves the compiler to a model or an agent. Without it, the command says so and exits 2 |
+| `watch` | `watchfiles` | [`scenet build --watch`](../reference/cli.md#scenet-build), which rebuilds on every save. Without it, `--watch` still works, by polling |
+
+```bash
+uv tool install "scenet[mcp,watch]"
+```
+
+or, in a project:
+
+```bash
+uv add "scenet[watch]"
+```
+
+The quotation marks keep a shell from reading the brackets as a pattern.
+
 ## Verify
 
 ```bash
