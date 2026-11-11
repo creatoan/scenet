@@ -1576,7 +1576,8 @@ def compile_book_file(
         path: A `*.panel.yaml`, `*.scene.yaml` or `*.script` file.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
-        dependencies: Optional set to populate with paths read during compilation.
+        dependencies: Optional set to populate with paths read during compilation, each
+            resolved.
 
     Returns:
         Every panel, and the pages they are laid out on -- none for a single panel or a
@@ -1621,7 +1622,7 @@ def compile_book_file(
         ...     book = compile_book_file(path, dependencies=read)
         >>> list(book.panels), len(book.pages)
         (['one', 'two'], 1)
-        >>> path in read
+        >>> path.resolve() in read
         True
 
     See Also:
