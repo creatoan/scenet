@@ -486,6 +486,8 @@ script:
 
 ## Balloons and captions
 
+Learn it in the tour: [Balloons and captions](tutorial/balloons_and_captions.md).
+
 ### Every balloon kind
 
 Speech, whisper, shout and thought, each with the outline a letterer would give it.
@@ -941,6 +943,8 @@ panels:
 
 ## Lettering and sound
 
+Learn it in the tour: [Lettering and sound](tutorial/lettering_and_sound.md).
+
 ### How lines break
 
 Long lines are broken where a letterer would break them, measured against the real font.
@@ -1229,6 +1233,8 @@ script:
 
 ## Faces and marks
 
+Learn it in the tour: [Faces and marks](tutorial/faces_and_marks.md).
+
 ### Ten expressions
 
 Every expression the shipped puppets have, one panel each.
@@ -1417,6 +1423,8 @@ panels:
 </details>
 
 ## Setting and colour
+
+Learn it in the tour: [Setting and colour](tutorial/setting_and_colour.md).
 
 ### Masses and planes
 
@@ -1839,6 +1847,8 @@ panels:
 
 ## Sequences
 
+Learn it in the tour: [Sequences](tutorial/sequences.md).
+
 ### A sequence
 
 Panels that follow one another, each written as what changes from the panel before.
@@ -1938,6 +1948,8 @@ panels:
 </details>
 
 ## Pages and print
+
+Learn it in the tour: [Pages and print](tutorial/pages_and_print.md).
 
 ### Margins and bleed
 
@@ -2540,6 +2552,8 @@ panels:
 </details>
 
 ## Comic scripts
+
+Learn it in the tour: [Comic scripts](tutorial/comic_scripts.md).
 
 ### A comic script
 
@@ -3192,6 +3206,8 @@ Theo at the foot of the lighthouse stairs.
 
 ## Your own art and characters
 
+Learn it in the tour: [Your own art and characters](tutorial/your_own_art.md).
+
 ### A picture behind the cast
 
 A picture painted elsewhere behind the puppets, fitted to cover the panel or contained in it.
@@ -3491,6 +3507,8 @@ panels:
 
 ## Right to left
 
+Learn it in the tour: [Right to left](tutorial/right_to_left.md).
+
 ### Right to left
 
 A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored.
@@ -3705,6 +3723,8 @@ panels:
 </details>
 
 ## What Scenet tells you
+
+Learn it in the tour: [What Scenet tells you, and publishing](tutorial/what_scenet_tells_you.md).
 
 ### The camera retreats
 
