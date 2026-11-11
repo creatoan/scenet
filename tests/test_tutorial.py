@@ -24,6 +24,7 @@ every `scenet` line it runs is run, under `tests/shell_examples.py`.
 
 import contextlib
 import io
+import itertools
 import re
 import shlex
 import tempfile
@@ -150,9 +151,7 @@ class TestEveryChapterHasItsParts:
         headings = [
             h.text for h in myst.headings(chapter.read_text(encoding="utf-8")) if h.level == 2
         ]
-        found = [
-            part for heading in headings for part in PARTS if heading.startswith(part)
-        ]
+        found = [part for heading in headings for part in PARTS if heading.startswith(part)]
         assert found == list(PARTS)
 
     @pytest.mark.parametrize("chapter", CHAPTERS, ids=IDS)
@@ -246,7 +245,7 @@ def _transcripts() -> list[tuple[Path, int, str, str]]:
             for token in MarkdownIt("commonmark").parse(chapter.read_text(encoding="utf-8"))
             if token.type == "fence" and token.map is not None
         ]
-        for before, after in zip(tokens, tokens[1:], strict=False):
+        for before, after in itertools.pairwise(tokens):
             assert before.map is not None
             assert after.map is not None
             if before.info.strip() == "bash" and after.info.strip() == "text":
@@ -296,7 +295,9 @@ def _documents(chapter: Path) -> list[Any]:
 @cache
 def _written() -> set[str]:
     """Every key written in any chapter's documents, at any depth."""
-    return {key for chapter in CHAPTERS for document in _documents(chapter) for key in _keys(document)}
+    return {
+        key for chapter in CHAPTERS for document in _documents(chapter) for key in _keys(document)
+    }
 
 
 @cache

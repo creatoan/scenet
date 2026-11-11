@@ -12,6 +12,26 @@ below 1.0 means.
 
 ### Added
 
+- **The author's tour** (#321): twelve chapters under `docs/tutorial/`, from a first panel to
+  a printed page, comic scripts, art and puppets of your own, right to left, and what Scenet
+  tells you. Each shows what you will make, as a gallery picture, beside its complete
+  document; builds it and says what the compiler decided; opens its examples in the
+  playground; runs `scenet check`; and links the key cards and the diagnostics entries. The
+  gallery's groups are now the tour's chapters, in its order, in the playground's menu too,
+  and the Gallery page sends each group to its chapter. `tests/test_tutorial.py` holds every
+  chapter to that shape, every "Try it" list to its group, every printed output to what the
+  command prints, and the tour to the whole language: every key of a panel or a scene, and
+  every top-level key of a puppet file and an artwork contract, is written in a chapter's
+  document and linked to its card. The first chapter, `first_panel.md`, is rewritten for an
+  author: it installs with `uv tool install`, builds the file it wrote, and names a note by
+  its id.
+- **The install guide names the `mcp` and `watch` extras.**
+- **A documented command runs on the files its page wrote.** A `bash` block in the docs now
+  finds every file a block above it, captioned with a file name, shows, and the gallery's
+  pictures, fonts and puppets; a line ending in `# exits 1` must exit 1, so a page can show
+  `scenet check` failing on a mistake. A captioned copy of a gallery example counts as that
+  example.
+
 - **The command-line reference is complete** (#320). Every option of every command has an
   example, which the test suite runs -- a `--watch` example runs its first build -- and every
   command and option says the release it appeared in, mined from the tags into

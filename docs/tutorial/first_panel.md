@@ -36,7 +36,8 @@ they are drawn, not where the balloons go.
 
 ## The smallest panel
 
-A panel needs a {term}`cast`. Nothing else is required: every other key has a default.
+A panel needs a [`cast`](../reference/language/cast.md), the people in it. Nothing else is
+required: every other key has a default.
 
 ```{code-block} yaml
 :caption: hello.panel.yaml
@@ -59,8 +60,8 @@ Open `hello.svg` in a browser. One figure, centred, framed as a medium shot in a
 1000 panel. You asked for none of that and got all of it, because every key has a default.
 
 `alice` appears twice in that line, and the two mean different things. The key, `alice:`,
-is an **actor id**: the name this panel uses for this person. `reference: alice` names the
-**puppet** that is drawn, one of the two Scenet ships, `alice` and `bob`. They match here
+is an {term}`actor` id: the name this panel uses for this person. `reference: alice` names the
+{term}`puppet` that is drawn, one of the two Scenet ships, `alice` and `bob`. They match here
 only for convenience. Two actors may be played by one puppet, `guard_left` and
 `guard_right` both by `bob`, and the panel still tells them apart.
 
