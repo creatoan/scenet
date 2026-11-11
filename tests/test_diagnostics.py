@@ -1214,7 +1214,7 @@ class TestTheReferenceListsEveryRule:
         doc = (Path(__file__).parent.parent / "docs" / "reference" / "cli.md").read_text(
             encoding="utf-8"
         )
-        listed = set(re.findall(r"^\| `scenet/([a-z-]+)` \|", doc, re.MULTILINE))
+        listed = set(re.findall(r"^\| \[`scenet/([a-z-]+)`\]", doc, re.MULTILINE))
         assert listed == set(RULES)
 
 

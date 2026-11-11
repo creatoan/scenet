@@ -124,6 +124,9 @@ undocumented:
 - each command's options, their choices and the values marked as defaults, against
   `scenet.cli.build_parser()`;
 - each command's exit-status table, against a scenario that produces every code in it;
+- each command's and each option's release, against `docs/reference/cli.since.toml`, which
+  `scripts/mine_cli_since.py` mines from the tags, and each option against a `bash` example
+  in its command's section that uses it;
 - the extension table, against the frontends `build` reads with;
 - every rule except `internal`, against a document in `tests/rule_corpus/` named after it
   that must produce exactly one finding of that rule, read beside `examples/gallery` as the

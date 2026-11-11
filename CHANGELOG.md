@@ -12,6 +12,14 @@ below 1.0 means.
 
 ### Added
 
+- **The command-line reference is complete** (#320). Every option of every command has an
+  example, which the test suite runs -- a `--watch` example runs its first build -- and every
+  command and option says the release it appeared in, mined from the tags into
+  `docs/reference/cli.since.toml` by `scripts/mine_cli_since.py`: `--pdf`, `--mono`, `--watch`
+  and `--puppet` are 0.13, not yet released. `scenet schema` has an exit-status table, held to
+  a scenario for each code as the other commands' are. Each rule in the table of rules links
+  its entry in the diagnostics reference. A test fails on an option without an example or a
+  release, and on an issue number in the page.
 - **A finding links its entry** (#320). SARIF gives every rule a `helpUri`, its entry in the
   diagnostics reference, and its `help` ends by naming that entry, in text and in Markdown, so
   code scanning and an editor send a reader to why it happens and how to fix it. The MCP

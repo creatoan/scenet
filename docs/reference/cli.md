@@ -10,6 +10,8 @@ Four commands: `build` compiles a document, `check` validates one without compil
 
 ## `scenet build`
 
+*Since 0.1.*
+
 ```
 scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--pdf] [--quiet] [--watch]
 ```
@@ -29,15 +31,18 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   exists or one written with a trailing `/` such as `out/`, takes that default name inside
   it, so `-o .` writes `duel.svg` to the current directory. Any other path is the SVG file
   itself, and every other output is named after it.
+  *Since 0.1.*
 
 `--core`
 : Also write the resolved Panel Core as JSON — every coordinate the compiler chose, in a
   format you can read, diff and hand-edit. See [Panel Core](panel_core.md).
+  *Since 0.1.*
 
 `--debug`
 : Also write a diagnostic overlay showing the geometry the solver was working against:
   silhouette hulls, face exclusion zones, named anchors, gaze vectors and tail routes.
   This is usually the fastest way to see why a panel came out the way it did.
+  *Since 0.1.*
 
 `--conditioning`
 : Also export each panel's staging for image models, as five files beside its SVG: the pose as
@@ -45,6 +50,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   each is another emitter reading Panel Core, text, JSON or SVG, and byte-identical like the
   rest. Per panel only; a page's frames are in its Page Core (`--core`). See
   [export for image models](../howto/export_for_image_models.md).
+  *Since 0.12.*
 
 `--live-text`
 : Emit selectable `<text>` elements instead of glyph outlines. Smaller files and
@@ -54,7 +60,8 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   self-contained. With `--pdf`, the print PDF is lettered in text too, and exactly: each
   face is embedded as a subset where its licence (the font's `OS/2` `fsType`) allows, and
   every glyph lands where its outline would; a face that may not be embedded stays in
-  outlines, and a note says so (#284). Sound effects stay outlines in both.
+  outlines, and a note says so. Sound effects stay outlines in both.
+  *Since 0.1.*
 
 `--mono`
 : Draw every value as its grey and ignore its colour: a black-and-white edition of a document
@@ -64,6 +71,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   With `--pdf`, the print PDF is printed in the greys too, rather than in the colours' CMYK
   twins: the same file `palette: mono` prints. Panel Core and the exports for image models are
   unaffected: `--core` still records the palette and its colours.
+  *Since 0.13.*
 
 `--no-aria`
 : Write no accessibility markup. By default each panel is an image a screen reader can read
@@ -72,6 +80,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   [accessible output](../howto/make_accessible_output.md). This leaves all of that out, for a
   pipeline that post-processes the SVG, and is otherwise byte-identical: the same file less
   those attributes and elements. Debug overlays never carry it.
+  *Since 0.12.*
 
 `--embed-images`
 : Write each [supplied picture](language/setting.md#settingimage) into the SVG as a
@@ -80,14 +89,16 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   written beside the document, as it is by default. Written anywhere else, the build says so
   in a `note:`, since the link will not resolve there; an SVG shown as an `<img>`, or turned
   into a PNG, loads no linked file at all. Embedding is byte-identical for the same picture.
+  *Since 0.12.*
 
 `--strip`
 : For a document of more than one panel, also lay every panel out side by side in reading
   order, as one extra file. Ignored when there is only one panel, a one-panel scene
   included.
+  *Since 0.1.*
 
 `--pdf`
-: Also write the document as one print PDF, `stem.pdf`, beside the SVGs (#80): a PDF page per
+: Also write the document as one print PDF, `stem.pdf`, beside the SVGs: a PDF page per
   page, or per panel for a document with no pages; with pages, a panel on no page is not
   printed. A page unit prints as 0.1 mm, and a page's `bleed` runs the sheet past its trim
   (TrimBox and BleedBox). Lettering, balloon borders and every line are 100% black and
@@ -102,6 +113,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   tagged sRGB, and an output intent names the printing condition, but no PDF/X conformance
   is claimed. See
   [Print a comic](../howto/print_a_comic.md).
+  *Since 0.13.*
 
 `--quiet`
 : Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are
@@ -110,6 +122,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes) — all but
   what the build says about its files: a linked picture written away from its document, and
   what `--pdf` leaves out.
+  *Since 0.1.*
 
 `--watch`
 : Build once, then rebuild when the source, a file read during compilation, or a tracked
@@ -118,6 +131,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   observed dependencies stay watched so a deleted source or a partial failed build can recover.
   Watch mode does not start a server or reload a browser. It polls with the standard library
   by default; install `scenet[watch]` to use `watchfiles` when available. Ctrl-C exits with 0.
+  *Since 0.13.*
 
 ### Output naming
 
@@ -195,7 +209,57 @@ scenet build examples/sequence.scene.yaml --strip
 scenet build examples/umbrella.script --strip -o out/umbrella.svg
 ```
 
+Also export each panel's staging for image models, beside its SVG:
+
+```bash
+scenet build examples/duel.panel.yaml --conditioning
+```
+
+Letter in selectable text rather than outlines:
+
+```bash
+scenet build examples/duel.panel.yaml --live-text
+```
+
+A black-and-white edition of a tinted document, without editing it:
+
+```bash
+scenet build examples/gallery/40-tinted-hours.scene.yaml --mono
+```
+
+Without the accessibility markup, for a pipeline that post-processes the SVG:
+
+```bash
+scenet build examples/duel.panel.yaml --no-aria
+```
+
+A supplied picture written into the SVG, so the file stands alone:
+
+```bash
+scenet build examples/gallery/52-a-jpeg.panel.yaml --embed-images -o out/jpeg.svg
+```
+
+The print PDF, beside the SVGs:
+
+```bash
+scenet build examples/sequence.scene.yaml --pdf
+```
+
+In a script, with nothing printed on success:
+
+```bash
+scenet build examples/duel.panel.yaml --quiet
+```
+
+Rebuilt on every save, until Ctrl-C:
+
+```bash
+scenet build examples/duel.panel.yaml --watch
+```
+
 ## `scenet check`
+
+*Since 0.3.*
 
 ```
 scenet check SOURCE... [--format {text,sarif}] [-o OUTPUT] [--quiet] [--deep]
@@ -233,6 +297,7 @@ published schema — are what make a generate/validate/repair loop work.
   `file:line:column: note: rule: message` for a note, where GCC and Clang put a
   severity. What a person reads. `file: ok` follows on stdout for each document when
   none has an error, notes or not.
+  *Since 0.3.*
 
 `--format sarif`
 : [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html), the
@@ -240,15 +305,18 @@ published schema — are what make a generate/validate/repair loop work.
   Nothing but the document reaches stdout, so redirecting it produces a file a parser
   accepts. To see the findings in VS Code, see
   [Findings the schema cannot see](../howto/editor_support.md#findings-the-schema-cannot-see).
+  *Since 0.3.*
 
 `-o`, `--output PATH`
 : Write the report to this file instead of the terminal, in either format. In text format
   the file holds the findings, one per line, and is empty when every document is valid.
   It names a file, so a directory is refused.
+  *Since 0.3.*
 
 `--quiet`
 : Suppress the per-file `ok` line. Findings are always reported — this hides the
   reassurance, never the diagnosis.
+  *Since 0.3.*
 
 `--deep`
 : Also run the full compiler on any document that passes every cheap check, to
@@ -257,6 +325,7 @@ published schema — are what make a generate/validate/repair loop work.
   runs. Off by default: it costs a real compile, including font metrics. Skipped for a
   document the cheap pass already found something wrong with, so a document with a bad
   pose reports that once rather than a second, worse-located finding for the same fault.
+  *Since 0.6.*
 
 ### Exit status
 
@@ -271,7 +340,9 @@ anything.
 
 ### Rules
 
-Every finding carries a stable `ruleId`. These identifiers **do not change across
+Every finding carries a stable `ruleId`, and each has an entry in
+[the diagnostics reference](diagnostics.md): why it happens, how to fix it, and a document that
+gives it beside the same document fixed. SARIF links it from the rule's `helpUri`. These identifiers **do not change across
 releases**: a `ruleId` that moves silently closes every alert that referenced the old one
 and opens a duplicate under the new one, so renaming one is a breaking change even though
 nothing stops compiling.
@@ -283,43 +354,43 @@ note as information rather than a red squiggle.
 
 | Rule | Level | Raised when |
 |---|---|---|
-| `scenet/syntax` | error | The file is not valid YAML, or is empty; in a comic script, its front matter. A line indented to match no line above it is said to be |
-| `scenet/duplicate-key` | error | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
-| `scenet/not-a-mapping` | error | The top level is a list or a scalar |
-| `scenet/unknown-key` | error | A key the language does not define — usually a typo |
-| `scenet/missing-field` | error | A required value was not supplied |
-| `scenet/invalid-field` | error | A known key holding the wrong type or an out-of-range value |
-| `scenet/panel-geometry` | error | Non-positive size, or margins leaving no usable area |
-| `scenet/unknown-actor` | error | An id in `staging` or `script` that is not in `cast` |
-| `scenet/off-panel-speaker` | error | A line spoken from off panel by somebody drawn in the panel |
-| `scenet/unbalanced-emphasis` | error | An underscore that opens emphasis in a line of `text`, with none to close it |
-| `scenet/reflexive-relation` | error | A relation relating an actor to itself |
-| `scenet/caption-speaker` | error | `by` on a caption whose `kind` is not `spoken` |
-| `scenet/ordering-cycle` | error | `left_of`/`right_of` relations that form a cycle |
-| `scenet/composition` | error | An `over:` chain that is missing or cyclic |
-| `scenet/panel-direction` | error | A panel of a scene that writes `direction`, or a comic script's `@direction:`: the reading direction is the whole document's |
-| `scenet/duplicate-panel` | error | Two panels in a comic script with the same name, even counting pages |
-| `scenet/page-layout` | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not reach the margin, or no room for its tiers |
-| `scenet/unknown-puppet` | error | A `reference` naming a character the library lacks |
-| `scenet/unknown-place` | error | A setting's `place` naming one the library does not have |
-| `scenet/conflicting-setting` | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |
-| `scenet/unknown-pose` | error | A `pose` naming one its puppet does not declare |
-| `scenet/unknown-expression` | error | An `expression` naming one its puppet does not declare |
-| `scenet/puppet-file` | error | A `reference` naming a puppet file (`puppets/pip.puppet.yaml`) that is absolute, missing, named by text with no folder, or not a puppet: not YAML, a key repeated or misspelt, a landmark missing or out of order, a joint naming one that does not exist. Reported in the puppet file when the document is checked as a file |
-| `scenet/image-file` | error | A picture in `setting.image` that is absolute, missing, not a PNG or JPEG, turned by its EXIF orientation, or named by text with no folder |
-| `scenet/artwork-contract` | error | A picture whose figures the panel casts has no artwork contract beside it (`art/p01.png` → `art/p01.art.yaml`), or one that is not YAML, repeats or misspells a key, holds a value out of place, puts a point off the picture, or was measured on a picture of another size. Reported in the contract when the document is checked as a file |
-| `scenet/unknown-figure` | error | A cast `figure` in a panel that names no picture, or a line spoken or sound made by a figure the panel's picture does not draw |
-| `scenet/conflicting-cast` | error | A cast member with both `reference` and `figure`, a puppet's `pose`, `expression`, `marks`, `at` or `facing` on a figure, a cast mixing puppets and figures, or two members playing one figure |
-| `scenet/figure-staging` | error | A staging relation naming a figure a picture draws, or a `camera` on a panel whose cast is all figures |
-| `scenet/font-file` | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
-| `scenet/layout` | error | Valid, but no layout satisfies its required constraints (`--deep` only) |
-| `scenet/balloon-placement` | error | No legal position exists for a balloon (`--deep` only) |
-| `scenet/sfx-placement` | error | No legal position exists for a sound effect (`--deep` only) |
-| `scenet/word-limit` | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |
-| `scenet/panel-count` | note | A comic script's `PAGE ONE (five panels)` names a count its panels do not match |
-| `scenet/looks-like-dialogue` | note | A cue in a comic script with nothing said under it, or a name in capitals with a line under it outside any panel |
-| `scenet/dropped-relation` | note | A shared staging relation left out of a panel its actor is left out of: `(OP)` in a script, or `cast: {name: null}` |
-| `scenet/internal` | error | A failure with no more specific rule — worth reporting |
+| [`scenet/syntax`](diagnostics.md#syntax) | error | The file is not valid YAML, or is empty; in a comic script, its front matter. A line indented to match no line above it is said to be |
+| [`scenet/duplicate-key`](diagnostics.md#duplicate-key) | error | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
+| [`scenet/not-a-mapping`](diagnostics.md#not-a-mapping) | error | The top level is a list or a scalar |
+| [`scenet/unknown-key`](diagnostics.md#unknown-key) | error | A key the language does not define — usually a typo |
+| [`scenet/missing-field`](diagnostics.md#missing-field) | error | A required value was not supplied |
+| [`scenet/invalid-field`](diagnostics.md#invalid-field) | error | A known key holding the wrong type or an out-of-range value |
+| [`scenet/panel-geometry`](diagnostics.md#panel-geometry) | error | Non-positive size, or margins leaving no usable area |
+| [`scenet/unknown-actor`](diagnostics.md#unknown-actor) | error | An id in `staging` or `script` that is not in `cast` |
+| [`scenet/off-panel-speaker`](diagnostics.md#off-panel-speaker) | error | A line spoken from off panel by somebody drawn in the panel |
+| [`scenet/unbalanced-emphasis`](diagnostics.md#unbalanced-emphasis) | error | An underscore that opens emphasis in a line of `text`, with none to close it |
+| [`scenet/reflexive-relation`](diagnostics.md#reflexive-relation) | error | A relation relating an actor to itself |
+| [`scenet/caption-speaker`](diagnostics.md#caption-speaker) | error | `by` on a caption whose `kind` is not `spoken` |
+| [`scenet/ordering-cycle`](diagnostics.md#ordering-cycle) | error | `left_of`/`right_of` relations that form a cycle |
+| [`scenet/composition`](diagnostics.md#composition) | error | An `over:` chain that is missing or cyclic |
+| [`scenet/panel-direction`](diagnostics.md#panel-direction) | error | A panel of a scene that writes `direction`, or a comic script's `@direction:`: the reading direction is the whole document's |
+| [`scenet/duplicate-panel`](diagnostics.md#duplicate-panel) | error | Two panels in a comic script with the same name, even counting pages |
+| [`scenet/page-layout`](diagnostics.md#page-layout) | error | A page placing a panel that does not exist, or one twice, two stacked columns side by side, two insets that overlap, an inset too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not reach the margin, or no room for its tiers |
+| [`scenet/unknown-puppet`](diagnostics.md#unknown-puppet) | error | A `reference` naming a character the library lacks |
+| [`scenet/unknown-place`](diagnostics.md#unknown-place) | error | A setting's `place` naming one the library does not have |
+| [`scenet/conflicting-setting`](diagnostics.md#conflicting-setting) | error | A setting that names a `place` and also lists `masses`, or names an `image` beside a place, masses or a `horizon` |
+| [`scenet/unknown-pose`](diagnostics.md#unknown-pose) | error | A `pose` naming one its puppet does not declare |
+| [`scenet/unknown-expression`](diagnostics.md#unknown-expression) | error | An `expression` naming one its puppet does not declare |
+| [`scenet/puppet-file`](diagnostics.md#puppet-file) | error | A `reference` naming a puppet file (`puppets/pip.puppet.yaml`) that is absolute, missing, named by text with no folder, or not a puppet: not YAML, a key repeated or misspelt, a landmark missing or out of order, a joint naming one that does not exist. Reported in the puppet file when the document is checked as a file |
+| [`scenet/image-file`](diagnostics.md#image-file) | error | A picture in `setting.image` that is absolute, missing, not a PNG or JPEG, turned by its EXIF orientation, or named by text with no folder |
+| [`scenet/artwork-contract`](diagnostics.md#artwork-contract) | error | A picture whose figures the panel casts has no artwork contract beside it (`art/p01.png` → `art/p01.art.yaml`), or one that is not YAML, repeats or misspells a key, holds a value out of place, puts a point off the picture, or was measured on a picture of another size. Reported in the contract when the document is checked as a file |
+| [`scenet/unknown-figure`](diagnostics.md#unknown-figure) | error | A cast `figure` in a panel that names no picture, or a line spoken or sound made by a figure the panel's picture does not draw |
+| [`scenet/conflicting-cast`](diagnostics.md#conflicting-cast) | error | A cast member with both `reference` and `figure`, a puppet's `pose`, `expression`, `marks`, `at` or `facing` on a figure, a cast mixing puppets and figures, or two members playing one figure |
+| [`scenet/figure-staging`](diagnostics.md#figure-staging) | error | A staging relation naming a figure a picture draws, or a `camera` on a panel whose cast is all figures |
+| [`scenet/font-file`](diagnostics.md#font-file) | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
+| [`scenet/layout`](diagnostics.md#layout) | error | Valid, but no layout satisfies its required constraints (`--deep` only) |
+| [`scenet/balloon-placement`](diagnostics.md#balloon-placement) | error | No legal position exists for a balloon (`--deep` only) |
+| [`scenet/sfx-placement`](diagnostics.md#sfx-placement) | error | No legal position exists for a sound effect (`--deep` only) |
+| [`scenet/word-limit`](diagnostics.md#word-limit) | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |
+| [`scenet/panel-count`](diagnostics.md#panel-count) | note | A comic script's `PAGE ONE (five panels)` names a count its panels do not match |
+| [`scenet/looks-like-dialogue`](diagnostics.md#looks-like-dialogue) | note | A cue in a comic script with nothing said under it, or a name in capitals with a line under it outside any panel |
+| [`scenet/dropped-relation`](diagnostics.md#dropped-relation) | note | A shared staging relation left out of a panel its actor is left out of: `(OP)` in a script, or `cast: {name: null}` |
+| [`scenet/internal`](diagnostics.md#internal) | error | A failure with no more specific rule — worth reporting |
 
 ### Source positions
 
@@ -375,6 +446,12 @@ scenet check --format sarif examples/duel.panel.yaml > results.sarif
 scenet check --deep examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml
 ```
 
+The findings in a file, one per line, and only the exit status on the terminal:
+
+```bash
+scenet check --quiet -o report.txt examples/duel.panel.yaml
+```
+
 Uploading to GitHub code scanning, which is how findings become annotations on a pull
 request:
 
@@ -428,6 +505,8 @@ close an import cycle.
 
 ## `scenet schema`
 
+*Since 0.1.*
+
 ```
 scenet schema [-o OUTPUT] [--scene | --artwork | --puppet]
 ```
@@ -439,17 +518,20 @@ the editor suggests cannot drift from what compiles — see
 
 `-o`, `--output PATH`
 : Write to this file instead of stdout. It names a file, so a directory is refused.
+  *Since 0.1.*
 
 `--scene`
 : Emit the multi-panel scene schema instead of the single-panel one. A scene allows the
   same keys as a panel — where they act as defaults every panel inherits — plus `panels:`,
   whose members may additionally carry `over:`.
+  *Since 0.1.*
 
 `--artwork`
 : Emit the schema for an [artwork contract](asset_contract.md#artwork-contracts), the
   `*.art.yaml` file beside a supplied picture that declares the figures it draws. What a
   schema cannot say — every point on the picture, every region a simple polygon, the size
   the picture's own — `scenet check` does.
+  *Since 0.12.*
 
 `--puppet`
 : Emit the schema for a [puppet file](../howto/add_your_own_character.md), the
@@ -457,6 +539,7 @@ the editor suggests cannot drift from what compiles — see
   landmark, a `head_top` of zero and a `standing_neutral` pose; what a schema cannot say —
   landmarks increasing downward, a skeleton that is a tree, every joint a part or a pose
   names declared — `scenet check` does, in the puppet file, on a document that casts it.
+  *Since 0.13.*
 
 ```bash
 scenet schema -o panel.schema.json
@@ -467,7 +550,16 @@ scenet schema --puppet -o puppet.schema.json
 
 The output is sorted and indented, so it is stable under version control.
 
+### Exit status
+
+| Code | Meaning |
+|---|---|
+| 0 | The schema was written |
+| 2 | Usage error, or `-o` names a directory |
+
 ## `scenet mcp`
+
+*Since 0.8.*
 
 ```
 scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT]
@@ -491,6 +583,7 @@ without the extra.
 : For a client that launches the server itself, which is how desktop and editor clients
   run a local server. **Nothing but protocol messages reaches stdout** — the server never
   prints, and the compiler's notes travel inside tool results.
+  *Since 0.8.*
 
 `--transport streamable-http`
 : Listens for remote clients over
@@ -498,10 +591,12 @@ without the extra.
   There is no authentication, so put it behind something that provides it before
   exposing it beyond your own machine. SSE is not offered: the protocol deprecated it in
   favour of Streamable HTTP.
+  *Since 0.8.*
 
 `--host HOST`, `--port PORT`
 : Where Streamable HTTP listens. Defaults to `127.0.0.1` and `8000`, so it is reachable
   only from the same machine unless you say otherwise.
+  *Since 0.8.*
 
 ### Exit status
 
@@ -513,9 +608,12 @@ without the extra.
 ```bash
 scenet mcp
 scenet mcp --transport streamable-http --port 8765
+scenet mcp --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
 ## `scenet --version`
+
+*Since 0.1.*
 
 Prints the installed version and exits 0.
 

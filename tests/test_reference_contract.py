@@ -21,8 +21,11 @@ The `bash` examples in the reference are run too, by `tests/shell_examples.py`.
 import argparse
 import json
 import re
+import shlex
+import tomllib
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -199,6 +202,13 @@ def _check_scenarios(tmp_path: Path) -> dict[int, Callable[[], int]]:
     }
 
 
+def _schema_scenarios(tmp_path: Path) -> dict[int, Callable[[], int]]:
+    return {
+        0: lambda: main(["schema", "-o", str(tmp_path / "panel.schema.json")]),
+        2: lambda: main(["schema", "-o", str(tmp_path)]),
+    }
+
+
 def _returns_at_once(*_args: object, **_kwargs: object) -> None:
     """A server whose client disconnects as soon as it starts."""
 
@@ -227,13 +237,14 @@ class TestExitStatus:
     """Every code in a command's table is produced by a scenario, and every scenario
     produces a code in the table."""
 
-    @pytest.mark.parametrize("command", ["build", "check", "mcp"])
+    @pytest.mark.parametrize("command", COMMANDS)
     def test_each_documented_code_is_produced(
         self, command: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
     ):
         scenarios = {
             "build": lambda: _build_scenarios(tmp_path),
             "check": lambda: _check_scenarios(tmp_path),
+            "schema": lambda: _schema_scenarios(tmp_path),
             "mcp": lambda: _mcp_scenarios(monkeypatch),
         }[command]()
         assert set(scenarios) == _exit_codes(command)
@@ -267,8 +278,15 @@ class TestRules:
     def test_the_table_gives_each_rule_its_level(self):
         """A note reports a house limit and never fails `check`, so the reader must be
         able to tell one from an error before running anything."""
-        rows = re.findall(r"^\| `scenet/([a-z-]+)` \| (\w+) \|", _section("check"), re.MULTILINE)
-        assert dict(rows) == {name: rule.level for name, rule in RULES.items()}
+        rows = re.findall(
+            r"^\| \[`scenet/([a-z-]+)`\]\(diagnostics\.md#([a-z-]+)\) \| (\w+) \|",
+            _section("check"),
+            re.MULTILINE,
+        )
+        assert {name: level for name, _, level in rows} == {
+            name: rule.level for name, rule in RULES.items()
+        }
+        assert [name for name, anchor, _ in rows if name != anchor] == []
 
     def test_every_rule_but_internal_has_a_corpus_document(self):
         covered = {path.name.split(".")[0] for path in DOCUMENTS}
@@ -301,6 +319,90 @@ class TestRules:
             assert emitted["helpUri"] == uri
             assert uri in emitted["help"]["text"]
             assert f"]({uri})" in emitted["help"]["markdown"]
+
+
+# ---------------------------------------------------------------- since and examples
+
+
+SINCE: dict[str, Any] = tomllib.loads(
+    (ROOT / "docs" / "reference" / "cli.since.toml").read_text(encoding="utf-8")
+)
+#: Every option of every command, by its long form when it has one: `build --output`.
+OPTIONS = sorted(
+    f"{command} {max(action.option_strings, key=len)}"
+    for command in COMMANDS
+    for action in _actions(command)
+    if action.option_strings
+)
+
+_SINCE = re.compile(r"\*Since (\d+\.\d+)\.\*")
+
+
+def _definition_blocks(command: str) -> list[tuple[str, str]]:
+    """Each option definition of a command: its term line, and the text that defines it."""
+    section = _section(command)
+    found = re.findall(r"^(`-[^\n]*)\n((?:: .*\n)(?:  .*\n|\n(?=  ))*)", section, re.MULTILINE)
+    return [(term, text) for term, text in found]
+
+
+def _bash_lines(command: str) -> list[list[str]]:
+    """Every `scenet` line of the `bash` blocks in a command's section, split as a shell would."""
+    blocks = re.findall(r"```bash\n(.*?)```", _section(command), re.DOTALL)
+    return [
+        shlex.split(line)
+        for block in blocks
+        for line in block.splitlines()
+        if line.strip().startswith("scenet ")
+    ]
+
+
+class TestEveryCommandAndOptionSaysWhenItCame:
+    def test_the_versions_were_mined_for_every_command_and_option(self):
+        assert sorted(SINCE["commands"]) == sorted(COMMANDS)
+        assert sorted(SINCE["options"]) == OPTIONS
+        assert SINCE["top-level"] == {"--version": "0.1"}
+
+    @pytest.mark.parametrize("command", COMMANDS)
+    def test_a_command_says_its_release(self, command: str):
+        found = _SINCE.search(_section(command).split("```", 1)[0])
+        assert found, f"`scenet {command}` says no *Since X.Y.* above its synopsis"
+        assert found.group(1) == SINCE["commands"][command]
+
+    @pytest.mark.parametrize("option", OPTIONS)
+    def test_an_option_says_its_release(self, option: str):
+        command, flag = option.split(" ")
+        said = {
+            found.group(1)
+            for term, text in _definition_blocks(command)
+            if re.search(rf"(?<![\w-]){re.escape(flag)}(?![\w-])", term)
+            for found in _SINCE.finditer(text)
+        }
+        assert said == {SINCE["options"][option]}, f"{option}: end its definition on *Since X.Y.*"
+
+    def test_one_added_since_the_last_release_takes_the_next(self):
+        """Nothing is said to come later than the next minor release: `--pdf` is not out yet."""
+        major, minor = (int(part) for part in __version__.split(".")[:2])
+        for version in [*SINCE["commands"].values(), *SINCE["options"].values()]:
+            assert tuple(int(part) for part in version.split(".")) <= (major, minor + 1)
+        assert SINCE["options"]["build --pdf"] == f"{major}.{minor + 1}"
+
+
+class TestEveryOptionHasAnExample:
+    """A flag without a tested example is a gap (#315): every one is run by
+    `tests/shell_examples.py`, from a `bash` block in its command's section."""
+
+    @pytest.mark.parametrize("option", OPTIONS)
+    def test_it_is_in_an_example(self, option: str):
+        command, flag = option.split(" ")
+        (action,) = [a for a in _actions(command) if flag in a.option_strings]
+        lines = [words for words in _bash_lines(command) if words[1:2] == [command]]
+        used = {word.split("=", 1)[0] for words in lines for word in words if word.startswith("-")}
+        assert used & set(action.option_strings), f"add a `scenet {command} ... {flag}` example"
+
+
+class TestNoIssueNumbers:
+    def test_the_reference_says_what_a_thing_does_not_where_it_was_asked_for(self):
+        assert re.findall(r"\(#\d+\)|(?<![\w/])#\d+\b", REFERENCE) == []
 
 
 # ---------------------------------------------------------------- behaviour

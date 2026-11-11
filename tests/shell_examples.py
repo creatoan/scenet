@@ -7,6 +7,8 @@ would misinform a reader without failing anything. So every documented `scenet b
 a traceback.
 
 - `scenet mcp` lines are parsed and not run: a server runs until its client leaves.
+- A `scenet build --watch` line runs its first build, which must succeed, and then stops
+  watching at once: watching runs until the reader presses Ctrl-C.
 - `pip`, `pipx`, `uv`, `uvx`, `git`, `gh`, `cp`, `claude`, `wsl` and `ulimit` lines never
   run. They install, publish, reach the network or set limits on the reader's shell, and are
   about the reader's machine, not Scenet.
@@ -23,6 +25,7 @@ import shlex
 import shutil
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 from sybil import Example
 
@@ -81,13 +84,23 @@ def _expand(words: list[str], cwd: Path) -> tuple[list[str], Path | None]:
     return expanded, redirect
 
 
+def _stop_watching(*_args: object, **_kwargs: object) -> None:
+    """A watch loop that returns at once, as if Ctrl-C came right after the first build."""
+
+
 def _run(argv: list[str], cwd: Path) -> None:
     if argv[:1] == ["mcp"]:
         build_parser().parse_args(argv)
         return
     argv, redirect = _expand(argv, cwd)
     stdout = io.StringIO()
-    with contextlib.chdir(cwd), contextlib.redirect_stdout(stdout):
+    # Watching runs until Ctrl-C; the first build is what the example shows working.
+    watching = mock.patch("scenet.cli.watch_loop", _stop_watching) if "--watch" in argv else None
+    with (
+        contextlib.chdir(cwd),
+        contextlib.redirect_stdout(stdout),
+        watching or contextlib.nullcontext(),
+    ):
         try:
             status = main(argv)
         except SystemExit as exc:  # `--version` exits through argparse

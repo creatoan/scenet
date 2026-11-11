@@ -1,0 +1,39 @@
+# The minor release each command and option of `scenet` appeared in: the first release
+# tag whose `src/scenet/cli.py` defined it. One added since the last release takes the
+# next minor version. An option is named by its long form, after its command.
+#
+# Mined from the tags by `uv run python scripts/mine_cli_since.py`.
+
+[top-level]
+"--version" = "0.1"
+
+[commands]
+"build" = "0.1"
+"check" = "0.3"
+"mcp" = "0.8"
+"schema" = "0.1"
+
+[options]
+"build --conditioning" = "0.12"
+"build --core" = "0.1"
+"build --debug" = "0.1"
+"build --embed-images" = "0.12"
+"build --live-text" = "0.1"
+"build --mono" = "0.13"
+"build --no-aria" = "0.12"
+"build --output" = "0.1"
+"build --pdf" = "0.13"
+"build --quiet" = "0.1"
+"build --strip" = "0.1"
+"build --watch" = "0.13"
+"check --deep" = "0.6"
+"check --format" = "0.3"
+"check --output" = "0.3"
+"check --quiet" = "0.3"
+"mcp --host" = "0.8"
+"mcp --port" = "0.8"
+"mcp --transport" = "0.8"
+"schema --artwork" = "0.12"
+"schema --output" = "0.1"
+"schema --puppet" = "0.13"
+"schema --scene" = "0.1"
