@@ -1,0 +1,12 @@
+# A looser shot of Bob keeps his face clear of the slanted gutter.
+page: {size: [1500, 900], margin: 75}
+panels:
+  swing:
+    camera: {shot: full_shot}
+    cast: {alice: {reference: alice, facing: right}}
+  hit:
+    camera: {shot: medium_shot}
+    cast: {bob: {reference: bob, facing: left}}
+pages:
+  - tiers:
+      - {slant: 20, panels: [swing, hit]}

@@ -1,1 +1,2 @@
+# Alice's puppet declares no `levitating` pose.
 cast: {alice: {reference: alice, pose: levitating}}

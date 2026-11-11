@@ -1,0 +1,5 @@
+# A locale caption names nobody; the harbourmaster's words are a spoken caption.
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Midnight. The docks.", kind: locale}
+  - caption: {text: "Nobody sails tonight.", kind: spoken, by: harbourmaster}

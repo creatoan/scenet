@@ -1,4 +1,5 @@
 ---
+# The page heading says three panels, and two follow it.
 cast: {ALICE: {reference: alice}}
 ---
 PAGE ONE (three panels)

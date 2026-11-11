@@ -1,0 +1,6 @@
+# The direction is written once, beside `panels:`, and every panel reads that way.
+direction: rtl
+cast: {alice: {reference: alice}}
+panels:
+  first: {}
+  second: {}

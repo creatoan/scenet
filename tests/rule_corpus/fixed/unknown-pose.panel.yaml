@@ -1,0 +1,2 @@
+# `pointing`, a pose Alice's puppet declares.
+cast: {alice: {reference: alice, pose: pointing}}

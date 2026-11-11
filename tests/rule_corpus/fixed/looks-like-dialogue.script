@@ -1,0 +1,10 @@
+---
+# ALICE's line is right under her cue.
+cast: {ALICE: {reference: alice}}
+---
+PAGE ONE
+
+Panel 1. A corner, in the rain.
+
+ALICE:
+Nobody comes.

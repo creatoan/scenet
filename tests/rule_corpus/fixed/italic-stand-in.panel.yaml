@@ -1,0 +1,8 @@
+# The italic face is named beside the regular one.
+lettering:
+  font:
+    regular: fonts/ComicNeue-Regular.ttf
+    italic: fonts/ComicNeue-Italic.ttf
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Later, at the type foundry.", kind: locale}

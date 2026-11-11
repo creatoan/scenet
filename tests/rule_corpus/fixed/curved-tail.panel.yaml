@@ -1,0 +1,7 @@
+# The balloon sits on the side the voice comes from, and its tail runs straight.
+panel: {size: [900, 600]}
+camera: {shot: medium_close_up}
+cast:
+  bob: {reference: bob, at: center}
+script:
+  - say: {by: carol, text: "Behind you!", off_panel: left, prefer: top_left}

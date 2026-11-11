@@ -1,0 +1,4 @@
+# `_told_`: the stress closes after the word it is on.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "I _told_ you so."}

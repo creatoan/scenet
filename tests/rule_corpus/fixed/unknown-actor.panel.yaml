@@ -1,0 +1,4 @@
+# `bob`, who is in the cast.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+script:
+  - say: {by: bob, text: Hello}

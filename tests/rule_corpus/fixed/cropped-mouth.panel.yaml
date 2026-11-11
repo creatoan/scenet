@@ -1,0 +1,7 @@
+# `fit: contain` shows the whole picture, Ana's mouth with it.
+panel: {size: [400, 900]}
+setting: {image: art/figures.png, fit: contain}
+cast:
+  ana: {figure: ana}
+script:
+  - say: {by: ana, text: "Is it always this late?"}

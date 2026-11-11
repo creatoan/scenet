@@ -1,0 +1,6 @@
+# A looser shot leaves room around the face for the line.
+camera: {shot: medium_shot}
+panel: {size: [300, 300]}
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "There is room."}

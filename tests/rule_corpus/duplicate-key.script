@@ -1,4 +1,5 @@
 ---
+# `@setting:` twice in one panel: the second would replace the first.
 cast: {ALICE: {reference: alice}}
 ---
 PANEL 1

@@ -1,0 +1,5 @@
+# Two characters side by side, at a close-up, in a panel too narrow for both faces.
+panel: {size: [600, 400]}
+camera: {shot: close_up}
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging: [alice left_of bob]

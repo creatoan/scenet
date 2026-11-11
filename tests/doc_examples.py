@@ -11,7 +11,8 @@ A reader copies an example into a fresh file and runs it. So:
 - **an example imports a public name from** `scenet`, the import the API promises, and
   anything else from the module that defines it (:func:`import_faults`);
 - **every YAML and comic-script block is a document that compiles**, unless its caption
-  names the document it is a part of (:func:`document_blocks`).
+  names the document it is a part of (:func:`document_blocks`) -- or, written as a
+  ```` ```{scenet-example} ```` with `:gives:`, it gives exactly the diagnostic it names.
 
 `conftest.py` puts the first two to work on the whole suite; `tests/test_doc_examples.py`
 holds all four to that.
@@ -19,10 +20,13 @@ holds all four to that.
 
 import ast
 import doctest
+import importlib.util
 import re
+import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import pytest
@@ -45,6 +49,7 @@ __all__ = [
     "fences",
     "import_faults",
     "markdown_pages",
+    "told",
 ]
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -323,15 +328,51 @@ def document_blocks() -> list[DocumentBlock]:
     ]
 
 
+def _examples_extension() -> ModuleType:
+    """The documentation's `scenet-example` directive, which is not a package's module."""
+    name = "scenet_examples"
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, ROOT / "docs" / "_ext" / f"{name}.py")
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def told(text: str, kind: str, base: Path | None) -> list[str]:
+    """Every diagnostic a document gives, by id, as the `scenet-example` directive reads it."""
+    given: list[str] = _examples_extension().told(text, kind, base)
+    return given
+
+
 def compile_block(block: DocumentBlock, tmp_path: Path) -> Any:
     """Compile a block as the kind of document it is said to be, and return the result.
 
     A `scenet-example` compiled `:beside:` a folder of the repository finds the files it
-    names there, as the documentation's build does.
+    names there, as the documentation's build does. One with `:gives:` is there to show a
+    diagnostic: it must give exactly that one, and the ids it gives are returned.
+
+    Raises:
+        AssertionError: A `:gives:` block gives something else, or more.
     """
     text = block.fence.text
-    beside = dict(block.fence.options).get("beside")
+    options = dict(block.fence.options)
+    beside = options.get("beside")
     base = ROOT / beside if beside else None
+    gives = options.get("gives")
+    if gives is not None and block.kind in ("panel", "scene", "script"):
+        given = told(text, block.kind, base)
+        assert given == [gives], f"{block.fence.where} gives {given}, not [{gives!r}]"
+        return given
+    return _compiled(block, base, tmp_path)
+
+
+def _compiled(block: DocumentBlock, base: Path | None, tmp_path: Path) -> Any:
+    """A block compiled, or read, as the kind of document it is."""
+    text = block.fence.text
     match block.kind:
         case "panel":
             return compile_source(text, base=base)

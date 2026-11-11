@@ -1,0 +1,5 @@
+# A wider panel holds both faces at the close-up that was asked for.
+panel: {size: [1200, 400]}
+camera: {shot: close_up}
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging: [alice left_of bob]

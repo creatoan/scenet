@@ -1,0 +1,9 @@
+# A long shot leaves room above Bob's head for his plewds.
+panel: {size: [1000, 700]}
+camera: {shot: long_shot}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, pose: arms_crossed, at: right_third, facing: left, marks: [plewds]}
+staging:
+  - alice left_of bob
+  - alice ground_shared_with bob

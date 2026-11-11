@@ -1,0 +1,13 @@
+---
+# The panels are numbered straight through.
+cast: {ALICE: {reference: alice}}
+---
+PAGE 1
+
+PANEL 1
+ALICE
+Hello.
+
+PANEL 2
+ALICE
+Hello again.

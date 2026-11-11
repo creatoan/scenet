@@ -1,0 +1,3 @@
+# The font is beside the document, in fonts/.
+cast: {alice: {reference: alice}}
+lettering: {font: fonts/ComicNeue-Regular.ttf}

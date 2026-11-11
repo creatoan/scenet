@@ -310,6 +310,46 @@ def test_a_document_that_does_not_compile_fails(tmp_path: Path):
         compile_block(block, tmp_path)
 
 
+def _showing(text: str, gives: str, kind: str = "panel") -> DocumentBlock:
+    options = (("gives", gives), ("beside", "examples/gallery"))
+    if kind == "script":
+        options = (*options, ("kind", "script"))
+    fence = Fence(ROOT / "docs" / "x.md", 1, "yaml", None, text, "scenet-example", options)
+    return doc_examples.classify(fence, {})
+
+
+class TestAnExampleThatGivesADiagnostic:
+    """A `scenet-example` with `:gives:` shows a fault, or a note, on purpose: the
+    diagnostics reference shows each this way, and a tutorial can show a mistake."""
+
+    def test_it_gives_the_error_it_names(self, tmp_path: Path):
+        block = _showing("cast: {a: {reference: alicia}}\n", "unknown-puppet")
+        assert compile_block(block, tmp_path) == ["unknown-puppet"]
+
+    def test_it_gives_the_compile_note_it_names(self, tmp_path: Path):
+        text = (
+            "panel: {size: [600, 400]}\ncamera: {shot: close_up}\n"
+            "cast: {a: {reference: alice}, b: {reference: bob}}\nstaging: [a left_of b]\n"
+        )
+        assert compile_block(_showing(text, "camera-retreated"), tmp_path) == ["camera-retreated"]
+
+    def test_one_that_gives_another_fails(self, tmp_path: Path):
+        block = _showing("cast: {a: {reference: alicia}}\n", "unknown-pose")
+        with pytest.raises(AssertionError, match="unknown-puppet"):
+            compile_block(block, tmp_path)
+
+    def test_one_that_gives_nothing_fails(self, tmp_path: Path):
+        block = _showing("cast: {a: {reference: alice}}\n", "unknown-puppet")
+        with pytest.raises(AssertionError, match=r"gives \[\]"):
+            compile_block(block, tmp_path)
+
+    def test_a_script_is_checked_as_one(self, tmp_path: Path):
+        text = "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n\nPANEL 1\nA\nHo.\n"
+        assert compile_block(_showing(text, "duplicate-panel", "script"), tmp_path) == [
+            "duplicate-panel"
+        ]
+
+
 #: A line that only a comic script has: a panel or a page heading, in English or French.
 _SCRIPT_HEADING = re.compile(r"^(#+ |\*\*)?(PANEL|Panel|PAGE|PLANCHE|CASE) \S", re.MULTILINE)
 

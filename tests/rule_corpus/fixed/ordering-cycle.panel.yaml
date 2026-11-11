@@ -1,0 +1,4 @@
+# One order: Alice on the left, Bob on the right.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging:
+  - alice left_of bob

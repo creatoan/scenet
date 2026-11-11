@@ -1,0 +1,2 @@
+# The puppet is beside the document, in puppets/.
+cast: {kid: {reference: puppets/pip.puppet.yaml}}

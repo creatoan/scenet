@@ -1,0 +1,3 @@
+# The panel names the picture that draws Ana.
+cast: {ana: {figure: ana}}
+setting: {image: art/figures.png}

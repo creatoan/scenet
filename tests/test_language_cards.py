@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 import yaml
 
-from scenet.diagnostics import RULES
+from scenet.diagnostics import COMPILE_NOTES, RULES
 from scenet.ir import PlacementZone
 from tests import myst
 from tests.doc_examples import fences
@@ -141,29 +141,22 @@ class TestSince:
 
 
 #: Rules about a whole document or a comic script's own form, which no key gives.
-DOCUMENT_RULES = {
-    "syntax",
-    "not-a-mapping",
-    "internal",
-    "duplicate-panel",
-    "panel-count",
-    "looks-like-dialogue",
-}
+DOCUMENT_RULES = build.DOCUMENT_RULES
 
 
 class TestDiagnostics:
     def test_every_rule_a_card_names_exists(self):
         named = {rule for rules in build.DIAGNOSTICS.values() for rule in rules}
-        assert sorted(named - set(RULES)) == []
+        assert sorted(named - set(RULES) - set(COMPILE_NOTES)) == []
 
     def test_every_rule_a_key_can_give_is_on_a_card(self):
-        """#320's catalogue links each rule to the cards that give it."""
-        given = {
-            rule.strip("`")
-            for card in CARDS.values()
-            for rule in build.facts(card).split("| Diagnostics | ", 1)[1].split(" |")[0].split(", ")
-        }
+        """The diagnostics reference links each rule to the cards that give it."""
+        given = {rule for card in CARDS.values() for rule in build.diagnostics_of(card)}
         assert sorted(set(RULES) - DOCUMENT_RULES - given) == []
+
+    def test_every_compile_note_is_on_a_card(self):
+        given = {rule for card in CARDS.values() for rule in build.diagnostics_of(card)}
+        assert sorted(set(COMPILE_NOTES) - given) == []
 
     def test_a_card_names_only_keys_that_exist(self):
         assert sorted(set(build.DIAGNOSTICS) - set(CARDS)) == []

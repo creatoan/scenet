@@ -1,4 +1,5 @@
 ---
+# Alice speaks from off panel, so the relation that places her cannot hold there.
 cast:
   ALICE: {reference: alice, at: left_third}
   BOB: {reference: bob, at: right_third}

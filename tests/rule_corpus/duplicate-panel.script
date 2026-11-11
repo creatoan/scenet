@@ -1,4 +1,5 @@
 ---
+# PANEL 1 twice on one page, so the second cannot be told from the first.
 cast: {ALICE: {reference: alice}}
 ---
 PAGE 1

@@ -1,3 +1,3 @@
 # A flow sequence that never closes.
-cast: {alice: {reference: alice}}
-staging: [alice left_of
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging: [alice left_of bob

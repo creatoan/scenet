@@ -1,0 +1,3 @@
+# The flow sequence is closed.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging: [alice left_of bob]

@@ -1,0 +1,9 @@
+# The bold italic face is named beside the other two.
+lettering:
+  font:
+    regular: fonts/ComicNeue-Regular.ttf
+    italic: fonts/ComicNeue-Italic.ttf
+    bold_italic: fonts/ComicNeue-BoldItalic.ttf
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Is this _really_ italic?"}

@@ -1,4 +1,5 @@
 ---
+# ALICE is set as a cue, but a blank line stands between her and her line.
 cast: {ALICE: {reference: alice}}
 ---
 PAGE ONE

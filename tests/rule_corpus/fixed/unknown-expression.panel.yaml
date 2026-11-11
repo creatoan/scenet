@@ -1,0 +1,2 @@
+# `coy`, an expression Alice's puppet declares.
+cast: {alice: {reference: alice, expression: coy}}

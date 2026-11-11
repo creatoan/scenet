@@ -1,0 +1,5 @@
+# Bob is in the panel, and speaks there.
+cast:
+  bob: {reference: bob}
+script:
+  - say: {by: bob, text: "I am right here."}

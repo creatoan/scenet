@@ -1,0 +1,10 @@
+---
+# Alice is drawn in the panel, so the relation that places her holds.
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB: {reference: bob, at: right_third}
+staging: [ALICE left_of BOB]
+---
+PANEL 1
+ALICE
+Is anybody there?

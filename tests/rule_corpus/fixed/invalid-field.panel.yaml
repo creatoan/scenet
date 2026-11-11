@@ -1,0 +1,3 @@
+# `close_up` is a shot type the language has.
+camera: {shot: close_up}
+cast: {alice: {reference: alice}}

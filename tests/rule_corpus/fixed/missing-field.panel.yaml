@@ -1,0 +1,3 @@
+# Alice names the puppet she is.
+cast:
+  alice: {reference: alice, pose: pointing}

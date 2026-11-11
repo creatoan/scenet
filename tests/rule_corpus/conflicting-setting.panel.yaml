@@ -1,3 +1,4 @@
+# A place is a list of masses already, so naming one and listing masses asks twice.
 cast: {alice: {reference: alice}}
 setting:
   place: shore

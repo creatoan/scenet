@@ -1,0 +1,8 @@
+---
+# `@setting:` once, with everything it sets.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@setting: {place: docks, weather: rain}
+ALICE
+Wet again.

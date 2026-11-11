@@ -1,0 +1,4 @@
+# The place alone: the shore already has its sky.
+cast: {alice: {reference: alice}}
+setting:
+  place: shore

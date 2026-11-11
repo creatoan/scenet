@@ -1,0 +1,3 @@
+# Ana is the figure the picture draws, and nothing else.
+cast: {ana: {figure: ana}}
+setting: {image: art/figures.png}

@@ -1,3 +1,3 @@
-# Its contract, art/figures.art.yaml, was measured on a picture of another size.
+# The street has no artwork contract beside it, so nobody can say where its figures are.
 cast: {ana: {figure: ana}}
-setting: {image: art/figures.png}
+setting: {image: art/street.png}

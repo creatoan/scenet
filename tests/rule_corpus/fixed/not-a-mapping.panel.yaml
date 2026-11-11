@@ -1,0 +1,4 @@
+# The two of them, as the cast of a panel.
+cast:
+  alice: {reference: alice}
+  bob: {reference: bob}

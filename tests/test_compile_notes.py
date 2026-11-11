@@ -1,4 +1,4 @@
-"""Every note the compiler gives has a name (#240).
+"""Every note the compiler gives has a name.
 
 A compile note is a sentence: something the compiler decided that the source did not
 literally ask for -- a camera that retreated, a tail that bent, a face an inset covers. A
@@ -15,7 +15,9 @@ from scenet import CompileNote, compile_source
 from scenet.diagnostics import RULES
 from scenet.pipeline import CompileNoteRule
 
-DEBUG = Path(__file__).resolve().parents[1] / "docs" / "howto" / "debug_a_layout.md"
+ROOT = Path(__file__).resolve().parents[1]
+DEBUG = ROOT / "docs" / "howto" / "debug_a_layout.md"
+REFERENCE = ROOT / "docs" / "reference" / "diagnostics.md"
 
 #: Two characters at a close-up in a panel too small for them: the camera retreats.
 CROWDED = (
@@ -36,8 +38,15 @@ class TestTheNames:
         assert sorted(set(get_args(CompileNoteRule)) & set(RULES)) == []
 
     def test_each_is_explained_where_the_notes_are(self):
+        """The how-to that reads the notes links each to its entry in the reference."""
         page = DEBUG.read_text(encoding="utf-8")
-        assert [name for name in get_args(CompileNoteRule) if f"`{name}`" not in page] == []
+        link = "[`{0}`](../reference/diagnostics.md#{0})"
+        assert [n for n in get_args(CompileNoteRule) if link.format(n) not in page] == []
+        assert [
+            n
+            for n in get_args(CompileNoteRule)
+            if f"### `{n}`" not in REFERENCE.read_text(encoding="utf-8")
+        ] == []
 
 
 class TestTheNotes:

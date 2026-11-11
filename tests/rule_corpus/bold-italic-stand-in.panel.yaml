@@ -1,0 +1,8 @@
+# A stressed word is set in bold italic, and lettering.font names no bold italic face.
+lettering:
+  font:
+    regular: fonts/ComicNeue-Regular.ttf
+    italic: fonts/ComicNeue-Italic.ttf
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: "Is this _really_ italic?"}

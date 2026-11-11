@@ -1,0 +1,3 @@
+# A margin smaller than half the shorter side.
+panel: {size: [400, 300], margin: 20}
+cast: {alice: {reference: alice}}

@@ -1,0 +1,18 @@
+# The clock is set into the bottom left corner, where no face is.
+page: {size: [1500, 1000], margin: 75}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third, facing: left}
+panels:
+  street:
+    camera: {shot: medium_shot}
+    staging: [alice left_of bob]
+  clock:
+    cast: {alice: null}
+    camera: {shot: close_up}
+pages:
+  - tiers:
+      - panels:
+          - use: street
+            insets:
+              - {use: clock, at: bottom_left, size: 0.3}

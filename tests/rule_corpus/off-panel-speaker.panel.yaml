@@ -1,3 +1,4 @@
+# Bob is drawn in the panel, so he cannot also speak from outside it.
 cast:
   bob: {reference: bob}
 script:

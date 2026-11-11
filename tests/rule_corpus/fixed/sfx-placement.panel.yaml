@@ -1,0 +1,5 @@
+# A shorter sound, at its middle size, fits the panel.
+panel: {size: [300, 200]}
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: KRAK!}

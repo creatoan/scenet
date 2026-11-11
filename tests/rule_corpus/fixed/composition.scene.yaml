@@ -1,0 +1,5 @@
+# `two` is over `one`, which the scene defines.
+cast: {alice: {reference: alice}}
+panels:
+  one: {}
+  two: {over: one}

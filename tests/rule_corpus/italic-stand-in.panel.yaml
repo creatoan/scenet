@@ -1,0 +1,6 @@
+# A locale caption is set in italic, and lettering.font names no italic face.
+lettering:
+  font: {regular: fonts/ComicNeue-Regular.ttf}
+cast: {alice: {reference: alice}}
+script:
+  - caption: {text: "Later, at the type foundry.", kind: locale}

@@ -1,0 +1,4 @@
+# One depth order: Alice in front of Bob.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+staging:
+  - alice in_front_of bob
