@@ -76,7 +76,14 @@ from pydantic import BaseModel, Field
 
 from scenet import __version__
 from scenet.assets.contract import PuppetSpec, default_library, is_puppet_file, load_puppet_file
-from scenet.diagnostics import RULE_NAMESPACE, RULES, Diagnostic, diagnose_script, diagnose_source
+from scenet.diagnostics import (
+    RULE_NAMESPACE,
+    RULES,
+    Diagnostic,
+    diagnose_script,
+    diagnose_source,
+    help_uri,
+)
 from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
 from scenet.emit.svg import render
@@ -192,6 +199,9 @@ class Finding(BaseModel):
     )
     message: str = Field(description="What is wrong, naming the offending construct")
     fix: str = Field(description="What to do about it")
+    help_uri: str = Field(
+        description="Where the rule is explained, with a document that gives it and its fix"
+    )
     where: str = Field(description="Path to the offending value, such as `script.0.say.by`")
     line: int = Field(description="1-based line the finding starts on")
     column: int = Field(description="1-based column the finding starts at")
@@ -610,6 +620,7 @@ def _finding(item: Diagnostic) -> Finding:
         level=item.level,
         message=item.message,
         fix=RULES[item.rule].help,
+        help_uri=help_uri(item.rule),
         where=".".join(str(step) for step in item.path),
         line=region.start.line,
         column=region.start.column,

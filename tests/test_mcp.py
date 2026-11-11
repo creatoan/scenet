@@ -238,6 +238,9 @@ class TestValidate:
         assert finding["rule"] == "scenet/unknown-actor"
         assert "bpb" in finding["message"]
         assert finding["fix"] == RULES["unknown-actor"].help
+        assert finding["help_uri"] == (
+            "https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor"
+        )
         assert finding["where"] == "script.0.say.by"
         assert (finding["line"], finding["column"]) == (5, 15)
         assert finding["end_line"] >= finding["line"]

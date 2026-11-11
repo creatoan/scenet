@@ -291,7 +291,16 @@ class TestRules:
             emitted = described[f"scenet/{rule}"]
             assert emitted["shortDescription"]["text"] == entry.summary
             assert emitted["fullDescription"]["text"] == entry.description
-            assert emitted["help"]["text"] == entry.help
+            assert emitted["help"]["text"].startswith(entry.help)
+
+    def test_sarif_links_each_rule_to_its_entry(self):
+        """`helpUri` is where code scanning and an editor send a reader, and `help` names it."""
+        found = [finding for path in DOCUMENTS for finding in _diagnose(path, deep=True)]
+        for emitted in to_sarif(found)["runs"][0]["tool"]["driver"]["rules"]:
+            uri = f"https://creatoan.github.io/scenet/reference/diagnostics.html#{emitted['name']}"
+            assert emitted["helpUri"] == uri
+            assert uri in emitted["help"]["text"]
+            assert f"]({uri})" in emitted["help"]["markdown"]
 
 
 # ---------------------------------------------------------------- behaviour

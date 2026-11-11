@@ -533,9 +533,9 @@ Panel names come straight from the heading, so `PANEL 1` becomes `"1"`. The CLI 
 them as filename suffixes: `umbrella.script` compiles to `umbrella.1.svg`,
 `umbrella.2.svg`.
 
-{func}`parse_script <scenet.frontends.script_front.parse_script>` gives you IR;
-{func}`load_script <scenet.frontends.script_front.load_script>` reads a file; and
-{func}`compile_document <scenet.pipeline.compile_document>` dispatches on the `.script`
+`parse_script` gives you IR;
+`load_script` reads a file; and
+`compile_document` dispatches on the `.script`
 extension so you do not have to care.
 
 ## The front matter is not optional in practice
@@ -561,7 +561,7 @@ needs a matching entry in the front-matter cast.
 
 This is the point of the whole arrangement. `script_front` computes no coordinates and
 knows nothing about geometry; it produces the same
-{class}`PanelIR <scenet.ir.PanelIR>` the YAML frontend does, and everything downstream is
+`PanelIR` the YAML frontend does, and everything downstream is
 unaware that a second syntax exists.
 
 Adding a third syntax means adding a parser and one line in the extension table. Nothing

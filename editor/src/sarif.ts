@@ -16,8 +16,8 @@
 import { isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** Where every `scenet/...` rule is documented. */
-export const RULE_REFERENCE = "https://creatoan.github.io/scenet/reference/cli.html#rules";
+/** Where every `scenet/...` rule has an entry, under its bare id: `#unknown-actor`. */
+export const DIAGNOSTICS_REFERENCE = "https://creatoan.github.io/scenet/reference/diagnostics.html";
 
 export type Severity = "error" | "warning" | "information";
 
@@ -82,7 +82,7 @@ export function sarifToDiagnostics(log: unknown, options: MappingOptions): Map<s
         message: stringAt(recordAt(result, "message"), "text") ?? "(no message)",
         severity: severityOf(result, rules),
         rule,
-        help: rule?.startsWith("scenet/") ? RULE_REFERENCE : undefined,
+        help: helpOf(rules, result, rule),
       };
       found.set(file, [...(found.get(file) ?? []), spec]);
     }
@@ -167,6 +167,18 @@ function severityOf(result: Record<string, unknown>, rules: readonly unknown[]):
     default:
       return "information";
   }
+}
+
+/**
+ * Where a result's rule is explained: the rule's own `helpUri`, which `scenet check` writes,
+ * or else the entry for a `scenet/...` rule, under its bare id.
+ */
+function helpOf(rules: readonly unknown[], result: Record<string, unknown>, rule: string | undefined): string | undefined {
+  const index = result["ruleIndex"];
+  const described = typeof index === "number" ? rules[index] : rules.find((r) => isRecord(r) && r["id"] === rule);
+  const given = isRecord(described) ? stringAt(described, "helpUri") : undefined;
+  if (given !== undefined) return given;
+  return rule?.startsWith("scenet/") ? `${DIAGNOSTICS_REFERENCE}#${rule.slice("scenet/".length)}` : undefined;
 }
 
 function ruleAt(rules: readonly unknown[], index: unknown): string | undefined {

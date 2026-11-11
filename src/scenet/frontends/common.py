@@ -25,6 +25,7 @@ from scenet.places import PLACES, Place
 __all__ = [
     "LANGUAGE_REFERENCE",
     "LAYOUT_KEYS",
+    "SITE",
     "errors_of",
     "expand_place",
     "normalise",
@@ -33,10 +34,13 @@ __all__ = [
     "summarise",
 ]
 
-#: Where the language reference is published, which a finding's help names: the root, which
-#: serves the latest release. A message read in a terminal or an editor has no folder of
-#: documentation beside it, so a path in the repository would lead nowhere.
-LANGUAGE_REFERENCE = "https://creatoan.github.io/scenet/reference/language/"
+#: Where the documentation is published: the root, which serves the latest release. A message
+#: read in a terminal or an editor has no folder of documentation beside it, so a path in the
+#: repository would lead nowhere; a finding's help names a page of the site instead.
+SITE = "https://creatoan.github.io/scenet/"
+
+#: Where the language reference is published, which a finding's help names.
+LANGUAGE_REFERENCE = f"{SITE}reference/language/"
 
 # `alice left_of bob` -- subject, predicate, object, separated by whitespace.
 RELATION_RE = re.compile(r"^\s*(\S+)\s+(\S+)\s+(\S+)\s*$")

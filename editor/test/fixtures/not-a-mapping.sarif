@@ -6,7 +6,7 @@
       "tool": {
         "driver": {
           "name": "scenet",
-          "version": "0.10.0",
+          "version": "0.12.0",
           "informationUri": "https://github.com/creatoan/scenet",
           "rules": [
             {
@@ -18,8 +18,10 @@
               "fullDescription": {
                 "text": "A panel document is a mapping of top-level keys -- panel, camera, cast, staging, script. A list or a bare scalar cannot be one."
               },
+              "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#not-a-mapping",
               "help": {
-                "text": "Wrap the content in top-level keys, or check you meant to compile this file."
+                "text": "Wrap the content in top-level keys, or check you meant to compile this file. Explained, with an example and its fix: https://creatoan.github.io/scenet/reference/diagnostics.html#not-a-mapping",
+                "markdown": "Wrap the content in top-level keys, or check you meant to compile this file. [Explained, with an example and its fix](https://creatoan.github.io/scenet/reference/diagnostics.html#not-a-mapping)."
               },
               "defaultConfiguration": {
                 "level": "error"

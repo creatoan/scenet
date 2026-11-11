@@ -21,7 +21,7 @@ import pytest
 import yaml
 
 from scenet import __version__, default_library
-from scenet.diagnostics import RULES, diagnose_source
+from scenet.diagnostics import COMPILE_NOTES, RULES, diagnose_source
 from scenet.schema import panel_schema
 from scenet.spec_pack import SPEC_PARTS, part, spec_pack_text
 
@@ -172,11 +172,26 @@ class TestSpecPack:
         assert block, "the schema part must hold one fenced JSON block"
         assert json.loads(block.group(1)) == panel_schema()
 
-    def test_every_rule_is_described(self):
+    def test_every_rule_and_compile_note_has_its_entry(self):
+        """The same entries as the diagnostics reference: why, how to fix it, and the pair."""
         body = part("diagnostics")
-        for name, rule in RULES.items():
-            assert f"scenet/{name}" in body
-            assert rule.help in body
+        assert "`scenet/unknown-key`" in body
+        for name, rule in {**RULES, **COMPILE_NOTES}.items():
+            assert f"### `{name}`" in body
+            assert f"**Why it happens.** {rule.description}" in body
+            assert f"**How to fix it.** {rule.help}" in body
+
+    def test_the_diagnostics_are_the_reference_page_in_plain_markdown(self):
+        body = part("diagnostics")
+        assert "{scenet-example}" not in body
+        assert ":gives:" not in body
+        assert "{attr}" not in body
+        assert "](language/" not in body, "links are made absolute"
+        assert f"]({build_spec.SITE}/reference/language/camera.html#camerashot)" in body
+        fixed = (ROOT / "tests" / "rule_corpus" / "fixed" / "unknown-key.panel.yaml").read_text(
+            encoding="utf-8"
+        )
+        assert f"```yaml\n{fixed}```" in body
 
     def test_every_puppet_pose_and_expression_is_listed(self):
         body = part("characters")

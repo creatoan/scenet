@@ -69,8 +69,9 @@ It contributes:
   dialogue.
 - **The findings of `scenet check`**, when a panel, scene or comic script is opened or
   saved: an actor not in the cast, an ordering cycle, a pose the puppet lacks, and every
-  other rule in the [catalogue](../reference/cli.md#rules), underlined where they are and
-  listed under **Problems** with their rule. A comic-script finding underlines its line.
+  other rule in the [catalogue](../reference/diagnostics.md), underlined where they are and
+  listed under **Problems** with their rule, which opens the rule's entry: why it happens, how
+  to fix it, and an example. A comic-script finding underlines its line.
   A note, such as a balloon over the words a publisher asks for, is shown as information
   rather than as an error, since the document still compiles; the playground does the same.
   Set `scenet.checkDeep` to check with `--deep` as well, which costs a real compile on

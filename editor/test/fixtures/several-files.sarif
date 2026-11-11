@@ -6,7 +6,7 @@
       "tool": {
         "driver": {
           "name": "scenet",
-          "version": "0.10.0",
+          "version": "0.12.0",
           "informationUri": "https://github.com/creatoan/scenet",
           "rules": [
             {
@@ -18,8 +18,10 @@
               "fullDescription": {
                 "text": "Panels are named by their PANEL heading, and by their PAGE heading as well when panel numbers start again on each page. Two panels that still share a name -- PANEL 1 twice on one page, or twice with no PAGE heading between them -- cannot both be kept, and dropping one without a word would lose whatever it held."
               },
+              "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-panel",
               "help": {
-                "text": "Number the panels straight through, or put a PAGE heading before each page whose numbering starts again."
+                "text": "Number the panels straight through, or put a PAGE heading before each page whose numbering starts again. Explained, with an example and its fix: https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-panel",
+                "markdown": "Number the panels straight through, or put a PAGE heading before each page whose numbering starts again. [Explained, with an example and its fix](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-panel)."
               },
               "defaultConfiguration": {
                 "level": "error"
@@ -34,8 +36,10 @@
               "fullDescription": {
                 "text": "The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A comic script's front matter is YAML too, and is read the same way."
               },
+              "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#syntax",
               "help": {
-                "text": "Fix the reported position; YAML errors cascade, so re-check after each fix."
+                "text": "Fix the reported position; YAML errors cascade, so re-check after each fix. Explained, with an example and its fix: https://creatoan.github.io/scenet/reference/diagnostics.html#syntax",
+                "markdown": "Fix the reported position; YAML errors cascade, so re-check after each fix. [Explained, with an example and its fix](https://creatoan.github.io/scenet/reference/diagnostics.html#syntax)."
               },
               "defaultConfiguration": {
                 "level": "error"
@@ -50,8 +54,10 @@
               "fullDescription": {
                 "text": "Every actor id named in `staging` or `script` must exist in `cast`. This is the check no JSON Schema can perform -- the value is a perfectly good string, it just does not resolve -- and it is among the most common faults in generated documents."
               },
+              "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor",
               "help": {
-                "text": "Correct the id, or add the actor to `cast`. The message lists the cast."
+                "text": "Correct the id, or add the actor to `cast`. The message lists the cast. Explained, with an example and its fix: https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor",
+                "markdown": "Correct the id, or add the actor to `cast`. The message lists the cast. [Explained, with an example and its fix](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor)."
               },
               "defaultConfiguration": {
                 "level": "error"

@@ -18,7 +18,7 @@ from typing import Any, get_args
 import pytest
 import yaml
 
-from scenet.diagnostics import COMPILE_NOTES, RULES
+from scenet.diagnostics import COMPILE_NOTES, RULES, help_uri
 from scenet.pipeline import CompileNoteRule
 from tests import myst
 from tests.doc_examples import fences
@@ -277,3 +277,40 @@ class TestTheGalleryAndTheEntries:
             return
         row = _row(name, "In the gallery")
         assert re.findall(r"\[([^\]]+)\]\(\.\./gallery\.md#[\w-]+\)", row) == showing
+
+
+#: A link to a page of the published site, as a rule's help or a message gives one.
+PUBLISHED = re.compile(r"https://creatoan\.github\.io/scenet/((?:[\w-]+/)*[\w-]+\.html)(#[\w-]+)?")
+#: The same, written after the constant that holds the site's address.
+AFTER_THE_SITE = re.compile(r"\{SITE\}((?:[\w-]+/)*[\w-]+\.html)(#[\w-]+)?")
+
+
+class TestARuleNamesItsEntry:
+    """SARIF's `helpUri`, the MCP finding and the editor send a reader to the entry."""
+
+    @pytest.mark.parametrize("name", IDS)
+    def test_its_help_uri_lands_on_its_entry(self, name: str):
+        uri = help_uri(name)
+        assert uri == f"https://creatoan.github.io/scenet/reference/diagnostics.html#{name}"
+        assert uri.rpartition("#")[2] in myst.anchors(PAGE)
+
+    @pytest.mark.parametrize("name", IDS)
+    def test_its_help_names_no_file_of_the_repository(self, name: str):
+        """A help read in a terminal or an editor has no `docs/` folder beside it."""
+        rule = build.catalogue()[name]
+        assert not re.search(r"\bdocs/", rule.help + rule.description), name
+
+    def test_every_link_the_package_gives_to_the_site_lands(self):
+        found = [
+            match
+            for path in sorted((ROOT / "src" / "scenet").rglob("*.py"))
+            for pattern in (PUBLISHED, AFTER_THE_SITE)
+            for match in pattern.finditer(path.read_text(encoding="utf-8"))
+        ]
+        assert any(match.re is AFTER_THE_SITE for match in found)
+        for match in found:
+            page = ROOT / "docs" / match.group(1).removesuffix(".html")
+            page = page.with_suffix(".md")
+            assert page.is_file(), match.group(0)
+            if match.group(2):
+                assert match.group(2)[1:] in myst.anchors(page), match.group(0)

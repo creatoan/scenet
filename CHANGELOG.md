@@ -12,6 +12,16 @@ below 1.0 means.
 
 ### Added
 
+- **A finding links its entry** (#320). SARIF gives every rule a `helpUri`, its entry in the
+  diagnostics reference, and its `help` ends by naming that entry, in text and in Markdown, so
+  code scanning and an editor send a reader to why it happens and how to fix it. The MCP
+  server's findings carry the same address as `help_uri`, and the VS Code extension opens the
+  rule's own entry from **Problems** rather than the list of every rule.
+  `scenet.diagnostics.help_uri` gives the address for an id. `puppet-file`'s help names the
+  published how-to instead of a path in the repository. The spec pack's `diagnostics` part
+  and the skill's `references/diagnostics.md` are the reference page itself, entry for entry,
+  with its documents and their fixes, the compile notes included; a cross-reference to the
+  Python API in any page the pack carries is printed as code instead of as raw MyST.
 - **A diagnostics reference** (#320), as Rust's error index is: an entry for each of the 37 rules
   `scenet check` reports and each of the 8 notes the compiler gives, at
   `docs/reference/diagnostics.md`. An entry gives the id, its level, what it says, why it

@@ -14,7 +14,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, test } from "node:test";
 
-import { MalformedSarif, RULE_REFERENCE, sarifToDiagnostics, type DiagnosticSpec } from "../src/sarif";
+import { DIAGNOSTICS_REFERENCE, MalformedSarif, sarifToDiagnostics, type DiagnosticSpec } from "../src/sarif";
 
 const FIXTURES = join(__dirname, "fixtures");
 
@@ -68,7 +68,21 @@ describe("captured from scenet check", () => {
   test("the message and the rule's reference travel with it", () => {
     const [diagnostic] = map(captured("unknown-actor")).get(source("unknown-actor.panel.yaml")) ?? [];
     assert.match(diagnostic?.message ?? "", /unknown actor 'bpb'/);
-    assert.equal(diagnostic?.help, RULE_REFERENCE);
+    assert.equal(diagnostic?.help, `${DIAGNOSTICS_REFERENCE}#unknown-actor`);
+  });
+
+  test("the reference is the rule's own helpUri, when the report gives one", () => {
+    const report = log(
+      { ruleId: "scenet/unknown-actor", ruleIndex: 0, message: { text: "x" } },
+      { tool: { driver: { name: "scenet", rules: [{ id: "scenet/unknown-actor", helpUri: "https://example.org/x" }] } } },
+    );
+    const [diagnostic] = map(report).get(source("unknown-actor.panel.yaml")) ?? [];
+    assert.equal(diagnostic?.help, "https://example.org/x");
+  });
+
+  test("a rule that is not Scenet's has no reference", () => {
+    const [diagnostic] = map(log({ ruleId: "other/thing", message: { text: "x" } })).get(source("unknown-actor.panel.yaml")) ?? [];
+    assert.equal(diagnostic?.help, undefined);
   });
 
   test("a note, such as a balloon over the word limit, is information, not an error", () => {

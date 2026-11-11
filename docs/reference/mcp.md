@@ -80,10 +80,11 @@ the network, or answers differently on a second call. A client can run them with
 
 | Field | |
 |---|---|
-| `rule` | Stable rule id, such as `scenet/unknown-actor` — the [same catalogue](cli.md#rules) `scenet check` reports |
+| `rule` | Stable rule id, such as `scenet/unknown-actor` — the [same catalogue](diagnostics.md) `scenet check` reports |
 | `level` | `error`, which stops the document compiling, or `note`, a house limit such as a balloon over the words a publisher asks for, which does not |
 | `message` | What is wrong, naming the offending construct |
 | `fix` | What to do about it |
+| `help_uri` | Where the rule is explained: its [entry](diagnostics.md), with a document that gives it and the same document fixed |
 | `where` | Path to the offending value, such as `script.0.say.by`; empty for the whole document |
 | `line`, `column`, `end_line`, `end_column` | 1-based |
 

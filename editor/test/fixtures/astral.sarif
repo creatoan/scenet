@@ -6,7 +6,7 @@
       "tool": {
         "driver": {
           "name": "scenet",
-          "version": "0.10.0",
+          "version": "0.12.0",
           "informationUri": "https://github.com/creatoan/scenet",
           "rules": [
             {
@@ -18,8 +18,10 @@
               "fullDescription": {
                 "text": "Every actor id named in `staging` or `script` must exist in `cast`. This is the check no JSON Schema can perform -- the value is a perfectly good string, it just does not resolve -- and it is among the most common faults in generated documents."
               },
+              "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor",
               "help": {
-                "text": "Correct the id, or add the actor to `cast`. The message lists the cast."
+                "text": "Correct the id, or add the actor to `cast`. The message lists the cast. Explained, with an example and its fix: https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor",
+                "markdown": "Correct the id, or add the actor to `cast`. The message lists the cast. [Explained, with an example and its fix](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor)."
               },
               "defaultConfiguration": {
                 "level": "error"

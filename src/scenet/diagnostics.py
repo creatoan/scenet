@@ -86,6 +86,7 @@ from scenet.frontends.common import (
     LANGUAGE_REFERENCE,
     LAYOUT_KEYS,
     PYDANTIC_RULES,
+    SITE,
     errors_of,
     normalise,
     normalise_layout,
@@ -122,11 +123,15 @@ __all__ = [
     "Rule",
     "diagnose_file",
     "diagnose_source",
+    "help_uri",
     "to_sarif",
 ]
 
 #: Where the tool describes itself, for the SARIF driver block.
 INFORMATION_URI = "https://github.com/creatoan/scenet"
+
+#: Where every rule and compile note has its entry, under its bare id: `#unknown-key`.
+DIAGNOSTICS_REFERENCE = f"{SITE}reference/diagnostics.html"
 
 #: Prefix on every emitted `ruleId`. Namespacing keeps Scenet's rules distinct from
 #: those of every other tool whose results land in the same code-scanning database.
@@ -391,8 +396,8 @@ RULES: dict[str, Rule] = {
         help=(
             "Check the path against the document's folder, write it relative to that "
             "folder, or fix the puppet where the finding points and check it against "
-            "`scenet schema --puppet`; docs/howto/add_your_own_character.md walks through "
-            "one."
+            "`scenet schema --puppet`. Writing one is walked through at "
+            f"{SITE}howto/add_your_own_character.html."
         ),
     ),
     "unknown-pose": Rule(
@@ -770,6 +775,27 @@ class Diagnostic:
             _uri_for(self.source, root=root) if self.source else "",
         ]
         return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:32]
+
+
+def help_uri(rule: str) -> str:
+    """Where a rule or a compile note is explained: its entry in the diagnostics reference.
+
+    The entry says why it happens and how to fix it, and shows a document that gives it
+    beside the same document fixed. SARIF carries it as each rule's `helpUri`.
+
+    Args:
+        rule: A rule's bare id, as :data:`RULES <scenet.diagnostics.RULES>` keys it, or a
+            compile note's name.
+
+    Returns:
+        The entry's address on the published site, which serves the latest release.
+
+    Example:
+        >>> from scenet.diagnostics import help_uri
+        >>> help_uri("unknown-key")
+        'https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key'
+    """
+    return f"{DIAGNOSTICS_REFERENCE}#{rule}"
 
 
 def _uri_for(source: Path | None, *, root: Path | None) -> str:
@@ -2076,7 +2102,13 @@ def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, 
             "name": name,
             "shortDescription": {"text": RULES[name].summary},
             "fullDescription": {"text": RULES[name].description},
-            "help": {"text": RULES[name].help},
+            "helpUri": help_uri(name),
+            "help": {
+                "text": f"{RULES[name].help} Explained, with an example and its fix: "
+                f"{help_uri(name)}",
+                "markdown": f"{RULES[name].help} [Explained, with an example and its fix]"
+                f"({help_uri(name)}).",
+            },
             "defaultConfiguration": {"level": RULES[name].level},
         }
         for name in used

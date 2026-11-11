@@ -100,7 +100,10 @@ for (const expected of CORPUS) {
     assert.equal(finding.severity, vscode.DiagnosticSeverity.Error);
     assert.ok(typeof finding.code === "object", "the rule is linked");
     assert.equal(finding.code.value, expected.rule);
-    assert.equal(finding.code.target.toString(), "https://creatoan.github.io/scenet/reference/cli.html#rules");
+    assert.equal(
+      finding.code.target.toString(),
+      `https://creatoan.github.io/scenet/reference/diagnostics.html#${expected.rule.slice("scenet/".length)}`,
+    );
   });
 }
 
