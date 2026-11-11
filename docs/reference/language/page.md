@@ -38,7 +38,7 @@ The format every page shares: its size, margin, gutters and bleed.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The format is the document's: written once beside `panels:`, it is every page's. It is not a
@@ -66,7 +66,7 @@ The page's width and height: the trim, the size the printed page is cut to, in t
 | Type | `[number, number]` |
 | Default | `[2000, 3000]` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 | In the gallery | [A page made for print](../../gallery.md#a-page-made-for-print) |
 <!-- /facts -->
 
@@ -100,7 +100,7 @@ The blank border inside the page's edge, on all four sides.
 | Values | 0 or more |
 | Default | `100` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The blank border inside the page's edge. Panels are laid out inside it, and it is the safe area
@@ -129,7 +129,7 @@ The gap between two panels, or two columns, side by side in a tier.
 | Values | 0 or more |
 | Default | `40` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The gap between two panels side by side, or between two columns. An {term}`inset` sits a gutter in
@@ -159,7 +159,7 @@ The gap between two tiers, and between two panels stacked in a column. Wider tha
 | Values | 0 or more |
 | Default | `60` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The gap between two tiers, and between two panels stacked in a column. Wider than `gutter` by
@@ -190,7 +190,7 @@ How far the printed sheet runs past the trim on every side, so art that reaches 
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 `bleed` is in the units of the page: `30` is 3 mm, `31.75` is the 0.125 in US printers ask for. It
@@ -220,7 +220,7 @@ The pages, in order, each a list of tiers top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 | In the gallery | [Two pages](../../gallery.md#two-pages) |
 <!-- /facts -->
 
@@ -255,7 +255,7 @@ The page's tiers, top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 | In the gallery | [A page in tiers](../../gallery.md#a-page-in-tiers) |
 <!-- /facts -->
 
@@ -285,7 +285,7 @@ The tier's share of the page's height, relative to the other tiers.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 A tier's share of the page's height: two tiers of `height: 2` and `1` take two thirds and one
@@ -313,7 +313,7 @@ The panels in the tier, in reading order: left to right, or right to left for a 
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The panels of a tier, in reading order: left to right, or right to left for a comic read that way.
@@ -341,7 +341,7 @@ In place of `panels`: columns side by side, each a stack of panels read top to b
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 | In the gallery | [Columns](../../gallery.md#columns) |
 <!-- /facts -->
 
@@ -379,7 +379,7 @@ How far the gutters between the tier's panels lean, in degrees, from -30 to 30. 
 | Values | -30 to 30 |
 | Default | `0` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`slant-cuts-face`](../diagnostics.md#slant-cuts-face) |
 | In the gallery | [Slanted tiers](../../gallery.md#slanted-tiers) |
 <!-- /facts -->
 
@@ -416,7 +416,7 @@ The name of a panel under `panels:`. Writing the name alone means `{use: name}`.
 | Type | text |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The panel a placement puts on the page, by its name under `panels:`. Writing the name alone, `one`,
@@ -445,7 +445,7 @@ The panel's share of its tier's width, relative to its neighbours.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 A panel's share of its tier's width, relative to its neighbours: `width: 2` beside a panel of the
@@ -473,7 +473,7 @@ Run the frame past the trim to the bleed line, with no border there: `true` on e
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 | In the gallery | [Panels that bleed](../../gallery.md#panels-that-bleed) |
 <!-- /facts -->
 
@@ -517,7 +517,7 @@ Panels set into its corners, and drawn over it.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`inset-covers-face`](../diagnostics.md#inset-covers-face) |
 | In the gallery | [Insets](../../gallery.md#insets) |
 <!-- /facts -->
 
@@ -557,7 +557,7 @@ The column's share of its tier's width, relative to the other columns.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 A column's share of its tier's width, relative to the other columns, as a panel's `width` is in a
@@ -586,7 +586,7 @@ The panels in the column, read top to bottom.
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 The panels of a column, read top to bottom, each a name or a mapping, as a tier's panels are; a
@@ -616,7 +616,7 @@ The panel's share of its column's height, relative to the others in it.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 A panel's share of its column's height, relative to the others in it.
@@ -644,7 +644,7 @@ The name of a panel under `panels:`, set into this one.
 | Type | text |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
 <!-- /facts -->
 
 The panel set into the corner, by its name under `panels:`. Like any panel on a page, it is placed
@@ -672,7 +672,7 @@ The corner of its parent the inset sits in, a gutter in from both edges.
 | Values | `top_left`, `top_right`, `bottom_left`, `bottom_right` |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`inset-covers-face`](../diagnostics.md#inset-covers-face) |
 <!-- /facts -->
 
 The corner of its parent. The corner is the parent's whichever way the page is read: an inset's
@@ -700,7 +700,7 @@ The inset's width and height, as a fraction of its parent's: above 0, at most 0.
 | Values | above 0, at most 0.5 |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`inset-covers-face`](../diagnostics.md#inset-covers-face) |
 <!-- /facts -->
 
 The inset's width and height, as one fraction of its parent's: `0.25` is a quarter as wide and a
@@ -728,7 +728,7 @@ When the inset is read: `after` its parent, or `before` it.
 | Values | `before`, `after` |
 | Default | `after` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 Readers split about evenly over whether an inset comes before the panel it sits in or after it

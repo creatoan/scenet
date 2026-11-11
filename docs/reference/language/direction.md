@@ -10,7 +10,7 @@ Which way the comic is read: `ltr` from the top left, `rtl` from the top right, 
 | Values | `ltr`, `rtl` |
 | Default | `ltr` |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `panel-direction` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-direction`](../diagnostics.md#panel-direction) |
 | In the gallery | [Right to left](../../gallery.md#right-to-left), [The same page, left to right](../../gallery.md#the-same-page-left-to-right) |
 <!-- /facts -->
 

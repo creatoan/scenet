@@ -24,6 +24,7 @@ worth having if it is not owned.
 | | |
 |---|---|
 | [Command line](cli.md) | Every command and flag |
+| [Diagnostics](diagnostics.md) | Every rule `scenet check` reports and every note the compiler gives, each with a document that gives it and the same document fixed |
 | [MCP server](mcp.md) | The tools `scenet mcp` serves to a model |
 | [Python API](api/index.md) | Every public name, and the internals behind them |
 
@@ -43,6 +44,7 @@ shot_types
 panel_core
 asset_contract
 cli
+diagnostics
 mcp
 api/index
 ```

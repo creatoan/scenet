@@ -9,7 +9,7 @@ How the cast is framed: the shot, and the camera's height.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `figure-staging` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`figure-staging`](../diagnostics.md#figure-staging) |
 <!-- /facts -->
 
 There is exactly **one camera per panel**, and every {term}`actor` is drawn at the scale it
@@ -41,7 +41,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 | Values | `long_shot`, `wide`, `full_shot`, `medium_full`, `cowboy`, `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
 | Default | `medium_shot` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`camera-retreated`](../diagnostics.md#camera-retreated), [`cropped-marks`](../diagnostics.md#cropped-marks), [`slant-cuts-face`](../diagnostics.md#slant-cuts-face) |
 | In the gallery | [The camera retreats](../../gallery.md#the-camera-retreats) |
 <!-- /facts -->
 
@@ -79,7 +79,7 @@ The camera's height: `low` looks up, leaving little air above the head; `high` l
 | Values | `low`, `eye_level`, `high` |
 | Default | `eye_level` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [Camera angles](../../gallery.md#camera-angles) |
 <!-- /facts -->
 

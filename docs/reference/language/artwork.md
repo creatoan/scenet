@@ -50,7 +50,7 @@ The picture's size in pixels, `[width, height]`, as it was measured. It must be 
 | Type | `[number, number]` |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 The picture's size in pixels, as the contract was measured against it. It must be the picture's
@@ -68,7 +68,7 @@ Each figure the picture draws, by the name a cast member's `figure` gives it. Ev
 | Type | a mapping |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 **Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
@@ -87,7 +87,7 @@ The figure's face: a disc no balloon, caption or sound effect may cover.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 The face, as a disc. A contract declares no gaze, so nothing keeps a balloon out of a figure's line
@@ -104,7 +104,7 @@ The face's centre, `[x, y]` in the picture's pixels, from its top left.
 | Type | `[number, number]` |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 The face's centre, in pixels from the picture's top left; it must lie on the picture. See
@@ -122,7 +122,7 @@ How far the face reaches, in pixels. Generous is safer than tight: no lettering 
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 Generous is safer than tight: no balloon may overlap the disc at all, and a tail stops on its edge.
@@ -140,7 +140,7 @@ Where the tail of a line the figure speaks ends, or the place a sound it makes c
 | Type | `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 Where a tail ends, and where a sound the figure makes comes from. A tail to a mouth that a `cover`
@@ -158,7 +158,7 @@ The figure's silhouette, a polygon in pixels, which a balloon pays to cover: hal
 | Type | a list of `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 A polygon of at least three points, in pixels, simple -- no edge crossing another. Covering a
@@ -176,7 +176,7 @@ Regions lettering should stay off, each a polygon in pixels: a sign, a hand, wha
 | Type | a list of a list of `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](../diagnostics.md#artwork-contract) |
 <!-- /facts -->
 
 **Keep-out regions** are ground lettering pays to cover, weighted as emanata are -- a sign, a hand,

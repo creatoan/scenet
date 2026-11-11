@@ -126,10 +126,16 @@ undocumented:
 - each command's exit-status table, against a scenario that produces every code in it;
 - the extension table, against the frontends `build` reads with;
 - every rule except `internal`, against a document in `tests/rule_corpus/` named after it
-  that must produce exactly one finding of that rule, and the rule objects SARIF emits
-  against the catalogue;
+  that must produce exactly one finding of that rule, read beside `examples/gallery` as the
+  playground reads a document, and the rule objects SARIF emits against the catalogue;
 - the behavioural sentences -- output naming, clashes, `--quiet`, what `check` writes,
   SARIF on stdout -- one test each.
+
+`docs/reference/diagnostics.md` is generated from the catalogue and the same corpus by
+`scripts/build_diagnostics.py`, and `tests/test_diagnostics_reference.py` holds it to them:
+an entry for every rule and every compile note, each document giving exactly its diagnostic,
+each fixed twin in `tests/rule_corpus/fixed/` giving nothing, and the cards and the entries
+linking each other.
 
 The `scenet` lines of every `bash` block in the documentation run as well, in-process in a
 copy of `examples/` (`tests/shell_examples.py`). `pip`, `uv`, `git` and the like never run.

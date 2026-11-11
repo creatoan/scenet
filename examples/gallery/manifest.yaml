@@ -16,7 +16,7 @@
 # - `summary:` one sentence, shown under the editor.
 # - `doc:` the page of docs/ that explains it, with the heading's anchor if there is one.
 # - `notes:` the notes compiling and checking it give, each named once: a `scenet check`
-#   rule whose level is note, or the name of a compile note (docs/howto/debug_a_layout.md).
+#   rule whose level is note, or the name of a compile note (docs/reference/diagnostics.md).
 #   Exactly those and no other, which the tests hold every example to; most give none, and
 #   leave it out. The examples of "What Scenet tells you" give theirs on purpose, and each
 #   ends its YAML -- a comic script, its front matter -- with a line commented out under a
@@ -370,42 +370,42 @@ examples:
     kind: panel
     group: What Scenet tells you
     summary: "A balloon of 34 words still compiles, and the checker notes that Dark Horse asks for about 25 at most."
-    doc: reference/cli.md#rules
+    doc: reference/diagnostics.md#word-limit
     notes: [word-limit]
   - file: 54-a-page-miscounted.script
     title: "A page miscounted"
     kind: script
     group: What Scenet tells you
     summary: "A script whose page says three panels where two follow: it compiles, and the checker notes the count."
-    doc: howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it
+    doc: reference/diagnostics.md#panel-count
     notes: [panel-count]
   - file: 55-not-read-as-dialogue.script
     title: "Not read as dialogue"
     kind: script
     group: What Scenet tells you
     summary: "A speaker's name misspelled in a script makes the line prose, not dialogue, and the checker points at it."
-    doc: howto/write_a_comic_script.md#the-rules
+    doc: reference/diagnostics.md#looks-like-dialogue
     notes: [looks-like-dialogue]
   - file: 56-a-relation-left-out.scene.yaml
     title: "A relation left out"
     kind: scene
     group: What Scenet tells you
     summary: "A panel that leaves Bob out with null leaves out the relation naming him too, and the checker notes it."
-    doc: howto/compile_a_sequence.md#leaving-something-out
+    doc: reference/diagnostics.md#dropped-relation
     notes: [dropped-relation]
   - file: 57-a-tail-that-bends.panel.yaml
     title: "A tail that bends"
     kind: panel
     group: What Scenet tells you
     summary: "A voice from the left with its balloon on the right: the tail bends around Bob's face, and a note says so."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#curved-tail
     notes: [curved-tail]
   - file: 58-a-mouth-cropped-away.panel.yaml
     title: "A mouth cropped away"
     kind: panel
     group: What Scenet tells you
     summary: "A picture fitted to cover a tall panel crops Ana's mouth away, so her tail stops on the frame, and a note says so."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#cropped-mouth
     notes: [cropped-mouth]
     files: [art/figures.png, art/figures.art.yaml]
   - file: 59-marks-cut-off.panel.yaml
@@ -413,28 +413,28 @@ examples:
     kind: panel
     group: What Scenet tells you
     summary: "Sweat drops over the taller character run off the top, since the camera makes no room for marks, and a note says so."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#cropped-marks
     notes: [cropped-marks]
   - file: 60-an-inset-over-a-face.scene.yaml
     title: "An inset over a face"
     kind: scene
     group: What Scenet tells you
     summary: "An inset set into the corner where Bob's face is covers it, since the art does not move for an inset, and a note says so."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#inset-covers-face
     notes: [inset-covers-face]
   - file: 61-a-slant-through-a-face.scene.yaml
     title: "A slant through a face"
     kind: scene
     group: What Scenet tells you
     summary: "A slanted gutter cuts across Bob's face in a close-up, since the camera does not know the cut is there, and a note says so."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#slant-cuts-face
     notes: [slant-cuts-face]
   - file: 62-a-face-standing-in.panel.yaml
     title: "A face standing in"
     kind: panel
     group: What Scenet tells you
     summary: "Comic Neue Regular named alone stands in for the italic and the bold italic faces, and a note says so for each."
-    doc: howto/debug_a_layout.md#1-read-the-notes
+    doc: reference/diagnostics.md#italic-stand-in
     notes: [italic-stand-in, bold-italic-stand-in]
     files: [fonts/ComicNeue-Regular.ttf, fonts/OFL.txt]
   - file: 63-a-markdown-script.script

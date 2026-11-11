@@ -9,7 +9,7 @@ How the cast stand to each other, as sentences: `alice left_of bob`. One relatio
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-actor`, `ordering-cycle`, `reflexive-relation`, `figure-staging`, `dropped-relation`, `layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-actor`](../diagnostics.md#unknown-actor), [`ordering-cycle`](../diagnostics.md#ordering-cycle), [`reflexive-relation`](../diagnostics.md#reflexive-relation), [`figure-staging`](../diagnostics.md#figure-staging), [`dropped-relation`](../diagnostics.md#dropped-relation), [`layout`](../diagnostics.md#layout) |
 | In the gallery | [Gaze steers balloons](../../gallery.md#gaze-steers-balloons), [Feet align, heads do not](../../gallery.md#feet-align-heads-do-not), [Depth and overlap](../../gallery.md#depth-and-overlap) |
 <!-- /facts -->
 
@@ -85,7 +85,7 @@ The actor id the relation is about.
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unknown-actor`](../diagnostics.md#unknown-actor), [`reflexive-relation`](../diagnostics.md#reflexive-relation) |
 | In the gallery | [Staging, spelled out](../../gallery.md#staging-spelled-out) |
 <!-- /facts -->
 
@@ -113,7 +113,7 @@ How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `beh
 | Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `ordering-cycle` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`ordering-cycle`](../diagnostics.md#ordering-cycle) |
 <!-- /facts -->
 
 The relation itself, one of the six in the [table above](#staging). Each is required, and none
@@ -141,7 +141,7 @@ The other actor id. For `looking_at`, it may be somebody heard from off panel.
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unknown-actor`](../diagnostics.md#unknown-actor), [`reflexive-relation`](../diagnostics.md#reflexive-relation) |
 <!-- /facts -->
 
 The other actor. For `looking_at`, the object may be somebody heard from off panel and drawn

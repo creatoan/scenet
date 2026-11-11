@@ -234,7 +234,7 @@ The panel's frame: its size and margin, in panel units.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
 <!-- /facts -->
 
 The frame everything else is measured against. A panel has a size and a margin, in
@@ -266,7 +266,7 @@ The panel's width and height, `[width, height]`, in panel units: everything else
 | Type | `[number, number]` |
 | Default | `[1000, 1000]` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `panel-geometry` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-geometry`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-geometry), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
 <!-- /facts -->
 
 Panel units are arbitrary and consistent: every length in the language -- a margin, a type size,
@@ -298,7 +298,7 @@ An inset on all four sides, in panel units. Balloons, captions and sound effects
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `panel-geometry` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-geometry`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-geometry) |
 | In the gallery | [Margins and bleed](https://creatoan.github.io/scenet/gallery.html#margins-and-bleed) |
 <!-- /facts -->
 
@@ -334,7 +334,7 @@ How the cast is framed: the shot, and the camera's height.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `figure-staging` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`figure-staging`](https://creatoan.github.io/scenet/reference/diagnostics.html#figure-staging) |
 <!-- /facts -->
 
 There is exactly **one camera per panel**, and every actor is drawn at the scale it
@@ -366,7 +366,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 | Values | `long_shot`, `wide`, `full_shot`, `medium_full`, `cowboy`, `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
 | Default | `medium_shot` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated), [`cropped-marks`](https://creatoan.github.io/scenet/reference/diagnostics.html#cropped-marks), [`slant-cuts-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#slant-cuts-face) |
 | In the gallery | [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats) |
 <!-- /facts -->
 
@@ -404,7 +404,7 @@ The camera's height: `low` looks up, leaving little air above the head; `high` l
 | Values | `low`, `eye_level`, `high` |
 | Default | `eye_level` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [Camera angles](https://creatoan.github.io/scenet/gallery.html#camera-angles) |
 <!-- /facts -->
 
@@ -432,7 +432,7 @@ Where and when the panel happens: a named place, tonal masses or a picture behin
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
 <!-- /facts -->
 
 Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
@@ -495,7 +495,7 @@ A named place, which stands for the list of masses it expands into. Write this, 
 | Values | `alley`, `desert`, `docks`, `field`, `forest`, `mountain`, `office`, `room`, `shore`, `street` |
 | Default | none |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `unknown-place`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-place`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-place), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting) |
 | In the gallery | [Ten places](https://creatoan.github.io/scenet/gallery.html#ten-places) |
 <!-- /facts -->
 
@@ -544,7 +544,7 @@ The backdrop as tonal masses, back to front: what a `place` expands into, writte
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting) |
 | In the gallery | [Masses and planes](https://creatoan.github.io/scenet/gallery.html#masses-and-planes) |
 <!-- /facts -->
 
@@ -582,7 +582,7 @@ What the mass is made of, which decides its silhouette: seven outdoor kinds of s
 | Values | `building`, `ceiling`, `floor`, `furniture`, `ground`, `plant`, `sky`, `solid`, `structural`, `wall`, `water`, `window` |
 | Default | none: required |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `missing-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field) |
 <!-- /facts -->
 
 **`kind`** is subsetted from the *supercategories* of
@@ -628,7 +628,7 @@ How far back the mass sits, which decides its value and its draw order. A `foreg
 | Values | `foreground`, `near`, `mid`, `far` |
 | Default | `mid` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [In front of the cast](https://creatoan.github.io/scenet/gallery.html#in-front-of-the-cast) |
 <!-- /facts -->
 
@@ -667,7 +667,7 @@ How much of the panel's width the mass covers: all of it, or its `left`, `center
 | Values | `full`, `left`, `center`, `right` |
 | Default | `full` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 **`spans`** is an absolute extent, and that is not cosmetic. Any construct that would reintroduce
@@ -699,7 +699,7 @@ Where the ground meets what is behind it, which every mass is composed against: 
 | Values | `high`, `mid`, `low` |
 | Default | `mid` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting) |
 | In the gallery | [Three horizons](https://creatoan.github.io/scenet/gallery.html#three-horizons) |
 <!-- /facts -->
 
@@ -735,7 +735,7 @@ When the panel happens, which sets the two ends of the value ladder: the foregro
 | Values | `dawn`, `day`, `dusk`, `night` |
 | Default | `day` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [Time and weather](https://creatoan.github.io/scenet/gallery.html#time-and-weather) |
 <!-- /facts -->
 
@@ -772,7 +772,7 @@ What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cl
 | Values | `clear`, `rain`, `fog`, `snow` |
 | Default | `clear` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 `weather` adds a layer over the backdrop. `clouds` and `fog` are first-class stuff in COCO-Stuff,
@@ -813,7 +813,7 @@ A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the 
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `image-file`, `conflicting-setting`, `artwork-contract` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`image-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#image-file), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting), [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 | In the gallery | [A JPEG behind the cast](https://creatoan.github.io/scenet/gallery.html#a-jpeg-behind-the-cast) |
 <!-- /facts -->
 
@@ -876,7 +876,7 @@ How the picture fills the panel: `cover` fills it and crops what overhangs, equa
 | Values | `cover`, `contain` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`cropped-mouth`](https://creatoan.github.io/scenet/reference/diagnostics.html#cropped-mouth) |
 <!-- /facts -->
 
 The picture is centred either way and never stretched: its shape is a fact about it, and a figure
@@ -908,7 +908,7 @@ Who is in the panel: each actor id, chosen by the author, and the puppet that pl
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `conflicting-cast`, `layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
@@ -950,7 +950,7 @@ The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` fil
 | Type | text |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-puppet`, `puppet-file`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-puppet`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-puppet), [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
 | In the gallery | [A puppet of your own](https://creatoan.github.io/scenet/gallery.html#a-puppet-of-your-own) |
 <!-- /facts -->
 
@@ -1000,7 +1000,7 @@ A pose the puppet declares, by name.
 | Type | text |
 | Default | `standing_neutral` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-pose`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-pose`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-pose), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
 | In the gallery | [Poses and facing](https://creatoan.github.io/scenet/gallery.html#poses-and-facing) |
 <!-- /facts -->
 
@@ -1029,7 +1029,7 @@ An expression the puppet declares, by name.
 | Type | text |
 | Default | `neutral` |
 | Since | 0.5 |
-| Diagnostics | `invalid-field`, `unknown-expression`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-expression`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-expression), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
 | In the gallery | [Ten expressions](https://creatoan.github.io/scenet/gallery.html#ten-expressions), [A face](https://creatoan.github.io/scenet/gallery.html#a-face) |
 <!-- /facts -->
 
@@ -1066,7 +1066,7 @@ Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffit
 | Values | `plewds`, `squeans`, `grawlixes`, `briffits` |
 | Default | none |
 | Since | 0.8 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`cropped-marks`](https://creatoan.github.io/scenet/reference/diagnostics.html#cropped-marks) |
 | In the gallery | [Emanata](https://creatoan.github.io/scenet/gallery.html#emanata) |
 <!-- /facts -->
 
@@ -1124,7 +1124,7 @@ Where along the panel's width the figure would like to stand. A preference: non-
 | Values | `left_edge`, `left_third`, `center`, `right_third`, `right_edge` |
 | Default | `center` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
 <!-- /facts -->
 
 Where along the panel's width the figure would like to stand, horizontally only: figures stand on
@@ -1154,7 +1154,7 @@ Which way the figure is turned, `left` or `right`, gaze and all.
 | Values | `left`, `right` |
 | Default | `right` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
 <!-- /facts -->
 
 Facing mirrors the whole puppet, its gaze included. It defaults to `right`, so a cast written
@@ -1180,7 +1180,7 @@ A figure the panel's picture draws, by the name its artwork contract gives it. W
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `unknown-figure`, `conflicting-cast`, `artwork-contract` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-figure`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-figure), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 | In the gallery | [From puppets to figures](https://creatoan.github.io/scenet/gallery.html#from-puppets-to-figures) |
 <!-- /facts -->
 
@@ -1239,7 +1239,7 @@ How the cast stand to each other, as sentences: `alice left_of bob`. One relatio
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-actor`, `ordering-cycle`, `reflexive-relation`, `figure-staging`, `dropped-relation`, `layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-actor`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor), [`ordering-cycle`](https://creatoan.github.io/scenet/reference/diagnostics.html#ordering-cycle), [`reflexive-relation`](https://creatoan.github.io/scenet/reference/diagnostics.html#reflexive-relation), [`figure-staging`](https://creatoan.github.io/scenet/reference/diagnostics.html#figure-staging), [`dropped-relation`](https://creatoan.github.io/scenet/reference/diagnostics.html#dropped-relation), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout) |
 | In the gallery | [Gaze steers balloons](https://creatoan.github.io/scenet/gallery.html#gaze-steers-balloons), [Feet align, heads do not](https://creatoan.github.io/scenet/gallery.html#feet-align-heads-do-not), [Depth and overlap](https://creatoan.github.io/scenet/gallery.html#depth-and-overlap) |
 <!-- /facts -->
 
@@ -1315,7 +1315,7 @@ The actor id the relation is about.
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unknown-actor`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor), [`reflexive-relation`](https://creatoan.github.io/scenet/reference/diagnostics.html#reflexive-relation) |
 | In the gallery | [Staging, spelled out](https://creatoan.github.io/scenet/gallery.html#staging-spelled-out) |
 <!-- /facts -->
 
@@ -1343,7 +1343,7 @@ How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `beh
 | Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `ordering-cycle` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`ordering-cycle`](https://creatoan.github.io/scenet/reference/diagnostics.html#ordering-cycle) |
 <!-- /facts -->
 
 The relation itself, one of the six in the [table above](#staging). Each is required, and none
@@ -1371,7 +1371,7 @@ The other actor id. For `looking_at`, it may be somebody heard from off panel.
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `reflexive-relation` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unknown-actor`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor), [`reflexive-relation`](https://creatoan.github.io/scenet/reference/diagnostics.html#reflexive-relation) |
 <!-- /facts -->
 
 The other actor. For `looking_at`, the object may be somebody heard from off panel and drawn
@@ -1398,7 +1398,7 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `balloon-placement`, `word-limit` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit) |
 | In the gallery | [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order) |
 <!-- /facts -->
 
@@ -1453,7 +1453,7 @@ A line of dialogue, in a balloon whose tail points at the speaker.
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
 <!-- /facts -->
 
 A line of dialogue: a balloon, with a tail to the speaker's mouth. Its keys say who speaks, what,
@@ -1478,7 +1478,7 @@ Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_p
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `off-panel-speaker` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unknown-actor`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor), [`off-panel-speaker`](https://creatoan.github.io/scenet/reference/diagnostics.html#off-panel-speaker) |
 <!-- /facts -->
 
 The tail of the balloon points at this actor's mouth -- the `mouth` anchor of their puppet, or of
@@ -1507,7 +1507,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
 | In the gallery | [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break), [Emphasis](https://creatoan.github.io/scenet/gallery.html#emphasis) |
 <!-- /facts -->
 
@@ -1573,7 +1573,7 @@ Where the balloon would like to sit, one of nine zones of the panel. The weakest
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`curved-tail`](https://creatoan.github.io/scenet/reference/diagnostics.html#curved-tail) |
 | In the gallery | [Placement zones](https://creatoan.github.io/scenet/gallery.html#placement-zones), [The other five zones](https://creatoan.github.io/scenet/gallery.html#the-other-five-zones) |
 <!-- /facts -->
 
@@ -1605,7 +1605,7 @@ The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`.
 | Values | `speech`, `thought`, `whisper`, `shout` |
 | Default | `speech` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [Every balloon kind](https://creatoan.github.io/scenet/gallery.html#every-balloon-kind) |
 <!-- /facts -->
 
@@ -1644,7 +1644,7 @@ script:
 | Values | `normal`, `small` |
 | Default | `normal` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 Dark Horse lists "(small)" and "(weak)" among the common indications for modified lettering.
@@ -1672,7 +1672,7 @@ The speaker is outside the panel: `true`, or the side of the frame they are on. 
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `off-panel-speaker` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`off-panel-speaker`](https://creatoan.github.io/scenet/reference/diagnostics.html#off-panel-speaker) |
 | In the gallery | [Off-panel speech](https://creatoan.github.io/scenet/gallery.html#off-panel-speech), [Looking off panel](https://creatoan.github.io/scenet/gallery.html#looking-off-panel) |
 <!-- /facts -->
 
@@ -1722,7 +1722,7 @@ A caption: a box in which the panel speaks in its own voice, with no tail.
 | Type | a mapping |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
 <!-- /facts -->
 
 A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
@@ -1759,7 +1759,7 @@ What the box says, as one string; line breaks are computed. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in) |
 <!-- /facts -->
 
 As for dialogue, line breaking is computed, and a word between underscores is stressed; see
@@ -1785,7 +1785,7 @@ What the box is doing: `locale` for a place and time, `monologue` for an inner v
 | Values | `locale`, `monologue`, `spoken`, `editorial` |
 | Default | `locale` |
 | Since | 0.4 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`caption-speaker`](https://creatoan.github.io/scenet/reference/diagnostics.html#caption-speaker), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in) |
 | In the gallery | [Captions](https://creatoan.github.io/scenet/gallery.html#captions) |
 <!-- /facts -->
 
@@ -1822,7 +1822,7 @@ What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper,
 | Values | `paper`, `pale`, `ink`, `warm` (since 0.13) |
 | Default | `paper` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones), [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption) |
 <!-- /facts -->
 
@@ -1885,7 +1885,7 @@ Where the box would like to sit, one of nine zones of the panel. Left out, where
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`curved-tail`](https://creatoan.github.io/scenet/reference/diagnostics.html#curved-tail) |
 <!-- /facts -->
 
 The same nine zones as a balloon's [`prefer`](#sayprefer), and as weak. Left out, a caption goes
@@ -1911,7 +1911,7 @@ Who is speaking, for a `spoken` caption only: any name, in the cast or not.
 | Type | text |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `caption-speaker` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`caption-speaker`](https://creatoan.github.io/scenet/reference/diagnostics.html#caption-speaker) |
 <!-- /facts -->
 
 **`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
@@ -1944,7 +1944,7 @@ A sound effect: letters lettered into the picture, with no balloon.
 | Type | a mapping |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `sfx-placement` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`sfx-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#sfx-placement) |
 | In the gallery | [Sound effects](https://creatoan.github.io/scenet/gallery.html#sound-effects) |
 <!-- /facts -->
 
@@ -1989,7 +1989,7 @@ The sound, lettered exactly as written, in the display face.
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `missing-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field) |
 <!-- /facts -->
 
 Nothing is added to the text: no exclamation mark, since sound effects are not exclamations, and no
@@ -2015,7 +2015,7 @@ Written `from`: the actor id the sound comes from, which it is placed near.
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-actor` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-actor`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-actor) |
 <!-- /facts -->
 
 Written `from`, the actor the sound comes from. The effect is tried around them first, and prefers
@@ -2042,7 +2042,7 @@ Where the effect would like to sit, one of nine zones of the panel: on its own, 
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [A sound pulled to a zone](https://creatoan.github.io/scenet/gallery.html#a-sound-pulled-to-a-zone) |
 <!-- /facts -->
 
@@ -2071,7 +2071,7 @@ How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dial
 | Values | `small`, `medium`, `large` |
 | Default | `medium` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 A multiple of the type size, not of the figure, so an effect reads at a long shot as well as at a
@@ -2099,7 +2099,7 @@ How far the effect is turned clockwise, in degrees, from -45 to 45.
 | Values | -45 to 45 |
 | Default | `0` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 Comics angle their sound effects; the default is level, and the angle is the author's. Positive
@@ -2125,7 +2125,7 @@ How far the line of letters bends, in degrees, from -120 to 120: positive bows i
 | Values | -120 to 120 |
 | Default | `0` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 The line of letters bends through this many degrees: positive bows its middle up, negative down.
@@ -2150,7 +2150,7 @@ script:
 | Type | `true` or `false` |
 | Default | `false` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 An open effect is all outline, in ink, and no fill, so the art behind shows through the letters --
@@ -2176,7 +2176,7 @@ What the panel shows, in words, for a reader who cannot see it. Carried into the
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `unknown-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key) |
 | In the gallery | [A description](https://creatoan.github.io/scenet/gallery.html#a-description) |
 <!-- /facts -->
 
@@ -2226,7 +2226,7 @@ How the lettering is set: the dialogue type size, and the font files.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
 <!-- /facts -->
 
 How the lettering is set: its size, and the face it is set in. Both are the author's to choose,
@@ -2261,7 +2261,7 @@ The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left
 | Values | above 0 |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `balloon-placement` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement) |
 | In the gallery | [Type size](https://creatoan.github.io/scenet/gallery.html#type-size) |
 <!-- /facts -->
 
@@ -2302,7 +2302,7 @@ The font files to letter in, relative to the document: one file for every face, 
 | Type | text, or a mapping |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `font-file` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
 | In the gallery | [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font) |
 <!-- /facts -->
 
@@ -2359,7 +2359,7 @@ The font file dialogue and `spoken` captions are lettered in, relative to the do
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `missing-field`, `font-file` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file) |
 <!-- /facts -->
 
 The face italic and bold italic stand in from, when they are not named. It is the only face a
@@ -2386,7 +2386,7 @@ The font file every caption but a `spoken` one is lettered in. Left out, they ar
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `font-file` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in) |
 <!-- /facts -->
 
 Italic is what `locale`, `monologue` and `editorial` captions are set in, and what emphasis falls
@@ -2414,7 +2414,7 @@ The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `font-file` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
 <!-- /facts -->
 
 A word written between underscores is stressed, and lettered in bold italic, the letterers'
@@ -2444,7 +2444,7 @@ The font file sound effects are lettered in. Left out, the shipped display face,
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `font-file` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file) |
 <!-- /facts -->
 
 Sound effects are letters that are part of the picture, so they have a face of their own, and it
@@ -2482,7 +2482,7 @@ Which way the comic is read: `ltr` from the top left, `rtl` from the top right, 
 | Values | `ltr`, `rtl` |
 | Default | `ltr` |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `panel-direction` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-direction`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-direction) |
 | In the gallery | [Right to left](https://creatoan.github.io/scenet/gallery.html#right-to-left), [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right) |
 <!-- /facts -->
 
@@ -2546,7 +2546,7 @@ What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each 
 | Values | `mono`, `tinted` |
 | Default | `mono` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 | In the gallery | [Every hour in colour](https://creatoan.github.io/scenet/gallery.html#every-hour-in-colour), [A flashback in grey](https://creatoan.github.io/scenet/gallery.html#a-flashback-in-grey) |
 <!-- /facts -->
 
@@ -2680,7 +2680,7 @@ Panels in reading order. Each may inherit from another with `over`.
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `composition` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
 <!-- /facts -->
 
 The panels, in reading order: the order they are written in is the order a strip draws them and a
@@ -2709,7 +2709,7 @@ Name of a panel to inherit from. Only the differences need stating: mappings mer
 | Type | text |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `composition` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
 | In the gallery | [A sequence](https://creatoan.github.io/scenet/gallery.html#a-sequence) |
 <!-- /facts -->
 
@@ -2774,7 +2774,7 @@ The format every page shares: its size, margin, gutters and bleed.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The format is the document's: written once beside `panels:`, it is every page's. It is not a
@@ -2802,7 +2802,7 @@ The page's width and height: the trim, the size the printed page is cut to, in t
 | Type | `[number, number]` |
 | Default | `[2000, 3000]` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 | In the gallery | [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) |
 <!-- /facts -->
 
@@ -2836,7 +2836,7 @@ The blank border inside the page's edge, on all four sides.
 | Values | 0 or more |
 | Default | `100` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The blank border inside the page's edge. Panels are laid out inside it, and it is the safe area
@@ -2865,7 +2865,7 @@ The gap between two panels, or two columns, side by side in a tier.
 | Values | 0 or more |
 | Default | `40` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The gap between two panels side by side, or between two columns. An inset sits a gutter in
@@ -2895,7 +2895,7 @@ The gap between two tiers, and between two panels stacked in a column. Wider tha
 | Values | 0 or more |
 | Default | `60` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The gap between two tiers, and between two panels stacked in a column. Wider than `gutter` by
@@ -2926,7 +2926,7 @@ How far the printed sheet runs past the trim on every side, so art that reaches 
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 `bleed` is in the units of the page: `30` is 3 mm, `31.75` is the 0.125 in US printers ask for. It
@@ -2956,7 +2956,7 @@ The pages, in order, each a list of tiers top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 | In the gallery | [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) |
 <!-- /facts -->
 
@@ -2991,7 +2991,7 @@ The page's tiers, top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 | In the gallery | [A page in tiers](https://creatoan.github.io/scenet/gallery.html#a-page-in-tiers) |
 <!-- /facts -->
 
@@ -3021,7 +3021,7 @@ The tier's share of the page's height, relative to the other tiers.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 A tier's share of the page's height: two tiers of `height: 2` and `1` take two thirds and one
@@ -3049,7 +3049,7 @@ The panels in the tier, in reading order: left to right, or right to left for a 
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The panels of a tier, in reading order: left to right, or right to left for a comic read that way.
@@ -3077,7 +3077,7 @@ In place of `panels`: columns side by side, each a stack of panels read top to b
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 | In the gallery | [Columns](https://creatoan.github.io/scenet/gallery.html#columns) |
 <!-- /facts -->
 
@@ -3115,7 +3115,7 @@ How far the gutters between the tier's panels lean, in degrees, from -30 to 30. 
 | Values | -30 to 30 |
 | Default | `0` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`slant-cuts-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#slant-cuts-face) |
 | In the gallery | [Slanted tiers](https://creatoan.github.io/scenet/gallery.html#slanted-tiers) |
 <!-- /facts -->
 
@@ -3152,7 +3152,7 @@ The name of a panel under `panels:`. Writing the name alone means `{use: name}`.
 | Type | text |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The panel a placement puts on the page, by its name under `panels:`. Writing the name alone, `one`,
@@ -3181,7 +3181,7 @@ The panel's share of its tier's width, relative to its neighbours.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 A panel's share of its tier's width, relative to its neighbours: `width: 2` beside a panel of the
@@ -3209,7 +3209,7 @@ Run the frame past the trim to the bleed line, with no border there: `true` on e
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 | In the gallery | [Panels that bleed](https://creatoan.github.io/scenet/gallery.html#panels-that-bleed) |
 <!-- /facts -->
 
@@ -3253,7 +3253,7 @@ Panels set into its corners, and drawn over it.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`inset-covers-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#inset-covers-face) |
 | In the gallery | [Insets](https://creatoan.github.io/scenet/gallery.html#insets) |
 <!-- /facts -->
 
@@ -3293,7 +3293,7 @@ The column's share of its tier's width, relative to the other columns.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 A column's share of its tier's width, relative to the other columns, as a panel's `width` is in a
@@ -3322,7 +3322,7 @@ The panels in the column, read top to bottom.
 | Type | a list, each text or a mapping |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 The panels of a column, read top to bottom, each a name or a mapping, as a tier's panels are; a
@@ -3352,7 +3352,7 @@ The panel's share of its column's height, relative to the others in it.
 | Values | above 0 |
 | Default | `1` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 A panel's share of its column's height, relative to the others in it.
@@ -3380,7 +3380,7 @@ The name of a panel under `panels:`, set into this one.
 | Type | text |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
 <!-- /facts -->
 
 The panel set into the corner, by its name under `panels:`. Like any panel on a page, it is placed
@@ -3408,7 +3408,7 @@ The corner of its parent the inset sits in, a gutter in from both edges.
 | Values | `top_left`, `top_right`, `bottom_left`, `bottom_right` |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`inset-covers-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#inset-covers-face) |
 <!-- /facts -->
 
 The corner of its parent. The corner is the parent's whichever way the page is read: an inset's
@@ -3436,7 +3436,7 @@ The inset's width and height, as a fraction of its parent's: above 0, at most 0.
 | Values | above 0, at most 0.5 |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | `invalid-field`, `page-layout` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`inset-covers-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#inset-covers-face) |
 <!-- /facts -->
 
 The inset's width and height, as one fraction of its parent's: `0.25` is a quarter as wide and a
@@ -3464,7 +3464,7 @@ When the inset is read: `after` its parent, or `before` it.
 | Values | `before`, `after` |
 | Default | `after` |
 | Since | 0.10 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
 <!-- /facts -->
 
 Readers split about evenly over whether an inset comes before the panel it sits in or after it
@@ -3649,7 +3649,7 @@ The name a cast member's `reference` uses.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The name the puppet goes by in messages and in Panel Core. A cast member names a puppet file by its
@@ -3668,7 +3668,7 @@ How many of the puppet's own units one head height is.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The puppet's own unit, against the one measure every shot is defined in: a head height. Offsets,
@@ -3687,7 +3687,7 @@ Each vertical body landmark, as a distance down from the top of the head, in hea
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The nine crop lines a shot names, each as a distance down from the top of the head, in heads:
@@ -3707,7 +3707,7 @@ The origin every other landmark is measured down from.
 | Values | `0` |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The origin every other landmark is measured down from, so it is `0`. See
@@ -3724,7 +3724,7 @@ The skeleton, by joint name.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The skeleton, by joint name: a tree rooted at [`root`](#root), every joint reaching it through its
@@ -3743,7 +3743,7 @@ The joint it hangs from. Left out for the root.
 | Type | text |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint this one hangs from. The root has none, and every other joint must reach the root: a
@@ -3760,7 +3760,7 @@ Where it is from its parent in the rest pose, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where the joint is from its parent in the rest pose, `[x, y]` in the puppet's units, with y
@@ -3777,7 +3777,7 @@ The joint every other one hangs from.
 | Type | text |
 | Default | `root` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint every other one hangs from. It must be declared, with no parent. See
@@ -3795,7 +3795,7 @@ The landmark the root joint sits at.
 | Values | `head_top`, `eyes`, `chin`, `shoulders`, `chest`, `waist`, `mid_thigh`, `knees`, `feet` |
 | Default | `waist` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The landmark the root joint physically sits at. The skeleton is built outward from the root, while
@@ -3814,7 +3814,7 @@ The shapes the body is drawn from, back to front.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 What is drawn, back to front: each part a **bone**, a capsule between two joints, or a **blob**, a
@@ -3833,7 +3833,7 @@ The joint the bone starts at.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint a bone starts at. It must be declared. See [the example](#a-puppet-file).
@@ -3849,7 +3849,7 @@ The joint the bone ends at.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint a bone ends at. It must be declared. See [the example](#a-puppet-file).
@@ -3866,7 +3866,7 @@ How thick it is drawn, in the puppet's own units.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 How thick a bone is drawn, in the puppet's units, with round caps at both ends. See
@@ -3883,7 +3883,7 @@ The joint it is centred on.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint a blob is centred on -- the head, or the chest of a round torso. See
@@ -3901,7 +3901,7 @@ Its radius, in the puppet's own units.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 A blob's radius, in the puppet's units. See [the example](#a-puppet-file).
@@ -3917,7 +3917,7 @@ Where its centre is from that joint, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where a blob's centre is from its joint, before posing. See [the example](#a-puppet-file).
@@ -3933,7 +3933,7 @@ Named attachment points, such as `mouth` and `eyes`, each on a joint.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Named points that ride along with a joint. They are how the solver addresses anatomy without
@@ -3951,7 +3951,7 @@ The joint it rides along with.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint the anchor rides along with, through every pose. It must be declared. See
@@ -3968,7 +3968,7 @@ Where it is from that joint, in the puppet's own units, before posing.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where the anchor is from its joint, before posing. See [the example](#a-puppet-file).
@@ -3984,7 +3984,7 @@ Where the face is, and what is drawn in it.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The disc no balloon, caption or sound effect may cover, and what is drawn inside it. A circle rather
@@ -4003,7 +4003,7 @@ The joint the face is centred on: the head, unless the puppet says otherwise.
 | Type | text |
 | Default | `head` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint the face is centred on. See [the example](#a-puppet-file).
@@ -4019,7 +4019,7 @@ Where the face's centre is from that joint, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where the face's centre is from its joint, before posing. See [the example](#a-puppet-file).
@@ -4036,7 +4036,7 @@ The face's radius, in the puppet's own units: the circle no balloon covers.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The face's radius, in the puppet's units: the circle lettering may not overlap. See
@@ -4053,7 +4053,7 @@ What is drawn inside the face, by feature. Empty for a plain round head.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 What is drawn inside the face, by feature: `brow_l`, `brow_r`, `eye_l`, `eye_r`, `nose` and
@@ -4074,7 +4074,7 @@ The joint the feature rides, practically always `head`.
 | Type | text |
 | Default | `head` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The joint the feature rides, which is the head for practically every face. See
@@ -4091,7 +4091,7 @@ Where the feature is from that joint, in the puppet's own units, before posing.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where the feature is from its joint, before posing, mirrored with the puppet. See
@@ -4109,7 +4109,7 @@ How big the feature is drawn, in the puppet's own units: an eye's radius, a brow
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 What the number means depends on the feature: an eye's radius, a brow's or a mouth's half-width, a
@@ -4126,7 +4126,7 @@ Where the puppet's line of sight starts.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Where the puppet's line of sight starts. Its direction is not declared: it comes from staging, so a
@@ -4143,7 +4143,7 @@ The anchor the line of sight starts at, conventionally `eyes`. It must be declar
 | Type | text |
 | Default | `eyes` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 The anchor the line of sight starts at, which must be one of the puppet's [anchors](#anchors). See
@@ -4160,7 +4160,7 @@ Named poses, each a set of joint angles.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Named poses, each a mapping of joint to angle, in degrees, that a cast member selects with
@@ -4179,7 +4179,7 @@ Named expressions, each a state of brow, eyes and mouth.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 Named expressions, each a state of the brows, the eyes and the mouth, that a cast member selects
@@ -4200,7 +4200,7 @@ The brows' state.
 | Values | `neutral`, `raised`, `lowered`, `angled_in`, `angled_out` |
 | Default | `neutral` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 What the eyebrows are doing. `angled_in` puts the inner ends down, the anger brow; `angled_out` puts
@@ -4219,7 +4219,7 @@ The eyes' state.
 | Values | `open`, `wide`, `narrowed`, `half`, `closed` |
 | Default | `open` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 How open the eyes are. `half` is the heavy-lidded eye of boredom, distinct from `narrowed`, the
@@ -4237,7 +4237,7 @@ The mouth's state.
 | Values | `neutral`, `flat`, `smile`, `grin`, `frown`, `open`, `small` |
 | Default | `neutral` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->
 
 What the mouth is doing. `grin` is an open smile, `smile` a closed one, and `small` the reticent
@@ -4311,7 +4311,7 @@ The picture's size in pixels, `[width, height]`, as it was measured. It must be 
 | Type | `[number, number]` |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 The picture's size in pixels, as the contract was measured against it. It must be the picture's
@@ -4329,7 +4329,7 @@ Each figure the picture draws, by the name a cast member's `figure` gives it. Ev
 | Type | a mapping |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 **Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
@@ -4348,7 +4348,7 @@ The figure's face: a disc no balloon, caption or sound effect may cover.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 The face, as a disc. A contract declares no gaze, so nothing keeps a balloon out of a figure's line
@@ -4365,7 +4365,7 @@ The face's centre, `[x, y]` in the picture's pixels, from its top left.
 | Type | `[number, number]` |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 The face's centre, in pixels from the picture's top left; it must lie on the picture. See
@@ -4383,7 +4383,7 @@ How far the face reaches, in pixels. Generous is safer than tight: no lettering 
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 Generous is safer than tight: no balloon may overlap the disc at all, and a tail stops on its edge.
@@ -4401,7 +4401,7 @@ Where the tail of a line the figure speaks ends, or the place a sound it makes c
 | Type | `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 Where a tail ends, and where a sound the figure makes comes from. A tail to a mouth that a `cover`
@@ -4419,7 +4419,7 @@ The figure's silhouette, a polygon in pixels, which a balloon pays to cover: hal
 | Type | a list of `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 A polygon of at least three points, in pixels, simple -- no edge crossing another. Covering a
@@ -4437,7 +4437,7 @@ Regions lettering should stay off, each a polygon in pixels: a sign, a hand, wha
 | Type | a list of a list of `[number, number]` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `artwork-contract` |
+| Diagnostics | [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
 <!-- /facts -->
 
 **Keep-out regions** are ground lettering pays to cover, weighted as emanata are -- a sign, a hand,

@@ -431,22 +431,25 @@ NOT_IN_A_SCRIPT = (
     "sfx.hollow",
 )
 
-#: The findings a key can give besides `invalid-field`, which any key gives for a value of the
-#: wrong shape, and `missing-field`, which a required one gives when it is left out.
+#: The diagnostics a key can give besides `invalid-field`, which any key gives for a value of
+#: the wrong shape, and `missing-field`, which a required one gives when it is left out: the
+#: rules `scenet check` reports, and the notes the compiler gives (`COMPILE_NOTES`).
 DIAGNOSTICS: dict[str, tuple[str, ...]] = {
-    "panel.size": ("panel-geometry",),
+    "panel.size": ("panel-geometry", "camera-retreated"),
     "panel.margin": ("panel-geometry",),
     "camera": ("figure-staging",),
+    "camera.shot": ("camera-retreated", "cropped-marks", "slant-cuts-face"),
     "setting.place": ("unknown-place", "conflicting-setting"),
     "setting.masses": ("conflicting-setting",),
     "setting.horizon": ("conflicting-setting",),
     "setting.image": ("image-file", "conflicting-setting", "artwork-contract"),
-    "cast": ("conflicting-cast", "layout"),
+    "setting.fit": ("cropped-mouth",),
+    "cast": ("conflicting-cast", "layout", "camera-retreated"),
     "cast.<id>.reference": ("unknown-puppet", "puppet-file", "conflicting-cast"),
     "cast.<id>.figure": ("unknown-figure", "conflicting-cast", "artwork-contract"),
     "cast.<id>.pose": ("unknown-pose", "conflicting-cast"),
     "cast.<id>.expression": ("unknown-expression", "conflicting-cast"),
-    "cast.<id>.marks": ("conflicting-cast",),
+    "cast.<id>.marks": ("conflicting-cast", "cropped-marks"),
     "cast.<id>.at": ("conflicting-cast",),
     "cast.<id>.facing": ("conflicting-cast",),
     "staging": (
@@ -462,17 +465,20 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "staging[].predicate": ("ordering-cycle",),
     "script": ("balloon-placement", "word-limit"),
     "say.by": ("unknown-actor", "off-panel-speaker"),
-    "say.text": ("unbalanced-emphasis", "word-limit", "balloon-placement"),
+    "say.text": ("unbalanced-emphasis", "word-limit", "balloon-placement", "bold-italic-stand-in"),
+    "say.prefer": ("curved-tail",),
     "say.off_panel": ("off-panel-speaker",),
     "caption.by": ("caption-speaker",),
-    "caption.text": ("unbalanced-emphasis", "word-limit", "balloon-placement"),
+    "caption.text": ("unbalanced-emphasis", "word-limit", "balloon-placement", "italic-stand-in"),
+    "caption.kind": ("caption-speaker", "italic-stand-in"),
+    "caption.prefer": ("curved-tail",),
     "sfx": ("sfx-placement",),
     "sfx.from": ("unknown-actor",),
     "lettering.size": ("balloon-placement",),
-    "lettering.font": ("font-file",),
+    "lettering.font": ("font-file", "italic-stand-in", "bold-italic-stand-in"),
     "lettering.font.regular": ("font-file",),
-    "lettering.font.italic": ("font-file",),
-    "lettering.font.bold_italic": ("font-file",),
+    "lettering.font.italic": ("font-file", "italic-stand-in"),
+    "lettering.font.bold_italic": ("font-file", "bold-italic-stand-in"),
     "lettering.font.display": ("font-file",),
     "description": ("unknown-key",),
     "direction": ("panel-direction",),
@@ -485,18 +491,25 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "pages[].tiers": ("page-layout",),
     "tiers[].panels": ("page-layout",),
     "tiers[].columns": ("page-layout",),
-    "tiers[].slant": ("page-layout",),
+    "tiers[].slant": ("page-layout", "slant-cuts-face"),
     "panels[].use": ("page-layout",),
     "panels[].bleed": ("page-layout",),
-    "panels[].insets": ("page-layout",),
+    "panels[].insets": ("page-layout", "inset-covers-face"),
     "insets[].use": ("page-layout",),
-    "insets[].size": ("page-layout",),
+    "insets[].size": ("page-layout", "inset-covers-face"),
+    "insets[].at": ("inset-covers-face",),
     "panels": ("duplicate-key", "composition"),
     "over": ("composition",),
 }
 
-#: Every finding's id has this prefix in a report; the cards name the rule alone.
-RULE_DOCS = "../../reference/cli.md#rules"
+#: Where every diagnostic has its entry, from a page of the language reference. A report
+#: prefixes a rule's id with `scenet/`; the cards name the rule alone, as its entry does.
+DIAGNOSTICS_PAGE = "../diagnostics.md"
+
+#: Rules about a whole document or a comic script's own form, which no key gives.
+DOCUMENT_RULES = frozenset(
+    {"syntax", "not-a-mapping", "internal", "duplicate-panel", "panel-count", "looks-like-dialogue"}
+)
 
 
 def _script_form(card: Card) -> str | None:
@@ -572,16 +585,27 @@ def _default(card: Card) -> str:
 FILE_RULES = {"puppet": "puppet-file", "artwork": "artwork-contract"}
 
 
-def _diagnostics(card: Card) -> str:
+def holds_a_mapping(card: Card) -> bool:
+    """Whether the key holds a mapping, whose own keys can be unknown or written twice."""
+    return any(b.get("type") == "object" or "properties" in b for b in _branches(card.node))
+
+
+def diagnostics_of(card: Card) -> list[str]:
+    """Every diagnostic a key can give, by id, each once: the automatic ones, then its own."""
     if card.family in FILE_RULES:
-        return f"`{FILE_RULES[card.family]}`"
+        return [FILE_RULES[card.family]]
     rules = ["invalid-field"]
     if _required(card):
         rules.append("missing-field")
-    if any(b.get("type") == "object" or "properties" in b for b in _branches(card.node)):
+    if holds_a_mapping(card):
         rules.extend(("unknown-key", "duplicate-key"))
     rules.extend(DIAGNOSTICS.get(card.name, ()))
-    return ", ".join(f"`{rule}`" for rule in dict.fromkeys(rules))
+    return list(dict.fromkeys(rules))
+
+
+def _diagnostics(card: Card) -> str:
+    """Each diagnostic the key can give, linked to its entry."""
+    return ", ".join(f"[`{rule}`]({DIAGNOSTICS_PAGE}#{rule})" for rule in diagnostics_of(card))
 
 
 @functools.cache

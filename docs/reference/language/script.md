@@ -9,7 +9,7 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `balloon-placement`, `word-limit` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`balloon-placement`](../diagnostics.md#balloon-placement), [`word-limit`](../diagnostics.md#word-limit) |
 | In the gallery | [Reading order](../../gallery.md#reading-order) |
 <!-- /facts -->
 
@@ -64,7 +64,7 @@ A line of dialogue, in a balloon whose tail points at the speaker.
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key) |
 <!-- /facts -->
 
 A line of dialogue: a balloon, with a tail to the speaker's mouth. Its keys say who speaks, what,
@@ -89,7 +89,7 @@ Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_p
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unknown-actor`, `off-panel-speaker` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unknown-actor`](../diagnostics.md#unknown-actor), [`off-panel-speaker`](../diagnostics.md#off-panel-speaker) |
 <!-- /facts -->
 
 The tail of the balloon points at this actor's mouth -- the `mouth` anchor of their puppet, or of
@@ -118,7 +118,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in) |
 | In the gallery | [How lines break](../../gallery.md#how-lines-break), [Emphasis](../../gallery.md#emphasis) |
 <!-- /facts -->
 
@@ -184,7 +184,7 @@ Where the balloon would like to sit, one of nine zones of the panel. The weakest
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`curved-tail`](../diagnostics.md#curved-tail) |
 | In the gallery | [Placement zones](../../gallery.md#placement-zones), [The other five zones](../../gallery.md#the-other-five-zones) |
 <!-- /facts -->
 
@@ -216,7 +216,7 @@ The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`.
 | Values | `speech`, `thought`, `whisper`, `shout` |
 | Default | `speech` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [Every balloon kind](../../gallery.md#every-balloon-kind) |
 <!-- /facts -->
 
@@ -255,7 +255,7 @@ script:
 | Values | `normal`, `small` |
 | Default | `normal` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 Dark Horse lists "(small)" and "(weak)" among the common indications for modified lettering.
@@ -283,7 +283,7 @@ The speaker is outside the panel: `true`, or the side of the frame they are on. 
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `off-panel-speaker` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`off-panel-speaker`](../diagnostics.md#off-panel-speaker) |
 | In the gallery | [Off-panel speech](../../gallery.md#off-panel-speech), [Looking off panel](../../gallery.md#looking-off-panel) |
 <!-- /facts -->
 
@@ -333,7 +333,7 @@ A caption: a box in which the panel speaks in its own voice, with no tail.
 | Type | a mapping |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key) |
 <!-- /facts -->
 
 A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
@@ -370,7 +370,7 @@ What the box says, as one string; line breaks are computed. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `missing-field`, `unbalanced-emphasis`, `word-limit`, `balloon-placement` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`italic-stand-in`](../diagnostics.md#italic-stand-in) |
 <!-- /facts -->
 
 As for dialogue, line breaking is computed, and a word between underscores is stressed; see
@@ -396,7 +396,7 @@ What the box is doing: `locale` for a place and time, `monologue` for an inner v
 | Values | `locale`, `monologue`, `spoken`, `editorial` |
 | Default | `locale` |
 | Since | 0.4 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`caption-speaker`](../diagnostics.md#caption-speaker), [`italic-stand-in`](../diagnostics.md#italic-stand-in) |
 | In the gallery | [Captions](../../gallery.md#captions) |
 <!-- /facts -->
 
@@ -433,7 +433,7 @@ What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper,
 | Values | `paper`, `pale`, `ink`, `warm` (since 0.13) |
 | Default | `paper` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [Caption tones](../../gallery.md#caption-tones), [A yellow caption](../../gallery.md#a-yellow-caption) |
 <!-- /facts -->
 
@@ -496,7 +496,7 @@ Where the box would like to sit, one of nine zones of the panel. Left out, where
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`curved-tail`](../diagnostics.md#curved-tail) |
 <!-- /facts -->
 
 The same nine zones as a balloon's [`prefer`](#sayprefer), and as weak. Left out, a caption goes
@@ -522,7 +522,7 @@ Who is speaking, for a `spoken` caption only: any name, in the cast or not.
 | Type | text |
 | Default | none |
 | Since | 0.4 |
-| Diagnostics | `invalid-field`, `caption-speaker` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`caption-speaker`](../diagnostics.md#caption-speaker) |
 <!-- /facts -->
 
 **`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
@@ -555,7 +555,7 @@ A sound effect: letters lettered into the picture, with no balloon.
 | Type | a mapping |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `sfx-placement` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`sfx-placement`](../diagnostics.md#sfx-placement) |
 | In the gallery | [Sound effects](../../gallery.md#sound-effects) |
 <!-- /facts -->
 
@@ -600,7 +600,7 @@ The sound, lettered exactly as written, in the display face.
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `missing-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field) |
 <!-- /facts -->
 
 Nothing is added to the text: no exclamation mark, since sound effects are not exclamations, and no
@@ -626,7 +626,7 @@ Written `from`: the actor id the sound comes from, which it is placed near.
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field`, `unknown-actor` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-actor`](../diagnostics.md#unknown-actor) |
 <!-- /facts -->
 
 Written `from`, the actor the sound comes from. The effect is tried around them first, and prefers
@@ -653,7 +653,7 @@ Where the effect would like to sit, one of nine zones of the panel: on its own, 
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [A sound pulled to a zone](../../gallery.md#a-sound-pulled-to-a-zone) |
 <!-- /facts -->
 
@@ -682,7 +682,7 @@ How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dial
 | Values | `small`, `medium`, `large` |
 | Default | `medium` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 A multiple of the type size, not of the figure, so an effect reads at a long shot as well as at a
@@ -710,7 +710,7 @@ How far the effect is turned clockwise, in degrees, from -45 to 45.
 | Values | -45 to 45 |
 | Default | `0` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 Comics angle their sound effects; the default is level, and the angle is the author's. Positive
@@ -736,7 +736,7 @@ How far the line of letters bends, in degrees, from -120 to 120: positive bows i
 | Values | -120 to 120 |
 | Default | `0` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 The line of letters bends through this many degrees: positive bows its middle up, negative down.
@@ -761,7 +761,7 @@ script:
 | Type | `true` or `false` |
 | Default | `false` |
 | Since | 0.11 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 An open effect is all outline, in ink, and no fill, so the art behind shows through the letters --

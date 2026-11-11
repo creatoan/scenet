@@ -109,11 +109,12 @@ from scenet.images import IMAGE_RULE, load_image
 from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
 from scenet.lettering import FONT_RULE, typeface_for
 from scenet.paths import Folder, NamedFileError
-from scenet.pipeline import compile_book, compile_ir, compile_script
+from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
 from scenet.safe_yaml import DuplicateKeyError, describe, load
 from scenet.solve.page import resolve_frames
 
 __all__ = [
+    "COMPILE_NOTES",
     "RULES",
     "Diagnostic",
     "Position",
@@ -600,6 +601,116 @@ RULES: dict[str, Rule] = {
             "is missing from the catalogue."
         ),
         help="Please open an issue with the document that produced it.",
+    ),
+}
+
+#: Every note the compiler gives, keyed by its stable name: what it means and what to do.
+#:
+#: A compile note is not a finding of `scenet check`: the document is valid, and the
+#: compiler decided something it did not literally ask for -- a camera that stepped back, a
+#: tail that bends. `scenet build` prints it as a `note:` line, and
+#: :attr:`CompileResult.compile_notes <scenet.pipeline.CompileResult.compile_notes>` gives it
+#: with its name. The names are as stable as the rules' ids.
+COMPILE_NOTES: dict[CompileNoteRule, Rule] = {
+    "camera-retreated": Rule(
+        summary="The camera stepped back so the cast would fit across the panel",
+        description=(
+            "A shot type is a crop landmark and a headroom, in head-heights, so a close-up "
+            "of one person is a fixed scale. Two people side by side at that scale can be "
+            "wider than the panel. Rather than crop somebody out, the camera retreats -- "
+            "keeps the shot's crop line and headroom, at a smaller scale -- and the note "
+            "says by how much, as a share of the framing that was asked for."
+        ),
+        help=(
+            "Widen the panel, ask for a looser shot, or stage fewer people in it; or accept "
+            "it, if a slightly looser shot is fine."
+        ),
+        level="note",
+    ),
+    "curved-tail": Rule(
+        summary="A balloon's tail bends around a face",
+        description=(
+            "A tail runs from its balloon to the speaker's mouth, or to the frame for a voice "
+            "from off panel. When a straight one would cross somebody's face, it bends around "
+            "it instead. Nothing is wrong, but a bent tail is usually a sign that the balloon "
+            "sits far from its speaker, or that the panel is crowded."
+        ),
+        help=(
+            "Let the balloon sit on its speaker's side -- drop its `prefer`, or ask for the "
+            "zone nearer the speaker -- or give the panel more room."
+        ),
+        level="note",
+    ),
+    "cropped-mouth": Rule(
+        summary="A speaking figure's mouth is cropped out of the panel by the picture's fit",
+        description=(
+            "`fit: cover` fills the panel with a supplied picture and crops what overhangs. "
+            "When that crops the mouth of a figure who speaks, the balloon's tail cannot "
+            "reach it, so it stops on the frame, aimed at where the mouth is."
+        ),
+        help="Write `fit: contain`, which shows the whole picture, or reshape the panel.",
+        level="note",
+    ),
+    "cropped-marks": Rule(
+        summary="A character's marks run off the panel at this framing",
+        description=(
+            "Emanata -- plewds, motion lines, a question mark -- are drawn outside the head, "
+            "and the camera frames by the body: it makes no room for them, which is what "
+            "keeps them from ever moving anybody. A tight shot can therefore crop them, and "
+            "a mark that vanished without a word would be a surprise."
+        ),
+        help="Ask for a looser shot, or give the marks to somebody they fit around.",
+        level="note",
+    ),
+    "inset-covers-face": Rule(
+        summary="An inset is drawn over a face",
+        description=(
+            "An inset is set into a corner of its panel and drawn over it. The panel's art "
+            "is staged and framed as if the inset were not there -- only its lettering keeps "
+            "clear -- so an inset can cover a face as easily as a patch of sky."
+        ),
+        help=(
+            "Set the inset into another corner, make it smaller, or frame the panel so that "
+            "nobody's face is in that corner."
+        ),
+        level="note",
+    ),
+    "slant-cuts-face": Rule(
+        summary="A slanted gutter cuts across a face",
+        description=(
+            "A slanted tier leans the gutters between its panels. Each panel is staged and "
+            "framed in its bounding box as usual and then cut to its outline, as a margin "
+            "would cut it; the camera does not know the cut is there, so it can fall across "
+            "a face."
+        ),
+        help=(
+            "Lean the tier less, or frame the shot so the face is clear of the cut: a looser "
+            "shot, or the face further from the slanted side."
+        ),
+        level="note",
+    ),
+    "italic-stand-in": Rule(
+        summary="No italic face is named, so the regular face stands in for it",
+        description=(
+            "Every caption but a `spoken` one is lettered in italic. `lettering.font` names "
+            "the faces a document is lettered in; when it names a regular face and no "
+            "italic, those captions are set in the regular face. It is the document's own "
+            "face that stands in, not the shipped italic: a family mixing two typefaces "
+            "would not be one family."
+        ),
+        help="Name the italic face beside the regular one, as `italic:` in `lettering.font`.",
+        level="note",
+    ),
+    "bold-italic-stand-in": Rule(
+        summary="No bold italic face is named, so another face stands in for it",
+        description=(
+            "A stressed word, written between underscores, is lettered in bold italic. When "
+            "`lettering.font` names no bold italic face, stressed words are set in its italic "
+            "face, or its regular one if it names no italic either -- so the stress is not "
+            "seen."
+        ),
+        help="Name the bold italic face, as `bold_italic:` in `lettering.font`.",
+        level="note",
     ),
 }
 

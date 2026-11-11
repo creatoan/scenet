@@ -35,16 +35,19 @@ Each note is a sentence, and each has a name that says what kind it is:
 name stays when the sentence is reworded, so it is the thing to match on, and it is how a
 gallery example that shows a note declares it.
 
-| Name | What happened | What to do |
-|---|---|---|
-| `camera-retreated` | The cast would not fit across the panel at the shot you asked for, so the camera stepped back, by the share the note gives | Widen the panel, ask for a looser shot, or accept it |
-| `curved-tail` | A straight tail would have gone through somebody's head, so it bends around it | Usually a sign the panel is crowded: let the balloon sit nearer its speaker, or give the panel more room |
-| `cropped-mouth` | A picture's `fit: cover` crops a speaking figure's mouth out of the panel, so the tail stops on the frame, aimed at it | `fit: contain` shows the whole picture; or reshape the panel |
-| `cropped-marks` | Emanata run off the panel: the camera frames by the body and makes no room for them | A looser shot, or the marks on somebody they fit around |
-| `inset-covers-face` | An inset is drawn over a face, and the art does not move for it | Put the inset in another corner, or reframe the panel |
-| `slant-cuts-face` | A slanted gutter cuts across a face: the panel is cropped to its outline, as by a margin | Lean the tier less, or frame the shot so the face is clear of it |
-| `italic-stand-in` | `lettering.font` names no italic face, so italic captions are set in the regular one | Name one as `italic:` |
-| `bold-italic-stand-in` | `lettering.font` names no bold italic face, so stressed words are set in the italic one, or the regular | Name one as `bold_italic:` |
+Each has an entry in [the diagnostics reference](../reference/diagnostics.md#notes-from-the-compiler):
+why it happens, what to do about it, and a panel that gives it beside the same panel fixed.
+
+| Name | What happened |
+|---|---|
+| [`camera-retreated`](../reference/diagnostics.md#camera-retreated) | The camera stepped back so the cast would fit across the panel |
+| [`curved-tail`](../reference/diagnostics.md#curved-tail) | A balloon's tail bends around a face |
+| [`cropped-mouth`](../reference/diagnostics.md#cropped-mouth) | A speaking figure's mouth is cropped out of the panel by the picture's fit |
+| [`cropped-marks`](../reference/diagnostics.md#cropped-marks) | A character's marks run off the panel at this framing |
+| [`inset-covers-face`](../reference/diagnostics.md#inset-covers-face) | An inset is drawn over a face |
+| [`slant-cuts-face`](../reference/diagnostics.md#slant-cuts-face) | A slanted gutter cuts across a face |
+| [`italic-stand-in`](../reference/diagnostics.md#italic-stand-in) | No italic face is named, so the regular face stands in for it |
+| [`bold-italic-stand-in`](../reference/diagnostics.md#bold-italic-stand-in) | No bold italic face is named, so another face stands in for it |
 
 On the command line these print as `note:` lines. `--quiet` suppresses them, which you
 should not normally want. The playground lists them under the picture, after what

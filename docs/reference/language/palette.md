@@ -10,7 +10,7 @@ What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each 
 | Values | `mono`, `tinted` |
 | Default | `mono` |
 | Since | 0.13 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [Every hour in colour](../../gallery.md#every-hour-in-colour), [A flashback in grey](../../gallery.md#a-flashback-in-grey) |
 <!-- /facts -->
 

@@ -86,7 +86,8 @@ from scenet.solve.text import SHIPPED_FACES, FontMetrics, TextBlock, Typeface
 
 #: What each kind of compile note is called: a stable name, as a check's rule has one, by
 #: which a gallery entry's `notes:` declares it while the sentence stays free to be
-#: reworded. One name per sentence; `docs/howto/debug_a_layout.md` explains each.
+#: reworded. One name per sentence; `scenet.diagnostics.COMPILE_NOTES` explains each, and the
+#: diagnostics reference gives each an entry.
 CompileNoteRule = Literal[
     "camera-retreated",
     "curved-tail",

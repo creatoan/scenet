@@ -9,7 +9,7 @@ Who is in the panel: each actor id, chosen by the author, and the puppet that pl
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `conflicting-cast`, `layout` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
@@ -51,7 +51,7 @@ The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` fil
 | Type | text |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-puppet`, `puppet-file`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-puppet`](../diagnostics.md#unknown-puppet), [`puppet-file`](../diagnostics.md#puppet-file), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
 | In the gallery | [A puppet of your own](../../gallery.md#a-puppet-of-your-own) |
 <!-- /facts -->
 
@@ -104,7 +104,7 @@ A pose the puppet declares, by name.
 | Type | text |
 | Default | `standing_neutral` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-pose`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-pose`](../diagnostics.md#unknown-pose), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
 | In the gallery | [Poses and facing](../../gallery.md#poses-and-facing) |
 <!-- /facts -->
 
@@ -133,7 +133,7 @@ An expression the puppet declares, by name.
 | Type | text |
 | Default | `neutral` |
 | Since | 0.5 |
-| Diagnostics | `invalid-field`, `unknown-expression`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-expression`](../diagnostics.md#unknown-expression), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
 | In the gallery | [Ten expressions](../../gallery.md#ten-expressions), [A face](../../gallery.md#a-face) |
 <!-- /facts -->
 
@@ -170,7 +170,7 @@ Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffit
 | Values | `plewds`, `squeans`, `grawlixes`, `briffits` |
 | Default | none |
 | Since | 0.8 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`cropped-marks`](../diagnostics.md#cropped-marks) |
 | In the gallery | [Emanata](../../gallery.md#emanata) |
 <!-- /facts -->
 
@@ -228,7 +228,7 @@ Where along the panel's width the figure would like to stand. A preference: non-
 | Values | `left_edge`, `left_third`, `center`, `right_third`, `right_edge` |
 | Default | `center` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
 <!-- /facts -->
 
 Where along the panel's width the figure would like to stand, horizontally only: figures stand on
@@ -258,7 +258,7 @@ Which way the figure is turned, `left` or `right`, gaze and all.
 | Values | `left`, `right` |
 | Default | `right` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `conflicting-cast` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
 <!-- /facts -->
 
 Facing mirrors the whole puppet, its gaze included. It defaults to `right`, so a cast written
@@ -284,7 +284,7 @@ A figure the panel's picture draws, by the name its artwork contract gives it. W
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `unknown-figure`, `conflicting-cast`, `artwork-contract` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-figure`](../diagnostics.md#unknown-figure), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`artwork-contract`](../diagnostics.md#artwork-contract) |
 | In the gallery | [From puppets to figures](../../gallery.md#from-puppets-to-figures) |
 <!-- /facts -->
 

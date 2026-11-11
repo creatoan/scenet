@@ -3759,7 +3759,7 @@ A balloon of 34 words still compiles, and the checker notes that Dark Horse asks
 
 ![Full shot. Alice, left, looking at Bob; Bob, right, arms crossed. Alice: So what happened? Bob: Well, I got up late, missed the bus, walked all the way, lost my keys on the way, found them again, and then the door was locked anyway, so I just came back here.](images/gallery/53-too-many-words.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=53-too-many-words.panel.yaml) · [Read about it](reference/cli.md#rules)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=53-too-many-words.panel.yaml) · [Read about it](reference/diagnostics.md#word-limit)
 
 <details>
 <summary>Source</summary>
@@ -3806,7 +3806,7 @@ A script whose page says three panels where two follow: it compiles, and the che
 
 ![A page of 2 panels. Maya and Theo on the harbour wall, at dusk. MAYA: Is the ferry late again? THEO: It was never on time. Theo shrugs. THEO: We could swim.](images/gallery/54-a-page-miscounted.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=54-a-page-miscounted.script) · [Read about it](howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=54-a-page-miscounted.script) · [Read about it](reference/diagnostics.md#panel-count)
 
 <details>
 <summary>Source</summary>
@@ -3864,7 +3864,7 @@ A speaker's name misspelled in a script makes the line prose, not dialogue, and 
 
 ![Maya waits at the door; Theo comes down the stairs at last. THOE: Asleep, mostly. MAYA: Where were you?](images/gallery/55-not-read-as-dialogue.1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=55-not-read-as-dialogue.script) · [Read about it](howto/write_a_comic_script.md#the-rules)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=55-not-read-as-dialogue.script) · [Read about it](reference/diagnostics.md#looks-like-dialogue)
 
 <details>
 <summary>Source</summary>
@@ -3913,7 +3913,7 @@ A panel that leaves Bob out with null leaves out the relation naming him too, an
 
 ![A strip of 3 panels. Medium shot. An office by day. Alice, centre; Bob, centre. Bob: Back in a minute. Medium shot. An office by day. Alice, centre. Alice, whispering: Take your time. Medium shot. An office by day. Alice, centre; Bob, centre. Bob: Did I miss anything?](images/gallery/56-a-relation-left-out.strip.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=56-a-relation-left-out.scene.yaml) · [Read about it](howto/compile_a_sequence.md#leaving-something-out)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=56-a-relation-left-out.scene.yaml) · [Read about it](reference/diagnostics.md#dropped-relation)
 
 <details>
 <summary>Source</summary>
@@ -3972,7 +3972,7 @@ A voice from the left with its balloon on the right: the tail bends around Bob's
 
 ![Medium close-up. Bob, centre. Carol, off panel: Behind you!](images/gallery/57-a-tail-that-bends.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=57-a-tail-that-bends.panel.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=57-a-tail-that-bends.panel.yaml) · [Read about it](reference/diagnostics.md#curved-tail)
 
 <details>
 <summary>Source</summary>
@@ -4011,7 +4011,7 @@ A picture fitted to cover a tall panel crops Ana's mouth away, so her tail stops
 
 ![Ana, left; Ben, centre. Ana: Is it always this late? Ben: Only when it rains.](images/gallery/58-a-mouth-cropped-away.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=58-a-mouth-cropped-away.panel.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=58-a-mouth-cropped-away.panel.yaml) · [Read about it](reference/diagnostics.md#cropped-mouth)
 
 <details>
 <summary>Source</summary>
@@ -4052,7 +4052,7 @@ Sweat drops over the taller character run off the top, since the camera makes no
 
 ![Medium shot. Alice, left, looking at Bob; Bob, right, arms crossed, sweating. Alice: You look warm. Bob: It's the coat.](images/gallery/59-marks-cut-off.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=59-marks-cut-off.panel.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=59-marks-cut-off.panel.yaml) · [Read about it](reference/diagnostics.md#cropped-marks)
 
 <details>
 <summary>Source</summary>
@@ -4098,7 +4098,7 @@ An inset set into the corner where Bob's face is covers it, since the art does n
 
 ![A page of 2 panels. Medium shot. A street by day. Alice, centre, looking at Bob; Bob, centre, arms crossed. Alice: We'll miss the start. Close-up. A street by day. Bob, centre, bored. Caption: 9:14.](images/gallery/60-an-inset-over-a-face.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=60-an-inset-over-a-face.scene.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=60-an-inset-over-a-face.scene.yaml) · [Read about it](reference/diagnostics.md#inset-covers-face)
 
 <details>
 <summary>Source</summary>
@@ -4156,7 +4156,7 @@ A slanted gutter cuts across Bob's face in a close-up, since the camera does not
 
 ![A page of 2 panels. Full shot. A street at night. Alice, centre, pointing, shouting. Alice, shouting: Take that! Close-up. A street at night. Bob, centre, surprised. Bob: Oof.](images/gallery/61-a-slant-through-a-face.page-1.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=61-a-slant-through-a-face.scene.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=61-a-slant-through-a-face.scene.yaml) · [Read about it](reference/diagnostics.md#slant-cuts-face)
 
 <details>
 <summary>Source</summary>
@@ -4207,7 +4207,7 @@ Comic Neue Regular named alone stands in for the italic and the bold italic face
 
 ![Full shot. Alice, left, looking at Bob; Bob, right. Caption: Later, at the type foundry. Alice: Is this really italic?](images/gallery/62-a-face-standing-in.svg)
 
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=62-a-face-standing-in.panel.yaml) · [Read about it](howto/debug_a_layout.md#1-read-the-notes)
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=62-a-face-standing-in.panel.yaml) · [Read about it](reference/diagnostics.md#italic-stand-in)
 
 <details>
 <summary>Source</summary>

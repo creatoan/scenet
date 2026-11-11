@@ -24,9 +24,18 @@ Options:
 `:beside:`
     A folder of the repository the document is compiled in, so that the files it names -- a
     picture, a font, a puppet -- are found: `examples/gallery`. A link cannot carry those
-    files to the playground, so such a document names the gallery example to open instead.
+    files to the playground.
+    The playground writes the gallery's files beside every document it opens, so a document
+    compiled beside `examples/gallery` keeps its own link; beside any other folder, it names
+    the gallery example to open instead.
 `:playground:`
     The gallery example the link opens, in place of the document itself.
+`:gives:`
+    The one diagnostic the document is there to show, by its id: a rule of `scenet check`
+    or a compile note's name, as the diagnostics reference names them. A document that gives
+    a rule's error does not compile, so it is shown without a picture; one that gives a note
+    compiles and is shown with its picture. Either way the build fails unless the document
+    gives exactly that, and nothing else.
 """
 
 import base64
@@ -44,6 +53,7 @@ from sphinx.environment import BuildEnvironment
 from sphinx.util.docutils import SphinxDirective
 
 from scenet import compile_book, compile_script, compile_source, render, render_pages, render_strip
+from scenet.diagnostics import COMPILE_NOTES, RULES, Diagnostic, diagnose_script, diagnose_source
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -55,6 +65,9 @@ PICTURES = "_images/examples"
 
 #: What a document is, by its option: the directive reads `:kind:` as the tests do.
 KINDS = ("panel", "scene", "script")
+
+#: The folder whose files the playground writes beside every document it opens.
+GALLERY = "examples/gallery"
 
 
 def share_token(text: str) -> str:
@@ -86,6 +99,46 @@ def picture(text: str, kind: str, beside: Path | None) -> str:
     return render_strip(list(cores.items()), fonts=book.fonts, embed=book.images)
 
 
+def findings(text: str, kind: str, beside: Path | None, *, name: str) -> list[Diagnostic]:
+    """What `scenet check --deep` reports of a document, checked as the file `name`."""
+    diagnose = diagnose_script if kind == "script" else diagnose_source
+    return diagnose(text, source=Path(name), base=beside, deep=True)
+
+
+def compile_notes(text: str, kind: str, beside: Path | None) -> list[tuple[str | None, str, str]]:
+    """The notes compiling a valid document gives: the panel, the note's name, its sentence.
+
+    The panel is `None` for a single panel, whose notes `scenet build` prints unprefixed.
+    """
+    if kind == "panel":
+        return [
+            (None, note.rule, note.message)
+            for note in compile_source(text, base=beside).compile_notes
+        ]
+    book = (
+        compile_script(text, base=beside) if kind == "script" else compile_book(text, base=beside)
+    )
+    single = len(book.panels) == 1
+    return [
+        (None if single else panel, note.rule, note.message)
+        for panel, result in book.panels.items()
+        for note in result.compile_notes
+    ]
+
+
+def told(text: str, kind: str, beside: Path | None, *, name: str = "shown.yaml") -> list[str]:
+    """Every diagnostic a document gives, by id: its findings, or else its compile notes.
+
+    A document with an error does not compile, so it gives no compile note.
+    """
+    found = findings(text, kind, beside, name=name)
+    if any(item.level == "error" for item in found):
+        return [item.rule for item in found]
+    return [item.rule for item in found] + [
+        rule for _, rule, _ in compile_notes(text, kind, beside)
+    ]
+
+
 def spoken(svg: str) -> str:
     """What a screen reader says of the picture: every title it holds, in order."""
     titles = re.findall(r"<title>(.*?)</title>", svg, re.DOTALL)
@@ -107,6 +160,7 @@ class ScenetExample(SphinxDirective):
         "kind": lambda value: directives.choice(value, KINDS),
         "beside": directives.unchanged_required,
         "playground": directives.unchanged_required,
+        "gives": directives.unchanged_required,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -114,8 +168,25 @@ class ScenetExample(SphinxDirective):
         text = "\n".join(self.content) + "\n"
         kind = self.options.get("kind") or kind_of(text)
         beside = ROOT / self.options["beside"] if "beside" in self.options else None
-        if beside is not None and "playground" not in self.options:
+        if (
+            beside is not None
+            and "playground" not in self.options
+            and self.options["beside"] != GALLERY
+        ):
             raise self.error(":beside: needs :playground:, the gallery example to open")
+        gives = self.options.get("gives")
+        if gives is not None:
+            if gives not in RULES and gives not in COMPILE_NOTES:
+                raise self.error(f":gives: {gives} is no rule and no compile note")
+            given = told(text, kind, beside)
+            if given != [gives]:
+                raise self.error(f"this example gives {given}, not [{gives!r}]")
+        language = "scenet-script" if kind == "script" else "yaml"
+        source = nodes.literal_block(text, text, language=language)
+        if gives in RULES and RULES[gives].level == "error":
+            container = nodes.container(classes=["scenet-example"])
+            container += [source, self._link(text)]
+            return [container]
         try:
             svg = picture(text, kind, beside)
         except Exception as error:
@@ -126,23 +197,25 @@ class ScenetExample(SphinxDirective):
         root = self.env.app.builder.get_relative_uri(self.env.docname, "index")
         root = root.removesuffix("index.html")
 
-        language = "scenet-script" if kind == "script" else "yaml"
-        source = nodes.literal_block(text, text, language=language)
         shown = nodes.raw(
             "",
             f'<p class="scenet-example-picture"><img src="{root}{PICTURES}/{name}" '
             f'alt="{html.escape(spoken(svg), quote=True)}"></p>',
             format="html",
         )
+        container = nodes.container(classes=["scenet-example"])
+        container += [source, shown, self._link(text)]
+        return [container]
+
+    def _link(self, text: str) -> nodes.paragraph:
+        """The playground link: to the document itself, or to the gallery example named."""
         if "playground" in self.options:
             target = f"{PLAYGROUND}#example={self.options['playground']}"
         else:
             target = f"{PLAYGROUND}#src={share_token(text)}"
         link = nodes.paragraph()
         link += nodes.reference("", "Open in the playground", refuri=target)
-        container = nodes.container(classes=["scenet-example"])
-        container += [source, shown, link]
-        return [container]
+        return link
 
 
 def _purge(app: Sphinx, env: BuildEnvironment, docname: str) -> None:

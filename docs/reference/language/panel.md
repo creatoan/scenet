@@ -9,7 +9,7 @@ The panel's frame: its size and margin, in panel units.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key) |
 <!-- /facts -->
 
 The frame everything else is measured against. A panel has a size and a margin, in
@@ -41,7 +41,7 @@ The panel's width and height, `[width, height]`, in panel units: everything else
 | Type | `[number, number]` |
 | Default | `[1000, 1000]` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `panel-geometry` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-geometry`](../diagnostics.md#panel-geometry), [`camera-retreated`](../diagnostics.md#camera-retreated) |
 <!-- /facts -->
 
 Panel units are arbitrary and consistent: every length in the language -- a margin, a type size,
@@ -73,7 +73,7 @@ An inset on all four sides, in panel units. Balloons, captions and sound effects
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `panel-geometry` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-geometry`](../diagnostics.md#panel-geometry) |
 | In the gallery | [Margins and bleed](../../gallery.md#margins-and-bleed) |
 <!-- /facts -->
 

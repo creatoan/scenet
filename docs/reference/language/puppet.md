@@ -44,7 +44,7 @@ The name a cast member's `reference` uses.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The name the puppet goes by in messages and in Panel Core. A cast member names a puppet file by its
@@ -63,7 +63,7 @@ How many of the puppet's own units one head height is.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The puppet's own unit, against the one measure every shot is defined in: a head height. Offsets,
@@ -82,7 +82,7 @@ Each vertical body landmark, as a distance down from the top of the head, in hea
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The nine crop lines a shot names, each as a distance down from the top of the head, in heads:
@@ -102,7 +102,7 @@ The origin every other landmark is measured down from.
 | Values | `0` |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The origin every other landmark is measured down from, so it is `0`. See
@@ -119,7 +119,7 @@ The skeleton, by joint name.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The skeleton, by joint name: a tree rooted at [`root`](#root), every joint reaching it through its
@@ -138,7 +138,7 @@ The joint it hangs from. Left out for the root.
 | Type | text |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint this one hangs from. The root has none, and every other joint must reach the root: a
@@ -155,7 +155,7 @@ Where it is from its parent in the rest pose, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where the joint is from its parent in the rest pose, `[x, y]` in the puppet's units, with y
@@ -172,7 +172,7 @@ The joint every other one hangs from.
 | Type | text |
 | Default | `root` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint every other one hangs from. It must be declared, with no parent. See
@@ -190,7 +190,7 @@ The landmark the root joint sits at.
 | Values | `head_top`, `eyes`, `chin`, `shoulders`, `chest`, `waist`, `mid_thigh`, `knees`, `feet` |
 | Default | `waist` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The landmark the root joint physically sits at. The skeleton is built outward from the root, while
@@ -209,7 +209,7 @@ The shapes the body is drawn from, back to front.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 What is drawn, back to front: each part a **bone**, a capsule between two joints, or a **blob**, a
@@ -228,7 +228,7 @@ The joint the bone starts at.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint a bone starts at. It must be declared. See [the example](#a-puppet-file).
@@ -244,7 +244,7 @@ The joint the bone ends at.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint a bone ends at. It must be declared. See [the example](#a-puppet-file).
@@ -261,7 +261,7 @@ How thick it is drawn, in the puppet's own units.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 How thick a bone is drawn, in the puppet's units, with round caps at both ends. See
@@ -278,7 +278,7 @@ The joint it is centred on.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint a blob is centred on -- the head, or the chest of a round torso. See
@@ -296,7 +296,7 @@ Its radius, in the puppet's own units.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 A blob's radius, in the puppet's units. See [the example](#a-puppet-file).
@@ -312,7 +312,7 @@ Where its centre is from that joint, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where a blob's centre is from its joint, before posing. See [the example](#a-puppet-file).
@@ -328,7 +328,7 @@ Named attachment points, such as `mouth` and `eyes`, each on a joint.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Named points that ride along with a joint. They are how the solver addresses anatomy without
@@ -346,7 +346,7 @@ The joint it rides along with.
 | Type | text |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint the anchor rides along with, through every pose. It must be declared. See
@@ -363,7 +363,7 @@ Where it is from that joint, in the puppet's own units, before posing.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where the anchor is from its joint, before posing. See [the example](#a-puppet-file).
@@ -379,7 +379,7 @@ Where the face is, and what is drawn in it.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The disc no balloon, caption or sound effect may cover, and what is drawn inside it. A circle rather
@@ -398,7 +398,7 @@ The joint the face is centred on: the head, unless the puppet says otherwise.
 | Type | text |
 | Default | `head` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint the face is centred on. See [the example](#a-puppet-file).
@@ -414,7 +414,7 @@ Where the face's centre is from that joint, in the puppet's own units.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where the face's centre is from its joint, before posing. See [the example](#a-puppet-file).
@@ -431,7 +431,7 @@ The face's radius, in the puppet's own units: the circle no balloon covers.
 | Values | above 0 |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The face's radius, in the puppet's units: the circle lettering may not overlap. See
@@ -448,7 +448,7 @@ What is drawn inside the face, by feature. Empty for a plain round head.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 What is drawn inside the face, by feature: `brow_l`, `brow_r`, `eye_l`, `eye_r`, `nose` and
@@ -469,7 +469,7 @@ The joint the feature rides, practically always `head`.
 | Type | text |
 | Default | `head` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The joint the feature rides, which is the head for practically every face. See
@@ -486,7 +486,7 @@ Where the feature is from that joint, in the puppet's own units, before posing.
 | Type | `[number, number]` |
 | Default | `[0, 0]` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where the feature is from its joint, before posing, mirrored with the puppet. See
@@ -504,7 +504,7 @@ How big the feature is drawn, in the puppet's own units: an eye's radius, a brow
 | Values | 0 or more |
 | Default | `0` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 What the number means depends on the feature: an eye's radius, a brow's or a mouth's half-width, a
@@ -521,7 +521,7 @@ Where the puppet's line of sight starts.
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Where the puppet's line of sight starts. Its direction is not declared: it comes from staging, so a
@@ -538,7 +538,7 @@ The anchor the line of sight starts at, conventionally `eyes`. It must be declar
 | Type | text |
 | Default | `eyes` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 The anchor the line of sight starts at, which must be one of the puppet's [anchors](#anchors). See
@@ -555,7 +555,7 @@ Named poses, each a set of joint angles.
 | Type | a mapping |
 | Default | none: required |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Named poses, each a mapping of joint to angle, in degrees, that a cast member selects with
@@ -574,7 +574,7 @@ Named expressions, each a state of brow, eyes and mouth.
 | Type | a mapping |
 | Default | none |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 Named expressions, each a state of the brows, the eyes and the mouth, that a cast member selects
@@ -595,7 +595,7 @@ The brows' state.
 | Values | `neutral`, `raised`, `lowered`, `angled_in`, `angled_out` |
 | Default | `neutral` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 What the eyebrows are doing. `angled_in` puts the inner ends down, the anger brow; `angled_out` puts
@@ -614,7 +614,7 @@ The eyes' state.
 | Values | `open`, `wide`, `narrowed`, `half`, `closed` |
 | Default | `open` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 How open the eyes are. `half` is the heavy-lidded eye of boredom, distinct from `narrowed`, the
@@ -632,7 +632,7 @@ The mouth's state.
 | Values | `neutral`, `flat`, `smile`, `grin`, `frown`, `open`, `small` |
 | Default | `neutral` |
 | Since | 0.13 |
-| Diagnostics | `puppet-file` |
+| Diagnostics | [`puppet-file`](../diagnostics.md#puppet-file) |
 <!-- /facts -->
 
 What the mouth is doing. `grin` is an open smile, `smile` a closed one, and `small` the reticent

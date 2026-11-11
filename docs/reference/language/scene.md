@@ -64,7 +64,7 @@ Panels in reading order. Each may inherit from another with `over`.
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key`, `composition` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition) |
 <!-- /facts -->
 
 The panels, in reading order: the order they are written in is the order a strip draws them and a
@@ -93,7 +93,7 @@ Name of a panel to inherit from. Only the differences need stating: mappings mer
 | Type | text |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | `invalid-field`, `composition` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`composition`](../diagnostics.md#composition) |
 | In the gallery | [A sequence](../../gallery.md#a-sequence) |
 <!-- /facts -->
 

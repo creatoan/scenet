@@ -9,7 +9,7 @@ Where and when the panel happens: a named place, tonal masses or a picture behin
 | Type | a mapping |
 | Default | each key's own |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `unknown-key`, `duplicate-key` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key) |
 <!-- /facts -->
 
 Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
@@ -72,7 +72,7 @@ A named place, which stands for the list of masses it expands into. Write this, 
 | Values | `alley`, `desert`, `docks`, `field`, `forest`, `mountain`, `office`, `room`, `shore`, `street` |
 | Default | none |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `unknown-place`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-place`](../diagnostics.md#unknown-place), [`conflicting-setting`](../diagnostics.md#conflicting-setting) |
 | In the gallery | [Ten places](../../gallery.md#ten-places) |
 <!-- /facts -->
 
@@ -121,7 +121,7 @@ The backdrop as tonal masses, back to front: what a `place` expands into, writte
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`conflicting-setting`](../diagnostics.md#conflicting-setting) |
 | In the gallery | [Masses and planes](../../gallery.md#masses-and-planes) |
 <!-- /facts -->
 
@@ -159,7 +159,7 @@ What the mass is made of, which decides its silhouette: seven outdoor kinds of s
 | Values | `building`, `ceiling`, `floor`, `furniture`, `ground`, `plant`, `sky`, `solid`, `structural`, `wall`, `water`, `window` |
 | Default | none: required |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `missing-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field) |
 <!-- /facts -->
 
 **`kind`** is subsetted from the *supercategories* of
@@ -205,7 +205,7 @@ How far back the mass sits, which decides its value and its draw order. A `foreg
 | Values | `foreground`, `near`, `mid`, `far` |
 | Default | `mid` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [In front of the cast](../../gallery.md#in-front-of-the-cast) |
 <!-- /facts -->
 
@@ -244,7 +244,7 @@ How much of the panel's width the mass covers: all of it, or its `left`, `center
 | Values | `full`, `left`, `center`, `right` |
 | Default | `full` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 **`spans`** is an absolute extent, and that is not cosmetic. Any construct that would reintroduce
@@ -276,7 +276,7 @@ Where the ground meets what is behind it, which every mass is composed against: 
 | Values | `high`, `mid`, `low` |
 | Default | `mid` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field`, `conflicting-setting` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`conflicting-setting`](../diagnostics.md#conflicting-setting) |
 | In the gallery | [Three horizons](../../gallery.md#three-horizons) |
 <!-- /facts -->
 
@@ -312,7 +312,7 @@ When the panel happens, which sets the two ends of the value ladder: the foregro
 | Values | `dawn`, `day`, `dusk`, `night` |
 | Default | `day` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 | In the gallery | [Time and weather](../../gallery.md#time-and-weather) |
 <!-- /facts -->
 
@@ -349,7 +349,7 @@ What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cl
 | Values | `clear`, `rain`, `fog`, `snow` |
 | Default | `clear` |
 | Since | 0.6 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field) |
 <!-- /facts -->
 
 `weather` adds a layer over the backdrop. `clouds` and `fog` are first-class stuff in COCO-Stuff,
@@ -390,7 +390,7 @@ A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the 
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field`, `image-file`, `conflicting-setting`, `artwork-contract` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`image-file`](../diagnostics.md#image-file), [`conflicting-setting`](../diagnostics.md#conflicting-setting), [`artwork-contract`](../diagnostics.md#artwork-contract) |
 | In the gallery | [A JPEG behind the cast](../../gallery.md#a-jpeg-behind-the-cast) |
 <!-- /facts -->
 
@@ -456,7 +456,7 @@ How the picture fills the panel: `cover` fills it and crops what overhangs, equa
 | Values | `cover`, `contain` |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | `invalid-field` |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`cropped-mouth`](../diagnostics.md#cropped-mouth) |
 <!-- /facts -->
 
 The picture is centred either way and never stretched: its shape is a fact about it, and a figure
