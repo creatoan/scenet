@@ -32,14 +32,14 @@ the network, or answers differently on a second call. A client can run them with
   server, and one calling convention for both transports is one less thing to get wrong.
 
 `files`
-: The files the document names — a [picture behind the cast](language.md#an-image-behind-the-cast),
-  a [lettering face](language.md#lettering), a [puppet of its own](language.md#a-puppet-of-your-own)
+: The files the document names — a [picture behind the cast](language/setting.md#an-image-behind-the-cast),
+  a [lettering face](language/lettering.md#lettering), a [puppet of its own](language/cast.md#a-puppet-of-your-own)
   — by the path it writes, each as base64: `{"art/p01.png": "iVBORw0KGgo…"}`. They stand in for
   the document's folder, which the server never reads, and are read in memory, so nothing is
   written to the server's disk. A path is held to a document's own rules — relative, `/` between
   folders — and a value that is not base64 is a tool error naming it. Left out, a document that
   names a file gets `image-file`, `font-file` or `puppet-file`, as text with no folder does
-  anywhere. A cast of [figures a picture draws](language.md#figures-the-picture-draws)
+  anywhere. A cast of [figures a picture draws](language/setting.md#figures-the-picture-draws)
   also needs the picture's artwork contract, beside it and named after it —
   `{"art/p01.png": "…", "art/p01.art.yaml": "…"}`; without it the finding is `artwork-contract`,
   at the line naming the picture. Given to `list_puppets`, each `*.puppet.yaml` among them is

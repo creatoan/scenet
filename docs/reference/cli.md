@@ -58,7 +58,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `--mono`
 : Draw every value as its grey and ignore its colour: a black-and-white edition of a document
-  drawn in [`palette: tinted`](language.md#palette), made without editing it. Every panel, page and
+  drawn in [`palette: tinted`](language/palette.md#palette), made without editing it. Every panel, page and
   strip is byte-identical to what the same document writes with `palette: mono`, because a
   palette only ever adds a colour beside a value the compiler had already decided on its grey.
   With `--pdf`, the print PDF is printed in the greys too, rather than in the colours' CMYK
@@ -74,7 +74,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   those attributes and elements. Debug overlays never carry it.
 
 `--embed-images`
-: Write each [supplied picture](language.md#an-image-behind-the-cast) into the SVG as a
+: Write each [supplied picture](language/setting.md#an-image-behind-the-cast) into the SVG as a
   `data:` URI, so the file stands alone. By default a picture is linked by the path the
   document wrote, which a viewer reads from beside the SVG: that finds it when the SVG is
   written beside the document, as it is by default. Written anywhere else, the build says so

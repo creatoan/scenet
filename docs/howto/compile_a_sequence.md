@@ -157,7 +157,7 @@ panels:
 assert all(result.core.width == 1200.0 for result in panels.values())
 ```
 
-One key is never inherited: a [`description`](../reference/language.md#description) says what
+One key is never inherited: a [`description`](../reference/language/description.md#description) says what
 one picture shows, to a reader who cannot see it. Beside `panels:` it is refused, and a panel
 drawn `over:` another does not take its parent's, since it is a different picture — it writes
 its own, or has one generated:
@@ -176,7 +176,7 @@ assert panels["first"].description == "Alice waits in the rain."
 assert panels["second"].description is None
 ```
 
-And one key is only ever the document's: [`direction`](../reference/language.md#direction), which
+And one key is only ever the document's: [`direction`](../reference/language/direction.md#direction), which
 way the comic is read. Written beside `panels:`, every panel reads that way; written on a panel,
 it is refused as `panel-direction`, since a sequence is read one way throughout:
 

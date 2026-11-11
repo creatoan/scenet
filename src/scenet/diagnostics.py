@@ -83,6 +83,7 @@ from scenet.errors import (
     UnknownPuppetError,
 )
 from scenet.frontends.common import (
+    LANGUAGE_REFERENCE,
     LAYOUT_KEYS,
     PYDANTIC_RULES,
     errors_of,
@@ -204,7 +205,7 @@ RULES: dict[str, Rule] = {
             "that is subtly wrong with no indication of why, which for a language meant "
             "to be precise is the worst possible failure."
         ),
-        help="Check the spelling against docs/reference/language.md.",
+        help=f"Check the spelling against the language reference, {LANGUAGE_REFERENCE}.",
     ),
     "missing-field": Rule(
         summary="A required field is missing",
@@ -217,7 +218,10 @@ RULES: dict[str, Rule] = {
             "The key is known but what it holds is not what the language accepts there "
             "-- a string where a number belongs, or a value outside the allowed set."
         ),
-        help="Check the field's type and permitted values in docs/reference/language.md.",
+        help=(
+            "Check the field's type and permitted values in the language reference, "
+            f"{LANGUAGE_REFERENCE}."
+        ),
     ),
     "panel-geometry": Rule(
         summary="The panel has no usable area",
@@ -342,7 +346,7 @@ RULES: dict[str, Rule] = {
             "`unknown-pose`: the key is a real field and the value is a perfectly good "
             "string, it just does not resolve to a place the compiler can expand."
         ),
-        help="Check the name against the list in docs/reference/language.md.",
+        help=f"Check the name against the list of places: {LANGUAGE_REFERENCE}setting.html#place.",
     ),
     "conflicting-setting": Rule(
         summary="A setting says what is behind the cast twice",
@@ -356,8 +360,8 @@ RULES: dict[str, Rule] = {
         ),
         help=(
             "Keep one of the place, the masses and the image. On a panel that inherits "
-            "one, write it as `null` to leave it out. docs/reference/language.md prints "
-            "what each place expands into."
+            "one, write it as `null` to leave it out. What each place expands into is at "
+            f"{LANGUAGE_REFERENCE}setting.html#place."
         ),
     ),
     "unknown-puppet": Rule(

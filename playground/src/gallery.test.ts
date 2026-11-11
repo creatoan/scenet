@@ -100,7 +100,10 @@ describe("a link to an example by name", () => {
 
 describe("the documentation an example points to", () => {
   it("is the same version's page, built as HTML, at its heading", () => {
-    assert.equal(docHref("reference/language.md#camera"), "../reference/language.html#camera");
+    assert.equal(
+      docHref("reference/language/camera.md#camera"),
+      "../reference/language/camera.html#camera",
+    );
   });
 
   it("may be a whole page", () => {

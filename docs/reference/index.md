@@ -7,7 +7,7 @@ Facts, tables and signatures. Nothing here teaches — for that, start with the
 
 | | |
 |---|---|
-| [Language specification](language.md) | Every construct in the DSL, with examples |
+| [Language specification](language/index.md) | Every construct in the DSL, with examples |
 | [Shot types](shot_types.md) | **Normative.** What each shot type means, in head-heights |
 | [Panel Core](panel_core.md) | The resolved intermediate format |
 | [Asset contract](asset_contract.md) | What a character puppet must declare |
@@ -35,7 +35,7 @@ language; the status table is authoritative about the compiler.
 :hidden:
 :maxdepth: 2
 
-language
+language/index
 shot_types
 panel_core
 asset_contract

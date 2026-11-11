@@ -84,7 +84,7 @@ survives contact with a real implementation.
 Modelling an image as nodes (objects with attributes) and directed edges (relations) is the standard
 machine-readable representation of image *content* rather than image *pixels*.
 
-Taken: this is the IR. The [`staging`](../reference/language.md#staging) block is literally a set of
+Taken: this is the IR. The [`staging`](../reference/language/staging.md#staging) block is literally a set of
 relation triples, and its predicate vocabulary is anchored on Visual Genome's spatial subset rather
 than invented, so scenes stay convertible in both directions.
 

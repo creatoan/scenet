@@ -157,6 +157,66 @@ script:
 
 **In the gallery:** [A complete panel](https://creatoan.github.io/scenet/gallery.html#a-complete-panel).
 
+## When constraints conflict
+
+Placement values are preferences of differing strength, and the solver resolves conflicts by
+priority rather than by failing:
+
+| Strength | Examples |
+|---|---|
+| **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
+| **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
+| **Weak** | `at:` anchors, `prefer:` balloon hints |
+
+![Four characters asked for in a close-up, the camera stepped back so that all four fit](https://creatoan.github.io/scenet/images/gallery/10-crowd-pullback.svg)
+
+**In the gallery:** [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats).
+
+So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
+required non-overlap wins and the weak anchors yield. This is why `at` is documented as a
+preference. If you need a guarantee, express it as a relation in `staging`.
+
+## Determinism
+
+The same source always compiles to byte-identical output. No wall-clock time, no unseeded
+randomness, no dependence on mapping iteration order. This is what makes a panel description a
+durable artifact rather than a prompt: it will render the same in five years as it does today.
+
+It is the same on every platform too. Every text file Scenet writes, and every document it
+prints for redirecting into one, is UTF-8 with LF line endings, on Windows as on Linux. The print
+PDF is bytes, not text, and is byte-identical in the same way: no date, nothing compressed, an
+`/ID` taken from its content.
+
+Backdrop silhouettes are generated, so they are seeded — from the declared setting and the panel
+size, through a content hash. Never a clock, and never Python's `hash()`, which is salted per
+process and would agree with itself all day while disagreeing with tomorrow's build.
+
+### The contract is on the SVG text, not on pixels
+
+Worth stating explicitly, because it is exactly the kind of assumption that rots silently.
+
+> **The determinism contract is on the emitted SVG text, which stays byte-identical. It has never
+> been on pixels.**
+
+The `feTurbulence` filter that draws fog and cloud is reproducible *by definition* — SVG has Perlin
+noise built in, the specification includes reference code, and the `seed` is fixed by the compiler
+— so the emitted document is identical every time. In practice browsers agree only
+[approximately](https://tympanus.net/codrops/2019/02/19/svg-filter-effects-creating-texture-with-feturbulence/)
+on what to paint from it. That is fine, and it was already true of every glyph outline and every
+antialiased edge in the file.
+
+Print has no such filter, so it computes the same noise from that reference code and carries it
+in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
+viewer paints from them is not.
+
+Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
+raster. The print plates Ghostscript renders from the PDF are checked for which ink lands where,
+and never kept as goldens. If a raster check is
+ever wanted, [resvg](https://github.com/linebender/resvg) is the candidate: it supports
+`feTurbulence`, aims at the whole specification rather than the common cases, and ships around 1600
+SVG-to-PNG regression tests — which matters because the W3C SVG test suite was abandoned long ago,
+making resvg's the practical conformance reference.
+
 ## `panel`
 
 | Key | Type | Default | Meaning |
@@ -774,7 +834,7 @@ to do. Comics solved this long before they had reliable backgrounds.
 
 ![Alice and Bob on the docks with four captions: a place and time, an inner voice, a line spoken off panel, and an editor's note](https://creatoan.github.io/scenet/images/gallery/16-captions.svg)
 
-**In the gallery:** [Captions](https://creatoan.github.io/scenet/gallery.html#captions), [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones) and [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption).
+**In the gallery:** [Captions](https://creatoan.github.io/scenet/gallery.html#captions).
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -811,6 +871,10 @@ requiring them to be cast would defeat the purpose. It is accepted only on `spok
 kind it is a mistake and is rejected.
 
 #### `tone`
+
+![Alice in a field under a noon sky, with three captions in three corners: a white box that all but vanishes into the sky, a grey one, and a black one lettered in white](https://creatoan.github.io/scenet/images/gallery/22-caption-tones.svg)
+
+**In the gallery:** [Caption tones](https://creatoan.github.io/scenet/gallery.html#caption-tones) and [A yellow caption](https://creatoan.github.io/scenet/gallery.html#a-yellow-caption).
 
 A caption box is opaque, so its lettering is never the thing at risk — the text sits on the fill
 whatever is behind it. What a tone changes is whether the **box** reads. Against the value ladder
@@ -1420,66 +1484,6 @@ refused. Any other layout one direction refuses, the other refuses too.
 
 Not yet: frames of any other shape, such as round panels or ones without borders.
 
-## When constraints conflict
-
-Placement values are preferences of differing strength, and the solver resolves conflicts by
-priority rather than by failing:
-
-| Strength | Examples |
-|---|---|
-| **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
-| **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
-| **Weak** | `at:` anchors, `prefer:` balloon hints |
-
-![Four characters asked for in a close-up, the camera stepped back so that all four fit](https://creatoan.github.io/scenet/images/gallery/10-crowd-pullback.svg)
-
-**In the gallery:** [The camera retreats](https://creatoan.github.io/scenet/gallery.html#the-camera-retreats).
-
-So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
-required non-overlap wins and the weak anchors yield. This is why `at` is documented as a
-preference. If you need a guarantee, express it as a relation in `staging`.
-
-## Determinism
-
-The same source always compiles to byte-identical output. No wall-clock time, no unseeded
-randomness, no dependence on mapping iteration order. This is what makes a panel description a
-durable artifact rather than a prompt: it will render the same in five years as it does today.
-
-It is the same on every platform too. Every text file Scenet writes, and every document it
-prints for redirecting into one, is UTF-8 with LF line endings, on Windows as on Linux. The print
-PDF is bytes, not text, and is byte-identical in the same way: no date, nothing compressed, an
-`/ID` taken from its content.
-
-Backdrop silhouettes are generated, so they are seeded — from the declared setting and the panel
-size, through a content hash. Never a clock, and never Python's `hash()`, which is salted per
-process and would agree with itself all day while disagreeing with tomorrow's build.
-
-### The contract is on the SVG text, not on pixels
-
-Worth stating explicitly, because it is exactly the kind of assumption that rots silently.
-
-> **The determinism contract is on the emitted SVG text, which stays byte-identical. It has never
-> been on pixels.**
-
-The `feTurbulence` filter that draws fog and cloud is reproducible *by definition* — SVG has Perlin
-noise built in, the specification includes reference code, and the `seed` is fixed by the compiler
-— so the emitted document is identical every time. In practice browsers agree only
-[approximately](https://tympanus.net/codrops/2019/02/19/svg-filter-effects-creating-texture-with-feturbulence/)
-on what to paint from it. That is fine, and it was already true of every glyph outline and every
-antialiased edge in the file.
-
-Print has no such filter, so it computes the same noise from that reference code and carries it
-in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
-viewer paints from them is not.
-
-Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
-raster. The print plates Ghostscript renders from the PDF are checked for which ink lands where,
-and never kept as goldens. If a raster check is
-ever wanted, [resvg](https://github.com/linebender/resvg) is the candidate: it supports
-`feTurbulence`, aims at the whole specification rather than the common cases, and ships around 1600
-SVG-to-PNG regression tests — which matters because the W3C SVG test suite was abandoned long ago,
-making resvg's the practical conformance reference.
-
 <!-- scenet-spec:part=shot-types -->
 # Shot types (normative)
 
@@ -1569,12 +1573,12 @@ and having those two the wrong way round inverted the ladder at its widest end w
 anything noticing.
 
 **`long_shot` and `full_shot` crop at the same landmark**, so headroom and footroom are all
-that separate them. Until the [setting layer](https://creatoan.github.io/scenet/reference/language.html#setting) existed the gap between them
+that separate them. Until the [setting layer](https://creatoan.github.io/scenet/reference/language/setting.html#setting) existed the gap between them
 had to stay modest: with nothing behind the figure, air is just white, and a small figure alone on
 a page reads as a full shot with a generous margin rather than as a long shot. Now the air is the
 environment — which is what a long shot is *about* — so the gap is a real rung, and a long shot
 frames the figure at roughly two thirds the size a full shot does. The environment may be masses or
-a [supplied picture](https://creatoan.github.io/scenet/reference/language.html#an-image-behind-the-cast): the camera reads neither, so a shot
+a [supplied picture](https://creatoan.github.io/scenet/reference/language/setting.html#an-image-behind-the-cast): the camera reads neither, so a shot
 frames the cast the same in front of either.
 
 ## Angle
@@ -1689,7 +1693,7 @@ and starts the next, so two speeches need no blank line between them.
 **Underline a word by writing it between underscores**: `I _told_ you.` Scripts underline the
 words to stress, and a letterer sets them in bold italic, which is what the compiler does — in
 dialogue and in captions alike. The rules are in
-[the language reference](https://creatoan.github.io/scenet/reference/language.html#emphasis).
+[the language reference](https://creatoan.github.io/scenet/reference/language/script.html#emphasis).
 
 **Panel numbers may start again on each page**, as publishers' script formats ask. When they
 do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
@@ -1705,7 +1709,7 @@ name from the cast — and how loud, `small`, `medium` or `large`, in either ord
 `SFX:` as a cue with the sound under it; that works too, and the line under it is the sound however
 it looks — `BLAM` is in capitals, which would otherwise make it a character's cue. An `SFX:` cue with
 nothing under it is reported rather than dropped. Turns, arcs and hollow letters are written in YAML;
-see [`sfx`](https://creatoan.github.io/scenet/reference/language.html#sfx).
+see [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx).
 
 `CAP`, `CAPTION` and `SFX` are checked before speaker cues, because as far as the cue pattern
 is concerned each is a perfectly good character name. So they are reserved: none can be a cast
@@ -1844,7 +1848,7 @@ scene with `@cast` and `@staging`:
 ## Pages
 
 **Each PAGE heading is a page**, and the panels under it are laid out on it, as a scene's
-[`pages:`](https://creatoan.github.io/scenet/reference/language.html#page-and-pages) would lay them out. Dark Horse leaves "exact
+[`pages:`](https://creatoan.github.io/scenet/reference/language/page.html#page-and-pages) would lay them out. Dark Horse leaves "exact
 panel layout" to the artist, and here the compiler is the artist, so a page's panels go into tiers
 by a fixed rule, in reading order:
 
@@ -1900,7 +1904,7 @@ A script has no `pages:` key — its pages are its PAGE headings — so writing 
 `direction: rtl` in the front matter makes the whole script read from the top right, as a manga
 is read: the panels of each page, and the balloons of each panel. Nothing is mirrored. A
 character written at `right_third` stands on the right; only what reading decides follows the
-direction, as [`direction`](https://creatoan.github.io/scenet/reference/language.html#direction) explains.
+direction, as [`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction) explains.
 
 *Part of a manga script:*
 
@@ -1986,7 +1990,7 @@ The nearest shots letter nothing: the head fills the panel, and no balloon may c
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
 `(OFF)`, and screenplays `(O.S.)` or the older `(O.C.)`. All four mean the same here: the line is
 spoken by somebody who is not drawn, and the balloon's tail ends on the frame, on their side —
-see [off-panel speech](https://creatoan.github.io/scenet/reference/language.html#off-panel-speech).
+see [off-panel speech](https://creatoan.github.io/scenet/reference/language/script.html#off-panel-speech).
 
 Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
 `ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
@@ -2039,7 +2043,7 @@ If you want the rain, say so with a directive: `@setting: {weather: rain}` draws
 description beside it is never read by the compiler.
 
 It is read by people, though, and not only the artist: a panel's prose is its
-[`description`](https://creatoan.github.io/scenet/reference/language.html#description), what accessible output reads to somebody
+[`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), what accessible output reads to somebody
 who cannot see the panel. Its lines become one paragraph, and Markdown's markers round a word
 (`**Alice**`, `_up_`) are taken off. **Everything** the prose says is read — a note to the artist,
 `NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
@@ -2089,7 +2093,7 @@ mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/h
 `description`, which says what one panel shows, is refused there.
 
 `direction: rtl` there makes the whole script read from the top right, as a manga does; see
-[`direction`](https://creatoan.github.io/scenet/reference/language.html#direction). It is the script's, never one panel's, so
+[`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction). It is the script's, never one panel's, so
 `@direction:` under a PANEL heading is refused.
 
 Note the actor ids are written in caps here, to match the speaker cues. That is a
@@ -2223,7 +2227,7 @@ A cast member is a puppet and a figure, or a cast mixes the two. A cast member i
 
 A setting says what is behind the cast twice. A place *is* a mass list -- the preset expands into exactly what an author could have written -- so naming one and listing the other asks two questions at once, and the compiler will not guess which was meant. A supplied `image` is a whole backdrop of its own, so it stands alone too: beside a place, masses, or a horizon, which only says where masses meet the ground.
 
-**Fix:** Keep one of the place, the masses and the image. On a panel that inherits one, write it as `null` to leave it out. docs/reference/language.md prints what each place expands into.
+**Fix:** Keep one of the place, the masses and the image. On a panel that inherits one, write it as `null` to leave it out. What each place expands into is at https://creatoan.github.io/scenet/reference/language/setting.html#place.
 
 ### `scenet/dropped-relation`
 
@@ -2271,7 +2275,7 @@ The compiler failed in a way it does not have a rule for. A Scenet error reached
 
 A field has the wrong shape or value. The key is known but what it holds is not what the language accepts there -- a string where a number belongs, or a value outside the allowed set.
 
-**Fix:** Check the field's type and permitted values in docs/reference/language.md.
+**Fix:** Check the field's type and permitted values in the language reference, https://creatoan.github.io/scenet/reference/language/.
 
 ### `scenet/layout`
 
@@ -2385,13 +2389,13 @@ A figure the panel's picture does not draw. A cast member's `figure` names a fig
 
 Unknown key. Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure.
 
-**Fix:** Check the spelling against docs/reference/language.md.
+**Fix:** Check the spelling against the language reference, https://creatoan.github.io/scenet/reference/language/.
 
 ### `scenet/unknown-place`
 
 Reference to a place the library does not have. `setting.place` names a preset that does not exist. The counterpart of `unknown-pose`: the key is a real field and the value is a perfectly good string, it just does not resolve to a place the compiler can expand.
 
-**Fix:** Check the name against the list in docs/reference/language.md.
+**Fix:** Check the name against the list of places: https://creatoan.github.io/scenet/reference/language/setting.html#place.
 
 ### `scenet/unknown-pose`
 
@@ -4367,7 +4371,7 @@ One place at different times of day and in different weather.
 # The determinism contract is on the **emitted SVG text**, which stays byte-identical.
 # It has never been on pixels: `feTurbulence` is reproducible by specification -- the
 # spec ships reference code and the seed is fixed -- and browsers still agree only
-# approximately on what to paint from it. See docs/reference/language.md.
+# approximately on what to paint from it. See docs/reference/language/index.md.
 
 panel:
   size: [1100, 620]
@@ -7398,7 +7402,7 @@ It gives the note `camera-retreated`: no fault, since a note never stops a docum
 ```yaml
 # A complete panel: every layer of the language at once.
 #
-# This is the complete example in docs/reference/language.md, and a test keeps the two
+# This is the complete example in docs/reference/language/index.md, and a test keeps the two
 # identical, so the reference shows what it compiles to. Each block is one layer:
 #
 # - `panel`, the frame: its size, in panel units.

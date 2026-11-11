@@ -31,7 +31,7 @@ EPILOGUE = """\
 Scenet is a deterministic compiler: the same source always produces byte-identical
 output. No generative image model is involved at any stage.
 
-See docs/reference/language.md for the language.
+See https://creatoan.github.io/scenet/reference/language/ for the language.
 """
 
 

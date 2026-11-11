@@ -2,7 +2,7 @@
 
 | Document | Contents |
 |---|---|
-| [Language specification](../reference/language.md) | The DSL — every construct, with examples |
+| [Language specification](../reference/language/index.md) | The DSL — every construct, with examples |
 | [Panel Core](../reference/panel_core.md) | The resolved intermediate format |
 | [Shot types](../reference/shot_types.md) | Normative camera framing table |
 | [Asset contract](../reference/asset_contract.md) | What a character puppet must declare |
@@ -39,7 +39,7 @@ attribution. A notation is only worth having if it is not owned.
 | 20 | `scenet build --watch`: a rebuild whenever the source or anything it reads changes | **Done** |
 | 21 | Print: a PDF with its trim and bleed, lettering on the black plate, pictures carried unchanged; a page unit printed as 0.1 mm | **Done** |
 
-Single panels compile end to end. Constructs described in `language.md` are the specification,
+Single panels compile end to end. Constructs described in the language reference are the specification,
 not a report of what is implemented — the table above is authoritative on what actually runs.
 
 ## Planned

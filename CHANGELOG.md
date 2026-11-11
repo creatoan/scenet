@@ -12,6 +12,14 @@ below 1.0 means.
 
 ### Added
 
+- **The language reference is a page per block** (#319). `docs/reference/language/` holds an
+  overview, the blocks, a complete example, conflicts and determinism, then a page each for
+  `panel`, `camera`, `setting`, `cast`, `staging`, `script`, `description`, `lettering`,
+  `direction`, `palette`, and `page` and `pages`. The old page keeps each heading it had, with a
+  link to its new home, so a link written before the split still lands on what it named. The
+  gallery's "Read about it", every page of the documentation, the spec pack's `language` part
+  and the skill's `references/language.md` follow the pages; a rule's help names the published
+  reference instead of a path in the repository.
 - **Every key a document can write says what it means on hover** (#319). The editor's four JSON
   Schemas -- panel, scene, artwork contract and puppet -- give each key a description of its
   own, one paragraph, where 4 of 77 had one: the meaning now sits under each field in the

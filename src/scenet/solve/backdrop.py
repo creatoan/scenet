@@ -464,7 +464,7 @@ class ResolvedVeil:
     reference code, so a fixed seed is reproducible **by definition** -- the emitted text
     is identical. Browsers agree only approximately on what to paint from it, which is
     fine and is why the determinism contract is on the SVG text and has never been on
-    pixels. See `docs/reference/language.md`.
+    pixels. See `docs/reference/language/index.md`.
 
     `colour` is the tone's twin in the panel's palette, or `""` in `mono`.
     """

@@ -86,12 +86,12 @@ and having those two the wrong way round inverted the ladder at its widest end w
 anything noticing.
 
 **`long_shot` and `full_shot` crop at the same landmark**, so headroom and footroom are all
-that separate them. Until the [setting layer](language.md#setting) existed the gap between them
+that separate them. Until the [setting layer](language/setting.md#setting) existed the gap between them
 had to stay modest: with nothing behind the figure, air is just white, and a small figure alone on
 a page reads as a full shot with a generous margin rather than as a long shot. Now the air is the
 environment — which is what a long shot is *about* — so the gap is a real rung, and a long shot
 frames the figure at roughly two thirds the size a full shot does. The environment may be masses or
-a [supplied picture](language.md#an-image-behind-the-cast): the camera reads neither, so a shot
+a [supplied picture](language/setting.md#an-image-behind-the-cast): the camera reads neither, so a shot
 frames the cast the same in front of either.
 
 ## Angle

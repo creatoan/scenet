@@ -1,6 +1,6 @@
 # A complete panel: every layer of the language at once.
 #
-# This is the complete example in docs/reference/language.md, and a test keeps the two
+# This is the complete example in docs/reference/language/index.md, and a test keeps the two
 # identical, so the reference shows what it compiles to. Each block is one layer:
 #
 # - `panel`, the frame: its size, in panel units.

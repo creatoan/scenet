@@ -1804,7 +1804,7 @@ class PanelIR(Strict):
         """Horizontal ordering must not contain a cycle.
 
         The layout engine is a *linear* constraint solver, so ordering has to be
-        decided before it runs -- see docs/reference/language.md. A cycle such as
+        decided before it runs -- see docs/reference/language/staging.md. A cycle such as
         'a left_of b, b left_of a' has no solution, and detecting it here produces a
         comprehensible message instead of an opaque solver failure.
         """

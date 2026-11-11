@@ -227,5 +227,5 @@ to be inherited from with `over:`.
 
 Frames of other shapes. A page's printed size and its bleed are written in `page:`, and a panel
 that runs past the trim says `bleed:` on its placement; see
-[the language reference](../reference/language.md#page-and-pages) and
+[the language reference](../reference/language/page.md#page-and-pages) and
 [Print a comic](print_a_comic.md).

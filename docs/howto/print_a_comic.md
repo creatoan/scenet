@@ -31,7 +31,7 @@ A panel whose art should run off the cut page says so on its placement: `bleed: 
 sides, `bleed: [top, left]` (#281). Its frame then runs out to the bleed line with no border
 there, its cast is framed to the trim and its lettering kept inside the page margin, so the
 cutter takes nothing but art. Such a panel needs the page's `bleed`; without one it stops at the
-trim, and print notes it. See [the language reference](../reference/language.md#page-and-pages).
+trim, and print notes it. See [the language reference](../reference/language/page.md#page-and-pages).
 
 ## Build it
 

@@ -431,7 +431,7 @@ def _atmosphere_filter(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     fixed seed is reproducible **by definition**: the emitted text is byte-identical.
     Browsers agree only approximately on what to paint from it, and that is fine -- the
     determinism contract is on the SVG text and has never been on pixels. See
-    `docs/reference/language.md`.
+    `docs/reference/language/index.md`.
 
     The colour matrix flattens the noise to one tone and takes the alpha from it, so the
     veil is a cloud of the atmosphere colour rather than coloured static.

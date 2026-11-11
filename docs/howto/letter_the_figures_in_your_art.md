@@ -76,7 +76,7 @@ script:
 `figure:` takes the place of `reference:`. The cast id is yours; the figure's name is the
 contract's. Nothing else a puppet takes applies — no `pose`, no `at`, no `facing`, no `camera`, no
 `staging` — because the artist already framed and posed everyone; `scenet check` says so if one is
-written. See [what does not apply](../reference/language.md#figures-the-picture-draws).
+written. See [what does not apply](../reference/language/setting.md#figures-the-picture-draws).
 
 In a scene or a comic script, the defaults or the front matter can cast every figure of a chapter.
 Each panel holds those its own picture draws; a line spoken in a panel by somebody its picture does

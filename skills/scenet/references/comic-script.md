@@ -92,7 +92,7 @@ and starts the next, so two speeches need no blank line between them.
 **Underline a word by writing it between underscores**: `I _told_ you.` Scripts underline the
 words to stress, and a letterer sets them in bold italic, which is what the compiler does — in
 dialogue and in captions alike. The rules are in
-[the language reference](https://creatoan.github.io/scenet/reference/language.html#emphasis).
+[the language reference](https://creatoan.github.io/scenet/reference/language/script.html#emphasis).
 
 **Panel numbers may start again on each page**, as publishers' script formats ask. When they
 do, every panel is named by its page as well: `PANEL 1` under `PAGE TWO` is panel `2-1`, and
@@ -108,7 +108,7 @@ name from the cast — and how loud, `small`, `medium` or `large`, in either ord
 `SFX:` as a cue with the sound under it; that works too, and the line under it is the sound however
 it looks — `BLAM` is in capitals, which would otherwise make it a character's cue. An `SFX:` cue with
 nothing under it is reported rather than dropped. Turns, arcs and hollow letters are written in YAML;
-see [`sfx`](https://creatoan.github.io/scenet/reference/language.html#sfx).
+see [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx).
 
 `CAP`, `CAPTION` and `SFX` are checked before speaker cues, because as far as the cue pattern
 is concerned each is a perfectly good character name. So they are reserved: none can be a cast
@@ -247,7 +247,7 @@ scene with `@cast` and `@staging`:
 ## Pages
 
 **Each PAGE heading is a page**, and the panels under it are laid out on it, as a scene's
-[`pages:`](https://creatoan.github.io/scenet/reference/language.html#page-and-pages) would lay them out. Dark Horse leaves "exact
+[`pages:`](https://creatoan.github.io/scenet/reference/language/page.html#page-and-pages) would lay them out. Dark Horse leaves "exact
 panel layout" to the artist, and here the compiler is the artist, so a page's panels go into tiers
 by a fixed rule, in reading order:
 
@@ -303,7 +303,7 @@ A script has no `pages:` key — its pages are its PAGE headings — so writing 
 `direction: rtl` in the front matter makes the whole script read from the top right, as a manga
 is read: the panels of each page, and the balloons of each panel. Nothing is mirrored. A
 character written at `right_third` stands on the right; only what reading decides follows the
-direction, as [`direction`](https://creatoan.github.io/scenet/reference/language.html#direction) explains.
+direction, as [`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction) explains.
 
 *Part of a manga script:*
 
@@ -389,7 +389,7 @@ The nearest shots letter nothing: the head fills the panel, and no balloon may c
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
 `(OFF)`, and screenplays `(O.S.)` or the older `(O.C.)`. All four mean the same here: the line is
 spoken by somebody who is not drawn, and the balloon's tail ends on the frame, on their side —
-see [off-panel speech](https://creatoan.github.io/scenet/reference/language.html#off-panel-speech).
+see [off-panel speech](https://creatoan.github.io/scenet/reference/language/script.html#off-panel-speech).
 
 Off panel means in the scene but out of the frame, and the front matter is the scene's cast. So
 `ALICE (OP)` leaves Alice out of **that panel**: out of its cast, and out of every staging relation
@@ -442,7 +442,7 @@ If you want the rain, say so with a directive: `@setting: {weather: rain}` draws
 description beside it is never read by the compiler.
 
 It is read by people, though, and not only the artist: a panel's prose is its
-[`description`](https://creatoan.github.io/scenet/reference/language.html#description), what accessible output reads to somebody
+[`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), what accessible output reads to somebody
 who cannot see the panel. Its lines become one paragraph, and Markdown's markers round a word
 (`**Alice**`, `_up_`) are taken off. **Everything** the prose says is read — a note to the artist,
 `NOTE: redraw the rain.`, included — so when the reader should hear something else, write it as a
@@ -492,7 +492,7 @@ mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/h
 `description`, which says what one panel shows, is refused there.
 
 `direction: rtl` there makes the whole script read from the top right, as a manga does; see
-[`direction`](https://creatoan.github.io/scenet/reference/language.html#direction). It is the script's, never one panel's, so
+[`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction). It is the script's, never one panel's, so
 `@direction:` under a PANEL heading is refused.
 
 Note the actor ids are written in caps here, to match the speaker cues. That is a

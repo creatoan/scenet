@@ -305,7 +305,7 @@ panel.
 
 - [How-to guides](../howto/index) for specific jobs — sequences, comic scripts, your own
   characters.
-- [The language reference](../reference/language) for every construct.
+- [The language reference](../reference/language/index) for every construct.
 - [Shot types](../reference/shot_types), which is normative, if you want to know exactly
   what `medium_shot` means.
 - [Explanation](../explanation/index) for why any of this is shaped the way it is.

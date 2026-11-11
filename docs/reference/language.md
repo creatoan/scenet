@@ -1,1397 +1,145 @@
-# The Scenet language
+---
+orphan: true
+---
 
-> **Status:** this is the specification. It is not a report of what is implemented — see
-> [implementation status](../explanation/status.md#implementation-status), which is authoritative on
-> what actually runs. Panels, sequences and pages of tiers compile end to end today; the style
-> layer does not exist yet.
+# The language reference has moved
 
-A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
-Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
-
-It is read strictly. An unknown key is an error rather than ignored, and so is a key written twice
-in one mapping, such as two cast members called `alice`. YAML requires keys to be unique, but the
-usual Python parser keeps the last and drops the first without a word, which would quietly lose a
-character or a panel. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+The language reference is now [a page for each block](language/index.md). This page keeps each
+heading it had, so that a link written before the reference was split still lands here, one step
+from what it named.
 
 ## The layers
 
-A panel is written in blocks, each saying one kind of thing about it. What the compiler
-makes of them — every coordinate, then the picture — is computed and emitted, never written.
-
-![A page of three panels lettered over painted pictures: Alice and Bob in the rain on a street at dusk, Alice worrying in an inset, and Ana and Ben, whom the picture draws, on a station platform](../images/gallery/38-tour.page-1.svg)
-
-**In the gallery:** [A tour of Scenet](../gallery.md#a-tour-of-scenet).
-
-| Block | What it says |
-|---|---|
-| [`panel`](#panel) | The size and margin of the panel |
-| [`camera`](#camera) | How the cast is framed |
-| [`setting`](#setting) | Where and when it happens |
-| [`cast`](#cast), [`staging`](#staging) | Who is present, and how they stand to each other |
-| [`script`](#script) | What is said and heard, in the order it is read |
-| [`lettering`](#lettering) | The type size, and the font files |
-| [`palette`](#palette) | Whether the panel is drawn in grey or in colour |
-| [`direction`](#direction) | Which way the comic is read: the whole document's, never one panel's |
-| [`description`](#description) | What the panel shows, in words, for a reader who cannot see it. Nothing is drawn from it |
-
-A scene document holds several panels under `panels:`, and lays them out with
-[`page` and `pages`](#page-and-pages).
-
-Blocks are separable on purpose. Changing `camera.shot` re-frames the same scene without touching
-anything else, exactly as transposing a score changes its key without rewriting the melody.
+Now at [The layers](language/index.md#the-layers).
 
 ## A complete example
 
-```yaml
-panel:
-  size: [1000, 1000]
-
-camera:
-  shot: medium_shot
-  angle: eye_level
-
-setting:
-  place: docks
-  time: night
-  weather: rain
-
-cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
-  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
-
-staging:
-  - alice left_of bob
-  - alice looking_at bob
-  - alice ground_shared_with bob
-
-script:
-  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
-  - say: {by: bob,   text: "I know."}
-```
-
-![Alice, pointing, and Bob, arms crossed, on the docks at night in the rain. Alice: You forgot your umbrella! Bob: I know.](../images/gallery/71-a-complete-panel.svg)
-
-**In the gallery:** [A complete panel](../gallery.md#a-complete-panel).
+Now at [A complete example](language/index.md#a-complete-example).
 
 ## `panel`
 
-| Key | Type | Default | Meaning |
-|---|---|---|---|
-| `size` | `[width, height]` | `[1000, 1000]` | Panel dimensions in panel units; printed, a unit is 0.1 mm |
-| `margin` | number | `0` | Inset all content by this much |
-
-![Alice and Bob in a medium close-up, their figures running off the panel's edges while both balloons keep inside its margin](../images/gallery/15-margin.svg)
-
-**In the gallery:** [Margins and bleed](../gallery.md#margins-and-bleed).
-
-Panel units are arbitrary and internally consistent; they become SVG user units.
+Now at [`panel`](language/panel.md#panel).
 
 ## `camera`
 
-| Key | Values | Default |
-|---|---|---|
-| `shot` | see [shot types](shot_types.md) | `medium_shot` |
-| `angle` | `low`, `eye_level`, `high` | `eye_level` |
-
-![Bob in a medium close-up three times: from a low angle, at eye level and from a high angle, with less air above his head each time](../images/gallery/03-camera-angles.strip.svg)
-
-**In the gallery:** [Camera angles](../gallery.md#camera-angles).
-
-`shot` determines the **scale** of every actor, by naming where the frame cuts the body rather than
-what fraction of the panel a figure fills. This is the single most consequential value in a panel.
+Now at [`camera`](language/camera.md#camera).
 
 ## `setting`
 
-Where and when the panel happens, drawn as **tonal masses** rather than as geometry, or as a
-picture drawn elsewhere.
+Now at [`setting`](language/setting.md#setting).
 
-```yaml
-cast: {alice: {reference: alice}}
-setting:
-  place: docks       # a named place, which expands into masses
-  horizon: mid       # high | mid | low
-  time: night        # dawn | day | dusk | night
-  weather: rain      # clear | rain | fog | snow
-```
+## Backdrops are never author-drawn
 
-```{code-block} yaml
-:caption: Part of a panel beside art/p01-street.png
+Now at [Backdrops are never author-drawn](language/setting.md#backdrops-are-never-author-drawn).
 
-setting:
-  image: art/p01-street.png   # a PNG or JPEG, relative to this document
-  fit: cover                  # cover | contain; left out, cover
-  weather: rain               # drawn over the picture, as over masses
-```
+## `masses`
 
-A panel with no `setting` renders exactly as it always did: figures on white.
+Now at [`masses`](language/setting.md#masses).
 
-### Backdrops are never author-drawn
+## `place`
 
-Two reasons, and the first is structural. Crisp architecture needs a vanishing point, and this is
-deliberately a flat, orthographic compiler — a tilted camera does not foreshorten anything — so
-drawn buildings would fight the compiler's own model. Soft tonal masses have no perspective to get
-wrong.
+Now at [`place`](language/setting.md#place).
 
-The second is that this is how comics actually establish place:
+## `horizon`
 
-- **[Notan](https://mitchalbala.com/the-wisdom-of-notan/)**, the Japanese light/dark mass
-  principle, which entered Western art teaching through Arthur Wesley Dow's *Composition* (1899):
-  place is read from the *arrangement of masses*, not from rendered detail.
-- **Layered silhouette depth**: foreground near-black, each receding plane paler.
-- **[Aerial perspective](https://en.wikipedia.org/wiki/Aerial_perspective)** supplies the
-  parametric rule for free — with distance, value contrast drops toward the atmosphere. Two numbers
-  per hour, monotonic in depth. That is notation, not interpretation, which is why it belongs in a
-  compiler.
+Now at [`horizon`](language/setting.md#horizon).
 
-**Received art is another matter.** The rule is about *drawing* a backdrop in the language, not
-about receiving one. A picture drawn elsewhere — painted, pencilled, photographed, rendered — can
-stand behind the cast with `image:` ([An image behind the cast](#an-image-behind-the-cast)). Its
-perspective is the artist's, and the compiler neither reads nor imitates it: what it takes from the
-file is its size, so the solver still never sees artwork, and the
-[asset contract](asset_contract.md)'s promise — the same layout whatever draws it — holds.
+## `time` and `weather`
 
-### `masses`
+Now at [`time` and `weather`](language/setting.md#time-and-weather).
 
-A place is a convenience. Underneath it is a list of masses, which stays authorable whenever you
-want control — and which is *exactly* what a place expands into:
+## An image behind the cast
 
-```yaml
-cast: {alice: {reference: alice}}
-setting:
-  horizon: mid
-  masses:
-    - {kind: building, plane: far,  spans: full}
-    - {kind: plant,    plane: mid,  spans: left}
-    - {kind: ground,   plane: near, spans: full}
-```
+Now at [An image behind the cast](language/setting.md#an-image-behind-the-cast).
 
-![Two panels of masses written by hand: outdoors, seven kinds of stuff four planes deep, and a room at dusk with its window](../images/gallery/19-setting.strip.svg)
+## Figures the picture draws
 
-**In the gallery:** [Masses and planes](../gallery.md#masses-and-planes) and [In front of the cast](../gallery.md#in-front-of-the-cast).
-
-| Key | Values | Default | Meaning |
-|---|---|---|---|
-| `kind` | see below | required | What the mass is made of, which decides its silhouette |
-| `plane` | `foreground`, `near`, `mid`, `far` | `mid` | How far back it sits |
-| `spans` | `full`, `left`, `center`, `right` | `full` | How much of the width it covers |
-
-**`kind`** is subsetted from the *supercategories* of
-[COCO-Stuff](https://arxiv.org/pdf/1612.03716), the canonical taxonomy of **stuff** — "amorphous
-background regions" as opposed to *things* with a well-defined shape. Taken from an existing
-vocabulary for the same reason the predicates were taken from Visual Genome. Twelve of them, seven
-outdoor and five indoor:
-
-| | Kinds |
-|---|---|
-| Outdoor | `building` `ground` `plant` `sky` `solid` `structural` `water` |
-| Indoor | `ceiling` `floor` `furniture` `wall` `window` |
-
-Deliberately *not* COCO-Stuff's leaf names. Its actual classes are `building-other`, `sky-other`,
-`wall-brick`, `water-other`; the `-other` suffix marks the catch-all inside a supercategory, and
-`building-other` is not a word anyone should have to type. Its `textile`, `food` and `rawmaterial`
-supercategories are left out: drapery and objects, not scene-defining masses.
-
-**`plane`** decides two things at once, and neither is a new mechanism. It maps onto the same
-integer painter's order `in_front_of` already uses — the three backdrop planes take negative
-depths, and `foreground` takes one above the frontmost actor, so a foreground mass draws over the
-cast the way a silhouetted doorway does. And it decides **value**: reading front to back, a mass
-never gets darker.
-
-Value comes from the plane and from **nothing else** — not from the kind. That is what keeps the
-notan reading literal: masses at one distance read as one mass, and their arrangement is what
-carries the place. Two kinds sit off their own plane's rung, and both stay on the ladder rather
-than beside it: `sky` is at infinite distance so it always takes the atmosphere's value, and
-`window` is a hole showing a more distant plane so it takes the rung one step farther back.
-
-A **nearer plane is also drawn larger**, which is size perspective alongside aerial perspective: a
-near hill is not merely darker than a far one, it is bigger.
-
-**`spans`** is an absolute extent, and that is not cosmetic. Any construct that would reintroduce a
-left/right *disjunction* has to resolve it before the solver — see
-[why ordering must be explicit](#why-ordering-must-be-explicit). A span is an extent rather than a
-relation, which is what stops masses becoming an unordered `beside`. `left` and `right` overlap
-slightly in the middle so that using both leaves no seam down the centre of the panel.
-
-One authored mass may resolve to **several polygons**: furniture is a few separate blocks, a wall
-holds several windows. Joining them into one comb with a zero-height baseline would be a lie about
-the shape.
-
-### `place`
-
-The headline surface, because the thing an author wants to write is *where the scene is*, not a
-list of shapes.
-
-![Alice in each of the ten places, one panel each: docks, street, alley, room, office, forest, field, shore, desert and mountain](../images/gallery/20-places.strip.svg)
-
-**In the gallery:** [Ten places](../gallery.md#ten-places).
-
-| Place | Expands into |
-|---|---|
-| `alley` | sky·far, building·near·left, building·near·right, ground·near, building·foreground·left |
-| `desert` | sky·far, solid·far·right, ground·mid, ground·near |
-| `docks` | sky·far, building·far·left, water·mid, structural·mid·right, ground·near |
-| `field` | sky·far, plant·far, ground·mid, ground·near |
-| `forest` | sky·far, plant·far, plant·near·left, plant·near·right, ground·near |
-| `mountain` | sky·far, solid·far, solid·mid·left, plant·mid·right, ground·near |
-| `office` | wall·far, window·far·center, ceiling·mid, floor·near, furniture·near |
-| `room` | wall·far, window·far·right, ceiling·mid, floor·near, furniture·near·left |
-| `shore` | sky·far, water·mid, ground·near |
-| `street` | sky·far, building·far, building·mid·left, building·mid·right, ground·near |
-
-**The rule that keeps `place:` honest**: a preset expands into a mass list the author could have
-written themselves, and is never a second opaque format. A library for convenience, not a parallel
-language. The expansion happens in the frontend, exactly as `alice left_of bob` is expanded into a
-relation — so by the time anything downstream sees a backdrop, there is one representation of it.
-
-`place` and `masses` are **mutually exclusive**. A place *is* a mass list; writing both asks two
-questions at once, and the compiler will not guess which was meant. An `image` is a backdrop of
-its own, so it is written instead of either, never beside one — and never beside a `horizon`,
-which says where masses meet the ground; a picture has its own. A panel that inherits a place
-from a scene's defaults, or from the panel it is `over`, leaves it out with `place: null`
-beside its image. `scenet check` reports any of these pairs as `conflicting-setting`, at the
-key other than `image`, and a `fit` with no image as `invalid-field`. See
-[An image behind the cast](#an-image-behind-the-cast).
-
-**Free prose is deliberately not offered.** `setting: "a rainy street corner at midnight"` needs
-language understanding, and the comic-script frontend already refuses to interpret prose on the
-grounds that guessing produces panels that are confidently wrong. A named place is the honest
-middle: it reads like a description and resolves deterministically. `scenet check` reports an
-unmatched name as `unknown-place`, listing the ones that exist.
-
-### `horizon`
-
-One line for the whole panel, which every mass is composed against: masses of the ground sort start
-at it and run down, masses that stand in the world rise from it. A **high** horizon sits nearer the
-top of the frame, so more ground is in view.
-
-![The same shore three times, its horizon high, in the middle and low](../images/gallery/72-three-horizons.strip.svg)
-
-**In the gallery:** [Three horizons](../gallery.md#three-horizons).
-
-Ground, floor and water all run to the bottom edge, so a near quayside drawn from the horizon would
-bury the water behind it. Each starts lower than the plane behind it, and that stack of receding
-bands is the depth cue. The exception is the *farthest* one in a panel, which meets the horizon
-itself: there is nothing behind it to reveal.
-
-### `time` and `weather`
-
-`time` sets a panel's values. In `mono` it adds no colour, and under [`palette: tinted`](#palette)
-each value takes the hour's colour without changing. It supplies the two ends of the value ladder —
-the value of the foreground and the value of the atmosphere — and the planes are spaced evenly between them in
-[OKLab](https://bottosson.github.io/posts/oklab/) lightness, which predicts perceived lightness
-well. So `night` is a darker, *narrower* ladder, which is what night does to a drawn scene, and the
-ladder stays monotonic in depth at every hour by construction rather than by tuning.
-
-![The docks four times: at midnight in the rain, at dawn in fog, at noon, and in snow](../images/gallery/21-atmosphere.strip.svg)
-
-**In the gallery:** [Time and weather](../gallery.md#time-and-weather).
-
-`weather` adds a layer over that. `clouds` and `fog` are first-class stuff in COCO-Stuff, so this
-vocabulary did not have to be invented either:
-
-| `weather` | What it does |
-|---|---|
-| `clear` | Nothing. The panel has no atmosphere layer at all |
-| `fog` | A dense, low-frequency noise veil, tinted with the atmosphere itself |
-| `rain` | The same veil as cloud — nearer, so darker than the sky — plus slanted streaks |
-| `snow` | The same veil, plus flecks |
-
-The veil sits over the backdrop and *under* the cast: fog between the reader and the figures would
-be the more literal reading and would bury them. Falling weather goes over everything, because it
-**is** between the reader and the panel — which is why it crosses the figures.
-
-Rain flips to ink over a bright sky and to paper over a dark one, as inkers do, because a white
-streak over noon is invisible and a black one over midnight is too. Snow never flips: snow is
-white, and the overcast veil is what gives it something to read against.
-
-### An image behind the cast
-
-`image` names a picture drawn elsewhere — painted, pencilled, photographed or rendered — and the
-cast is drawn in front of it, lettered by the same rules as on any other backdrop.
-
-![Alice and Bob in front of a photograph of a harbour, supplied as a JPEG](../images/gallery/52-a-jpeg.svg)
-
-**In the gallery:** [A JPEG behind the cast](../gallery.md#a-jpeg-behind-the-cast).
-
-| Key | Values | Default |
-|---|---|---|
-| `image` | A PNG or JPEG file, relative to the folder the document is in | — |
-| `fit` | `cover`: fill the panel, cropping what overhangs, equally on both sides. `contain`: show the whole picture, the panel showing round it | `cover` |
-
-The picture is centred either way and never stretched.
-
-- **The path is read as a font's is**: relative to the folder the document is in, wherever
-  `scenet` was run from, with `/` between folders. An absolute path is refused. Text compiled with
-  no file behind it has no folder, so it names a picture only when its caller says which folder it
-  belongs to, or hands the file over with it.
-- **PNG or JPEG**, the two raster formats SVG 2 requires every viewer to draw, told apart by their
-  first bytes rather than by the file's name.
-- **Only the size is read.** The compiler takes from the file how many pixels it has across and
-  down, from its header, and decodes nothing: the solver never sees artwork, here as everywhere.
-  Only the print PDF carries the pixels, unchanged, into the file it writes.
-- **A picture its EXIF says to turn is refused.** Renderers disagree on obeying that tag —
-  Chromium turns an SVG `<image>` by it, others do not — so such a picture would be upright in
-  one viewer and on its side in the next. Save it with the pixels turned instead.
-
-`scenet check` reports every way a picture cannot be read as `image-file`, at the line it is named
-on, without running the solver. In the [playground](https://creatoan.github.io/scenet/playground/),
-**Image…** adds a picture to the document's `art/` folder for as long as the tab is open.
-
-**Time and weather over a picture.** The veil sits over the picture and under the cast, and
-falling rain or snow over everything, exactly as over masses; `time` chooses their tint, and
-whether rain is drawn in ink or paper. The value ladder — aerial perspective — has nothing to apply
-to: a picture's values are the artist's.
-
-**Nothing else moves.** The picture costs a balloon nothing. The compiler does not know what is in
-it, so a balloon may sit anywhere on it; the cast's faces are what lettering keeps clear of. The
-camera frames the cast exactly as it would in front of masses. When the people are in the picture,
-its artwork contract says where — see [Figures the picture draws](#figures-the-picture-draws).
-
-**Linked or embedded.** The SVG names the picture by the path exactly as written, percent-encoded,
-so it is found when the SVG sits beside the document — which is where `scenet build` writes it.
-`scenet build --embed-images` writes the picture's bytes in as a `data:` URI instead, which an SVG
-shown as an `<img>`, turned into a PNG or written anywhere else needs; the playground always embeds.
-Either is byte-identical for the same picture. The link is `xlink:href` rather than SVG 2's plain
-`href`, because Inkscape still does not load a resource named by plain `href`; see
-[prior art](../explanation/prior_art.md#image-in-svg-renderers-and-editors).
-
-**Read aloud.** The picture is part of the panel's one image, `role="img"`, so it adds nothing to the
-accessible name and has no title of its own. A generated description names neither the place nor
-the hour over a picture — the compiler has not seen it — only the weather it drew. Write
-`description:` to say what the picture shows.
-
-### Figures the picture draws
-
-A picture can draw its own people. Cast them with `figure:` in place of `reference:`, and Scenet
-letters them as it letters puppets — balloons in reading order, never over a face, tails to the
-mouth — while drawing nothing of them: the picture already has.
-
-![Two panels: Ana and Ben as puppets in a street at night, then the same two as a picture draws them, lettered from its artwork contract](../images/gallery/51-puppets-to-figures.strip.svg)
-
-**In the gallery:** [From puppets to figures](../gallery.md#from-puppets-to-figures).
-
-```{code-block} yaml
-:caption: Part of a panel beside art/p01-street.png and art/p01-street.art.yaml
-
-setting: {image: art/p01-street.png}
-cast:
-  ana: {figure: ana}          # in place of reference:
-  ben: {figure: ben}
-script:
-  - say: {by: ana, text: "Where are we?"}
-  - say: {by: ben, text: "Somewhere they won't look."}
-```
-
-Where each face, mouth and body is, the panel does not say — it never writes a coordinate. The
-picture's [artwork contract](asset_contract.md#artwork-contracts) does: a file beside the picture,
-named after it, `art/p01-street.art.yaml`, measured once in the picture's own pixels and
-committed with it. `figure:` names a figure it declares. The contract is read only for a panel
-whose cast names a figure, and its geometry goes through the picture's `fit`, so a face is
-excluded exactly where the picture draws it, under `cover` and `contain` alike.
-
-**Everybody the contract declares is in the picture.** A face nobody cast is as forbidden to
-lettering as a speaker's, and a body as costly to cover: a crowd of five can be declared and two of
-them cast. The other way round, a cast figure the panel's picture does not draw is simply not in
-that panel — as a member written `(OP)` is not — so a script's front matter or a scene's defaults
-can cast every figure of a chapter, and each panel holds those its own picture draws. A line spoken
-there by one it does not draw is `unknown-figure`, listing who the picture does draw; that is where
-a misspelt name is caught. A figure in a panel with no picture is `unknown-figure` too.
-
-**What does not apply.** The artist already framed, posed and staged everybody in the picture:
-
-- **No camera.** The shot is whatever the picture shows. `camera:` on a panel whose cast is all
-  figures is refused, as `figure-staging`, a key with no effect; a panel that inherits one writes
-  `camera: null`. A generated description says no shot.
-- **No staging.** A relation naming a figure — `left_of`, `looking_at` and the rest — is refused,
-  as `figure-staging`.
-- **No posing.** `pose`, `expression`, `marks`, `at` and `facing` are a puppet's, and refused beside
-  `figure`, as is `reference`: a member is one or the other (`conflicting-cast`). A member inherited
-  as a puppet becomes a figure with `reference: null` beside its `figure`.
-- **No gaze.** A contract declares none, so nothing keeps a balloon out of a figure's line of sight.
-- **No mixed casts.** A cast is all puppets or all figures (`conflicting-cast`): staging and the
-  camera would place a puppet over a painted face they cannot see. One figure is one person, played
-  by one member.
-
-**Keep-out regions** in the contract are ground lettering pays to cover, weighted as emanata are —
-a sign, a hand, what the panel is about — and never forbidden: a crowded panel covers one before it
-fails.
-
-**A `cover` crop** can push a face or a mouth out of the panel. Lettering stays inside the panel as
-always, and a face is kept clear for whatever part of it is in view. A tail to a mouth cropped
-away ends on the frame, aimed at it, and `scenet build` says so in a note; `fit: contain` shows the
-whole picture.
-
-`scenet check` reads the contract without running the solver, and reports a missing or malformed one
-as `artwork-contract`: in the contract itself, at the line of the fault, when the document is checked
-as a file; at the line naming the picture when it is checked as text, as in the playground or over
-MCP. The debug overlay (`scenet build --debug`) draws every face, mouth, body and keep-out over the
-panel, which is how a contract is checked against its picture.
+Now at [Figures the picture draws](language/setting.md#figures-the-picture-draws).
 
 ## `cast`
 
-A mapping of actor id to properties. Ids are chosen by the author and referenced everywhere else.
+Now at [`cast`](language/cast.md#cast).
 
-![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](../images/gallery/11-poses.svg)
+## `marks`
 
-**In the gallery:** [Poses and facing](../gallery.md#poses-and-facing), [Ten expressions](../gallery.md#ten-expressions) and [A face](../gallery.md#a-face).
+Now at [`marks`](language/cast.md#marks).
 
-| Key | Type | Meaning |
-|---|---|---|
-| `reference` | asset name, or a `.puppet.yaml` path | Which puppet to pull from the library, or a [puppet file of your own](#a-puppet-of-your-own), relative to the document |
-| `figure` | figure name | Instead of `reference`: a figure the panel's picture draws, as its [artwork contract](asset_contract.md#artwork-contracts) names it. See [Figures the picture draws](#figures-the-picture-draws) |
-| `pose` | pose name | A named joint configuration declared by that puppet |
-| `expression` | expression name | A named face declared by that puppet |
-| `marks` | list of marks | Emanata drawn around the character: `plewds`, `squeans`, `grawlixes`, `briffits` |
-| `at` | anchor | Horizontal placement preference |
-| `facing` | `left`, `right` | Which way the figure is turned |
+## A puppet of your own
 
-`at` accepts `left_third`, `center`, `right_third`, `left_edge`, `right_edge`. It is a
-**preference, not a command** — see [conflicts](#when-constraints-conflict).
-
-`expression` is selected by name exactly as `pose` is, because a face is the same kind of thing as a
-body: a small closed set of arrangements a character can be in. The shipped puppets declare ten —
-`neutral`, `happy`, `laughing`, `coy`, `bored`, `scared`, `sad`, `angry`, `shouting`, `surprise` —
-and it defaults to `neutral`. They are a **drawing convention**, the small closed set of faces comics
-actually draw, and not a claim about what a person feeling anger looks like. What a face is made of,
-and how to give your own puppet one, is in the [asset contract](asset_contract.md#faces).
-
-A character's pupils follow whoever they are `looking_at`. Nothing else about the face depends on the
-rest of the panel, and nothing about the face changes the layout: to the solver a face is still one
-disc that balloons may not cover.
-
-### `marks`
-
-```yaml
-cast:
-  alice: {reference: alice, expression: angry, marks: [grawlixes, plewds]}
-```
-
-![Alice and Bob in four panels with marks drawn round them: sweat, an oath, dizziness, and dust where one has gone](../images/gallery/23-emanata.strip.svg)
-
-**In the gallery:** [Emanata](../gallery.md#emanata).
-
-`marks` are what a comic draws *around* a character rather than on them. The vocabulary is Mort
-Walker's, from *The Lexicon of Comicana*, and it is closed:
-
-| Mark | What is drawn | What it says |
-|---|---|---|
-| `plewds` | Droplets flying off the head, mostly off the back | sweating: effort, heat, nerves |
-| `squeans` | Little starbursts and circles in an arc over the head | dizzy, drunk, or sick |
-| `grawlixes` | A spiral, a star, a bolt and a `#` over the head | swearing |
-| `briffits` | Puffs of dust at the feet, behind the figure | gone, fast |
-
-They are a **list**, not a second `expression:`, because they compose: a character can be angry *and*
-sweating. Order does not matter, and a mark listed twice is an error. They need nothing from the
-puppet — every mark is placed from the face circle, the facing and the feet — so every character can
-have every mark. In a scene, `marks: []` under `over:` clears the ones a panel inherited, because
-lists replace rather than merge.
-
-Emanata are drawn **outside** the head, in the space balloons are placed in, so unlike a face they
-matter to the layout — but only softly:
-
-- **They never move anybody.** They stay out of the hull, so staging, the camera and every figure are
-  exactly where they would be without them.
-- **A balloon prefers not to cover them.** Each mark has a zone the solver reads as a cost, weighted
-  above covering a body, with no forgiveness for the speaker. A crowded panel still compiles: a balloon
-  covers a mark before it fails.
-- **The camera makes no room for them.** It frames by body landmarks, so a tight shot — or the head of
-  the tallest character, which the frame is fitted to — can crop marks over the head, and a shot that
-  cuts at the waist leaves briffits below the frame. `scenet build` reports any mark that runs off the
-  panel.
-
-At a wide framing a plewd is a dot: below a head size, each mark collapses to a dot where it would
-have been drawn, and a character too small to have a face has no marks at all. See the
-[asset contract](asset_contract.md#emanata).
-
-An oath written in a balloon — `"@#$%!"` — is dialogue, and already works. `grawlixes` is the other
-convention, the symbols over a head.
-
-A cast member may instead be a figure the panel's picture draws, written `figure:`; see
-[Figures the picture draws](#figures-the-picture-draws) for what applies to it and what does not.
-
-### A puppet of your own
-
-`alice` and `bob` are shipped. A character of your own is a `*.puppet.yaml` file — a skeleton, the
-parts drawn on it, a face, and the poses and expressions it can take — and a cast member names it by
-its path:
-
-```{code-block} yaml
-:caption: Part of a panel beside puppets/pip.puppet.yaml
-
-cast:
-  alice: {reference: alice}
-  pip:   {reference: puppets/pip.puppet.yaml, pose: waving}
-```
-
-![A page of five panels: Pip, a puppet five heads tall from a file beside the document, beside Alice on the docks at dusk](../images/gallery/69-a-puppet-of-your-own.page-1.svg)
-
-**In the gallery:** [A puppet of your own](../gallery.md#a-puppet-of-your-own).
-
-- **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A path
-  is never a name, so no file shadows `alice` or `bob`.
-- **The path is read as a font's is**: relative to the folder the document is in, wherever `scenet`
-  was run from, with `/` between folders, never absolute — so a document and its puppets travel
-  together, and `../puppets/` reads a folder of characters several documents share. Text compiled
-  with no file behind it names a puppet only when its caller says which folder it belongs to, or
-  hands the file over with it.
-- **Only what the cast names is read**, once however many members it draws.
-- **`pose` and `expression` are the file's own** names, held to it exactly as a shipped puppet's are.
-- **A puppet of another height shares the ground only when staging says so**, with
-  `ground_shared_with`: framed alone, each figure's head is under the top of the panel.
-- **Panel Core records the reference as written**, for the actor and for the camera composed on
-  it. Nothing else of the file reaches the output but the figure drawn.
-
-A file that is absolute, missing or not a puppet is `puppet-file`: in the puppet file, at the key
-that is wrong, when the document is checked as a file, and on the line naming it otherwise. In the
-[playground](https://creatoan.github.io/scenet/playground/), **Puppet…** adds a file to the
-document's `puppets/` folder for as long as the tab is open; over MCP it is sent in `files`. What the
-file holds is in [Add your own character](../howto/add_your_own_character.md), and the gallery's
-`69-a-puppet-of-your-own.scene.yaml` casts one.
-
-`reference`, `pose` and `expression` are validated against the puppet library, not just against the
-language's own grammar — a misspelled pose is a perfectly good string as far as the grammar is
-concerned, so nothing at that level can tell `pointing` from `smirking`. `scenet check` resolves the
-library and reports an unmatched name as `unknown-puppet`, `unknown-pose` or `unknown-expression`,
-each naming the field and, for `pose` and `expression`, listing the names that puppet does declare.
-A puppet file is read to resolve them the same way. See [`scenet check`](cli.md#scenet-check).
+Now at [A puppet of your own](language/cast.md#a-puppet-of-your-own).
 
 ## `staging`
 
-A list of relations between actors, written `subject predicate object`. This is a scene graph: the
-cast are nodes, these are the edges. Predicates come from the spatial subset of the Visual Genome
-vocabulary rather than being invented here, so a Scenet scene remains convertible to and from the
-scene-graph representations used elsewhere in computer vision.
+Now at [`staging`](language/staging.md#staging).
 
-![Alice points at Bob and the two look at each other; their balloons keep clear of the space in front of their eyes](../images/gallery/07-gaze.svg)
+## Why ordering must be explicit
 
-**In the gallery:** [Gaze steers balloons](../gallery.md#gaze-steers-balloons), [Feet align, heads do not](../gallery.md#feet-align-heads-do-not), [Depth and overlap](../gallery.md#depth-and-overlap) and [Staging, spelled out](../gallery.md#staging-spelled-out).
-
-| Predicate | Effect |
-|---|---|
-| `left_of`, `right_of` | Fixes horizontal ordering |
-| `in_front_of`, `behind` | Fixes draw order and occlusion |
-| `looking_at` | Sets the subject's gaze vector toward the object — who may be somebody heard [from off panel](#off-panel-speech) |
-| `ground_shared_with` | Places both actors on the same ground line |
-
-### Why ordering must be explicit
-
-`left_of` looks redundant next to `at: left_third`, but it is not. The layout engine is a **linear**
-constraint solver, and "A and B must not overlap" is a *disjunction*: A is left of B, **or** B is
-left of A. Linear solvers cannot express that choice.
-
-So the language resolves it instead. By the time the solver runs, ordering is already decided, and
-what reaches the solver is a linear system it can always solve. A `left_of` or `right_of` in
-`staging` decides first. Where staging says nothing, figures stand in the order of their `at:`
-anchors, and two at the same anchor by actor id, in code-point order, so `Bob` stands left of
-`alice`. That is the same on every run, but seldom what was meant: when the order matters, state it
-with `left_of`. This is the reason there is no unordered `beside` predicate, and why any future construct
-must resolve its own ordering in the frontend.
+Now at [Why ordering must be explicit](language/staging.md#why-ordering-must-be-explicit).
 
 ## `script`
 
-An ordered list of narrative events, each tagged by a verb. **Order is meaningful**: it is the order
-the reader reads them, and it constrains where the boxes may be placed.
+Now at [`script`](language/script.md#script).
 
-There are three verbs. `say` puts a line in a balloon; `caption` puts one in a box; `sfx`
-letters a sound effect into the picture.
+## `say`
 
-```yaml
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
-script:
-  - caption: {text: "Midnight. The docks.", kind: locale, prefer: top_left}
-  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
-  - say: {by: bob,   text: "I know.", kind: whisper}
-```
+Now at [`say`](language/script.md#say).
 
-### `say`
+## Off-panel speech
 
-| Key | Type | Meaning |
-|---|---|---|
-| `by` | actor id | Who speaks; the tail points at this actor's mouth. With `off_panel`, the name of somebody nobody draws |
-| `text` | string | The dialogue. Line breaking is computed, not authored. `_word_` stresses a word; see [Emphasis](#emphasis) |
-| `prefer` | zone | A hint about placement, honoured when possible |
-| `kind` | `speech`, `thought`, `whisper`, `shout` | Balloon styling |
-| `size` | `normal`, `small` | `small` for a line muttered or said weakly: smaller type, in a balloon that keeps its room |
-| `off_panel` | `true`, or `left`, `right`, `top`, `bottom` | The speaker is outside the panel; the tail ends on the frame. See [Off-panel speech](#off-panel-speech) |
+Now at [Off-panel speech](language/script.md#off-panel-speech).
 
-![Alice and Bob in four balloons: a dashed whisper, a spiked shout, a speech balloon and a cloud for a thought](../images/gallery/04-balloon-kinds.svg)
+## `caption`
 
-**In the gallery:** [Every balloon kind](../gallery.md#every-balloon-kind), [Placement zones](../gallery.md#placement-zones) and [The other five zones](../gallery.md#the-other-five-zones).
+Now at [`caption`](language/script.md#caption).
 
-`text` is never pre-wrapped by the author. Wrapping is computed from real font metrics during
-compilation, because a balloon's size determines whether it fits where it is wanted — so the
-compiler must decide the line breaks before it can place anything.
+## Emphasis
 
-A double dash, a dash or an ellipsis written as a word of its own — `out --`, `... maybe` — is
-never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
-space before or after it, so it belongs to its word: it stays on the line of the word before
-it, or of the word after it when it opens the balloon. The space is still lettered as written.
+Now at [Emphasis](language/script.md#emphasis).
 
-A line of text, a caption and an actor id may not contain a control character other than tab, line
-feed and carriage return. Each one is written into the SVG, and XML has no way to write those
-characters at all, not even escaped, so a panel holding one is refused with the character named.
+## `sfx`
 
-### Off-panel speech
+Now at [`sfx`](language/script.md#sfx).
 
-```yaml
-cast:
-  bob: {reference: bob}
-script:
-  - say: {by: caller, text: "Open up!", off_panel: left}
-  - say: {by: bob, text: "Who is it?"}
-```
+## Reading order is enforced, not suggested
 
-![Bob in a room at night, answering voices from off panel whose balloons' tails run to the edge of the frame](../images/gallery/32-off-panel.strip.svg)
-
-**In the gallery:** [Off-panel speech](../gallery.md#off-panel-speech) and [Looking off panel](../gallery.md#looking-off-panel).
-
-A speaker who is not drawn has no mouth to point at, so their balloon's tail ends on the frame,
-on their side — Blambot: "the tail of the balloon generally butts against the panel border". Name
-the side, or write `off_panel: true` and the compiler takes the nearer of left and right to where it
-put the balloon — which it puts high on the side reading starts from, top left, or top right in a
-comic read right to left. A side you name is a side of the panel, whichever way it is read. Top and bottom are only ever named: balloons sit high, so "the nearest edge" would
-aim most tails at the top border, which reads as a speaker above.
-
-An off-panel speaker is somebody nobody draws, so `by` is any name and must **not** be in the
-panel's cast: a line marked `off_panel` by somebody who is drawn is `off-panel-speaker`. The
-balloon is placed as a caption is — no mouth to stay near — under the same rules: never over a
-face, inside the margin, in reading order. Its tail reaches past the margin to the frame itself, or
-to the panel's outline when it is slanted.
-
-**Somebody heard from off panel may be looked at**, and by `looking_at` only — nothing else can be
-staged against a figure nobody draws. `bob looking_at carol` turns Bob toward Carol's side of the
-frame, left or right, and aims his eyes straight out of it, up or down for `top` and `bottom`. With
-`off_panel: true` and no side named, Carol is heard from the side Bob faces, so the tail and his
-look agree.
-
-```yaml
-cast:
-  bob: {reference: bob, at: center}
-staging: [bob looking_at carol]
-script:
-  - say: {by: carol, text: Over here!, off_panel: left}
-```
-
-A panel that shares a cast, through `over:` or a scene's defaults, leaves a member out with
-`null`: `cast: {carol: null}`, and Carol is not drawn there — so she may speak from off panel in it.
-Of the relations the panel shares that name her, `bob looking_at carol` still holds while she does,
-and her `off_panel: true` ends on the side she was written to stand on, `at: left_third` being the
-left, unless her line names one; every other relation goes. See
-[Leaving something out](../howto/compile_a_sequence.md#leaving-something-out). A comic script does
-it with `(OP)`.
-
-### `caption`
-
-A caption is the panel speaking in its own voice. It is what lets a panel say *where* and *when* it
-happens without a character having to explain it out loud — which is the thing writers are told not
-to do. Comics solved this long before they had reliable backgrounds.
-
-![Alice and Bob on the docks with four captions: a place and time, an inner voice, a line spoken off panel, and an editor's note](../images/gallery/16-captions.svg)
-
-**In the gallery:** [Captions](../gallery.md#captions), [Caption tones](../gallery.md#caption-tones) and [A yellow caption](../gallery.md#a-yellow-caption).
-
-| Key | Type | Meaning |
-|---|---|---|
-| `text` | string | What the box says. Line breaking is computed, as for dialogue |
-| `kind` | `locale`, `monologue`, `spoken`, `editorial` | What the box is doing |
-| `tone` | `paper`, `pale`, `ink`, `warm` | What the box is filled with. Defaults to `paper` |
-| `prefer` | zone | Where it would like to sit. Unwritten, where reading starts: `top_left`, or `top_right` read right to left |
-| `by` | any name | Who is speaking, for a `spoken` caption only |
-
-The four kinds are the letterers' own vocabulary, taken from Blambot's *Comic Book Grammar &
-Tradition* rather than invented — for the same reason the predicates were taken from Visual Genome.
-Note that "narration", the obvious guess, is not one of them.
-
-| Kind | What it is | How it is set |
-|---|---|---|
-| `locale` | Location and time — "Midnight. The docks." | Italic |
-| `monologue` | A character's inner voice | Italic |
-| `spoken` | Off-panel dialogue | Roman, in quotation marks |
-| `editorial` | The voice of the writer or editor | Italic |
-
-`monologue` has largely replaced the thought balloon in modern comics, so a panel has two ways to
-render an inner voice: a `monologue` caption and a `thought` balloon. Both are correct. They are
-different eras of the same convention, not a duplication.
-
-**Quotation marks are applied by the compiler**, not by you. In a run of consecutive `spoken`
-captions by one speaker, each opens with a quote and only the last one closes — the run is one
-continuous line of off-panel speech, and closing every box would read as a series of interruptions.
-A change of speaker (`by`) ends the run, so each speaker's last box closes, as Blambot asks: end
-quotes "should appear as each speaker finishes". Write the words; the marks are lettering.
-
-**`by` is the one place an actor id is allowed not to resolve.** Everywhere else, naming somebody
-who is not in `cast` is an error. A `spoken` caption's speaker is *off panel* by definition, so
-requiring them to be cast would defeat the purpose. It is accepted only on `spoken`; on any other
-kind it is a mistake and is rejected.
-
-#### `tone`
-
-A caption box is opaque, so its lettering is never the thing at risk — the text sits on the fill
-whatever is behind it. What a tone changes is whether the **box** reads. Against the value ladder
-the `setting` block produces, a white box on a noon sky is 1.16:1: legible, and invisible.
-
-| Tone | Fill | Where it comes from | Lettered in |
-|---|---|---|---|
-| `paper` | `#ffffff` | the paper the panel is printed on — **the default** | ink |
-| `pale` | `#adadad` | the `day` row of the value ladder, far plane | ink |
-| `ink` | `#090909` | the `day` row of the value ladder, foreground | paper |
-| `warm` | `#eeeeee` | the `day` row of the value ladder, atmosphere — yellow under `tinted` | ink |
-
-Three of the four are rungs of the ladder in `solve/backdrop.py`, taken by index rather than restated
-as literals, so lettering and backdrop cannot drift apart as either is tuned. A tone is **fixed, not
-a function of the panel's `time`**: a caption's value is a property of the caption, and letting it
-follow the hour would make the table below a function of the panel.
-
-`ink` produces what letterers call reversed type. **The inversion is decided by the compiler**, by
-contrast, and travels in Panel Core as a resolved value — the same rule and the same reason as
-falling rain, which is inked over a bright sky and papered over a dark one.
-
-Two floors, and only the first is a rule every tone must meet:
-
-- **Lettering, 4.5:1.** A caption's text against its own fill, WCAG AA for body text. This is the
-  contrast a reader actually gets, and every tone in the palette clears it with room — 18.9:1,
-  8.4:1, 19.9:1 and 16.3:1 respectively, and `warm` 16.4:1 on its yellow.
-- **Separation, 3:1.** The box against the plane behind it. *No tone is required to clear this on
-  every rung*, and the default does not: white on a noon sky is the case that motivated the feature.
-  What the palette owes you is an escape from every background the compiler can produce — at least
-  one tone above 3:1 for every rung of every hour — and that is what the test suite checks.
-
-`warm` is the classic yellow `locale` caption. Its value is a rung of the ladder like the others,
-and its lettering is chosen on that grey; under [`palette: tinted`](#palette) its box is drawn in the
-grey's twin, the pale yellow `#fef0a1`, of the same lightness. In `mono` it is the grey, which is
-what a black-and-white reprint does to a yellow caption. `paper`, `pale` and `ink` stay neutral in
-every palette. There is no free-form `fill:`: an open colour field would be this language's one open
-vocabulary and would let you produce an unreadable box.
-
-**Text is set flush left.** This is a *convention*, not a rule the way reading order is: the
-lettering references describe left alignment as the norm while calling it a house preference. It is
-the default because it is what letterers do, and it is recorded here as a choice rather than a law —
-unlike `shot_types.md`, which is normative. Balloons, by contrast, centre their text. Both hold
-in a comic read right to left: its text still reads left to right.
-
-Captions are placed by the same machinery as balloons — the same face avoidance, the same silhouette
-occlusion cost, the same hard reading-order rule — because the placement principles for floating
-text are the ones the balloon solver already implements. What differs is the pull toward the frame:
-a balloon mildly dislikes hugging the panel edge, and a caption is looking for exactly that corner.
-
-### Emphasis
-
-A word written between underscores is stressed, and lettered in **bold italic**:
-
-```yaml
-cast: {alice: {reference: alice}}
-script:
-  - caption: {text: "_Later._ The same corner.", kind: locale}
-  - say: {by: alice, text: "I _told_ you it would rain."}
-```
-
-![Alice, angry, says: I told you it would rain, with told lettered in bold italic](../images/gallery/28-emphasis.svg)
-
-**In the gallery:** [Emphasis](../gallery.md#emphasis).
-
-Bold italic is the letterers' convention for a stressed word: Blambot's *Comic Book Grammar &
-Tradition* notes there is almost no plain bold in comics dialogue. The underscore stands in for
-the underline a script uses, as Dark Horse's script format asks. It works the same in `say` and
-`caption`, in YAML and in a comic script; in an italic caption the stressed word is bold italic
-too.
-
-The stressed word is **measured** in bold italic, not just drawn in it. Bold italic is wider than
-roman, so a stressed word widens its balloon, or pushes the next word onto another line, by
-exactly as much as it is drawn wider. Bold italic is a real font file of the same family, never a
-slant applied to the roman, for the reason the italic caption face is one.
-
-The rules are Markdown's for an underscore:
-
-- An underscore **opens** emphasis when nothing alphanumeric is before it and something other
-  than a space is after it. Inside emphasis, one **closes** it when something other than a space
-  is before it and nothing alphanumeric is after it. A span may run across words: `_told you_`.
-- Any other underscore is just an underscore, so `file_name` and `__init__` are lettered as
-  written, and `\_` writes one anywhere. In a double-quoted YAML string `\_` is YAML's own escape
-  for a no-break space, so write `\\_` there, or use single quotes.
-- Emphasis opened and never closed is refused as `unbalanced-emphasis`, located at the line,
-  rather than guessed at.
-
-Panel Core keeps each line as the plain text it reads as, and records where the face changes
-beside it; see [Panel Core](panel_core.md).
-
-**Why not `*told*`.** Markdown's other marker starts an alias when it opens a YAML value:
-`text: *told* you` does not parse at all. A document that trips on it is told to quote the value
-and use underscores, but `*` is never read as emphasis, because it is also what a typed grawlix
-such as `@#*%!` is made of.
-
-### `sfx`
-
-A sound effect is letters treated as picture. `BLAM` is not dialogue: comics letter sound big,
-angled and outlined, near where it happens, with no balloon.
-
-![Alice and Bob with three sound effects lettered into the picture: KRAK, tok tok tok and WHOOSH](../images/gallery/30-sound-effects.svg)
-
-**In the gallery:** [Sound effects](../gallery.md#sound-effects) and [A sound pulled to a zone](../gallery.md#a-sound-pulled-to-a-zone).
-
-```yaml
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
-script:
-  - say: {by: alice, text: "Get down!"}
-  - sfx: {text: BLAM, from: bob, size: large, rotate: -14}
-  - sfx: {text: tok tok tok, prefer: top_right, size: small, arc: 30}
-```
-
-| Key | Type | Meaning |
-|---|---|---|
-| `text` | string | The sound, lettered exactly as written |
-| `from` | actor id | Who or what it comes from; it is placed near them |
-| `prefer` | zone | Where it would like to sit, with no source, or as a pull with one |
-| `size` | `small`, `medium`, `large` | How loud: 1.6, 2.6 or 4 times the dialogue type size. Defaults to `medium` |
-| `rotate` | degrees, -45 to 45 | Turned clockwise. Defaults to level |
-| `arc` | degrees, -120 to 120 | Bent along a curve: positive bows the middle up, negative down |
-| `hollow` | `true` or `false` | All outline and no fill, so the art shows through |
-
-It is lettered in the **display face**, Bangers, which ships with Scenet; `lettering.font` can name
-another as `display:`. A solid effect is ink with a paper outline around every letter, so it reads
-over light art and dark alike; a hollow one is the outline alone, in ink. The arc and the rotation
-are applied to the glyph outlines, not handed to a renderer, so they come out the same everywhere.
-
-**It is placed, never positioned.** As with every box, the compiler tries candidate positions —
-around the actor it comes from, around the zone it prefers, the middle of every zone — and keeps the
-cheapest. It **never covers a face**, never leaves the panel or lies under an inset, and two effects
-never overlap; it may cover a figure, and prefers its own source's to anyone else's. When nothing
-fits, it is reported as `sfx-placement`.
-
-**Balloons pay to cover it, and nobody moves for it.** Effects are placed before any balloon or
-caption, since they are part of the picture; a balloon or caption then pays to cover one, exactly as
-it pays to cover emanata, and is never forbidden to. No figure and no framing changes.
-
-Size is a multiple of the type size, not of the figure, so an effect reads at a long shot as well as
-at a close-up. Nothing is added to the text: no exclamation mark, since sound effects are not
-exclamations, and no emphasis — an underscore here is just an underscore.
-
-### Reading order is enforced, not suggested
-
-Balloons and captions are placed in script order, in one pass, and a box may never sit
-above-and-left of the one before it — above-and-*right*, in a comic read right to left (see
-[`direction`](#direction)). Violating this is not a cosmetic flaw: it makes the panel read
-in the wrong order, which is a correctness bug in a comic. The constraint is therefore hard, and a
-panel whose boxes cannot be placed without breaking it is rejected rather than rendered wrongly.
-
-![Four balloons, First, Second, Third and Fourth, placed so that they read in that order](../images/gallery/06-reading-order.svg)
-
-**In the gallery:** [Reading order](../gallery.md#reading-order).
-
-Captions take their turn in that sequence rather than being placed first as a layer. A caption
-written between two lines of dialogue is read between them; one written last is read last.
-
-A sound effect takes its number in the same sequence — which is the order a reader of the text, or a
-screen reader, follows — but is exempt from the geometric rule. A sound sits where the sound is, and
-holding it to above-and-left would make many panels impossible to letter. Read right to left, it
-stays exempt, and stays where it was: a sound is part of the picture, which is not mirrored.
-
-That sequence is what a screen reader hears. Every SVG names each panel with its
-[description](#description) and then every balloon, caption and sound effect in this order —
-`Caption: Midnight. Alice: You forgot your umbrella! Bob, whispering: I know.` — whatever order
-they are painted in; see [accessible output](../howto/make_accessible_output.md).
+Now at [Reading order is enforced, not suggested](language/script.md#reading-order-is-enforced-not-suggested).
 
 ## `description`
 
-What the panel shows, in words, for a reader who cannot see it.
-
-![Late at night, Bob points at something off to the side, beaming, while Alice watches him, bored](../images/gallery/45-a-description.svg)
-
-**In the gallery:** [A description](../gallery.md#a-description).
-
-```yaml
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
-description: Alice and Bob face each other on a rainy street corner. She is exasperated.
-```
-
-| Key | Type | Meaning |
-|---|---|---|
-| `description` | text | One paragraph of prose. Runs of whitespace, line breaks included, are read as one space |
-
-**It is carried, never interpreted.** Nothing is drawn from it — the rain comes from `setting`, the
-exasperation from `expression` — exactly as a comic script's prose is never read by the compiler.
-What it is for is accessible output: it is the first thing a screen reader says about the panel,
-before what is said in it.
-
-In a [comic script](../howto/write_a_comic_script.md#prose-is-never-interpreted) a panel's prose is
-its description, unless an `@description:` directive says something else. Left out, accessible
-output says what the panel holds — the shot, the setting, and who is where, doing what.
-
-**It describes one panel**, so it is never inherited:
-
-- written beside `panels:`, where every panel would inherit it, it is refused as `unknown-key`;
-- a panel drawn `over:` another does not take its parent's. It is a different picture, and the
-  parent's words would be wrong to exactly the reader who cannot see that they are.
-
-An empty one is refused, since it would describe the panel with nothing; leave it out instead. Like
-dialogue, it may not hold a character an SVG cannot hold.
+Now at [`description`](language/description.md#description).
 
 ## `lettering`
 
-How the lettering is set: its size, and the face it is set in.
+Now at [`lettering`](language/lettering.md#lettering).
 
-![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](../images/gallery/14-lettering.svg)
+## `font`
 
-**In the gallery:** [How lines break](../gallery.md#how-lines-break) and [Type size](../gallery.md#type-size).
+Now at [`font`](language/lettering.md#font).
 
-```{code-block} yaml
-:caption: Part of a panel beside fonts/
+## Capitals are yours to set
 
-lettering:
-  size: 30
-  font: {regular: fonts/Comic-Regular.ttf, italic: fonts/Comic-Italic.ttf}
-```
-
-| Key | Type | Meaning |
-|---|---|---|
-| `size` | number above 0 | The dialogue type size, in panel units. Captions keep their proportion to it, 30 parts in 35 |
-| `font` | path, or `regular`, `italic`, `bold_italic`, `display` | The font files to letter in, relative to the document |
-
-Left out, dialogue is lettered at 3.5% of the height the panel letters against and captions at
-3% — the panel's own height alone, one tier of a three-tier page on a page. That is a good default
-and a bad only choice: a page of tight panels wants smaller type, a children's comic larger, and
-neither is something the compiler should guess.
-
-`size` is in the same units as `panel.size`, which on a page are the page's, since a panel there is
-compiled at its frame's size. Set beside `panels:`, it is a default every panel inherits, which is
-how a whole page letters at one size you chose. Set on one panel, it letters that panel alone. In a
-comic script, put it in the front matter for every panel, or in an `@lettering:` directive for one.
-
-The type is measured at exactly this size, so it decides how big every balloon is. A size too large
-for the panel leaves a balloon nowhere to go, which `scenet check --deep` reports as
-`balloon-placement`.
-
-### `font`
-
-Scenet letters in Source Sans Pro unless you name a face of your own. A font is always a **file you
-name**, never a font installed on the machine: what is measured has to be the same everywhere, or the
-same document would letter differently on two computers.
-
-![Two panels of Alice and Bob lettered in Comic Neue: dialogue, a caption and the sound CLUNK](../images/gallery/42-your-own-font.strip.svg)
-
-**In the gallery:** [Your own font](../gallery.md#your-own-font).
-
-```{code-block} yaml
-:caption: Part of a panel beside fonts/
-
-lettering: {font: fonts/Comic-Regular.ttf}           # one file for every face
-```
-
-Or a file for each face:
-
-```{code-block} yaml
-:caption: Part of a panel beside fonts/
-
-lettering:
-  font:
-    regular: fonts/Comic-Regular.ttf                 # dialogue, and spoken captions
-    italic: fonts/Comic-Italic.ttf                   # every other caption kind
-    bold_italic: fonts/Comic-BoldItalic.ttf          # emphasis
-    display: fonts/Shout.ttf                         # sound effects
-```
-
-- **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
-  `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out of
-  it. An absolute path is refused, so a document and its fonts move together, and a server compiling
-  documents it is sent cannot be pointed at its own files. Folders are separated by `/`, never `\`,
-  which only Windows reads as a separator: a backslash is refused, so a document finds its files
-  on every system or on none. Text compiled with no file behind it — by
-  the MCP server, say — has no folder, so it can name a font only when its caller says which
-  folder it belongs to, or sends the file with it.
-- **A face you do not name stands in from one you do.** Italic captions are set in `regular`;
-  emphasis in `italic`, or in `regular` when there is no italic. A family from one file stays one
-  family, rather than mixing your face with the shipped one. When a stand-in is actually used, the
-  compiler says so.
-- **TrueType or OpenType**, with a Unicode character map, since every line is measured against it
-  — kerning included. A path that is absolute, missing, or not such a font is reported as
-  `font-file`, at the face that names it.
-
-Panel Core records each face by its family, style and a digest of its bytes, never by where the file
-was; see [Panel Core](panel_core.md). Rendering needs the same files, and refuses a panel whose
-fonts it was not given rather than draw its lettering in a face it was not measured in. `scenet
-build` and the playground hand them over for you. `--live-text` names your font's family.
-
-The faces letterers use are mostly commercial, or free only on their own terms. You can name one;
-Scenet can only ship a face whose licence allows it, which is why Source Sans Pro, under the SIL
-Open Font License, is the default. In the [playground](https://creatoan.github.io/scenet/playground/),
-**Font…** adds a file to the document's `fonts/` folder for as long as the tab is open.
-
-### Capitals are yours to set
-
-Comics are conventionally lettered in capitals, and Scenet sets exactly what you type. It does not
-uppercase for you, because doing it well is not a case conversion: the personal pronoun "I" takes a
-crossbar that every other capital I does not, and choosing between the two needs a font with both
-forms and the contextual substitution that picks one, which only a full text shaper performs.
-Scenet applies no glyph substitution at all, so a face that picks its crossbar "I" contextually will
-not pick it here either. Write in capitals if you want them.
+Now at [Capitals are yours to set](language/lettering.md#capitals-are-yours-to-set).
 
 ## `direction`
 
-Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the
-top right, as manga are. It is the comic's **progression**, not the direction of its text: a manga
-translated into English still reads right to left, while the words in each balloon read left to
-right. Vertical Japanese lettering is not part of it.
-
-![A page of eight panels read from the top right: Hana and Ken on a street at night, in the rain](../images/gallery/36-right-to-left.page-1.svg)
-
-**In the gallery:** [Right to left](../gallery.md#right-to-left) and [The same page, left to right](../gallery.md#the-same-page-left-to-right).
-
-```yaml
-direction: rtl
-cast:
-  hana: {reference: alice, at: right_third, facing: left}
-  ken: {reference: bob, at: left_third}
-script:
-  - say: {by: hana, text: You came.}
-  - say: {by: ken, text: You called.}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `direction` | `ltr` or `rtl` | `ltr` |
-
-The words are EPUB's, whose `page-progression-direction` says the same thing about a book. Like
-EPUB's, it is said **once, for the whole document**: at the top of a single panel, beside
-`panels:` in a scene, where every panel inherits it, or in a comic script's front matter. A panel
-may not have one of its own — a page read one way holding a panel read the other has no order a
-reader could follow — so a panel under `panels:` that writes `direction`, even the document's
-own, and a script's `@direction:` are reported as `panel-direction`.
-
-Only what reading decides follows it. **The scene is never mirrored**: figures, gaze, staging, the
-camera, tails and sound effects stay exactly as staged, and every word that names a place on the
-panel means the same place either way — `at:`, `left_of`, `facing:`, `prefer:`, a side for
-`off_panel`, an inset's corner. Panel Core and Page Core record `direction` when it is `rtl`.
-
-What follows it, in a panel:
-
-- **[Reading order](#reading-order-is-enforced-not-suggested)**: a box may never sit above and
-  *right* of one before it.
-- **Where an unplaced box would rather start**: a caption with no `prefer`, and a voice from
-  [off panel](#off-panel-speech) with no side named, go top right — where reading starts.
-- **Every tiebreak reading decides.** When two places cost exactly the same, the one tried first
-  wins, and right to left they are tried in the mirrored order. So the mirror image of a panel,
-  read right to left, is lettered as the exact mirror of the original read left to right.
-- **The description** names the cast in reading order, from the right; "left" and "right" still
-  say where each one stands.
-
-And on a [page](#page-and-pages): each tier's panels from the right, the pages of a document side
-by side from the right, and a strip from the right — each still written in reading order, the
-order a screen reader follows.
+Now at [`direction`](language/direction.md#direction).
 
 ## `palette`
 
-What a panel is drawn in: the value ladder in grey, as every panel has always been, or in colour.
-
-```yaml
-cast: {alice: {reference: alice}}
-palette: tinted
-setting: {place: docks, time: dusk}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `palette` | `mono` or `tinted` | `mono` |
-
-![The docks at dawn in fog, rose; at noon, blue under a pale sky; at dusk, orange behind deep violet; at midnight in rain, blue all the way back](../images/gallery/40-tinted-hours.page-1.svg)
-
-**In the gallery:** [Every hour in colour](../gallery.md#every-hour-in-colour) and [A flashback in grey](../gallery.md#a-flashback-in-grey).
-
-**Colour is a twin of value, never a replacement.** Under `tinted`, every value on the
-[ladder](#time-and-weather) is drawn in a colour with the same OKLab lightness, on the same rung, at
-the same hour. In monochrome a tinted panel is the mono one, value for value: the ladder stays
-monotonic in depth, and every contrast floor still holds — checked on the colours themselves, which
-weigh a little less than their greys in WCAG's luminance.
-
-Each hour has two hues: the shadow's, at the foreground, and the atmosphere's, at the sky. The
-planes between move from one to the other, the hue the short way round the circle and the chroma in
-a straight line, so with distance colour drifts toward the colour of the air. It is aerial
-perspective in colour as well as in value, and the painters' warm light and cool shadow:
-
-| `time` | Shadow | Atmosphere |
-|---|---|---|
-| `dawn` | blue violet | rose gold |
-| `day` | blue grey | sky blue |
-| `dusk` | violet | orange |
-| `night` | blue | blue |
-
-Chroma is capped at what a screen can show at each lightness, and that cap, not a tuning, is what
-drains the colour out of the dark end of night and out of a noon sky.
-
-**What it tints:** the masses of a setting, the veil of fog or cloud, falling rain, and the box of a
-[`warm` caption](#caption). **What it never tints:** snow, which is white by convention, the paper, the
-puppets, a supplied picture, and all lettering — balloons, the words in captions, and sound effects.
-Lettering stays on the black plate a printer wants it on.
-
-**Every decision is made on the grey.** Which rung a mass takes, whether rain is inked or papered,
-where a balloon goes and what a caption is lettered in are all settled before the palette is
-consulted, so a palette moves nothing. [Panel Core](panel_core.md) keeps each grey where it always
-was and adds the colour beside it. `scenet build --mono` draws the greys and ignores the colours: a
-black-and-white edition of a book in colour, byte for byte what `palette: mono` writes, made without
-editing a document. The [exports for image models](../howto/export_for_image_models.md) are the same
-in every palette, except that the semantics names one that is not `mono`.
-
-It is written where [`lettering`](#lettering) is: at the top of a panel, beside `panels:` in a
-scene, where every panel inherits it, or in a comic script's front matter. Unlike
-[`direction`](#direction), **a panel may have its own**, in a scene or as a script's `@palette:`.
-A page read two ways has no order a reader could follow, but a page in two palettes is a
-convention: the flashback in grey.
-
-![A page in colour, the street at dusk with a yellow caption; its middle panel, ten years earlier, in grey](../images/gallery/41-flashback.page-1.svg)
-
-A palette with nothing to tint — no `setting`, or a supplied picture under a clear sky — is not a
-mistake and is not reported: it is a choice for the whole document, and changing it never makes a
-document invalid.
-
-**`mono` is the default**, so no panel written before palettes existed draws any differently.
-**There is no free-form colour.** `palette` is a closed set of names for the same reason `tone` is:
-an open colour would be the language's one open vocabulary, and would let a value break the ladder.
+Now at [`palette`](language/palette.md#palette).
 
 ## `page` and `pages`
 
-A scene can lay its panels out on pages. `pages:` is a list of pages; each page is a list of
-**tiers**, top to bottom; each tier is a list of panels, in reading order — left to right, or right
-to left for a comic read that way. `page:` is the
-format they share.
-
-![The first of two pages: three panels of Alice and Bob in a street, laid out in tiers](../images/gallery/48-two-pages.page-1.svg)
-![The second page of the same document, its panels named by page and number, one with an inset](../images/gallery/48-two-pages.page-2.svg)
-
-**In the gallery:** [Two pages](../gallery.md#two-pages), [A page made for print](../gallery.md#a-page-made-for-print) and [Panels that bleed](../gallery.md#panels-that-bleed).
-
-A comic script's pages are its `PAGE` headings instead; its front matter takes `page:` but
-not `pages:`. See [Write a panel as a comic script](../howto/write_a_comic_script.md#pages).
-
-A panel's name, its key under `panels:`, is text, as a cast member's id is. YAML reads an
-unquoted `1:` as a number, so a panel named by its number is written `'1':`.
-
-```{code-block} yaml
-:caption: Part of a scene document
-
-page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
-pages:
-  - tiers:
-      - panels: [{use: establishing, width: 2}, reply]
-      - {height: 1.2, panels: [closer]}
-      - panels: [her, him]
-panels:
-  establishing: {...}
-  reply: {...}
-```
-
-| Key | Means | Default |
-|---|---|---|
-| `page.size` | Width and height, in the units a panel uses: the trim, the size the printed page is cut to | `[2000, 3000]` |
-| `page.margin` | The blank border inside the page edge | `100` |
-| `page.gutter` | The gap between two panels side by side in a tier | `40` |
-| `page.tier_gutter` | The gap between two tiers; wider than `gutter`, as in print | `60` |
-| `page.bleed` | How far the printed sheet runs past the trim on every side, so art reaching the edge can be cut cleanly | `0` |
-| `tiers[].height` | The tier's share of the page's height, relative to the other tiers | `1` |
-| `panels[].use` | The name of a panel under `panels:`; writing the name alone means `{use: name}` | |
-| `panels[].width` | The panel's share of its tier's width, relative to its neighbours | `1` |
-| `tiers[].columns` | In place of `panels`: columns side by side, each a stack of panels | |
-| `tiers[].slant` | How far the gutters between its panels lean, in degrees, -30 to 30; positive leans the top right | `0` |
-| `columns[].width` | The column's share of its tier's width | `1` |
-| `columns[].panels[].height` | The panel's share of its column's height | `1` |
-| `insets[].use` | On any panel in a tier or column: a panel set into one of its corners | |
-| `insets[].at` | `top_left`, `top_right`, `bottom_left` or `bottom_right` | |
-| `insets[].size` | Its width and height, as a fraction of its parent's; above 0, at most 0.5 | |
-| `insets[].read` | `after` its parent, or `before` it | `after` |
-| `panels[].bleed`, `columns[].panels[].bleed` | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of sides, such as `[top, left]` | `false` |
-
-Shares work like CSS Grid's `fr` tracks: what the margin and gutters leave is divided in
-proportion to the weights. A splash page is one tier holding one panel.
-
-**Printed, a unit is a tenth of a millimetre.** The default page prints at 200 × 300 mm; a US
-comic's 6.625 × 10.25 inches is `size: [1682.75, 2603.5]`, and a tankōbon's B6 is
-`size: [1280, 1820]`. `bleed` is in the same units: `30` is 3 mm, `31.75` is the 0.125 in US
-printers ask for. It is paper around the page and moves nothing on it: the PDF's TrimBox is the
-page, its BleedBox the page grown by `bleed` on every side. The SVG page is drawn at its trim, as
-before.
-
-**A panel can bleed**: its frame runs past the trim, out to the bleed line, and has no
-border on that side, so its art goes to the edge of the cut page.
-
-![A page whose panels run off its top, left, right and bottom edges, the one beside them bordered all round](../images/gallery/73-panels-that-bleed.page-1.svg)
-
-```{code-block} yaml
-:caption: Part of a scene document
-
-page: {size: [1600, 2400], margin: 80, bleed: 30}
-pages:
-  - tiers:
-      - panels: [{use: wide, width: 2, bleed: [top, left]}, {use: look, bleed: true}]
-      - columns:
-          - panels: [{use: dock, bleed: [left]}, {use: gull, bleed: true}]
-          - {panels: [far]}
-```
-
-`bleed: true` bleeds every side of the frame that reaches the page's margin; a list bleeds those
-sides only, and a listed side that does not reach the margin is a `page-layout` error. The sides
-are the page's, `top`, `bottom`, `left` and `right`, whichever way it is read: the page is never
-mirrored. An inset sits inside its parent, so it cannot bleed.
-
-A bleeding panel is three boxes. Its **frame** runs to the bleed line: that is its size in its
-Core, and what its art, picture, veil and weather cover. What the reader sees stops at the trim,
-so its cast is staged and its camera framed in **the frame out to the trim**, and the trim never
-cuts a shot. Its lettering keeps inside **the frame as it was** before bleeding, inside the panel
-margin, so the page margin stays the safe area for words. Its insets stay where they were. The SVG
-page is drawn at its trim, as it will look once cut; its debug view shows the whole sheet, the trim
-and each bleeding panel's lettering box.
-
-A page needs a `bleed` of its own for its panels to bleed into; with `bleed: 0`, they stop at the
-trim, and print says so.
-
-A tier holds `panels` or `columns`, never both. **Columns** are how a tall panel beside a stack
-of short ones is written: the tier is split across into columns, and each column down into its
-panels, with `tier_gutter` between them.
-
-```{code-block} yaml
-:caption: Part of a scene's tiers
-
-- height: 2
-  columns:
-    - {width: 2, panels: [above, {use: below, height: 2}]}
-    - {width: 1, panels: [falling]}   # spans the tier's whole height
-```
-
-A tier of columns is read column by column and top to bottom in each: `above`, `below`, then
-`falling`. That is the order readers take when a panel spanning the tier blocks the way across
-(about nine in ten of them, in Cohn's 2013 experiments). Two stacks side by side have nothing
-between them blocking the way, and readers go across those instead, so they are refused as
-`page-layout`; write them as tiers, or put a panel that spans the tier between them.
-
-An **inset** is a small panel set into a corner of another and drawn over it:
-
-```{code-block} yaml
-:caption: Part of a scene's tiers
-
-- panels:
-    - use: street
-      insets:
-        - {use: clock, at: top_left, size: 0.2, read: before}
-        - {use: face, at: bottom_right, size: 0.3}
-```
-
-It sits a gutter in from both edges of its corner, ringed by a gutter's width of white. Readers
-split about evenly over whether an inset comes before the panel it sits in or after it (Cohn,
-2013), so it is never guessed: an inset is read right after its parent unless it says
-`read: before`. Here that is `clock`, `street`, `face` — and that is the order the page's SVG writes
-them in, which is the order a screen reader follows. The parent is cut around each inset's ring
-rather than painted under it, so an inset read first is still on top.
-
-The parent's art is drawn exactly as if the inset were not there; only its lettering moves, since
-words under an inset could not be read. When an inset covers a character's face, the compiler
-notes it. Two insets in one panel must stay a gutter clear of each other, and an inset, a gutter
-in from its corner, must fit inside its panel.
-
-A tier of panels can **slant**, for a beat that should not sit square:
-
-```{code-block} yaml
-:caption: Part of a scene's tiers
-
-- {slant: 12, panels: [wind_up, {use: swing, width: 1.3}]}
-```
-
-Every gutter in the tier leans by that many degrees about its centre at the tier's mid-height, so
-the weights share the width out exactly as they would upright, and neighbours share one cut. A
-gutter stays a gutter wide measured across the cut, as paneling tools keep it, and the tier's outer
-edges stay upright. Each frame is then a four-sided shape, convex by construction.
-
-A slanted panel is staged and framed in its bounding box, as a rectangle would be, and cropped to
-its outline the way a margin crops; its lettering stays inside the outline. When the cut runs
-through a character's face, the compiler notes it. A slant needs gutters to lean, so a tier of
-columns, a tier of one panel, and a slanted panel with insets are refused, as is a slant so steep
-that a panel would have no width left at its top or bottom.
-
-**A panel on a page is compiled at its frame's size**, exactly as it would be compiled alone at that
-size: the page decides how big the frame is and nothing about what goes in it. The one other thing
-it decides is **type size**. Alone, a panel letters at a fixed fraction of its own height; on a page
-every panel letters at the same size, as if each were one tier of a three-tier page, because no
-letterer sets a short panel and a tall one at different sizes. A size you set with
-[`lettering`](#lettering) takes its place.
-
-A page is read tier by tier, left to right, and down each column, so the order panels are written
-in is the order they are read in; that holds by construction. A panel can be on one page once. A panel
-on no page is allowed, and compiles as it always did; it may exist only to be inherited from with
-`over:`. A placement naming a panel `panels:` does not define, a panel placed twice, a tier with
-both `panels` and `columns` or neither, two stacks side by side, two insets that overlap, an inset
-too big for its panel, a slant that cannot apply or is too steep, a bleed on a side that does not
-reach the page's margin, or margins and gutters that leave no room are reported as `page-layout`.
-
-**Read right to left.** With [`direction: rtl`](#direction), the same page is read from the top
-right. Panels are still written in reading order, so the first panel of a tier is at its right and
-the last at its left; the first column of a tier of columns is at the right, and each column is
-still read top to bottom — a stack beside a tall panel is read down before across, on the right.
-Each frame is exactly the one a left-to-right page gives that panel with the tier written the other
-way round, so every panel keeps its size, and its art is the art it has read left to right. What
-names a place on the page keeps naming it: an inset's `at:` is a corner of its parent, and a
-positive `slant` leans the top of each gutter right, as written, and a `bleed` names the page's
-own sides, so `bleed: [left]` on a tier's first panel, which right to left is at the right, is
-refused. Any other layout one direction refuses, the other refuses too.
-
-Not yet: frames of any other shape, such as round panels or ones without borders.
+Now at [`page` and `pages`](language/page.md#page-and-pages).
 
 ## When constraints conflict
 
-Placement values are preferences of differing strength, and the solver resolves conflicts by
-priority rather than by failing:
-
-| Strength | Examples |
-|---|---|
-| **Required** | Actors never overlap; declared `left_of` / `right_of` ordering holds; balloons never cover a face; reading order holds |
-| **Strong** | Actors stay inside the panel, but may bleed past its edge when the cast does not fit, which is ordinary comics practice |
-| **Weak** | `at:` anchors, `prefer:` balloon hints |
-
-![Four characters asked for in a close-up, the camera stepped back so that all four fit](../images/gallery/10-crowd-pullback.svg)
-
-**In the gallery:** [The camera retreats](../gallery.md#the-camera-retreats).
-
-So two actors both asked to stand at `center` will be pushed apart rather than overlapping: the
-required non-overlap wins and the weak anchors yield. This is why `at` is documented as a
-preference. If you need a guarantee, express it as a relation in `staging`.
+Now at [When constraints conflict](language/index.md#when-constraints-conflict).
 
 ## Determinism
 
-The same source always compiles to byte-identical output. No wall-clock time, no unseeded
-randomness, no dependence on mapping iteration order. This is what makes a panel description a
-durable artifact rather than a prompt: it will render the same in five years as it does today.
+Now at [Determinism](language/index.md#determinism).
 
-It is the same on every platform too. Every text file Scenet writes, and every document it
-prints for redirecting into one, is UTF-8 with LF line endings, on Windows as on Linux. The print
-PDF is bytes, not text, and is byte-identical in the same way: no date, nothing compressed, an
-`/ID` taken from its content.
+## The contract is on the SVG text, not on pixels
 
-Backdrop silhouettes are generated, so they are seeded — from the declared setting and the panel
-size, through a content hash. Never a clock, and never Python's `hash()`, which is salted per
-process and would agree with itself all day while disagreeing with tomorrow's build.
-
-### The contract is on the SVG text, not on pixels
-
-Worth stating explicitly, because it is exactly the kind of assumption that rots silently.
-
-> **The determinism contract is on the emitted SVG text, which stays byte-identical. It has never
-> been on pixels.**
-
-The `feTurbulence` filter that draws fog and cloud is reproducible *by definition* — SVG has Perlin
-noise built in, the specification includes reference code, and the `seed` is fixed by the compiler
-— so the emitted document is identical every time. In practice browsers agree only
-[approximately](https://tympanus.net/codrops/2019/02/19/svg-filter-effects-creating-texture-with-feturbulence/)
-on what to paint from it. That is fine, and it was already true of every glyph outline and every
-antialiased edge in the file.
-
-Print has no such filter, so it computes the same noise from that reference code and carries it
-in the PDF as an image; the PDF's bytes are a contract like the SVG's text, and what a
-viewer paints from them is not.
-
-Golden-file tests therefore target Panel Core, SVG **text** and the print PDF's bytes, never a
-raster. The print plates Ghostscript renders from the PDF are checked for which ink lands where,
-and never kept as goldens. If a raster check is
-ever wanted, [resvg](https://github.com/linebender/resvg) is the candidate: it supports
-`feTurbulence`, aims at the whole specification rather than the common cases, and ships around 1600
-SVG-to-PNG regression tests — which matters because the W3C SVG test suite was abandoned long ago,
-making resvg's the practical conformance reference.
+Now at [The contract is on the SVG text, not on pixels](language/index.md#the-contract-is-on-the-svg-text-not-on-pixels).

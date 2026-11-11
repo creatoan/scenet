@@ -23,6 +23,7 @@ from scenet.ir import PUPPET_KEYS, Predicate, Relation
 from scenet.places import PLACES, Place
 
 __all__ = [
+    "LANGUAGE_REFERENCE",
     "LAYOUT_KEYS",
     "errors_of",
     "expand_place",
@@ -31,6 +32,11 @@ __all__ = [
     "parse_relation",
     "summarise",
 ]
+
+#: Where the language reference is published, which a finding's help names: the root, which
+#: serves the latest release. A message read in a terminal or an editor has no folder of
+#: documentation beside it, so a path in the repository would lead nowhere.
+LANGUAGE_REFERENCE = "https://creatoan.github.io/scenet/reference/language/"
 
 # `alice left_of bob` -- subject, predicate, object, separated by whitespace.
 RELATION_RE = re.compile(r"^\s*(\S+)\s+(\S+)\s+(\S+)\s*$")
@@ -137,7 +143,7 @@ def expand_place(setting: object) -> object:
         raise PanelSyntaxError(
             "'setting' names a place and lists masses; a place *is* a mass list, so "
             "this asks two questions at once. Write one or the other -- "
-            "docs/reference/language.md prints what each place expands into",
+            f"{LANGUAGE_REFERENCE}setting.html#place prints what each place expands into",
             rule="conflicting-setting",
             loc=("setting", "place"),
         )

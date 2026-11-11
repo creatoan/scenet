@@ -232,7 +232,7 @@ source under [`docs/`](docs/), which GitHub renders without a build step.
 | [Tutorial](docs/tutorial/first_panel.md) | Build a panel from nothing, in fifteen minutes |
 | [Gallery](docs/gallery.md) | Every example, drawn, with its source |
 | [How-to guides](docs/howto/index.md) | Sequences, comic scripts, your own characters, using it as a library |
-| [Language specification](docs/reference/language.md) | Every construct, with examples |
+| [Language specification](docs/reference/language/index.md) | Every construct, with examples |
 | [Shot types](docs/reference/shot_types.md) | Normative camera framing table |
 | [Panel Core](docs/reference/panel_core.md) | The resolved intermediate format |
 | [Asset contract](docs/reference/asset_contract.md) | What a character puppet must declare |

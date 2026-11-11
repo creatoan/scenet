@@ -68,13 +68,17 @@ def anchors(page: Path) -> set[str]:
     return {heading.anchor for heading in headings(page.read_text(encoding="utf-8"))}
 
 
-def sections(text: str) -> list[Section]:
-    """Each `##` and `###` section, with its own text, its `####` subsections included."""
+def sections(text: str, *, titles: bool = False) -> list[Section]:
+    """Each `##` and `###` section, with its own text, its `####` subsections included.
+
+    With `titles`, the page's `#` title is a section too: on a page of the language
+    reference, what comes before the first `##` is the block itself.
+    """
     lines = text.splitlines()
     found = headings(text)
     ends = [heading.line for heading in found[1:]] + [len(lines)]
     return [
         Section(heading, "\n".join(lines[heading.line + 1 : end]))
         for heading, end in zip(found, ends, strict=True)
-        if heading.level > 1
+        if titles or heading.level > 1
     ]

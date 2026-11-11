@@ -270,9 +270,9 @@ NOT_AUTHORABLE: dict[str, str] = {}
 #: schemas' -- written anywhere it may just leave a default as it is -- so they are listed.
 REMOVALS = {
     "document.cast.*": "howto/compile_a_sequence.md#leaving-something-out",
-    "document.camera": "reference/language.md#figures-the-picture-draws",
-    "SettingSpec.place": "reference/language.md#place",
-    "CastMember.reference": "reference/language.md#figures-the-picture-draws",
+    "document.camera": "reference/language/setting.md#figures-the-picture-draws",
+    "SettingSpec.place": "reference/language/setting.md#place",
+    "CastMember.reference": "reference/language/setting.md#figures-the-picture-draws",
 }
 
 

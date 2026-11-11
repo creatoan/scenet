@@ -106,7 +106,7 @@ compilation using real font metrics, so the emitter never re-measures and never 
 solver about how wide a balloon needs to be. For a `spoken` caption the quotation marks are part of
 those lines for the same reason: marks added afterwards would not fit the box drawn for them.
 
-A line with [emphasis](language.md#emphasis) in it is still plain text in `lines`, the text as it
+A line with [emphasis](language/script.md#emphasis) in it is still plain text in `lines`, the text as it
 reads. Beside `lines`, the balloon or caption then carries `runs`: every line cut wherever its face
 changes, so the emitter draws each run in the face it was measured in. The runs of a line must
 spell it exactly, and a Core whose runs do not is refused.
@@ -123,7 +123,7 @@ spell it exactly, and a Core whose runs do not is refused.
 `runs` key at all, so every Core written before emphasis existed reads, and is written, byte for
 byte as before — which is why it needed no `format_version` bump.
 
-A panel lettered in an [author's face](language.md#font) carries `fonts`: each face set in a
+A panel lettered in an [author's face](language/lettering.md#font) carries `fonts`: each face set in a
 font other than the shipped one, by its family and style as the font names them, and the SHA-256 of
 the file. Never a path — where the file was is a fact about one machine.
 
@@ -150,7 +150,7 @@ script order, so a caption between two lines of dialogue takes the number betwee
 balloon list can have gaps in it. A panel with no captions is unaffected, which is why this did not
 need a `format_version` bump.
 
-**A balloon spoken from [off panel](language.md#off-panel-speech) carries `off_panel`**, the side
+**A balloon spoken from [off panel](language/script.md#off-panel-speech) carries `off_panel`**, the side
 of the frame its speaker is on, as the solver settled it: `left`, `right`, `top` or `bottom`. When
 it is set, `speaker` names somebody who is not an actor, so it is not looked up among `actors`, and
 the tail's `end` lies on the frame on that side — on `outline`, when the panel has one. A balloon
@@ -162,7 +162,7 @@ discipline as `capsules`, `blobs` and `face_marks`: the emitter is left with no 
 a backdrop can be read, diffed and hand-adjusted like everything else in this tier. `depth` is the
 same painter's order the actors use, so masses and figures sort into one sequence.
 
-A backdrop that is a [supplied picture](language.md#an-image-behind-the-cast) has an `image` in
+A backdrop that is a [supplied picture](language/setting.md#an-image-behind-the-cast) has an `image` in
 place of masses, and no `horizon`: the compiler does not know where the picture's horizon is, and
 does not pretend to. The solver was told the picture's size and nothing else; what it resolved is
 `box`, the rectangle the picture is drawn in — centred, overhanging the panel under `cover`,
@@ -242,7 +242,7 @@ nothing else changes — which is why they needed no `format_version` bump eithe
 "emanata_zones": [[[150.3, 61.0], [205.8, 70.4], "..."]]
 ```
 
-A panel with [sound effects](language.md#sfx) carries `sfx`, one entry per effect in script
+A panel with [sound effects](language/script.md#sfx) carries `sfx`, one entry per effect in script
 order: its `id` (`s0`, `s1`, ...), its `order` in the one sequence it shares with balloons and
 captions, its `text`, its `source`, its `font_size`, and every letter as a `glyph` — the character,
 the `origin` its baseline starts at, and the `angle` it is turned by. The arc and the rotation are
@@ -264,11 +264,11 @@ A panel with no effects has no `sfx` key, so no `format_version` bump.
 different skylines differ here, and here is where to look.
 
 A panel read right to left carries `"direction": "rtl"`, the reason its lettering is where it
-is: see [`direction`](language.md#direction). A panel read left to right has no `direction` key,
+is: see [`direction`](language/direction.md#direction). A panel read left to right has no `direction` key,
 so every Core written before it reads, and is written, byte for byte as before — no
 `format_version` bump.
 
-A panel drawn in [`palette: tinted`](language.md#palette) carries `"palette": "tinted"`, and beside
+A panel drawn in [`palette: tinted`](language/palette.md#palette) carries `"palette": "tinted"`, and beside
 each value the palette tints, that value's colour: `colour` on each mass, on the atmosphere and on
 its veil, `fall_colour` for rain, and `colour` on a `warm` caption.
 
@@ -338,7 +338,7 @@ like everything else, so the emitter copies them and decides nothing:
 "sfx": [{ "id": "s0", "order": 2, "label": "Sound effect, from Bob: BLAM.", "...": "..." }]
 ```
 
-- **`description`** is the panel's [`description`](language.md#description) when it has one —
+- **`description`** is the panel's [`description`](language/description.md#description) when it has one —
   written, or a comic script's prose — and otherwise generated from what it holds: the shot and
   angle, the place, the hour and the weather, then each figure in reading order (from the right in
   a panel read right to left), by thirds of the panel
@@ -360,7 +360,7 @@ may hold a character an SVG cannot, since Core is hand-edited and both go into t
 
 The atmosphere's `veil` is a set of `feTurbulence` parameters rather than an image, and the filter
 is reproducible by specification. What browsers paint from it agrees only approximately. See
-[the language reference](language.md#the-contract-is-on-the-svg-text-not-on-pixels), where the
+[the language reference](language/index.md#the-contract-is-on-the-svg-text-not-on-pixels), where the
 boundary is stated in full; golden-file tests target this tier, the SVG text and the print PDF's
 bytes, never a raster.
 

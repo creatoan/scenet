@@ -98,7 +98,7 @@ export function exampleIndex(
 /**
  * Where an entry's `doc:` is on the site: the same version's documentation, built.
  *
- * `doc:` names a page of `docs/` as written, `reference/language.md#camera`. Every
+ * `doc:` names a page of `docs/` as written, `reference/language/camera.md#camera`. Every
  * version's playground sits at `playground/` inside that version's documentation, which
  * Sphinx builds page for page into HTML -- so the header's own Documentation link is `../`.
  */

@@ -58,9 +58,12 @@ SITE = "https://creatoan.github.io/scenet"
 #: leftover -- an example deleted from the gallery, say -- and is removed.
 GENERATED_DIRECTORIES = (SKILL / "references", SKILL / "assets")
 
-#: Parts taken from a documentation page, by path under `docs/`.
+#: The language reference: a folder of pages, whose overview's table of contents orders them.
+LANGUAGE = "reference/language"
+
+#: Parts taken from a documentation page, by path under `docs/`. The `language` part is the
+#: language reference's pages, one after another (`_language`).
 DOCUMENT_PARTS = {
-    "language": "reference/language.md",
     "shot-types": "reference/shot_types.md",
     "comic-script": "howto/write_a_comic_script.md",
 }
@@ -72,7 +75,7 @@ SKILL_REFERENCES = ("language", "shot-types", "comic-script", "characters", "dia
 #: The documentation pages `llms.txt` lists, with what each is for. The titles are read
 #: from the pages themselves, so a renamed page cannot leave a stale title behind.
 LLMS_DOCUMENTS = {
-    "reference/language": "every construct of the YAML language",
+    "reference/language/index": "every block and key of the YAML language, a page each",
     "howto/write_a_comic_script": "the comic-script format, which a chat model can write unaided",
     "reference/shot_types": "normative: what each camera shot frames",
     "reference/cli": "`scenet build`, `scenet check`, `scenet schema` and `scenet mcp`",
@@ -94,13 +97,12 @@ GENERATED_NOTICE = (
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 
 
-def _absolute_links(text: str, page: str, site: str = SITE) -> str:
+def _absolute_links(text: str, page: str) -> str:
     """Rewrite every relative link in a documentation page to its published URL.
 
     Args:
         text: The page's Markdown.
         page: Its path under `docs/`, such as `reference/language.md`.
-        site: The version of the site to link: the root, or `<root>/dev`.
 
     Returns:
         The same Markdown, with `shot_types.md#x` become `<site>/reference/shot_types.html#x`.
@@ -116,7 +118,7 @@ def _absolute_links(text: str, page: str, site: str = SITE) -> str:
         resolved = posixpath.normpath(posixpath.join(posixpath.dirname(page), path))
         if resolved.endswith(".md"):
             resolved = resolved.removesuffix(".md") + ".html"
-        return f"]({site}/{resolved}{'#' + anchor if anchor else ''})"
+        return f"]({SITE}/{resolved}{'#' + anchor if anchor else ''})"
 
     return LINK.sub(rewrite, text)
 
@@ -144,6 +146,86 @@ def _plain_captions(text: str) -> str:
     return CAPTIONED.sub(plain, text)
 
 
+def language_pages() -> list[str]:
+    """The language reference's pages, by path under `docs/`: the overview, then its contents."""
+    index = (DOCS / LANGUAGE / "index.md").read_text(encoding="utf-8")
+    toctree = TOCTREE.search(index)
+    if toctree is None:
+        raise ValueError(f"docs/{LANGUAGE}/index.md has no table of contents")
+    entries = [
+        line.strip()
+        for line in toctree.group(1).splitlines()
+        if line.strip() and not line.startswith(":")
+    ]
+    return [f"{LANGUAGE}/index.md", *(f"{LANGUAGE}/{entry}.md" for entry in entries)]
+
+
+#: The opening of a fenced block, inside which a `#` line is not a heading.
+_FENCE = re.compile(r"\s*(`{3,}|~{3,})")
+
+#: A page's table of contents, a MyST directive, and the entries it lists.
+TOCTREE = re.compile(r"```\{toctree\}\n(.*?)```\n?", re.DOTALL)
+
+
+def _demoted(text: str) -> str:
+    """A page with every heading one level deeper, its title become a section of the part."""
+    lines = []
+    fence = ""
+    for line in text.splitlines(keepends=True):
+        if fence:
+            if re.fullmatch(rf"\s*{re.escape(fence[0])}{{{len(fence)},}}\s*", line):
+                fence = ""
+        elif (opening := _FENCE.match(line)) is not None:
+            fence = opening.group(1)
+        elif line.startswith("#"):
+            lines.append("#" + line)
+            continue
+        lines.append(line)
+    return "".join(lines)
+
+
+def _within_the_part(text: str, page: str, titles: dict[str, str]) -> str:
+    """Point a link to another page of the language reference at its heading in the part.
+
+    The pages are one part of the pack, so `camera.md#camera` is a heading a few screens
+    down, not a page of the site; a link to a page alone goes to its title.
+    """
+
+    def rewrite(match: re.Match[str]) -> str:
+        target = match.group(1)
+        if re.match(r"[a-z][a-z0-9+.-]*:|#", target):
+            return match.group(0)
+        path, _, anchor = target.partition("#")
+        resolved = posixpath.normpath(posixpath.join(posixpath.dirname(page), path))
+        if resolved not in titles:
+            return match.group(0)
+        return f"](#{anchor or titles[resolved]})"
+
+    return LINK.sub(rewrite, text)
+
+
+def _language() -> str:
+    """The `language` part: every page of the language reference, in its own order."""
+    pages = language_pages()
+    texts = {page: (DOCS / page).read_text(encoding="utf-8") for page in pages}
+    titles = {
+        page: _slug(next(line for line in text.splitlines() if line.startswith("# "))[2:])
+        for page, text in texts.items()
+    }
+    joined = []
+    for page in pages:
+        text = _absolute_links(_within_the_part(texts[page], page, titles), page)
+        # The overview's toctree lists the pages that follow it, which is what the part does.
+        text = TOCTREE.sub("", text)
+        joined.append(text if page.endswith("/index.md") else _demoted(text))
+    return _plain_captions("\n".join(part.rstrip("\n") + "\n" for part in joined))
+
+
+def _slug(heading: str) -> str:
+    """A heading's anchor, as MyST and GitHub make it."""
+    return re.sub(r"[^\w\- ]", "", heading.strip().lower().replace(" ", "-"))
+
+
 def _title(page: str) -> str:
     """The first top-level heading of a documentation page."""
     for line in (DOCS / f"{page}.md").read_text(encoding="utf-8").splitlines():
@@ -169,14 +251,14 @@ def _named_files(entry: dict[str, Any]) -> list[str]:
     return list(entry.get("files", []))
 
 
-def _preamble(site: str) -> str:
+def _preamble() -> str:
     puppets = ", ".join(f"`{name}`" for name in default_library().names())
     contents = "\n".join(f"- `{name}` — {description}" for name, description in SPEC_PARTS.items())
     return f"""\
 # Scenet specification pack
 
 Everything needed to write a Scenet panel, in one file. Published at
-<{site}/scenet-spec.md> and regenerated from the project's own sources on every build,
+<{SITE}/scenet-spec.md> and regenerated from the project's own sources on every build,
 so it describes the language the compiler actually accepts.
 
 > This project is deliberately AI-generated: the compiler, its documentation and this
@@ -253,7 +335,7 @@ def _default(field: str) -> str:
     return str(CastMember.model_fields[field].default)
 
 
-def _characters(site: str) -> str:
+def _characters() -> str:
     library = default_library()
     rows = []
     for name in library.names():
@@ -277,8 +359,8 @@ def _characters(site: str) -> str:
         "declares its own poses and expressions, and a member names those. Over MCP, send "
         "it in `files` by that path, and `list_puppets` given the same `files` lists it "
         "with them. A fault in it is `puppet-file`. What a puppet file holds is in "
-        f"[the asset contract]({site}/reference/asset_contract.html) and "
-        f"[Add your own character]({site}/howto/add_your_own_character.html); the gallery's "
+        f"[the asset contract]({SITE}/reference/asset_contract.html) and "
+        f"[Add your own character]({SITE}/howto/add_your_own_character.html); the gallery's "
         "`69-a-puppet-of-your-own.scene.yaml` casts one, printed after it.\n\n"
         "## Figures a picture draws\n\n"
         "A cast member may instead be `figure: <name>`: somebody a supplied picture "
@@ -288,7 +370,7 @@ def _characters(site: str) -> str:
         "Over MCP, send the contract in `files` with the picture. A figure takes no `pose`, "
         "`expression`, `marks`, `at` or `facing`, no staging names it, and a panel whose "
         "cast is all figures has no `camera`; a cast does not mix figures and puppets. See "
-        f"[the artwork contract]({site}/reference/asset_contract.html#artwork-contracts) and "
+        f"[the artwork contract]({SITE}/reference/asset_contract.html#artwork-contracts) and "
         "the gallery's `35-figures.scene.yaml`.\n"
     )
 
@@ -317,10 +399,10 @@ SCHEMAS = {
 }
 
 
-def _schema(site: str) -> str:
+def _schema() -> str:
     document = json.dumps(panel_schema(), indent=2, sort_keys=True)
     published = "\n".join(
-        f"- <{site}/schemas/{name}.schema.json>: {what}" for name, what in SCHEMAS.items()
+        f"- <{SITE}/schemas/{name}.schema.json>: {what}" for name, what in SCHEMAS.items()
     )
     return (
         "# JSON Schema\n\n"
@@ -493,19 +575,23 @@ def parts(site: str = SITE) -> dict[str, str]:
             release, or one version's own, `<root>/dev` or `<root>/v0.12`.
     """
     built = {
-        "preamble": _preamble(site),
+        "preamble": _preamble(),
+        "language": _language(),
         **{
-            name: _plain_captions(
-                _absolute_links((DOCS / page).read_text(encoding="utf-8"), page, site)
-            )
+            name: _plain_captions(_absolute_links((DOCS / page).read_text(encoding="utf-8"), page))
             for name, page in DOCUMENT_PARTS.items()
         },
-        "characters": _characters(site),
+        "characters": _characters(),
         "diagnostics": _diagnostics(),
-        "schema": _schema(site),
+        "schema": _schema(),
         "gallery": _gallery(),
     }
-    return {name: built[name].rstrip("\n") + "\n" for name in SPEC_PARTS}
+    # Every part is built linking the root, as the committed copies do -- and so does what the
+    # package itself says, such as a rule's help. A version's own copy names that version
+    # instead, wherever a link is.
+    return {
+        name: built[name].replace(f"{SITE}/", f"{site}/").rstrip("\n") + "\n" for name in SPEC_PARTS
+    }
 
 
 def spec_pack(site: str = SITE) -> str:
@@ -567,6 +653,7 @@ def skill_files() -> dict[Path, bytes]:
     """The generated half of the skill folder. `SKILL.md` itself is written by hand."""
     built = parts()
     sources = {
+        "language": f"docs/{LANGUAGE}/",
         **{name: f"docs/{page}" for name, page in DOCUMENT_PARTS.items()},
         "characters": "the shipped puppet library",
         "diagnostics": "scenet.diagnostics.RULES",

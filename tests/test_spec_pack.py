@@ -123,7 +123,7 @@ class TestSpecPack:
     @pytest.mark.parametrize(
         ("name", "source"),
         [
-            ("language", "docs/reference/language.md"),
+            ("language", "docs/reference/language/index.md"),
             ("shot-types", "docs/reference/shot_types.md"),
             ("comic-script", "docs/howto/write_a_comic_script.md"),
         ],
@@ -135,6 +135,28 @@ class TestSpecPack:
             if line.startswith("# ")
         )
         assert first_heading in part(name)
+
+    def test_the_language_part_holds_every_page_in_order(self):
+        """The reference is a page per block; the part is the pages one after another, each
+        title a section of it, in the order the overview's table of contents gives."""
+        pages = build_spec.language_pages()
+        assert len(pages) > 1
+        assert pages[0].endswith("/index.md")
+        body = part("language")
+        found = []
+        for page in pages[1:]:
+            title = next(
+                line
+                for line in (ROOT / "docs" / page).read_text(encoding="utf-8").splitlines()
+                if line.startswith("# ")
+            )
+            found.append(body.index(f"\n#{title}\n"))
+        assert found == sorted(found)
+
+    def test_a_link_between_its_pages_stays_in_the_part(self):
+        body = part("language")
+        assert f"{build_spec.SITE}/reference/language/" not in body
+        assert "](#camera)" in body
 
     def test_the_schema_is_the_published_one(self):
         body = part("schema")

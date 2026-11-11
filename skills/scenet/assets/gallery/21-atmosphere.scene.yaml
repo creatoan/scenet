@@ -15,7 +15,7 @@
 # The determinism contract is on the **emitted SVG text**, which stays byte-identical.
 # It has never been on pixels: `feTurbulence` is reproducible by specification -- the
 # spec ships reference code and the seed is fixed -- and browsers still agree only
-# approximately on what to paint from it. See docs/reference/language.md.
+# approximately on what to paint from it. See docs/reference/language/index.md.
 
 panel:
   size: [1100, 620]
