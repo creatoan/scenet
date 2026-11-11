@@ -43,9 +43,10 @@ Emacs (lsp-mode), IntelliJ and Zed, among others. You get:
 
 - Completion on every key, and on every enum value — all ten shot types, all four balloon
   kinds, all nine placement zones.
-- **Hover documentation**, because the docstrings on the models become `description`
-  fields in the schema. Hovering `shot:` explains that it is an upper bound on tightness,
-  not a promise.
+- **Hover documentation** on every key: the line under each field of the models becomes its
+  `description` in the schema, and the language reference's card for the key opens with it.
+  Hovering `shot:` says it is the tightest the camera may go, and that it steps back when
+  the cast does not fit.
 - Inline errors for unknown keys, wrong types and out-of-range values, as you type.
 
 ## The VS Code extension
@@ -126,8 +127,8 @@ schema = panel_schema()
 
 assert schema["$defs"]["ShotType"]["enum"][0] == "long_shot"
 
-# The docstrings travel with it -- which is where the hover text comes from.
-assert "upper bound" in schema["$defs"]["ShotType"]["description"]
+# Each key says what it means -- which is where the hover text comes from.
+assert "steps back" in schema["$defs"]["CameraSpec"]["properties"]["shot"]["description"]
 
 document = json.dumps(schema, indent=2, sort_keys=True)
 ```
