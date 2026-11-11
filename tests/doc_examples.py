@@ -47,6 +47,7 @@ __all__ = [
     "clean_doctest_globals",
     "document_blocks",
     "fences",
+    "file_named",
     "import_faults",
     "markdown_pages",
     "told",
@@ -268,6 +269,14 @@ class DocumentBlock:
     copy_of: Path | None = None
 
 
+def file_named(fence: Fence) -> str | None:
+    """The file a block shows, when its caption is a file name: `hello.panel.yaml`."""
+    if fence.caption is None:
+        return None
+    named = _FILE_NAME.match(fence.caption)
+    return named["name"] if named else None
+
+
 def _example_files() -> dict[str, Path]:
     """Every document under `examples/`, by its text."""
     files: dict[str, Path] = {}
@@ -306,7 +315,10 @@ def classify(fence: Fence, examples: dict[str, Path]) -> DocumentBlock:
         if part := _PART_OF.match(fence.caption):
             return DocumentBlock(fence, None, part_of=part["name"].strip("`"))
         if named := _FILE_NAME.match(fence.caption):
-            return DocumentBlock(fence, _kind_of_name(named["name"]))
+            # Saved under a name of the reader's own -- the tour's `hello.panel.yaml` -- a
+            # gallery example is still that example, compiled beside the files it names.
+            kind = _kind_of_name(named["name"])
+            return DocumentBlock(fence, kind, copy_of=examples.get(fence.text))
         message = (
             f"{fence.where}: a caption on a {fence.language} block names the document it "
             f"shows (`story.scene.yaml`) or the one it is a part of (`Part of "

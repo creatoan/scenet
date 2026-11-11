@@ -613,10 +613,44 @@ def _gallery_entry(entry: dict[str, Any]) -> str:
     )
 
 
+#: The author's tour (#321): a chapter per gallery group, in the same order.
+TUTORIAL = DOCS / "tutorial"
+
+
+def tour_chapters() -> list[tuple[str, str]]:
+    """The tour's chapters, as its table of contents lists them: each one's file and title."""
+    index = (TUTORIAL / "index.md").read_text(encoding="utf-8")
+    toctree = re.search(r"```\{toctree\}\n(.*?)```", index, re.S)
+    if toctree is None:
+        message = f"{TUTORIAL / 'index.md'} has no table of contents"
+        raise ValueError(message)
+    chapters = []
+    for line in toctree.group(1).splitlines():
+        name = line.strip()
+        if not name or name.startswith(":"):
+            continue
+        text = (TUTORIAL / f"{name}.md").read_text(encoding="utf-8")
+        title = re.search(r"^# (.+)$", text, re.M)
+        if title is None:
+            message = f"{name}.md has no title"
+            raise ValueError(message)
+        chapters.append((f"{name}.md", title.group(1).strip()))
+    return chapters
+
+
+def _chapter_line(group: str) -> str:
+    """The sentence that sends a group's reader to the tour's chapter on it."""
+    for file, title in tour_chapters():
+        if title.startswith(group):
+            return f"Learn it in the tour: [{title}](tutorial/{file}).\n\n"
+    return ""
+
+
 def gallery_page() -> str:
     """The documentation's Gallery page, `docs/gallery.md`."""
     groups = "\n".join(
-        f"## {name}\n\n" + "\n".join(_gallery_entry(entry) for entry in members)
+        f"## {name}\n\n{_chapter_line(name)}"
+        + "\n".join(_gallery_entry(entry) for entry in members)
         for name, members in gallery_groups()
     )
     notice = GENERATED_NOTICE.format(source="examples/gallery/ and docs/images/gallery/")

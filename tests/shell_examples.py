@@ -13,9 +13,14 @@ a traceback.
   run. They install, publish, reach the network or set limits on the reader's shell, and are
   about the reader's machine, not Scenet.
 - A heredoc's body is skipped with its command.
+- A line that ends on `# exits 1` must exit 1 instead: a chapter of the tour shows
+  `scenet check` failing on a mistake, as a reader's terminal would.
 
-A block that needs a file the reader creates along the way -- the tutorial's
-`hello.panel.yaml` -- is marked `<!--- skip: next -->` in the Markdown.
+A block that names a file the reader creates along the way -- the tutorial's
+`hello.panel.yaml` -- finds it: every block above it on the page whose caption is a file
+name is written there first, the latest one of each name winning, as a reader saving each
+version in turn would have it. The gallery's pictures, fonts and puppets are there too, as
+the playground writes them beside every document it opens.
 """
 
 import contextlib
@@ -25,13 +30,15 @@ import shlex
 import shutil
 import tempfile
 from pathlib import Path
+from typing import NamedTuple
 from unittest import mock
 
 from sybil import Example
 
 from scenet.cli import build_parser, main
+from tests.doc_examples import fences, file_named
 
-__all__ = ["run_bash_block"]
+__all__ = ["commands", "run_bash_block", "workspace"]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,11 +49,20 @@ NEVER_RUN = frozenset({"pip", "pipx", "uv", "uvx", "git", "gh", "cp", "claude", 
 _ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=\S*$")
 # `<<'END'` or `<<END`: the start of a heredoc, and the word that ends it.
 _HEREDOC = re.compile(r"<<-?\s*'?(\w+)'?")
+# `# exits 1` at the end of a line: the status the command is shown exiting with.
+_EXITS = re.compile(r"#\s*exits (\d+)\s*$")
 
 
-def _commands(source: str) -> list[list[str]]:
+class Command(NamedTuple):
+    """A documented `scenet` line: its arguments, and the status it is shown exiting with."""
+
+    words: list[str]
+    status: int
+
+
+def commands(source: str) -> list[Command]:
     """The `scenet` command lines of a block, split as a shell would, heredocs dropped."""
-    commands: list[list[str]] = []
+    found: list[Command] = []
     lines = iter(source.splitlines())
     for raw in lines:
         line = raw.strip()
@@ -63,8 +79,9 @@ def _commands(source: str) -> list[list[str]]:
         if not words or words[0] in NEVER_RUN:
             continue
         assert words[0] == "scenet", f"a documented command this suite cannot run: {line!r}"
-        commands.append(words[1:])
-    return commands
+        exits = _EXITS.search(line)
+        found.append(Command(words[1:], int(exits.group(1)) if exits else 0))
+    return found
 
 
 def _expand(words: list[str], cwd: Path) -> tuple[list[str], Path | None]:
@@ -88,7 +105,7 @@ def _stop_watching(*_args: object, **_kwargs: object) -> None:
     """A watch loop that returns at once, as if Ctrl-C came right after the first build."""
 
 
-def _run(argv: list[str], cwd: Path) -> None:
+def _run(argv: list[str], cwd: Path, expected: int = 0) -> None:
     if argv[:1] == ["mcp"]:
         build_parser().parse_args(argv)
         return
@@ -107,21 +124,41 @@ def _run(argv: list[str], cwd: Path) -> None:
             status = exc.code if isinstance(exc.code, int) else 1
     if redirect is not None:
         redirect.write_text(stdout.getvalue(), encoding="utf-8")
-    assert status == 0, f"`scenet {shlex.join(argv)}` exited {status}"
+    assert status == expected, f"`scenet {shlex.join(argv)}` exited {status}, not {expected}"
+
+
+def workspace(cwd: Path, page: Path, line: int) -> None:
+    """Fill `cwd` with what a command on line `line` of `page` may name.
+
+    - `examples/`, and each document beside it: the reference names
+      `examples/duel.panel.yaml`, and a how-to, written as if from the folder holding the
+      reader's documents, names `duel.panel.yaml`. Both work.
+    - The gallery's folders of pictures, fonts and puppets, which its documents name.
+    - Every file the page has shown so far, by the file name its block's caption gives.
+    """
+    shutil.copytree(ROOT / "examples", cwd / "examples")
+    for document in (ROOT / "examples").iterdir():
+        if document.is_file():
+            shutil.copy(document, cwd / document.name)
+    gallery = ROOT / "examples" / "gallery"
+    for folder in sorted(gallery.iterdir()):
+        if folder.is_dir():
+            shutil.copytree(folder, cwd / folder.name, dirs_exist_ok=True)
+    for fence in fences(page):
+        name = file_named(fence)
+        if fence.line < line and name is not None:
+            path = cwd / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(fence.text, encoding="utf-8", newline="\n")
 
 
 def run_bash_block(example: Example) -> None:
-    """Sybil evaluator: run each `scenet` line of a `bash` block in a copy of examples/."""
-    commands = _commands(str(example.parsed))
-    if not commands:
+    """Sybil evaluator: run each `scenet` line of a `bash` block where its page's files are."""
+    found = commands(str(example.parsed))
+    if not found:
         return
     with tempfile.TemporaryDirectory() as directory:
         cwd = Path(directory)
-        # The reference names `examples/duel.panel.yaml`; a how-to, written as if from
-        # the folder holding the reader's documents, names `duel.panel.yaml`. Both work.
-        shutil.copytree(ROOT / "examples", cwd / "examples")
-        for document in (ROOT / "examples").iterdir():
-            if document.is_file():
-                shutil.copy(document, cwd / document.name)
-        for argv in commands:
-            _run(argv, cwd)
+        workspace(cwd, Path(example.path), example.line)
+        for command in found:
+            _run(command.words, cwd, command.status)

@@ -9,7 +9,9 @@ test suite compiles, and each picture is a golden output of that build, held to 
 neither can drift from what the compiler does. Open an example in the playground to change it,
 or read the page that explains it.
 
-## Start here
+## Your first panel
+
+Learn it in the tour: [Your first panel](tutorial/first_panel.md).
 
 ### A tour of Scenet
 
@@ -181,7 +183,9 @@ script:
 
 </details>
 
-## Staging and camera
+## Camera and staging
+
+Learn it in the tour: [Camera and staging](tutorial/camera_and_staging.md).
 
 ### The shot ladder
 
@@ -436,193 +440,6 @@ staging:
   - a ground_shared_with b
   - b ground_shared_with c
   - c ground_shared_with d
-```
-
-</details>
-
-### Ten expressions
-
-Every expression the shipped puppets have, one panel each.
-
-![A strip of 5 panels. Medium shot. Alice, left, arms crossed, angry, looking at Bob; Bob, right, hands on hips, shouting, looking at Alice. Medium shot. Alice, left, arms crossed, looking at Bob; Bob, right, hands on hips, surprised, looking at Alice. Medium shot. Alice, left, arms crossed, happy, looking at Bob; Bob, right, hands on hips, laughing, looking at Alice. Medium shot. Alice, left, arms crossed, coy, looking at Bob; Bob, right, hands on hips, bored, looking at Alice. Medium shot. Alice, left, arms crossed, sad, looking at Bob; Bob, right, hands on hips, scared, looking at Alice.](images/gallery/17-expressions.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=17-expressions.scene.yaml) · [Read about it](reference/language/cast.md#castidexpression)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# Ten expressions, which is every face the shipped puppets can make.
-#
-# An expression is to features what a pose is to joints: the puppet declares feature
-# points that ride the head, declares named expressions as a state per feature, and the
-# panel selects one by name. Nothing here touches the solver -- a face is still one disc
-# that balloons may not cover, exactly as it was.
-#
-# The vocabulary is Comic Chat's emotion wheel plus `surprise`, which is to say it is a
-# **drawing convention**: the small closed set of faces comics actually draw. It is not
-# a claim that a person feeling anger produces this face.
-#
-# Watch the pupils. `looking_at` has always turned a figure toward its target and made
-# the space in front of them expensive for a balloon; now it aims their eyes as well.
-
-camera:
-  shot: medium_shot
-
-cast:
-  alice: {reference: alice, pose: arms_crossed, at: left_third}
-  bob:   {reference: bob,   pose: hands_on_hips, at: right_third, facing: left}
-
-staging:
-  - alice left_of bob
-  - alice ground_shared_with bob
-  - alice looking_at bob
-  - bob looking_at alice
-
-panels:
-  confrontation:
-    cast:
-      alice: {expression: angry}
-      bob:   {expression: shouting}
-
-  surprised:
-    cast:
-      alice: {expression: neutral}
-      bob:   {expression: surprise}
-
-  delighted:
-    cast:
-      alice: {expression: happy}
-      bob:   {expression: laughing}
-
-  unimpressed:
-    cast:
-      alice: {expression: coy}
-      bob:   {expression: bored}
-
-  afraid:
-    cast:
-      alice: {expression: sad}
-      bob:   {expression: scared}
-```
-
-</details>
-
-### A face
-
-A big close-up, where the head fills the panel and the face is drawn in full.
-
-![Big close-up. Alice, centre, angry.](images/gallery/18-a-face.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=18-a-face.panel.yaml) · [Read about it](reference/language/cast.md#castidexpression)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# A big close-up, which is the framing that pays for the face rig: the head fills the
-# panel, and until expressions existed it was a circle.
-#
-# One character on purpose. A big close-up of two is not a big close-up for long -- the
-# camera retreats to fit them both across the panel, and the note it prints says so.
-
-panel:
-  size: [900, 900]
-
-camera:
-  shot: big_close_up
-
-cast:
-  alice: {reference: alice, expression: angry}
-
-# No lettering. At this framing the head fills the panel and there is nowhere a balloon
-# could sit without covering the face, which the compiler refuses to do -- and a silent
-# reaction panel is what a letterer would have drawn here anyway.
-```
-
-</details>
-
-### Emanata
-
-Sweat, dizziness, oaths and dust drawn round a character, and the balloons that make room for them.
-
-![A strip of 4 panels. Medium shot. Alice, left, scared, sweating, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Bob: Where is my umbrella? Medium shot. Alice, left, angry, swearing, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Alice: It was hideous! Medium shot. Alice, left, sad, dizzy, looking at Bob; Bob, right, arms crossed, bored, looking at Alice. Alice: I spun it round. Very fast. Then it was gone. Full shot. Alice, left, surprised; Bob, centre, pointing, shouting, dashing off. Alice: Bob?](images/gallery/23-emanata.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=23-emanata.scene.yaml) · [Read about it](reference/language/cast.md#castidmarks)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# Emanata: what a comic draws around a character, rather than on them.
-#
-# Mort Walker named them in The Lexicon of Comicana, and four of his names are the
-# vocabulary: `plewds` fly off a sweating head, `squeans` circle a dizzy one,
-# `grawlixes` stand in for an oath, and `briffits` are the dust somebody leaves behind.
-#
-# They are a list, not a second `expression:`, because they compose -- Alice is scared
-# *and* sweating, angry *and* swearing.
-#
-# Unlike a face, they are drawn outside the head, in the space balloons go, so they
-# matter to the layout. How much is the decision this example shows: a balloon pays to
-# cover them, so in `oath` Alice's line settles beside her grawlixes rather than on
-# them. But they never move anybody. Strip every mark from this file and both
-# characters stand exactly where they stand now.
-#
-# That cuts both ways. The camera frames by the body and makes no room for marks, so
-# over the taller character's head, at this framing, they would run off the top of the
-# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so, as
-# the example "Marks cut off" shows.
-
-panel:
-  size: [1000, 700]
-
-camera:
-  shot: medium_shot
-
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
-
-staging:
-  - alice left_of bob
-  - alice ground_shared_with bob
-  - alice looking_at bob
-  - bob looking_at alice
-
-panels:
-  heat:
-    cast:
-      alice: {expression: scared, marks: [plewds]}
-      bob:   {expression: angry}
-    script:
-      - say: {by: bob, text: "Where is my umbrella?"}
-
-  oath:
-    over: heat
-    cast:
-      alice: {expression: angry, marks: [grawlixes]}
-    script:
-      - say: {by: alice, text: "It was hideous!", prefer: top_left}
-
-  dizzy:
-    over: heat
-    cast:
-      alice: {expression: sad, marks: [squeans]}
-      bob:   {expression: bored}
-    script:
-      - say: {by: alice, text: "I spun it round. Very fast. Then it was gone."}
-
-  gone:
-    camera: {shot: full_shot}
-    cast:
-      alice: {expression: surprise}
-      bob:   {pose: pointing, expression: shouting, marks: [briffits], facing: right}
-    staging:
-      - alice left_of bob
-      - alice ground_shared_with bob
-    script:
-      - say: {by: alice, text: "Bob?"}
 ```
 
 </details>
@@ -1410,7 +1227,196 @@ script:
 
 </details>
 
-## Setting
+## Faces and marks
+
+### Ten expressions
+
+Every expression the shipped puppets have, one panel each.
+
+![A strip of 5 panels. Medium shot. Alice, left, arms crossed, angry, looking at Bob; Bob, right, hands on hips, shouting, looking at Alice. Medium shot. Alice, left, arms crossed, looking at Bob; Bob, right, hands on hips, surprised, looking at Alice. Medium shot. Alice, left, arms crossed, happy, looking at Bob; Bob, right, hands on hips, laughing, looking at Alice. Medium shot. Alice, left, arms crossed, coy, looking at Bob; Bob, right, hands on hips, bored, looking at Alice. Medium shot. Alice, left, arms crossed, sad, looking at Bob; Bob, right, hands on hips, scared, looking at Alice.](images/gallery/17-expressions.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=17-expressions.scene.yaml) · [Read about it](reference/language/cast.md#castidexpression)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# Ten expressions, which is every face the shipped puppets can make.
+#
+# An expression is to features what a pose is to joints: the puppet declares feature
+# points that ride the head, declares named expressions as a state per feature, and the
+# panel selects one by name. Nothing here touches the solver -- a face is still one disc
+# that balloons may not cover, exactly as it was.
+#
+# The vocabulary is Comic Chat's emotion wheel plus `surprise`, which is to say it is a
+# **drawing convention**: the small closed set of faces comics actually draw. It is not
+# a claim that a person feeling anger produces this face.
+#
+# Watch the pupils. `looking_at` has always turned a figure toward its target and made
+# the space in front of them expensive for a balloon; now it aims their eyes as well.
+
+camera:
+  shot: medium_shot
+
+cast:
+  alice: {reference: alice, pose: arms_crossed, at: left_third}
+  bob:   {reference: bob,   pose: hands_on_hips, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice ground_shared_with bob
+  - alice looking_at bob
+  - bob looking_at alice
+
+panels:
+  confrontation:
+    cast:
+      alice: {expression: angry}
+      bob:   {expression: shouting}
+
+  surprised:
+    cast:
+      alice: {expression: neutral}
+      bob:   {expression: surprise}
+
+  delighted:
+    cast:
+      alice: {expression: happy}
+      bob:   {expression: laughing}
+
+  unimpressed:
+    cast:
+      alice: {expression: coy}
+      bob:   {expression: bored}
+
+  afraid:
+    cast:
+      alice: {expression: sad}
+      bob:   {expression: scared}
+```
+
+</details>
+
+### A face
+
+A big close-up, where the head fills the panel and the face is drawn in full.
+
+![Big close-up. Alice, centre, angry.](images/gallery/18-a-face.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=18-a-face.panel.yaml) · [Read about it](reference/language/cast.md#castidexpression)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# A big close-up, which is the framing that pays for the face rig: the head fills the
+# panel, and until expressions existed it was a circle.
+#
+# One character on purpose. A big close-up of two is not a big close-up for long -- the
+# camera retreats to fit them both across the panel, and the note it prints says so.
+
+panel:
+  size: [900, 900]
+
+camera:
+  shot: big_close_up
+
+cast:
+  alice: {reference: alice, expression: angry}
+
+# No lettering. At this framing the head fills the panel and there is nowhere a balloon
+# could sit without covering the face, which the compiler refuses to do -- and a silent
+# reaction panel is what a letterer would have drawn here anyway.
+```
+
+</details>
+
+### Emanata
+
+Sweat, dizziness, oaths and dust drawn round a character, and the balloons that make room for them.
+
+![A strip of 4 panels. Medium shot. Alice, left, scared, sweating, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Bob: Where is my umbrella? Medium shot. Alice, left, angry, swearing, looking at Bob; Bob, right, arms crossed, angry, looking at Alice. Alice: It was hideous! Medium shot. Alice, left, sad, dizzy, looking at Bob; Bob, right, arms crossed, bored, looking at Alice. Alice: I spun it round. Very fast. Then it was gone. Full shot. Alice, left, surprised; Bob, centre, pointing, shouting, dashing off. Alice: Bob?](images/gallery/23-emanata.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=23-emanata.scene.yaml) · [Read about it](reference/language/cast.md#castidmarks)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# Emanata: what a comic draws around a character, rather than on them.
+#
+# Mort Walker named them in The Lexicon of Comicana, and four of his names are the
+# vocabulary: `plewds` fly off a sweating head, `squeans` circle a dizzy one,
+# `grawlixes` stand in for an oath, and `briffits` are the dust somebody leaves behind.
+#
+# They are a list, not a second `expression:`, because they compose -- Alice is scared
+# *and* sweating, angry *and* swearing.
+#
+# Unlike a face, they are drawn outside the head, in the space balloons go, so they
+# matter to the layout. How much is the decision this example shows: a balloon pays to
+# cover them, so in `oath` Alice's line settles beside her grawlixes rather than on
+# them. But they never move anybody. Strip every mark from this file and both
+# characters stand exactly where they stand now.
+#
+# That cuts both ways. The camera frames by the body and makes no room for marks, so
+# over the taller character's head, at this framing, they would run off the top of the
+# panel -- which is why they are on Alice. Try them on Bob: `scenet build` says so, as
+# the example "Marks cut off" shows.
+
+panel:
+  size: [1000, 700]
+
+camera:
+  shot: medium_shot
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice ground_shared_with bob
+  - alice looking_at bob
+  - bob looking_at alice
+
+panels:
+  heat:
+    cast:
+      alice: {expression: scared, marks: [plewds]}
+      bob:   {expression: angry}
+    script:
+      - say: {by: bob, text: "Where is my umbrella?"}
+
+  oath:
+    over: heat
+    cast:
+      alice: {expression: angry, marks: [grawlixes]}
+    script:
+      - say: {by: alice, text: "It was hideous!", prefer: top_left}
+
+  dizzy:
+    over: heat
+    cast:
+      alice: {expression: sad, marks: [squeans]}
+      bob:   {expression: bored}
+    script:
+      - say: {by: alice, text: "I spun it round. Very fast. Then it was gone."}
+
+  gone:
+    camera: {shot: full_shot}
+    cast:
+      alice: {expression: surprise}
+      bob:   {pose: pointing, expression: shouting, marks: [briffits], facing: right}
+    staging:
+      - alice left_of bob
+      - alice ground_shared_with bob
+    script:
+      - say: {by: alice, text: "Bob?"}
+```
+
+</details>
+
+## Setting and colour
 
 ### Masses and planes
 
@@ -1831,7 +1837,7 @@ panels:
 
 </details>
 
-## Pages and sequences
+## Sequences
 
 ### A sequence
 
@@ -1884,6 +1890,54 @@ panels:
 ```
 
 </details>
+
+### Leaving someone out
+
+A panel that takes away somebody it would inherit, with null.
+
+![A strip of 2 panels. Medium shot. An office by day. Alice, centre; Bob, centre. Bob: I'll leave you to it. Alice: Thanks, Bob. Medium shot. An office by day. Alice, centre. Alice, whispering: Finally.](images/gallery/49-leaving-someone-out.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=49-leaving-someone-out.scene.yaml) · [Read about it](howto/compile_a_sequence.md#leaving-something-out)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# Leaving someone out of a panel that would inherit them.
+#
+# Everything beside `panels:` is a default every panel takes, and a panel `over:` another
+# takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
+# Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
+#
+# A staging relation naming him would go with him, and `scenet check` would note it, as
+# the example "A relation left out" shows. This scene places its cast with `at:` alone, so
+# there is none to lose.
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+panels:
+  meeting:
+    script:
+      - say: {by: bob, text: "I'll leave you to it."}
+      - say: {by: alice, text: "Thanks, Bob."}
+
+  alone:
+    over: meeting
+    cast:
+      bob: null
+    script:
+      - say: {by: alice, text: "Finally.", kind: whisper}
+```
+
+</details>
+
+## Pages and print
 
 ### Margins and bleed
 
@@ -2334,52 +2388,6 @@ panels:
 
 </details>
 
-### Leaving someone out
-
-A panel that takes away somebody it would inherit, with null.
-
-![A strip of 2 panels. Medium shot. An office by day. Alice, centre; Bob, centre. Bob: I'll leave you to it. Alice: Thanks, Bob. Medium shot. An office by day. Alice, centre. Alice, whispering: Finally.](images/gallery/49-leaving-someone-out.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=49-leaving-someone-out.scene.yaml) · [Read about it](howto/compile_a_sequence.md#leaving-something-out)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# Leaving someone out of a panel that would inherit them.
-#
-# Everything beside `panels:` is a default every panel takes, and a panel `over:` another
-# takes all of it. To take something away, write it as `null`: JSON Merge Patch's rule.
-# Here Bob leaves, and `cast: {bob: null}` leaves him out of the last panel.
-#
-# A staging relation naming him would go with him, and `scenet check` would note it, as
-# the example "A relation left out" shows. This scene places its cast with `at:` alone, so
-# there is none to lose.
-
-panel: {size: [900, 600]}
-camera: {shot: medium_shot}
-setting: {place: office, time: day}
-
-cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
-
-panels:
-  meeting:
-    script:
-      - say: {by: bob, text: "I'll leave you to it."}
-      - say: {by: alice, text: "Thanks, Bob."}
-
-  alone:
-    over: meeting
-    cast:
-      bob: null
-    script:
-      - say: {by: alice, text: "Finally.", kind: whisper}
-```
-
-</details>
-
 ### A page made for print
 
 A US comic page with its bleed, printed as a PDF: lettering on the black plate, rich black at night, the picture's pixels unchanged.
@@ -2527,520 +2535,6 @@ panels:
     staging: [alice left_of bob]
     script:
       - caption: {text: "This one keeps its border.", kind: editorial}
-```
-
-</details>
-
-## Your own art
-
-### A picture behind the cast
-
-A picture painted elsewhere behind the puppets, fitted to cover the panel or contained in it.
-
-![A strip of 2 panels. Long shot. In the rain. Alice, left, pointing, looking at Bob; Bob, centre. Caption: Eight o'clock. Still raining. Alice: You painted every one of those windows? Bob: Every one. Twice. Full shot. Alice, left, pointing, looking at Bob; Bob, right. Alice: It looks smaller from here.](images/gallery/34-supplied-art.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=34-supplied-art.scene.yaml) · [Read about it](howto/letter_over_your_own_art.md)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# A picture drawn elsewhere, behind the cast.
-#
-# `image` names a PNG or JPEG beside this document -- art/street.png, painted by
-# scripts/make_gallery_art.py -- and the cast is drawn in front of it and lettered by the
-# same rules as on any other backdrop. The compiler reads the picture's size and nothing
-# else: it does not know there is a road, so a balloon pays nothing to sit on it.
-#
-# `fit` says how the picture fills the panel, keeping its proportions: `cover` fills it
-# and crops what overhangs, equally top and bottom here; `contain` shows the whole
-# picture, and the panel shows round it. Weather is drawn over the picture as over masses.
-#
-# A link by default -- the SVG names art/street.png, as written -- or the picture's own
-# bytes with `scenet build --embed-images`, which the playground always uses.
-
-camera:
-  shot: long_shot
-
-cast:
-  alice: {reference: alice, at: left_third, pose: pointing}
-  bob:   {reference: bob,   at: right_third, facing: left}
-
-staging:
-  - alice left_of bob
-  - alice looking_at bob
-  - alice ground_shared_with bob
-
-setting: {image: art/street.png, time: dusk}
-
-panels:
-  arrival:
-    panel: {size: [1200, 600]}
-    setting: {fit: cover, weather: rain}
-    script:
-      - caption: {text: "Eight o'clock. Still raining.", kind: locale, prefer: top_left}
-      - say: {by: alice, text: "You painted every one of those windows?"}
-      - say: {by: bob, text: "Every one. Twice."}
-
-  framed:
-    over: arrival
-    panel: {size: [700, 700]}
-    camera: {shot: full_shot}
-    setting: {fit: contain, weather: clear}
-    script:
-      - say: {by: alice, text: "It looks smaller from here."}
-```
-
-</details>
-
-### Figures a picture draws
-
-People the picture draws, lettered from its artwork contract: balloons keep off their faces and tails find their mouths.
-
-![A strip of 2 panels. Ana, left; Ben, centre. Caption: The last train. Again. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](images/gallery/35-figures.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=35-figures.scene.yaml) · [Read about it](howto/letter_the_figures_in_your_art.md)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# Figures a picture draws, lettered over (#71).
-#
-# The people are in the picture -- art/figures.png, painted by
-# scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of
-# posing puppets. Where each face, mouth and body is lives in the picture's artwork
-# contract, art/figures.art.yaml, beside it and named after it; this document writes no
-# coordinate. Balloons keep off every declared face, Carl's too though nobody cast him,
-# tails aim at each speaker's mouth, and the timetable board is a keep-out: lettering
-# pays to cover it, and does not.
-#
-# Nobody is posed, placed or framed: the artist did all of that, so there is no camera
-# and no staging. `fit` maps the contract through the same transform as the picture.
-
-cast:
-  ana: {figure: ana}
-  ben: {figure: ben}
-
-setting: {image: art/figures.png, time: night}
-
-panels:
-  platform:
-    panel: {size: [1200, 600]}
-    setting: {fit: cover}
-    script:
-      - caption: {text: "The last train. Again.", kind: locale}
-      - say: {by: ana, text: "Is it always this late?"}
-      - say: {by: ben, text: "Only when it rains somewhere else."}
-
-  waiting:
-    over: platform
-    panel: {size: [600, 700]}
-    setting: {fit: contain}
-    script:
-      - say: {by: ana, text: "Is that ours?"}
-      - say: {by: ben, text: "No."}
-```
-
-</details>
-
-### From puppets to figures
-
-Two puppets in a street, then the same two people drawn by a picture, the place, camera and puppets taken away with null.
-
-![A strip of 2 panels. Full shot. A street at night. Ana, centre; Ben, centre. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](images/gallery/51-puppets-to-figures.strip.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=51-puppets-to-figures.scene.yaml) · [Read about it](reference/language/cast.md#castidfigure)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# From puppets to figures: the same two people, drawn first by Scenet, then by a picture.
-#
-# In the first panel Ana and Ben are puppets in a named place. The second is `over:` it, and
-# takes everything it does not take away with `null`:
-#
-# - `place: null` beside its `image`, since a picture is a backdrop of its own;
-# - `camera: null`, since the artist already framed the picture;
-# - `reference: null` beside each `figure`, and every key that posed the puppet -- `at`,
-#   `facing` -- since a member is a puppet or a figure, never both.
-#
-# The picture's artwork contract, art/figures.art.yaml, says where each face and mouth is.
-
-panels:
-  waiting:
-    panel: {size: [1200, 600]}
-    camera: {shot: full_shot}
-    setting: {place: street, time: night}
-    cast:
-      ana: {reference: alice, at: left_third}
-      ben: {reference: bob,   at: right_third, facing: left}
-    script:
-      - say: {by: ana, text: "Is it always this late?"}
-      - say: {by: ben, text: "Only when it rains somewhere else."}
-
-  platform:
-    over: waiting
-    camera: null
-    setting: {place: null, image: art/figures.png, fit: cover}
-    cast:
-      ana: {reference: null, figure: ana, at: null}
-      ben: {reference: null, figure: ben, at: null, facing: null}
-    script:
-      - say: {by: ana, text: "Is that ours?"}
-      - say: {by: ben, text: "No."}
-```
-
-</details>
-
-### A JPEG behind the cast
-
-A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for its size alone.
-
-![Full shot. Alice, left, pointing, looking at Bob; Bob, centre. Alice: The first boat leaves at six. Bob: Then we have time for coffee.](images/gallery/52-a-jpeg.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=52-a-jpeg.panel.yaml) · [Read about it](reference/language/setting.md#settingimage)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# A JPEG behind the cast.
-#
-# A supplied picture may be a PNG or a JPEG, the two raster formats every SVG viewer must
-# draw. The compiler tells them apart by their first bytes, not by the file's name, and
-# reads nothing but the size from either. This one, art/harbour.jpg, was painted and
-# encoded by scripts/make_gallery_photo.py.
-#
-# `time: dawn` changes nothing in the picture, whose values are the artist's: over a
-# picture, the hour only tints weather, and there is none.
-
-panel:
-  size: [1200, 700]
-
-camera:
-  shot: full_shot
-
-setting:
-  image: art/harbour.jpg
-  fit: cover
-  time: dawn
-
-cast:
-  alice: {reference: alice, at: left_third, pose: pointing}
-  bob:   {reference: bob,   at: center, facing: left}
-
-staging:
-  - alice left_of bob
-  - alice looking_at bob
-
-script:
-  - say: {by: alice, text: "The first boat leaves at six."}
-  - say: {by: bob, text: "Then we have time for coffee."}
-```
-
-</details>
-
-### A puppet of your own
-
-Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path.
-
-![A page of 5 panels. Full shot. The docks at dusk. Alice, centre; Pip, centre, looking at Alice. Pip: Is that our boat? Alice: Not yet. Cowboy shot. The docks at dusk. Pip, centre, waving, happy. Pip: Hello, boat! Cowboy shot. The docks at dusk. Pip, centre, arms up, surprised. Pip: It's enormous! Cowboy shot. The docks at dusk. Pip, centre, scared. Pip, whispering: And so loud. Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.](images/gallery/69-a-puppet-of-your-own.page-1.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=69-a-puppet-of-your-own.scene.yaml) · [Read about it](reference/language/cast.md#castidreference)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# A puppet of your own: pip, a child five heads tall, at the docks with alice.
-#
-# Scenet ships two puppets, alice and bob, and pip is not one of them. Its file,
-# pip.puppet.yaml, is in puppets/, beside this document, and the cast names it by that path:
-# relative to the folder the document is in, as a font or a picture is named. The
-# playground writes it there for you, and Puppet... adds one of your own the same way.
-#
-# A puppet file says what a character is made of -- landmarks, joints, the parts drawn, a
-# face -- and the poses and expressions it can take, by name. Pip's are its own: it waves
-# and throws its arms up, where alice points and crosses hers. This page draws every pose
-# and every expression pip has.
-#
-# Pip is five heads tall to alice's seven and a half. The camera frames each shot by the
-# landmarks a puppet declares, counted in heads, so pip fills a panel of its own at the
-# shot asked for. Beside alice, `ground_shared_with` stands them on one ground, and pip
-# comes up to her chest; without it, each would be framed alone, head under the top of the
-# panel, and pip would float.
-
-page: {size: [1500, 2100], margin: 60, gutter: 30, tier_gutter: 40}
-setting: {place: docks, time: dusk}
-
-cast:
-  alice: {reference: alice, at: left_third}
-  pip: {reference: puppets/pip.puppet.yaml, at: right_third, facing: left}
-
-pages:
-  - tiers:
-      - panels: [quay]
-      - {height: 1.2, panels: [wave, enormous, loud]}
-      - panels: [gone]
-
-panels:
-  quay:
-    camera: {shot: full_shot}
-    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
-    script:
-      - say: {by: pip, text: "Is that our boat?"}
-      - say: {by: alice, text: "Not yet."}
-
-  wave:
-    camera: {shot: cowboy}
-    cast:
-      alice: null
-      pip: {pose: waving, expression: happy, at: center}
-    script:
-      - say: {by: pip, text: "Hello, boat!"}
-
-  enormous:
-    camera: {shot: cowboy}
-    cast:
-      alice: null
-      pip: {pose: arms_up, expression: surprise, at: center}
-    script:
-      - say: {by: pip, text: "It's enormous!"}
-
-  loud:
-    camera: {shot: cowboy}
-    cast:
-      alice: null
-      pip: {expression: scared, at: center}
-    script:
-      - say: {by: pip, text: "And so loud.", kind: whisper}
-
-  gone:
-    camera: {shot: full_shot}
-    cast:
-      alice: {expression: happy}
-      pip: {expression: sad}
-    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
-    script:
-      - say: {by: pip, text: "It's going without us."}
-      - say: {by: alice, text: "That one wasn't ours."}
-```
-
-</details>
-
-## Reading direction
-
-### Right to left
-
-A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored.
-
-![A page of 8 panels. Long shot. A street at night, in the rain. Hana, right, pointing, looking at Ken; Ken, left. Caption: Shinjuku. Ten past midnight. Hana: You came. Ken: You called. Medium close-up. A street at night, in the rain. Ken, centre. Ken, whispering: Is anybody else coming? Close-up. A street at night, in the rain. Hana, centre. Hana: Only us. Close-up. A street at night, in the rain. Ken, centre, surprised. Ken: Then why the umbrella? Full shot. A street at night, in the rain. Hana, centre; Ken, centre. Sound effect: KRAK. Hana: Because it is raining. Ken: It always is, here. Long shot. A street at night, in the rain. Ken, centre, sad. Caption: 00:10. Medium shot. A street at night, in the rain. Hana, centre. Mother, off panel: Hana? Where are you? Hana: Nearly home. Medium shot. A street at night, in the rain. Ken, centre, arms crossed. Ken: Go. I will wait.](images/gallery/36-right-to-left.page-1.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=36-right-to-left.scene.yaml) · [Read about it](reference/language/direction.md#direction)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# A manga page, read from the top right.
-#
-# `direction: rtl` is the whole document's, written once beside `panels:`. The panels are
-# written in reading order, as on any page, and read right to left: `arrival` is top right,
-# the stack beside the tall street is read down before across, and the last tier ends at
-# the bottom left. In each panel the balloons are read the same way -- never above and right
-# of one before -- and the caption, given no zone, sits where reading starts.
-#
-# Nothing in the picture is mirrored: Hana stands where `at:` puts her and faces the way
-# `facing:` says, the clock is in the corner its `at:` names, and the sound sits where the
-# sound is. 37-left-to-right.scene.yaml is this page read left to right, figure for figure.
-
-direction: rtl
-page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
-setting: {place: street, time: night, weather: rain}
-
-pages:
-  - tiers:
-      - panels: [{use: arrival, width: 2}, door]
-      - height: 1.4
-        columns:
-          - {panels: [asks, answers]}
-          - width: 1.2
-            panels:
-              - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
-      - panels: [phone, wait]
-
-panels:
-  arrival:
-    camera: {shot: long_shot}
-    cast:
-      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
-      ken: {reference: bob, at: left_third}
-    staging: [ken left_of hana, hana looking_at ken]
-    script:
-      - caption: {text: "Shinjuku. Ten past midnight."}
-      - say: {by: hana, text: "You came."}
-      - say: {by: ken, text: "You called."}
-
-  door:
-    camera: {shot: medium_close_up}
-    cast:
-      ken: {reference: bob, at: center}
-    script:
-      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
-
-  asks:
-    camera: {shot: close_up}
-    cast:
-      hana: {reference: alice, at: center, facing: left}
-    script:
-      - say: {by: hana, text: "Only us."}
-
-  answers:
-    camera: {shot: close_up}
-    cast:
-      ken: {reference: bob, expression: surprise, at: center}
-    script:
-      - say: {by: ken, text: "Then why the umbrella?"}
-
-  street:
-    camera: {shot: full_shot}
-    cast:
-      hana: {reference: alice, at: right_third, facing: left}
-      ken: {reference: bob, at: left_third}
-    staging: [ken left_of hana]
-    script:
-      - sfx: {text: KRAK, size: medium, prefer: top_center}
-      - say: {by: hana, text: "Because it is raining."}
-      - say: {by: ken, text: "It always is, here."}
-
-  clock:
-    camera: {shot: long_shot}
-    cast:
-      ken: {reference: bob, expression: sad, at: right_third}
-    script:
-      - caption: {text: "00:10"}
-
-  phone:
-    camera: {shot: medium_shot}
-    cast:
-      hana: {reference: alice, at: center, facing: left}
-    script:
-      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
-      - say: {by: hana, text: "Nearly home."}
-
-  wait:
-    camera: {shot: medium_shot}
-    cast:
-      ken: {reference: bob, pose: arms_crossed, at: center}
-    script:
-      - say: {by: ken, text: "Go. I will wait."}
-```
-
-</details>
-
-### The same page, left to right
-
-The right-to-left page read the other way, figure for figure, to compare the two.
-
-![A page of 8 panels. Long shot. A street at night, in the rain. Ken, left; Hana, right, pointing, looking at Ken. Caption: Shinjuku. Ten past midnight. Hana: You came. Ken: You called. Medium close-up. A street at night, in the rain. Ken, centre. Ken, whispering: Is anybody else coming? Close-up. A street at night, in the rain. Hana, centre. Hana: Only us. Close-up. A street at night, in the rain. Ken, centre, surprised. Ken: Then why the umbrella? Full shot. A street at night, in the rain. Ken, centre; Hana, centre. Sound effect: KRAK. Hana: Because it is raining. Ken: It always is, here. Long shot. A street at night, in the rain. Ken, centre, sad. Caption: 00:10. Medium shot. A street at night, in the rain. Hana, centre. Mother, off panel: Hana? Where are you? Hana: Nearly home. Medium shot. A street at night, in the rain. Ken, centre, arms crossed. Ken: Go. I will wait.](images/gallery/37-left-to-right.page-1.svg)
-
-[Open in the playground](https://creatoan.github.io/scenet/playground/#example=37-left-to-right.scene.yaml) · [Read about it](reference/language/direction.md#direction)
-
-<details>
-<summary>Source</summary>
-
-```yaml
-# The manga page of 36-right-to-left.scene.yaml, read left to right.
-#
-# The same document with `direction: ltr`, which is also what a page with no `direction`
-# reads as. Put the two side by side: every panel draws the same figures, staged the same
-# way, at the same size -- only where each panel sits on the page, and where its lettering
-# sits in it, follows the direction.
-
-direction: ltr
-page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
-setting: {place: street, time: night, weather: rain}
-
-pages:
-  - tiers:
-      - panels: [{use: arrival, width: 2}, door]
-      - height: 1.4
-        columns:
-          - {panels: [asks, answers]}
-          - width: 1.2
-            panels:
-              - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
-      - panels: [phone, wait]
-
-panels:
-  arrival:
-    camera: {shot: long_shot}
-    cast:
-      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
-      ken: {reference: bob, at: left_third}
-    staging: [ken left_of hana, hana looking_at ken]
-    script:
-      - caption: {text: "Shinjuku. Ten past midnight."}
-      - say: {by: hana, text: "You came."}
-      - say: {by: ken, text: "You called."}
-
-  door:
-    camera: {shot: medium_close_up}
-    cast:
-      ken: {reference: bob, at: center}
-    script:
-      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
-
-  asks:
-    camera: {shot: close_up}
-    cast:
-      hana: {reference: alice, at: center, facing: left}
-    script:
-      - say: {by: hana, text: "Only us."}
-
-  answers:
-    camera: {shot: close_up}
-    cast:
-      ken: {reference: bob, expression: surprise, at: center}
-    script:
-      - say: {by: ken, text: "Then why the umbrella?"}
-
-  street:
-    camera: {shot: full_shot}
-    cast:
-      hana: {reference: alice, at: right_third, facing: left}
-      ken: {reference: bob, at: left_third}
-    staging: [ken left_of hana]
-    script:
-      - sfx: {text: KRAK, size: medium, prefer: top_center}
-      - say: {by: hana, text: "Because it is raining."}
-      - say: {by: ken, text: "It always is, here."}
-
-  clock:
-    camera: {shot: long_shot}
-    cast:
-      ken: {reference: bob, expression: sad, at: right_third}
-    script:
-      - caption: {text: "00:10"}
-
-  phone:
-    camera: {shot: medium_shot}
-    cast:
-      hana: {reference: alice, at: center, facing: left}
-    script:
-      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
-      - say: {by: hana, text: "Nearly home."}
-
-  wait:
-    camera: {shot: medium_shot}
-    cast:
-      ken: {reference: bob, pose: arms_crossed, at: center}
-    script:
-      - say: {by: ken, text: "Go. I will wait."}
 ```
 
 </details>
@@ -3692,6 +3186,520 @@ Theo at the foot of the lighthouse stairs.
 2. SFX (small): tik tik tik
 3. CAPTION/MAYA (spoken): "Bring the oil."
 4. CAPTION (editorial): See The Lighthouse, issue 1.
+```
+
+</details>
+
+## Your own art and characters
+
+### A picture behind the cast
+
+A picture painted elsewhere behind the puppets, fitted to cover the panel or contained in it.
+
+![A strip of 2 panels. Long shot. In the rain. Alice, left, pointing, looking at Bob; Bob, centre. Caption: Eight o'clock. Still raining. Alice: You painted every one of those windows? Bob: Every one. Twice. Full shot. Alice, left, pointing, looking at Bob; Bob, right. Alice: It looks smaller from here.](images/gallery/34-supplied-art.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=34-supplied-art.scene.yaml) · [Read about it](howto/letter_over_your_own_art.md)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# A picture drawn elsewhere, behind the cast.
+#
+# `image` names a PNG or JPEG beside this document -- art/street.png, painted by
+# scripts/make_gallery_art.py -- and the cast is drawn in front of it and lettered by the
+# same rules as on any other backdrop. The compiler reads the picture's size and nothing
+# else: it does not know there is a road, so a balloon pays nothing to sit on it.
+#
+# `fit` says how the picture fills the panel, keeping its proportions: `cover` fills it
+# and crops what overhangs, equally top and bottom here; `contain` shows the whole
+# picture, and the panel shows round it. Weather is drawn over the picture as over masses.
+#
+# A link by default -- the SVG names art/street.png, as written -- or the picture's own
+# bytes with `scenet build --embed-images`, which the playground always uses.
+
+camera:
+  shot: long_shot
+
+cast:
+  alice: {reference: alice, at: left_third, pose: pointing}
+  bob:   {reference: bob,   at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
+setting: {image: art/street.png, time: dusk}
+
+panels:
+  arrival:
+    panel: {size: [1200, 600]}
+    setting: {fit: cover, weather: rain}
+    script:
+      - caption: {text: "Eight o'clock. Still raining.", kind: locale, prefer: top_left}
+      - say: {by: alice, text: "You painted every one of those windows?"}
+      - say: {by: bob, text: "Every one. Twice."}
+
+  framed:
+    over: arrival
+    panel: {size: [700, 700]}
+    camera: {shot: full_shot}
+    setting: {fit: contain, weather: clear}
+    script:
+      - say: {by: alice, text: "It looks smaller from here."}
+```
+
+</details>
+
+### Figures a picture draws
+
+People the picture draws, lettered from its artwork contract: balloons keep off their faces and tails find their mouths.
+
+![A strip of 2 panels. Ana, left; Ben, centre. Caption: The last train. Again. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](images/gallery/35-figures.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=35-figures.scene.yaml) · [Read about it](howto/letter_the_figures_in_your_art.md)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# Figures a picture draws, lettered over (#71).
+#
+# The people are in the picture -- art/figures.png, painted by
+# scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of
+# posing puppets. Where each face, mouth and body is lives in the picture's artwork
+# contract, art/figures.art.yaml, beside it and named after it; this document writes no
+# coordinate. Balloons keep off every declared face, Carl's too though nobody cast him,
+# tails aim at each speaker's mouth, and the timetable board is a keep-out: lettering
+# pays to cover it, and does not.
+#
+# Nobody is posed, placed or framed: the artist did all of that, so there is no camera
+# and no staging. `fit` maps the contract through the same transform as the picture.
+
+cast:
+  ana: {figure: ana}
+  ben: {figure: ben}
+
+setting: {image: art/figures.png, time: night}
+
+panels:
+  platform:
+    panel: {size: [1200, 600]}
+    setting: {fit: cover}
+    script:
+      - caption: {text: "The last train. Again.", kind: locale}
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  waiting:
+    over: platform
+    panel: {size: [600, 700]}
+    setting: {fit: contain}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}
+```
+
+</details>
+
+### From puppets to figures
+
+Two puppets in a street, then the same two people drawn by a picture, the place, camera and puppets taken away with null.
+
+![A strip of 2 panels. Full shot. A street at night. Ana, centre; Ben, centre. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](images/gallery/51-puppets-to-figures.strip.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=51-puppets-to-figures.scene.yaml) · [Read about it](reference/language/cast.md#castidfigure)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# From puppets to figures: the same two people, drawn first by Scenet, then by a picture.
+#
+# In the first panel Ana and Ben are puppets in a named place. The second is `over:` it, and
+# takes everything it does not take away with `null`:
+#
+# - `place: null` beside its `image`, since a picture is a backdrop of its own;
+# - `camera: null`, since the artist already framed the picture;
+# - `reference: null` beside each `figure`, and every key that posed the puppet -- `at`,
+#   `facing` -- since a member is a puppet or a figure, never both.
+#
+# The picture's artwork contract, art/figures.art.yaml, says where each face and mouth is.
+
+panels:
+  waiting:
+    panel: {size: [1200, 600]}
+    camera: {shot: full_shot}
+    setting: {place: street, time: night}
+    cast:
+      ana: {reference: alice, at: left_third}
+      ben: {reference: bob,   at: right_third, facing: left}
+    script:
+      - say: {by: ana, text: "Is it always this late?"}
+      - say: {by: ben, text: "Only when it rains somewhere else."}
+
+  platform:
+    over: waiting
+    camera: null
+    setting: {place: null, image: art/figures.png, fit: cover}
+    cast:
+      ana: {reference: null, figure: ana, at: null}
+      ben: {reference: null, figure: ben, at: null, facing: null}
+    script:
+      - say: {by: ana, text: "Is that ours?"}
+      - say: {by: ben, text: "No."}
+```
+
+</details>
+
+### A JPEG behind the cast
+
+A photograph supplied as a JPEG, read as a PNG is: by its first bytes, and for its size alone.
+
+![Full shot. Alice, left, pointing, looking at Bob; Bob, centre. Alice: The first boat leaves at six. Bob: Then we have time for coffee.](images/gallery/52-a-jpeg.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=52-a-jpeg.panel.yaml) · [Read about it](reference/language/setting.md#settingimage)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# A JPEG behind the cast.
+#
+# A supplied picture may be a PNG or a JPEG, the two raster formats every SVG viewer must
+# draw. The compiler tells them apart by their first bytes, not by the file's name, and
+# reads nothing but the size from either. This one, art/harbour.jpg, was painted and
+# encoded by scripts/make_gallery_photo.py.
+#
+# `time: dawn` changes nothing in the picture, whose values are the artist's: over a
+# picture, the hour only tints weather, and there is none.
+
+panel:
+  size: [1200, 700]
+
+camera:
+  shot: full_shot
+
+setting:
+  image: art/harbour.jpg
+  fit: cover
+  time: dawn
+
+cast:
+  alice: {reference: alice, at: left_third, pose: pointing}
+  bob:   {reference: bob,   at: center, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+
+script:
+  - say: {by: alice, text: "The first boat leaves at six."}
+  - say: {by: bob, text: "Then we have time for coffee."}
+```
+
+</details>
+
+### A puppet of your own
+
+Pip, a child five heads tall, is drawn from a puppet file beside the gallery, which the cast names by its path.
+
+![A page of 5 panels. Full shot. The docks at dusk. Alice, centre; Pip, centre, looking at Alice. Pip: Is that our boat? Alice: Not yet. Cowboy shot. The docks at dusk. Pip, centre, waving, happy. Pip: Hello, boat! Cowboy shot. The docks at dusk. Pip, centre, arms up, surprised. Pip: It's enormous! Cowboy shot. The docks at dusk. Pip, centre, scared. Pip, whispering: And so loud. Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.](images/gallery/69-a-puppet-of-your-own.page-1.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=69-a-puppet-of-your-own.scene.yaml) · [Read about it](reference/language/cast.md#castidreference)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# A puppet of your own: pip, a child five heads tall, at the docks with alice.
+#
+# Scenet ships two puppets, alice and bob, and pip is not one of them. Its file,
+# pip.puppet.yaml, is in puppets/, beside this document, and the cast names it by that path:
+# relative to the folder the document is in, as a font or a picture is named. The
+# playground writes it there for you, and Puppet... adds one of your own the same way.
+#
+# A puppet file says what a character is made of -- landmarks, joints, the parts drawn, a
+# face -- and the poses and expressions it can take, by name. Pip's are its own: it waves
+# and throws its arms up, where alice points and crosses hers. This page draws every pose
+# and every expression pip has.
+#
+# Pip is five heads tall to alice's seven and a half. The camera frames each shot by the
+# landmarks a puppet declares, counted in heads, so pip fills a panel of its own at the
+# shot asked for. Beside alice, `ground_shared_with` stands them on one ground, and pip
+# comes up to her chest; without it, each would be framed alone, head under the top of the
+# panel, and pip would float.
+
+page: {size: [1500, 2100], margin: 60, gutter: 30, tier_gutter: 40}
+setting: {place: docks, time: dusk}
+
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: puppets/pip.puppet.yaml, at: right_third, facing: left}
+
+pages:
+  - tiers:
+      - panels: [quay]
+      - {height: 1.2, panels: [wave, enormous, loud]}
+      - panels: [gone]
+
+panels:
+  quay:
+    camera: {shot: full_shot}
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
+    script:
+      - say: {by: pip, text: "Is that our boat?"}
+      - say: {by: alice, text: "Not yet."}
+
+  wave:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: waving, expression: happy, at: center}
+    script:
+      - say: {by: pip, text: "Hello, boat!"}
+
+  enormous:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {pose: arms_up, expression: surprise, at: center}
+    script:
+      - say: {by: pip, text: "It's enormous!"}
+
+  loud:
+    camera: {shot: cowboy}
+    cast:
+      alice: null
+      pip: {expression: scared, at: center}
+    script:
+      - say: {by: pip, text: "And so loud.", kind: whisper}
+
+  gone:
+    camera: {shot: full_shot}
+    cast:
+      alice: {expression: happy}
+      pip: {expression: sad}
+    staging: [alice left_of pip, pip looking_at alice, alice ground_shared_with pip]
+    script:
+      - say: {by: pip, text: "It's going without us."}
+      - say: {by: alice, text: "That one wasn't ours."}
+```
+
+</details>
+
+## Right to left
+
+### Right to left
+
+A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored.
+
+![A page of 8 panels. Long shot. A street at night, in the rain. Hana, right, pointing, looking at Ken; Ken, left. Caption: Shinjuku. Ten past midnight. Hana: You came. Ken: You called. Medium close-up. A street at night, in the rain. Ken, centre. Ken, whispering: Is anybody else coming? Close-up. A street at night, in the rain. Hana, centre. Hana: Only us. Close-up. A street at night, in the rain. Ken, centre, surprised. Ken: Then why the umbrella? Full shot. A street at night, in the rain. Hana, centre; Ken, centre. Sound effect: KRAK. Hana: Because it is raining. Ken: It always is, here. Long shot. A street at night, in the rain. Ken, centre, sad. Caption: 00:10. Medium shot. A street at night, in the rain. Hana, centre. Mother, off panel: Hana? Where are you? Hana: Nearly home. Medium shot. A street at night, in the rain. Ken, centre, arms crossed. Ken: Go. I will wait.](images/gallery/36-right-to-left.page-1.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=36-right-to-left.scene.yaml) · [Read about it](reference/language/direction.md#direction)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# A manga page, read from the top right.
+#
+# `direction: rtl` is the whole document's, written once beside `panels:`. The panels are
+# written in reading order, as on any page, and read right to left: `arrival` is top right,
+# the stack beside the tall street is read down before across, and the last tier ends at
+# the bottom left. In each panel the balloons are read the same way -- never above and right
+# of one before -- and the caption, given no zone, sits where reading starts.
+#
+# Nothing in the picture is mirrored: Hana stands where `at:` puts her and faces the way
+# `facing:` says, the clock is in the corner its `at:` names, and the sound sits where the
+# sound is. 37-left-to-right.scene.yaml is this page read left to right, figure for figure.
+
+direction: rtl
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - height: 1.4
+        columns:
+          - {panels: [asks, answers]}
+          - width: 1.2
+            panels:
+              - use: street
+                insets: [{use: clock, at: bottom_left, size: 0.4}]
+      - panels: [phone, wait]
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    cast:
+      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana, hana looking_at ken]
+    script:
+      - caption: {text: "Shinjuku. Ten past midnight."}
+      - say: {by: hana, text: "You came."}
+      - say: {by: ken, text: "You called."}
+
+  door:
+    camera: {shot: medium_close_up}
+    cast:
+      ken: {reference: bob, at: center}
+    script:
+      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
+
+  asks:
+    camera: {shot: close_up}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: hana, text: "Only us."}
+
+  answers:
+    camera: {shot: close_up}
+    cast:
+      ken: {reference: bob, expression: surprise, at: center}
+    script:
+      - say: {by: ken, text: "Then why the umbrella?"}
+
+  street:
+    camera: {shot: full_shot}
+    cast:
+      hana: {reference: alice, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana]
+    script:
+      - sfx: {text: KRAK, size: medium, prefer: top_center}
+      - say: {by: hana, text: "Because it is raining."}
+      - say: {by: ken, text: "It always is, here."}
+
+  clock:
+    camera: {shot: long_shot}
+    cast:
+      ken: {reference: bob, expression: sad, at: right_third}
+    script:
+      - caption: {text: "00:10"}
+
+  phone:
+    camera: {shot: medium_shot}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
+      - say: {by: hana, text: "Nearly home."}
+
+  wait:
+    camera: {shot: medium_shot}
+    cast:
+      ken: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: ken, text: "Go. I will wait."}
+```
+
+</details>
+
+### The same page, left to right
+
+The right-to-left page read the other way, figure for figure, to compare the two.
+
+![A page of 8 panels. Long shot. A street at night, in the rain. Ken, left; Hana, right, pointing, looking at Ken. Caption: Shinjuku. Ten past midnight. Hana: You came. Ken: You called. Medium close-up. A street at night, in the rain. Ken, centre. Ken, whispering: Is anybody else coming? Close-up. A street at night, in the rain. Hana, centre. Hana: Only us. Close-up. A street at night, in the rain. Ken, centre, surprised. Ken: Then why the umbrella? Full shot. A street at night, in the rain. Ken, centre; Hana, centre. Sound effect: KRAK. Hana: Because it is raining. Ken: It always is, here. Long shot. A street at night, in the rain. Ken, centre, sad. Caption: 00:10. Medium shot. A street at night, in the rain. Hana, centre. Mother, off panel: Hana? Where are you? Hana: Nearly home. Medium shot. A street at night, in the rain. Ken, centre, arms crossed. Ken: Go. I will wait.](images/gallery/37-left-to-right.page-1.svg)
+
+[Open in the playground](https://creatoan.github.io/scenet/playground/#example=37-left-to-right.scene.yaml) · [Read about it](reference/language/direction.md#direction)
+
+<details>
+<summary>Source</summary>
+
+```yaml
+# The manga page of 36-right-to-left.scene.yaml, read left to right.
+#
+# The same document with `direction: ltr`, which is also what a page with no `direction`
+# reads as. Put the two side by side: every panel draws the same figures, staged the same
+# way, at the same size -- only where each panel sits on the page, and where its lettering
+# sits in it, follows the direction.
+
+direction: ltr
+page: {size: [1500, 2250], margin: 75, gutter: 30, tier_gutter: 45}
+setting: {place: street, time: night, weather: rain}
+
+pages:
+  - tiers:
+      - panels: [{use: arrival, width: 2}, door]
+      - height: 1.4
+        columns:
+          - {panels: [asks, answers]}
+          - width: 1.2
+            panels:
+              - use: street
+                insets: [{use: clock, at: bottom_left, size: 0.4}]
+      - panels: [phone, wait]
+
+panels:
+  arrival:
+    camera: {shot: long_shot}
+    cast:
+      hana: {reference: alice, pose: pointing, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana, hana looking_at ken]
+    script:
+      - caption: {text: "Shinjuku. Ten past midnight."}
+      - say: {by: hana, text: "You came."}
+      - say: {by: ken, text: "You called."}
+
+  door:
+    camera: {shot: medium_close_up}
+    cast:
+      ken: {reference: bob, at: center}
+    script:
+      - say: {by: ken, text: "Is anybody else coming?", kind: whisper}
+
+  asks:
+    camera: {shot: close_up}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: hana, text: "Only us."}
+
+  answers:
+    camera: {shot: close_up}
+    cast:
+      ken: {reference: bob, expression: surprise, at: center}
+    script:
+      - say: {by: ken, text: "Then why the umbrella?"}
+
+  street:
+    camera: {shot: full_shot}
+    cast:
+      hana: {reference: alice, at: right_third, facing: left}
+      ken: {reference: bob, at: left_third}
+    staging: [ken left_of hana]
+    script:
+      - sfx: {text: KRAK, size: medium, prefer: top_center}
+      - say: {by: hana, text: "Because it is raining."}
+      - say: {by: ken, text: "It always is, here."}
+
+  clock:
+    camera: {shot: long_shot}
+    cast:
+      ken: {reference: bob, expression: sad, at: right_third}
+    script:
+      - caption: {text: "00:10"}
+
+  phone:
+    camera: {shot: medium_shot}
+    cast:
+      hana: {reference: alice, at: center, facing: left}
+    script:
+      - say: {by: mother, text: "Hana? Where are you?", off_panel: true}
+      - say: {by: hana, text: "Nearly home."}
+
+  wait:
+    camera: {shot: medium_shot}
+    cast:
+      ken: {reference: bob, pose: arms_crossed, at: center}
+    script:
+      - say: {by: ken, text: "Go. I will wait."}
 ```
 
 </details>
