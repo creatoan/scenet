@@ -12,6 +12,27 @@ below 1.0 means.
 
 ### Added
 
+- **The front door and the story** (#323). The README and the site's landing page open the
+  same way: the gallery tour's picture, one sentence on what Scenet does today, buttons to the
+  playground, the gallery and the install guide, the AI-generated notice word for word, and a door
+  for each reader: Discover, Write comics, Build with Python, Drive from a model, Contribute. The
+  README is the PyPI page too, so every link in it is absolute and it stays under 120 lines; a
+  test holds it to both. About gains **Why Scenet**, the score-and-performer thesis rewritten for
+  what Scenet is now, with the style layer defined; **What Scenet does today**, a feature matrix in
+  place of the phase log, whose every "since" is checked against the releases mined from the tags
+  and the CHANGELOG, unreleased work marked; and **What's new**, this file. The navbar reads Learn,
+  Guides, Language, Python API, Gallery, Playground, About, with Contribute in the footer; the
+  how-to guides are grouped by what the reader is doing, a line each; and **Use the playground**
+  documents every button, Puppet… included, which a test holds to the page's toolbar.
+  *Design decisions* is named so and grouped by theme, the PDF print spike is a design note marked
+  superseded, the glossary gains character, scene, sequence, page, book and retreat, and reader
+  pages say what a thing does rather than which issue added it.
+- **One umbrella panel.** The gallery's `01-two-characters` is the example every page shows: the
+  README, the landing page, the skill and the Python track. The language reference's complete
+  example, gallery `71`, is that panel with a setting, and a test holds every copy to it. The six
+  files at the top of `examples/` are folded into the gallery, whose files the reference's commands
+  now name.
+
 - **Learn Scenet from Python** (#322): the developer's track, five chapters under
   `docs/tutorial/python/`, from `pip install scenet` to Scenet inside a program of your own.
   *Compile and render* calls every `compile_*` entry point and every renderer, writes files,

@@ -201,7 +201,7 @@ says why it happens and how to fix it: link to it from your program's own report
 ## Notes, matched by their codes
 
 A note is not an error. The compile succeeded, and did something the document did not
-literally ask for: a camera that pulled back so the cast would fit, a tail bent around a
+literally ask for: a camera that retreated so the cast would fit, a tail bent around a
 face. [`compile_notes`](../../reference/api/public/CompileResult.md) holds a
 [`CompileNote`](../../reference/api/public/CompileNote.md) for each, with its `rule`, a code
 that does not change between releases, and its `message`, a sentence that may. Save this as

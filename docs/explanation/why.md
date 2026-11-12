@@ -37,7 +37,7 @@ the same layout.
 ## The style is the performer's
 
 The **style layer** is what a performer adds that no score says: the line, the hatching, the
-colour beyond [the value ladder](../reference/glossary.md#term-value-ladder), how a face is drawn,
+colour beyond the {term}`value ladder`, how a face is drawn,
 what a picture means beyond who stands where. Scenet's own renderers draw in one plain style, and
 the compiler has no style layer and is not meant to grow one. Style belongs to whoever performs
 the score: an artist, an image model, or a renderer someone else writes.

@@ -365,7 +365,7 @@ def compile_panel(
 
     The result is the Panel Core for each panel: every figure's position and scale,
     every balloon's box and tail. Its notes say what the compiler did that the source
-    did not literally ask for -- a camera that pulled back so the cast would fit, a
+    did not literally ask for -- a camera that retreated so the cast would fit, a
     tail that bent around a face. A document that does not compile is an error
     carrying the same findings `validate` reports.
 

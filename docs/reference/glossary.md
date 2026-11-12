@@ -1,16 +1,24 @@
 # Glossary
 
-The words the language reference uses, each in the sense Scenet gives it. A key card links a term
-here the first time it uses it.
+The words the documentation uses, each in the sense Scenet gives it, and only in that sense. A
+key card links a term here the first time it uses it. Where two words are close -- an actor and a
+character, a scene and a sequence -- each entry says which is which.
 
 ```{glossary}
+character
+  Someone in the story, as a writer thinks of them: Alice, across every panel she is in. In a
+  document, a character is an {term}`actor` in each panel, and is drawn as a {term}`puppet` or is a
+  {term}`figure`. `alice` and `bob`, the puppets Scenet ships, are often called its characters; the
+  reference calls them puppets.
+
 actor
   Someone in a panel, by the id the author gives them under `cast:` -- `alice`, `guard_left`. Every
   other block names the cast by these ids. An actor is played by a {term}`puppet` or is a
   {term}`figure` a picture draws. See [`cast`](language/cast.md#cast).
 
 cast member
-  One entry of `cast:`: an actor id, and who plays them. A member is a {term}`puppet` or a
+  One entry of `cast:`: an {term}`actor`'s id, and who plays them. The actor is the person in the
+  panel; the cast member is the entry that says who they are. A member is a {term}`puppet` or a
   {term}`figure`, never both, and a panel's cast is all one or the other.
 
 puppet
@@ -52,7 +60,31 @@ emanata
 
 marks
   The four emanata a cast member can carry: `plewds`, `squeans`, `grawlixes` and `briffits`. See
-  [`cast.<id>.marks`](language/cast.md#castidmarks).
+  [`cast.<id>.marks`](language/cast.md#castidmarks). Not the module `scenet.emit.marks`, which lists
+  everything a panel paints, for the emitters, and which the language never names.
+
+scene
+  A `*.scene.yaml` document: several panels in one file, written as a {term}`sequence`, laid out on
+  {term}`page`s, or both. See [Scenes](language/scene.md).
+
+sequence
+  Panels read one after another, each saying only what changed from the one before with `over:`.
+  It is how a scene writes its `panels:`, and a comic script's panels are one too. See
+  [`over`](language/scene.md#over).
+
+page
+  Panels laid out on a sheet, in {term}`tier`s, as a scene's `pages:` writes them or a comic
+  script's `PAGE` headings do. See [`pages`](language/page.md#pages).
+
+book
+  A scene compiled whole: every panel and every page of it, as `compile_book` returns them. The
+  word is the Python API's; a document is never called a book.
+
+retreat
+  What the camera does when the cast cannot fit at the shot asked for: it steps back, keeping the
+  shot's crop and widening the frame, and says so with the `camera-retreated` note. Panel Core
+  records by how much as `camera.pullback`, the factor of the scale asked for, below 1 when it
+  retreated. See [`camera.shot`](language/camera.md#camerashot).
 
 mass
   One tonal shape of a backdrop: a kind of stuff -- `building`, `sky`, `wall` -- on a

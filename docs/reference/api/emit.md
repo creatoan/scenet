@@ -4,7 +4,8 @@ Panel Core to SVG, to a print PDF, and to the exports for image models. No emitt
 decision: everything it draws or says was already decided. The shapes Panel Core names but
 does not spell out -- a burst's spikes, a tail's corners, where each letter lands -- are worked
 out once in `scenet.emit.geometry`, and the order a panel is painted in is `scenet.emit.marks`,
-so that every emitter draws the same thing.
+so that every emitter draws the same thing. Its marks are everything painted, and have nothing to
+do with the `marks` key of the language, a cast member's emanata.
 
 ## `scenet.emit.svg`
 

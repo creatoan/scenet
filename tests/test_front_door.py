@@ -273,9 +273,7 @@ class TestOneUmbrellaPanel:
     @pytest.mark.parametrize(("where", "document"), UMBRELLAS, ids=[w for w, _ in UMBRELLAS])
     def test_it_is_the_gallerys_first(self, where: str, document: dict[str, Any]):
         """Exactly `01`, or `01` with a setting added (the language's complete example)."""
-        assert {key: value for key, value in document.items() if key != "setting"} == (
-            _umbrella()
-        )
+        assert {key: value for key, value in document.items() if key != "setting"} == (_umbrella())
 
     def test_the_complete_example_adds_only_a_setting(self):
         complete = yaml.safe_load(_read(GALLERY / "71-a-complete-panel.panel.yaml"))
@@ -369,7 +367,9 @@ def _rows() -> list[tuple[str, str, list[str], str]]:
                 continue
             if cells == ["Feature", "Written as", "Since"]:
                 continue
-            rows.append((section.heading.text, cells[0], re.findall(r"`([^`]+)`", cells[1]), cells[2]))
+            rows.append(
+                (section.heading.text, cells[0], re.findall(r"`([^`]+)`", cells[1]), cells[2])
+            )
     return rows
 
 
@@ -415,7 +415,11 @@ class TestWhatScenetDoesToday:
         assert unreleased.strip()
 
     def test_the_specification_disclaimer_is_gone(self):
-        for path in [*DOCS.rglob("*.md"), *ROOT.glob("skills/**/*.md"), ROOT / "src" / "scenet" / "scenet-spec.md"]:
+        for path in [
+            *DOCS.rglob("*.md"),
+            *ROOT.glob("skills/**/*.md"),
+            ROOT / "src" / "scenet" / "scenet-spec.md",
+        ]:
             if "_build" not in path.parts:
                 assert "not a report of what is implemented" not in _read(path), path
 
@@ -431,7 +435,7 @@ class TestTheStory:
             assert performer in text, performer
 
     def test_the_style_layer_is_defined_or_gone(self):
-        """"Style layer" or "interpretation layer" is said only where it is defined."""
+        """ "Style layer" or "interpretation layer" is said only where it is defined."""
         for path in [*DOCS.rglob("*.md"), README]:
             if "_build" in path.parts:
                 continue
@@ -448,7 +452,14 @@ class TestTheStory:
 
     def test_about_leads_to_each(self):
         text = _read(DOCS / "explanation" / "index.md")
-        for page in ("why", "status", "whats_new", "design_decisions", "prior_art", "design_notes/index"):
+        for page in (
+            "why",
+            "status",
+            "whats_new",
+            "design_decisions",
+            "prior_art",
+            "design_notes/index",
+        ):
             assert f"]({page}.md)" in text, page
 
     def test_the_spike_is_a_superseded_design_note(self):
@@ -601,11 +612,15 @@ class TestTheGuides:
         page = _read(ROOT / "playground" / "index.html")
         guide = _read(DOCS / "howto" / "use_the_playground.md")
         names: list[str] = []
-        for button in re.finditer(r"<button(?P<attributes>[^>]*)>(?P<body>.*?)</button>", page, re.S):
+        for button in re.finditer(
+            r"<button(?P<attributes>[^>]*)>(?P<body>.*?)</button>", page, re.S
+        ):
             if 'id="' not in button["attributes"]:
                 continue  # an item of the Download menu, which the guide names as a list
             label = re.search(r'aria-label="([^"]+)"', button["attributes"])
-            names.append(label[1] if label else " ".join(re.sub(r"<[^>]+>", " ", button["body"]).split()))
+            names.append(
+                label[1] if label else " ".join(re.sub(r"<[^>]+>", " ", button["body"]).split())
+            )
         assert len(names) > 20
         for name in names:
             assert name.removesuffix(" PDF") in guide, name

@@ -353,7 +353,8 @@ Core.
 
 - **The same drawing, from one computation.** `scenet.emit.geometry` works out what Core names
   but does not spell out -- a burst's spikes, a tail's corners, where each letter lands -- and
-  `scenet.emit.marks` lists what a panel paints, in order. Both emitters draw from them, and a
+  `scenet.emit.marks` lists what a panel paints, in order (no relation to the
+  `marks` key, the emanata). Both emitters draw from them, and a
   test holds the marks to the SVG for every gallery panel.
 - **No dependency.** ReportLab, the one PDF library that passed the licence gate, was compared on
   a real page and set aside: both were deterministic and both could overprint, but the direct
