@@ -23,7 +23,7 @@ from typing import Any
 import pytest
 import yaml
 
-from tests.doc_examples import document_blocks
+from tests.doc_examples import document_blocks, fences
 from tests.myst import headings, sections
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -248,6 +248,9 @@ def _umbrella_blocks() -> list[tuple[str, dict[str, Any]]]:
             continue  # a document broken on purpose, to show its diagnostic
         if _is_umbrella(document):
             found.append((block.fence.where, document))
+    for fence in fences(ROOT / "skills" / "scenet" / "SKILL.md"):
+        if fence.language == "yaml" and _is_umbrella(yaml.safe_load(fence.text)):
+            found.append((fence.where, yaml.safe_load(fence.text)))
     for path in sorted(ROOT.glob("examples/**/*.yaml")):
         document = yaml.safe_load(_read(path))
         if _is_umbrella(document):

@@ -1,11 +1,12 @@
-"""The documentation's home page shows its example compiled, and opens it in the playground.
+"""The documentation's home page shows the umbrella panel compiled, and opens it in the playground.
 
-The example is the gallery's first entry, the panel from the README, so all three must stay
-one document: the YAML on the page, the picture under it, and the share link the "Open it in
-the playground" button carries. (The playground itself opens on the gallery's tour, which the
-manifest names as its `start:`.) Each is checked against the gallery file, and
-the picture against the golden digest of that file's build -- so it cannot drift from what
-the compiler draws today. `scripts/update_golden.py` rewrites the picture with the goldens.
+The example is the gallery's first entry, the umbrella panel every page starts from (see
+`tests/test_front_door.py`), so three things must stay one document: the YAML on the page, the
+picture under it, and the share link the "Open this panel in the playground" button carries.
+(The playground itself opens on the gallery's tour, which the manifest names as its `start:`.)
+Each is checked against the gallery file, and the picture against the golden digest of that
+file's build -- so it cannot drift from what the compiler draws today.
+`scripts/update_golden.py` rewrites the picture with the goldens.
 """
 
 import base64
@@ -59,7 +60,7 @@ def test_the_picture_is_what_the_compiler_draws():
 def test_the_picture_follows_the_example():
     home = _home()
     picture = home.index("](images/gallery/01-two-characters.svg)")
-    assert home.index("```yaml") < picture < home.index("## Try it without installing anything")
+    assert home.index("```yaml") < picture < home.index("## Where to start")
 
 
 def test_the_button_opens_this_example_in_the_playground():
