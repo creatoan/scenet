@@ -25,7 +25,7 @@ cast:
   alice: {reference: alice}
 """
 
-DUEL = Path(__file__).resolve().parents[1] / "examples" / "duel.panel.yaml"
+DUEL = Path(__file__).resolve().parents[1] / "examples" / "gallery" / "01-two-characters.panel.yaml"
 
 
 class TestRelationSentences:

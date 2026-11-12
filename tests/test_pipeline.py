@@ -340,14 +340,14 @@ class TestStripIsOneDocument:
 
 class TestExample:
     def test_shipped_example_compiles(self):
-        result = compile_file(EXAMPLES / "duel.panel.yaml")
+        result = compile_file(EXAMPLES / "gallery" / "01-two-characters.panel.yaml")
         assert len(result.core.actors) == 2
         assert len(result.core.balloons) == 2
 
     def test_a_retreating_camera_is_reported(self):
         """Diagnostics are part of the result, not log noise, so tooling can surface
         that the requested framing was loosened."""
-        result = compile_file(EXAMPLES / "duel.panel.yaml")
+        result = compile_file(EXAMPLES / "gallery" / "10-crowd-pullback.panel.yaml")
         assert any("retreated" in note for note in result.notes)
 
 
