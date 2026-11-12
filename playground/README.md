@@ -11,73 +11,20 @@ Treat it accordingly: an experiment first, a usable tool second.
 
 ---
 
-The Scenet compiler running in a browser, published to GitHub Pages.
+The Scenet compiler running in a browser, published to GitHub Pages with the documentation.
 
-## What it does
+**What it does, button by button, is in
+[Use the playground](https://creatoan.github.io/scenet/howto/use_the_playground.html).** This
+README is for building it.
 
-- **A guided gallery.** It opens on a tour, `examples/gallery/38-tour.scene.yaml`, and its
-  menu groups every example by theme. Previous and Next walk the gallery in that order; under
-  the editor, a sentence says what each example shows, with a link to the documentation that
-  explains it. `#example=<file>` opens one by name, and choosing one puts that link in the
-  address bar until the first edit. The groups, the opening example, the summaries and the
-  links come from `examples/gallery/manifest.yaml`.
-- **Live compile** as you type, with the compiler's own findings underlined at the
-  line they are about. The list under the output jumps to each one.
-- **Notes listed over the picture**: what `scenet check` notes, each under its rule and a
-  click away from its line, then what the compiler decided, each under its name. The
-  gallery's *What Scenet tells you* has an example of each.
-- **A link over each try-this**: those examples end with a line commented out that makes
-  them an error, and *Try it* uncomments it, `# ` and all, as one edit Ctrl+Z takes back.
-- **Zoom and pan** the output: scroll or pinch to zoom about the pointer, drag to pan,
-  double-click for Fit or 100%. With the picture focused, `+` `-` `0` `1` and the arrow
-  keys do the same. Editing keeps the zoom; opening another document fits it.
-- **Overlay** shows the solver's working geometry, for a single panel or a whole scene.
-- **Panel Core** is shown read-only in a second editor, with folding.
-- **Depth, Mask, Pose, Boxes and Semantics** show the exports for image models, every
-  panel's side by side under its name. They are made only while one of these tabs is open,
-  so typing stays fast. The pose and the boxes are JSON; what is shown is their picture,
-  drawn by `scenet.emit.preview`.
-- **Screen reader** lists what a screen reader is given (`src/outline.ts`): every image and
-  group the SVG names, nested, with its words.
-- **Print** shows the print PDF, as `scenet build --pdf` writes it, in the browser's own
-  viewer, with what print leaves out listed above it; where a browser shows no PDF in a frame,
-  as on a phone, its link opens the file. The Content Security Policy lets frames load only
-  this page's own `blob:` addresses.
-- **Files** shows the files beside the document: the gallery's pictures and artwork
-  contracts, and what Font… and Image… added.
-- **Output** letters with live text, as `--live-text` does, and shows a document of several
-  panels as its pages, a strip, or each panel on its own (`src/maps.ts`). The choice is kept
-  in the browser; a share link does not carry it.
-- **Download** the panel as SVG or a 2× PNG, the overlay, the Panel Core, a panel's exports
-  for image models, the print PDF, or the source; a document of several panels has its exports in one ZIP.
-  `Ctrl+S` saves the source. Names follow `scenet build`: `foo.svg`, `foo.debug.svg`,
-  `foo.core.json`, `foo.pose.json`, `foo.pdf`, `foo.conditioning.zip` holding
-  `foo.one.pose.json`.
-- **Share** copies a link with the whole document compressed into the URL fragment. The
-  fragment never reaches a server, so there is no backend.
-- **Font…** adds `.ttf` and `.otf` files to the document's `fonts/` folder, in Pyodide's
-  in-memory file system, so `lettering: {font: fonts/Name.ttf}` letters in them. They last
-  as long as the tab: neither a reload nor a share link keeps them.
-- **Your edits survive a reload**, saved in the browser. *Reset to example* discards them.
-- **Every version of Scenet has its own playground** on the site: the latest release's,
-  `main`'s under `/dev/`, each minor version's under `/vX.Y/`. The switcher beside the title
-  moves between them, keeping a shared document, and `main`'s and an old release's say so.
-- The divider between editor and output can be dragged, or moved with the arrow keys;
-  the output can go full screen.
-
-## Why there is no compiler in here
-
-The obvious way to build a browser playground for a DSL is to reimplement the compiler
-in TypeScript. That forks the geometry into two codebases which slowly disagree, and
-the browser version is the one nobody tests.
-
-[Pyodide](https://pyodide.org/) ships `shapely`, `geos`, `numpy`, `pydantic` and
-`kiwisolver` compiled to WebAssembly, and `fontTools`, `pyyaml` and the font packages
-are pure Python. So the actual compiler runs unmodified, and the TypeScript here only
-moves strings across the boundary.
-
-The page installs the exact wheel `uv build` produces. Nothing is rebuilt or
-transformed for the browser.
+The TypeScript here only moves strings across the boundary: the page runs the real compiler
+under [Pyodide](https://pyodide.org/), which ships `shapely`, `geos`, `numpy`, `pydantic` and
+`kiwisolver` compiled to WebAssembly, while `fontTools`, `pyyaml` and the font packages are pure
+Python. Nothing is rebuilt or transformed for the browser; the guide's
+[The compiler it runs](https://creatoan.github.io/scenet/howto/use_the_playground.html#the-compiler-it-runs)
+says why that matters. The groups of the example menu, the opening example, the summaries and the
+links all come from `examples/gallery/manifest.yaml`; `src/outline.ts` builds the Screen reader
+tab and `src/maps.ts` the Output menu's layouts.
 
 ## Building
 

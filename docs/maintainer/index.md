@@ -1,3 +1,7 @@
+---
+orphan: true
+---
+
 # Maintainer guide
 
 For anyone with commit rights, and for the future version of yourself who has forgotten
@@ -80,9 +84,10 @@ side — a version can never be re-uploaded.
 
 These are enforced by tests, not by good intentions:
 
-- **Determinism.** Identical input produces byte-identical output. No wall-clock time, no
-  unseeded randomness, no reliance on set or dict iteration order, no absolute paths in
-  output. Golden-file tests are meaningless without it.
+- **Determinism.** Identical input produces byte-identical output, as
+  [the language promises](../reference/language/index.md#determinism): no clock, no
+  randomness that is not seeded, no order that depends on a set or a dict, no absolute path
+  in the output. Golden-file tests are meaningless without it.
 - **The solver never sees artwork.** It sees a geometric contract only — bounding boxes,
   named anchors, exclusion polygons, gaze vectors. Rendering stays swappable.
 - **Everything is typed.** `ty` is a blocking gate. A bare `# type: ignore` is rejected;

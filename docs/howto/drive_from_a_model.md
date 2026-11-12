@@ -190,4 +190,4 @@ Two caveats. **Schema conformance is not validity**: no schema can say that ever
 generator gets wrong. Always run `scenet check`, or the `validate` tool, on the result. And
 whether this schema suits a given provider's constrained decoding is untested here — providers
 document that very large or deeply nested schemas may be rejected, and say little more. Measuring
-that is tracked in [#11](https://github.com/creatoan/scenet/issues/11).
+that is [an open issue](https://github.com/creatoan/scenet/issues/11).

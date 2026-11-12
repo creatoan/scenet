@@ -163,7 +163,7 @@ stay off: here, a timetable board.
 ```{code-block} yaml
 :caption: platform.scene.yaml
 
-# Figures a picture draws, lettered over (#71).
+# Figures a picture draws, lettered over.
 #
 # The people are in the picture -- art/figures.png, painted by
 # scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of

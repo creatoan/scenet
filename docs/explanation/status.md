@@ -1,51 +1,90 @@
-# Implementation status
+# What Scenet does today
 
-| Document | Contents |
-|---|---|
-| [Language specification](../reference/language/index.md) | The DSL — every construct, with examples |
-| [Panel Core](../reference/panel_core.md) | The resolved intermediate format |
-| [Shot types](../reference/shot_types.md) | Normative camera framing table |
-| [Asset contract](../reference/asset_contract.md) | What a character puppet must declare |
+Everything here runs, and every example of it is compiled by the test suite. Each line gives the
+release it arrived in. Work marked *not yet released* is on `main`, and in
+[the documentation of `main`](https://creatoan.github.io/scenet/dev/), but not in what
+`pip install scenet` gives you until the next release. [What's new](whats_new.md) has the detail,
+release by release.
 
-**This specification is free to implement.** The project is released under
-[0BSD](https://github.com/creatoan/scenet/blob/main/LICENSE), which imposes no conditions whatsoever — but to be explicit: anyone may
-build a competing compiler, editor, renderer or tool for this language without permission or
-attribution. A notation is only worth having if it is not owned.
+Each "Written as" names the key, command or function the feature is used through; its card or
+entry gives the rest.
 
-## Implementation status
+## Frontends
 
-| Phase | Scope | State |
+| Feature | Written as | Since |
 |---|---|---|
-| 0 | Toolchain, CI, specification, project scaffolding | **Done** |
-| 1 | IR, Panel Core schema, YAML frontend, puppets and forward kinematics | **Done** |
-| 2 | Camera scale resolution and actor placement (Cassowary) | **Done** |
-| 3 | Text metrics, balloon placement, reading order, tails | **Done** |
-| 4 | SVG emitter, debug overlay and CLI | **Done** |
-| 5 | Comic-script frontend; multi-panel `over` inheritance | **Done** |
-| 6 | Browser playground (Pyodide); VS Code extension | **Done** |
-| 7 | Machine-readable diagnostics: `scenet check`, in SARIF | **Done** |
-| 8 | Captions, faces, and the setting layer — places, masses, planes, atmosphere | **Done** |
-| 9 | Emanata — plewds, squeans, grawlixes, briffits — as a soft placement cost | **Done** |
-| 10 | The agent-facing surface: spec pack and `llms.txt`, Agent Skill, MCP server | **Done** |
-| 11 | Pages: tiers of panels at varying sizes, columns, insets, slanted tiers, one type size per page, Page Core | **Done** |
-| 12 | Lettering: emphasis, kerning, type size, an author's own face; sound effects in the display face | **Done** |
-| 13 | Comic scripts as publishers write them, and in French; off-panel speech; small type; a script's pages; notes in `scenet check` | **Done** |
-| 14 | Accessible output: every panel an image a screen reader reads whole, in reading order; descriptions written, kept from a script or generated | **Done** |
-| 15 | Supplied artwork: a picture behind the cast, linked or embedded; figures the picture draws, declared in an artwork contract and lettered around | **Done** |
-| 16 | Right-to-left reading, for manga: panels, pages, strips and lettering read from the top right, the scene never mirrored | **Done** |
-| 17 | Exports for image models: an OpenPose pose, boxes with phrases, a depth map, a mask and the semantics, from Panel Core | **Done** |
-| 18 | A colour policy: `palette: tinted`, the value ladder in colour at every value; the yellow `warm` caption; monochrome on output with `--mono` | **Done** |
-| 19 | VS Code: `scenet check` findings, and highlighting for comic scripts | **Done** |
-| 20 | `scenet build --watch`: a rebuild whenever the source or anything it reads changes | **Done** |
-| 21 | Print: a PDF with its trim and bleed, lettering on the black plate, pictures carried unchanged; a page unit printed as 0.1 mm | **Done** |
+| A panel, written in YAML | `panel`, `cast`, `script` | 0.1 |
+| A sequence, each panel saying only what changed | `panels`, `over` | 0.1 |
+| Pages of tiers, columns and insets | `pages`, `page`, `panels[].insets` | 0.10 |
+| Slanted tiers | `tiers[].slant` | 0.10 |
+| A comic script, as writers write it | `parse_script()` | 0.1 |
+| Scripts in Dark Horse's published format, and in French | | 0.11 |
+| A voice from off panel | `say.off_panel` | 0.11 |
+| Scripts laid out as a manga script, a screenplay or a letterer's script | | 0.13, not yet released |
+| Characters of your own, as puppet files | `load_puppet()` | 0.1 |
+| A JSON Schema for puppet files, for completion in an editor | `scenet schema --puppet` | 0.13, not yet released |
 
-Single panels compile end to end. Constructs described in the language reference are the specification,
-not a report of what is implemented — the table above is authoritative on what actually runs.
+## Layout
 
-## Planned
+| Feature | Written as | Since |
+|---|---|---|
+| Shots framed by where they cut the body | `camera.shot` | 0.1 |
+| Camera angles | `camera.angle` | 0.1 |
+| Figures ordered, overlapped, grounded and looking at each other | `staging` | 0.1 |
+| Balloons sized for their words, placed in reading order, with tails | `say` | 0.1 |
+| Captions | `caption` | 0.4 |
+| Faces and expressions | `cast.<id>.expression` | 0.5 |
+| Settings: places, masses, the hour and the weather | `setting` | 0.6 |
+| Emanata: plewds, squeans, grawlixes and briffits | `cast.<id>.marks` | 0.8 |
+| A supplied picture behind the cast | `setting.image` | 0.12 |
+| Figures a supplied picture draws, lettered around | `cast.<id>.figure` | 0.12 |
+| Reading right to left, for manga | `direction` | 0.12 |
+| Colour, as a twin of the value ladder | `palette` | 0.13, not yet released |
+| Panels that bleed off the page | `panels[].bleed`, `page.bleed` | 0.13, not yet released |
 
-What is planned is in the [issues](https://github.com/creatoan/scenet/issues), each scoped to be a
-release on its own, with what it depends on stated there.
+## Lettering
 
-Still further out, and not yet ticketed: the interpretation layer that would give a panel a
-*style*.
+| Feature | Written as | Since |
+|---|---|---|
+| Lettering drawn as glyph outlines, measured in the face it is drawn in | `render()` | 0.1 |
+| Kerning, and emphasis in bold and italic | | 0.11 |
+| A face of your own | `lettering.font` | 0.11 |
+| One type size for a page, and small type | `lettering.size`, `say.size` | 0.11 |
+| Sound effects, in the display face | `sfx` | 0.11 |
+| The warm caption | `caption.tone: warm` | 0.13, not yet released |
+
+## Outputs
+
+| Feature | Written as | Since |
+|---|---|---|
+| An SVG for each panel | `scenet build` | 0.1 |
+| A strip of a document's panels | `scenet build --strip` | 0.1 |
+| Panel Core, the resolved layout, as JSON | `scenet build --core` | 0.1 |
+| The debug overlay | `scenet build --debug` | 0.1 |
+| Lettering as live text | `scenet build --live-text` | 0.1 |
+| Output a screen reader reads, with a description of each panel | `description`, `scenet build --no-aria` | 0.12 |
+| A supplied picture embedded, so the SVG stands alone | `scenet build --embed-images` | 0.12 |
+| Exports for image models: pose, boxes, depth, mask and semantics | `scenet build --conditioning` | 0.12 |
+| A PDF for print, with its trim, its bleed and lettering on the black plate | `scenet build --pdf`, `render_pdf()` | 0.13, not yet released |
+| A monochrome edition of a tinted document | `scenet build --mono` | 0.13, not yet released |
+
+## Tools
+
+| Feature | Written as | Since |
+|---|---|---|
+| The Python API | `compile_source()` | 0.1 |
+| JSON Schemas for panel and scene documents | `scenet schema` | 0.1 |
+| The browser playground | | 0.1 |
+| The VS Code extension | | 0.1 |
+| `scenet check`, its findings as text or SARIF | `scenet check` | 0.3 |
+| The checks that compile, `--deep` | `scenet check --deep` | 0.6 |
+| The spec pack, `llms.txt` and the Agent Skill | | 0.8 |
+| The MCP server | `scenet mcp` | 0.8 |
+| A rebuild on every save | `scenet build --watch` | 0.13, not yet released |
+
+## Roadmap
+
+What is planned is in [the issues](https://github.com/creatoan/scenet/issues), each scoped to be
+a release of its own, with what it depends on stated there. What Scenet will not do is said in
+[Why Scenet](why.md): it draws no picture with a model, interprets no prose, and leaves style to
+whoever performs the score.

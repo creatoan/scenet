@@ -73,8 +73,13 @@ At the root, as the Gallery page is, one example opens in
 
 ```{toctree}
 howto/other
+Playground <https://creatoan.github.io/scenet/playground/>
 ```
 """
+
+#: The landing page of a release built before the playground was in its table of contents,
+#: as `scripts/backfill_site.py` builds one with today's templates.
+_OLD_INDEX = _INDEX.replace("Playground <https://creatoan.github.io/scenet/playground/>\n", "")
 
 _OTHER = """\
 # Another page
@@ -85,13 +90,14 @@ absolute link works: [the playground](https://creatoan.github.io/scenet/playgrou
 
 
 @pytest.fixture(scope="session")
-def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str], Path]:
+def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[..., Path]:
     """Build the two-page project documenting a version; each version is built once."""
     built: dict[str, Path] = {}
 
-    def build(documented: str) -> Path:
-        if documented in built:
-            return built[documented]
+    def build(documented: str, index: str = _INDEX) -> Path:
+        key = f"{documented}-{index == _INDEX}"
+        if key in built:
+            return built[key]
         base = tmp_path_factory.mktemp(f"docs-{documented}")
         source = base / "source"
         (source / "howto").mkdir(parents=True)
@@ -103,7 +109,7 @@ def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str], Path
             ),
             encoding="utf-8",
         )
-        (source / "index.md").write_text(_INDEX, encoding="utf-8")
+        (source / "index.md").write_text(index, encoding="utf-8")
         (source / "howto" / "other.md").write_text(_OTHER, encoding="utf-8")
         output = base / "html"
         result = subprocess.run(  # noqa: S603
@@ -126,7 +132,7 @@ def build_docs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str], Path
             check=False,
         )
         assert result.returncode == 0, result.stderr
-        built[documented] = output
+        built[key] = output
         return output
 
     return build
@@ -183,10 +189,10 @@ class TestConf:
         assert site_versions.SITE_URL == "https://creatoan.github.io/scenet/"
 
     def test_the_playground_is_in_the_navbar(self, monkeypatch: pytest.MonkeyPatch):
-        """Beside Tutorial and How-to guides, named, rather than an icon at the far end."""
+        """Among the sections, named, rather than an icon at the far end."""
         options = _conf(monkeypatch, None)["html_theme_options"]
-        assert options["navbar_center"] == ["navbar-nav", "playground-link"]
-        assert "playground-link" not in options.get("navbar_end", [])
+        assert options["navbar_center"] == ["navbar-nav"]
+        assert (DOCS / "_templates" / "navbar-nav.html").is_file()
         assert not any("playground" in link["url"] for link in options["icon_links"])
 
 
@@ -220,18 +226,18 @@ class TestVersion:
 class TestCheckDocs:
     """`check_docs` is what refuses a build that does not say which version it is."""
 
-    def test_a_release_build_passes(self, build_docs: Callable[[str], Path]):
+    def test_a_release_build_passes(self, build_docs: Callable[..., Path]):
         pages = site_versions.check_docs(build_docs("0.10.0"), "0.10", "0.10.0")
         assert pages >= 2
 
-    def test_a_dev_build_passes(self, build_docs: Callable[[str], Path]):
+    def test_a_dev_build_passes(self, build_docs: Callable[..., Path]):
         site_versions.check_docs(build_docs("dev"), "dev", "dev")
 
-    def test_the_wrong_version_is_refused(self, build_docs: Callable[[str], Path]):
+    def test_the_wrong_version_is_refused(self, build_docs: Callable[..., Path]):
         with pytest.raises(site_versions.SiteError, match="version_match"):
             site_versions.check_docs(build_docs("0.10.0"), "0.11", "0.11.0")
 
-    def test_every_page_is_canonical_at_the_root(self, build_docs: Callable[[str], Path]):
+    def test_every_page_is_canonical_at_the_root(self, build_docs: Callable[..., Path]):
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         assert (
             '<link rel="canonical" href="https://creatoan.github.io/scenet/howto/other.html"'
@@ -239,7 +245,7 @@ class TestCheckDocs:
         )
 
     def test_a_page_without_a_canonical_link_is_refused(
-        self, build_docs: Callable[[str], Path], tmp_path: Path
+        self, build_docs: Callable[..., Path], tmp_path: Path
     ):
         copy = _copy(build_docs("dev"), tmp_path / "html")
         page = copy / "howto" / "other.html"
@@ -249,7 +255,7 @@ class TestCheckDocs:
             site_versions.check_docs(copy, "dev", "dev")
 
     def test_a_build_without_the_banner_is_refused(
-        self, build_docs: Callable[[str], Path], tmp_path: Path
+        self, build_docs: Callable[..., Path], tmp_path: Path
     ):
         copy = _copy(build_docs("dev"), tmp_path / "html")
         for page in copy.rglob("*.html"):
@@ -258,34 +264,48 @@ class TestCheckDocs:
         with pytest.raises(site_versions.SiteError, match="banner"):
             site_versions.check_docs(copy, "dev", "dev")
 
-    def test_the_banner_knows_the_release(self, build_docs: Callable[[str], Path]):
+    def test_the_banner_knows_the_release(self, build_docs: Callable[..., Path]):
         """The theme compares `DOCUMENTATION_OPTIONS.VERSION` -- the release -- for its words."""
         options = build_docs("dev") / "_static" / "documentation_options.js"
         assert "VERSION: 'dev'" in options.read_text(encoding="utf-8")
 
-    def test_the_playground_link_stays_in_its_version(self, build_docs: Callable[[str], Path]):
+    def test_the_playground_link_stays_in_its_version(self, build_docs: Callable[..., Path]):
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         assert 'href="../playground/"' in page
         assert "creatoan.github.io/scenet/playground" not in page
 
     def test_a_link_written_to_the_playground_stays_in_its_version(
-        self, build_docs: Callable[[str], Path]
+        self, build_docs: Callable[..., Path]
     ):
         """Absolute in the Markdown, so it works on GitHub; relative once built."""
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         assert 'href="../playground/#src=abc"' in page
 
     def test_a_link_to_a_gallery_example_stays_in_its_version(
-        self, build_docs: Callable[[str], Path]
+        self, build_docs: Callable[..., Path]
     ):
         """The Gallery page's "Open in the playground", from a page at the root (#243)."""
         page = (build_docs("dev") / "index.html").read_text(encoding="utf-8")
         assert 'href="playground/#example=38-tour.scene.yaml"' in page
 
-    def test_the_navbar_names_the_playground(self, build_docs: Callable[[str], Path]):
+    def test_the_navbar_names_the_playground(self, build_docs: Callable[..., Path]):
+        """The table of contents writes it in full; the navbar opens this version's."""
         page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
         header = page[page.index("<header") : page.index("</header>")]
         assert re.search(r'<a class="nav-link[^"]*" href="\.\./playground/">\s*Playground', header)
+        assert "https://creatoan.github.io/scenet/playground/" not in header
+
+    def test_an_old_release_still_names_the_playground(self, build_docs: Callable[..., Path]):
+        """One whose table of contents has none, built with today's templates."""
+        built = build_docs("dev", _OLD_INDEX)
+        page = (built / "howto" / "other.html").read_text(encoding="utf-8")
+        header = page[page.index("<header") : page.index("</header>")]
+        assert re.search(r'href="\.\./playground/">\s*Playground', header)
+
+    def test_the_footer_links_contributors(self, build_docs: Callable[..., Path]):
+        page = (build_docs("dev") / "howto" / "other.html").read_text(encoding="utf-8")
+        footer = page[page.index("<footer") :]
+        assert re.search(r'<a href="\.\./maintainer/index\.html">Contribute</a>', footer)
 
 
 class TestPlaygroundSwitcher:
@@ -431,8 +451,8 @@ def _version_site(docs: Path, target: Path, label: str) -> Path:
 
 @pytest.fixture(scope="session")
 def release_archive(
-    build_docs: Callable[[str], Path], tmp_path_factory: pytest.TempPathFactory
-) -> Callable[[str], Path]:
+    build_docs: Callable[..., Path], tmp_path_factory: pytest.TempPathFactory
+) -> Callable[..., Path]:
     """The archive a release attaches, holding a real build of its documentation."""
     made: dict[str, Path] = {}
 
@@ -449,12 +469,12 @@ def release_archive(
 
 
 @pytest.fixture
-def dev_site(build_docs: Callable[[str], Path], tmp_path: Path) -> Path:
+def dev_site(build_docs: Callable[..., Path], tmp_path: Path) -> Path:
     return _version_site(build_docs("dev"), tmp_path / "dev-build", "dev")
 
 
 @pytest.fixture
-def assembled(release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path) -> Path:
+def assembled(release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path) -> Path:
     out = tmp_path / "site"
     site_versions.assemble(dev_site, [release_archive("0.10.0"), release_archive("0.11.0")], out)
     return out
@@ -491,7 +511,7 @@ class TestAssembledSite:
         )
 
     def test_a_release_is_served_exactly_as_attached(
-        self, assembled: Path, release_archive: Callable[[str], Path], tmp_path: Path
+        self, assembled: Path, release_archive: Callable[..., Path], tmp_path: Path
     ):
         unpacked = tmp_path / "unpacked"
         site_versions.read_archive(release_archive("0.10.0"), unpacked)
@@ -561,7 +581,7 @@ class TestAssembledSite:
         assert site_versions.Version.parse(release("v0.10/")) < site_versions.Version(0, 11, 0)
 
     def test_a_push_to_main_changes_only_dev(
-        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+        self, release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path
     ):
         archives = [release_archive("0.10.0"), release_archive("0.11.0")]
         before, after = tmp_path / "before", tmp_path / "after"
@@ -573,7 +593,7 @@ class TestAssembledSite:
         assert [name for name in old if old[name] != new[name]] == ["dev/llms.txt"]
 
     def test_the_latest_is_the_highest_version_not_the_last_given(
-        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+        self, release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path
     ):
         """A patch to an older minor version must not take the root."""
         out = tmp_path / "site"
@@ -589,7 +609,7 @@ class TestAssemblyRefuses:
             site_versions.assemble(dev_site, [], tmp_path / "site")
 
     def test_a_mislabelled_release(
-        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+        self, release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path
     ):
         """An archive whose pages say another version would show the wrong banner."""
         wrong = tmp_path / "scenet-0.12.0-site.zip"
@@ -600,7 +620,7 @@ class TestAssemblyRefuses:
             site_versions.assemble(dev_site, [wrong], tmp_path / "site")
 
     def test_a_dev_build_labelled_as_a_release(
-        self, release_archive: Callable[[str], Path], build_docs: Callable[[str], Path],
+        self, release_archive: Callable[..., Path], build_docs: Callable[..., Path],
         tmp_path: Path,
     ):  # fmt: skip
         mislabelled = _version_site(build_docs("0.10.0"), tmp_path / "dev", "dev")
@@ -608,7 +628,7 @@ class TestAssemblyRefuses:
             site_versions.assemble(mislabelled, [release_archive("0.11.0")], tmp_path / "site")
 
     def test_two_of_one_minor_version(
-        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+        self, release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path
     ):
         archive = release_archive("0.11.0")
         twin = tmp_path / "scenet-0.11.1-site.zip"
@@ -617,7 +637,7 @@ class TestAssemblyRefuses:
             site_versions.assemble(dev_site, [archive, twin], tmp_path / "site")
 
     def test_a_root_entry_in_the_way_of_a_version(
-        self, release_archive: Callable[[str], Path], dev_site: Path, tmp_path: Path
+        self, release_archive: Callable[..., Path], dev_site: Path, tmp_path: Path
     ):
         unpacked = tmp_path / "unpacked"
         site_versions.read_archive(release_archive("0.11.0"), unpacked)
@@ -630,7 +650,7 @@ class TestAssemblyRefuses:
 
     def test_a_site_over_the_pages_limit(
         self,
-        release_archive: Callable[[str], Path],
+        release_archive: Callable[..., Path],
         dev_site: Path,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
@@ -648,7 +668,7 @@ class TestOldPlaygroundsRetire:
 
     def test_an_older_one_becomes_a_page_pointing_on(
         self,
-        release_archive: Callable[[str], Path],
+        release_archive: Callable[..., Path],
         dev_site: Path,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
@@ -773,7 +793,8 @@ class TestBackfill:
     def test_it_overlays_what_makes_a_build_versioned(self, backfill: ModuleType):
         assert {
             "docs/conf.py",
-            "docs/_templates/playground-link.html",
+            "docs/_templates/navbar-nav.html",
+            "docs/_templates/contribute-link.html",
             "docs/_static/scenet.css",
             "scripts/build_site.py",
             "scripts/site_versions.py",

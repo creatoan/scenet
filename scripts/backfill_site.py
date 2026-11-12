@@ -48,7 +48,8 @@ TOOLING = (
 #: What makes a build versioned, copied from this checkout over the release's.
 OVERLAY = (
     "docs/conf.py",
-    "docs/_templates/playground-link.html",
+    "docs/_templates/navbar-nav.html",
+    "docs/_templates/contribute-link.html",
     "docs/_static/scenet.css",
     "scripts/build_site.py",
     "scripts/site_versions.py",

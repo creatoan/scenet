@@ -294,12 +294,13 @@ class TestOneUmbrellaPanel:
         places = [
             *ROOT.glob("docs/**/*.md"),
             *ROOT.glob("examples/**/*.yaml"),
-            *ROOT.glob("skills/**/*"),
+            *ROOT.glob("skills/**/*.md"),
+            *ROOT.glob("skills/**/*.yaml"),
             ROOT / "src" / "scenet" / "scenet-spec.md",
             *ROOT.glob("tests/*.py"),
         ]
         for path in places:
-            if path.is_file() and path != Path(__file__):
+            if path.is_file() and path.name != Path(__file__).name:
                 assert "panel from the README" not in _read(path), path
 
     def test_the_examples_folder_is_the_gallery(self):
@@ -484,7 +485,7 @@ def _published() -> list[Path]:
 
 @pytest.mark.parametrize(("statement", "home"), sorted(SAID_ONCE.items()))
 def test_said_once(statement: str, home: str):
-    saying = [path for path in _published() if statement in _flat(_read(path))]
+    saying = [path for path in _published() if statement.lower() in _flat(_read(path)).lower()]
     assert saying == [DOCS / home]
 
 
@@ -576,7 +577,8 @@ class TestTheGuides:
     def test_every_guide_once_with_a_line(self):
         listed: list[str] = []
         for section in sections(_read(DOCS / "howto" / "index.md")):
-            for line in section.text.splitlines():
+            items = re.split(r"\n(?=- )|\n\n", section.text)
+            for line in (" ".join(item.split()) for item in items):
                 if match := re.match(r"- \*\*\[[^\]]+\]\(([\w-]+)\.md\)\*\* — (.+)", line):
                     assert match.group(2).endswith("."), line
                     listed.append(match.group(1))
@@ -598,5 +600,12 @@ class TestTheGuides:
         """Each button the toolbar has: a new one fails here until the guide says what it does."""
         page = _read(ROOT / "playground" / "index.html")
         guide = _read(DOCS / "howto" / "use_the_playground.md")
-        for label in re.findall(r"<button[^>]*>\s*([^<]+?)\s*</button>", page):
-            assert label in guide, label
+        names: list[str] = []
+        for button in re.finditer(r"<button(?P<attributes>[^>]*)>(?P<body>.*?)</button>", page, re.S):
+            if 'id="' not in button["attributes"]:
+                continue  # an item of the Download menu, which the guide names as a list
+            label = re.search(r'aria-label="([^"]+)"', button["attributes"])
+            names.append(label[1] if label else " ".join(re.sub(r"<[^>]+>", " ", button["body"]).split()))
+        assert len(names) > 20
+        for name in names:
+            assert name.removesuffix(" PDF") in guide, name

@@ -62,17 +62,22 @@ class TestPyPI:
         """If this stops being true, the disclosure stops reaching PyPI."""
         assert 'readme = "README.md"' in _text("pyproject.toml")
 
-    def test_the_disclosure_is_near_the_top(self):
-        """Buried at the bottom of a long README, it may as well not be there."""
+    def test_the_disclosure_is_under_the_hero(self):
+        """Buried at the bottom of a long README, it may as well not be there.
+
+        It follows the hero -- the tour's picture, what Scenet does and the buttons -- and comes
+        before the first section, so it is on the first screen.
+        """
         lines = _text("README.md").splitlines()
         position = next(index for index, line in enumerate(lines) if _has_disclosure(line))
-        assert position < 12, f"disclosure is at line {position + 1}; it belongs above the fold"
+        first_section = next(index for index, line in enumerate(lines) if line.startswith("## "))
+        assert position < first_section, "the disclosure belongs above the first section"
 
-    def test_it_is_a_heading_not_a_footnote(self):
-        assert any(
-            line.startswith("#") and _has_disclosure(line)
-            for line in _text("README.md").splitlines()
-        )
+    def test_it_is_said_in_full_and_bold(self):
+        """A compact line, but the whole statement, its claim in bold, not a footnote."""
+        text = " ".join(_text("README.md").split())
+        assert "**This project is deliberately AI-generated.** This project is, by design," in text
+        assert "Treat it accordingly: an experiment first, a usable tool second." in text
 
 
 class TestVSCodeExtension:

@@ -1,23 +1,17 @@
-# Explanation
+# About Scenet
 
-Why the design is the way it is. None of this is needed to use Scenet — it is here because
-the decisions are the interesting part, and because a decision whose reasoning is lost
-gets reversed by accident later.
+Why Scenet exists, what it does today, what changed in each release, and why its design is the
+way it is. None of this is needed to use Scenet; it is here because the decisions are the
+interesting part, and because a decision whose reasoning is lost gets reversed by accident later.
 
 | | |
 |---|---|
-| [Design decisions](design_decisions.md) | The load-bearing choices, and what each one costs |
+| [Why Scenet](why.md) | A score for comics: what it is, who performs it, and what that buys |
+| [What Scenet does today](status.md) | Every feature, with the release it arrived in |
+| [What's new](whats_new.md) | The CHANGELOG, release by release |
+| [Design decisions](design_decisions.md) | The load-bearing choices, by theme, and what each one costs |
 | [Prior art](prior_art.md) | What already exists, what was taken from it, and what was deliberately not used |
-| [Implementation status](status.md) | What actually runs, as opposed to what is specified |
-| [PDF print spike](pdf_print_spike.md) | Prototype findings and design decisions for the PDF emitter |
-
-## The one-paragraph version
-
-Music has notation; images do not. SVG describes *how to draw*, not *what is depicted* —
-it is closer to a WAV file than to a score. Scenet is an attempt at the missing layer,
-narrowed to one tractable domain, and built as a **deterministic compiler** rather than a
-generative model, so that the same source always produces the same picture and you can
-reason about why.
+| [Design notes](design_notes/index.md) | Records of decisions being made, kept as they were |
 
 ## The three tiers, and why there are three
 
@@ -52,7 +46,8 @@ a real, writable format rather than a hidden data structure, which buys three th
   preserved and never parsed. Guessing at "a rainy street corner" would produce a compiler
   whose output you cannot predict, which is the thing this is not.
 - **No TypeScript reimplementation of the compiler.** The browser playground runs the real
-  Python under WebAssembly, so there is no second copy of the geometry to drift.
+  Python under WebAssembly; [Use the playground](../howto/use_the_playground.md#the-compiler-it-runs)
+  says how.
 
 Each of these is argued in full in [design decisions](design_decisions.md) and
 [prior art](prior_art.md).
@@ -61,8 +56,10 @@ Each of these is argued in full in [design decisions](design_decisions.md) and
 :hidden:
 :maxdepth: 1
 
+why
+status
+whats_new
 design_decisions
 prior_art
-status
-pdf_print_spike
+design_notes/index
 ```

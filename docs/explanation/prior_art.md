@@ -112,7 +112,8 @@ travels.
 
 Taken: gaze is a real geometric quantity, so it becomes a term in the balloon cost function.
 Balloons are drawn toward the gaze direction and penalised for blocking it. The rest — ideal/real
-verticality, modality — belongs to the deferred style layer.
+verticality, modality — is about how a panel is drawn and what it means, which Scenet leaves to
+[whoever performs it](why.md#the-style-is-the-performers).
 
 Not taken: **"given to new"** as a staging tiebreaker. This page used to say it broke ties when a
 script does not say who stands where, but no code ever did. Staging breaks a tie by the `at:`
@@ -137,8 +138,8 @@ standardised comic script format at all. But the informal industry convention (`
 `PANEL 1`, description, `CAPTION`, character cue, `SFX`) is stable across publishers, and
 `screenplay-tools` provides a working tokenizer to extend.
 
-Planned as the human-facing frontend in phase 5 — better than inventing a syntax, because writers
-already write this one.
+It is the comic-script frontend — better than inventing a syntax, because writers already write
+this one.
 
 **Dark Horse's published guide is the reference house format.** Its
 [*Script Format and Specifications*](https://images.darkhorse.com/darkhorse08/company/submissions/DHScriptFormatGuides.pdf)
@@ -262,7 +263,7 @@ neutral values fixed once, computed during development and hardcoded, and for a 
 reduces to the cube root of the linear value anyway. Putting a package through the licence gate to
 produce numbers that never change would be the wrong trade.
 
-**Aerial perspective in colour** is the same rule with a hue (#244). With distance, colour drifts
+**Aerial perspective in colour** is the same rule with a hue. With distance, colour drifts
 toward the colour of the air; and light and shadow take opposite temperatures, warm light with cool
 shadow and the reverse — the painters' convention set out in James Gurney's *Color and Light*
 (2010). So each hour has two hues, the shadow's at the foreground and the atmosphere's at the sky,
@@ -475,7 +476,7 @@ already record.
 [accname 1.2](https://www.w3.org/TR/accname-1.2/) ·
 [ACT rule 7d6734](https://www.w3.org/WAI/standards-guidelines/act/rules/7d6734/proposed/)
 
-Accessible output (#76) is built from what the specifications say and what screen readers have
+Accessible output is built from what the specifications say and what screen readers have
 been tested to do, which are not the same thing.
 
 - **The vocabulary.** SVG-AAM makes `<title>` an element's name and `<desc>` its description.
@@ -545,8 +546,8 @@ rules first, then a cost.
 
 Taken: the problem as it states it — the picture is given, and lettering is what is placed — and the
 confirmation that a placer needs to know where the speakers are, not what the picture shows. With a
-supplied picture behind Scenet's own figures (#70), the figures carry that geometry already. For
-figures the artwork draws (#71), an [artwork contract](../reference/asset_contract.md#artwork-contracts)
+supplied picture behind Scenet's own figures, the figures carry that geometry already. For
+figures the artwork draws, an [artwork contract](../reference/asset_contract.md#artwork-contracts)
 beside the picture declares it: each face, mouth and body, measured once, committed and reviewed,
 and read by the same placer as a puppet's. Not taken: finding the actors in the frame. Chun et al.
 take positions from the film; here they come from a file the author commits, never from looking at
@@ -584,13 +585,13 @@ places rather than what it is given.
 [usvg `resources_dir`](https://docs.rs/usvg/latest/usvg/struct.Options.html) ·
 [WPT `svg-image-orientation-none`](https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_23310%5E%21/)
 
-How a supplied picture is written into the SVG (#70) was checked against what the specification
+How a supplied picture is written into the SVG was checked against what the specification
 asks and what renderers and editors do, which differ.
 
 | Question | What the sources say | What Scenet writes |
 |---|---|---|
-| `href` or `xlink:href` | SVG 2 asks a generator for plain `href`, deprecates the XLink one, reads `href` when both are present, and needs `xmlns:xlink` declared for the old one. MDN keeps `xlink:href` as a fallback. Inkscape does not load a resource named by plain `href` (#4411). librsvg reads both. | `xlink:href` alone, its namespace declared on the element. With both, an editor that rewrites one leaves a stale other that browsers read, and an embedded picture is stored twice. |
-| `preserveAspectRatio` | SVG 2 fits the picture by its intrinsic proportions, `meet` or `slice`, and the user-agent stylesheet clips an `<image>` to its rectangle. Inkscape has honoured it since 0.91. librsvg once mishandled it on its gdk-pixbuf path (#907). | The rectangle is the placed box, which already has the picture's proportions, so the keyword changes nothing where renderers agree; it is kept so one that does not still covers or contains rather than stretching. |
+| `href` or `xlink:href` | SVG 2 asks a generator for plain `href`, deprecates the XLink one, reads `href` when both are present, and needs `xmlns:xlink` declared for the old one. MDN keeps `xlink:href` as a fallback. Inkscape does not load a resource named by plain `href` (Inkscape issue 4411). librsvg reads both. | `xlink:href` alone, its namespace declared on the element. With both, an editor that rewrites one leaves a stale other that browsers read, and an embedded picture is stored twice. |
+| `preserveAspectRatio` | SVG 2 fits the picture by its intrinsic proportions, `meet` or `slice`, and the user-agent stylesheet clips an `<image>` to its rectangle. Inkscape has honoured it since 0.91. librsvg once mishandled it on its gdk-pixbuf path (librsvg issue 907). | The rectangle is the placed box, which already has the picture's proportions, so the keyword changes nothing where renderers agree; it is kept so one that does not still covers or contains rather than stretching. |
 | A linked file | librsvg loads only files in the SVG's folder or below it, and any `data:` URL; resvg resolves against a `resources_dir`; an SVG used as an image loads nothing it links to, `data:` URLs aside (MDN). | The path as written, which resolves beside the document, where `build` writes; `--embed-images` otherwise. Not rewritten to climb back with `../`, which librsvg refuses. |
 | Formats | SVG 2 requires every viewer to draw PNG, JPEG and SVG; librsvg also reads GIF and WebP. | PNG and JPEG, sniffed from their first bytes. |
 | EXIF orientation | Chromium turns an SVG `<image>` by it (the WPT test adds the opt-out); gdk-pixbuf only when asked; Inkscape's own report says both. | Refused unless upright, as `image-file`. |
@@ -602,7 +603,7 @@ asks and what renderers and editors do, which differ.
 [littleCMS](https://www.littlecms.com/) ·
 [Adobe, black point compensation](https://www.color.org/WP40-Black_Point_Compensation_2010-07-27.pdf)
 
-How a tinted palette is printed (#280): each colour converted, once, to CMYK under a registered
+How a tinted palette is printed: each colour converted, once, to CMYK under a registered
 printing condition, as a layout program converts artwork -- relative colorimetric with black point
 compensation, which keeps every in-gamut colour where it is and maps the screen's black onto the
 press's, in luminance. The table is committed; nothing converts at run time.
@@ -614,7 +615,7 @@ press's, in luminance. The table is committed; nothing converts at run time.
 [Park and Miller, CACM 31(10), 1988](https://doi.org/10.1145/63039.63042) ·
 [Skia `SkPerlinNoiseShader`](https://skia.googlesource.com/skia/+/refs/heads/main/src/shaders/SkPerlinNoiseShader.cpp)
 
-How print draws the fog and cloud the SVG leaves to a filter (#282).
+How print draws the fog and cloud the SVG leaves to a filter.
 
 | Question | What the sources say | What Scenet computes |
 |---|---|---|
@@ -630,7 +631,7 @@ How print draws the fog and cloud the SVG leaves to a filter (#282).
 [OFL FAQ 1.11-1.14](https://openfontlicense.org/ofl-faq/) ·
 [fontTools subset](https://fonttools.readthedocs.io/en/latest/subset/index.html)
 
-How a face is carried into the print PDF for live text (#284).
+How a face is carried into the print PDF for live text.
 
 | Question | What the sources say | What Scenet writes |
 |---|---|---|
@@ -647,7 +648,7 @@ How a face is carried into the print PDF for live text (#284).
 [ICC, sRGB profiles](https://www.color.org/srgbprofiles.xalter) ·
 [veraPDF validation profiles](https://docs.verapdf.org/cli/validation/)
 
-How far the print PDF goes toward PDF/X-4, and why it claims nothing (#283).
+How far the print PDF goes toward PDF/X-4, and why it claims nothing.
 
 | Question | What the sources say | What Scenet writes |
 |---|---|---|
@@ -658,7 +659,7 @@ How far the print PDF goes toward PDF/X-4, and why it claims nothing (#283).
 
 ### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
 
-**Load-bearing** for `--conditioning` (#72), as formats and consumers rather than as code.
+**Load-bearing** for `--conditioning`, as formats and consumers rather than as code.
 
 | Source | What it takes | What Scenet writes for it |
 |---|---|---|
@@ -675,17 +676,17 @@ What white means is MiDaS's relative inverse depth (Ranftl et al., TPAMI 2022,
 [arXiv 1907.01341](https://arxiv.org/abs/1907.01341)), and the depth ControlNet the export was
 checked against, [`control_v11f1p_sd15_depth`](https://huggingface.co/lllyasviel/control_v11f1p_sd15_depth),
 is by its own card not trained on any one estimator's depth. Inverse depth is why a ground recedes
-as a straight vertical ramp (#227): on a flat surface it is proportional to the distance below the
+as a straight vertical ramp: on a flat surface it is proportional to the distance below the
 horizon on screen.
 
-The playground draws the pose as ControlNet's OpenPose annotator draws a skeleton (#238): its
+The playground draws the pose as ControlNet's OpenPose annotator draws a skeleton: its
 seventeen limbs and its eighteen colours, red round the wheel to rose, each limb in the colour at
 its own position, at half opacity, on black. The table is in `scenet.emit.preview`, as
 [`controlnet_aux`](https://github.com/huggingface/controlnet_aux) inherited it from
 [pytorch-openpose](https://github.com/Hzzone/pytorch-openpose): taken as it is because it is what
 a reader who works with these models has seen. Only the colours and the limbs were taken; no code.
 
-Deliberately not taken: a prompt. Two drafts behind #72 proposed a `scenet prompt` turning a
+Deliberately not taken: a prompt. Two drafts of the exports proposed a `scenet prompt` turning a
 panel into positive and negative prompt strings. Dialects differ per model and change every few
 months, and turning structure into prose is the step WordsEye, above, leaves to the language
 side, not the compiler; the semantics export hands over the structure instead.
@@ -741,7 +742,7 @@ Morris & Ritchie, arXiv 2504.05482
 
 Recorded because it is the strongest published argument *against* the shape Scenet has, and
 because it was first proposed for this file — in
-[#11](https://github.com/creatoan/scenet/issues/11) — as evidence for the opposite of what it
+[an issue](https://github.com/creatoan/scenet/issues/11) — as evidence for the opposite of what it
 found. The paper does not show that models do better emitting declarative constraints. It
 challenges that consensus: instead of a model stating constraints for a separate solver, the model
 writes a step-by-step program that places each object relative to those already placed, and an

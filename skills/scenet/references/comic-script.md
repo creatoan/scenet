@@ -7,6 +7,8 @@ asking someone to abandon it in order to try a compiler is a poor trade.
 
 So Scenet reads it.
 
+*umbrella.script:*
+
 ```scenet-script
 ---
 cast:
@@ -466,7 +468,7 @@ A script is dialogue and camera direction. It has no way to say who `ALICE` *is*
 puppet she uses, or where she stands. That comes from a YAML preamble between `---`
 fences:
 
-*Part of examples/umbrella.script:*
+*Part of examples/gallery/13-comic-script.script:*
 
 ```scenet-script
 ---

@@ -200,7 +200,8 @@ html_theme_options = {
     "show_prev_next": True,
     "navigation_with_keys": True,
     "show_toc_level": 2,
-    "header_links_before_dropdown": 6,
+    # Learn, Guides, Language, Python API, Gallery, Playground, About: none in a "More" menu.
+    "header_links_before_dropdown": 7,
     "icon_links": [
         {
             "name": "PyPI",
@@ -208,11 +209,11 @@ html_theme_options = {
             "icon": "fa-solid fa-box",
         },
     ],
-    # The playground is named in the navbar, beside the sections, and not left an icon at
-    # the far end. A template rather than an entry in `external_links`, because it is
-    # relative: each version's documentation opens that version's playground.
+    # The playground is named in the navbar, among the sections, and not left an icon at
+    # the far end. It is in the landing page's table of contents, and `navbar-nav.html`
+    # makes its link relative: each version's documentation opens that version's playground.
     "navbar_start": ["navbar-logo", "version-switcher"],
-    "navbar_center": ["navbar-nav", "playground-link"],
+    "navbar_center": ["navbar-nav"],
     # One switcher.json for every version, so an old version lists the releases made after
     # it. Site-absolute rather than a full URL, so the local preview -- served under
     # /scenet/ too -- reads the one beside it. See scripts/site_versions.py.
@@ -223,7 +224,9 @@ html_theme_options = {
     # Shown on /dev/ and on old versions, with a link to the same page in the latest.
     "show_version_warning_banner": True,
     "footer_start": ["copyright"],
-    "footer_end": [],
+    # The maintainer's documentation is for contributors, so it is linked here, not in the
+    # navbar, which is for readers.
+    "footer_end": ["contribute-link"],
 }
 
 html_context = {

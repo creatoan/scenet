@@ -1,4 +1,23 @@
-# PDF print emitter spike (#80)
+# The PDF print spike
+
+:::{admonition} Superseded
+:class: note
+
+This note records the experiment that chose how Scenet prints, as it was written before the
+print emitter existed. The decision it reached, a PDF drawn from Panel Core and not converted
+from the SVG, is the one that shipped. Its details are not: what print does is in
+[Print a comic](../../howto/print_a_comic.md) and in
+[Design decisions](../design_decisions.md#print-is-an-emitter-from-core-not-a-converter), which
+win wherever this note differs. Three differences matter:
+
+- **The PDF carries no date.** The ReportLab column below writes a fixed `CreationDate`; the
+  shipped writer writes none, and takes its `/ID` from its content.
+- **Greys are tinted on black.** The prototype lettered a plain cyan tint; a grey now prints on
+  the black plate at the percentage that prints its own lightness under the printing condition.
+- **The ink limit is kept by the emitter.** The prototype left ink limits to manual prepress;
+  the night foreground now prints C40 K100, within any printer's limit, and a tinted palette
+  prints its CMYK twins.
+:::
 
 ## Decision
 
@@ -8,8 +27,8 @@ This note records the design decision and prototype findings, not a claim of PDF
 
 ## Outcome: the comparison on a real panel
 
-The prototype below drew a hand-written fixture. The comparison #80 asks for was run on a real
-document, the gallery's `24-page.scene.yaml` (a night page of three panels with lettering, a
+The prototype below drew a hand-written fixture. The comparison the plan called for was run on a
+real document, the gallery's `24-page.scene.yaml` (a night page of three panels with lettering, a
 mass at every depth and no supplied picture), by drawing the **same marks**
 (`scenet.emit.marks`, with the same inks and overprint) two ways: through ReportLab 5.1.0, and
 through the dependency-free writer that became `scenet.emit.pdf`.
@@ -26,7 +45,7 @@ through the dependency-free writer that became `scenet.emit.pdf`.
 Both are deterministic and both control overprint. The direct writer was kept: it adds no
 dependency, so the PDF exists wherever the compiler runs, the browser playground included,
 and every byte is the project's own. It is `scenet.emit.pdf`, and
-[Print a comic](../howto/print_a_comic.md) says how to use it.
+[Print a comic](../../howto/print_a_comic.md) says how to use it.
 
 ## Candidate comparison
 
@@ -58,7 +77,7 @@ Target a constrained PDF suitable for print first, but do not label output PDF/X
 ## Runnable prototype and findings
 
 The first prototype, a script drawing one hand-written fixture with both backends, is in the
-history of #207; `scenet.emit.pdf` replaced it. Its findings, kept as they were recorded:
+project's history; `scenet.emit.pdf` replaced it. Its findings, kept as they were recorded:
 
 The prototype comparison produced valid, readable one-page PDFs from both backends. `pdfinfo`
 reported PDF 1.4 and Letter-size media pages; `pdftotext` extracted the fixture lettering;
@@ -98,7 +117,7 @@ Core glyph outlines or its full range of drawing primitives.
 
 ## How it ended
 
-Every step the spike planned was taken, in #272 to #278: the comparison on a real page (above),
+Every step the spike planned was taken: the comparison on a real page (above),
 tests first, the emitter beside `emit/svg.py`, `scenet build --pdf`, the print how-to and the
 determinism documentation. ReportLab was not added, so no licence notice changed, and MCP is
 unchanged. The manual check became a test: Ghostscript separates every print example in CI, and

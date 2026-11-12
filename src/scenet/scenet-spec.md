@@ -84,10 +84,9 @@ so always check.
 <!-- scenet-spec:part=language -->
 # The Scenet language
 
-> **Status:** this is the specification. It is not a report of what is implemented — see
-> [implementation status](https://creatoan.github.io/scenet/explanation/status.html#implementation-status), which is authoritative on
-> what actually runs. Panels, sequences and pages of tiers compile end to end today; the style
-> layer does not exist yet.
+Everything on these pages runs: each key's card gives the release it arrived in, and every
+example is compiled by the test suite. [What Scenet does today](https://creatoan.github.io/scenet/explanation/status.html) has
+the features as a whole.
 
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
@@ -135,11 +134,10 @@ anything else, exactly as transposing a score changes its key without rewriting 
 
 ```yaml
 panel:
-  size: [1000, 1000]
+  size: [1000, 800]
 
 camera:
   shot: medium_shot
-  angle: eye_level
 
 setting:
   place: docks
@@ -147,7 +145,7 @@ setting:
   weather: rain
 
 cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
 
 staging:
@@ -4568,6 +4566,8 @@ asking someone to abandon it in order to try a compiler is a poor trade.
 
 So Scenet reads it.
 
+*umbrella.script:*
+
 ```scenet-script
 ---
 cast:
@@ -5027,7 +5027,7 @@ A script is dialogue and camera direction. It has no way to say who `ALICE` *is*
 puppet she uses, or where she stands. That comes from a YAML preamble between `---`
 fences:
 
-*Part of examples/umbrella.script:*
+*Part of examples/gallery/13-comic-script.script:*
 
 ```scenet-script
 ---
@@ -8200,15 +8200,15 @@ Every example the playground offers, in the order the gallery's manifest lists t
 
 ## Two characters
 
-The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue.
+The umbrella panel, which every page starts from: two actors, who stands where, who looks at whom, and two lines of dialogue.
 
 It gives the note `camera-retreated`: no fault, since a note never stops a document.
 
 `01-two-characters.panel.yaml`
 
 ```yaml
-# The panel from the README. Two actors, an ordering constraint, a gaze, a shared
-# ground line, and two lines of dialogue.
+# The umbrella panel, the example every page of the documentation starts from. Two
+# actors, an ordering constraint, a gaze, a shared ground line, and two lines of dialogue.
 
 panel:
   size: [1000, 800]
@@ -9810,7 +9810,7 @@ People the picture draws, lettered from its artwork contract: balloons keep off 
 It names `art/figures.png`, which is beside it in the gallery: a picture, not printed here.
 
 ```yaml
-# Figures a picture draws, lettered over (#71).
+# Figures a picture draws, lettered over.
 #
 # The people are in the picture -- art/figures.png, painted by
 # scripts/make_gallery_figures.py -- so the cast names them with `figure:` instead of
@@ -12040,7 +12040,8 @@ It gives the note `camera-retreated`: no fault, since a note never stops a docum
 `71-a-complete-panel.panel.yaml`
 
 ```yaml
-# A complete panel: every layer of the language at once.
+# A complete panel: every layer of the language at once. It is the umbrella panel, the
+# gallery's first example, given a setting.
 #
 # This is the complete example in docs/reference/language/index.md, and a test keeps the two
 # identical, so the reference shows what it compiles to. Each block is one layer:
@@ -12054,11 +12055,10 @@ It gives the note `camera-retreated`: no fault, since a note never stops a docum
 # Change one layer and the others stay as they are: try `shot: close_up`, or `time: day`.
 
 panel:
-  size: [1000, 1000]
+  size: [1000, 800]
 
 camera:
   shot: medium_shot
-  angle: eye_level
 
 setting:
   place: docks
@@ -12066,7 +12066,7 @@ setting:
   weather: rain
 
 cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
 
 staging:

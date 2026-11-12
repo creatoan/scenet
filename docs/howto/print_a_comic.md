@@ -28,7 +28,7 @@ trim. Ask the printer for both numbers; a Franco-Belgian album, for one, varies 
 A document with no pages prints each panel at its own size, at the same scale.
 
 A panel whose art should run off the cut page says so on its placement: `bleed: true`, or the
-sides, `bleed: [top, left]` (#281). Its frame then runs out to the bleed line with no border
+sides, `bleed: [top, left]`. Its frame then runs out to the bleed line with no border
 there, its cast is framed to the trim and its lettering kept inside the page margin, so the
 cutter takes nothing but art. Such a panel needs the page's `bleed`; without one it stops at the
 trim, and print notes it. See [the language reference](../reference/language/page.md#page-and-pages).
@@ -116,7 +116,7 @@ which prints no differently from twice as fine; a veiled panel grows by a few hu
 
 ## Lettering as text
 
-`--live-text` letters the PDF in text rather than outlines, as it letters the SVG (#284), so the
+`--live-text` letters the PDF in text rather than outlines, as it letters the SVG, so the
 words can be selected, searched and copied:
 
 ```sh

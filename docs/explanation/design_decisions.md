@@ -1,8 +1,13 @@
-# Solver and toolchain choices
+# Design decisions
 
-Non-obvious decisions, with reasoning, so they can be revisited rather than rediscovered.
+Non-obvious decisions, with reasoning, so they can be revisited rather than rediscovered. They
+are grouped by theme, and each says what was chosen, why, and what it costs.
 
-## Shot types are crop landmarks, not panel fractions
+## The language
+
+What a document can say, and what it is never asked to say.
+
+### Shot types are crop landmarks, not panel fractions
 
 The tempting definition of a medium shot is "the figure fills about 60% of panel height". It is
 wrong. A shot type names **where the frame cuts the body** — waist, chest, shoulders. What fraction
@@ -11,7 +16,28 @@ adult, or a seated versus a standing pose. Encoding the fraction bakes in one bo
 
 See [shot_types.md](../reference/shot_types.md), which is normative.
 
-## Notes report a house limit; errors a contradiction
+### Cassowary is linear, so the language must resolve disjunctions
+
+Non-overlap between two actors is a disjunction — A left of B, **or** B left of A — and no linear
+solver can express a choice. Rather than reaching for a mixed-integer solver, the DSL resolves
+ordering at parse time, so the solver always receives a linear system.
+
+This is a *language* constraint, not merely an implementation detail: it is why there is no
+unordered `beside` predicate. Any future construct that reintroduces a disjunction must resolve it
+in the frontend.
+
+### An off-panel speaker is not in the cast
+
+Off-panel speech needs a speaker who is not drawn, and every speaker used to have to be in the cast
+— which is the list of who *is* drawn. So `off_panel` lets `by` name anybody, and forbids naming a
+cast member: somebody both drawn and off panel in one panel contradicts themselves, and is
+`off-panel-speaker`. The tail ends on the frame (Blambot), never nowhere: a tailless balloon was
+considered and set aside, since a balloon with no pointer has no attributed speaker. Panel Core
+records the side the solver settled on, so a reader of the Core knows the tail's end is on the
+frame and the speaker is not an actor; the field is left out when unset, and every Core written
+before it is unchanged.
+
+### Notes report a house limit; errors a contradiction
 
 Every finding was an error, and any finding failed `scenet check`. That was right while every
 rule was a contradiction — an actor not in the cast, staging that loops — which no compile
@@ -26,46 +52,18 @@ reported with its rule and its place, as SARIF `note`, so an editor shows it as 
 and never fails anything. `--deep` runs on a document with notes, since notes do not stop the
 compile it would run.
 
-## Small and weak lettering are one size
+## Placement
 
-Dark Horse names `(small)` and `(weak)` beside `(burst)`. Blambot defines small dialogue by its
-effect — "a reduced font size is used when a character mutters something" — and the balloon stays
-the size it would have been, so the line reads as said quietly rather than as a small balloon.
-`say.size: small` is exactly that: type at three quarters of the panel's dialogue size, padded as
-normal type would be. Blambot's script guide reads `(WEAK)` as "dialogue should be diminished", so
-a weak line is small too. Comicraft also letters weak dialogue in an erratic hand; that is not
-drawn, since no source fixes what the hand should be, and drawing an invented one would be worse
-than drawing none.
+How the solver decides where things go, and what it pays for.
 
-## An off-panel speaker is not in the cast
-
-Off-panel speech needs a speaker who is not drawn, and every speaker used to have to be in the cast
-— which is the list of who *is* drawn. So `off_panel` lets `by` name anybody, and forbids naming a
-cast member: somebody both drawn and off panel in one panel contradicts themselves, and is
-`off-panel-speaker`. The tail ends on the frame (Blambot), never nowhere: a tailless balloon was
-considered and set aside, since a balloon with no pointer has no attributed speaker. Panel Core
-records the side the solver settled on, so a reader of the Core knows the tail's end is on the
-frame and the speaker is not an actor; the field is left out when unset, and every Core written
-before it is unchanged.
-
-## Cassowary is linear, so the language must resolve disjunctions
-
-Non-overlap between two actors is a disjunction — A left of B, **or** B left of A — and no linear
-solver can express a choice. Rather than reaching for a mixed-integer solver, the DSL resolves
-ordering at parse time, so the solver always receives a linear system.
-
-This is a *language* constraint, not merely an implementation detail: it is why there is no
-unordered `beside` predicate. Any future construct that reintroduces a disjunction must resolve it
-in the frontend.
-
-## Balloon placement: candidate scoring, not a grid sweep
+### Balloon placement: candidate scoring, not a grid sweep
 
 Discretising the panel into a cost grid and scanning every cell is the obvious approach, and is both
 slower and worse. Balloons belong in a small number of sensible positions relative to their speaker.
 So candidates are generated map-labelling style — a ring of directions and radii around the
 speaker's head, plus the panel corners — and scored. Fewer evaluations, more natural results.
 
-## Emanata are a soft cost, not part of the hull
+### Emanata are a soft cost, not part of the hull
 
 Plewds, squeans, grawlixes and briffits are drawn outside the head circle, which is exactly where
 balloons go, so they had to mean something to the solver. There were three choices:
@@ -89,13 +87,13 @@ The cost of not moving anybody is that the camera makes no room either, so marks
 head can be cropped at a tight shot. That is reported as a note rather than silently drawn off the
 page.
 
-## Sound effects are picture: placed first, exempt from reading order, paid for by balloons
+### Sound effects are picture: placed first, exempt from reading order, paid for by balloons
 
 A sound effect is lettering treated as art, so three decisions follow from treating it as art.
 
 - **Reading order.** Balloons and captions share one hard sequence. Dark Horse's format wants sound
   effects listed in it too, but a sound sits where the sound is, and holding it to above-and-left
-  would make many panels impossible to letter. Of the three options in #73 — in the sequence under
+  would make many panels impossible to letter. Of the three options weighed — in the sequence under
   the rule, in it but exempt from the geometry, or outside it — the second shipped: an effect takes
   its `order`, which a reader of the text and accessible output follow, and is placed with no
   geometric constraint against any box.
@@ -113,11 +111,15 @@ never over another effect. It is set in a display face, bent and turned as trans
 outlines Scenet already draws, so an arc comes out the same in every renderer; SVG's `<textPath>`
 would have handed the layout back to the renderer and to installed fonts.
 
-## Figures a picture draws come with a contract, beside the picture
+## Characters and art
 
-When the people are in a supplied picture (#71), the solver still needs each face, mouth and body,
+What Scenet needs to know about a picture someone else drew.
+
+### Figures a picture draws come with a contract, beside the picture
+
+When the people are in a supplied picture, the solver still needs each face, mouth and body,
 and still may not look at the picture. An [artwork contract](../reference/asset_contract.md#artwork-contracts)
-declares them, as a puppet's contract declares its skeleton. What #71 left open was decided this way:
+declares them, as a puppet's contract declares its skeleton. What the contract leaves open was decided this way:
 
 - **The contract is found beside its picture, by name.** `art/p01.png` has `art/p01.art.yaml`. The
   issue sketched `setting.image` naming the contract, and the contract naming its picture; that
@@ -155,9 +157,13 @@ declares them, as a puppet's contract declares its skeleton. What #71 left open 
   model and a platform, and could not run in the playground; see
   [prior art](prior_art.md#magi-a-helper-that-could-propose-a-contract).
 
-## A panel is one image, read whole, in reading order
+## Reading
 
-Accessible output (#76) makes each panel `role="img"`, named by one `<title>`: the description,
+The order a panel is read in, by eye and by screen reader.
+
+### A panel is one image, read whole, in reading order
+
+Accessible output makes each panel `role="img"`, named by one `<title>`: the description,
 then every balloon, caption and sound effect's label, in `order`. The sources behind it are in
 {ref}`prior art <accessible-svg>`, and the screen-reader results in
 [the how-to](../howto/make_accessible_output.md#recorded-results).
@@ -186,9 +192,9 @@ then every balloon, caption and sound effect's label, in `order`. The sources be
 - **`aria=False` is exactly the SVG written before.** A golden variant holds every gallery
   document built `--no-aria`, and its digests are those the default build had before.
 
-## Right to left mirrors the reading, never the picture
+### Right to left mirrors the reading, never the picture
 
-`direction: rtl` (#68) is decided by one test: compile the mirror image of a panel right to left,
+`direction: rtl` is decided by one test: compile the mirror image of a panel right to left,
 and every balloon and caption lands at the mirror of where left to right puts it in the original.
 Everything reading decides is mirrored to pass it, and nothing the picture decides is touched.
 
@@ -217,9 +223,91 @@ Everything reading decides is mirrored to pass it, and nothing the picture decid
 - **No disjunction comes back.** Reading order is a filter over candidates, not a Cassowary
   constraint, and the direction is known when the document is read.
 
-## Colour is a twin of value, never a replacement
+## Lettering
 
-The compiler drew only greys until #244, and the colour policy it settled keeps every reason the
+Words measured in the face they are drawn in.
+
+### Text metrics are a hard dependency, not a detail
+
+A balloon's size is a function of its text, wrapped at some measure, in a specific font. Nothing
+downstream — placement, occlusion, reading order — can be computed until that size is known. The
+font is therefore bundled rather than referenced, and measurement uses `fontTools` against that
+exact file. If renderer and measurer disagree even slightly, output stops being deterministic.
+
+### A font is a file beside the document, and Core names it by its bytes
+
+An author's lettering face is declared as a path, read relative to the folder the document is in,
+and an absolute path is refused. Three things follow from that one rule. A document and its fonts
+move together and compile the same anywhere. A server that compiles documents it is sent cannot be
+pointed at files of its own. And no path reaches any output: Panel Core records a face by its
+family, style and the SHA-256 of its bytes, which is the same on every machine — `tests/test_golden.py`
+already holds the output to not depending on where a document is.
+
+The digest is also what keeps measurement and drawing together once they are separate steps. A
+renderer is handed fonts by digest and refuses a Core that names one it was not given, rather than
+drawing lettering in a face it was not measured in. Fonts are cached by digest too, so a file
+replaced in place is read again.
+
+The path rule lives in `scenet/paths.py`, written to be shared, and a picture to letter over is
+read by it too: the same paths and the same refusals, and in Panel Core the same identity, a digest
+of its bytes. A caller with no folder — text compiled with nothing behind it — may hand over the
+files themselves instead, by the path the document writes; they are read from memory, never
+written to a folder of the server's.
+
+### The default face stays Source Sans Pro
+
+Comic Neue (Craig Rozynski, SIL OFL 1.1) was the candidate to replace it, as a face with a lettering
+feel that can be shipped. It was not adopted here. The choice is to be made on legibility at balloon
+sizes rather than taste, which is a comparison of pictures, and the change that makes it cheap to
+run is this one: declare the face beside a document and compile the gallery in both. Switching the
+default would also move every example's output a second time and needs the face packaged, since no
+PyPI package carries it. Until a comparison says otherwise, an author who wants it names it.
+
+### Kerning is applied, because the outlines are positioned here
+
+Pair kerning was ignored at first, on a sound argument: SVG renderers do not agree on whether to
+kern `<text>`, and a measurement the renderer will not reproduce is worse than a slightly generous
+one. That argument is about `--live-text`. The default emits glyph outlines, and Scenet positions
+every one of them itself, so no renderer has a say: a pair adjustment that is measured is drawn,
+exactly. So kerning is applied, to measurement and outlines through one function, and live text in
+the SVG is the best-effort mode it always was. In the print PDF it is exact, because there Scenet
+embeds the face and places every glyph itself.
+
+The pairs are read with `fontTools` from the GPOS `kern` feature, or from a legacy `kern` table in a
+font with no GPOS kerning. HarfBuzz would shape the text for us, but Pyodide does not ship it and the
+playground installs the same wheel as the CLI, so it is a dev dependency instead — the **oracle**.
+`tests/test_kerning.py` checks every ordered pair of the characters the tests letter, in all three
+faces, against HarfBuzz's advances. A hand-picked pair would not have caught the rules that matter:
+the first subtable that covers a pair answers for it, and a class pair applies even when its value is
+zero.
+
+Only pair adjustments are applied: no ligatures, no contextual alternates, no mark positioning. That
+is all a Latin line of lettering needs, and all that measurement can promise to reproduce. Two faces
+are two fonts, so a stressed word in bold italic is not kerned against its roman neighbours.
+
+Adopting it moved every example once: box widths changed by between −1.4% and +0.4%, since a pair can
+loosen as well as tighten, one two-line balloon
+fit on one line, and a few balloons whose candidate positions had scored nearly equal chose
+differently.
+
+### Small and weak lettering are one size
+
+Dark Horse names `(small)` and `(weak)` beside `(burst)`. Blambot defines small dialogue by its
+effect — "a reduced font size is used when a character mutters something" — and the balloon stays
+the size it would have been, so the line reads as said quietly rather than as a small balloon.
+`say.size: small` is exactly that: type at three quarters of the panel's dialogue size, padded as
+normal type would be. Blambot's script guide reads `(WEAK)` as "dialogue should be diminished", so
+a weak line is small too. Comicraft also letters weak dialogue in an erratic hand; that is not
+drawn, since no source fixes what the hand should be, and drawing an invented one would be worse
+than drawing none.
+
+## Colour and print
+
+The value ladder, its colour twin, and the PDF a printer takes.
+
+### Colour is a twin of value, never a replacement
+
+The compiler drew only greys until 0.13, and the colour policy it settled then keeps every reason the
 greys were chosen for. A notan reading of masses, an aerial-perspective ladder monotonic in depth,
 contrast floors a test can check, lettering on a printer's black plate: none of them may depend on
 which palette a panel is drawn in.
@@ -255,10 +343,10 @@ which palette a panel is drawn in.
   raises which plate they print on. Local colour by kind of mass would give each of twelve kinds a
   hue, where a kind decides a mass's shape and never its value. Each is its own issue.
 
-## Print is an emitter from Core, not a converter
+### Print is an emitter from Core, not a converter
 
-A printer takes a PDF; the SVG was already there. Converting one into the other was ruled out
-(#80): an SVG has lost what each path *is* -- a converter cannot tell a balloon's lettering from a
+A printer takes a PDF; the SVG was already there. Converting one into the other was ruled out:
+an SVG has lost what each path *is* -- a converter cannot tell a balloon's lettering from a
 figure's outline, so it cannot put one on the black plate and leave the other alone -- and SVG has
 no overprint to convert. So the PDF is a third emitter beside the SVG, drawing from the same Panel
 Core.
@@ -279,7 +367,7 @@ Core.
   platform picks one. Content streams are written plain, and a picture's own compressed data is
   carried as it is, never re-deflated.
 
-## Lettering prints on the black plate
+### Lettering prints on the black plate
 
 Comics have a convention a generic converter cannot know: **small type is 100% K and
 overprints**, so it stays sharp when the colour plates drift out of register, and never cuts a
@@ -290,12 +378,12 @@ ink is `#111111`, which a conversion would make 93% K.
   balloon -- knocks out its white fill and overprints its border, so the outline also hides the
   tail's stroke where they meet.
 - **Greys are black tints, and the night is rich black.** A grey prints on black alone, at the K
-  that prints its lightness under the same condition the colours print under (#280, below); a
+  that prints its lightness under the same condition the colours print under (below); a
   mass dark enough to be the night foreground prints C40 K100, for even coverage within any
   printer's ink limit.
-- **A tinted palette prints its CMYK twins** (#280), below; `--mono` prints the greys.
+- **A tinted palette prints its CMYK twins**, below; `--mono` prints the greys.
 
-## A colour prints as its twin under one printing condition
+### A colour prints as its twin under one printing condition
 
 Every colour the compiler owns -- the tinted ladder's twenty and the `warm` caption's -- has a
 CMYK twin, in a table print reads (`scenet.emit.cmyk`), generated by `scripts/make_palette.py`.
@@ -315,7 +403,7 @@ CMYK twin, in a table print reads (`scenet.emit.cmyk`), generated by `scripts/ma
   compensation has put the screen's black on the press's: the twin rule, on paper.
 - **littleCMS at generation, never at run time.** Pillow's `ImageCms` is a dev dependency, pinned
   exactly so its bundled engine cannot move a value on a half percent; print reads a table and
-  converts nothing. (#239 refused Pillow for a JPEG encoder Scenet could write; a colour engine
+  converts nothing. (Pillow was refused for a JPEG encoder Scenet could write itself; a colour engine
   with black point compensation is not that.)
 - **Every tinted paint prints its twin, a night mass included**: one rule, so the tinted night
   foreground prints the condition's own black, not C40 K100. Lettering and lines stay on the black
@@ -330,9 +418,9 @@ CMYK twin, in a table print reads (`scenet.emit.cmyk`), generated by `scripts/ma
   twins get (`#707070` at K 69%); one darker than black alone can print takes it all. Still one
   plate: the black-plate rule is about lettering and lines, and a grey stays on black too.
 
-## The veil prints as the same noise
+### The veil prints as the same noise
 
-The fog and cloud veil is `feTurbulence` in the SVG, and PDF has no such filter (#282). Leaving it
+The fog and cloud veil is `feTurbulence` in the SVG, and PDF has no such filter. Leaving it
 out changed a panel's values most -- the near ground of a foggy dawn went much darker -- and a
 flat tint at the veil's mean opacity kept the values but lost the fog. So print computes the
 noise itself and carries it as a raster, a luminosity soft mask over the veil's ink, compared on
@@ -351,9 +439,9 @@ proofs against the SVG as Edge draws it.
 - **It knocks out.** A black tint that overprinted could only darken; the SVG's veil fades what is
   under it towards its tone, lightening a dark scene and greying a picture.
 
-## Live text in print is exact, and asked for
+### Live text in print is exact, and asked for
 
-`--live-text` letters the print PDF in text as it letters the SVG (#284): one flag, one meaning,
+`--live-text` letters the print PDF in text as it letters the SVG: one flag, one meaning,
 lettering as text rather than outlines in every output that letters. Outlines stay the default, so
 no PDF changes unless asked, and a document never depends on its fonts' licences unless it asks
 for live text.
@@ -375,9 +463,9 @@ for live text.
   subset tag taken from what it holds, nothing compressed. The playground's own fontTools may
   subset to other bytes; that is said, not promised away.
 
-## Print claims no PDF/X, and says what its colours are
+### Print claims no PDF/X, and says what its colours are
 
-A printer may ask for PDF/X-4. Scenet's print PDF does not claim it (#283), because nothing
+A printer may ask for PDF/X-4. Scenet's print PDF does not claim it, because nothing
 free can check the claim: veraPDF validates PDF/A and PDF/UA, PDFBox PDF/A-1b, and the free
 X-1a checkers do not read X-4. A claim no preflight has checked is worse than none, since a
 RIP or a printer trusts it. Writing one would also take what the determinism contract rules
@@ -405,10 +493,10 @@ embedded fonts, no forbidden filter, version -- and that what a claim would need
 printer finishes the file with Acrobat Pro's "Convert to PDF/X-4", callas pdfToolbox or Enfocus
 PitStop, given GRACoL 2013's profile.
 
-## A panel bleeds to the bleed line, framed to the trim
+### A panel bleeds to the bleed line, framed to the trim
 
-A placement's `bleed` runs its frame past the trim, out to the bleed line, with no border there
-(#281). It is `true`, for every side that reaches the page's margin, or a list of the page's own
+A placement's `bleed` runs its frame past the trim, out to the bleed line, with no border there.
+It is `true`, for every side that reaches the page's margin, or a list of the page's own
 sides, never mirrored right to left: a side that does not reach the margin is an error, not a
 guess.
 
@@ -425,9 +513,13 @@ guess.
   note, rather than refusing a layout that is right for screen.
 - **Not in comic scripts**, which have no per-placement keys; a scene's `pages:` writes it.
 
-## Staging leaves as text, never as a picture or a prompt
+## Exports for image models
 
-`--conditioning` (#72) hands a panel's staging to image models as five files. Each is decided by
+What a panel hands to a model, and what it does not.
+
+### Staging leaves as text, never as a picture or a prompt
+
+`--conditioning` hands a panel's staging to image models as five files. Each is decided by
 what the consumer already reads, and by one rule: an export reads Panel Core and nothing else, so
 it can make no layout decision and no model ever runs inside Scenet.
 
@@ -449,7 +541,7 @@ it can make no layout decision and no model ever runs inside Scenet.
 - **Depth is a painter's order, said as one.** Even grey steps by rank, white nearest, black for
   the paper, the sky and a supplied picture: there is no metric depth to give, and the backdrop's
   own ladder runs the other way.
-- **A surface that lies flat recedes** (#227). A ground, floor or water is a straight ramp from its
+- **A surface that lies flat recedes.** A ground, floor or water is a straight ramp from its
   own step at the horizon to the farthest figure's step at the bottom edge, and a ceiling the same
   ramp upward. Through a pinhole camera, a flat surface's inverse depth is linear in screen height,
   so the straight ramp is perspective's own shape. This bends "ranks, not distances" a little: the
@@ -480,70 +572,11 @@ it can make no layout decision and no model ever runs inside Scenet.
   declines for PNG; the playground's own rasteriser, and every SVG tool, turn the maps into
   pictures.
 
-## Text metrics are a hard dependency, not a detail
+## Toolchain and documentation
 
-A balloon's size is a function of its text, wrapped at some measure, in a specific font. Nothing
-downstream — placement, occlusion, reading order — can be computed until that size is known. The
-font is therefore bundled rather than referenced, and measurement uses `fontTools` against that
-exact file. If renderer and measurer disagree even slightly, output stops being deterministic.
+How the project is checked, and how its site is built.
 
-## A font is a file beside the document, and Core names it by its bytes
-
-An author's lettering face is declared as a path, read relative to the folder the document is in,
-and an absolute path is refused. Three things follow from that one rule. A document and its fonts
-move together and compile the same anywhere. A server that compiles documents it is sent cannot be
-pointed at files of its own. And no path reaches any output: Panel Core records a face by its
-family, style and the SHA-256 of its bytes, which is the same on every machine — `tests/test_golden.py`
-already holds the output to not depending on where a document is.
-
-The digest is also what keeps measurement and drawing together once they are separate steps. A
-renderer is handed fonts by digest and refuses a Core that names one it was not given, rather than
-drawing lettering in a face it was not measured in. Fonts are cached by digest too, so a file
-replaced in place is read again.
-
-The path rule lives in `scenet/paths.py`, written to be shared, and a picture to letter over (#70) is
-read by it too: the same paths and the same refusals, and in Panel Core the same identity, a digest
-of its bytes. A caller with no folder — text compiled with nothing behind it — may hand over the
-files themselves instead, by the path the document writes; they are read from memory, never
-written to a folder of the server's.
-
-## The default face stays Source Sans Pro
-
-Comic Neue (Craig Rozynski, SIL OFL 1.1) was the candidate to replace it, as a face with a lettering
-feel that can be shipped. It was not adopted here. The choice is to be made on legibility at balloon
-sizes rather than taste, which is a comparison of pictures, and the change that makes it cheap to
-run is this one: declare the face beside a document and compile the gallery in both. Switching the
-default would also move every example's output a second time and needs the face packaged, since no
-PyPI package carries it. Until a comparison says otherwise, an author who wants it names it.
-
-## Kerning is applied, because the outlines are positioned here
-
-Pair kerning was ignored at first, on a sound argument: SVG renderers do not agree on whether to
-kern `<text>`, and a measurement the renderer will not reproduce is worse than a slightly generous
-one. That argument is about `--live-text`. The default emits glyph outlines, and Scenet positions
-every one of them itself, so no renderer has a say: a pair adjustment that is measured is drawn,
-exactly. So kerning is applied, to measurement and outlines through one function, and live text in
-the SVG is the best-effort mode it always was. In the print PDF it is exact, because there Scenet
-embeds the face and places every glyph itself (#284).
-
-The pairs are read with `fontTools` from the GPOS `kern` feature, or from a legacy `kern` table in a
-font with no GPOS kerning. HarfBuzz would shape the text for us, but Pyodide does not ship it and the
-playground installs the same wheel as the CLI, so it is a dev dependency instead — the **oracle**.
-`tests/test_kerning.py` checks every ordered pair of the characters the tests letter, in all three
-faces, against HarfBuzz's advances. A hand-picked pair would not have caught the rules that matter:
-the first subtable that covers a pair answers for it, and a class pair applies even when its value is
-zero.
-
-Only pair adjustments are applied: no ligatures, no contextual alternates, no mark positioning. That
-is all a Latin line of lettering needs, and all that measurement can promise to reproduce. Two faces
-are two fonts, so a stressed word in bold italic is not kerned against its roman neighbours.
-
-Adopting it moved every example once: box widths changed by between −1.4% and +0.4%, since a pair can
-loosen as well as tighten, one two-line balloon
-fit on one line, and a few balloons whose candidate positions had scored nearly equal chose
-differently.
-
-## `ty` gates the build; `basedpyright` advises
+### `ty` gates the build; `basedpyright` advises
 
 [`ty`](https://docs.astral.sh/ty/) is Astral's type checker: fast, and consistent with `uv` and
 `ruff`. It is also **pre-1.0 and in beta**.
@@ -558,7 +591,7 @@ is pydantic models throughout and the solver will lean on Protocols, that is the
 accept silently. So `basedpyright --strict` runs as a **second, non-blocking** job. Anything it
 reports that `ty` missed is signal. Delete that job once `ty` reaches 1.0 and closes the gap.
 
-## `TC001`-`TC003` are disabled deliberately
+### `TC001`-`TC003` are disabled deliberately
 
 Ruff's flake8-type-checking rules want annotation-only imports moved into `if TYPE_CHECKING` blocks.
 Declined, for two reasons:
@@ -572,7 +605,7 @@ Declined, for two reasons:
 That same PEP pair is why `from __future__ import annotations` is banned here: forward references
 work unquoted, and the future import is on a deprecation path.
 
-## License gate checks runtime dependencies only
+### License gate checks runtime dependencies only
 
 Dev tooling is never distributed, so it is out of scope — which matters concretely, because
 `hypothesis` is MPL-2.0 and would otherwise fail a permissive-only allowlist for no good reason. CI
@@ -583,13 +616,13 @@ dependencies `--no-dev` just pruned, so the gate checks the wrong environment an
 meaninglessly. `uv run --no-sync` is required. This was caught by running the gate and reading its
 output, not by reasoning about it — which is the general lesson.
 
-## The documentation site serves every release from the site attached to it
+### The documentation site serves every release from the site attached to it
 
 The site's root used to be `main`, rebuilt on every push. So between releases it described
 language a released `scenet` refused, the playground ran an unreleased compiler, and an
 editor validating against `schemas/panel.schema.json` was checked against unreleased models.
 Now the root is the latest release, `main` is under `/dev/`, and each minor version is under
-`/vX.Y/` ([#171](https://github.com/creatoan/scenet/issues/171)). The layout is the one
+`/vX.Y/`. The layout is the one
 pandas uses: stable at the root, development under it, old versions beside it.
 
 **Where old versions come from.** A Pages deployment replaces the whole site and keeps
@@ -707,11 +740,11 @@ Sources:
   [numpy](https://numpy.org/doc/_static/versions.json),
   [pandas](https://pandas.pydata.org/versions.json)
 
-## The documentation's pictures are golden outputs, committed
+### The documentation's pictures are golden outputs, committed
 
 Every picture of a gallery example in the documentation is the file `scenet build` writes for
 it, copied from the golden build by `scripts/update_golden.py` into `docs/images/gallery/` and
-held to its digest by a test ([#243](https://github.com/creatoan/scenet/issues/243)). It was
+held to its digest by a test. It was
 that or rendering them while Sphinx builds, which would commit nothing. Copying won:
 
 - **GitHub renders these pages.** The documentation is Markdown so that a reader who lands in

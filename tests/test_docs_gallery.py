@@ -214,7 +214,7 @@ class TestTheGalleryPage:
         home = (DOCS / "index.md").read_text(encoding="utf-8")
         toctree = re.search(r"```\{toctree\}(.*?)```", home, re.DOTALL)
         assert toctree
-        assert "gallery" in toctree.group(1).split()
+        assert "Gallery <gallery>" in toctree.group(1).splitlines()
 
 
 #: The gallery's copy of the language reference's complete example (#243).
@@ -330,7 +330,7 @@ GALLERY_PAGE = "https://creatoan.github.io/scenet/gallery.html"
 
 class TestTheReadme:
     """The README shows the tour, the example the playground opens on, and links the Gallery
-    page (#243)."""
+    page. The umbrella panel follows, drawn (`tests/test_front_door.py`)."""
 
     def test_it_shows_the_tours_pictures(self):
         (start,) = [entry for entry in ENTRIES if entry["file"] == MANIFEST["start"]]
@@ -339,7 +339,8 @@ class TestTheReadme:
             f"{RAW}{picture.relative_to(ROOT).as_posix()}" for picture in _pictures_of(start)
         ]
         assert expected
-        assert [source for source in shown if source.startswith(RAW)] == expected
+        drawn = [source for source in shown if source.startswith(RAW)]
+        assert drawn[: len(expected)] == expected
 
     def test_its_pictures_say_what_they_show(self):
         assert all(alt.strip() for _, alt in _images(README.read_text(encoding="utf-8")))
@@ -347,7 +348,6 @@ class TestTheReadme:
     def test_it_links_the_gallery(self):
         readme = README.read_text(encoding="utf-8")
         assert f"]({GALLERY_PAGE})" in readme
-        assert "](docs/gallery.md)" in readme
 
     def test_it_opens_the_tour_in_the_playground(self):
         readme = README.read_text(encoding="utf-8")

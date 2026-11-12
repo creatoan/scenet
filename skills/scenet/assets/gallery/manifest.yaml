@@ -44,7 +44,7 @@ examples:
     title: "Two characters"
     kind: panel
     group: Your first panel
-    summary: "The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue."
+    summary: "The umbrella panel, which every page starts from: two actors, who stands where, who looks at whom, and two lines of dialogue."
     doc: tutorial/first_panel.md
     notes: [camera-retreated]
   - file: 02-shot-ladder.scene.yaml

@@ -1,7 +1,8 @@
-# Reference
+# Language and tools
 
-Facts, tables and signatures. Nothing here teaches — for that, start with the
-[tutorial](../tutorial/index) or a [how-to guide](../howto/index).
+The reference for whoever writes comics in Scenet: the language, key by key, and the tools that
+read it. Nothing here teaches; for that, start with the [tutorial](../tutorial/index) or a
+[how-to guide](../howto/index). The Python API has [a reference of its own](api/index.md).
 
 ## The language
 
@@ -14,10 +15,8 @@ Facts, tables and signatures. Nothing here teaches — for that, start with the
 | [Panel Core](panel_core.md) | The resolved intermediate format |
 | [Asset contract](asset_contract.md) | What a character puppet must declare |
 
-The language specification is what a second implementation would target. It is free to
-implement: the project is 0BSD, and to be explicit, anyone may build a competing compiler,
-editor or renderer for this language without permission or attribution. A notation is only
-worth having if it is not owned.
+The language specification is what a second implementation would target, and it is
+[free to implement](../explanation/why.md#free-to-implement).
 
 ## The tools
 
@@ -26,13 +25,12 @@ worth having if it is not owned.
 | [Command line](cli.md) | Every command and flag |
 | [Diagnostics](diagnostics.md) | Every rule `scenet check` reports and every note the compiler gives, each with a document that gives it and the same document fixed |
 | [MCP server](mcp.md) | The tools `scenet mcp` serves to a model |
-| [Python API](api/index.md) | Every public name, and the internals behind them |
 
-## Version and status
+## Versions
 
-The table of what actually runs, as opposed to what is specified, is in
-[implementation status](../explanation/status.md). The specification describes the
-language; the status table is authoritative about the compiler.
+Every key's card, every command and option, and every diagnostic says the release it arrived in.
+[What Scenet does today](../explanation/status.md) has the features as a whole, and
+[What's new](../explanation/whats_new.md) what each release changed.
 
 ```{toctree}
 :hidden:
@@ -46,5 +44,4 @@ asset_contract
 cli
 diagnostics
 mcp
-api/index
 ```

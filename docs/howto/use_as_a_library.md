@@ -373,8 +373,8 @@ public surface has a gap.
 
 ## Determinism, and what it buys you
 
-The same input always produces byte-identical output. No wall-clock time, no unseeded
-randomness, no reliance on dictionary iteration order, no absolute paths in the output.
+The same input always produces byte-identical output: see
+[Determinism](../reference/language/index.md#determinism) for what that covers.
 
 ```python
 from scenet import compile_source, render

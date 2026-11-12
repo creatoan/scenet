@@ -619,7 +619,7 @@ Prints the installed version and exits 0.
 
 ## Determinism
 
-The same input always produces byte-identical output — no wall-clock time, no unseeded
-randomness, no absolute paths in the output. Two runs on different machines produce files
+The same input always produces byte-identical output, as
+[Determinism](language/index.md#determinism) says: two runs on different machines produce files
 you can compare with `cmp`. The print PDF carries no date and takes its `/ID` from its content,
 and compresses nothing: zlib implementations differ from one platform to the next.

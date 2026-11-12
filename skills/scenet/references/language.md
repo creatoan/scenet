@@ -2,10 +2,9 @@
 
 # The Scenet language
 
-> **Status:** this is the specification. It is not a report of what is implemented — see
-> [implementation status](https://creatoan.github.io/scenet/explanation/status.html#implementation-status), which is authoritative on
-> what actually runs. Panels, sequences and pages of tiers compile end to end today; the style
-> layer does not exist yet.
+Everything on these pages runs: each key's card gives the release it arrived in, and every
+example is compiled by the test suite. [What Scenet does today](https://creatoan.github.io/scenet/explanation/status.html) has
+the features as a whole.
 
 A panel source is a YAML document describing **what is in a panel**, never **where things are drawn**.
 Coordinates do not appear anywhere in the language; producing them is the compiler's entire job.
@@ -53,11 +52,10 @@ anything else, exactly as transposing a score changes its key without rewriting 
 
 ```yaml
 panel:
-  size: [1000, 1000]
+  size: [1000, 800]
 
 camera:
   shot: medium_shot
-  angle: eye_level
 
 setting:
   place: docks
@@ -65,7 +63,7 @@ setting:
   weather: rain
 
 cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
 
 staging:
