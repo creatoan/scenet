@@ -294,6 +294,7 @@ class TestCheckDocs:
         header = page[page.index("<header") : page.index("</header>")]
         assert re.search(r'<a class="nav-link[^"]*" href="\.\./playground/">\s*Playground', header)
         assert "https://creatoan.github.io/scenet/playground/" not in header
+        assert re.search(r'class="nav-link nav-internal" href="\.\./playground/"', header)
 
     def test_an_old_release_still_names_the_playground(self, build_docs: Callable[..., Path]):
         """One whose table of contents has none, built with today's templates."""

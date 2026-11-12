@@ -6,8 +6,9 @@ release it arrived in. Work marked *not yet released* is on `main`, and in
 `pip install scenet` gives you until the next release. [What's new](whats_new.md) has the detail,
 release by release.
 
-Each "Written as" names the key, command or function the feature is used through; its card or
-entry gives the rest.
+Each "Written as" names the key, command or function the feature is used through, which
+[the language reference](../reference/language/keys.md), [the command line](../reference/cli.md)
+or [the Python API](../reference/api/index.md) describes in full.
 
 ## Frontends
 

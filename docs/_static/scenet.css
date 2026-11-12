@@ -81,9 +81,9 @@ img[src$="two-characters.svg"] {
 }
 
 /* The tour's page, the hero: limited by height, so the sentence under it stays in sight. */
-.bd-article img[src$="38-tour.page-1.svg"] {
+.bd-article img[src*="_images/"][src$="38-tour.page-1.svg"] {
   display: block;
-  max-height: 28rem;
+  max-height: 26rem;
   width: auto;
   margin: 0.5rem auto 1rem;
   border-radius: 4px;

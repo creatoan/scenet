@@ -1,14 +1,15 @@
 {#- The navbar: the sections of the landing page's table of contents, Playground among them.
 
     The table of contents names the playground by its full address, the only kind a toctree
-    takes. Here it becomes `pathto('playground/', 1)`, so the documentation of /dev/ opens
-    /dev/playground/ and a release's opens the playground running its wheel. A release built
+    takes, which the theme marks as a link to another site. Here it becomes
+    `pathto('playground/', 1)`, a link within the site: the documentation of /dev/ opens
+    /dev/playground/, and a release's opens the playground running its wheel. A release built
     before the playground was in the table of contents (scripts/backfill_site.py) gets it
     appended instead, so every version's navbar names it. On a narrow screen the theme moves
     this into the sidebar with the sections. -#}
 {%- set nav = generate_header_nav_html(n_links_before_dropdown=theme_header_links_before_dropdown, dropdown_text=theme_header_dropdown_text) -%}
-{%- set written = 'href="https://creatoan.github.io/scenet/playground/"' | safe -%}
-{%- set here = ('href="' ~ pathto('playground/', 1) ~ '"') | safe -%}
+{%- set written = 'class="nav-link nav-external" href="https://creatoan.github.io/scenet/playground/"' | safe -%}
+{%- set here = ('class="nav-link nav-internal" href="' ~ pathto('playground/', 1) ~ '"') | safe -%}
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     {% if written in nav -%}
@@ -16,7 +17,7 @@
     {%- else -%}
     {{ nav }}
     <li class="nav-item">
-      <a class="nav-link nav-internal" {{ here }}>
+      <a {{ here }}>
         Playground
       </a>
     </li>
