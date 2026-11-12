@@ -29,12 +29,15 @@ import pytest
 from sybil import Sybil
 from sybil.parsers.markdown import CodeBlockParser, SkipParser
 
-from tests.doc_examples import FreshPythonCodeBlockParser, clean_doctest_globals
+from tests.doc_examples import clean_doctest_globals
+from tests.python_examples import TrackPythonCodeBlockParser
 from tests.shell_examples import run_bash_block
 
 pytest_collect_file = Sybil(
     parsers=[
-        FreshPythonCodeBlockParser(),
+        # Each block alone; the developer's track's as scripts, checked against what they
+        # print (`tests/python_examples.py`).
+        TrackPythonCodeBlockParser(),
         # The `scenet` lines of every `bash` block are run too: a documented command
         # that stopped working fails the build, exactly as a Python example does.
         CodeBlockParser(language="bash", evaluator=run_bash_block),

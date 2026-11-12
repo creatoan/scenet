@@ -22,25 +22,18 @@ Every document a chapter shows compiles, under the rule of `tests/test_doc_examp
 every `scenet` line it runs is run, under `tests/shell_examples.py`.
 """
 
-import contextlib
-import io
-import itertools
 import re
-import shlex
-import tempfile
 from functools import cache
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
-from markdown_it import MarkdownIt
 
-from scenet.cli import main
 from scenet.diagnostics import COMPILE_NOTES, RULES
 from tests import myst
 from tests.doc_examples import fences
-from tests.shell_examples import commands, workspace
+from tests.shell_examples import Transcript, commands, run_transcript, transcripts
 from tests.test_docs_gallery import (
     ENTRIES,
     MANIFEST,
@@ -235,52 +228,15 @@ def _line_of(chapter: Path, part: str) -> int:
     raise AssertionError(f"{chapter.name} has no part {part!r}")
 
 
-@cache
-def _transcripts() -> list[tuple[Path, int, str, str]]:
-    """Each `bash` block followed by a `text` block: page, line, commands and output."""
-    found = []
-    for chapter in CHAPTERS:
-        tokens = [
-            token
-            for token in MarkdownIt("commonmark").parse(chapter.read_text(encoding="utf-8"))
-            if token.type == "fence" and token.map is not None
-        ]
-        for before, after in itertools.pairwise(tokens):
-            assert before.map is not None
-            assert after.map is not None
-            if before.info.strip() == "bash" and after.info.strip() == "text":
-                lines = chapter.read_text(encoding="utf-8").splitlines()
-                between = lines[before.map[1] : after.map[0]]
-                if all(not line.strip() for line in between):
-                    found.append((chapter, before.map[0] + 1, before.content, after.content))
-    return found
-
-
 class TestWhatAChapterSaysAppears:
     def test_the_chapters_show_output(self):
-        assert _transcripts()
+        assert transcripts(CHAPTERS)
 
     @pytest.mark.parametrize(
-        ("chapter", "line", "source", "output"),
-        _transcripts(),
-        ids=[f"{chapter.stem}:{line}" for chapter, line, _, _ in _transcripts()],
+        "transcript", transcripts(CHAPTERS), ids=[found.where for found in transcripts(CHAPTERS)]
     )
-    def test_it_is_what_the_commands_print(
-        self, chapter: Path, line: int, source: str, output: str
-    ):
-        printed = io.StringIO()
-        with tempfile.TemporaryDirectory() as directory:
-            cwd = Path(directory)
-            workspace(cwd, chapter, line)
-            for command in commands(source):
-                with (
-                    contextlib.chdir(cwd),
-                    contextlib.redirect_stdout(printed),
-                    contextlib.redirect_stderr(printed),
-                ):
-                    status = main(command.words)
-                assert status == command.status, shlex.join(command.words)
-        assert printed.getvalue() == output
+    def test_it_is_what_the_commands_print(self, transcript: Transcript):
+        assert run_transcript(transcript) == transcript.output
 
 
 def _documents(chapter: Path) -> list[Any]:

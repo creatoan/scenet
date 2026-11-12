@@ -25,6 +25,7 @@ the playground writes them beside every document it opens.
 
 import contextlib
 import io
+import itertools
 import re
 import shlex
 import shutil
@@ -33,12 +34,21 @@ from pathlib import Path
 from typing import NamedTuple
 from unittest import mock
 
+from markdown_it import MarkdownIt
 from sybil import Example
 
 from scenet.cli import build_parser, main
 from tests.doc_examples import fences, file_named
 
-__all__ = ["commands", "run_bash_block", "workspace"]
+__all__ = [
+    "Transcript",
+    "commands",
+    "outputs",
+    "run_bash_block",
+    "run_transcript",
+    "transcripts",
+    "workspace",
+]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -162,3 +172,67 @@ def run_bash_block(example: Example) -> None:
         workspace(cwd, Path(example.path), example.line)
         for command in found:
             _run(command.words, cwd, command.status)
+
+
+class Transcript(NamedTuple):
+    """A block of a page followed by the `text` block that shows what it prints."""
+
+    page: Path
+    #: The line its fence opens on, counted from 1.
+    line: int
+    source: str
+    output: str
+
+    @property
+    def where(self) -> str:
+        """`page:line`, for a test id."""
+        return f"{self.page.stem}:{self.line}"
+
+
+def outputs(page: Path, language: str) -> list[Transcript]:
+    """Each `language` block of a page that a `text` block follows, with nothing between.
+
+    That `text` block is what the first one prints: a page shows a command, or a script, and
+    then its output, as a reader's terminal would.
+    """
+    text = page.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    tokens = [
+        token
+        for token in MarkdownIt("commonmark").parse(text)
+        if token.type == "fence" and token.map is not None
+    ]
+    found: list[Transcript] = []
+    for before, after in itertools.pairwise(tokens):
+        assert before.map is not None
+        assert after.map is not None
+        if before.info.strip() == language and after.info.strip() == "text":
+            between = lines[before.map[1] : after.map[0]]
+            if all(not line.strip() for line in between):
+                found.append(Transcript(page, before.map[0] + 1, before.content, after.content))
+    return found
+
+
+def transcripts(pages: list[Path]) -> list[Transcript]:
+    """Each `bash` block of the pages that a `text` block, its output, follows."""
+    return [found for page in pages for found in outputs(page, "bash")]
+
+
+def run_transcript(transcript: Transcript) -> str:
+    """What a transcript's `scenet` lines print, run where its page's files are.
+
+    Each line must exit with the status it is shown exiting with.
+    """
+    printed = io.StringIO()
+    with tempfile.TemporaryDirectory() as directory:
+        cwd = Path(directory)
+        workspace(cwd, transcript.page, transcript.line)
+        for command in commands(transcript.source):
+            with (
+                contextlib.chdir(cwd),
+                contextlib.redirect_stdout(printed),
+                contextlib.redirect_stderr(printed),
+            ):
+                status = main(command.words)
+            assert status == command.status, shlex.join(command.words)
+    return printed.getvalue()
