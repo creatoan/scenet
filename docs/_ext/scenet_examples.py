@@ -161,6 +161,7 @@ class ScenetExample(SphinxDirective):
         "beside": directives.unchanged_required,
         "playground": directives.unchanged_required,
         "gives": directives.unchanged_required,
+        "file": directives.unchanged_required,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -182,7 +183,13 @@ class ScenetExample(SphinxDirective):
             if given != [gives]:
                 raise self.error(f"this example gives {given}, not [{gives!r}]")
         language = "scenet-script" if kind == "script" else "yaml"
-        source = nodes.literal_block(text, text, language=language)
+        source: nodes.Element = nodes.literal_block(text, text, language=language)
+        if "file" in self.options:
+            # The file a reader saves it as, captioned as a `code-block` names one.
+            file = self.options["file"]
+            wrapper = nodes.container("", literal_block=True, classes=["literal-block-wrapper"])
+            wrapper += [nodes.caption(file, "", nodes.Text(file)), source]
+            source = wrapper
         if gives in RULES and RULES[gives].level == "error":
             container = nodes.container(classes=["scenet-example"])
             container += [source, self._link(text)]

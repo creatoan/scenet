@@ -11,7 +11,7 @@ Which way the comic is read: `ltr` from the top left, `rtl` from the top right, 
 | Default | `ltr` |
 | Since | 0.12 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-direction`](../diagnostics.md#panel-direction) |
-| In the gallery | [Right to left](../../gallery.md#right-to-left), [The same page, left to right](../../gallery.md#the-same-page-left-to-right) |
+| In the gallery | [A manga page, right to left](../../gallery.md#a-manga-page-right-to-left), [The same page, left to right](../../gallery.md#the-same-page-left-to-right) |
 <!-- /facts -->
 
 Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the

@@ -220,8 +220,9 @@ hello.panel.yaml: ok
 A note is not a fault: the camera's retreat is a decision, not a mistake, and the document
 is still `ok`. Here is a mistake. Save this beside it:
 
-```{code-block} yaml
-:caption: typo.panel.yaml
+```{scenet-example}
+:file: typo.panel.yaml
+:gives: unknown-pose
 
 cast:
   alice: {reference: alice, pose: pointng}

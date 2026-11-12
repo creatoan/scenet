@@ -2401,7 +2401,7 @@ Which way the comic is read: `ltr` from the top left, `rtl` from the top right, 
 | Default | `ltr` |
 | Since | 0.12 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-direction`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-direction) |
-| In the gallery | [Right to left](https://creatoan.github.io/scenet/gallery.html#right-to-left), [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right) |
+| In the gallery | [A manga page, right to left](https://creatoan.github.io/scenet/gallery.html#a-manga-page-right-to-left), [The same page, left to right](https://creatoan.github.io/scenet/gallery.html#the-same-page-left-to-right) |
 <!-- /facts -->
 
 Which way the comic is read: `ltr`, from the top left, as Western comics are, or `rtl`, from the

@@ -270,7 +270,13 @@ class DocumentBlock:
 
 
 def file_named(fence: Fence) -> str | None:
-    """The file a block shows, when its caption is a file name: `hello.panel.yaml`."""
+    """The file a block shows, when its caption is a file name: `hello.panel.yaml`.
+
+    A `scenet-example` names it with `:file:`, which it is captioned with: a document that
+    gives a diagnostic on purpose, which a page then runs `scenet check` on.
+    """
+    if fence.directive == "scenet-example":
+        return dict(fence.options).get("file")
     if fence.caption is None:
         return None
     named = _FILE_NAME.match(fence.caption)

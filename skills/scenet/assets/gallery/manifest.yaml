@@ -262,7 +262,7 @@ examples:
     doc: howto/letter_the_figures_in_your_art.md
     files: [art/figures.png, art/figures.art.yaml]
   - file: 36-right-to-left.scene.yaml
-    title: "Right to left"
+    title: "A manga page, right to left"
     kind: scene
     group: Right to left
     summary: "A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored."

@@ -3509,7 +3509,7 @@ panels:
 
 Learn it in the tour: [Right to left](tutorial/right_to_left.md).
 
-### Right to left
+### A manga page, right to left
 
 A page read from the top right, as manga are, where reading order decides everything and the art is never mirrored.
 
