@@ -303,6 +303,18 @@ def test_a_caption_says_what_to_compile_a_block_as():
     assert kind("Part of hello.panel.yaml") is None
 
 
+def test_the_spec_packs_caption_is_read_as_one(tmp_path: Path):
+    """The spec pack prints a caption as `*name:*` over a plain fence (`scripts/build_spec.py`).
+
+    So a command in the pack that builds a file a block above it shows finds it, as it does on
+    the page the block was taken from.
+    """
+    page = tmp_path / "pack.md"
+    page.write_text("*umbrella.script:*\n\n```scenet-script\nPANEL 1\n```\n", encoding="utf-8")
+    (fence,) = fences(page)
+    assert (fence.caption, doc_examples.file_named(fence)) == ("umbrella.script", "umbrella.script")
+
+
 def test_a_document_that_does_not_compile_fails(tmp_path: Path):
     fence = Fence(ROOT / "README.md", 1, "scenet-script", None, "PANEL 1\n\nALICE\nHello.\n")
     block = doc_examples.classify(fence, {})

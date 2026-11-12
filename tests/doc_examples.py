@@ -31,6 +31,7 @@ from typing import Any
 
 import pytest
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 from sybil import Document, Example, Region
 from sybil.parsers.markdown import PythonCodeBlockParser
 
@@ -209,6 +210,18 @@ class Fence:
         return f"{self.path.relative_to(ROOT).as_posix()}:{self.line}"
 
 
+#: A caption as the spec pack prints one, alone in the paragraph over its block: `*name:*`.
+_PRINTED_CAPTION = re.compile(r"^\*(?P<caption>[^*]+):\*$")
+
+
+def _printed_caption(before: list[Token]) -> str | None:
+    """The caption the spec pack printed over a fence, if the paragraph right above is one."""
+    if len(before) < 3 or before[-1].type != "paragraph_close":
+        return None
+    printed = _PRINTED_CAPTION.match(before[-2].content.strip())
+    return printed["caption"] if printed else None
+
+
 def fences(path: Path) -> list[Fence]:
     """Every fenced block of a page, as MyST reads it.
 
@@ -219,13 +232,13 @@ def fences(path: Path) -> list[Fence]:
     """
     tokens = MarkdownIt("commonmark").parse(path.read_text(encoding="utf-8"))
     found: list[Fence] = []
-    for token in tokens:
+    for index, token in enumerate(tokens):
         if token.type != "fence" or token.map is None:
             continue
         info = token.info.split()
         language = info[0] if info else ""
         text = token.content
-        caption: str | None = None
+        caption: str | None = _printed_caption(tokens[:index])
         directive: str | None = None
         options: list[tuple[str, str]] = []
         if language in ("{code-block}", "{scenet-example}"):
