@@ -411,8 +411,13 @@ class TestWhatScenetDoesToday:
             assert version in _releases(), f"the CHANGELOG has no {_name(version)}"
 
     def test_unreleased_work_is_in_the_changelog(self):
+        """A row marked not yet released has its entry under Unreleased.
+
+        Right after a release nothing is marked, and Unreleased may be empty.
+        """
         unreleased = _read(CHANGELOG).split("## [Unreleased]", 1)[1].split("\n## [", 1)[0]
-        assert unreleased.strip()
+        if any(since.endswith(", not yet released") for *_, since in ROWS):
+            assert unreleased.strip()
 
     def test_the_specification_disclaimer_is_gone(self):
         for path in [

@@ -10,6 +10,8 @@ below 1.0 means.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-12
+
 **Upgrading from 0.12.0.**
 
 - **The depth map of every panel with a ground, floor, water or ceiling changes once** (#227),
@@ -2023,7 +2025,8 @@ or has drifted out of step with the code fails the build.
 - `long_shot` and `full_shot` crop at the same landmark, so with no environment to show
   they can differ only by headroom.
 
-[Unreleased]: https://github.com/creatoan/scenet/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/creatoan/scenet/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/creatoan/scenet/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/creatoan/scenet/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/creatoan/scenet/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/creatoan/scenet/compare/v0.10.0...v0.11.0

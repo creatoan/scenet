@@ -21,9 +21,9 @@ or [the Python API](../reference/api/index.md) describes in full.
 | A comic script, as writers write it | `parse_script()` | 0.1 |
 | Scripts in Dark Horse's published format, and in French | | 0.11 |
 | A voice from off panel | `say.off_panel` | 0.11 |
-| Scripts laid out as a manga script, a screenplay or a letterer's script | | 0.13, not yet released |
+| Scripts laid out as a manga script, a screenplay or a letterer's script | | 0.13 |
 | Characters of your own, as puppet files | `load_puppet()` | 0.1 |
-| A JSON Schema for puppet files, for completion in an editor | `scenet schema --puppet` | 0.13, not yet released |
+| A JSON Schema for puppet files, for completion in an editor | `scenet schema --puppet` | 0.13 |
 
 ## Layout
 
@@ -40,8 +40,8 @@ or [the Python API](../reference/api/index.md) describes in full.
 | A supplied picture behind the cast | `setting.image` | 0.12 |
 | Figures a supplied picture draws, lettered around | `cast.<id>.figure` | 0.12 |
 | Reading right to left, for manga | `direction` | 0.12 |
-| Colour, as a twin of the value ladder | `palette` | 0.13, not yet released |
-| Panels that bleed off the page | `panels[].bleed`, `page.bleed` | 0.13, not yet released |
+| Colour, as a twin of the value ladder | `palette` | 0.13 |
+| Panels that bleed off the page | `panels[].bleed`, `page.bleed` | 0.13 |
 
 ## Lettering
 
@@ -52,7 +52,7 @@ or [the Python API](../reference/api/index.md) describes in full.
 | A face of your own | `lettering.font` | 0.11 |
 | One type size for a page, and small type | `lettering.size`, `say.size` | 0.11 |
 | Sound effects, in the display face | `sfx` | 0.11 |
-| The warm caption | `caption.tone: warm` | 0.13, not yet released |
+| The warm caption | `caption.tone: warm` | 0.13 |
 
 ## Outputs
 
@@ -66,8 +66,8 @@ or [the Python API](../reference/api/index.md) describes in full.
 | Output a screen reader reads, with a description of each panel | `description`, `scenet build --no-aria` | 0.12 |
 | A supplied picture embedded, so the SVG stands alone | `scenet build --embed-images` | 0.12 |
 | Exports for image models: pose, boxes, depth, mask and semantics | `scenet build --conditioning` | 0.12 |
-| A PDF for print, with its trim, its bleed and lettering on the black plate | `scenet build --pdf`, `render_pdf()` | 0.13, not yet released |
-| A monochrome edition of a tinted document | `scenet build --mono` | 0.13, not yet released |
+| A PDF for print, with its trim, its bleed and lettering on the black plate | `scenet build --pdf`, `render_pdf()` | 0.13 |
+| A monochrome edition of a tinted document | `scenet build --mono` | 0.13 |
 
 ## Tools
 
@@ -81,7 +81,7 @@ or [the Python API](../reference/api/index.md) describes in full.
 | The checks that compile, `--deep` | `scenet check --deep` | 0.6 |
 | The spec pack, `llms.txt` and the Agent Skill | | 0.8 |
 | The MCP server | `scenet mcp` | 0.8 |
-| A rebuild on every save | `scenet build --watch` | 0.13, not yet released |
+| A rebuild on every save | `scenet build --watch` | 0.13 |
 
 ## Roadmap
 

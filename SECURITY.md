@@ -7,7 +7,7 @@ was a security release of 0.11. `main` gets every fix first.
 
 | Version | Supported |
 |---|---|
-| 0.12.x | Yes |
+| 0.13.x | Yes |
 | Older | No: upgrade to the latest release |
 
 ## Reporting a vulnerability

@@ -7,7 +7,7 @@
 *The gallery's [tour](gallery.md#a-tour-of-scenet), exactly as `scenet build` draws it from one YAML file.*
 
 Scenet compiles a written description of a comic, whether a panel, a sequence, a page or a
-whole comic script, into SVG, and from 0.13 into a PDF for print: it frames each shot, stages
+whole comic script, into SVG and into a PDF for print: it frames each shot, stages
 the cast, sizes, places and tails every balloon in reading order, letters over your own art,
 reads right to left, writes pictures a screen reader can read, and exports each panel for
 image models, all without an image model of its own.

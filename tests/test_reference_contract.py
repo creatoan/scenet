@@ -380,11 +380,11 @@ class TestEveryCommandAndOptionSaysWhenItCame:
         assert said == {SINCE["options"][option]}, f"{option}: end its definition on *Since X.Y.*"
 
     def test_one_added_since_the_last_release_takes_the_next(self):
-        """Nothing is said to come later than the next minor release: `--pdf` is not out yet."""
+        """Nothing is said to come later than the next minor release; `--pdf` came in 0.13."""
         major, minor = (int(part) for part in __version__.split(".")[:2])
         for version in [*SINCE["commands"].values(), *SINCE["options"].values()]:
             assert tuple(int(part) for part in version.split(".")) <= (major, minor + 1)
-        assert SINCE["options"]["build --pdf"] == f"{major}.{minor + 1}"
+        assert SINCE["options"]["build --pdf"] == "0.13"
 
 
 class TestEveryOptionHasAnExample:
