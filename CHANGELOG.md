@@ -10,6 +10,12 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.12.0.**
+
+- **The depth map of every panel with a ground, floor, water or ceiling changes once** (#227),
+  and with it the bytes of its `.depth.svg`: regenerate golden depth maps of your own. Nothing
+  else changes, Panel Core included.
+
 ### Added
 
 - **The front door and the story** (#323). The README and the site's landing page open the
@@ -344,6 +350,38 @@ below 1.0 means.
 - **`scenet build --watch`** (#78) rebuilds when the source or compilation dependencies change,
   with debounced saves and recovery after failed builds. The optional `watch` extra installs
   the file-watching dependency.
+- **The tinted ladder** (#244), the first step of the colour policy: the value ladder in
+  colour, each value with the OKLab lightness of the grey on its rung, so that a panel drawn in
+  it is, in monochrome, the panel drawn in greys. Each hour has a shadow hue at the foreground and
+  an atmosphere hue at the sky, and the rungs move between them. `TINTED` in
+  `scenet.solve.backdrop` is generated from those two ends by `scripts/make_palette.py`, and
+  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it.
+- **`palette: mono | tinted`** (#244), what a panel is drawn in. `tinted` draws every value on the
+  ladder (the masses of a setting, the veil and the rain) in its twin colour. `mono`, the default,
+  is what every panel already was. It is written where `lettering` is: at the top of a panel, beside
+  `panels:` for every panel, on one panel for that panel alone, or in a comic script's front matter
+  or as `@palette:`. A panel may have its own, for a flashback in grey on a page in colour. Panel Core
+  keeps every grey where it was and adds `colour` beside it (`fall_colour` for rain), with `palette`
+  at the top, all left out in `mono`: no existing Core, SVG or export changes. Every decision is
+  still made on the grey, so a tinted Core with its colours taken out is the mono one. The pose,
+  boxes, depth and mask exports are the same in every palette, and the semantics names the palette
+  when it is not `mono`. `Palette` is exported, and `colour_for` gives a grey's twin.
+- **`scenet build --mono`** (#244) draws a tinted document as a black-and-white edition, without
+  editing it: every value as its grey, and every panel, page and strip byte-identical to what the
+  same document writes with `palette: mono`. `render`, `render_page`, `render_pages` and
+  `render_strip` take `mono=True`, MCP `render` takes `mono`, and `PanelCore.as_mono()` gives the
+  panel with its colours taken back out, which is the mono Core.
+- **`tone: warm`** (#244), the yellow `locale` caption that #28 left out for want of a colour policy.
+  Its value is the `day` row's atmosphere rung, `#eeeeee`, taken by index as `pale` and `ink` are,
+  and it is lettered in ink. Under `palette: tinted` its box is drawn in that grey's twin, the pale
+  yellow `#fef0a1`, which the ink reads on at 16:1. In `mono` it is the grey, which is what a
+  black-and-white reprint does to a yellow caption. Panel Core records the yellow as the caption's
+  `colour`, beside `fill`, and leaves it out in `mono`. `paper`, `pale` and `ink` stay neutral in
+  every palette.
+- **Colour in the gallery and the reference** (#244). Two gallery examples, *Every hour in colour*
+  and *A flashback in grey*, join *A yellow caption*. The language reference has a `palette`
+  section with both pages as pictures, and `warm` in the `tone` table. Panel Core's reference
+  documents the colour keys, and the design decisions record why colour is a twin of value.
 
 ### Changed
 
@@ -369,6 +407,18 @@ below 1.0 means.
 - **The gallery's CI job drops the notes the manifest declares before code scanning**
   (`scripts/check_gallery.py`), so the examples that give a note on purpose open no alert. An
   error, or a note nobody declared, is still uploaded and still fails the job.
+- **`lightness` and `contrast_ratio` refuse a colour** (#244) with a `ValueError`, rather than
+  answer for it with a formula that is exact only for a neutral grey. Every decision the compiler
+  makes from a value is made on the grey.
+- **A ground, floor or stretch of water recedes in the depth export** (#227), instead of standing
+  as one flat grey that a depth model reads as a wall. Each is a straight vertical ramp from its own
+  step at the horizon to the farthest figure's step at the bottom edge, white when every figure
+  is; a ceiling is the same ramp running up to the top edge. A flat surface's inverse depth is
+  linear in screen height, so the straight ramp is the shape perspective gives. The ramp is never
+  darker than its plane's step, so the painter's order holds, and never paler than a figure
+  standing on it. A ground in the foreground plane stays flat, and so does every other kind. Each
+  ramped region's paint names its step as the fallback. A hand-edited Core with no horizon has
+  each surface recede from its own far edge.
 
 ### Fixed
 
@@ -492,62 +542,20 @@ below 1.0 means.
   toward her side and her line ends on the side she was written to stand on; every other
   relation that names her still goes. In a script, `@cast: {CAROL: null}` beside `CAROL (OP)`
   is no longer refused as drawing her.
-
-**Upgrading from 0.12.0.**
-
-- **The depth map of every panel with a ground, floor, water or ceiling changes once** (#227),
-  and with it the bytes of its `.depth.svg`: regenerate golden depth maps of your own. Nothing
-  else changes, Panel Core included.
-
-### Added
-
-- **The tinted ladder** (#244), the first step of the colour policy: the value ladder in
-  colour, each value with the OKLab lightness of the grey on its rung, so that a panel drawn in
-  it is, in monochrome, the panel drawn in greys. Each hour has a shadow hue at the foreground and
-  an atmosphere hue at the sky, and the rungs move between them. `TINTED` in
-  `scenet.solve.backdrop` is generated from those two ends by `scripts/make_palette.py`, and
-  `scripts/setting_sheet.py --palette tinted` draws every place and weather in it.
-- **`palette: mono | tinted`** (#244), what a panel is drawn in. `tinted` draws every value on the
-  ladder (the masses of a setting, the veil and the rain) in its twin colour. `mono`, the default,
-  is what every panel already was. It is written where `lettering` is: at the top of a panel, beside
-  `panels:` for every panel, on one panel for that panel alone, or in a comic script's front matter
-  or as `@palette:`. A panel may have its own, for a flashback in grey on a page in colour. Panel Core
-  keeps every grey where it was and adds `colour` beside it (`fall_colour` for rain), with `palette`
-  at the top, all left out in `mono`: no existing Core, SVG or export changes. Every decision is
-  still made on the grey, so a tinted Core with its colours taken out is the mono one. The pose,
-  boxes, depth and mask exports are the same in every palette, and the semantics names the palette
-  when it is not `mono`. `Palette` is exported, and `colour_for` gives a grey's twin.
-- **`scenet build --mono`** (#244) draws a tinted document as a black-and-white edition, without
-  editing it: every value as its grey, and every panel, page and strip byte-identical to what the
-  same document writes with `palette: mono`. `render`, `render_page`, `render_pages` and
-  `render_strip` take `mono=True`, MCP `render` takes `mono`, and `PanelCore.as_mono()` gives the
-  panel with its colours taken back out, which is the mono Core.
-- **`tone: warm`** (#244), the yellow `locale` caption that #28 left out for want of a colour policy.
-  Its value is the `day` row's atmosphere rung, `#eeeeee`, taken by index as `pale` and `ink` are,
-  and it is lettered in ink. Under `palette: tinted` its box is drawn in that grey's twin, the pale
-  yellow `#fef0a1`, which the ink reads on at 16:1. In `mono` it is the grey, which is what a
-  black-and-white reprint does to a yellow caption. Panel Core records the yellow as the caption's
-  `colour`, beside `fill`, and leaves it out in `mono`. `paper`, `pale` and `ink` stay neutral in
-  every palette.
-- **Colour in the gallery and the reference** (#244). Two gallery examples, *Every hour in colour*
-  and *A flashback in grey*, join *A yellow caption*. The language reference has a `palette`
-  section with both pages as pictures, and `warm` in the `tone` table. Panel Core's reference
-  documents the colour keys, and the design decisions record why colour is a twin of value.
-
-### Changed
-
-- **`lightness` and `contrast_ratio` refuse a colour** (#244) with a `ValueError`, rather than
-  answer for it with a formula that is exact only for a neutral grey. Every decision the compiler
-  makes from a value is made on the grey.
-- **A ground, floor or stretch of water recedes in the depth export** (#227), instead of standing
-  as one flat grey that a depth model reads as a wall. Each is a straight vertical ramp from its own
-  step at the horizon to the farthest figure's step at the bottom edge, white when every figure
-  is; a ceiling is the same ramp running up to the top edge. A flat surface's inverse depth is
-  linear in screen height, so the straight ramp is the shape perspective gives. The ramp is never
-  darker than its plane's step, so the painter's order holds, and never paler than a figure
-  standing on it. A ground in the foreground plane stays flat, and so does every other kind. Each
-  ramped region's paint names its step as the fallback. A hand-edited Core with no horizon has
-  each surface recede from its own far edge.
+- **The contributor documents say what CI does** (#324). `CONTRIBUTING.md` lists every gate
+  CI runs, `basedpyright` and the documentation build included, installs every dependency
+  group, says what to regenerate when the output moves, and asks for the commit titles the
+  history actually has rather than Conventional Commits; it and the maintainer guide link each
+  other. Both, with `CLAUDE.md` and the design decisions, say to quote forward references,
+  since the 3.12 floor needs it: two of them said the opposite. The design decisions call
+  `basedpyright` blocking, as `ci.yml` has made it, and gain the section on the floor the
+  install guide links. The maintainer guide has a row for every check a pull request runs.
+  `SECURITY.md` says alpha, names the release that gets fixes, and covers what Scenet really
+  reads and serves: `scenet mcp` over HTTP, fonts, pictures, artwork contracts, puppet files and
+  paths that climb out with `..`. The pull request template asks for a CHANGELOG line and lists
+  every generator; the bug report takes a scene, a comic script and the files a document names.
+  Every kind in this file is one heading per release, and tests hold all of it to the
+  repository.
 
 ## [0.12.0] - 2026-10-29
 
@@ -1601,7 +1609,6 @@ tinted to read against it.
   Off by default: it costs a real compile, including font metrics, and `check` stays
   the cheap pass it is documented as unless asked otherwise.
 
-
 ### Changed
 
 - **`long_shot` reframes noticeably wider, and `wide` with it** — headroom `0.14` → `0.28`,
@@ -1633,7 +1640,6 @@ tinted to read against it.
   already set — so `except KeyError` and the documented `Raises: KeyError` on both
   methods keep working unchanged.
 
-
 ### Fixed
 
 - **`extreme_close_up` framed the forehead, not the eyes.** Its crop landmark (`eyes`)
@@ -1654,7 +1660,6 @@ tinted to read against it.
   `ruleId` and a location naming the field. This closes the `check`/`build` gap
   entirely rather than for two known bad field names: `--deep` (below) extends the same
   guarantee to `layout` and `balloon-placement`.
-
 
 ### Upgrading
 
@@ -1831,6 +1836,17 @@ Diagnostics a machine can read, and the deploy that had quietly been failing for
 - **CI checks the gallery** and uploads the result to code scanning, so a broken example
   becomes an annotation on the pull request that broke it.
 
+### Changed
+
+- **`ScriptSyntaxError` carries its line as a number**, not only inside the message text,
+  so comic scripts get positions too. Lines only: a script line is prose, and a column
+  would imply a precision the parser does not have.
+- **`RuleViolationError`** is a new exported error type. It is raised only inside pydantic
+  validators and never escapes as itself, so it deliberately does not inherit
+  `ScenetError` — that would promise an `except ScenetError` clause could catch it.
+- **CI builds the playground assets**, so a break there fails a pull request instead of
+  the Pages deploy after merge.
+
 ### Fixed
 
 - **Diagnostics now name the field rather than the document.** pydantic reports a
@@ -1851,17 +1867,6 @@ Diagnostics a machine can read, and the deploy that had quietly been failing for
   single panel reported `panels` as an unknown key — a confident, wrong diagnostic on
   every valid scene file in the repository. Found while wiring the gallery into CI.
 
-### Changed
-
-- **`ScriptSyntaxError` carries its line as a number**, not only inside the message text,
-  so comic scripts get positions too. Lines only: a script line is prose, and a column
-  would imply a precision the parser does not have.
-- **`RuleViolationError`** is a new exported error type. It is raised only inside pydantic
-  validators and never escapes as itself, so it deliberately does not inherit
-  `ScenetError` — that would promise an `except ScenetError` clause could catch it.
-- **CI builds the playground assets**, so a break there fails a pull request instead of
-  the Pages deploy after merge.
-
 ### Upgrading
 
 Nothing was removed and no document stops compiling. Two things a caller might notice:
@@ -1875,6 +1880,20 @@ Nothing was removed and no document stops compiling. Two things a caller might n
 A correctness release for the shot ladder, and a pass over the things the project says
 about itself. **Panels using `medium_full`, `long_shot`, `full_shot` or `wide` render
 differently than they did in 0.1.0** — see below before upgrading.
+
+### Changed
+
+- **`wide` remains an exact synonym for `long_shot`**, and the gallery example now says so,
+  so the two identical panels read as intentional rather than broken.
+- **The playground moved above the fold** in `README.md` and `docs/index.md`, and the
+  repository homepage points at it. It runs the real compiler under Pyodide and it was the
+  last section of the landing page, below the licence in reading order.
+- **`docs/explanation/status.md` gained a Planned section.** Its phase table stopped at 6,
+  so everything in the tracker was invisible in the one document claiming to be
+  authoritative. The tickets are listed without numbering them into phases, because that
+  order is genuinely not decided.
+- **`docs/index.md` names Diátaxis.** The four sections always followed it; saying so tells
+  a contributor where a new page belongs.
 
 ### Fixed
 
@@ -1901,20 +1920,6 @@ differently than they did in 0.1.0** — see below before upgrading.
   nothing compiles", which stopped being true at phase 1, while `status.md` two clicks
   away listed phases 0–6 as done and called itself authoritative. The more-read document
   was the wrong one.
-
-### Changed
-
-- **`wide` remains an exact synonym for `long_shot`**, and the gallery example now says so,
-  so the two identical panels read as intentional rather than broken.
-- **The playground moved above the fold** in `README.md` and `docs/index.md`, and the
-  repository homepage points at it. It runs the real compiler under Pyodide and it was the
-  last section of the landing page, below the licence in reading order.
-- **`docs/explanation/status.md` gained a Planned section.** Its phase table stopped at 6,
-  so everything in the tracker was invisible in the one document claiming to be
-  authoritative. The tickets are listed without numbering them into phases, because that
-  order is genuinely not decided.
-- **`docs/index.md` names Diátaxis.** The four sections always followed it; saying so tells
-  a contributor where a new page belongs.
 
 ### Upgrading
 

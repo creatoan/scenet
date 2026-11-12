@@ -577,7 +577,7 @@ it can make no layout decision and no model ever runs inside Scenet.
 
 How the project is checked, and how its site is built.
 
-### `ty` gates the build; `basedpyright` advises
+### `ty` and `basedpyright` both gate the build
 
 [`ty`](https://docs.astral.sh/ty/) is Astral's type checker: fast, and consistent with `uv` and
 `ruff`. It is also **pre-1.0 and in beta**.
@@ -589,8 +589,12 @@ apply here.
 The risk pinning does *not* solve is coverage: pre-1.0 `ty` is documented to miss advanced typing
 patterns Pyright catches — Protocols, `ParamSpec`, recursive types, complex overloads. Since the IR
 is pydantic models throughout and the solver will lean on Protocols, that is the wrong blind spot to
-accept silently. So `basedpyright --strict` runs as a **second, non-blocking** job. Anything it
-reports that `ty` missed is signal. Delete that job once `ty` reaches 1.0 and closes the gap.
+accept silently. So `basedpyright --strict` runs as a **second job, and it blocks** too. It was
+advisory at first, and failed on every run while the run reported green: 87 of its 92 findings
+were untyped third-party libraries nobody could act on. A red job inside a green run teaches
+everyone to ignore CI, so the rules that fire only on untyped dependencies were turned off and
+the job made blocking (`ci.yml`, *Strict type check*). Delete it once `ty` reaches 1.0 and closes
+the gap.
 
 ### `TC001`-`TC003` are disabled deliberately
 
@@ -603,8 +607,22 @@ Declined, for two reasons:
 2. The import-time saving it exists for is largely gone in Python 3.14, which already evaluates
    annotations lazily (PEP 649/749).
 
-That same PEP pair is why `from __future__ import annotations` is banned here: forward references
-work unquoted, and the future import is on a deprecation path.
+`from __future__ import annotations` is banned for the first reason: it turns every annotation
+into a string pydantic must resolve later, and it is on a deprecation path besides.
+
+### The floor is Python 3.12, so forward references are quoted
+
+Scenet supports Python 3.12, 3.13 and 3.14, and CI runs the suite on each. 3.12 is the floor
+because a bug only older Pythons show had already shipped once: before Python 3.14 and PEP 649,
+an annotation is evaluated when its function is defined, so a self-referential `-> Point`
+inside `class Point` raises `NameError` at import. Development on 3.14 alone hid it completely;
+it first surfaced in the browser, where Pyodide ran an older Python.
+
+Self- and forward-references are therefore quoted: `-> "Point"`. On 3.14 the quotes are
+redundant; on the floor they are what makes the module import. `ruff` targets `py312`, so
+`UP037` does not strip them back off, and the 3.12 job is a required check. `Self` is no way
+round the quoting unless the body really does use `cls(...)`: otherwise it promises
+subclass-preserving behaviour the code does not deliver, and `ty` says so.
 
 ### License gate checks runtime dependencies only
 

@@ -106,7 +106,7 @@ uv run python scripts/update_golden.py
 
 ## The print plates
 
-`tests/test_print_separations.py` renders the print PDF (#80) to its plates with
+`tests/test_print_separations.py` renders the print PDF ([#80](https://github.com/creatoan/scenet/issues/80)) to its plates with
 Ghostscript's `tiffsep` device, one per ink, and checks the black-plate rule in ink: lettering
 on K alone, an overprinting line leaving the colour under it, the paper and reversed captions
 knocking out, the night foreground rich black. `qpdf --check` reads every gallery PDF. Both
@@ -156,7 +156,7 @@ tests say which.
 ## Examples a reader can paste
 
 A reader copies an example into a fresh file and runs it, and it must work. The suite runs
-every example that way (#317), and fails on each way it could not:
+every example that way ([#317](https://github.com/creatoan/scenet/issues/317)), and fails on each way it could not:
 
 - **A missing import.** `--doctest-modules` runs a docstring's examples in a copy of its
   module's globals, where an example could call the function it documents without importing
@@ -252,7 +252,7 @@ replayed on the next run:
 
 - the solver's reading-order rule disabled, which a caption placed before a balloon
   caught;
-- the glyph scale written to two places again, the bug fixed in #99, which the SVG check
+- the glyph scale written to two places again, the bug fixed in [#99](https://github.com/creatoan/scenet/issues/99), which the SVG check
   caught at the first panel with lettering.
 
 ## What the properties found
@@ -262,14 +262,14 @@ that trips on it landed:
 
 | Found | Fixed in |
 |---|---|
-| A control character in a panel wrote an SVG no XML parser accepts | #101 |
-| A document nested a few hundred levels deep ended in `RecursionError` | #103 |
-| An inset in a narrow panel was drawn outside it | #104 |
-| `a left_of a` was filed under `invalid-field`, not `reflexive-relation` | #105 |
-| A misspelled required key was reported twice | #106 |
-| A broken `over:` was located at the whole `panels:` block | #107 |
-| A syntax error at the end of a file pointed past its last line; a block value at its first field | #108 |
-| An unknown speaker was located one step short of its `by:` | #109 |
+| A control character in a panel wrote an SVG no XML parser accepts | [#101](https://github.com/creatoan/scenet/issues/101) |
+| A document nested a few hundred levels deep ended in `RecursionError` | [#103](https://github.com/creatoan/scenet/issues/103) |
+| An inset in a narrow panel was drawn outside it | [#104](https://github.com/creatoan/scenet/issues/104) |
+| `a left_of a` was filed under `invalid-field`, not `reflexive-relation` | [#105](https://github.com/creatoan/scenet/issues/105) |
+| A misspelled required key was reported twice | [#106](https://github.com/creatoan/scenet/issues/106) |
+| A broken `over:` was located at the whole `panels:` block | [#107](https://github.com/creatoan/scenet/issues/107) |
+| A syntax error at the end of a file pointed past its last line; a block value at its first field | [#108](https://github.com/creatoan/scenet/issues/108) |
+| An unknown speaker was located one step short of its `by:` | [#109](https://github.com/creatoan/scenet/issues/109) |
 
 ## Mutation testing
 
@@ -396,7 +396,7 @@ below. Anything else is new, and is triaged the same way.
 | `_curve_hits` 6 | sampling starts at step 0 | Step 0 adds a zero-length segment at the start; the next segment begins there anyway. |
 | `_curve_hits` 2, 8; `_segment_hits_box` 2 | sample count 16 to 17, first sample skipped, 12 to 13 | Sampling resolution, below what the format can show: the chord between samples is within a fraction of a unit of the curve, and faces and boxes are tens of units across. |
 
-Off-panel speech and small type (#75) added 27 survivors. 16 are killed by `TestOffPanel`
+Off-panel speech and small type ([#75](https://github.com/creatoan/scenet/issues/75)) added 27 survivors. 16 are killed by `TestOffPanel`
 and `TestTheNearerSide` in `tests/test_balloons.py` and by `tests/test_off_panel.py`, and
 these 11 are accepted, numbered as in run `38642945474`:
 
@@ -489,7 +489,7 @@ order (`tests/test_off_panel.py`; run `39038963872`).
 | `_facing_for` 10 | `>` to `>=` | Only equal for an actor looking at itself, which the IR refuses as `reflexive-relation`. |
 | `solve_staging` 51 | extents measured with the root at `x = 1` | An extent is measured from the root wherever it stands; `TestAnExtentIsMeasuredFromTheRoot` holds that. |
 | `solve_staging` 61 | the expression left out when measuring extents | An expression moves the features inside the head, which the silhouette does not include. |
-**`solve/describe.py`** (#76) -- a fresh run,
+**`solve/describe.py`** ([#76](https://github.com/creatoan/scenet/issues/76)) -- a fresh run,
 [`39124930311`](https://github.com/creatoan/scenet/actions/runs/39124930311), tried 177
 mutants and left 2, `_figure` 26 and 27: an expression's underscores read as spaces, which no
 shipped expression has. `test_a_puppets_own_expression_is_read_with_its_underscores_as_spaces`
@@ -501,7 +501,7 @@ survived is what the gallery never produces: several pages side by side, a curve
 gaze that is not level, a limb thinner than its outline. A Core is a format people
 hand-edit, so the tests edit a compiled one to hold them.
 
-Accessible output (#76) changed `svg.py`, `strip.py`, `page.py` and `debug_svg.py`: `render`
+Accessible output ([#76](https://github.com/creatoan/scenet/issues/76)) changed `svg.py`, `strip.py`, `page.py` and `debug_svg.py`: `render`
 and `render_debug` became wrappers round `panel_body` and `debug_body`, which `placed_panel`
 places instead of cutting text, and every renderer took `aria`. A fresh run of `emit/*`,
 [`39124932431`](https://github.com/creatoan/scenet/actions/runs/39124932431), tried 1438
@@ -518,7 +518,7 @@ mutants as before, one renumbered, one new.
 | `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
 | `emit/svg.py` `_tail_shape` 47 (now `emit/geometry.py` `pointer`) | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
 
-Supplied pictures (#70) changed `solve/backdrop.py`, `solve/describe.py` and every emitter.
+Supplied pictures ([#70](https://github.com/creatoan/scenet/issues/70)) changed `solve/backdrop.py`, `solve/describe.py` and every emitter.
 Fresh runs from the stack's emitter branch:
 
 - `solve/describe.py`,
@@ -541,7 +541,7 @@ Each mutant killed was applied by hand to see its test fail.
 | `emit/svg.py` `image_href` 6 | `safe="/"` to `safe="XX/XX"` | `quote` never escapes a letter, so adding `X` to what it leaves alone changes nothing. |
 | `emit/svg.py` `image_href` 15 | `decode("ascii")` to `decode("ASCII")` | The same codec; Python's codec names are case-insensitive. |
 
-Figures a picture draws (#71) changed `solve/balloons.py` and `solve/sfx.py` -- the speaker
+Figures a picture draws ([#71](https://github.com/creatoan/scenet/issues/71)) changed `solve/balloons.py` and `solve/sfx.py` -- the speaker
 interface, bystanders, keep-outs, a tail to a cropped mouth -- added `solve/speakers.py` and
 `solve/figures.py`, and drew figures in the debug overlay. Fresh runs from the stack's top
 branch. The first batch never tried a mutant: two `@given` tests written as methods failed
@@ -574,19 +574,19 @@ in one process; every property test is a module function now, as the rest of the
       (`place_script` 67, 75, 76, 77);
     - the bottom-right corner candidate (`_candidate_positions` 62-65) and the fallback tail's
       start (`route_tail` 83). These two had been killed only by golden panels whose balloons sat
-      there before #71's speaker fix moved them.
+      there before [#71](https://github.com/creatoan/scenet/issues/71)'s speaker fix moved them.
   - **Removed:** `_within_frame` 15, 30, 36, 37, 40 and 43 checked whether a mouth was inside the
     frame first, and walked shapely's result by hand. A convex frame is crossed once by a line to
     a mouth beyond it and never by one to a mouth inside, so the function now only intersects, and
     reads the crossing with `shapely.get_coordinates`. Every golden is unchanged.
 - `solve/sfx.py`, [`39483560230`](https://github.com/creatoan/scenet/actions/runs/39483560230):
   489 mutants and 37 survivors. `solve/sfx.py` arrived after the baseline above and had not been
-  triaged. #71 changed `_cost` and `place_effects`, and their 21 survivors are triaged here:
+  triaged. [#71](https://github.com/creatoan/scenet/issues/71) changed `_cost` and `place_effects`, and their 21 survivors are triaged here:
   - **18 killed** in `tests/test_sfx.py`: `TestTheCostOfAPosition` pins each term of `_cost`
     exactly, on a footprint smaller than a mutant's area floor; `TestWhereAnEffectMayGo` holds
     `place_effects` to an inset elsewhere, a sliver of one, and a shaped panel.
   - **3 accepted**, below.
-  - The other 16, in `layout_effect` (9), `_ring` (6) and `_candidates` (1), are in code #71 did
+  - The other 16, in `layout_effect` (9), `_ring` (6) and `_candidates` (1), are in code [#71](https://github.com/creatoan/scenet/issues/71) did
     not change, and were triaged after it. `TestTheShapeOfAnEffect` and
     `TestWhereAnEffectIsLookedFor` in `tests/test_sfx.py` kill 9: the last pair of letters
     kerned as every other is (`layout_effect` 10), an arc of one degree bowing the same way as
@@ -617,7 +617,7 @@ Each mutant killed was applied by hand to see its test fail.
 | `solve/sfx.py` `_ring` 19 | `sin(-pi / 2 + a)` to `sin(-pi / 2 - a)` | Both are `-cos(a)`. |
 | `solve/sfx.py` `place_effects` 42 | `distance < radius` to `<=` | Differs only for a footprint exactly tangent to a face. Footprints are glyph outlines placed at candidate centres a ring step apart, which never land at a face's radius exactly; a balloon's own face test is strict for the same reason. |
 
-Right-to-left reading (#68) changed `solve/balloons.py`, `solve/page.py`, `solve/describe.py`,
+Right-to-left reading ([#68](https://github.com/creatoan/scenet/issues/68)) changed `solve/balloons.py`, `solve/page.py`, `solve/describe.py`,
 `emit/strip.py`, `emit/page.py` and `emit/debug_svg.py`. Fresh runs from the stack's top branch:
 
 - `solve/balloons.py`,
@@ -668,9 +668,9 @@ read the other way and can find no room where the original did. The property now
 reversed pages out without compiling a panel, since frames cannot depend on lettering, and passes
 300 examples.
 
-The exports for image models (#72) added `emit/conditioning.py`, `emit/pose.py`,
+The exports for image models ([#72](https://github.com/creatoan/scenet/issues/72)) added `emit/conditioning.py`, `emit/pose.py`,
 `emit/boxes.py`, `emit/semantics.py`, `emit/depth.py`, `emit/mask.py` and `emit/export.py`, moved
-the painter's order of `emit/svg.py` into `in_painters_order` (#221: masses past the tenth were
+the painter's order of `emit/svg.py` into `in_painters_order` ([#221](https://github.com/creatoan/scenet/issues/221): masses past the tenth were
 drawn out of order), and took `traits` out of `solve/describe.py`.
 
 A first triage ran before the stack's review: `emit/*`
@@ -716,7 +716,7 @@ Each mutant killed was applied by hand to see its test fail.
 The second job of every run, exploring with fresh seeds, passed every property, the new ones for
 the exports included, at 300 examples.
 
-The depth export's receding surfaces (#227) added `recedes` and a ramped `render_depth` to
+The depth export's receding surfaces ([#227](https://github.com/creatoan/scenet/issues/227)) added `recedes` and a ramped `render_depth` to
 `emit/depth.py`, and taught `flat_map` in `emit/conditioning.py` a `Ramp`. Both modules were run
 from the pull request's branch, each from nothing (the totals are every mutant of the module):
 
@@ -729,7 +729,7 @@ from the pull request's branch, each from nothing (the totals are every mutant o
   [`40952725859`](https://github.com/creatoan/scenet/actions/runs/40952725859): 188 mutants and 1
   survivor, `to_json` 5, accepted above under the same number.
 
-The colour policy (#244) changed `solve/backdrop.py` (the tinted ladder, `colour_for`, the
+The colour policy ([#244](https://github.com/creatoan/scenet/issues/244)) changed `solve/backdrop.py` (the tinted ladder, `colour_for`, the
 twins in `_atmosphere`, and `_luminance` refusing a colour), `solve/balloons.py` (the `warm`
 caption's colour), and in `emit/`, `svg.py`, `page.py`, `strip.py` and `semantics.py` (drawing the
 colour, `mono=`, and the semantics' `palette`). Fresh runs from the stack's top branch, each from
@@ -769,7 +769,7 @@ the mono Core on every example.
 |---|---|---|
 | `solve/backdrop.py` `_luminance` 2 | `.lower()` to `.upper()` on each channel | The channels are only compared with each other and read as hexadecimal, and both are case-insensitive. |
 
-The print PDF (#80) added four modules to `emit/`: `geometry.py` and `marks.py`, which the
+The print PDF ([#80](https://github.com/creatoan/scenet/issues/80)) added four modules to `emit/`: `geometry.py` and `marks.py`, which the
 SVG now draws from, and `pdf.py` and `pdf_images.py`. A run of all of `emit/`,
 [`41777653921`](https://github.com/creatoan/scenet/actions/runs/41777653921), reached the
 job's time limit with 748 of 4767 mutants untried, all in `geometry.py` and `marks.py`, so each
@@ -806,9 +806,9 @@ Accepted, by what makes them equivalent:
 | `pdf_images.py` `_paeth` 12 | `<=` to `<` between left and up | They tie only when they are equal, so which is returned cannot be told apart. |
 | `pdf_images.py` `_deinterlaced` 4, 11, 17, 21, 27 | the grid's fill, or a pass's empty test changed | Every cell is written by some pass, and a pass that starts past the edge counts 0 either way. |
 
-The print follow-ups (#280–#284) added `emit/pdf_fonts.py` and `emit/turbulence.py`, changed
+The print follow-ups ([#280](https://github.com/creatoan/scenet/issues/280)–[#284](https://github.com/creatoan/scenet/issues/284)) added `emit/pdf_fonts.py` and `emit/turbulence.py`, changed
 `emit/pdf.py` and `emit/geometry.py`, and made `solve/page.py` bleed. Each file was run on its own
-from the stack's top (#310):
+from the stack's top ([#310](https://github.com/creatoan/scenet/issues/310)):
 
 | File | Run | Mutants | Survivors | Killed since | Accepted |
 |---|---|---|---|---|---|

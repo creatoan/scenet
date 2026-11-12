@@ -4,7 +4,7 @@
 
 Python **3.12 or newer**. No system libraries, no fonts to install, no configuration.
 
-The 3.12 floor is not arbitrary — see [why 3.12](../explanation/design_decisions.md) if
+The 3.12 floor is not arbitrary — see [why 3.12](../explanation/design_decisions.md#the-floor-is-python-312-so-forward-references-are-quoted) if
 you are curious, but the short version is that a bug only reproducible on older Pythons
 made it worth testing against them.
 

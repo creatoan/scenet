@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Reminder: this project is pre-alpha and largely AI-generated. Rough edges are expected.
+        Reminder: this project is alpha and largely AI-generated. Rough edges are expected.
   - type: textarea
     id: what-happened
     attributes:
@@ -16,12 +16,23 @@ body:
   - type: textarea
     id: source
     attributes:
-      label: Panel source
-      description: The `.panel.yaml` that triggers it, as small as you can make it.
-      render: yaml
+      label: The document
+      description: >-
+        The `.panel.yaml`, `.scene.yaml` or comic script that triggers it, as small as you can
+        make it. If it names other files -- a font, a picture, an artwork contract, a puppet
+        file -- attach them here too, or say which shipped ones it uses.
+  - type: textarea
+    id: command
+    attributes:
+      label: What you ran
+      description: >-
+        The command (`scenet build story.scene.yaml --pdf`), the Python call, the playground,
+        the editor, or the MCP tool and its arguments.
+      render: text
   - type: input
     id: version
     attributes:
       label: Version or commit
+      description: What `scenet --version` prints, or the commit you built from.
     validations:
       required: true

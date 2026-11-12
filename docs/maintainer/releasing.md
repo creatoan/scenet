@@ -8,7 +8,15 @@ The tag is the single source of truth.
 
 ## Cutting a release
 
-Four commands.
+A release is a pull request, a tag and one click:
+
+1. Bump the version, and set it everywhere a test holds to it.
+2. Write the CHANGELOG section.
+3. Merge both through a pull request.
+4. Tag the merged commit on `main`, and push the tag.
+5. Approve the `pypi` deployment when the release run asks.
+
+The version first:
 
 ```bash
 uv version --bump minor
@@ -29,6 +37,11 @@ files agree with `pyproject.toml`.
 Set it too in [Build and check a comic in CI](../howto/build_in_ci.md), as the
 `scenet==` pin its workflow installs and the release it was last checked with: a test fails
 until both name the version in `pyproject.toml`.
+
+For a new minor version, set the supported row in
+[`SECURITY.md`](https://github.com/creatoan/scenet/blob/main/SECURITY.md) to it: `0.13.x` for
+0.13.0. Fixes go to the latest minor release, and a test fails until the policy names the
+one `pyproject.toml` does.
 
 Then write the changelog section. `CHANGELOG.md` follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); rename the `## [Unreleased]`

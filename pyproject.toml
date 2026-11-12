@@ -245,7 +245,7 @@ include = ["src", "tests"]
 [tool.ty.rules]
 possibly-unresolved-reference = "error"
 
-# ---------------------------------------------------------------- basedpyright (non-blocking)
+# ---------------------------------------------------------------- basedpyright (blocking, in CI's strict type check)
 [tool.basedpyright]
 include = ["src", "tests"]
 typeCheckingMode = "strict"

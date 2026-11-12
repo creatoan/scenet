@@ -37,11 +37,15 @@ artwork; the emitter never makes layout decisions.
 ## Commands
 
 ```bash
-uv sync                  # install; uv manages the Python version too
+uv sync --all-groups     # install; uv manages the Python version too
 uv run pytest
 uv run ruff format . && uv run ruff check --fix .
 uv run ty check
+uv run basedpyright
+uv run sphinx-build -W --keep-going -b html docs docs/_build/html
 ```
+
+`CONTRIBUTING.md` lists every gate CI runs, and what to regenerate when output moves.
 
 ## Design constraints worth knowing before changing the language
 

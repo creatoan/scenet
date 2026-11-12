@@ -5,26 +5,35 @@ orphan: true
 # Maintainer guide
 
 For anyone with commit rights, and for the future version of yourself who has forgotten
-how any of this works.
+how any of this works. What a pull request needs — the setup, the commands, what to
+regenerate and the house rules — is in
+[the contributor's guide](https://github.com/creatoan/scenet/blob/main/CONTRIBUTING.md);
+this guide says why, and what happens after.
 
 | | |
 |---|---|
 | [Releasing](releasing.md) | How to cut a release, and what happens when you do |
 | [Credentials](secrets.md) | Which secrets exist (almost none), and why |
-| [Testing](testing.md) | The property tests: profiles, replaying a failure, adding a strategy |
+| [Testing](testing.md) | The suite's layers: golden outputs, the reference as a contract, examples a reader can paste, properties, mutation testing |
 
 ## The gates
 
-Everything below runs in CI on every push and pull request. Run them locally first;
-they are fast.
+Everything below runs in CI on every push and pull request. Run them locally first.
 
 ```bash
 uv sync --all-groups
 uv run ruff format --check .
 uv run ruff check .
 uv run ty check
+uv run basedpyright
 uv run pytest
+uv run python scripts/check_gallery.py
 ```
+
+`basedpyright` is the second type checker, and it blocks as `ty` does: the
+[design decisions](../explanation/design_decisions.md#ty-and-basedpyright-both-gate-the-build)
+say why both. `check_gallery.py` is `scenet check` over the gallery, less the notes its
+examples give on purpose.
 
 `pytest` runs more than the unit tests. It also executes every example in every docstring
 and every fenced Python block in the Markdown documentation, so a documented example that
@@ -41,10 +50,39 @@ The documentation build is a separate gate:
 
 ```bash
 uv run sphinx-build -W --keep-going -b html docs docs/_build/html
+uv run python scripts/site_versions.py check docs/_build/html
 ```
 
 `-W` turns warnings into errors, so a broken cross-reference or a page missing from a
-table of contents fails rather than quietly producing a worse site.
+table of contents fails rather than quietly producing a worse site. `site_versions.py`
+then checks that every page says which version it documents, where the version
+switcher's data is, and its canonical address at the root.
+
+## The checks a pull request runs
+
+| Check | Required | What it runs |
+|---|---|---|
+| `Lint, types and tests (Python 3.12)` | Yes | The suite on the floor, without coverage |
+| `Lint, types and tests (Python 3.13)` | No | The suite, without coverage |
+| `Lint, types and tests (Python 3.14)` | Yes | Format, lint, `ty`, and the suite with its coverage gate |
+| `Tests on Windows` | No | The suite, where writing text can change line endings |
+| `Documentation` | Yes | The Sphinx build with `-W`, and `site_versions.py check` |
+| `Dependency licenses` | Yes | The runtime dependencies against `.github/allowed-licenses.txt` |
+| `Strict type check` | Yes | `basedpyright` |
+| `Gallery diagnostics` | No | `check_gallery.py`, uploaded to code scanning |
+| `Package` | No | The sdist and wheel, `twine check --strict`, the wheel smoke test |
+| `TypeScript` | Yes | The playground and the editor extension: typecheck, tests, build, `vsce package` |
+| `Editor end to end` | Yes | The extension in a real VS Code |
+| `Analyze (python)` | No | CodeQL, on the Python |
+| `Analyze (javascript-typescript)` | No | CodeQL, on the TypeScript |
+| `Analyze (actions)` | No | CodeQL, on the workflows |
+| `Dependency review` | Yes | A new dependency with a known high or critical vulnerability |
+
+The first eleven rows are `ci.yml`, the next three `codeql.yml`, and the last
+`dependency-review.yml`. A test holds this table to the workflows, so a new job fails it
+until it has a row. Which checks are required is the ruleset's, on GitHub, which no test
+can read. A check marked *No* still runs on every pull request, and a red one is fixed
+before merging all the same.
 
 ## How a change reaches main
 
@@ -66,7 +104,7 @@ The ruleset requires:
 | Rule | Why |
 |---|---|
 | Pull request required | Nothing reaches `main` without a diff somebody could have read |
-| Seven status checks green | Python 3.12 and 3.14, docs, licences, strict types, TypeScript, the editor end to end |
+| Eight status checks green | The checks marked *Required* above |
 | Branch up to date before merge | A green check against a stale base proves nothing |
 | Linear history | `main` stays bisectable; a regression can be found by halving |
 | No force push, no deletion | History is evidence |
