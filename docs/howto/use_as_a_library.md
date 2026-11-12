@@ -2,7 +2,8 @@
 
 The `scenet` command is a thin wrapper over the same functions you can call yourself.
 This page covers the public API: what is in it, what is not, and how to reach the parts
-the command line does not expose.
+the command line does not expose. To learn it step by step, with every example's output,
+follow [Learn Scenet from Python](../tutorial/python/index.md).
 
 ## The one function you probably want
 

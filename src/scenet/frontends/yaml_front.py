@@ -25,7 +25,7 @@ from scenet.compose import (
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
     LAYOUT_KEYS,
-    errors_of,
+    first_fault,
     normalise,
     normalise_layout,
     panel_name_problem,
@@ -94,7 +94,8 @@ def _validate_panel(
         # and where it is, and `build` reports both just as `check` does.
         raise PanelSyntaxError(str(exc), source=source, rule=exc.rule, loc=exc.loc) from exc
     except ValidationError as exc:
-        raise PanelSyntaxError(summarise(exc), source=source) from exc
+        rule, loc = first_fault(exc)
+        raise PanelSyntaxError(summarise(exc), source=source, rule=rule, loc=loc) from exc
 
 
 def parse_panel(text: str, *, source: Path | None = None) -> PanelIR:
@@ -310,13 +311,8 @@ def _validate_layout(data: dict[str, Any], source: Path | None) -> PageLayout:
     try:
         return PageLayout.model_validate(normalise_layout(data))
     except ValidationError as exc:
-        broken = [
-            original
-            for error in errors_of(exc)
-            if isinstance(original := (error.get("ctx") or {}).get("error"), RuleViolationError)
-        ]
-        rule = broken[0].rule if broken else None
-        raise PanelSyntaxError(summarise(exc), source=source, rule=rule) from exc
+        rule, loc = first_fault(exc)
+        raise PanelSyntaxError(summarise(exc), source=source, rule=rule, loc=loc) from exc
 
 
 def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, PanelIR]:
@@ -366,7 +362,13 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
         try:
             result[name] = _validate_panel(merged, None, beneath=beneath)
         except PanelSyntaxError as exc:
-            raise PanelSyntaxError(f"in panel '{name}': {exc}", source=source) from exc
+            # Located from the top of the document, as every other fault in a scene is.
+            raise PanelSyntaxError(
+                f"in panel '{name}': {exc}",
+                source=source,
+                rule=exc.rule,
+                loc=("panels", name, *exc.loc),
+            ) from exc
     return result
 
 

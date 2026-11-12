@@ -26,6 +26,10 @@ and run `npm install --package-lock-only` in `editor/` to carry it into the lock
 extension shipped with a release is versioned as that release, and a test fails until both
 files agree with `pyproject.toml`.
 
+Set it too in [Build and check a comic in CI](../howto/build_in_ci.md), as the
+`scenet==` pin its workflow installs and the release it was last checked with: a test fails
+until both name the version in `pyproject.toml`.
+
 Then write the changelog section. `CHANGELOG.md` follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); rename the `## [Unreleased]`
 heading to `## [0.2.0] - 2026-08-23` and start a fresh `Unreleased` above it.

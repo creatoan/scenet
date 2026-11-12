@@ -1,5 +1,11 @@
 # Tutorial
 
+Two tracks. **The author's tour** teaches the language, for whoever writes the panels.
+**[Learn Scenet from Python](python/index.md)** teaches the library, for whoever calls Scenet
+from a program of their own.
+
+## The author's tour
+
 The author's tour: twelve chapters that take you from a first panel to a printed comic,
 one part of the language at a time. Work through them in order. A reader who finishes can
 write any example in the [gallery](../gallery.md), and the chapters follow the gallery's
@@ -32,4 +38,16 @@ comic_scripts
 your_own_art
 right_to_left
 what_scenet_tells_you
+```
+
+## Learn Scenet from Python
+
+Five chapters, from `pip install scenet` to Scenet inside your own program: compiling and
+rendering, reading what the compiler decided, errors and notes, bringing your own
+characters, fonts and pictures, and batches, golden files, CI and the MCP server.
+
+```{toctree}
+:maxdepth: 2
+
+python/index
 ```

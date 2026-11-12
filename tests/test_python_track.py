@@ -10,7 +10,8 @@ scenet` to Scenet inside a program of the reader's own. So:
   it uses, runs alone in a folder holding what the page made so far, and is followed by a
   `text` block holding exactly what it prints (`tests/python_examples.py` runs them so,
   through Sybil);
-- **what a chapter says a command prints is what it prints**, as in the author's tour;
+- **every `scenet` line a chapter shows is run**, and what it is shown printing, if anything,
+  is what it prints, as in the author's tour;
 - **the track calls every public `compile_*` and `render_*` function**, and links each one's
   page in the Python reference;
 - **every link into the Python reference resolves**, and every chapter has some.
@@ -32,7 +33,8 @@ from tests.python_examples import (
     run_python,
     scripts,
 )
-from tests.shell_examples import Transcript, run_transcript, transcripts
+from tests.shell_examples import commands, run_transcript, transcripts
+from tests.test_doc_examples import _root_conftest
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -163,17 +165,26 @@ class TestTheTrackCoversEveryEntryPoint:
 
 
 class TestWhatAChapterSaysAppears:
-    @pytest.mark.parametrize(
-        "transcript", transcripts(CHAPTERS), ids=[found.where for found in transcripts(CHAPTERS)]
-    )
-    def test_it_is_what_the_commands_print(self, transcript: Transcript):
-        assert run_transcript(transcript) == transcript.output
+    @pytest.mark.parametrize("chapter", CHAPTERS, ids=IDS)
+    def test_what_it_says_a_command_prints_is_what_it_prints(self, chapter: Path):
+        """As in the author's tour: a `text` block right after a `bash` block is its output."""
+        for transcript in transcripts([chapter]):
+            assert run_transcript(transcript) == transcript.output, transcript.where
+
+    def test_every_chapter_that_runs_a_command_checks_it(self):
+        """A `scenet` line is run for its status, under `tests/shell_examples.py`."""
+        ran = [
+            chapter
+            for chapter in CHAPTERS
+            for fence in fences(chapter)
+            if fence.language == "bash" and commands(fence.text)
+        ]
+        assert ran
 
     def test_the_suite_runs_the_tracks_python_as_scripts(self):
         """Through Sybil, each block of the track is run and its output compared."""
-        import conftest  # noqa: PLC0415 -- the root conftest, as pytest loaded it
-
-        (sybils,) = [cell.cell_contents for cell in conftest.pytest_collect_file.__closure__]
+        collect = _root_conftest().pytest_collect_file
+        (sybils,) = [cell.cell_contents for cell in collect.__closure__]
         (sybil,) = sybils
         assert any(isinstance(parser, TrackPythonCodeBlockParser) for parser in sybil.parsers)
         assert all(in_the_track(chapter) for chapter in CHAPTERS)

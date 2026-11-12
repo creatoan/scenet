@@ -12,6 +12,22 @@ below 1.0 means.
 
 ### Added
 
+- **Learn Scenet from Python** (#322): the developer's track, five chapters under
+  `docs/tutorial/python/`, from `pip install scenet` to Scenet inside a program of your own.
+  *Compile and render* calls every `compile_*` entry point and every renderer, writes files,
+  and hands fonts and pictures back with `fonts=` and `embed=`; *Read what it decided* reads
+  a Panel Core as objects and as JSON, edits one and draws it again, and shows determinism;
+  *Errors and notes* walks the `ScenetError` tree, a fault's rule and place, and notes
+  matched by their codes; *Bring your own* adds a puppet library, a font as `metrics=`, a
+  document's files as `base=`, and a picture; *Outputs, batch and CI* builds a folder,
+  keeps golden files, runs `scenet check`, writes SARIF from Python, and calls the MCP tools
+  and server in process. Every example is a complete script followed by what it prints:
+  the test suite runs each one alone, in a folder holding the documents its chapter saved,
+  and compares its output with the page. `tests/test_python_track.py` holds every chapter
+  to its parts, its examples to their output, and the track to every public `compile_*` and
+  `render_*` function, each called and linked to its reference page. The Tutorial page now
+  leads to both tracks.
+
 - **The author's tour** (#321): twelve chapters under `docs/tutorial/`, from a first panel to
   a printed page, comic scripts, art and puppets of your own, right to left, and what Scenet
   tells you. Each shows what you will make, as a gallery picture, beside its complete
@@ -334,6 +350,16 @@ below 1.0 means.
   error, or a note nobody declared, is still uploaded and still fails the job.
 
 ### Fixed
+
+- **A YAML document's `PanelSyntaxError` carries its rule and place** (#322). A fault
+  validation found reached a caller with `rule=None` and `loc=()`, only the message saying
+  what and where, though a comic script's error already carried both. Now `rule` and `loc`
+  are those of the first fault, as `scenet check` orders them; a fault in a panel of a scene
+  keeps its rule, and its `loc` starts at `panels` and the panel's name, as every other
+  fault in a scene's does.
+- **Build and check a comic in CI installs the current release.** Its workflow pinned
+  `scenet==0.10.0`; it pins 0.12.0, and a test holds the pin, and the release the page says
+  it was checked with, to the version in `pyproject.toml`.
 
 - **The language reference states what the compiler does** (#319). `panel.size` was called
   required; it is `[1000, 1000]` when left out. The caption key table left out the `warm` tone.

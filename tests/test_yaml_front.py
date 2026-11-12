@@ -199,6 +199,56 @@ staging:
 """)
 
 
+class TestAFaultCarriesItsRuleAndPlace:
+    """`rule` and `loc` as data, as the comic-script frontend gives them, not prose alone.
+
+    A program matches an error by its rule and points at its value; until #322 a fault
+    pydantic found reached a YAML document's caller with `rule=None` and `loc=()`.
+    """
+
+    def test_an_unknown_speaker(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel("cast: {a: {reference: alice}}\nscript: [{say: {by: b, text: Hi.}}]")
+        assert (caught.value.rule, caught.value.loc) == (
+            "unknown-actor",
+            ("script", 0, "say", "by"),
+        )
+
+    def test_a_value_pydantic_refuses(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel("cast: {a: {reference: alice, at: nowhere}}")
+        assert (caught.value.rule, caught.value.loc) == ("invalid-field", ("cast", "a", "at"))
+
+    def test_a_model_level_check(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel("panel: {size: [0, 100]}")
+        assert (caught.value.rule, caught.value.loc) == ("panel-geometry", ("panel",))
+
+    def test_the_first_of_several_faults(self):
+        """The message lists every fault; the attributes are the first, as `check` orders them."""
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel("cast: {a: {reference: alice, at: nowhere}}\ncamera: {shot: very_wide}")
+        assert caught.value.loc in {("cast", "a", "at"), ("camera", "shot")}
+        assert caught.value.rule == "invalid-field"
+        assert "cast.a.at" in str(caught.value)
+        assert "camera.shot" in str(caught.value)
+
+    def test_a_panel_of_a_scene_is_located_within_it(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene("panels:\n  one: {cast: {a: {reference: alice, at: nowhere}}}\n")
+        assert caught.value.rule == "invalid-field"
+        assert caught.value.loc == ("panels", "one", "cast", "a", "at")
+
+    def test_a_page_layout(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene(
+                "panels: {one: {cast: {a: {reference: alice}}}}\n"
+                "pages: [{tiers: [{height: -1, panels: [one]}]}]\n"
+            )
+        assert caught.value.rule is not None
+        assert caught.value.loc[:1] == ("pages",)
+
+
 class TestExample:
     def test_shipped_example_parses(self):
         panel = load_panel(DUEL)

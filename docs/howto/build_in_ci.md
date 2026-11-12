@@ -30,7 +30,7 @@ jobs:
 
       - name: Install Scenet
         id: install
-        run: python -m pip install "scenet==0.10.0"
+        run: python -m pip install "scenet==0.12.0"
 
       - name: Check source
         id: check
@@ -146,7 +146,8 @@ Run `scenet check --format sarif -o scenet.sarif comics/issue-01.scene.yaml`, th
 open `scenet.sarif` with Microsoft's [SARIF Viewer for VS Code](https://github.com/microsoft/sarif-vscode-extension).
 
 Pin the package version in CI: releases below `1.0.0` may make breaking changes in a
-minor release. Update the pin deliberately when upgrading.
+minor release. Update the pin deliberately when upgrading. To check documents from a Python
+pipeline of your own, see [Outputs, batch and CI](../tutorial/python/outputs_batch_and_ci.md).
 
-*Last checked with Scenet 0.10.0. The documentation test suite runs Python and bash examples,
+*Last checked with Scenet 0.12.0. The documentation test suite runs Python and bash examples,
 but does not execute this GitHub Actions workflow.*

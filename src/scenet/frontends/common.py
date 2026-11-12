@@ -444,6 +444,29 @@ def rule_for_pydantic(error: ErrorDetails) -> tuple[str, tuple[str | int, ...]]:
     return PYDANTIC_RULES.get(str(error["type"]), "invalid-field"), tuple(error["loc"])
 
 
+def first_fault(exc: ValidationError) -> tuple[str | None, tuple[str | int, ...]]:
+    """The rule and place of the first fault pydantic found, as `scenet check` orders them.
+
+    A :exc:`PanelSyntaxError <scenet.errors.PanelSyntaxError>` lists every fault in its
+    message, and carries one as data: this one, so a caller can match it by rule and point
+    at its value, as a comic script's error already could.
+
+    Example:
+        >>> from pydantic import ValidationError
+        >>> from scenet import PanelIR
+        >>> from scenet.frontends.common import first_fault
+        >>> try:
+        ...     PanelIR.model_validate({"cast": {"a": {"reference": "alice", "at": "x"}}})
+        ... except ValidationError as exc:
+        ...     print(first_fault(exc))
+        ('invalid-field', ('cast', 'a', 'at'))
+    """
+    errors = errors_of(exc)
+    if not errors:  # pragma: no cover -- pydantic raises with at least one error
+        return None, ()
+    return rule_for_pydantic(errors[0])
+
+
 def summarise(exc: ValidationError, *, what: str = "panel") -> str:
     """Flatten pydantic's error list into something a human can act on.
 

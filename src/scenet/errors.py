@@ -410,8 +410,10 @@ class PanelSyntaxError(SourceError):
             performs itself -- a place that does not exist, a setting that names one and
             lists masses too -- knows exactly what it found, and saying so is the whole
             point of having a rule catalogue.
-        loc: Path to the offending value, relative to the panel, in pydantic's `loc`
-            form. Empty means the panel as a whole.
+        loc: Path to the offending value, from the top of the document, in pydantic's
+            `loc` form: in a scene, it starts with `panels` and the panel's name. Empty
+            means the document as a whole. When validation found several faults, the
+            message lists each, and `rule` and `loc` are the first's.
 
     Example:
         >>> from scenet import PanelSyntaxError, compile_source
