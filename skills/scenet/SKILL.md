@@ -82,15 +82,22 @@ If `scenet` is not installed: `pip install scenet`, or run it once with
 ## A minimal panel
 
 ```yaml
-panel: {size: [800, 600]}
-camera: {shot: medium_shot}
+panel:
+  size: [1000, 800]
+
+camera:
+  shot: medium_shot
+
 cast:
-  alice: {reference: alice, pose: pointing, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
+  alice: {reference: alice, pose: pointing,     at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
 staging:
   - alice left_of bob
   - alice looking_at bob
+  - alice ground_shared_with bob
+
 script:
-  - say: {by: alice, text: "You forgot your umbrella!"}
+  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
   - say: {by: bob,   text: "I know."}
 ```

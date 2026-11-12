@@ -14,18 +14,18 @@ pictures with whatever you already use for SVG.
 ## Build them
 
 ```bash
-scenet build duel.panel.yaml --conditioning
+scenet build examples/gallery/01-two-characters.panel.yaml --conditioning
 ```
 
-Five files land beside `duel.svg`:
+Five files land beside `01-two-characters.svg`:
 
 | File | What it is | Read by |
 |---|---|---|
-| `duel.pose.json` | Each actor's skeleton, [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md) COCO-18 | ControlNet's OpenPose tooling: ComfyUI's `POSE_KEYPOINT`, the WebUI pose editor |
-| `duel.boxes.json` | A phrase and a box per figure | GLIGEN, and box-conditioned models after it |
-| `duel.depth.svg` | Grey planes in painter's order, white near, black far; floors recede | ControlNet depth, once rasterised |
-| `duel.mask.svg` | Each figure and backdrop mass in its own flat colour | Regional prompting, inpainting per figure |
-| `duel.semantics.json` | Camera, setting, cast and lettering, as structure | Whatever writes your prompt |
+| `01-two-characters.pose.json` | Each actor's skeleton, [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md) COCO-18 | ControlNet's OpenPose tooling: ComfyUI's `POSE_KEYPOINT`, the WebUI pose editor |
+| `01-two-characters.boxes.json` | A phrase and a box per figure | GLIGEN, and box-conditioned models after it |
+| `01-two-characters.depth.svg` | Grey planes in painter's order, white near, black far; floors recede | ControlNet depth, once rasterised |
+| `01-two-characters.mask.svg` | Each figure and backdrop mass in its own flat colour | Regional prompting, inpainting per figure |
+| `01-two-characters.semantics.json` | Camera, setting, cast and lettering, as structure | Whatever writes your prompt |
 
 A scene or a comic script gets one set per panel, named after each panel's SVG. From Python:
 

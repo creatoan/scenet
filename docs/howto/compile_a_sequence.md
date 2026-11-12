@@ -216,7 +216,7 @@ alone, panels would not be reusable and golden-file tests would mean nothing.
 ## Rendering the whole thing
 
 ```bash
-scenet build sequence.scene.yaml --strip
+scenet build examples/gallery/12-sequence.scene.yaml --strip
 ```
 
 `--strip` writes one extra file laying every panel out side by side in reading order, on

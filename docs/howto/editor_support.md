@@ -96,7 +96,7 @@ extension, so you can see them in VS Code without the Scenet extension, or open 
 CI wrote:
 
 ```bash
-scenet check --format sarif -o scenet.sarif examples/duel.panel.yaml
+scenet check --format sarif -o scenet.sarif examples/gallery/01-two-characters.panel.yaml
 ```
 
 Then open `scenet.sarif` in VS Code. The viewer opens its results panel, underlines each

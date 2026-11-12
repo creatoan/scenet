@@ -249,7 +249,7 @@ class TestOldDocuments:
 
 class TestTheGallery:
     def test_every_puppet_panel_records_its_camera_and_joints(self):
-        result = compile_file(ROOT / "examples" / "duel.panel.yaml")
+        result = compile_file(ROOT / "examples" / "gallery" / "01-two-characters.panel.yaml")
         assert result.core.camera is not None
         assert all(actor.joints for actor in result.core.actors)
 

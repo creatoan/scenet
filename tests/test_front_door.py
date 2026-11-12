@@ -491,7 +491,7 @@ def test_said_once(statement: str, home: str):
 #: Pages a reader reads to learn or decide; the contributor's pages keep their history.
 _HISTORY = {DOCS / "maintainer"}
 #: `#71`, but not a colour, `#111111`.
-_ISSUE = re.compile(r"(?<![\w/&\[])#\d+(?!\w)|\[#\d+\]")
+_ISSUE = re.compile(r"(?<![\w/&\[])#\d{1,4}(?!\w)|\[#\d+\]")
 
 
 def _reader_pages() -> list[Path]:

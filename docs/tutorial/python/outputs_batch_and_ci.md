@@ -17,14 +17,24 @@ Save these three documents in a folder `comics/`. The third has a mistake on pur
 ```{code-block} yaml
 :caption: comics/corner.panel.yaml
 
-panel: {size: [800, 500]}
+panel:
+  size: [1000, 800]
+
+camera:
+  shot: medium_shot
+
 cast:
-  alice: {reference: alice, at: left_third}
-  bob: {reference: bob, at: right_third, facing: left}
-staging: [alice left_of bob]
+  alice: {reference: alice, pose: pointing,     at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
+staging:
+  - alice left_of bob
+  - alice looking_at bob
+  - alice ground_shared_with bob
+
 script:
-  - say: {by: alice, text: "You forgot your umbrella!"}
-  - say: {by: bob, text: "I know."}
+  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
+  - say: {by: bob,   text: "I know."}
 ```
 
 ```{code-block} yaml

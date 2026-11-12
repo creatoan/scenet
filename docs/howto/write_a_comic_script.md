@@ -5,7 +5,9 @@ asking someone to abandon it in order to try a compiler is a poor trade.
 
 So Scenet reads it.
 
-```scenet-script
+```{code-block} scenet-script
+:caption: umbrella.script
+
 ---
 cast:
   ALICE: {reference: alice, at: left_third}
@@ -465,7 +467,7 @@ puppet she uses, or where she stands. That comes from a YAML preamble between `-
 fences:
 
 ```{code-block} scenet-script
-:caption: Part of examples/umbrella.script
+:caption: Part of examples/gallery/13-comic-script.script
 
 ---
 panel:

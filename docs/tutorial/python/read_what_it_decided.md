@@ -12,22 +12,30 @@ where a speaker's mouth is, where each balloon sits and how its text was broken.
 the Core to a file, moves a balloon in the file, reads it back and draws it, and then
 shows that compiling the same document twice gives the same bytes.
 
-Save this panel as `talk.panel.yaml`, beside the scripts:
+Save the umbrella panel, the [gallery's first example](../../gallery.md#two-characters), as
+`talk.panel.yaml`, beside the scripts:
 
 ```{code-block} yaml
 :caption: talk.panel.yaml
 
-panel: {size: [900, 600]}
-camera: {shot: medium_shot}
+panel:
+  size: [1000, 800]
+
+camera:
+  shot: medium_shot
+
 cast:
-  alice: {reference: alice, at: left_third, pose: pointing}
-  bob: {reference: bob, at: right_third, facing: left}
+  alice: {reference: alice, pose: pointing,     at: left_third}
+  bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
+
 staging:
   - alice left_of bob
   - alice looking_at bob
+  - alice ground_shared_with bob
+
 script:
-  - say: {by: alice, text: "You forgot your umbrella!"}
-  - say: {by: bob, text: "I know."}
+  - say: {by: alice, text: "You forgot your umbrella!", prefer: top_left}
+  - say: {by: bob,   text: "I know."}
 ```
 
 ## The Core, as objects
@@ -55,11 +63,11 @@ for balloon in core.balloons:
 ```
 
 ```text
-900.0 600.0 medium_shot scale 1.64
-alice pointing at 117.73 depth 0
-mouth (117.73, 182.73)
-b0 alice ('You forgot', 'your umbrella!') x=239.69 y=21.93 width=152.42 height=75.6
-b1 bob ('I know.',) x=722.7 y=188.94 width=85.45 height=49.35
+1000.0 800.0 medium_shot scale 1.94
+alice pointing at 96.87 depth 0
+mouth (96.87, 225.31)
+b0 alice ('You forgot', 'your umbrella!') x=243.39 y=229.25 width=203.22 height=100.8
+b1 bob ('I know.',) x=496.66 y=170.22 width=113.93 height=65.8
 ```
 
 Every length is in panel units, from the top left corner, `y` downwards. `lines` is the
@@ -129,7 +137,7 @@ print(render(edited) == render(core))
 ```
 
 ```text
-21.93 -> 81.93
+229.25 -> 289.25
 False
 ```
 
@@ -148,7 +156,7 @@ print(bob.font_size, "->", edited.balloons[1].font_size)
 ```
 
 ```text
-21.0 -> 26.25
+28.0 -> 35.0
 ```
 
 Nothing checks an edit against the rules the compiler keeps: a balloon moved over a face

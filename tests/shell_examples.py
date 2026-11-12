@@ -140,16 +140,12 @@ def _run(argv: list[str], cwd: Path, expected: int = 0) -> None:
 def workspace(cwd: Path, page: Path, line: int) -> None:
     """Fill `cwd` with what a command on line `line` of `page` may name.
 
-    - `examples/`, and each document beside it: the reference names
-      `examples/duel.panel.yaml`, and a how-to, written as if from the folder holding the
-      reader's documents, names `duel.panel.yaml`. Both work.
+    - `examples/`, as in a checkout: the reference names
+      `examples/gallery/01-two-characters.panel.yaml`.
     - The gallery's folders of pictures, fonts and puppets, which its documents name.
     - Every file the page has shown so far, by the file name its block's caption gives.
     """
     shutil.copytree(ROOT / "examples", cwd / "examples")
-    for document in (ROOT / "examples").iterdir():
-        if document.is_file():
-            shutil.copy(document, cwd / document.name)
     gallery = ROOT / "examples" / "gallery"
     for folder in sorted(gallery.iterdir()):
         if folder.is_dir():

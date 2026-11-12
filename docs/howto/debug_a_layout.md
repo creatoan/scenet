@@ -57,10 +57,10 @@ Scenet tells you*.
 ## 2. Look at the debug overlay
 
 ```bash
-scenet build duel.panel.yaml --debug
+scenet build examples/gallery/01-two-characters.panel.yaml --debug
 ```
 
-That writes `duel.debug.svg`, drawing what the solver was actually working against:
+That writes `01-two-characters.debug.svg`, drawing what the solver was actually working against:
 
 | Overlay | What it shows |
 |---|---|
@@ -94,10 +94,10 @@ assert overlay.lstrip().startswith("<?xml")
 ## 3. Read the Panel Core
 
 ```bash
-scenet build duel.panel.yaml --core
+scenet build examples/gallery/01-two-characters.panel.yaml --core
 ```
 
-`duel.core.json` is every decision the compiler made, in a format you can read and diff.
+`01-two-characters.core.json` is every decision the compiler made, in a format you can read and diff.
 When a layout changes unexpectedly between two versions of your source, diffing two Core
 documents tells you exactly what moved. Diffing two SVGs does not — a reordered attribute
 or a different path-rounding produces an enormous diff that means nothing.

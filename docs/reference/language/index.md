@@ -51,11 +51,10 @@ anything else, exactly as transposing a score changes its key without rewriting 
 
 ```yaml
 panel:
-  size: [1000, 1000]
+  size: [1000, 800]
 
 camera:
   shot: medium_shot
-  angle: eye_level
 
 setting:
   place: docks
@@ -63,7 +62,7 @@ setting:
   weather: rain
 
 cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
 
 staging:

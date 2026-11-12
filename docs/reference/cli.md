@@ -194,31 +194,31 @@ cannot be compiled" rather than "scenet broke". They print as one line. A traceb
 ### Examples
 
 ```bash
-scenet build examples/duel.panel.yaml
+scenet build examples/gallery/01-two-characters.panel.yaml
 ```
 
 ```bash
-scenet build examples/duel.panel.yaml --core --debug
+scenet build examples/gallery/01-two-characters.panel.yaml --core --debug
 ```
 
 ```bash
-scenet build examples/sequence.scene.yaml --strip
+scenet build examples/gallery/12-sequence.scene.yaml --strip
 ```
 
 ```bash
-scenet build examples/umbrella.script --strip -o out/umbrella.svg
+scenet build examples/gallery/13-comic-script.script --strip -o out/umbrella.svg
 ```
 
 Also export each panel's staging for image models, beside its SVG:
 
 ```bash
-scenet build examples/duel.panel.yaml --conditioning
+scenet build examples/gallery/01-two-characters.panel.yaml --conditioning
 ```
 
 Letter in selectable text rather than outlines:
 
 ```bash
-scenet build examples/duel.panel.yaml --live-text
+scenet build examples/gallery/01-two-characters.panel.yaml --live-text
 ```
 
 A black-and-white edition of a tinted document, without editing it:
@@ -230,7 +230,7 @@ scenet build examples/gallery/40-tinted-hours.scene.yaml --mono
 Without the accessibility markup, for a pipeline that post-processes the SVG:
 
 ```bash
-scenet build examples/duel.panel.yaml --no-aria
+scenet build examples/gallery/01-two-characters.panel.yaml --no-aria
 ```
 
 A supplied picture written into the SVG, so the file stands alone:
@@ -242,19 +242,19 @@ scenet build examples/gallery/52-a-jpeg.panel.yaml --embed-images -o out/jpeg.sv
 The print PDF, beside the SVGs:
 
 ```bash
-scenet build examples/sequence.scene.yaml --pdf
+scenet build examples/gallery/12-sequence.scene.yaml --pdf
 ```
 
 In a script, with nothing printed on success:
 
 ```bash
-scenet build examples/duel.panel.yaml --quiet
+scenet build examples/gallery/01-two-characters.panel.yaml --quiet
 ```
 
 Rebuilt on every save, until Ctrl-C:
 
 ```bash
-scenet build examples/duel.panel.yaml --watch
+scenet build examples/gallery/01-two-characters.panel.yaml --watch
 ```
 
 ## `scenet check`
@@ -431,7 +431,7 @@ and its absolute path give one fingerprint.
 ### Examples
 
 ```bash
-scenet check examples/duel.panel.yaml
+scenet check examples/gallery/01-two-characters.panel.yaml
 ```
 
 ```bash
@@ -439,7 +439,7 @@ scenet check examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml
 ```
 
 ```bash
-scenet check --format sarif examples/duel.panel.yaml > results.sarif
+scenet check --format sarif examples/gallery/01-two-characters.panel.yaml > results.sarif
 ```
 
 ```bash
@@ -449,7 +449,7 @@ scenet check --deep examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml
 The findings in a file, one per line, and only the exit status on the terminal:
 
 ```bash
-scenet check --quiet -o report.txt examples/duel.panel.yaml
+scenet check --quiet -o report.txt examples/gallery/01-two-characters.panel.yaml
 ```
 
 Uploading to GitHub code scanning, which is how findings become annotations on a pull

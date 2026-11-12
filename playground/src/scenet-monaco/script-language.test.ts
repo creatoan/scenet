@@ -84,7 +84,7 @@ function spans(...lines: string[]): string[][] {
 
 describe("scriptMonarchTokens", () => {
   test("the gallery's comic script tokenizes", () => {
-    const script = readFileSync(new URL("../../../examples/umbrella.script", import.meta.url), "utf8");
+    const script = readFileSync(new URL("../../../examples/gallery/13-comic-script.script", import.meta.url), "utf8");
     assert.doesNotThrow(() => tokenizeScript(script));
   });
 

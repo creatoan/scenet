@@ -73,8 +73,8 @@ this:
 ```{code-block} yaml
 :caption: hello.panel.yaml
 
-# The panel from the README. Two actors, an ordering constraint, a gaze, a shared
-# ground line, and two lines of dialogue.
+# The umbrella panel, the example every page of the documentation starts from. Two
+# actors, an ordering constraint, a gaze, a shared ground line, and two lines of dialogue.
 
 panel:
   size: [1000, 800]

@@ -95,7 +95,7 @@ panels:
 
 ### Two characters
 
-The panel from the README: two actors, who stands where, who looks at whom, and two lines of dialogue.
+The umbrella panel, which every page starts from: two actors, who stands where, who looks at whom, and two lines of dialogue.
 
 ![Medium shot. Alice, left, pointing, looking at Bob; Bob, right, arms crossed. Alice: You forgot your umbrella! Bob: I know.](images/gallery/01-two-characters.svg)
 
@@ -105,8 +105,8 @@ The panel from the README: two actors, who stands where, who looks at whom, and 
 <summary>Source</summary>
 
 ```yaml
-# The panel from the README. Two actors, an ordering constraint, a gaze, a shared
-# ground line, and two lines of dialogue.
+# The umbrella panel, the example every page of the documentation starts from. Two
+# actors, an ordering constraint, a gaze, a shared ground line, and two lines of dialogue.
 
 panel:
   size: [1000, 800]
@@ -142,7 +142,8 @@ The language reference's complete example: a frame, a camera, a setting, a cast,
 <summary>Source</summary>
 
 ```yaml
-# A complete panel: every layer of the language at once.
+# A complete panel: every layer of the language at once. It is the umbrella panel, the
+# gallery's first example, given a setting.
 #
 # This is the complete example in docs/reference/language/index.md, and a test keeps the two
 # identical, so the reference shows what it compiles to. Each block is one layer:
@@ -156,11 +157,10 @@ The language reference's complete example: a frame, a camera, a setting, a cast,
 # Change one layer and the others stay as they are: try `shot: close_up`, or `time: day`.
 
 panel:
-  size: [1000, 1000]
+  size: [1000, 800]
 
 camera:
   shot: medium_shot
-  angle: eye_level
 
 setting:
   place: docks
@@ -168,7 +168,7 @@ setting:
   weather: rain
 
 cast:
-  alice: {reference: alice, pose: pointing,     at: left_third,  facing: right}
+  alice: {reference: alice, pose: pointing,     at: left_third}
   bob:   {reference: bob,   pose: arms_crossed, at: right_third, facing: left}
 
 staging:

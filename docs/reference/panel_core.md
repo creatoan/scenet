@@ -292,7 +292,7 @@ written before palettes reads, and is written, byte for byte as before — no `f
 
 What the solver used and once threw away is recorded too, so that an
 [export for image models](../howto/export_for_image_models.md), reading only this tier, can say
-how the panel is staged. From `examples/duel.panel.yaml`, and a backdrop
+how the panel is staged. From `examples/gallery/01-two-characters.panel.yaml`, and a backdrop
 set in a street at night:
 
 ```json

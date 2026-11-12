@@ -128,11 +128,11 @@ panels:
 """)
 
     def test_shipped_sequence_example_parses(self):
-        scene = load_scene(EXAMPLES / "sequence.scene.yaml")
+        scene = load_scene(EXAMPLES / "gallery" / "12-sequence.scene.yaml")
         assert list(scene) == ["establishing", "reaction", "closer"]
-        # Only Alice's pose was overridden in the last panel; Bob is untouched.
-        assert scene["closer"].cast["alice"].pose == "pointing"
-        assert scene["closer"].cast["bob"].pose == scene["establishing"].cast["bob"].pose
+        # Only Bob's pose was overridden in the last panel; Alice is untouched.
+        assert scene["closer"].cast["bob"].pose == "hands_on_hips"
+        assert scene["closer"].cast["alice"].pose == scene["establishing"].cast["alice"].pose
 
 
 class TestComicScript:
@@ -304,7 +304,7 @@ PANEL 2
         assert (caught.value.line, caught.value.rule) == (9, "invalid-field")
 
     def test_shipped_script_example_parses(self):
-        panels = load_script(EXAMPLES / "umbrella.script")
+        panels = load_script(EXAMPLES / "gallery" / "13-comic-script.script")
         assert list(panels) == ["1", "2"]
         assert [event.kind for event in panels["2"].script if isinstance(event, SayEvent)] == [
             BalloonKind.WHISPER,
@@ -421,9 +421,9 @@ class TestNothingTypedIsLost:
 class TestFrontendDispatch:
     def test_extension_selects_the_frontend(self):
         """Every frontend produces the same IR, so adding a syntax is one line."""
-        assert len(compile_document(EXAMPLES / "umbrella.script")) == 2
-        assert len(compile_document(EXAMPLES / "sequence.scene.yaml")) == 3
-        assert len(compile_document(EXAMPLES / "duel.panel.yaml")) == 1
+        assert len(compile_document(EXAMPLES / "gallery" / "13-comic-script.script")) == 2
+        assert len(compile_document(EXAMPLES / "gallery" / "12-sequence.scene.yaml")) == 3
+        assert len(compile_document(EXAMPLES / "gallery" / "01-two-characters.panel.yaml")) == 1
 
     def test_an_unsupported_extension_is_rejected(self, tmp_path: Path):
         stray = tmp_path / "panel.txt"

@@ -110,7 +110,7 @@ written yet; what they embed is exactly this SVG.
 ## Leave it out
 
 ```bash
-scenet build examples/duel.panel.yaml --no-aria
+scenet build examples/gallery/01-two-characters.panel.yaml --no-aria
 ```
 
 writes the same file without any of it — no `role`, `<title>` or `aria-` attribute —
