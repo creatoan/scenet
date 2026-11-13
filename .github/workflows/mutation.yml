@@ -199,3 +199,15 @@ jobs:
         env:
           HYPOTHESIS_PROFILE: explore
         run: uv run pytest tests/properties --no-cov -p no:cacheprovider -o addopts="" --hypothesis-show-statistics
+
+  # A scheduled run's failure opens an issue, and its next success closes it
+  # (.github/workflows/scheduled-report.yml).
+  report:
+    name: Report the scheduled run
+    needs: [mutmut, explore]
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
+    permissions:
+      issues: write
+    uses: ./.github/workflows/scheduled-report.yml
+    with:
+      results: ${{ join(needs.*.result, ' ') }}

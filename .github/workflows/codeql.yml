@@ -54,3 +54,15 @@ jobs:
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: /language:${{ matrix.language }}
+
+  # A scheduled run's failure opens an issue, and its next success closes it
+  # (.github/workflows/scheduled-report.yml).
+  report:
+    name: Report the scheduled run
+    needs: [analyze]
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
+    permissions:
+      issues: write
+    uses: ./.github/workflows/scheduled-report.yml
+    with:
+      results: ${{ join(needs.*.result, ' ') }}

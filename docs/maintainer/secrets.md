@@ -47,7 +47,8 @@ Both are ephemeral and neither is stored anywhere.
 
 The workflows declare `permissions: contents: read` at the top level, so `GITHUB_TOKEN`
 starts with the minimum and jobs that need more say so themselves. Only
-`github-release` asks for `contents: write`.
+`github-release` asks for `contents: write`, and only the report that ends each scheduled
+workflow asks for `issues: write`, to open and close the issue a failed run gets.
 
 Every `actions/checkout` sets `persist-credentials: false`, so the checkout token is not
 left behind in `.git/config` for a later step — or a compromised dependency's build script

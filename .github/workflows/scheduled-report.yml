@@ -1,0 +1,88 @@
+name: Report a scheduled run
+
+# The last job of every workflow with a `schedule:` trigger calls this, so a scheduled run
+# that fails tells somebody. The link check was red for eleven weeks, and the mutation run
+# for six, before anyone looked (#346).
+#
+# On a failure it opens an issue titled with the workflow's name -- or, if that issue is
+# still open, comments on it, so a job that keeps failing is one issue, not one a week. On
+# the next success it closes the issue. A cancelled run reports nothing: the caller's job
+# runs on `!cancelled()`. tests/test_scheduled_runs.py holds every scheduled workflow to
+# calling it, and runs the script below against a fake `gh`.
+#
+# Shell and the `gh` CLI already on the runner: no action, no checkout, so no third-party
+# code ever holds the token, and every value reaches the script as an environment
+# variable rather than spliced into it.
+
+on:
+  workflow_call:
+    inputs:
+      results:
+        description: "The caller's `join(needs.*.result, ' ')`: the result of every other job"
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  report:
+    name: Open, comment on or close the issue
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Report the run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULTS: ${{ inputs.results }}
+        run: |
+          if [ -z "$RESULTS" ]; then
+            echo "No job results were handed over." >&2
+            exit 1
+          fi
+
+          # A job skipped because one it needs failed did not do its work either; and one
+          # cancelled while the run was not ran out of time.
+          outcome=success
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              outcome=failure
+            fi
+          done
+
+          label=scheduled-failure
+          title="Scheduled run failed: $GITHUB_WORKFLOW"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+          # By label, then by exact title: a label lists without the search index, which
+          # can lag behind an issue opened a minute ago.
+          open=$(TITLE="$title" gh issue list --state open --label "$label" --limit 100 \
+            --json number,title --jq '[.[] | select(.title == env.TITLE) | .number] | first // empty')
+
+          if [ "$outcome" = failure ]; then
+            if [ -n "$open" ]; then
+              gh issue comment "$open" --body "Failed again: $run_url"
+              echo "Commented on #$open."
+            else
+              gh label create "$label" --force --color B60205 \
+                --description "A scheduled workflow failed; .github/workflows/scheduled-report.yml closes it"
+              body=$(printf '%s\n' \
+                "The scheduled workflow **$GITHUB_WORKFLOW** failed." \
+                "" \
+                "- Run: $run_url" \
+                "- Event: \`$GITHUB_EVENT_NAME\`, on \`$GITHUB_REF_NAME\` at $GITHUB_SHA" \
+                "- Jobs: $RESULTS" \
+                "" \
+                "A further failure comments here; the next success closes this issue." \
+                "Opened by \`.github/workflows/scheduled-report.yml\`.")
+              gh issue create --title "$title" --label "$label" --body "$body"
+            fi
+          elif [ -n "$open" ]; then
+            gh issue close "$open" --comment "Passed again: $run_url"
+            echo "Closed #$open."
+          else
+            echo "Passed, and no issue was open."
+          fi

@@ -16,6 +16,17 @@ on:
     # Mondays, 07:00 UTC. Early enough in the week to be worth acting on.
     - cron: "0 7 * * 1"
   workflow_dispatch:
+    # Both are for showing the report of a scheduled run working, on any branch: two runs
+    # with both set open one issue and comment on it, and one with `report` alone closes it.
+    inputs:
+      force-failure:
+        description: "Fail at once, without checking a link"
+        type: boolean
+        default: false
+      report:
+        description: "Report the result as a scheduled run does: open, comment on or close its issue"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,6 +36,12 @@ jobs:
     name: Documentation links
     runs-on: ubuntu-26.04
     steps:
+      - name: Fail on request
+        if: inputs.force-failure
+        run: |
+          echo "::error::Failed on request (force-failure), to test the report of a scheduled run."
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -48,3 +65,16 @@ jobs:
               echo 'no broken links' >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  # A scheduled run's failure opens an issue, and its next success closes it. A dispatched
+  # run reports only when asked to, so trying the check on a branch cannot close the issue
+  # a failing week opened.
+  report:
+    name: Report the scheduled run
+    needs: [linkcheck]
+    if: ${{ !cancelled() && (github.event_name == 'schedule' || inputs.report) }}
+    permissions:
+      issues: write
+    uses: ./.github/workflows/scheduled-report.yml
+    with:
+      results: ${{ join(needs.*.result, ' ') }}

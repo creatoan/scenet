@@ -89,6 +89,32 @@ until it has a row. Which checks are required is the ruleset's, on GitHub, which
 can read. A check marked *No* still runs on every pull request, and a red one is fixed
 before merging all the same.
 
+## The weekly runs, and who hears of a failure
+
+Three workflows run on a schedule, every Monday: the mutation run (`mutation.yml`, 05:00
+UTC), CodeQL (`codeql.yml`, 06:00) and the link check (`linkcheck.yml`, 07:00). Nobody
+watches a scheduled run, so each ends in a job that calls `scheduled-report.yml`:
+
+- a failure opens an issue titled `Scheduled run failed: <workflow>`, labelled
+  `scheduled-failure`, which notifies whoever watches the repository;
+- a further failure while that issue is open comments on it, rather than opening another;
+- the next success closes it.
+
+The job holds `issues: write` and nothing else, and runs only on the schedule, so it shows
+as skipped on a pull request. A test lists every workflow with a `schedule:` trigger and
+fails if one does not end in it. To see it work on a branch, dispatch the link check with
+`force-failure` and `report` set, then with `report` alone:
+
+```bash
+gh workflow run linkcheck.yml --ref <branch> -f force-failure=true -f report=true
+gh workflow run linkcheck.yml --ref <branch> -f report=true
+```
+
+The link check skips what it cannot check, in `docs/conf.py`: the playground's state after
+the `#` (`#example=…`, `#src=…`), and the hosts that answer every automated client with an
+error, listed by host with the error each gives. A link to one of those hosts is unchecked,
+not known good.
+
 ## How a change reaches main
 
 `main` is protected by a repository ruleset. **Direct pushes are rejected** — including

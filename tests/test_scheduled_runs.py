@@ -45,6 +45,11 @@ def _reporters(workflow: dict[Any, Any]) -> dict[str, dict[Any, Any]]:
     return {name: job for name, job in workflow["jobs"].items() if job.get("uses") == CALL}
 
 
+def _needs(job: dict[Any, Any]) -> list[str]:
+    needs = job.get("needs", [])
+    return [needs] if isinstance(needs, str) else list(needs)
+
+
 def test_the_scheduled_workflows_are_found():
     names = [path.name for path in _scheduled()]
     assert {"linkcheck.yml", "mutation.yml", "codeql.yml"} <= set(names)
@@ -58,12 +63,17 @@ class TestEveryScheduledWorkflowReports:
     def test_it_calls_the_report_once(self, path: Path):
         assert len(_reporters(_load(path))) == 1, f"{path.name} does not call {CALL}"
 
-    def test_the_report_waits_for_every_other_job(self, path: Path):
-        """A job it does not wait for is a failure it cannot see."""
+    def test_the_report_waits_for_every_last_job(self, path: Path):
+        """A job it does not wait for is a failure it cannot see.
+
+        Waiting for the jobs nothing else waits for is enough: a job that fails before them
+        leaves them skipped, and a skipped job is reported as a failure.
+        """
         workflow = _load(path)
         ((name, job),) = _reporters(workflow).items()
-        needs = job["needs"] if isinstance(job["needs"], list) else [job["needs"]]
-        assert set(needs) == set(workflow["jobs"]) - {name}
+        others = {other: body for other, body in workflow["jobs"].items() if other != name}
+        needed = {need for body in others.values() for need in _needs(body)}
+        assert set(_needs(job)) == set(others) - needed
 
     def test_it_runs_after_a_failure_but_not_after_a_cancellation(self, path: Path):
         """`always()` would also report a run somebody cancelled, or a newer push replaced."""
@@ -127,11 +137,12 @@ def _bash() -> str | None:
     return found
 
 
-FAKE_GH = """\
-#!/usr/bin/env bash
-printf '%s\\n' "$*" >> "$GH_LOG"
+FAKE_GH = r"""#!/usr/bin/env bash
+# One line per call, so a newline inside an argument is logged as a space.
+args="$*"
+printf '%s\n' "${args//$'\n'/ }" >> "$GH_LOG"
 if [ "$1 $2" = "issue list" ] && [ -n "${OPEN_ISSUE:-}" ]; then
-  printf '%s\\n' "$OPEN_ISSUE"
+  printf '%s\n' "$OPEN_ISSUE"
 fi
 """
 

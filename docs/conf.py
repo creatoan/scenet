@@ -273,6 +273,38 @@ def _playground_links_stay_in_their_version(
             reference["refuri"] = f"{root}playground/{target.removeprefix(_PLAYGROUND)}"
 
 
+# -- What the link check cannot check ------------------------------------------
+#
+# `.github/workflows/linkcheck.yml` runs `-b linkcheck` every week. Two kinds of result
+# there are not about the link, and are named here so that everything else still fails the
+# run -- tests/test_linkcheck.py holds this section to its rules.
+#
+# The playground keeps its state in the fragment, `#example=<file>` or `#src=<token>`, and
+# its script reads it; no element has that id, so each one was "Anchor not found". Only the
+# fragment is skipped: the playground's page is checked like any other, and `^!` is
+# Sphinx's own default, kept.
+linkcheck_anchors_ignore = ["^!", r"^(example|src)="]
+
+# Hosts that answer every automated client with an error page, whatever the link, so the
+# check cannot tell a live page from a dead one. Ignored by host, never by page: a link
+# there is "cannot verify", not "fine". Each was seen failing in the weekly runs.
+linkcheck_ignore = [
+    # The ACM Digital Library: 403 Forbidden.
+    r"^https://dl\.acm\.org/",
+    # ACM's DOI prefix, which redirects to the Digital Library above.
+    r"^https://doi\.org/10\.1145/",
+    # Elsevier's ScienceDirect: 403 Forbidden.
+    r"^https://www\.sciencedirect\.com/",
+    # PubMed Central: 403 Forbidden.
+    r"^https://pmc\.ncbi\.nlm\.nih\.gov/",
+    # GNOME's GitLab, behind a bot challenge: 406 Not Acceptable.
+    r"^https://gitlab\.gnome\.org/",
+]
+
+# A server's bad minute is not a dead link: blambot.com answered 500 once in eleven weeks.
+linkcheck_retries = 3
+
+
 # -- A heading's address -------------------------------------------------------
 #
 # A heading is linked by its slug, as MyST and GitHub make it: `camera.md#camerashot`. MyST

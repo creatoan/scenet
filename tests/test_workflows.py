@@ -442,9 +442,12 @@ class TestCodeQL:
         writers = [
             name
             for name, job in codeql["jobs"].items()
-            if "write" in (job.get("permissions") or {}).values()
+            if (job.get("permissions") or {}).get("security-events") == "write"
         ]
         assert writers == ["analyze"]
+        # The one other write is the scheduled run's report, held to issues alone by
+        # tests/test_scheduled_runs.py.
+        assert codeql["jobs"]["report"]["permissions"] == {"issues": "write"}
         # `actions: read` is for private repositories only; this one is public.
         assert codeql["jobs"]["analyze"]["permissions"] == {
             "contents": "read",
