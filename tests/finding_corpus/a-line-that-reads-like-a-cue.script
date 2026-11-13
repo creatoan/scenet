@@ -1,0 +1,7 @@
+---
+# Alice's line reads like a cue for Carol, and is still her line.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+CAROL: who is this?

@@ -1,0 +1,12 @@
+---
+# The picture every panel is drawn over is not beside this script: one fault, where it is named.
+setting: {image: art/missing.png}
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.
+
+PANEL 2
+ALICE
+Still here.

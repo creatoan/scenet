@@ -1,0 +1,8 @@
+---
+# The regular face of the font mapping is not beside this script.
+lettering: {font: {regular: fonts/Missing-Regular.ttf}}
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.

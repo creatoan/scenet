@@ -1,0 +1,7 @@
+# Fifty-one words in a panel, none of its balloons over its own limit.
+panel: {size: [2400, 1600]}
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+script:
+  - say: {by: alice, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen"}
+  - say: {by: bob, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen"}
+  - say: {by: alice, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen"}

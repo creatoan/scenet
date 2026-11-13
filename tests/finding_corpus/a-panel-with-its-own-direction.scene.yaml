@@ -1,0 +1,5 @@
+# Panel two reads its own way, which a scene's panels share; and its shot is no shot.
+cast: {alice: {reference: alice}}
+panels:
+  one: {}
+  two: {direction: rtl, camera: {shot: wide_angle}}

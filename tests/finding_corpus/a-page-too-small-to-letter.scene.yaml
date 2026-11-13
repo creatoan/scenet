@@ -1,0 +1,9 @@
+# The page gives the panel a frame too small to letter at an extreme close-up: found only when the book is compiled.
+page: {size: [160, 160], margin: 0}
+camera: {shot: extreme_close_up}
+cast: {alice: {reference: alice}}
+panels:
+  one: {script: [{say: {by: alice, text: "There is no room anywhere in this frame for a line as long as this one is."}}]}
+pages:
+  - tiers:
+      - panels: [one]

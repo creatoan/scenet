@@ -1,0 +1,7 @@
+---
+# Ana is a figure a picture draws, and no panel names a picture to draw her.
+cast: {ANA: {figure: ana}}
+---
+PANEL 1
+ANA
+Hello.

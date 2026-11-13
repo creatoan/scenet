@@ -1,0 +1,9 @@
+# The inset on the second page has no room in its panel.
+page: {size: [300, 300], margin: 20, gutter: 140}
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}, three: {}}
+pages:
+  - tiers:
+      - panels: [one]
+  - tiers:
+      - panels: [{use: two, insets: [{use: three, at: top_left, size: 0.5}]}]

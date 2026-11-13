@@ -1,0 +1,5 @@
+# Panel two is drawn over one, so it inherits one's staging, and the fault in it.
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+panels:
+  one: {staging: [alice beside bob]}
+  two: {over: one}

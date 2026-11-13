@@ -1,0 +1,5 @@
+# `pages:` lays out the panels of a scene, and this document is one panel.
+cast: {alice: {reference: alice}}
+pages:
+  - tiers:
+      - panels: [panel]

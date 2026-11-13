@@ -1,0 +1,7 @@
+---
+# A sound on one line, and prose under it that is no part of it.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+SFX: BLAM
+A cat runs off.

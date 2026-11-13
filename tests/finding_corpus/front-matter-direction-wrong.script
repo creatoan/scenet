@@ -1,0 +1,8 @@
+---
+# The direction is ltr or rtl.
+direction: upward
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.

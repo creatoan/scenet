@@ -1,0 +1,8 @@
+---
+# The last line reads like dialogue, and no newline follows it.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.
+CAROL: who is this?

@@ -1,0 +1,3 @@
+# The file beside this document is named like a font and holds text.
+cast: {a: {reference: alice}}
+lettering: {font: fonts/not-a-font.ttf}

@@ -1,0 +1,2 @@
+# `refer` is too far from `reference` to be read as it.
+cast: {a: {refer: alice}}

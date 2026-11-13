@@ -18,11 +18,13 @@ memory, which cannot see three ways the promise breaks:
 """
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 
@@ -70,6 +72,80 @@ class TestTheGalleryMatchesItsGoldens:
         name = next(name for name in written if name.endswith(".core.json"))
         written[name] = written[name].replace(b".", b",", 1)
         assert name in update_golden.differences(written)
+
+
+class TestEveryFindingIsItsGolden:
+    """What `scenet check` says, in full, on every document of the rule corpus (#345).
+
+    The corpus pins which rule each document breaks. Mutation testing found that nothing
+    held the rest of a finding: the file it names, where it points, the path it gives. A
+    finding that pointed at the start of the document, or named no file, passed every
+    test. This holds every field, with and without `--deep`.
+    """
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def golden(cls) -> dict[str, Any]:
+        return json.loads(update_golden.FINDINGS.read_text(encoding="utf-8"))
+
+    @pytest.mark.parametrize(
+        "path",
+        update_golden.finding_documents(),
+        ids=lambda path: path.relative_to(ROOT).as_posix(),
+    )
+    def test_its_findings_are_as_committed(self, path: Path, golden: dict[str, Any]):
+        found = update_golden.findings_of(path)
+        assert found == {key: golden.get(key) for key in found}, (
+            f"a finding changed: if it is intended, run `{update_golden.COMMAND}` and review "
+            "the diff of tests/golden/findings.json"
+        )
+
+    def test_every_kept_document_is_in_it_and_nothing_else(self, golden: dict[str, Any]):
+        documents = {
+            path.relative_to(ROOT).as_posix() for path in update_golden.finding_documents()
+        }
+        assert {name.removesuffix(" --deep") for name in golden} == documents
+
+    def test_every_finding_names_its_file_and_a_place_in_it(self, golden: dict[str, Any]):
+        for name, found in golden.items():
+            document = name.removesuffix(" --deep")
+            folder = document.rpartition("/")[0] + "/"
+            for finding in found:
+                # A fault inside a file the document names -- a puppet, a contract -- is
+                # reported in that file, which is beside the document.
+                assert finding["source"] == document or finding["source"].startswith(folder), name
+                assert finding["region"] is not None, name
+
+
+class TestEveryDocumentReadsAsItsGolden:
+    """What the front ends read from every kept document, or how they refuse it (#345).
+
+    A Core says what was drawn, and the findings what was wrong; neither holds everything
+    read on the way -- a script's line numbers, its notes, a field the solver happens not to
+    use. Mutation testing found the front ends' changes to all of those unnoticed.
+    """
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def golden(cls) -> dict[str, str]:
+        return json.loads(update_golden.PARSED.read_text(encoding="utf-8"))
+
+    @pytest.mark.parametrize(
+        "path",
+        update_golden.finding_documents(),
+        ids=lambda path: path.relative_to(ROOT).as_posix(),
+    )
+    def test_it_reads_as_committed(self, path: Path, golden: dict[str, str]):
+        assert update_golden.parsed_of(path) == golden.get(path.relative_to(ROOT).as_posix()), (
+            f"what {path.name} reads as changed: if it is intended, run "
+            f"`{update_golden.COMMAND}` and review the change"
+        )
+
+    def test_every_kept_document_is_in_it_and_nothing_else(self, golden: dict[str, str]):
+        documents = {
+            path.relative_to(ROOT).as_posix() for path in update_golden.finding_documents()
+        }
+        assert set(golden) == documents
 
 
 # A program each child process runs: build the gallery into the directory it is given.

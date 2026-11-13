@@ -1,0 +1,9 @@
+---
+# A figure a picture draws, given a pose by a panel of its own.
+setting: {image: art/missing.png}
+cast: {ANA: {figure: ana}}
+---
+PANEL 1
+@cast: {ANA: {figure: ana, pose: pointing}}
+ANA
+Hello.

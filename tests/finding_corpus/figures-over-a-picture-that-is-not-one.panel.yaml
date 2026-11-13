@@ -1,0 +1,3 @@
+# Figures a picture draws, and the file named for the picture holds text.
+cast: {a: {figure: ana}}
+setting: {image: art/not-a-picture.png}

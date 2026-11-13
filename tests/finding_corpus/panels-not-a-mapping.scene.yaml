@@ -1,0 +1,3 @@
+# `panels:` is a list here, and a scene names its panels.
+cast: {alice: {reference: alice}}
+panels: [one, two]

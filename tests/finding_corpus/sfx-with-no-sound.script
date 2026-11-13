@@ -1,0 +1,9 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PANEL 1
+SFX:
+
+PANEL 2
+ALICE
+Hi.

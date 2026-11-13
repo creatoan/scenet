@@ -1,0 +1,3 @@
+# Nobody places a figure a picture draws, so `facing` does not apply to it.
+cast: {a: {reference: alice}, b: {figure: ana, facing: left}}
+setting: {image: art/missing.png}

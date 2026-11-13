@@ -1,0 +1,4 @@
+# A page is a mapping of tiers, and this one is a number.
+cast: {a: {reference: alice}}
+panels: {one: {}}
+pages: [3]

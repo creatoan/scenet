@@ -1,0 +1,9 @@
+---
+# Panel 1 casts a figure of its own, which the picture's contract does not draw.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@setting: {image: ../../examples/gallery/art/figures.png}
+@cast: {ALICE: null, DORA: {figure: dora}}
+DORA
+Hi.

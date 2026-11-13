@@ -1,0 +1,2 @@
+# A misspelled key, and after it a fault of another member.
+cast: {a: {referenc: alice}, b: {reference: bob, facing: 5}}

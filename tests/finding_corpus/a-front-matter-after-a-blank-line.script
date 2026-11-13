@@ -1,0 +1,9 @@
+
+---
+# A blank line before the front matter, which has a description.
+cast: {ALICE: {reference: alice}}
+description: A street.
+---
+PANEL 1
+ALICE
+Hi.

@@ -1,0 +1,3 @@
+# `staging` is a list of sentences, and this is one sentence.
+cast: {a: {reference: alice}, b: {reference: bob}}
+staging: a left_of b

@@ -1,0 +1,7 @@
+---
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@lettering: {font: fonts/missing.ttf}
+ALICE
+Hi.

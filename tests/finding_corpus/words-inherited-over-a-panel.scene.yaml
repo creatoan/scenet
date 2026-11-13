@@ -1,0 +1,5 @@
+# Panel two inherits one's words, and they are over a balloon's limit there too.
+cast: {alice: {reference: alice}}
+panels:
+  one: {script: [{say: {by: alice, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five more"}}]}
+  two: {over: one}

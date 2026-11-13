@@ -1,0 +1,19 @@
+---
+# A caption comes first; then Alice speaks from off panel, beside a relation that is not hers.
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB: {reference: bob}
+  CAROL: {reference: alice, at: right_third}
+staging: [ALICE left_of BOB, BOB left_of CAROL]
+---
+PANEL 1
+CAPTION: Later.
+
+ALICE (OP)
+Anyone?
+
+BOB
+Here.
+
+CAROL
+And here.

@@ -1,0 +1,15 @@
+---
+# Everything this script names is a file beside the gallery: a picture, a font, a puppet.
+setting: {image: ../../examples/gallery/art/street.png}
+lettering: {font: ../../examples/gallery/fonts/ComicNeue-Regular.ttf}
+cast:
+  ALICE: {reference: alice, at: left_third}
+  PIP: {reference: ../../examples/gallery/puppets/pip.puppet.yaml, at: right_third}
+---
+PANEL 1
+ALICE
+Hello, Pip.
+
+PANEL 2
+PIP
+Hello.

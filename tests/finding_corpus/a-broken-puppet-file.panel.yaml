@@ -1,0 +1,2 @@
+# The puppet file beside this document is no puppet: the fault is in that file.
+cast: {a: {reference: puppets/broken.puppet.yaml}}

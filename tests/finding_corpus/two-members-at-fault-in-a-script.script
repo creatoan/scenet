@@ -1,0 +1,10 @@
+---
+# Two cast members name puppets that do not exist.
+cast: {ALICE: {reference: nobody}, BOB: {reference: nobody-else}}
+---
+PANEL 1
+ALICE
+Hello.
+
+BOB
+Hi.

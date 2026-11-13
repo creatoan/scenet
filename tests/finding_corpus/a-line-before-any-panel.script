@@ -1,0 +1,9 @@
+---
+# Prose before the first panel is the title page, not a fault.
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+A line of prose before any panel.
+
+PANEL 1
+ALICE
+Hi.

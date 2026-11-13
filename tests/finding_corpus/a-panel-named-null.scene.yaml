@@ -1,0 +1,5 @@
+# YAML reads `null:` as nothing, and a panel is named by text.
+cast: {a: {reference: alice}}
+panels:
+  null: {}
+  two: {}

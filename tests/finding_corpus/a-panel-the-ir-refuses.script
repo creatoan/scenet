@@ -1,0 +1,8 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PANEL 1
+@shot: close_up
+@angle: sideways
+ALICE
+Hi.

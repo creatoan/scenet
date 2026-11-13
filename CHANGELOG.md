@@ -29,6 +29,10 @@ below 1.0 means.
   `diagnostics.py` as well as `solve/` and `emit/`. Every pull request runs mutmut's clean run,
   the check *Mutation clean run*, so a test that cannot pass in the mutants tree fails before
   merge.
+- **A puppet that draws nothing but a face compiles** (#345). Its silhouette was the line
+  between two of its joints, and balloon placement made a polygon of it, which ended `scenet
+  build` and `scenet check --deep` in a `ValueError` rather than a finding. Lettering now sees
+  its face alone, as it does a figure's that declares only a face.
 - **The weekly link check passes again** (#346), red since 2026-08-31. The Skia source the
   `feTurbulence` notes cite moved to `SkPerlinNoiseShaderImpl.h`, now linked at a commit rather
   than a branch. The playground's state after the `#` is no longer checked as an anchor, and the

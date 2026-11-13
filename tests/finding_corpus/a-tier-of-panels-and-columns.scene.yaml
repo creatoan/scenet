@@ -1,0 +1,6 @@
+# A tier holds panels or columns, and this one holds both.
+cast: {a: {reference: alice}}
+panels: {one: {}, two: {}}
+pages:
+  - tiers:
+      - {panels: [one], columns: [{panels: [two]}]}

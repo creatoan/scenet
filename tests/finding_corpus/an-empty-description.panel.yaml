@@ -1,0 +1,3 @@
+# A description says what the panel shows, so it cannot be empty.
+description: ''
+cast: {a: {reference: alice}}

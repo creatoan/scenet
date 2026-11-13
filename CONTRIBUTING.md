@@ -60,7 +60,7 @@ it. Each script takes `--check`, which exits 1 if anything it writes is stale.
 
 | Regenerate | When you changed |
 |---|---|
-| `uv run python scripts/update_golden.py` | what the compiler writes for the gallery: SVG, Core, exports |
+| `uv run python scripts/update_golden.py` | what the compiler writes for the gallery: SVG, Core, exports; what `scenet check` says and what the front ends read |
 | `uv run python scripts/build_spec.py` | the language or the gallery: the spec pack, the agent skill, the Gallery page |
 | `npm run schemas`, in `editor/` | a model of the language: the JSON Schemas the editor ships |
 | `uv run python scripts/build_language_pages.py` | a key, its type or default: the language reference's key cards |

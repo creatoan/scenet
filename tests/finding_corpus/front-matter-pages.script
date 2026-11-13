@@ -1,0 +1,8 @@
+---
+# A script's pages come from its PAGE headings.
+cast: {ALICE: {reference: alice}}
+pages: []
+---
+PANEL 1
+ALICE
+Hi.

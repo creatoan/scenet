@@ -1,0 +1,4 @@
+# A description says what one panel shows, so beside `panels:` it is no default.
+description: A street at night.
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}

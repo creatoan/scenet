@@ -1,0 +1,3 @@
+# A panel's cast is all puppets or all figures.
+cast: {a: {reference: alice}, c: {reference: bob}, b: {figure: ana}, d: {figure: ben}}
+setting: {image: art/missing.png}

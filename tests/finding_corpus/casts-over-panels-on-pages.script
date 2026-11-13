@@ -1,0 +1,27 @@
+---
+# Panel numbers start again on each page; each @over: names a panel on its own page.
+cast: {ALICE: {reference: alice}}
+---
+PAGE ONE
+
+PANEL 1
+@cast: {BOB: {reference: bob}}
+BOB
+Hi.
+
+PANEL 2
+@over: 1
+BOB
+Still me.
+
+PAGE TWO
+
+PANEL 1
+@cast: {CAROL: {reference: alice}}
+CAROL
+Hello.
+
+PANEL 2
+@over: 1
+CAROL
+Again.

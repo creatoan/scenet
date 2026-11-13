@@ -1,0 +1,7 @@
+# An inset is set into a square corner, which a slanted panel lacks.
+cast: {a: {reference: alice}}
+panels: {one: {}, two: {}, three: {}}
+pages:
+  - tiers:
+      - slant: 0.1
+        panels: [{use: one, insets: [{use: three, at: top_left, size: 0.3}]}, two]
