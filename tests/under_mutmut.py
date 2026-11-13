@@ -23,3 +23,23 @@ reads_the_source = pytest.mark.skipif(
     UNDER_MUTMUT,
     reason="mutmut rewrites every file it mutates, so the text read is not the source",
 )
+
+
+def keep_the_stats_in_this_process() -> None:
+    """Let no child process of the suite inherit mutmut's stats run.
+
+    The stats run, which finds the tests that reach each function, sets
+    `MUTANT_UNDER_TEST=stats`, and every process the suite starts inherits it. A child
+    that imports a mutated module then records each call it makes, which nobody reads,
+    and to do it loads mutmut's configuration from its working directory. Sphinx runs
+    `conf.py` from the documentation's source directory, which holds none, and once
+    `ir.py` was mutated -- it calls a mutated function as it is imported -- every build in
+    the suite failed there (#345).
+
+    mutmut keeps its own copy of the variable in this process and reads it when the
+    variable is gone, so dropping it changes nothing here, and a child runs the
+    unmutated code. Only the stats run is affected: a mutant's run, and the clean run,
+    keep the variable, so a child runs the mutant too.
+    """
+    if os.environ.get("MUTANT_UNDER_TEST") == "stats":
+        del os.environ["MUTANT_UNDER_TEST"]

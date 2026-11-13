@@ -23,6 +23,8 @@ from pathlib import Path
 from hypothesis import HealthCheck, settings
 from hypothesis.database import DirectoryBasedExampleDatabase
 
+from tests.under_mutmut import keep_the_stats_in_this_process
+
 _FIXED = settings(
     derandomize=True,
     database=None,
@@ -48,3 +50,8 @@ settings.register_profile(
     ),
 )
 settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "fixed"))
+
+
+def pytest_configure() -> None:
+    """At every session's start: mutmut runs several in one process, the stats run among them."""
+    keep_the_stats_in_this_process()

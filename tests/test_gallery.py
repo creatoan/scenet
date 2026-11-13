@@ -45,6 +45,7 @@ from scenet.pipeline import DOCUMENT_LOADERS, Book
 from scenet.safe_yaml import load
 from scenet.schema import panel_schema, scene_schema
 from tests import myst, script_forms
+from tests.under_mutmut import reads_the_source
 from tests.written import Written, read, read_file, union, vocabulary
 
 ROOT = Path(__file__).parent.parent
@@ -485,6 +486,7 @@ class TestTheGalleryCoversTheScriptFormat:
         written = set[str]().union(*(script_forms.read_file(path) for path in SCRIPTS))
         assert sorted(script_forms.offered() - written) == []
 
+    @reads_the_source
     def test_every_table_and_pattern_is_read_or_excused(self):
         """A table or a pattern the frontend gains is read, or said why not, before a form it
         holds can go without an example."""

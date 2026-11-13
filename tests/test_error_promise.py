@@ -53,6 +53,7 @@ from scenet import (
 from scenet.assets.contract import DEFAULT_LIBRARY_PATH
 from scenet.solve.text import FontMetrics
 from tests.images import jpeg
+from tests.under_mutmut import reads_the_source
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "scenet"
@@ -311,6 +312,7 @@ def _builtin_raises() -> set[tuple[str, str]]:
     return found
 
 
+@reads_the_source
 def test_no_plain_built_in_is_raised_where_a_caller_could_see_it():
     unexplained = sorted(_builtin_raises() - set(NEVER_REACHES_A_CALLER))
     assert unexplained == [], (
@@ -319,5 +321,6 @@ def test_no_plain_built_in_is_raised_where_a_caller_could_see_it():
     )
 
 
+@reads_the_source
 def test_the_list_holds_nothing_that_is_gone():
     assert sorted(set(NEVER_REACHES_A_CALLER) - _builtin_raises()) == []

@@ -10,6 +10,7 @@ below its threshold. `docs/maintainer/testing.md` gives the same scores and thre
 import fnmatch
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -20,6 +21,9 @@ from types import ModuleType
 from typing import Any
 
 import pytest
+
+from tests import under_mutmut
+from tests.under_mutmut import reads_the_source
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTING = ROOT / "docs" / "maintainer" / "testing.md"
@@ -52,6 +56,7 @@ def _matching(patterns: list[str] | tuple[str, ...]) -> set[str]:
 
 
 class TestTheLegs:
+    @reads_the_source  # each leg's job narrows `only_mutate` to the leg before it runs
     def test_every_mutated_file_is_in_exactly_one_leg(self, mutation: ModuleType):
         """A new file under a mutated directory is mutated by the pull request's clean run
         at once, and fails this until it is given a leg, so no file goes unmutated weekly."""
@@ -324,3 +329,24 @@ class TestTheDocument:
             assert (
                 run == f"[`{leg.run}`](https://github.com/creatoan/scenet/actions/runs/{leg.run})"
             )
+
+
+class TestTheStatsStayInThisProcess:
+    """A child of mutmut's stats run imports the mutants with nothing to record into."""
+
+    def test_the_stats_run_s_variable_is_dropped(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("MUTANT_UNDER_TEST", "stats")
+        under_mutmut.keep_the_stats_in_this_process()
+        assert "MUTANT_UNDER_TEST" not in os.environ
+
+    @pytest.mark.parametrize("value", ["", "fail", "scenet.ir.x_tag_by__mutmut_3"])
+    def test_any_other_run_keeps_it(self, monkeypatch: pytest.MonkeyPatch, value: str):
+        """A child of a mutant's run runs the mutant, and one of the forced-fail run fails."""
+        monkeypatch.setenv("MUTANT_UNDER_TEST", value)
+        under_mutmut.keep_the_stats_in_this_process()
+        assert os.environ["MUTANT_UNDER_TEST"] == value
+
+    def test_outside_mutmut_nothing_is_set(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv("MUTANT_UNDER_TEST", raising=False)
+        under_mutmut.keep_the_stats_in_this_process()
+        assert "MUTANT_UNDER_TEST" not in os.environ
