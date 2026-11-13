@@ -299,6 +299,9 @@ linkcheck_ignore = [
     r"^https://pmc\.ncbi\.nlm\.nih\.gov/",
     # GNOME's GitLab, behind a bot challenge: 406 Not Acceptable.
     r"^https://gitlab\.gnome\.org/",
+    # BlankComic, behind a firewall that blocks some clients and not others: 403 from
+    # GitHub's runners on 2026-11-13, an hour after the same page answered 200 there.
+    r"^https://blankcomic\.com/",
 ]
 
 # A server's bad minute is not a dead link: blambot.com answered 500 once in eleven weeks.

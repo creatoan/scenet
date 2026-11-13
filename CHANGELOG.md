@@ -33,7 +33,7 @@ below 1.0 means.
   `feTurbulence` notes cite moved to `SkPerlinNoiseShaderImpl.h`, now linked at a commit rather
   than a branch. The playground's state after the `#` is no longer checked as an anchor, and the
   hosts that answer every automated client with an error (the ACM Digital Library and its DOIs,
-  ScienceDirect, PubMed Central, GNOME's GitLab) are skipped, by host, each with the reason.
+  ScienceDirect, PubMed Central, GNOME's GitLab, BlankComic) are skipped, by host, each with the reason.
 
 ## [0.13.0] - 2026-11-12
 

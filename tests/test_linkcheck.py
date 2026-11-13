@@ -84,6 +84,7 @@ def test_only_the_hosts_that_refuse_are_ignored():
         "www.sciencedirect.com",
         "pmc.ncbi.nlm.nih.gov",
         "gitlab.gnome.org",
+        "blankcomic.com",
     }
 
 
