@@ -1,0 +1,6 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PANEL 1
+ALICE (whisper) (shout)
+Hi.

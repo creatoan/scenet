@@ -1,0 +1,13 @@
+---
+# Panel 2 is valid, but at an extreme close-up no word fits: found only when compiled.
+panel: {size: [300, 300]}
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.
+
+PANEL 2
+@shot: extreme_close_up
+ALICE
+There is no room anywhere in this panel for a line this long.

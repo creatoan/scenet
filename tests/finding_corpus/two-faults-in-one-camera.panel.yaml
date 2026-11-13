@@ -1,0 +1,3 @@
+# Two faults in one field, each on its own line.
+cast: {a: {reference: alice}}
+camera: {shot: bogus, angle: sideways}

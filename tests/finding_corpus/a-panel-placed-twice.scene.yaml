@@ -1,0 +1,7 @@
+# A panel has one frame, so it is placed once.
+cast: {a: {reference: alice}}
+panels: {one: {}, two: {}}
+pages:
+  - tiers:
+      - panels: [one, two]
+      - panels: [one]

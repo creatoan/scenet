@@ -1,0 +1,6 @@
+# Two balloons of 25 words: at each limit, and over none.
+panel: {size: [2400, 1600]}
+cast: {alice: {reference: alice}, bob: {reference: bob}}
+script:
+  - say: {by: alice, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five"}
+  - say: {by: bob, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five"}

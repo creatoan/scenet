@@ -1,0 +1,10 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PANEL 1
+SFX
+BLAM
+A cat runs off.
+
+ALICE
+What was that?

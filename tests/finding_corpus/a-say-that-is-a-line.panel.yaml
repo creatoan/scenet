@@ -1,0 +1,3 @@
+# Each event is a mapping, and this `say` is a line.
+cast: {a: {reference: alice}}
+script: [{say: Hello.}]

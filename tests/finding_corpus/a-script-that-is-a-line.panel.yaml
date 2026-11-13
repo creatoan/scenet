@@ -1,0 +1,3 @@
+# `script` is a list of events, and this is one line.
+cast: {a: {reference: alice}}
+script: "Hello."

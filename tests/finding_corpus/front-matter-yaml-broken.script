@@ -1,0 +1,7 @@
+---
+# The front matter does not read as YAML.
+cast: {ALICE: [
+---
+PANEL 1
+ALICE
+Hi.

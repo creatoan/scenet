@@ -1,0 +1,7 @@
+---
+# A cast id a cue would read as a sound effect, written in quotes.
+cast: {"SFX": {reference: alice}}
+---
+PANEL 1
+SFX
+Hi.

@@ -1,0 +1,7 @@
+# A sound is no lettering to count; the caption after it holds one word too many.
+panel: {size: [2400, 1600]}
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: BANG}
+  - caption: {kind: locale, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five more"}
+  - say: {by: alice, text: "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five and"}

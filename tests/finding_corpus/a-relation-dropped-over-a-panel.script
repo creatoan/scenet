@@ -1,0 +1,18 @@
+---
+# Panel 2 is drawn over 1, and Alice speaks there from off panel.
+cast:
+  ALICE: {reference: alice, at: left_third}
+  BOB: {reference: bob, at: right_third}
+staging: [ALICE left_of BOB]
+---
+PANEL 1
+ALICE
+Hi.
+
+PANEL 2
+@over: 1
+ALICE (OP)
+Still here.
+
+BOB
+Where?

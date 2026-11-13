@@ -1,0 +1,3 @@
+# `off_panel` is true, false or a side, and `up` is none of them.
+cast: {a: {reference: alice}}
+script: [{say: {by: b, text: Hi., off_panel: up}}]

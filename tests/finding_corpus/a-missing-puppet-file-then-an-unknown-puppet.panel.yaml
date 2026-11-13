@@ -1,0 +1,2 @@
+# The first member names a puppet file that is not there, the second a puppet nobody ships.
+cast: {a: {reference: puppets/missing.puppet.yaml}, b: {reference: nobody}}

@@ -1,0 +1,9 @@
+---
+# A panel sets its camera twice over: an angle with @camera:, a shot with @shot:.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@camera: {angle: high}
+@shot: close_up
+ALICE
+Hi.

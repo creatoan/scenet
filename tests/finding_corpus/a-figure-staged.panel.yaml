@@ -1,0 +1,4 @@
+# The artist placed the figures already; staging names one.
+cast: {a: {figure: ana}, b: {figure: ben}}
+setting: {image: art/missing.png}
+staging: [a left_of b]

@@ -1,0 +1,4 @@
+# Carol speaks from off panel, and only looking_at may name somebody nobody draws.
+cast: {alice: {reference: alice}}
+staging: [alice left_of carol]
+script: [{say: {by: carol, text: Hello., off_panel: true}}]

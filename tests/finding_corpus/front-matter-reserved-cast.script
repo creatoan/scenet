@@ -1,0 +1,7 @@
+---
+# A cast name a cue would read as something else.
+cast: {SFX: {reference: alice}}
+---
+PANEL 1
+SFX
+Hi.

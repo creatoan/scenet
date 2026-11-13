@@ -1,0 +1,7 @@
+---
+cast: {ALICE: {reference: alice}}
+cast: {BOB: {reference: bob}}
+---
+PANEL 1
+BOB
+Hi.

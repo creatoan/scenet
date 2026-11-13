@@ -1,0 +1,12 @@
+---
+# The font is not beside this script: one fault, however many panels are lettered in it.
+lettering: {font: fonts/Missing-Regular.ttf}
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.
+
+PANEL 2
+ALICE
+Still here.

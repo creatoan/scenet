@@ -1,0 +1,16 @@
+---
+# Pip and Carl are heard from off panel only, so no panel draws them; Carl's puppet does not exist.
+cast:
+  ALICE: {reference: alice}
+  PIP: {reference: ../../examples/gallery/puppets/pip.puppet.yaml}
+  CARL: {reference: nobody}
+---
+PANEL 1
+ALICE
+Who is there?
+
+PIP (OP)
+Me.
+
+CARL (OP)
+And me.

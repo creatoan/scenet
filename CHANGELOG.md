@@ -20,6 +20,10 @@ below 1.0 means.
   `diagnostics.py` as well as `solve/` and `emit/`. Every pull request runs mutmut's clean run,
   the check *Mutation clean run*, so a test that cannot pass in the mutants tree fails before
   merge.
+- **A puppet that draws nothing but a face compiles** (#345). Its silhouette was the line
+  between two of its joints, and balloon placement made a polygon of it, which ended `scenet
+  build` and `scenet check --deep` in a `ValueError` rather than a finding. Lettering now sees
+  its face alone, as it does a figure's that declares only a face.
 
 ## [0.13.0] - 2026-11-12
 

@@ -1,0 +1,3 @@
+# A chain reached first, then a cycle among the rest.
+cast: {a: {reference: alice}, b: {reference: bob}, c: {reference: alice}, d: {reference: bob}}
+staging: [a left_of b, c left_of d, d left_of c]

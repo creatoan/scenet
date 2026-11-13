@@ -1,0 +1,6 @@
+# A column is a mapping of panels, and this one is a number.
+cast: {a: {reference: alice}}
+panels: {one: {}}
+pages:
+  - tiers:
+      - columns: [3]

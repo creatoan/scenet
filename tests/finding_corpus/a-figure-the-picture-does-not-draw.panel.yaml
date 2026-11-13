@@ -1,0 +1,4 @@
+# The picture's contract draws Ana, Ben and Carl, and nobody called Dora, who speaks.
+cast: {a: {figure: dora}}
+setting: {image: ../../examples/gallery/art/figures.png}
+script: [{say: {by: a, text: "Hello."}}]

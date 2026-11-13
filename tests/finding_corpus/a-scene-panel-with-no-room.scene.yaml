@@ -1,0 +1,8 @@
+# Panel two is valid, but at an extreme close-up no word fits: found only when compiled.
+panel: {size: [300, 300]}
+cast: {alice: {reference: alice}}
+panels:
+  one: {}
+  two:
+    camera: {shot: extreme_close_up}
+    script: [{say: {by: alice, text: "There is no room anywhere in this panel for a line this long."}}]

@@ -18,6 +18,16 @@ Two kinds of golden:
   SVG is too large to review usefully as text, and its Core already says what moved.
 - `docs/images/gallery/` holds the pictures the documentation shows of each gallery
   example (#243), whole: copies of goldens, compared byte for byte.
+- `tests/golden/findings.json` holds every finding `scenet check` gives, with and without
+  `--deep`, on every gallery example, every document of `tests/rule_corpus/` and its fixed
+  twins, and `tests/finding_corpus/`: rule, level, message, path, file, region and
+  fingerprint. The rule corpus pins which rule a document breaks; this pins everything else
+  a finding says, which nothing held until mutation testing reached the diagnostics (#345).
+  The gallery is there for what it does not say: a check that lost its document's folder
+  or its puppets would find fault with it.
+- `tests/golden/parsed.json` holds the SHA-256 of what the front ends read from each of the
+  same documents -- every panel's IR, a script's lines, notes and page layout -- or of how
+  they refused it. A Core only says what was drawn; this holds what was read on the way.
 
 After an intended change to the output, regenerate and review the diff:
 
@@ -27,25 +37,48 @@ After an intended change to the output, regenerate and review the diff:
 
 import argparse
 import contextlib
+import dataclasses
 import hashlib
 import io
 import json
 import re
 import sys
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import BaseModel
 
 from scenet.cli import main
+from scenet.diagnostics import Diagnostic, diagnose_file
+from scenet.errors import ScenetError
+from scenet.frontends.script_front import load_script, parse_script_document
+from scenet.frontends.yaml_front import (
+    load_panel,
+    load_scene,
+    load_scene_document,
+    parse_scene_document,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 GALLERY = ROOT / "examples" / "gallery"
 GOLDEN = ROOT / "tests" / "golden"
 CORES = GOLDEN / "core"
 DIGESTS = GOLDEN / "digests.json"
+FINDINGS = GOLDEN / "findings.json"
+PARSED = GOLDEN / "parsed.json"
+#: The folders whose documents' findings are kept: the gallery; one document per diagnostic,
+#: and its fixed twin; and a document for each way of reaching a finding the others miss.
+FINDING_CORPORA = (
+    GALLERY,
+    ROOT / "tests" / "rule_corpus",
+    ROOT / "tests" / "rule_corpus" / "fixed",
+    ROOT / "tests" / "finding_corpus",
+)
+#: What a document `scenet check` reads ends in.
+DOCUMENT_SUFFIXES = (".panel.yaml", ".scene.yaml", ".script")
 COMMAND = "uv run python scripts/update_golden.py"
 
 #: Pictures the documentation shows, each exactly as `scenet build` writes it -- so each is a
@@ -220,6 +253,118 @@ def goldens(written: dict[str, bytes]) -> tuple[dict[str, bytes], dict[str, str]
     return cores, digests
 
 
+def _finding(item: Diagnostic) -> dict[str, Any]:
+    region = item.region
+    return {
+        "rule": item.rule,
+        "level": item.level,
+        "message": item.message,
+        "path": list(item.path),
+        "source": item.source.relative_to(ROOT).as_posix() if item.source else None,
+        "region": None
+        if region is None
+        else [region.start.line, region.start.column, region.end.line, region.end.column],
+        "fingerprint": item.fingerprint(root=ROOT),
+    }
+
+
+def finding_documents() -> list[Path]:
+    """Every document whose findings are kept, in order."""
+    return sorted(
+        path
+        for corpus in FINDING_CORPORA
+        for path in corpus.iterdir()
+        if path.is_file() and path.name.endswith(DOCUMENT_SUFFIXES)
+    )
+
+
+def findings_of(path: Path) -> dict[str, list[dict[str, Any]]]:
+    """A document's findings, checked and checked `--deep`, keyed as the golden keys them."""
+    name = path.relative_to(ROOT).as_posix()
+    return {
+        name + (" --deep" if deep else ""): [
+            _finding(item) for item in diagnose_file(path, deep=deep)
+        ]
+        for deep in (False, True)
+    }
+
+
+def findings() -> bytes:
+    """Every finding of every kept document, as the golden's JSON."""
+    table = {key: found for path in finding_documents() for key, found in findings_of(path).items()}
+    text = json.dumps(table, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    return text.encode("utf-8")
+
+
+def _plain(value: object) -> object:
+    """A value the front ends return, as JSON can hold it."""
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return {
+            field.name: _plain(getattr(value, field.name)) for field in dataclasses.fields(value)
+        }
+    if isinstance(value, dict):
+        return {str(key): _plain(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_plain(item) for item in value]
+    if isinstance(value, Path):
+        return value.relative_to(ROOT).as_posix() if value.is_absolute() else value.as_posix()
+    return value
+
+
+def _refusal(exc: ScenetError) -> dict[str, Any]:
+    return {
+        "refused": type(exc).__name__,
+        # Without the path `str()` puts in front, which is written as the system writes it.
+        "message": getattr(exc, "detail", str(exc)),
+        "rule": getattr(exc, "rule", None),
+        "loc": list(getattr(exc, "loc", None) or ()),
+        "line": getattr(exc, "line", None),
+        "source": _plain(getattr(exc, "source", None)),
+    }
+
+
+def _reading(read: Callable[[], object]) -> object:
+    try:
+        return _plain(read())
+    except ScenetError as exc:
+        return _refusal(exc)
+
+
+def parsed_of(path: Path) -> str:
+    """The SHA-256 of what the front end reads from a document, or of its refusal.
+
+    Each document is read twice, as a caller would: by the loader for its kind of file, and
+    by the parser that reads the whole document -- a script's lines and notes, a scene's
+    page layout, a panel file as the one panel of a scene.
+    """
+    text = path.read_text(encoding="utf-8")
+    if path.name.endswith(".script"):
+        readings = {
+            "loaded": _reading(lambda: load_script(path)),
+            "document": _reading(lambda: parse_script_document(text, source=path)),
+        }
+    elif path.name.endswith(".scene.yaml"):
+        readings = {
+            "loaded": _reading(lambda: load_scene(path)),
+            "document": _reading(lambda: load_scene_document(path)),
+        }
+    else:
+        readings = {
+            "loaded": _reading(lambda: load_panel(path)),
+            "document": _reading(lambda: parse_scene_document(text, source=path)),
+        }
+    encoded = json.dumps(readings, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def parsed() -> bytes:
+    """What every kept document reads as, as the golden's JSON."""
+    table = {path.relative_to(ROOT).as_posix(): parsed_of(path) for path in finding_documents()}
+    return (json.dumps(table, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
 def committed() -> tuple[dict[str, bytes], dict[str, str]]:
     """The goldens as committed."""
     cores = {path.name: path.read_bytes() for path in sorted(CORES.glob("*.core.json"))}
@@ -246,6 +391,10 @@ def differences(written: dict[str, bytes]) -> list[str]:
         for stale in sorted(GALLERY_PICTURES.glob("*"))
         if stale not in shown_now
     ]
+    if not FINDINGS.is_file() or FINDINGS.read_bytes() != findings():
+        names.append(FINDINGS.relative_to(ROOT).as_posix())
+    if not PARSED.is_file() or PARSED.read_bytes() != parsed():
+        names.append(PARSED.relative_to(ROOT).as_posix())
     return names
 
 
@@ -265,6 +414,8 @@ def write(written: dict[str, bytes]) -> None:
     for picture, source in pictures(written).items():
         picture.parent.mkdir(parents=True, exist_ok=True)
         picture.write_bytes(written[source])
+    FINDINGS.write_bytes(findings())
+    PARSED.write_bytes(parsed())
 
 
 def run(argv: list[str] | None = None) -> int:

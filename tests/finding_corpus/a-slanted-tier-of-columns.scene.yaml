@@ -1,0 +1,6 @@
+# A slant leans the gutters between panels, and columns have none upright.
+cast: {a: {reference: alice}}
+panels: {one: {}, two: {}}
+pages:
+  - tiers:
+      - {slant: 0.1, columns: [{panels: [one]}, {panels: [two]}]}

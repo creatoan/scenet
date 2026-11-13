@@ -1,0 +1,8 @@
+---
+# A description says what one panel shows, so it is no default.
+cast: {ALICE: {reference: alice}}
+description: A street.
+---
+PANEL 1
+ALICE
+Hi.

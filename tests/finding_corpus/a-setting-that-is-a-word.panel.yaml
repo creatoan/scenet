@@ -1,0 +1,3 @@
+# `setting` is a mapping; a place on its own is written `setting: {place: street}`.
+cast: {a: {reference: alice}}
+setting: street

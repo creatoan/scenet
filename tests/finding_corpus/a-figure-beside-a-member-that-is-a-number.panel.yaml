@@ -1,0 +1,4 @@
+# Member b is no mapping, so the cast is not all figures yet, whatever the camera says.
+cast: {a: {figure: ana}, b: 3}
+setting: {image: art/missing.png}
+camera: {shot: close_up}

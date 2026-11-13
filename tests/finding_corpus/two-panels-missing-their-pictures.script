@@ -1,0 +1,13 @@
+---
+# Each panel names a picture that is not beside this script.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@setting: {image: art/missing-one.png}
+ALICE
+Hello.
+
+PANEL 2
+@setting: {image: art/missing-two.png}
+ALICE
+Still here.

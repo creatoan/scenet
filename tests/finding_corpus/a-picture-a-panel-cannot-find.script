@@ -1,0 +1,12 @@
+---
+# Panel 2 names a picture that is not beside this script: found on its own line.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.
+
+PANEL 2
+@setting: {image: art/missing.png}
+ALICE
+Still here.

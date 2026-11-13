@@ -1,0 +1,11 @@
+---
+# Ana and Ben are figures a picture draws, in two panels, and no picture is named.
+cast: {ANA: {figure: ana}, BEN: {figure: ben}}
+---
+PANEL 1
+ANA
+Hello.
+
+PANEL 2
+BEN
+Hello.

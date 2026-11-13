@@ -1,0 +1,9 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PAGE ONE
+@tiers: two
+
+PANEL 1
+ALICE
+Hi.

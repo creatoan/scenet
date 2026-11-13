@@ -1,0 +1,4 @@
+# The picture framed its figures already, so a camera does not apply.
+cast: {a: {figure: ana}, b: {figure: ben}}
+setting: {image: art/missing.png}
+camera: close_up

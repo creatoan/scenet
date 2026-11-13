@@ -1,0 +1,9 @@
+---
+# Two faults in one panel; the earlier line holds the rule that sorts later.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@panel: {size: [0, 100]}
+@cast: {BOB: {reference: bob, facing: up}}
+ALICE
+Hi.

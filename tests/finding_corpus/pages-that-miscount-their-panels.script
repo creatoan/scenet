@@ -1,0 +1,24 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+PAGE ONE (two panels)
+
+PANEL 1
+ALICE
+Hi.
+
+PAGE TWO (one panel)
+
+PANEL 1
+BOB
+Hi.
+
+PANEL 2
+ALICE
+Bye.
+
+PAGE THREE (one panel)
+
+PANEL 1
+BOB
+Bye.

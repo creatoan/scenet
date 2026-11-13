@@ -1,0 +1,10 @@
+---
+# A puppet file that is no puppet, then a puppet nobody ships, in one panel.
+cast: {A: {reference: puppets/broken.puppet.yaml}, B: {reference: nobody}}
+---
+PANEL 1
+A
+Hi.
+
+B
+Hello.

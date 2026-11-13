@@ -1,0 +1,2 @@
+# Member a misspells the key that names a puppet; member b names none.
+cast: {a: {refrence: alice}, b: {}}

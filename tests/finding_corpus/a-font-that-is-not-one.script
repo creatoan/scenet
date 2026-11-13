@@ -1,0 +1,12 @@
+---
+# The file named for the font holds text.
+lettering: {font: fonts/not-a-font.ttf}
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.
+
+PANEL 2
+ALICE
+Again.

@@ -23,6 +23,10 @@ from scenet.geom import Circle, Point, Vector
 STILL = Vector(0.0, 0.0)
 
 
+#: The fewest points that enclose an area.
+MIN_BODY_POINTS = 3
+
+
 @dataclass(frozen=True, slots=True)
 class Speaker:
     """Somebody in the panel, as lettering placement sees them.
@@ -77,12 +81,14 @@ def speaker_of(puppet: ResolvedPuppet) -> Speaker:
         puppet: The posed puppet.
 
     Returns:
-        Its face, mouth, hull, eyes and gaze.
+        Its face, mouth, hull, eyes and gaze. A hull of fewer than three points has no
+        area -- a puppet that draws nothing but a face has its joints for a silhouette --
+        and is no body: the face alone is known, as for a figure that declares one.
     """
     return Speaker(
         face=puppet.face,
         mouth=puppet.anchors.get("mouth", puppet.face.centre),
-        body=puppet.hull,
+        body=puppet.hull if len(puppet.hull) >= MIN_BODY_POINTS else (),
         eyes=puppet.anchors.get("eyes"),
         gaze=puppet.gaze,
     )

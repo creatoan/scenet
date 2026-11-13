@@ -1,0 +1,9 @@
+---
+cast: {ALICE: {reference: alice}, BOB: {reference: bob}}
+---
+ALICE
+Spoken before any panel.
+
+PANEL 1
+BOB
+Hi.

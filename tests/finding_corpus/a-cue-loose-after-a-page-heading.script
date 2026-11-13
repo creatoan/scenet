@@ -1,0 +1,12 @@
+---
+# A cue with a line under it, between a PAGE heading and its first panel.
+cast: {ALICE: {reference: alice}}
+---
+PAGE ONE
+
+ALICE
+Hello there.
+
+PANEL 1
+ALICE
+Hi.

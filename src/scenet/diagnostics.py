@@ -1033,7 +1033,7 @@ def _diagnose_setting(
                 message=_message_of(exc),
                 path=path,
                 source=source,
-                region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+                region=locate(text, path) or DOCUMENT_START,
             )
         ]
     return []
@@ -1110,7 +1110,7 @@ def _located(
         message=_message_of(exc),
         path=path,
         source=source,
-        region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+        region=locate(text, path) or DOCUMENT_START,
     )
 
 
@@ -1229,7 +1229,7 @@ def _diagnose_lettering(
                 message=_message_of(exc),
                 path=path,
                 source=source,
-                region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+                region=locate(text, path) or DOCUMENT_START,
             )
         ]
     return []
@@ -1337,9 +1337,7 @@ def _diagnose_panel(
             ),
             path=(*prefix, "cast", item.actor),
             source=source,
-            region=locate(text, (*prefix, "cast", item.actor))
-            or locate(text, prefix)
-            or DOCUMENT_START,
+            region=locate(text, (*prefix, "cast", item.actor)) or DOCUMENT_START,
         )
         for item in dropped
     ]
@@ -1353,7 +1351,7 @@ def _diagnose_panel(
                 message=_message_of(exc),
                 path=path,
                 source=source,
-                region=locate(text, path) or locate(text, prefix) or DOCUMENT_START,
+                region=locate(text, path) or DOCUMENT_START,
             )
         ]
 
@@ -1387,7 +1385,7 @@ def _diagnose_panel(
             message=message,
             path=prefix + path,
             source=source,
-            region=locate(text, prefix + path) or locate(text, prefix) or DOCUMENT_START,
+            region=locate(text, prefix + path) or DOCUMENT_START,
         )
         for path, message in _over_the_word_limits(panel)
     ]
@@ -1465,9 +1463,7 @@ def _diagnose_scene(
                     message=problem,
                     path=("panels", name),
                     source=source,
-                    region=locate(text, ("panels", name))
-                    or locate(text, ("panels",))
-                    or DOCUMENT_START,
+                    region=locate(text, ("panels", name)) or DOCUMENT_START,
                 )
             )
         elif not isinstance(document, dict):

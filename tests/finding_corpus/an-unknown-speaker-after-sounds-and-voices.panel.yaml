@@ -1,0 +1,7 @@
+# A sound, a caption and a voice from off panel come first; the speaker after them is in no cast.
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: BANG}
+  - caption: {kind: locale, text: Later.}
+  - say: {by: carol, text: Hi., off_panel: true}
+  - say: {by: ghost, text: Hello.}

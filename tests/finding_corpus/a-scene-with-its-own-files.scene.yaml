@@ -1,0 +1,12 @@
+# Everything this scene names is a file beside the gallery: a picture, a font, a puppet.
+setting: {image: ../../examples/gallery/art/street.png}
+lettering: {font: ../../examples/gallery/fonts/ComicNeue-Regular.ttf}
+cast:
+  alice: {reference: alice, at: left_third}
+  pip: {reference: ../../examples/gallery/puppets/pip.puppet.yaml, at: right_third}
+panels:
+  one: {script: [{say: {by: alice, text: "Hello, Pip."}}]}
+  two: {script: [{say: {by: pip, text: "Hello."}}]}
+pages:
+  - tiers:
+      - panels: [one, two]

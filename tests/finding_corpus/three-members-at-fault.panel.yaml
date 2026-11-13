@@ -1,0 +1,6 @@
+# Each member is wrong in its own way, and each is reported.
+cast:
+  a: {reference: nobody}
+  b: {reference: alice, expression: smirking}
+  c: {reference: nobody-else}
+  d: {reference: bob, pose: cartwheeling}

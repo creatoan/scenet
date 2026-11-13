@@ -1,0 +1,4 @@
+# The script beside `panels:` is a default, and its speaker is in no cast: one fault.
+cast: {alice: {reference: alice}}
+script: [{say: {by: nobody, text: Hello.}}]
+panels: {one: {}, two: {}}

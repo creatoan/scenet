@@ -1,0 +1,9 @@
+---
+# Two faults in one panel; the first line holds the one validated second.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@cast: {BOB: {reference: bob, facing: up}}
+@panel: {size: [0, 100]}
+ALICE
+Hi.

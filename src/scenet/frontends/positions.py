@@ -102,7 +102,8 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
 
     Returns:
         The region, or `None` if the text does not compose at all -- in which case the
-        caller has a syntax error to report and no use for a path.
+        caller has a syntax error to report and no use for a path. So when one path is
+        not found, no shorter path in the same text is either.
 
     Example:
         >>> from scenet.frontends.positions import locate

@@ -1,0 +1,4 @@
+# Two pages, and each is a number: each is reported.
+cast: {a: {reference: alice}}
+panels: {one: {}}
+pages: [3, 4]

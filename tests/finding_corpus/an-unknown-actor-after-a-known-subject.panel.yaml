@@ -1,0 +1,3 @@
+# The relation's subject is cast and its object is not.
+cast: {alice: {reference: alice}}
+staging: [alice left_of ghost]

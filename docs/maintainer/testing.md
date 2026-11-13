@@ -90,7 +90,22 @@ compares the bytes on disk with what is committed:
   or else its strip, or else its one panel, written whole. An example lettered over a picture
   of its own is built once more with `--embed-images` for it, since an SVG shown as an image
   loads nothing from outside itself. `tests/test_docs_gallery.py` holds each picture to its
-  digest.
+  digest;
+- `tests/golden/findings.json` holds every finding `scenet check` gives, with and without
+  `--deep`, on every gallery example, every document of `tests/rule_corpus/` and its fixed
+  twins, and every document of `tests/finding_corpus/`: its rule, level, message, path, file,
+  region and fingerprint. The rule corpus says which rule a document breaks; this says
+  everything else, and the gallery is there for what it does not say -- a check that lost the
+  document's folder or its puppets would find fault with it;
+- `tests/golden/parsed.json` holds the SHA-256 of what the front ends read from each of the
+  same documents -- every panel's IR, a script's lines, notes and page layout -- or of how they
+  refused it: what is read on the way to a Core, which a Core does not show.
+
+`tests/finding_corpus/` is one document for each way of reaching a finding or a refusal that
+neither the gallery nor the rule corpus takes: a fault inherited over a panel, a default no
+panel overrides, a script's every refusal. Mutation testing is what found each of them
+missing ([#345](https://github.com/creatoan/scenet/issues/345)); a new way of refusing a
+document adds one.
 
 It also builds the gallery in two processes with different `PYTHONHASHSEED`s, and one scene
 and one script from a relative path, an absolute one and another directory; each must
@@ -1038,6 +1053,72 @@ below, under the same numbers.
 |---|---|---|
 | `_check_runs` 7, 10, 11 | `zip(..., strict=True)` relaxed | The line before refuses runs that are not one per line, so the two sequences are always as long. |
 | `PanelCore.to_json` 138, `PageCore.to_json` 25 | `ensure_ascii=False` to `None` | `json.dumps` only asks whether it is true, and `None` is not. |
+
+#### What holds the rest
+
+Most survivors of the other three modules were what a refusal or a finding says -- its
+message, its rule, its path, the file it names, where it points -- or what a front end reads
+on the way to a Core. Two goldens hold all of that for every document of the gallery, the rule
+corpus and `tests/finding_corpus/`; see [Golden outputs](#golden-outputs). The finding corpus
+gained a document for each way of reaching a refusal that no document took: a fault inherited
+over a panel, a default no panel overrides, every refusal of a comic script. What no document
+can reach -- an IR check the front ends always refuse first, a page's room to the unit -- has a
+test of its own: `tests/test_page_room.py`, `tests/test_ir_checks.py`,
+`tests/test_diagnostics_library.py`, `tests/test_locating.py` and `tests/test_summaries.py`.
+
+Checking with a library of one puppet the shipped one lacks, which `tests/test_diagnostics_library.py`
+does at every step, found a bug: a puppet that draws nothing but a face crashed balloon
+placement. It is fixed in `solve/speakers.py`.
+
+Twelve `locate(text, path) or locate(text, prefix) or DOCUMENT_START` in `diagnostics.py` were
+two lookups where one decides: `locate` is `None` only for text that does not compose, and then
+no path in it is found. The second lookup is gone, and with it a dozen mutants no test could
+see.
+
+#### `frontends/`
+
+[`43435768392`](https://github.com/creatoan/scenet/actions/runs/43435768392) ran
+`frontends/common` and `frontends/yaml` with the goldens, and left 39 and 37 survivors; each
+since killed was applied by hand to see a test fail. Accepted:
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `common.py` `_figures_stand_alone` 55 | `next(iter(camera), None)` without its default | An empty camera returns before it, so the mapping always has a first key. |
+| `common.py` `_merge_misspellings` 53, 56 | `n=1` left out, or 2 | Only the first match is read, and `get_close_matches` puts the best first. |
+| `yaml_front.py` `_validate_panels` 73, 80 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `positions.py` `syntax_error_region` 24 | `getattr(mark, "buffer")` without its default | Every PyYAML mark has a `buffer`, `None` when it holds no text. |
+| `positions.py` `syntax_error_region` 30 | `rstrip("\0")` to `rstrip("XX\0XX")` | An `X` goes too only off a buffer whose last line has no newline, and the mark of an error at its end is then on that line, so the count of lines is never read. |
+
+The same run left `frontends/script` 170 survivors of 2,174. `tests/test_script_words.py`
+holds the words a script is read by -- numbers written out, headings, labels, cues, quotes --
+and the finding corpus a script for each way of reading one the gallery does not take: casts
+ahead of the line that needs them, removals inherited over a panel, a sound and the prose under
+it, front matter in flow style or after a blank line. Every mutant killed was applied by hand.
+Accepted, all in `script_front.py`:
+
+| Mutants | Change | Why it cannot change an output |
+|---|---|---|
+| `_split_front_matter` 7, 19 | `count("\n", 0, ...)` from `None` | Counting from `None` is counting from the start. |
+| `_split_front_matter` 65, 66; `_first_fault` 28, 29; `_composed` 37, 38 | the branch with no line, or no path | Every YAML error has a mark, every fault of a panel's IR names a field, and every `@over:` has a line. |
+| `_first_fault` 18, 20 | `min` without its key | The faults are tuples that start with their line, so the first line is the least either way. |
+| `_composed` 17, 20, 21, 22, 25; `_over_target` 15, 16 | the composition error's path read or written otherwise | Every composition error is at `("panels", name, "over")`, and only the name in it is read. |
+| `_inherited_casts` 11, 14, 15 | `zip(..., strict=True)` relaxed | The names are made from the panels, one each. |
+| `_inherited_casts` 22, 28; `_panel_casts` 2 | a panel before any PAGE heading looked up by page | Without pages, every panel is named by its label, which the lookup falls back to; with pages, a panel before the first is refused. |
+| `_panel_casts` 14, 15, 19 | the line or page given to `_read_panel_heading` | The pre-scan reads only a heading's label, which neither decides. |
+| `_panel_casts` 50 | `continue` to `break` after a `@cast:` that is not YAML | That panel is refused at that line when it is read, before any later panel is. |
+| `_PanelDraft.line_of` 19, 21 | `max(..., key=len)` without its key | The directives a fault falls under are prefixes of its path, so the longest is also the greatest. |
+| `_Reader.__init__` 10, 11, 16; `_Reader.end_of_page` 3; `_Reader.heading` 7 | a first value, or a page's line | A panel heading clears the cue and the speech, a page heading the count and the heading, before either is read; a page's line is never read. |
+| `_Reader.caption` 24; `_modifiers` 8; `_read_page_heading` 28 | `if speaker` always true, or a default of `"XXXX"` | A missing speaker is `None` either way; no parenthesis is found in `"XXXX"`; a note of `"XXXX"` is no count. |
+| `_read_panel_heading` 37, 38 | `"CASE"` spelled otherwise | `_is_a_panel_label` only asks whether the keyword is `PANEL`. |
+| `_unquoted` 3, 4 | `len(text) > 1` moved by one | A text of one or two characters that opens and closes with a quote has nothing inside to keep. |
+| `_recognisable` 7, 9 | `count=1` left out, or 2 | The heading pattern is anchored at the start, so it matches once at most. |
+| `default_tiers` 2, 11 | the entry for one panel, or four, moved | The rows computed for one panel and for four are `[1]` and `[2, 2]`. |
+| `_check_prose` 4 | words joined by `"XX XX"` | `unholdable` names the first character it cannot hold, and the join adds none. |
+| `_check_direction` 6; `parse_script_document` 25, 45 | the front matter's length `None` | Then every line is searched, and the key's first line is the front matter's. |
+| `_apply_directive` 94 | `key == "cast"` always true | Every other directive's value is not a mapping, which `_reserved_name` reads as no name. |
+| `_camera_word` 25 | French words of more than four letters, not three | No French shot or angle is four letters long. |
+| `_off_panel` 67, 69, 84, 86 | who leaves read otherwise, or a missing script defaulted | A voice nobody casts is in no relation but `looking_at`, which stays either way; a panel somebody leaves from off panel has a script. |
+| `_read_script` 1 | `offset` defaults to 1 | Its one caller passes it. |
 
 ### Exploring with fresh seeds
 
