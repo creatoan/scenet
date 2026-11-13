@@ -25,9 +25,9 @@ from typing import Any, Protocol
 # The `fonts` packages publish each face through entry_points at install time, so
 # the attribute exists at runtime but cannot be seen statically.
 from fonts.ttf import (
-    SourceSansPro,  # ty: ignore[unresolved-import]  # pyright: ignore[reportAttributeAccessIssue]
-    SourceSansProBoldIt,  # ty: ignore[unresolved-import]  # pyright: ignore[reportAttributeAccessIssue]
-    SourceSansProIt,  # ty: ignore[unresolved-import]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansPro,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansProBoldIt,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansProIt,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
 )
 from fontTools.pens.basePen import BasePen
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -462,7 +462,7 @@ class FontMetrics:
         # fontTools builds table objects dynamically, so `unitsPerEm` exists at runtime
         # but not in any stub. Both checkers are told, each in its own dialect.
         head = self._font["head"]
-        self._units_per_em: float = head.unitsPerEm  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+        self._units_per_em: float = head.unitsPerEm  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
         # A font with no usable Unicode cmap cannot be measured against text at all,
         # so this is worth failing on loudly rather than limping along with no glyphs.
         # fontTools raises KeyError for a font with no `cmap` table at all, rather than

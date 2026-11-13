@@ -39,7 +39,7 @@ from scenet.ir import Fit
 from scenet.pipeline import Book, compile_book, compile_book_file
 
 ROOT = Path(__file__).parent.parent
-SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 GALLERY = ROOT / "examples" / "gallery"
 ENTRIES = yaml.safe_load((GALLERY / "manifest.yaml").read_text(encoding="utf-8"))["examples"]
 IDS = [entry["file"] for entry in ENTRIES]

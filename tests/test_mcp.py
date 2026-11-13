@@ -634,7 +634,7 @@ class TestFilesBesideTheDocument:
         assert "data:image/png;base64," in svg.text
 
     def test_a_font_comes_the_same_way(self):
-        face = Path(fonts.ttf.SourceSansProSemibold).read_bytes()  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+        face = Path(fonts.ttf.SourceSansProSemibold).read_bytes()  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
         source = (
             "cast: {alice: {reference: alice}}\nlettering: {font: fonts/Comic.ttf}\n"
             "script: [{say: {by: alice, text: Hi}}]\n"

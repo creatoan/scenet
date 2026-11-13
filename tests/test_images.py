@@ -220,7 +220,7 @@ class TestTheFilesThemselvesMayStandInForTheFolder:
     ):
         import fonts.ttf  # noqa: PLC0415 -- only this test needs the shipped family's files
 
-        face = Path(fonts.ttf.SourceSansProSemibold).read_bytes()  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+        face = Path(fonts.ttf.SourceSansProSemibold).read_bytes()  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
         (folder / "fonts").mkdir()
         (folder / "fonts" / "Comic.ttf").write_bytes(face)
         source = (

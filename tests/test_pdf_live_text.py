@@ -292,7 +292,7 @@ def test_a_kern_in_a_face_of_another_size_is_written_to_the_millionth(tmp_path: 
     folder = tmp_path / "comic"
     (folder / "fonts").mkdir(parents=True)
     font = TTFont(str(face(tmp_path / "k.ttf")))
-    font["head"].unitsPerEm = 2048  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue] -- fontTools tables are untyped
+    font["head"].unitsPerEm = 2048  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue] -- fontTools tables are untyped
     addOpenTypeFeaturesFromString(font, "feature kern { pos A B -37; } kern;")
     font.save(str(folder / "fonts" / "K.ttf"))
     source = folder / "panel.panel.yaml"
