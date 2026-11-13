@@ -437,7 +437,7 @@ gallery are what guard them.
 | `frontends/script` | `frontends/script_front.py` | 2,104 | 333 | 84.2% | 84% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 500 | 44 | 91.2% | 91% | [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598) |
 | `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 359 | 71 | 80.2% | 80% | [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598) |
-| `core` | `core.py` | 351 | 31 | 91.2% | 91% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43435527525`](https://github.com/creatoan/scenet/actions/runs/43435527525) |
 | `ir` | `ir.py` | 165 | 22 | 86.7% | 86% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `diagnostics` | `diagnostics.py` | 1,603 | 262 | 83.7% | 83% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 
@@ -1004,6 +1004,40 @@ here:
 | `solve/page.py` `_bled` 97 | every corner not on the top moved to the bottom line | A slanted tier's corners all lie on its top or its bottom edge. |
 | `geometry.py` `border` 16 | `range(4)` to `range(5)` | A panel whose border is drawn open has a side open and a side kept, so a start is found before the fifth. |
 | `geometry.py` `border` 22, 38 | the current line `None` instead of empty | `current or [...]` and `if current` read both as empty. |
+
+### Past `solve/` and `emit/`
+
+`frontends/`, `core.py`, `ir.py` and `diagnostics.py` were mutated for the first time by
+[`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157)
+([#345](https://github.com/creatoan/scenet/issues/345)). Two things kept mutants from
+`ir.py` before a test could see them, and both are lessons for any module:
+
+- **A decorated function is never mutated.** A pydantic validator is one, and the IR's
+  checks -- every reference resolving, no ordering cycle, a page with room for its panels --
+  were all in validators. Each validator now calls a plain function after its class, which
+  holds the check and is mutated as usual; see the blind spot above.
+- **A function that only runs at import runs before the mutant is chosen.** mutmut forks each
+  mutant from a process that has imported everything, so `tag_by`, which builds a union's
+  discriminator once as `ir.py` is imported, ran unmutated in every mutant's process: its 14
+  mutants survived whatever the tests did. The closure it builds now calls `_tag_of`, which
+  runs on every value a union validates. The mutants of `tag_by`'s own body are still built
+  at import, and are accepted with the rest of `ir.py`'s survivors.
+
+#### `core.py`
+
+[`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157): 351 mutants and
+31 survivors. 26 are killed by `tests/test_core_documents.py`: the path and the rule a
+hand-edited picture or puppet file is refused under when a Core is read back, the kind of Core
+the refusal names, a Page Core's text beyond ASCII, an unknown actor's message, a tail aimed at
+the face of a puppet with no mouth, and a monochrome copy of weather with no veil. Each was
+applied by hand to see a test fail. Run again with them,
+[`43435527525`](https://github.com/creatoan/scenet/actions/runs/43435527525) left the five
+below, under the same numbers.
+
+| Mutant | Change | Why it cannot change an output |
+|---|---|---|
+| `_check_runs` 7, 10, 11 | `zip(..., strict=True)` relaxed | The line before refuses runs that are not one per line, so the two sequences are always as long. |
+| `PanelCore.to_json` 138, `PageCore.to_json` 25 | `ensure_ascii=False` to `None` | `json.dumps` only asks whether it is true, and `None` is not. |
 
 ### Exploring with fresh seeds
 
