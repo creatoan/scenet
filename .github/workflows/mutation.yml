@@ -8,10 +8,9 @@ name: Mutation testing
 # checks. Its survivors are triaged as described in docs/maintainer/testing.md.
 #
 # One job mutating everything stopped finishing: three weekly runs were cancelled at the
-# time limit, and a cancelled job saves no cache, so each started from nothing again (#345).
-# The run is split into legs instead, listed in scripts/mutation.py: one job each, each with
-# a cache of its own, each failing when its score falls below its threshold or when it
-# stops with mutants it never tried.
+# time limit (#345). The run is split into legs instead, listed in scripts/mutation.py: one
+# job each, each run from nothing, each failing when its score falls below its threshold or
+# when it stops with mutants it never tried.
 #
 # The second job explores: the property tests with fresh random seeds and 300 examples
 # each, where CI always runs the same 20. A failure it finds prints a reproduction; pin
@@ -78,11 +77,12 @@ jobs:
     name: mutmut (${{ matrix.name }})
     needs: legs
     runs-on: ubuntu-26.04
-    # From nothing, a leg took 20 to 95 minutes on its first run: a mutant of a module the
-    # whole pipeline goes through runs much of the suite before it fails, or all of it when it
-    # survives. Cached, a week re-tests only what changed. A cache saved on a pull request
-    # is not one `main` can read, so the first scheduled run after a merge starts from
-    # nothing too, and the limit leaves room for it.
+    # A leg runs from nothing every time, in up to two hours: a mutant of a module the whole
+    # pipeline goes through runs much of the suite before it fails, or all of it when it
+    # survives. Nothing is kept between runs. mutmut resumes from a kept `mutants/`, but it
+    # re-tests only the functions whose code changed: a survivor that a new test, a new
+    # golden or a change elsewhere in the package now kills stays a survivor, so the list a
+    # cached run reports drifts from the truth, and triage is done against it.
     timeout-minutes: 180
     strategy:
       fail-fast: false
@@ -100,28 +100,6 @@ jobs:
       # that needs a group this skips fails it before a single mutant is tried.
       - name: Sync dependencies
         run: uv sync --frozen --all-groups
-
-      # mutmut resumes, and only re-tests functions whose code changed, so keeping its
-      # working directory between runs makes most weeks incremental. Each leg keeps its
-      # own: a cache restored from another leg would hold that leg's mutants.
-      - name: Restore the previous run
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: mutants
-          key: mutants-${{ matrix.key }}-${{ hashFiles('uv.lock') }}-${{ github.sha }}
-          restore-keys: mutants-${{ matrix.key }}-${{ hashFiles('uv.lock') }}-
-
-      # mutmut copies a file into `mutants/` only when it is not already there, and checks
-      # `.py` files by modification time. So a restored cache keeps the first copy of
-      # every other file under `src/`, however much the source has moved on. One of them
-      # is `scenet-spec.md`, which is generated from the rules and the language reference:
-      # `tests/test_spec_pack.py` compares it with a fresh build, and a copy from before
-      # the last change fails that test in mutmut's clean run, so no mutant is tried at
-      # all. Copy them again; there are four.
-      - name: Refresh the files mutmut keeps from the cache
-        run: |
-          mkdir -p mutants
-          git ls-files -z src | grep -zv '\.py$' | xargs -0 -I{} cp --parents -f {} mutants/
 
       - name: Narrow to the leg
         env:

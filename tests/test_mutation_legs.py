@@ -1,9 +1,8 @@
 """The weekly mutation run is split into legs, and each is held to a threshold (#345).
 
 One job mutating all of `solve/` and `emit/` stopped finishing: three weekly runs were
-cancelled at the 120-minute limit, and a cancelled run saves no cache, so the next one
-started from nothing again. `scripts/mutation.py` lists the legs; the workflow builds its
-matrix from that list, runs each leg with its own cache, and fails a leg whose score falls
+cancelled at the 120-minute limit. `scripts/mutation.py` lists the legs; the workflow builds
+its matrix from that list, runs each leg from nothing, and fails a leg whose score falls
 below its threshold. `docs/maintainer/testing.md` gives the same scores and thresholds.
 """
 
@@ -93,7 +92,7 @@ class TestTheLegs:
         for leg in holding:
             assert _matching(leg.paths) <= files, leg.name
 
-    def test_names_and_cache_keys_are_unique(self, mutation: ModuleType):
+    def test_names_and_artifact_keys_are_unique(self, mutation: ModuleType):
         names = [leg.name for leg in mutation.LEGS]
         keys = [leg.key for leg in mutation.LEGS]
         assert len(set(names)) == len(names)
@@ -162,7 +161,7 @@ class TestTheMatrix:
         assert leg["threshold"] == ""
         assert re.fullmatch(r"path-[0-9a-f]{12}", leg["key"])
 
-    def test_two_paths_do_not_share_a_cache(self, mutation: ModuleType):
+    def test_two_paths_do_not_share_an_artifact(self, mutation: ModuleType):
         one = json.loads(mutation.matrix(path="src/scenet/solve/camera.py"))
         two = json.loads(mutation.matrix(path="src/scenet/solve/text.py"))
         assert one["include"][0]["key"] != two["include"][0]["key"]

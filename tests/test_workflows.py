@@ -549,3 +549,16 @@ class TestThePullRequestRunsOneLeg:
     def test_a_new_push_replaces_the_last_run(self):
         concurrency = _load("mutation.yml")["concurrency"]
         assert concurrency["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
+
+
+def test_a_leg_runs_from_nothing():
+    """mutmut re-tests only functions whose code changed, so a kept `mutants/` keeps a
+    survivor a new test now kills, and the weekly list drifts from the truth (#345)."""
+    job = _load("mutation.yml")["jobs"]["mutmut"]
+    cached = [
+        step
+        for step in job["steps"]
+        if str(step.get("uses", "")).startswith("actions/cache@")
+        and "mutants" in str(step.get("with", {}).get("path", ""))
+    ]
+    assert cached == []

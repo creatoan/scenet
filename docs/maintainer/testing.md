@@ -282,9 +282,10 @@ passes. Each survivor is a behaviour nothing checks.
 It runs weekly, and on demand, in `.github/workflows/mutation.yml`, split into **legs**: one
 job each, listed in `scripts/mutation.py`, each sized to finish from nothing well inside the
 job's time limit. One job mutating everything stopped finishing -- three weekly runs were
-cancelled at 120 minutes, and a cancelled job saves no cache, so each began again from nothing
-([#345](https://github.com/creatoan/scenet/issues/345)). Each leg keeps its own cache, so most
-weeks only re-test what changed. A file under a mutated directory belongs to exactly one leg,
+cancelled at 120 minutes ([#345](https://github.com/creatoan/scenet/issues/345)). Each leg runs
+from nothing, every time: mutmut can resume from a kept `mutants/`, but it re-tests only the
+functions whose code changed, so a survivor a new test now kills would stay one, and triage
+would be done against a list that is no longer true. A file under a mutated directory belongs to exactly one leg,
 and `tests/test_mutation_legs.py` fails on a new one until it is given one.
 
 Each leg's job summary gives its score and lists its survivors. Its `mutmut-results-<leg>`

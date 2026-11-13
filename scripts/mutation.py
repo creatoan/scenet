@@ -1,9 +1,8 @@
 """The weekly mutation run's legs, and what `.github/workflows/mutation.yml` does with each.
 
-One job mutating everything stopped finishing inside its time limit, and a cancelled job
-saves no cache, so every week started again from nothing. The run is split into the legs
-below instead. Each runs as its own job with its own cache, and fails when its score falls
-below its threshold, or when it stops with mutants it never tried.
+One job mutating everything stopped finishing inside its time limit. The run is split
+into the legs below instead. Each runs as its own job, from nothing, and fails when its
+score falls below its threshold, or when it stops with mutants it never tried.
 `docs/maintainer/testing.md` gives the same table, and a test holds the two together.
 
     python scripts/mutation.py matrix [--legs NAME,...] [--path GLOB]
@@ -61,7 +60,7 @@ class Leg:
 
     @property
     def key(self) -> str:
-        """The leg's name as a cache key: lower case, letters, digits and dashes."""
+        """The leg's name as its artifact is named: lower case, letters, digits and dashes."""
         return re.sub(r"[^a-z0-9]+", "-", self.name.lower()).strip("-")
 
 
@@ -185,7 +184,7 @@ def matrix(legs: str = "", path: str = "") -> str:
             a probe during triage, not a score to hold.
 
     Returns:
-        `{"include": [...]}`, one entry per job, each a name, a cache key, the paths
+        `{"include": [...]}`, one entry per job, each a name, an artifact key, the paths
         separated by spaces, and the threshold, empty when there is none.
     """
     if path:
