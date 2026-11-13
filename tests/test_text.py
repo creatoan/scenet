@@ -274,7 +274,7 @@ class TestAFreshFontMetrics:
 
     def test_it_reads_the_em_from_the_head_table(self, fresh: FontMetrics):
         font = TTFont(str(DEFAULT_FONT_PATH))
-        assert fresh.units_per_em == font["head"].unitsPerEm == 1000  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+        assert fresh.units_per_em == font["head"].unitsPerEm == 1000  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_it_measures_exactly_as_the_cached_instance_does(self, fresh: FontMetrics):
         text = "You forgot your umbrella!"

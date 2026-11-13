@@ -15,7 +15,7 @@ from scenet.pipeline import compile_book_file
 from scenet.watch import WatchSession, _nearest_existing_directory, snapshot, watch_loop
 from tests.images import contract, png
 
-SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 
 PANEL = """cast:
   alice: {reference: alice}

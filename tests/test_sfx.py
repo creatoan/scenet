@@ -59,7 +59,7 @@ from scenet.solve.speakers import NOBODY, Bystanders, Speaker
 from scenet.solve.text import DISPLAY_FONT_PATH, Typeface
 from tests.invariants import assert_effects_are_placed, assert_svg_is_sound
 
-SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 
 PANEL = (
     "panel: {size: [1200, 800], margin: 20}\n"

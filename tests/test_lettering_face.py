@@ -48,8 +48,8 @@ from tests.invariants import assert_svg_is_sound
 
 #: Faces of the shipped family that are not the ones it letters in, standing in for an
 #: author's own: real files, measurably different, and nothing new to commit.
-SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
-SEMIBOLD_ITALIC = Path(fonts.ttf.SourceSansProSemiboldIt)  # ty: ignore[unresolved-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+SEMIBOLD = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
+SEMIBOLD_ITALIC = Path(fonts.ttf.SourceSansProSemiboldIt)  # ty: ignore[missing-attribute]  # pyright: ignore[reportAttributeAccessIssue]
 
 CAST = "cast: {alice: {reference: alice}}\n"
 SAY = "script:\n  - say: {by: alice, text: I _told_ you so.}\n"
