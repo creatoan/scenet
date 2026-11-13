@@ -275,16 +275,46 @@ that trips on it landed:
 
 Coverage shows which lines ran, not whether any assertion would notice them changing.
 [mutmut](https://github.com/boxed/mutmut) does notice: it makes one small edit at a time to
-the solver and the emitters -- `<` becomes `<=`, a constant is nudged, an argument dropped --
-and reports every edit the suite still passes. Each survivor is a behaviour nothing checks.
+the solver, the emitters, the front ends, the Core, the IR and the diagnostics -- `<` becomes
+`<=`, a constant is nudged, an argument dropped -- and reports every edit the suite still
+passes. Each survivor is a behaviour nothing checks.
 
-It runs weekly, and on demand, in `.github/workflows/mutation.yml`. The only pull request
-it runs on is one that changes the workflow itself: a full run takes far longer than a review
-should wait. The job summary gives the score and lists the survivors. The `mutmut-results`
+It runs weekly, and on demand, in `.github/workflows/mutation.yml`, split into **legs**: one
+job each, listed in `scripts/mutation.py`, each sized to finish from nothing well inside the
+job's time limit. One job mutating everything stopped finishing -- three weekly runs were
+cancelled at 120 minutes, and a cancelled job saves no cache, so each began again from nothing
+([#345](https://github.com/creatoan/scenet/issues/345)). Each leg keeps its own cache, so most
+weeks only re-test what changed. A file under a mutated directory belongs to exactly one leg,
+and `tests/test_mutation_legs.py` fails on a new one until it is given one.
+
+Each leg's job summary gives its score and lists its survivors. Its `mutmut-results-<leg>`
 artifact holds the same list, and `survivors.diff`: every survivor's change, as `mutmut show`
-prints it, which is what triage starts from. A run on one file is a `workflow_dispatch` with
-`path` set, on whichever branch holds the tests to try. It is not a required check, and there is no threshold until the baseline
-below has been worked down.
+prints it, which is what triage starts from. **A leg fails** when its score falls below its
+threshold, in the table below, or when it stopped with mutants it never tried: those count as
+survivors, and the list would not be the whole list. A run by hand is a `workflow_dispatch`
+on whichever branch holds the tests to try: `legs` runs the named legs, with their
+thresholds; `path` mutates one file or glob instead, with none.
+
+Pull requests do not run mutants: a run takes far longer than a review should wait. They run
+the check **Mutation clean run** (`ci.yml`): mutmut up to its forced-fail test, every leg's
+files mutated together, in four shards of the test files, each a job of its own. Whole, it
+ran 22 minutes: it is the suite three times over, and the stats pass three times slower with
+every function behind a trampoline. A shard leaves out the coverage pass, which only decides
+which lines get mutants. The weekly run broke four times in that step and nowhere else
+([#139](https://github.com/creatoan/scenet/issues/139),
+[#152](https://github.com/creatoan/scenet/issues/152),
+[#193](https://github.com/creatoan/scenet/issues/193), [#345](https://github.com/creatoan/scenet/issues/345)), so it is a required check. What
+breaks it:
+
+- **A test that reads a mutated file's text**, to compare it with what a generator writes or
+  to scan it: mutmut has rewritten it. Mark it `@reads_the_source`, from
+  `tests/under_mutmut.py`, which skips it under mutmut. It holds the text, not the behaviour,
+  so no mutant could be killed by it.
+- **A file the tests read that `mutants/` does not hold.** `also_copy` in `pyproject.toml`
+  is everything git tracks at the top of the repository, and a test holds it to that.
+- **A child process of the stats run.** It inherits `MUTANT_UNDER_TEST=stats` and, importing
+  a mutated module, looks for mutmut's configuration in its own working directory. The tests'
+  `conftest.py` drops the variable in the stats run, which mutmut does not need.
 
 **Why mutmut.** Our imports are slow -- numpy, shapely, kiwisolver, fontTools -- and the suite
 takes about 40 seconds. mutmut forks each mutant from a process that has already imported
@@ -308,9 +338,16 @@ into `*` in the rain or snow density asks for millions of streaks -- and, uncapp
 them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in a
 `MemoryError` and counts as killed. A test process needs under 1 GB.
 
-`[tool.mutmut]` in `pyproject.toml` limits it to `src/scenet/solve/` and `src/scenet/emit/`,
-mutates only lines the tests cover, and runs mutants without the coverage floor, doctests or
-the documentation examples. To try one file, run the workflow by hand with its `path` input.
+`[tool.mutmut]` in `pyproject.toml` limits it to `solve/`, `emit/`, `frontends/`, `core.py`,
+`ir.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
+coverage floor, doctests or the documentation examples. To run one leg locally, narrow it
+first, as its job does, and restore the file after:
+
+```bash
+uv run python scripts/mutation.py matrix          # every leg, its paths and threshold
+uv run python scripts/mutation.py narrow src/scenet/core.py
+uv run python scripts/mutation.py clean-run --shard 1/4   # one of the pull request's checks
+```
 
 **On Windows**, mutmut needs `fork()`, so run it under WSL with a Linux distribution:
 
@@ -341,6 +378,27 @@ The undecorated methods of the same classes are mutated as usual. `was_pulled_ba
 `head_top_y` are the ones that matter: they are part of the framing geometry, and until
 mutmut reaches them the shot-type tests in `tests/test_camera.py` and the golden Cores are
 what guard them.
+
+### Scores and thresholds
+
+| Leg | Files | Mutants | Survivors | Score | Threshold | Run |
+|---|---|---|---|---|---|---|
+| `solve/balloons` | `solve/balloons.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `solve/backdrop` | `solve/backdrop.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `solve/text` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py`, `solve/text.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `emit/pdf` | `emit/pdf.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `frontends/script` | `frontends/script_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `frontends/other` | `frontends/__init__.py`, `frontends/common.py`, `frontends/positions.py`, `frontends/yaml_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `core` | `core.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `ir` | `ir.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `diagnostics` | `diagnostics.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+
+PROVISIONAL: measured on the first run of the legs, which replaces this paragraph.
 
 ### Baseline
 

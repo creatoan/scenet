@@ -350,3 +350,48 @@ class TestTheStatsStayInThisProcess:
         monkeypatch.delenv("MUTANT_UNDER_TEST", raising=False)
         under_mutmut.keep_the_stats_in_this_process()
         assert "MUTANT_UNDER_TEST" not in os.environ
+
+
+class TestTheCleanRunIsSharded:
+    """The clean run is the suite three times over -- coverage, stats, clean -- each slower
+    than a plain run, and the stats run three times slower with every function behind a
+    trampoline. Run whole, it took 22 minutes. A pull request runs it as four shards of the
+    test files, without the coverage pass, which decides only which lines get mutants."""
+
+    def test_the_shards_split_the_test_files_between_them(self, mutation: ModuleType):
+        files = mutation.test_files()
+        shards = [mutation.shard(files, number, of=4) for number in range(1, 5)]
+        assert all(shards)
+        assert sorted(path for one in shards for path in one) == sorted(files)
+
+    def test_every_test_file_is_found(self, mutation: ModuleType):
+        files = mutation.test_files()
+        assert "tests/test_mutation_legs.py" in files
+        assert any(path.startswith("tests/properties/") for path in files)
+        assert all(path.startswith("tests/") and path.endswith(".py") for path in files)
+        assert len(files) == len(set(files))
+
+    def test_the_shards_are_near_one_size(self, mutation: ModuleType):
+        files = mutation.test_files()
+        sizes = [
+            sum((ROOT / path).stat().st_size for path in mutation.shard(files, number, of=4))
+            for number in range(1, 5)
+        ]
+        assert max(sizes) < 1.25 * min(sizes)
+
+    def test_a_shard_number_out_of_range_is_refused(self, mutation: ModuleType):
+        with pytest.raises(SystemExit, match="shard 5 of 4"):
+            mutation.shard(mutation.test_files(), 5, of=4)
+
+    def test_the_configuration_runs_the_shard_s_files_without_coverage(self, mutation: ModuleType):
+        text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        config = tomllib.loads(
+            mutation.for_a_shard(text, ["tests/test_ir.py", "tests/test_page.py"])
+        )
+        mutmut = config["tool"]["mutmut"]
+        assert mutmut["pytest_add_cli_args_test_selection"] == [
+            "tests/test_ir.py",
+            "tests/test_page.py",
+        ]
+        assert mutmut["mutate_only_covered_lines"] is False
+        assert mutmut["only_mutate"] == _only_mutate()

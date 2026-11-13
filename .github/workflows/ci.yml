@@ -194,15 +194,24 @@ jobs:
           uv run --no-sync pip-licenses --allow-only="$ALLOWED"
 
   mutmut-clean:
-    name: Mutation clean run
+    name: Mutation clean run (${{ matrix.shard }} of 4)
     # The weekly mutation run broke four times in the same place (#139, #152, #193, #345):
     # mutmut's clean run, the suite run once in the mutants tree, where every mutated file
     # is rewritten and only what `also_copy` lists sits beside it. A test that reads the
     # package's source text, or a file mutmut never copied, fails there and nowhere else,
     # and no mutant is tried. This runs mutmut up to its forced-fail test and stops, so
     # that break fails a pull request rather than the next Monday's run.
+    #
+    # Whole, it ran 22 minutes: the suite three times -- coverage, stats, clean -- the stats
+    # pass three times slower with every function behind a trampoline. So it is four shards
+    # of the test files, each with every leg's files mutated, and without the coverage pass,
+    # which only decides which lines get mutants.
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -220,7 +229,7 @@ jobs:
       - name: Run mutmut's clean run
         run: |
           ulimit -v 2097152
-          uv run python scripts/mutation.py clean-run --max-children 4
+          uv run python scripts/mutation.py clean-run --shard ${{ matrix.shard }}/4 --max-children 4
 
   typecheck-strict:
     name: Strict type check

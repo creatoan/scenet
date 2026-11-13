@@ -67,7 +67,10 @@ switcher's data is, and its canonical address at the root.
 | `Lint, types and tests (Python 3.13)` | No | The suite, without coverage |
 | `Lint, types and tests (Python 3.14)` | Yes | Format, lint, `ty`, and the suite with its coverage gate |
 | `Tests on Windows` | No | The suite, where writing text can change line endings |
-| `Mutation clean run` | Yes | mutmut up to its forced-fail test: the suite in the mutants tree, every leg's files mutated |
+| `Mutation clean run (1 of 4)` | Yes | mutmut up to its forced-fail test: a quarter of the test files in the mutants tree, every leg's files mutated |
+| `Mutation clean run (2 of 4)` | Yes | The second quarter |
+| `Mutation clean run (3 of 4)` | Yes | The third quarter |
+| `Mutation clean run (4 of 4)` | Yes | The fourth quarter |
 | `Documentation` | Yes | The Sphinx build with `-W`, and `site_versions.py check` |
 | `Dependency licenses` | Yes | The runtime dependencies against `.github/allowed-licenses.txt` |
 | `Strict type check` | Yes | `basedpyright` |
@@ -80,7 +83,7 @@ switcher's data is, and its canonical address at the root.
 | `Analyze (actions)` | No | CodeQL, on the workflows |
 | `Dependency review` | Yes | A new dependency with a known high or critical vulnerability |
 
-The first twelve rows are `ci.yml`, the next three `codeql.yml`, and the last
+The first fifteen rows are `ci.yml`, the next three `codeql.yml`, and the last
 `dependency-review.yml`. A test holds this table to the workflows, so a new job fails it
 until it has a row. Which checks are required is the ruleset's, on GitHub, which no test
 can read. A check marked *No* still runs on every pull request, and a red one is fixed

@@ -10,11 +10,12 @@ below its threshold, or when it stops with mutants it never tried.
     python scripts/mutation.py narrow PATH...
     python scripts/mutation.py report mutants/mutmut-cicd-stats.json
     python scripts/mutation.py gate mutants/mutmut-cicd-stats.json --threshold 90
-    python scripts/mutation.py clean-run --max-children 4
+    python scripts/mutation.py clean-run --shard 1/4 --max-children 4
 
-`clean-run` is the pull request's job: mutmut's own clean run, which runs the suite in the
-mutants tree, and its forced-fail test, and nothing after. A test that reads a generated
-file or the package's source text breaks there and nowhere else (#139, #152, #193, #345).
+`clean-run` is the pull request's check: `mutmut run` up to its forced-fail test, every
+leg's files mutated, and nothing after. A test that reads a generated file or the package's
+source text breaks there and nowhere else (#139, #152, #193, #345). Whole, it took 22
+minutes, so it runs as shards of the test files, each in a job of its own.
 """
 
 import argparse
@@ -28,8 +29,12 @@ from typing import Any, Protocol
 
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
+TESTS = ROOT / "tests"
 #: `[tool.mutmut]`'s list of what to mutate, over as many lines as it is written on.
 ONLY_MUTATE = re.compile(r"^only_mutate = \[[^\]]*\]", re.MULTILINE)
+#: The tests mutmut runs, and whether it mutates only the lines they cover.
+TEST_SELECTION = re.compile(r"^pytest_add_cli_args_test_selection = \[[^\]]*\]", re.MULTILINE)
+COVERED_LINES = re.compile(r"^mutate_only_covered_lines = \w+", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -69,8 +74,8 @@ def _in(directory: str, *names: str) -> tuple[str, ...]:
 #: and on mutmut's coverage, stats and clean runs, and mutants go at 25 to 40 a minute,
 #: slower where each test writes a PDF.
 LEGS: tuple[Leg, ...] = (
-    Leg("solve/balloons", _in("solve/", "balloons.py"), 0, 0.0, 0, 0, 0),
-    Leg("solve/backdrop", _in("solve/", "backdrop.py"), 0, 0.0, 0, 0, 0),
+    Leg("solve/balloons", _in("solve/", "balloons.py"), 1, 1.0, 1, 0, 1),
+    Leg("solve/backdrop", _in("solve/", "backdrop.py"), 1, 1.0, 1, 0, 1),
     Leg(
         "solve/text",
         _in(
@@ -82,24 +87,24 @@ LEGS: tuple[Leg, ...] = (
             "staging.py",
             "text.py",
         ),
+        1,
+        1.0,
+        1,
         0,
-        0.0,
-        0,
-        0,
-        0,
+        1,
     ),
-    Leg("solve/page", _in("solve/", "describe.py", "page.py", "sfx.py"), 0, 0.0, 0, 0, 0),
-    Leg("emit/pdf", _in("emit/", "pdf.py"), 0, 0.0, 0, 0, 0),
-    Leg("emit/pdf parts", _in("emit/", "pdf_fonts.py", "pdf_images.py"), 0, 0.0, 0, 0, 0),
-    Leg("emit/svg", _in("emit/", "marks.py", "svg.py"), 0, 0.0, 0, 0, 0),
+    Leg("solve/page", _in("solve/", "describe.py", "page.py", "sfx.py"), 1, 1.0, 1, 0, 1),
+    Leg("emit/pdf", _in("emit/", "pdf.py"), 1, 1.0, 1, 0, 1),
+    Leg("emit/pdf parts", _in("emit/", "pdf_fonts.py", "pdf_images.py"), 1, 1.0, 1, 0, 1),
+    Leg("emit/svg", _in("emit/", "marks.py", "svg.py"), 1, 1.0, 1, 0, 1),
     Leg(
         "emit/drawing",
         _in("emit/", "debug_svg.py", "geometry.py", "page.py", "strip.py"),
+        1,
+        1.0,
+        1,
         0,
-        0.0,
-        0,
-        0,
-        0,
+        1,
     ),
     Leg(
         "emit/other",
@@ -117,25 +122,25 @@ LEGS: tuple[Leg, ...] = (
             "semantics.py",
             "turbulence.py",
         ),
+        1,
+        1.0,
+        1,
         0,
-        0.0,
-        0,
-        0,
-        0,
+        1,
     ),
-    Leg("frontends/script", _in("frontends/", "script_front.py"), 0, 0.0, 0, 0, 0),
+    Leg("frontends/script", _in("frontends/", "script_front.py"), 1, 1.0, 1, 0, 1),
     Leg(
         "frontends/other",
         _in("frontends/", "__init__.py", "common.py", "positions.py", "yaml_front.py"),
+        1,
+        1.0,
+        1,
         0,
-        0.0,
-        0,
-        0,
-        0,
+        1,
     ),
-    Leg("core", _in("", "core.py"), 0, 0.0, 0, 0, 0),
-    Leg("ir", _in("", "ir.py"), 0, 0.0, 0, 0, 0),
-    Leg("diagnostics", _in("", "diagnostics.py"), 0, 0.0, 0, 0, 0),
+    Leg("core", _in("", "core.py"), 1, 1.0, 1, 0, 1),
+    Leg("ir", _in("", "ir.py"), 1, 1.0, 1, 0, 1),
+    Leg("diagnostics", _in("", "diagnostics.py"), 1, 1.0, 1, 0, 1),
 )
 
 
@@ -184,6 +189,46 @@ def narrowed(text: str, paths: list[str]) -> str:
     if count != 1:
         sys.exit("pyproject.toml has no only_mutate line to narrow")
     return replaced
+
+
+# ---------------------------------------------------------------- the pull request's shards
+
+
+def test_files() -> list[str]:
+    """Every test file under `tests/`, as a path from the repository's root."""
+    return sorted(path.relative_to(ROOT).as_posix() for path in TESTS.rglob("test_*.py"))
+
+
+def shard(files: list[str], number: int, of: int) -> list[str]:
+    """One of `of` shards of the test files, numbered from 1, near one size in bytes.
+
+    The largest file goes to the smallest shard, then the next largest, and so on: a file's
+    size is a fair guess at how long it runs, and the split stays the same until the files
+    change.
+    """
+    if not 1 <= number <= of:
+        sys.exit(f"there is no shard {number} of {of}")
+    shards: list[list[str]] = [[] for _ in range(of)]
+    sizes = [0] * of
+    for path in sorted(files, key=lambda path: (-(ROOT / path).stat().st_size, path)):
+        smallest = sizes.index(min(sizes))
+        shards[smallest].append(path)
+        sizes[smallest] += (ROOT / path).stat().st_size
+    return sorted(shards[number - 1])
+
+
+def for_a_shard(text: str, tests: list[str]) -> str:
+    """`pyproject.toml` with mutmut running these tests alone, and mutating every line.
+
+    The coverage pass, which decides which lines get mutants, is a run of the suite of its
+    own, and a clean run tries no mutant, so it is left out.
+    """
+    selection = "pytest_add_cli_args_test_selection = " + json.dumps(tests)
+    text, found = TEST_SELECTION.subn(lambda _: selection, text, count=1)
+    text, covered = COVERED_LINES.subn("mutate_only_covered_lines = false", text, count=1)
+    if not (found and covered):
+        sys.exit("pyproject.toml has no test selection, or no mutate_only_covered_lines, to set")
+    return text
 
 
 # ---------------------------------------------------------------- the score
@@ -331,6 +376,7 @@ def main() -> None:
     hold.add_argument("stats", type=Path)
     hold.add_argument("--threshold", default="")
     clean = commands.add_parser("clean-run", help="mutmut up to its forced-fail test")
+    clean.add_argument("--shard", default="1/1", help="which of how many, e.g. 2/4")
     clean.add_argument("--max-children", type=int, default=4)
     args = parser.parse_args()
 
@@ -347,6 +393,11 @@ def main() -> None:
     elif args.command == "gate":
         sys.exit(gate(args.stats, args.threshold))
     else:
+        number, _, of = args.shard.partition("/")
+        tests = shard(test_files(), int(number), int(of))
+        print(f"Shard {args.shard}: {len(tests)} test files.")
+        text = PYPROJECT.read_text(encoding="utf-8")
+        PYPROJECT.write_text(for_a_shard(text, tests), encoding="utf-8", newline="\n")
         import mutmut.__main__ as mutmut_main  # noqa: PLC0415  # Linux only: it forks
 
         sys.exit(clean_run(mutmut_main, args.max_children))  # type: ignore[arg-type]
