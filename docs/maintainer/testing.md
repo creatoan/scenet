@@ -359,26 +359,67 @@ wsl --install -d Ubuntu
 then, inside WSL, clone the repository and run the commands above. A checkout on the Windows
 side, under `/mnt/c/`, works but is several times slower.
 
-**Known blind spot.** mutmut 3 does not mutate decorated functions. In `solve/` and `emit/`
-those are nine `@property` accessors and one cached loader, and none of them is ever mutated:
+**Known blind spot.** mutmut 3 does not mutate a decorated function, other than a plain
+`@classmethod` or `@staticmethod`. A pydantic validator is decorated, so each of the sixteen in
+`ir.py` and `core.py` holds only its name, docstring and a call: the check itself is a plain
+function after its class -- `_check_references_resolve`, `_check_room` -- which is mutated as
+usual. What is left is properties and cached loaders, none of them ever mutated. Lines are of
+code, the docstring left out:
 
 | Function | Decorator | Lines |
 |---|---|---|
-| `solve/camera.py::CameraSolution.was_pulled_back` | `@property` | 8 |
-| `solve/camera.py::CameraSolution.head_top_y` | `@property` | 3 |
-| `solve/balloons.py::TailRoute.is_curved` | `@property` | 7 |
-| `solve/text.py::TextBlock.aspect` | `@property` | 7 |
-| `solve/text.py::TextBlock.raggedness` | `@property` | 5 |
-| `solve/text.py::FontMetrics.units_per_em` | `@property` | 3 |
-| `solve/text.py::load_metrics` | `@functools.lru_cache` | 3 |
-| `solve/backdrop.py::_Plot.width` | `@property` | 3 |
-| `solve/staging.py::Placement.origin` | `@property` | 3 |
-| `solve/staging.py::_Extent.centre_offset` | `@property` | 2 |
+| `core.py::Box.right` | `@property` | 1 |
+| `core.py::Box.bottom` | `@property` | 1 |
+| `core.py::CoreActor.bounds` | `@property` | 3 |
+| `core.py::Tail.is_curved` | `@property` | 1 |
+| `core.py::PanelCore.bounds` | `@property` | 1 |
+| `diagnostics.py::Diagnostic.level` | `@property` | 1 |
+| `emit/conditioning.py::Region.sky` | `@property` | 1 |
+| `emit/marks.py::Polygon.tag` | `@property` | 1 |
+| `emit/marks.py::Mark.is_veil` | `@property` | 1 |
+| `emit/pdf.py::_GraphicsState.name` | `@property` | 3 |
+| `emit/pdf_fonts.py::refusal` | `@functools.lru_cache` | 16 |
+| `emit/pdf_fonts.py::_pdf_font` | `@functools.lru_cache` | 18 |
+| `emit/turbulence.py::lattice` | `@functools.lru_cache` | 30 |
+| `emit/turbulence.py::_alpha` | `@functools.lru_cache` | 20 |
+| `frontends/script_front.py::ScriptDocument.direction` | `@property` | 1 |
+| `frontends/yaml_front.py::SceneDocument.direction` | `@property` | 1 |
+| `ir.py::PlacementZone.fractions` | `@property` | 4 |
+| `ir.py::CaptionKind.is_italic` | `@property` | 1 |
+| `ir.py::CaptionKind.is_quoted` | `@property` | 1 |
+| `ir.py::Spans.fractions` | `@property` | 6 |
+| `ir.py::Horizon.fraction` | `@property` | 1 |
+| `ir.py::PanelSpec.width` | `@property` | 1 |
+| `ir.py::PanelSpec.height` | `@property` | 1 |
+| `ir.py::SettingSpec.is_bare` | `@property` | 1 |
+| `ir.py::CastMember.is_figure` | `@property` | 1 |
+| `ir.py::PanelIR.drawn_by_its_picture` | `@property` | 1 |
+| `ir.py::PageFormat.width` | `@property` | 1 |
+| `ir.py::PageFormat.height` | `@property` | 1 |
+| `ir.py::Tier.placed` | `@property` | 12 |
+| `solve/backdrop.py::_Plot.width` | `@property` | 1 |
+| `solve/balloons.py::TailRoute.is_curved` | `@property` | 1 |
+| `solve/camera.py::CameraSolution.was_pulled_back` | `@property` | 1 |
+| `solve/camera.py::CameraSolution.head_top_y` | `@property` | 1 |
+| `solve/figures.py::PlacedFigure.speaker` | `@property` | 1 |
+| `solve/speakers.py::Speaker.outline` | `@property` | 9 |
+| `solve/staging.py::Placement.origin` | `@property` | 1 |
+| `solve/staging.py::_Extent.centre_offset` | `@property` | 1 |
+| `solve/text.py::Styled.runs` | `@property` | 7 |
+| `solve/text.py::TextBlock.aspect` | `@property` | 1 |
+| `solve/text.py::TextBlock.raggedness` | `@property` | 3 |
+| `solve/text.py::FontMetrics.extent` | `@property` | 2 |
+| `solve/text.py::FontMetrics.data` | `@property` | 1 |
+| `solve/text.py::FontMetrics.units_per_em` | `@property` | 1 |
+| `solve/text.py::load_metrics` | `@functools.lru_cache` | 1 |
 
-The undecorated methods of the same classes are mutated as usual. `was_pulled_back` and
-`head_top_y` are the ones that matter: they are part of the framing geometry, and until
-mutmut reaches them the shot-type tests in `tests/test_camera.py` and the golden Cores are
-what guard them.
+The undecorated methods of the same classes are mutated as usual. The ones that matter most
+are the cached loaders -- `lattice` and `_alpha`, the turbulence a PDF's paper is printed from,
+and `_pdf_font` and `refusal`, the faces a PDF embeds -- and `Tier.placed`, which reads a
+page's panels in order. Lifting a cached loader's body out would not reach it: a mutant runs
+in a process whose cache the unmutated code already filled (see the lessons below). Until
+mutmut reaches them, the tests named in those lessons, the golden outputs and the
+gallery are what guard them.
 
 ### Scores and thresholds
 
