@@ -1,13 +1,17 @@
 name: Mutation testing
 
-# Weekly, and on demand. Deliberately NOT part of CI, and not a required check.
+# Weekly, and on demand. A pull request's share is the clean run in ci.yml.
 #
 # Coverage shows which lines ran, not whether any assertion would notice them changing.
-# mutmut changes the solver and the emitters one small edit at a time -- `<` to `<=`, a
-# constant nudged -- and reports every edit the suite still passes. Each of those is a
-# behaviour nothing checks. A full run takes far longer than a pull request should wait,
-# so it runs on a schedule, and its survivors are triaged as described in
-# docs/maintainer/testing.md. There is no score threshold until there is a baseline.
+# mutmut changes the package one small edit at a time -- `<` to `<=`, a constant nudged --
+# and reports every edit the suite still passes. Each of those is a behaviour nothing
+# checks. Its survivors are triaged as described in docs/maintainer/testing.md.
+#
+# One job mutating everything stopped finishing: three weekly runs were cancelled at the
+# time limit, and a cancelled job saves no cache, so each started from nothing again (#345).
+# The run is split into legs instead, listed in scripts/mutation.py: one job each, each with
+# a cache of its own, each failing when its score falls below its threshold or when it
+# stops with mutants it never tried.
 #
 # The second job explores: the property tests with fresh random seeds and 300 examples
 # each, where CI always runs the same 20. A failure it finds prints a reproduction; pin
@@ -17,15 +21,20 @@ on:
   schedule:
     # Mondays, 05:00 UTC, before the link check at 07:00.
     - cron: "0 5 * * 1"
-  # A change to this workflow runs it on its own pull request, so a broken configuration
-  # is seen before the weekly run, not after. Nothing else triggers it on a pull request.
+  # A change to this workflow, or to the legs, runs it on its own pull request, so a broken
+  # configuration is seen before the weekly run, not after.
   pull_request:
     paths:
       - .github/workflows/mutation.yml
+      - scripts/mutation.py
   workflow_dispatch:
     inputs:
+      legs:
+        description: "Run only these legs, comma-separated, as scripts/mutation.py names them (default: every leg)"
+        required: false
+        default: ""
       path:
-        description: "Mutate only this file or glob, e.g. src/scenet/solve/camera.py (default: all of solve/ and emit/)"
+        description: "Mutate only this file or glob instead, with no threshold, e.g. src/scenet/solve/camera.py"
         required: false
         default: ""
 
@@ -36,10 +45,39 @@ env:
   UV_FROZEN: "1"
 
 jobs:
-  mutmut:
-    name: mutmut (solve/ and emit/)
+  legs:
+    name: Plan the legs
     runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      # The script needs nothing outside the standard library to plan.
+      - name: Plan the legs
+        id: plan
+        env:
+          LEGS: ${{ inputs.legs }}
+          ONLY: ${{ inputs.path }}
+        run: |
+          matrix=$(uv run --no-project python scripts/mutation.py matrix --legs "$LEGS" --path "$ONLY")
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  mutmut:
+    name: mutmut (${{ matrix.name }})
+    needs: legs
+    runs-on: ubuntu-26.04
+    # Every leg is sized to finish from nothing in well under an hour. The limit is for a
+    # leg that has grown, not the expected case.
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.legs.outputs.matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,13 +93,14 @@ jobs:
         run: uv sync --frozen --all-groups
 
       # mutmut resumes, and only re-tests functions whose code changed, so keeping its
-      # working directory between runs makes most weeks incremental.
+      # working directory between runs makes most weeks incremental. Each leg keeps its
+      # own: a cache restored from another leg would hold that leg's mutants.
       - name: Restore the previous run
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: mutants
-          key: mutants-${{ hashFiles('uv.lock') }}-${{ github.sha }}
-          restore-keys: mutants-${{ hashFiles('uv.lock') }}-
+          key: mutants-${{ matrix.key }}-${{ hashFiles('uv.lock') }}-${{ github.sha }}
+          restore-keys: mutants-${{ matrix.key }}-${{ hashFiles('uv.lock') }}-
 
       # mutmut copies a file into `mutants/` only when it is not already there, and checks
       # `.py` files by modification time. So a restored cache keeps the first copy of
@@ -75,19 +114,12 @@ jobs:
           mkdir -p mutants
           git ls-files -z src | grep -zv '\.py$' | xargs -0 -I{} cp --parents -f {} mutants/
 
-      - name: Narrow to one path
-        if: inputs.path != ''
+      - name: Narrow to the leg
         env:
-          ONLY: ${{ inputs.path }}
+          PATHS: ${{ matrix.paths }}
         run: |
-          uv run --no-sync python - <<'PY'
-          import os, pathlib, re
-          path = pathlib.Path("pyproject.toml")
-          text = path.read_text(encoding="utf-8")
-          only = os.environ["ONLY"].replace('"', "")
-          text = re.sub(r"^only_mutate = .*$", f'only_mutate = ["{only}"]', text, flags=re.M)
-          path.write_text(text, encoding="utf-8")
-          PY
+          read -r -a paths <<< "$PATHS"
+          uv run --no-sync python scripts/mutation.py narrow "${paths[@]}"
 
       # Some mutants allocate without bound: `/` turned into `*` in the rain and snow
       # densities asks for millions of streaks. Uncapped, one of those exhausts the runner's
@@ -101,27 +133,18 @@ jobs:
 
       - name: Report
         if: always()
+        env:
+          LEG: ${{ matrix.name }}
+          THRESHOLD: ${{ matrix.threshold }}
         run: |
           uv run mutmut export-cicd-stats || true
           uv run mutmut results > mutants/survivors.txt 2>&1 || true
           {
-            echo '### Mutation testing'
+            echo "### Mutation testing: $LEG"
             echo
-            if [ -f mutants/mutmut-cicd-stats.json ]; then
-              uv run --no-sync python - <<'PY'
-          import json
-          stats = json.load(open("mutants/mutmut-cicd-stats.json"))
-          tested = stats["total"] - stats["skipped"]
-          killed = stats["killed"] + stats["timeout"]
-          score = 100 * killed / tested if tested else 0.0
-          print(f"**{score:.1f}%** killed: {killed} of {tested} mutants "
-                f"({stats['survived']} survived, {stats['no_tests']} reached by no test).")
-          print()
-          print("| | |\n|---|---|")
-          for key, value in stats.items():
-              print(f"| {key} | {value} |")
-          PY
-            fi
+            uv run --no-sync python scripts/mutation.py report mutants/mutmut-cicd-stats.json
+            echo
+            if [ -n "$THRESHOLD" ]; then echo "Threshold: $THRESHOLD%."; else echo "No threshold."; fi
             echo
             echo '<details><summary>Surviving mutants</summary>'
             echo
@@ -137,7 +160,8 @@ jobs:
       - name: Diff every survivor
         if: always()
         run: |
-          grep -E ': survived$' mutants/survivors.txt | sed -E 's/^ *//; s/: survived$//'             | while read -r name; do
+          grep -E ': survived$' mutants/survivors.txt | sed -E 's/^ *//; s/: survived$//' \
+            | while read -r name; do
                 echo "=== $name"
                 uv run --no-sync mutmut show "$name" 2>&1 || true
                 echo
@@ -147,12 +171,21 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: mutmut-results
+          name: mutmut-results-${{ matrix.key }}
           path: |
             mutants/mutmut-cicd-stats.json
             mutants/survivors.txt
             mutants/survivors.diff
           if-no-files-found: warn
+
+      # Last, so the summary and the artifact are there to read when it fails. A leg's
+      # threshold is its score when it was last triaged, in whole percent, so a drop below
+      # it is a survivor nobody has looked at yet. A run on one path has no threshold, and
+      # is held only to having tried every mutant.
+      - name: Hold the leg to its threshold
+        env:
+          THRESHOLD: ${{ matrix.threshold }}
+        run: uv run --no-sync python scripts/mutation.py gate mutants/mutmut-cicd-stats.json --threshold "$THRESHOLD"
 
   explore:
     name: Hypothesis exploration

@@ -7,7 +7,6 @@ finding rendered twice -- so several of these tests assert exactly that.
 
 import ast
 import json
-import os
 import re
 from pathlib import Path
 from typing import Any
@@ -51,6 +50,7 @@ from scenet.frontends.positions import DOCUMENT_START, locate, syntax_error_regi
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
 from scenet.pipeline import compile_script, compile_source
+from tests.under_mutmut import reads_the_source
 
 # A panel whose only fault is the speaker's name. The interesting case, because no JSON
 # Schema can catch it: the actor exists as a string, it just is not in the cast.
@@ -1237,11 +1237,7 @@ class TestEveryRaisedRuleIsCatalogued:
     finding reached `to_sarif` and ended in a `KeyError`. A rule cannot be named in the
     source now without being described in the catalogue."""
 
-    @pytest.mark.skipif(
-        "MUTANT_UNDER_TEST" in os.environ,
-        reason="mutmut rewrites the literals in solve/ and emit/ on purpose, so what is "
-        "scanned is no longer the source",
-    )
+    @reads_the_source
     def test_every_rule_named_in_the_source_is_in_the_catalogue(self):
         named = _rules_named_in_the_source()
         # The scan reaches validators in `ir.py`, not just this package's own findings.

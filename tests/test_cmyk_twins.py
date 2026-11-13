@@ -20,6 +20,7 @@ from PIL import Image, ImageCms
 from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK, CONDITION
 from scenet.solve.backdrop import TINTED
 from scenet.solve.balloons import CAPTION_COLOURS
+from tests.under_mutmut import reads_the_source
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILES = ROOT / "scripts" / "profiles"
@@ -73,6 +74,7 @@ def test_the_table_is_what_the_conversion_makes():
     assert make_palette.black_ramp() == BLACK_RAMP
 
 
+@reads_the_source
 def test_the_generated_module_is_committed_as_the_script_writes_it():
     assert make_palette.cmyk_source() == (ROOT / "src" / "scenet" / "emit" / "cmyk.py").read_text(
         encoding="utf-8"

@@ -205,11 +205,21 @@ docstring-code-format = true
 # most: `.github/workflows/mutation.yml`, and `docs/maintainer/testing.md` for running it.
 # Install with `uv sync --group mutation`; it is not a default group.
 [tool.mutmut]
-only_mutate = ["src/scenet/solve/*", "src/scenet/emit/*"]
+# The weekly run splits these into legs, one job each: `scripts/mutation.py` lists them, and
+# `tests/test_mutation_legs.py` fails on a file in none. The pull request's clean run
+# mutates all of them, so a test that cannot pass in the mutants tree fails before merge.
+only_mutate = [
+    "src/scenet/solve/*",
+    "src/scenet/emit/*",
+    "src/scenet/frontends/*",
+    "src/scenet/core.py",
+    "src/scenet/ir.py",
+    "src/scenet/diagnostics.py",
+]
 # Inside a mutant: no coverage floor, no doctests, no Sybil -- only the tests that reach
 # the mutated function, which mutmut selects for itself. The real stdio session hands its
 # server process the runner's stderr, which mutmut has closed; it tests the MCP transport,
-# not the solver or the emitters.
+# which nothing here mutates.
 pytest_add_cli_args = [
     "--no-cov",
     "-p",
@@ -220,21 +230,35 @@ pytest_add_cli_args = [
     "tests/test_mcp.py::TestStdoutStaysClean::test_over_a_real_stdio_session",
 ]
 pytest_add_cli_args_test_selection = ["tests/"]
-# Everything the tests read from outside `src/` and `tests/`: the examples, the reference
-# documents the contract tests hold the code to, the generators and their outputs.
+# Everything at the top of the repository but `src/` and `tests/`, which mutmut copies
+# itself, and `.claude/`, which holds agents' worktrees: the tests read the examples, the
+# reference documents the contract tests hold the code to, the generators and their
+# outputs, and the documents at the root. One left out fails mutmut's clean run and no
+# mutant is tried: `CHANGELOG.md` was (#345). `tests/test_mutation_legs.py` holds this
+# list to what git tracks.
 also_copy = [
-    "conftest.py",
-    "examples/",
-    "docs/",
-    "scripts/",
-    "skills/",
-    "editor/",
-    "playground/",
+    ".gitattributes",
     ".github/",
+    ".gitignore",
+    ".python-version",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
     "README.md",
+    "SECURITY.md",
     "THIRD_PARTY_NOTICES.md",
-    "server.json",
+    "conftest.py",
+    "docs/",
+    "editor/",
+    "examples/",
+    "opencode.json",
+    "playground/",
     "pyproject.toml",
+    "scripts/",
+    "server.json",
+    "skills/",
 ]
 mutate_only_covered_lines = true
 

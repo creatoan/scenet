@@ -193,6 +193,35 @@ jobs:
           ALLOWED=$(grep -v '^#' .github/allowed-licenses.txt | grep -v '^$' | paste -sd ';' -)
           uv run --no-sync pip-licenses --allow-only="$ALLOWED"
 
+  mutmut-clean:
+    name: Mutation clean run
+    # The weekly mutation run broke four times in the same place (#139, #152, #193, #345):
+    # mutmut's clean run, the suite run once in the mutants tree, where every mutated file
+    # is rewritten and only what `also_copy` lists sits beside it. A test that reads the
+    # package's source text, or a file mutmut never copied, fails there and nowhere else,
+    # and no mutant is tried. This runs mutmut up to its forced-fail test and stops, so
+    # that break fails a pull request rather than the next Monday's run.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen --all-groups
+
+      # Every path the weekly legs mutate, together, and no cache: a fresh tree, as a leg
+      # with no cache builds it.
+      - name: Run mutmut's clean run
+        run: |
+          ulimit -v 2097152
+          uv run python scripts/mutation.py clean-run --max-children 4
+
   typecheck-strict:
     name: Strict type check
     runs-on: ubuntu-26.04
