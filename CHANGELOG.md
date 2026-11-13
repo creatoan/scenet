@@ -10,6 +10,17 @@ below 1.0 means.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The weekly mutation run finishes again, and covers the front ends and the core** (#345). It
+  had not completed since 2026-10-12: three runs reached the 120-minute limit, and the fourth
+  failed in mutmut's clean run on a test that reads the generated `emit/cmyk.py`, which mutmut
+  had rewritten. It is now one job per leg, each with its own cache and a threshold it fails
+  below, listed in `scripts/mutation.py`, and it mutates `frontends/`, `core.py`, `ir.py` and
+  `diagnostics.py` as well as `solve/` and `emit/`. Every pull request runs mutmut's clean run,
+  the check *Mutation clean run*, so a test that cannot pass in the mutants tree fails before
+  merge.
+
 ## [0.13.0] - 2026-11-12
 
 **Upgrading from 0.12.0.**

@@ -181,7 +181,18 @@ def test_the_mutation_run_installs_what_the_tests_import():
     documentation's configuration, which needs `docs`, so the clean run failed and no
     mutant was tried: run 39116267418. CI's test jobs sync every group; so must this.
     """
-    job = _load("mutation.yml")["jobs"]["mutmut"]
+    for name in ("mutmut", "mutmut-clean"):
+        job = _load("ci.yml" if name == "mutmut-clean" else "mutation.yml")["jobs"][name]
+        syncs = [line for line in _script(job).splitlines() if "uv sync" in line]
+        assert syncs, name
+        assert all("--all-groups" in line for line in syncs), syncs
+
+
+def test_the_exploration_installs_what_the_conftest_imports():
+    """The root `conftest.py` loads the documentation's example parsers, which import
+    `markdown_it` from the `docs` group. The exploring job synced the default groups
+    alone, so it failed to load the conftest and explored nothing (#345)."""
+    job = _load("mutation.yml")["jobs"]["explore"]
     syncs = [line for line in _script(job).splitlines() if "uv sync" in line]
     assert syncs
     assert all("--all-groups" in line for line in syncs), syncs

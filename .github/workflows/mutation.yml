@@ -200,8 +200,10 @@ jobs:
         with:
           enable-cache: true
 
+      # Every group: the root conftest.py loads the documentation's example parsers,
+      # which need `docs`, before a single property is collected.
       - name: Sync dependencies
-        run: uv sync --frozen
+        run: uv sync --frozen --all-groups
 
       # Random seeds and 300 examples per property. A failure prints a
       # `@reproduce_failure` blob and the shrunk document: pin the document as an
