@@ -3,6 +3,18 @@ version: 2
 # The CI actions in this repository were, before this file existed, a full major
 # version behind across the board -- and on a Node runtime GitHub was about to remove.
 # Nothing told anyone. That is what this is for.
+#
+# Every group below says `applies-to: version-updates`, which is also the default when it
+# is left out: a group, and the `update-types` inside it, shapes the weekly routine
+# updates only. A security update is never put in a group here, so it opens its own pull
+# request, and it is never held to `[minor, patch]` -- it may cross a major version. The
+# job definition Dependabot logs for each security run shows it, `"dependency-groups":[]`.
+#
+# What does reach a security update is `ignore` (the `@types/vscode` rule below is in
+# every editor security job), and the version ranges of the packages that pull a
+# vulnerable one in. A fix no parent's range admits cannot be proposed by any
+# configuration: the run fails, the alert stays open, and docs/maintainer/dependencies.md
+# says what to do then.
 updates:
   # Actions are pinned to commit SHAs for supply-chain safety, which makes them
   # invisible to a human reading the file. Dependabot understands the `# vX.Y.Z`
@@ -13,6 +25,7 @@ updates:
       interval: weekly
     groups:
       actions:
+        applies-to: version-updates
         patterns: ["*"]
         update-types: [minor, patch]
     commit-message:
@@ -24,6 +37,7 @@ updates:
       interval: weekly
     groups:
       python-minor:
+        applies-to: version-updates
         patterns: ["*"]
         update-types: [minor, patch]
     commit-message:
@@ -35,6 +49,7 @@ updates:
       interval: weekly
     groups:
       playground:
+        applies-to: version-updates
         patterns: ["*"]
         update-types: [minor, patch]
     commit-message:
@@ -62,6 +77,7 @@ updates:
       interval: weekly
     groups:
       editor:
+        applies-to: version-updates
         patterns: ["*"]
         update-types: [minor, patch]
     commit-message:

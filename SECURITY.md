@@ -66,7 +66,11 @@ All of this is GitHub's own tooling, configured in this repository; there is not
   [dependency graph](https://github.com/creatoan/scenet/network/dependencies), which GitHub
   builds from `uv.lock` and both `package-lock.json` files, transitive dependencies included.
   **Dependabot security updates** open a pull request for an alert when a fixed version
-  exists. Version updates are separate, in `.github/dependabot.yml`.
+  can be installed, crossing a major version if it has to. When the packages that pull the
+  vulnerable one in do not admit the fix, no pull request comes and the alert stays open;
+  the maintainer looks at open alerts every week
+  ([what then](https://github.com/creatoan/scenet/blob/main/docs/maintainer/dependencies.md)). Version updates are separate, grouped
+  and limited to minor and patch releases in `.github/dependabot.yml`.
 - **Dependency review** fails a pull request that adds a dependency with a known high or
   critical vulnerability, development dependencies included
   (`.github/workflows/dependency-review.yml`).

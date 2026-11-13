@@ -125,6 +125,11 @@
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
   },
+  "overrides": {
+    "@vscode/vsce": {
+      "minimatch": "^11.0.1"
+    }
+  },
   "allowScripts": {
     "esbuild@0.28.2": true
   },

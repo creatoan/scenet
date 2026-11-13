@@ -14,6 +14,7 @@ this guide says why, and what happens after.
 |---|---|
 | [Releasing](releasing.md) | How to cut a release, and what happens when you do |
 | [Credentials](secrets.md) | Which secrets exist (almost none), and why |
+| [Dependencies](dependencies.md) | Who looks at Dependabot alerts, how often, and what to do when Dependabot cannot fix one |
 | [Testing](testing.md) | The suite's layers: golden outputs, the reference as a contract, examples a reader can paste, properties, mutation testing |
 
 ## The gates
@@ -158,5 +159,6 @@ will say so.
 
 releasing
 secrets
+dependencies
 testing
 ```
