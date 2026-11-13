@@ -1675,10 +1675,20 @@ def tag_by(field: str) -> Discriminator:
     """
 
     def tag_of(value: object) -> str:
-        tag = value.get(field) if isinstance(value, dict) else getattr(value, field, None)
-        return UNTAGGED if tag is None else str(tag)
+        return _tag_of(field, value)
 
     return Discriminator(tag_of)
+
+
+def _tag_of(field: str, value: object) -> str:
+    """The tag `value` carries in `field`, or :data:`UNTAGGED`.
+
+    A function of its own, which `tag_by`'s closure only calls: `tag_by` runs once, as this
+    module is imported, so a mutant of a closure it built was never the one called, and
+    mutmut could not test it. This one is called on every value a union validates.
+    """
+    tag = value.get(field) if isinstance(value, dict) else getattr(value, field, None)
+    return UNTAGGED if tag is None else str(tag)
 
 
 #: One entry in a panel's script, chosen by its `verb`.
