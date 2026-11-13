@@ -69,10 +69,10 @@ def _in(directory: str, *names: str) -> tuple[str, ...]:
     return tuple(f"src/scenet/{directory}{name}" for name in names)
 
 
-#: Every file `[tool.mutmut]` mutates, in exactly one leg each. A leg is sized to finish in
-#: well under an hour from nothing on a four-core runner: about 15 minutes go on syncing
-#: and on mutmut's coverage, stats and clean runs, and mutants go at 25 to 40 a minute,
-#: slower where each test writes a PDF.
+#: Every file `[tool.mutmut]` mutates, in exactly one leg each, sized to finish from nothing
+#: well inside the job's 180 minutes on a four-core runner. About 17 minutes go on syncing
+#: and on mutmut's coverage, stats and clean runs; then a mutant takes from under a second
+#: to minutes, by how much of the suite reaches the function it changed.
 LEGS: tuple[Leg, ...] = (
     Leg("solve/balloons", _in("solve/", "balloons.py"), 1, 1.0, 1, 0, 1),
     Leg("solve/backdrop", _in("solve/", "backdrop.py"), 1, 1.0, 1, 0, 1),

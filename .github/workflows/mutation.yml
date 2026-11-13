@@ -72,9 +72,12 @@ jobs:
     name: mutmut (${{ matrix.name }})
     needs: legs
     runs-on: ubuntu-26.04
-    # Every leg is sized to finish from nothing in well under an hour. The limit is for a
-    # leg that has grown, not the expected case.
-    timeout-minutes: 120
+    # From nothing, a leg took 20 to 95 minutes on its first run: a mutant of a module the
+    # whole pipeline goes through runs much of the suite before it fails, or all of it when it
+    # survives. Cached, a week re-tests only what changed. A cache saved on a pull request
+    # is not one `main` can read, so the first scheduled run after a merge starts from
+    # nothing too, and the limit leaves room for it.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.legs.outputs.matrix) }}
