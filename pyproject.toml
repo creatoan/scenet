@@ -228,7 +228,6 @@ pytest_add_cli_args = [
     "addopts=",
     "--deselect",
     "tests/test_mcp.py::TestStdoutStaysClean::test_over_a_real_stdio_session",
-    "--maxfail=1000",
 ]
 pytest_add_cli_args_test_selection = ["tests/"]
 # Everything at the top of the repository but `src/` and `tests/`, which mutmut copies
