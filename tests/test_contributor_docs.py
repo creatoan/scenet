@@ -152,6 +152,10 @@ def _pull_request_checks() -> list[str]:
         if trigger is False or (isinstance(trigger, dict) and "paths" in trigger):
             continue
         for job in workflow["jobs"].values():
+            # The report of a scheduled run is skipped on every pull request, so it is not
+            # a check one waits for (tests/test_scheduled_runs.py).
+            if job.get("uses") == "./.github/workflows/scheduled-report.yml":
+                continue
             name = job["name"]
             matrix = job.get("strategy", {}).get("matrix", {})
             values = {
