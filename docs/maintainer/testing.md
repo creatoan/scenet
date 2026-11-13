@@ -393,8 +393,8 @@ what guard them.
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `frontends/script` | `frontends/script_front.py` | 2,104 | 333 | 84.2% | 84% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 500 | 44 | 91.2% | 91% | [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598) |
+| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 359 | 71 | 80.2% | 80% | [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598) |
 | `core` | `core.py` | 351 | 31 | 91.2% | 91% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `ir` | `ir.py` | 165 | 22 | 86.7% | 86% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `diagnostics` | `diagnostics.py` | 1,603 | 262 | 83.7% | 83% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
@@ -414,7 +414,8 @@ measured them from nothing, each in its own job:
 
 `frontends/` was one leg, and ran out of time with 26 of its 859 mutants untried: a mutant of a
 function every document goes through runs most of the suite before a test fails, and all of it
-when none does. It is two legs now.
+when none does. It is two legs now, measured on their own by
+[`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598).
 
 ### Baseline
 
