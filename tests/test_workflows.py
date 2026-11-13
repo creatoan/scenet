@@ -527,3 +527,25 @@ def test_every_linux_job_runs_on_the_one_pinned_image():
         for path in WORKFLOWS.glob("*.yml")
     }
     assert {name: images for name, images in runners.items() if images - {UBUNTU}} == {}
+
+
+class TestThePullRequestRunsOneLeg:
+    """A pull request that changes the mutation workflow runs it, to see it work (#345).
+
+    Every leg would hold the runners for hours, again on every push. One leg, with a
+    threshold, goes through every step a scheduled leg does.
+    """
+
+    def test_its_plan_names_one_leg_on_a_pull_request(self):
+        (step,) = [
+            step
+            for step in _load("mutation.yml")["jobs"]["legs"]["steps"]
+            if step.get("id") == "plan"
+        ]
+        assert step["env"]["LEGS"] == (
+            "${{ github.event_name == 'pull_request' && 'emit/other' || inputs.legs }}"
+        )
+
+    def test_a_new_push_replaces_the_last_run(self):
+        concurrency = _load("mutation.yml")["concurrency"]
+        assert concurrency["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"

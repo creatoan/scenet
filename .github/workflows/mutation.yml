@@ -22,7 +22,8 @@ on:
     # Mondays, 05:00 UTC, before the link check at 07:00.
     - cron: "0 5 * * 1"
   # A change to this workflow, or to the legs, runs it on its own pull request, so a broken
-  # configuration is seen before the weekly run, not after.
+  # configuration is seen before the weekly run, not after. One leg is enough to see that,
+  # and the shortest is run: every leg would hold the runners for hours on every push.
   pull_request:
     paths:
       - .github/workflows/mutation.yml
@@ -40,6 +41,11 @@ on:
 
 permissions:
   contents: read
+
+# A new push to a pull request replaces the run of the last one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   UV_FROZEN: "1"
@@ -62,7 +68,7 @@ jobs:
       - name: Plan the legs
         id: plan
         env:
-          LEGS: ${{ inputs.legs }}
+          LEGS: ${{ github.event_name == 'pull_request' && 'emit/other' || inputs.legs }}
           ONLY: ${{ inputs.path }}
         run: |
           matrix=$(uv run --no-project python scripts/mutation.py matrix --legs "$LEGS" --path "$ONLY")

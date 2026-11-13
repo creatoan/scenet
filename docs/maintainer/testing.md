@@ -383,22 +383,38 @@ what guard them.
 
 | Leg | Files | Mutants | Survivors | Score | Threshold | Run |
 |---|---|---|---|---|---|---|
-| `solve/balloons` | `solve/balloons.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `solve/backdrop` | `solve/backdrop.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `solve/text` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py`, `solve/text.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `emit/pdf` | `emit/pdf.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `frontends/script` | `frontends/script_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `frontends/other` | `frontends/__init__.py`, `frontends/common.py`, `frontends/positions.py`, `frontends/yaml_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `core` | `core.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `ir` | `ir.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
-| `diagnostics` | `diagnostics.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `solve/balloons` | `solve/balloons.py` | 1,371 | 29 | 97.9% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/backdrop` | `solve/backdrop.py` | 1,060 | 8 | 99.2% | 99% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/text` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py`, `solve/text.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/pdf` | `emit/pdf.py` | 1,388 | 32 | 97.7% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 979 | 47 | 95.2% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `frontends/script` | `frontends/script_front.py` | 2,104 | 333 | 84.2% | 84% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 1 | 0 | 1.0% | 1% | [`1`](https://github.com/creatoan/scenet/actions/runs/1) |
+| `core` | `core.py` | 351 | 31 | 91.2% | 91% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `ir` | `ir.py` | 165 | 22 | 86.7% | 86% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `diagnostics` | `diagnostics.py` | 1,603 | 262 | 83.7% | 83% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 
-PROVISIONAL: measured on the first run of the legs, which replaces this paragraph.
+A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
+threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
+it. Survivors are numbered from the run named, and the numbers shift when the function they
+are in changes. The first run of the legs, [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157),
+measured them from nothing, each in its own job:
+
+- **`solve/` and `emit/`**, triaged before: their survivors are the accepted lists below, and
+  those the code has gained since, in modules that had not run on their own --
+  `emit/preview.py`, `solve/speakers.py` and `solve/figures.py` among them. Those are triaged
+  in [#472](https://github.com/creatoan/scenet/issues/472).
+- **`frontends/`, `core.py`, `ir.py` and `diagnostics.py`**, mutated for the first time: each
+  is triaged below, and its threshold raised with what is killed.
+
+`frontends/` was one leg, and ran out of time with 26 of its 859 mutants untried: a mutant of a
+function every document goes through runs most of the suite before a test fails, and all of it
+when none does. It is two legs now.
 
 ### Baseline
 
