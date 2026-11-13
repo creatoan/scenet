@@ -277,8 +277,8 @@ NEVER_REACHES_A_CALLER: dict[tuple[str, str], str] = {
     # pydantic catches what a validator raises and re-raises its own `ValidationError`,
     # which a frontend turns into a `PanelSyntaxError` with a location.
     ("ir.py", "_holdable"): "called by validators only",
-    ("ir.py", "check_marks"): "a validator",
-    ("ir.py", "check_off_panel"): "a validator",
+    ("ir.py", "_check_marks"): "the body of a validator",
+    ("ir.py", "_check_off_panel"): "the body of a validator",
     ("core.py", "_check_runs"): "called by validators only",
     # Invariants of the compiler itself: a failure is a bug in Scenet, not bad input.
     ("solve/camera.py", "solve_camera"): "every shot's headroom and footroom leave room",

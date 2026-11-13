@@ -1011,11 +1011,16 @@ class PanelSpec(Strict):
             ValueError: A dimension is zero or negative, or the margins meet in the
                 middle leaving nothing to compose in.
         """
-        if self.width <= 0 or self.height <= 0:
-            raise RuleViolationError("panel size must be positive", rule="panel-geometry")
-        if self.margin * 2 >= min(self.width, self.height):
-            raise RuleViolationError("margin leaves no usable panel area", rule="panel-geometry")
+        _check_positive_panel_spec(self)
         return self
+
+
+def _check_positive_panel_spec(spec: PanelSpec) -> None:
+    """`PanelSpec.check_positive`, outside the class so that mutmut mutates it."""
+    if spec.width <= 0 or spec.height <= 0:
+        raise RuleViolationError("panel size must be positive", rule="panel-geometry")
+    if spec.margin * 2 >= min(spec.width, spec.height):
+        raise RuleViolationError("margin leaves no usable panel area", rule="panel-geometry")
 
 
 class CameraSpec(Strict):
@@ -1217,26 +1222,31 @@ class SettingSpec(Strict):
             RuleViolationError: `conflicting-setting` for masses and a picture, and
                 `invalid-field` for a fit with nothing to fit.
         """
-        if self.image is not None and self.masses:
-            raise RuleViolationError(
-                "'setting' lists masses and names an image; the picture is the whole "
-                "backdrop, so write one or the other",
-                rule="conflicting-setting",
-                loc=("setting", "masses"),
-            )
-        if self.fit is not None and self.image is None:
-            raise RuleViolationError(
-                "'setting' has a fit and no image; `fit` says how a picture fills the "
-                "panel, so it goes beside `image`",
-                rule="invalid-field",
-                loc=("setting", "fit"),
-            )
+        _check_backdrop(self)
         return self
 
     @property
     def is_bare(self) -> bool:
         """Whether there is nothing to draw: no masses, no picture, nothing in the air."""
         return not self.masses and self.image is None and self.weather is Weather.CLEAR
+
+
+def _check_backdrop(setting: SettingSpec) -> None:
+    """`SettingSpec.check_backdrop`, outside the class so that mutmut mutates it."""
+    if setting.image is not None and setting.masses:
+        raise RuleViolationError(
+            "'setting' lists masses and names an image; the picture is the whole "
+            "backdrop, so write one or the other",
+            rule="conflicting-setting",
+            loc=("setting", "masses"),
+        )
+    if setting.fit is not None and setting.image is None:
+        raise RuleViolationError(
+            "'setting' has a fit and no image; `fit` says how a picture fills the "
+            "panel, so it goes beside `image`",
+            rule="invalid-field",
+            loc=("setting", "fit"),
+        )
 
 
 class CastMember(Strict):
@@ -1298,18 +1308,7 @@ class CastMember(Strict):
         figures existed exactly as it was, and lets a misspelt `referecne` still be
         folded into "did you mean 'reference'?".
         """
-        if not isinstance(data, dict) or any(
-            data.get(key) is not None for key in ("reference", "figure")
-        ):
-            return handler(data)
-        missing: InitErrorDetails = {"type": "missing", "loc": ("reference",), "input": data}
-        try:
-            handler(data)
-        except ValidationError as exc:
-            raise ValidationError.from_exception_data(
-                cls.__name__, [missing, *_init_details(exc)]
-            ) from None
-        raise ValidationError.from_exception_data(cls.__name__, [missing])
+        return _names_a_puppet_or_a_figure(cls.__name__, data, handler)
 
     @property
     def is_figure(self) -> bool:
@@ -1328,10 +1327,31 @@ class CastMember(Strict):
             ValueError: A mark appears more than once. Harmless to draw, but almost
                 certainly a slip, and this language reports slips.
         """
-        repeated = sorted({mark.value for mark in marks if marks.count(mark) > 1})
-        if repeated:
-            raise ValueError(f"mark listed more than once: {', '.join(repeated)}")
-        return tuple(sorted(marks))
+        return _check_marks(marks)
+
+
+def _names_a_puppet_or_a_figure(
+    title: str, data: object, handler: ModelWrapValidatorHandler["CastMember"]
+) -> "CastMember":
+    """`CastMember.names_a_puppet_or_a_figure`, outside the class so that mutmut mutates it."""
+    if not isinstance(data, dict) or any(
+        data.get(key) is not None for key in ("reference", "figure")
+    ):
+        return handler(data)
+    missing: InitErrorDetails = {"type": "missing", "loc": ("reference",), "input": data}
+    try:
+        handler(data)
+    except ValidationError as exc:
+        raise ValidationError.from_exception_data(title, [missing, *_init_details(exc)]) from None
+    raise ValidationError.from_exception_data(title, [missing])
+
+
+def _check_marks(marks: tuple[Mark, ...]) -> tuple[Mark, ...]:
+    """`CastMember.check_marks`, outside the class so that mutmut mutates it."""
+    repeated = sorted({mark.value for mark in marks if marks.count(mark) > 1})
+    if repeated:
+        raise ValueError(f"mark listed more than once: {', '.join(repeated)}")
+    return tuple(sorted(marks))
 
 
 def _init_details(error: ValidationError) -> list[InitErrorDetails]:
@@ -1393,12 +1413,17 @@ class Relation(Strict):
             ValueError: Subject and object are the same actor id. No predicate in the
                 language means anything reflexively, so this is always a typo.
         """
-        if self.subject == self.object:
-            raise RuleViolationError(
-                f"relation '{self.predicate}' cannot relate '{self.subject}' to itself",
-                rule="reflexive-relation",
-            )
+        _check_not_reflexive(self)
         return self
+
+
+def _check_not_reflexive(relation: Relation) -> None:
+    """`Relation.check_not_reflexive`, outside the class so that mutmut mutates it."""
+    if relation.subject == relation.object:
+        raise RuleViolationError(
+            f"relation '{relation.predicate}' cannot relate '{relation.subject}' to itself",
+            rule="reflexive-relation",
+        )
 
 
 class SayEvent(Strict):
@@ -1451,13 +1476,18 @@ class SayEvent(Strict):
         Validated as a plain union, a wrong value failed both members and was reported
         twice, once as not a boolean and once as not a side, when it is one mistake.
         """
-        if isinstance(value, bool) or value in {side.value for side in Side}:
-            return value
-        sides = ", ".join(f"'{side.value}'" for side in Side)
-        raise ValueError(
-            f"off_panel is true, false, or the side of the frame the speaker is on: {sides}; "
-            f"not {value!r}"
-        )
+        return _check_off_panel(value)
+
+
+def _check_off_panel(value: object) -> object:
+    """`SayEvent.check_off_panel`, outside the class so that mutmut mutates it."""
+    if isinstance(value, bool) or value in {side.value for side in Side}:
+        return value
+    sides = ", ".join(f"'{side.value}'" for side in Side)
+    raise ValueError(
+        f"off_panel is true, false, or the side of the frame the speaker is on: {sides}; "
+        f"not {value!r}"
+    )
 
 
 class CaptionEvent(Strict):
@@ -1526,13 +1556,18 @@ class CaptionEvent(Strict):
                 states a place; nobody says it, so naming who did is a mistake worth
                 reporting rather than a field to ignore.
         """
-        kind = info.data.get("kind")
-        if by is not None and isinstance(kind, CaptionKind) and not kind.is_quoted:
-            raise RuleViolationError(
-                f"only a 'spoken' caption may name a speaker, but this one is '{kind.value}'",
-                rule="caption-speaker",
-            )
-        return by
+        return _check_speaker_is_meaningful(by, info)
+
+
+def _check_speaker_is_meaningful(by: str | None, info: ValidationInfo) -> str | None:
+    """`CaptionEvent.check_speaker_is_meaningful`, outside the class so that mutmut mutates it."""
+    kind = info.data.get("kind")
+    if by is not None and isinstance(kind, CaptionKind) and not kind.is_quoted:
+        raise RuleViolationError(
+            f"only a 'spoken' caption may name a speaker, but this one is '{kind.value}'",
+            rule="caption-speaker",
+        )
+    return by
 
 
 class SfxSize(StrEnum):
@@ -1737,66 +1772,7 @@ class PanelIR(Strict):
         Caught here rather than in the solver so the error names the offending
         identifier while the source is still in view.
         """
-        known = set(self.cast)
-        heard = self.off_panel_speakers()
-        for index, relation in enumerate(self.staging):
-            for role, actor in (("subject", relation.subject), ("object", relation.object)):
-                if actor in known:
-                    continue
-                # Somebody heard from off panel is not drawn, but may be looked at: the
-                # figure turns toward the side of the frame the voice comes from.
-                looked_at = role == "object" and relation.predicate is Predicate.LOOKING_AT
-                if looked_at and actor in heard:
-                    continue
-                message = (
-                    f"staging relation '{relation.predicate}' names unknown actor "
-                    f"'{actor}' as {role}; cast is {sorted(known)}"
-                )
-                if actor in heard:
-                    message += (
-                        f". '{actor}' speaks from off panel, and only looking_at may name "
-                        "somebody who is not drawn"
-                    )
-                raise RuleViolationError(
-                    message,
-                    rule="unknown-actor",
-                    loc=("staging", index),
-                )
-        # Captions are skipped rather than exempted by accident. A `spoken` caption's
-        # `by` names somebody *off panel*, so it is not in the cast by definition and
-        # checking it here would make the field impossible to use for what it is for.
-        for index, event in enumerate(self.script):
-            if isinstance(event, SfxEvent):
-                if event.source is not None and event.source not in known:
-                    raise RuleViolationError(
-                        f"sound effect {index} comes from unknown actor '{event.source}'; "
-                        f"cast is {sorted(known)}",
-                        rule="unknown-actor",
-                        loc=("script", index, event.verb, "from"),
-                    )
-                continue
-            if not isinstance(event, SayEvent):
-                continue
-            # An off-panel speaker is somebody nobody draws, so not in the cast -- and one
-            # who is drawn in this panel cannot also be speaking from outside it.
-            if event.off_panel is not False:
-                if event.by in known:
-                    raise RuleViolationError(
-                        f"script entry {index} is spoken from off panel by '{event.by}', "
-                        "who is drawn in this panel; leave them out of the cast, or drop "
-                        "off_panel",
-                        rule="off-panel-speaker",
-                        loc=("script", index, event.verb, "by"),
-                    )
-                continue
-            if event.by not in known:
-                raise RuleViolationError(
-                    f"script entry {index} is spoken by unknown actor '{event.by}'; "
-                    f"cast is {sorted(known)}. If they speak from outside the panel, "
-                    "say so with off_panel",
-                    rule="unknown-actor",
-                    loc=("script", index, event.verb, "by"),
-                )
+        _check_references_resolve(self)
         return self
 
     @model_validator(mode="after")
@@ -1808,46 +1784,7 @@ class PanelIR(Strict):
         'a left_of b, b left_of a' has no solution, and detecting it here produces a
         comprehensible message instead of an opaque solver failure.
         """
-        edges: dict[str, set[str]] = {actor: set() for actor in self.cast}
-        # Which staging entry introduced each edge, so a cycle can be reported against a
-        # line the author actually wrote rather than against the document as a whole.
-        # First writer wins: if two entries state the same ordering, the earlier one is
-        # the one to point at.
-        wrote: dict[tuple[str, str], int] = {}
-        for index, relation in enumerate(self.staging):
-            if relation.predicate is Predicate.LEFT_OF:
-                edge = (relation.subject, relation.object)
-            elif relation.predicate is Predicate.RIGHT_OF:
-                edge = (relation.object, relation.subject)
-            else:
-                continue
-            edges[edge[0]].add(edge[1])
-            wrote.setdefault(edge, index)
-
-        # Iterative depth-first search, so a deep cast cannot blow the Python stack.
-        colour = dict.fromkeys(edges, _UNVISITED)
-        for start in sorted(edges):
-            if colour[start] != _UNVISITED:
-                continue
-            stack: list[tuple[str, bool]] = [(start, False)]
-            while stack:
-                node, leaving = stack.pop()
-                if leaving:
-                    colour[node] = _DONE
-                    continue
-                colour[node] = _ON_STACK
-                stack.append((node, True))
-                for neighbour in sorted(edges[node]):
-                    if colour[neighbour] == _ON_STACK:
-                        culprit = wrote.get((node, neighbour))
-                        raise RuleViolationError(
-                            f"horizontal ordering is cyclic around '{neighbour}'; "
-                            "left_of/right_of relations must form a consistent order",
-                            rule="ordering-cycle",
-                            loc=("staging",) if culprit is None else ("staging", culprit),
-                        )
-                    if colour[neighbour] == _UNVISITED:
-                        stack.append((neighbour, False))
+        _check_ordering_is_consistent(self)
         return self
 
     @model_validator(mode="after")
@@ -1863,58 +1800,7 @@ class PanelIR(Strict):
         - one figure plays one part (`conflicting-cast`);
         - no staging relation names a figure (`figure-staging`): the artist staged them.
         """
-        figures = self.figures()
-        if not figures:
-            return self
-        for actor, member in self.cast.items():
-            if not member.is_figure:
-                continue
-            if member.reference is not None:
-                raise RuleViolationError(
-                    f"cast member {actor!r} names a puppet and a figure the picture draws; it "
-                    "is one or the other. Over an inherited member, write `reference: null`",
-                    rule="conflicting-cast",
-                    loc=("cast", actor, "reference"),
-                )
-            for key in PUPPET_KEYS:
-                if getattr(member, key) != CastMember.model_fields[key].default:
-                    raise RuleViolationError(
-                        f"cast member {actor!r} is a figure the picture draws, which nobody "
-                        f"poses or places, so {key!r} does not apply to it",
-                        rule="conflicting-cast",
-                        loc=("cast", actor, key),
-                    )
-        puppets = [actor for actor, member in self.cast.items() if not member.is_figure]
-        if puppets:
-            raise RuleViolationError(
-                f"the cast mixes puppets ({', '.join(puppets)}) with figures the picture draws "
-                f"({', '.join(figures)}); a panel's cast is all one or all the other, since "
-                "staging would place a puppet over a painted face it cannot see",
-                rule="conflicting-cast",
-                loc=("cast", puppets[0], "reference"),
-            )
-        played: dict[str, str] = {}
-        for actor, figure in figures.items():
-            if figure in played:
-                raise RuleViolationError(
-                    f"figure {figure!r} is played by {played[figure]!r} already; one figure "
-                    "the picture draws is one person",
-                    rule="conflicting-cast",
-                    loc=("cast", actor, "figure"),
-                )
-            played[figure] = actor
-        for index, relation in enumerate(self.staging):
-            named = next(
-                (actor for actor in (relation.subject, relation.object) if actor in figures),
-                None,
-            )
-            if named is not None:
-                raise RuleViolationError(
-                    f"staging relation '{relation.predicate}' names {named!r}, a figure the "
-                    "picture draws: the artist already placed and staged everyone in it",
-                    rule="figure-staging",
-                    loc=("staging", index),
-                )
+        _check_figures(self)
         return self
 
     def figures(self) -> dict[str, str]:
@@ -2029,6 +1915,170 @@ class PanelIR(Strict):
         return tuple(frozenset(members) for members in groups.values() if len(members) > 1)
 
 
+def _check_references_resolve(panel: PanelIR) -> None:
+    """`PanelIR.check_references_resolve`, outside the class so that mutmut mutates it."""
+    known = set(panel.cast)
+    heard = panel.off_panel_speakers()
+    for index, relation in enumerate(panel.staging):
+        for role, actor in (("subject", relation.subject), ("object", relation.object)):
+            if actor in known:
+                continue
+            # Somebody heard from off panel is not drawn, but may be looked at: the
+            # figure turns toward the side of the frame the voice comes from.
+            looked_at = role == "object" and relation.predicate is Predicate.LOOKING_AT
+            if looked_at and actor in heard:
+                continue
+            message = (
+                f"staging relation '{relation.predicate}' names unknown actor "
+                f"'{actor}' as {role}; cast is {sorted(known)}"
+            )
+            if actor in heard:
+                message += (
+                    f". '{actor}' speaks from off panel, and only looking_at may name "
+                    "somebody who is not drawn"
+                )
+            raise RuleViolationError(
+                message,
+                rule="unknown-actor",
+                loc=("staging", index),
+            )
+    # Captions are skipped rather than exempted by accident. A `spoken` caption's
+    # `by` names somebody *off panel*, so it is not in the cast by definition and
+    # checking it here would make the field impossible to use for what it is for.
+    for index, event in enumerate(panel.script):
+        if isinstance(event, SfxEvent):
+            if event.source is not None and event.source not in known:
+                raise RuleViolationError(
+                    f"sound effect {index} comes from unknown actor '{event.source}'; "
+                    f"cast is {sorted(known)}",
+                    rule="unknown-actor",
+                    loc=("script", index, event.verb, "from"),
+                )
+            continue
+        if not isinstance(event, SayEvent):
+            continue
+        # An off-panel speaker is somebody nobody draws, so not in the cast -- and one
+        # who is drawn in this panel cannot also be speaking from outside it.
+        if event.off_panel is not False:
+            if event.by in known:
+                raise RuleViolationError(
+                    f"script entry {index} is spoken from off panel by '{event.by}', "
+                    "who is drawn in this panel; leave them out of the cast, or drop "
+                    "off_panel",
+                    rule="off-panel-speaker",
+                    loc=("script", index, event.verb, "by"),
+                )
+            continue
+        if event.by not in known:
+            raise RuleViolationError(
+                f"script entry {index} is spoken by unknown actor '{event.by}'; "
+                f"cast is {sorted(known)}. If they speak from outside the panel, "
+                "say so with off_panel",
+                rule="unknown-actor",
+                loc=("script", index, event.verb, "by"),
+            )
+
+
+def _check_ordering_is_consistent(panel: PanelIR) -> None:
+    """`PanelIR.check_ordering_is_consistent`, outside the class so that mutmut mutates it."""
+    edges: dict[str, set[str]] = {actor: set() for actor in panel.cast}
+    # Which staging entry introduced each edge, so a cycle can be reported against a
+    # line the author actually wrote rather than against the document as a whole.
+    # First writer wins: if two entries state the same ordering, the earlier one is
+    # the one to point at.
+    wrote: dict[tuple[str, str], int] = {}
+    for index, relation in enumerate(panel.staging):
+        if relation.predicate is Predicate.LEFT_OF:
+            edge = (relation.subject, relation.object)
+        elif relation.predicate is Predicate.RIGHT_OF:
+            edge = (relation.object, relation.subject)
+        else:
+            continue
+        edges[edge[0]].add(edge[1])
+        wrote.setdefault(edge, index)
+
+    # Iterative depth-first search, so a deep cast cannot blow the Python stack.
+    colour = dict.fromkeys(edges, _UNVISITED)
+    for start in sorted(edges):
+        if colour[start] != _UNVISITED:
+            continue
+        stack: list[tuple[str, bool]] = [(start, False)]
+        while stack:
+            node, leaving = stack.pop()
+            if leaving:
+                colour[node] = _DONE
+                continue
+            colour[node] = _ON_STACK
+            stack.append((node, True))
+            for neighbour in sorted(edges[node]):
+                if colour[neighbour] == _ON_STACK:
+                    culprit = wrote.get((node, neighbour))
+                    raise RuleViolationError(
+                        f"horizontal ordering is cyclic around '{neighbour}'; "
+                        "left_of/right_of relations must form a consistent order",
+                        rule="ordering-cycle",
+                        loc=("staging",) if culprit is None else ("staging", culprit),
+                    )
+                if colour[neighbour] == _UNVISITED:
+                    stack.append((neighbour, False))
+
+
+def _check_figures(panel: PanelIR) -> None:
+    """`PanelIR.check_figures`, outside the class so that mutmut mutates it."""
+    figures = panel.figures()
+    if not figures:
+        return
+    for actor, member in panel.cast.items():
+        if not member.is_figure:
+            continue
+        if member.reference is not None:
+            raise RuleViolationError(
+                f"cast member {actor!r} names a puppet and a figure the picture draws; it "
+                "is one or the other. Over an inherited member, write `reference: null`",
+                rule="conflicting-cast",
+                loc=("cast", actor, "reference"),
+            )
+        for key in PUPPET_KEYS:
+            if getattr(member, key) != CastMember.model_fields[key].default:
+                raise RuleViolationError(
+                    f"cast member {actor!r} is a figure the picture draws, which nobody "
+                    f"poses or places, so {key!r} does not apply to it",
+                    rule="conflicting-cast",
+                    loc=("cast", actor, key),
+                )
+    puppets = [actor for actor, member in panel.cast.items() if not member.is_figure]
+    if puppets:
+        raise RuleViolationError(
+            f"the cast mixes puppets ({', '.join(puppets)}) with figures the picture draws "
+            f"({', '.join(figures)}); a panel's cast is all one or all the other, since "
+            "staging would place a puppet over a painted face it cannot see",
+            rule="conflicting-cast",
+            loc=("cast", puppets[0], "reference"),
+        )
+    played: dict[str, str] = {}
+    for actor, figure in figures.items():
+        if figure in played:
+            raise RuleViolationError(
+                f"figure {figure!r} is played by {played[figure]!r} already; one figure "
+                "the picture draws is one person",
+                rule="conflicting-cast",
+                loc=("cast", actor, "figure"),
+            )
+        played[figure] = actor
+    for index, relation in enumerate(panel.staging):
+        named = next(
+            (actor for actor in (relation.subject, relation.object) if actor in figures),
+            None,
+        )
+        if named is not None:
+            raise RuleViolationError(
+                f"staging relation '{relation.predicate}' names {named!r}, a figure the "
+                "picture draws: the artist already placed and staged everyone in it",
+                rule="figure-staging",
+                loc=("staging", index),
+            )
+
+
 class PageFormat(Strict):
     """The page every panel on it is laid out on.
 
@@ -2075,15 +2125,18 @@ class PageFormat(Strict):
     @model_validator(mode="after")
     def check_positive(self) -> Self:
         """Reject a page with no area inside its margin."""
-        if self.width <= 0 or self.height <= 0:
-            raise RuleViolationError(
-                "page size must be positive", rule="page-layout", loc=("page",)
-            )
-        if self.margin * 2 >= min(self.width, self.height):
-            raise RuleViolationError(
-                "the page margin leaves no room for panels", rule="page-layout", loc=("page",)
-            )
+        _check_positive_page_format(self)
         return self
+
+
+def _check_positive_page_format(page: PageFormat) -> None:
+    """`PageFormat.check_positive`, outside the class so that mutmut mutates it."""
+    if page.width <= 0 or page.height <= 0:
+        raise RuleViolationError("page size must be positive", rule="page-layout", loc=("page",))
+    if page.margin * 2 >= min(page.width, page.height):
+        raise RuleViolationError(
+            "the page margin leaves no room for panels", rule="page-layout", loc=("page",)
+        )
 
 
 class Corner(StrEnum):
@@ -2274,12 +2327,7 @@ class Tier(Strict):
     @model_validator(mode="after")
     def check_one_kind(self) -> Self:
         """A tier is a row of panels or a row of columns: never both, never neither."""
-        if bool(self.panels) == bool(self.columns):
-            raise RuleViolationError(
-                "a tier holds either `panels:` or `columns:`, and this one has "
-                + ("both" if self.panels else "neither"),
-                rule="page-layout",
-            )
+        _check_one_kind(self)
         return self
 
     @model_validator(mode="after")
@@ -2289,19 +2337,8 @@ class Tier(Strict):
         Refused rather than ignored where it would do nothing, or something undefined: a
         column's gutters run across it, and an inset is set into a rectangular corner.
         """
-        if not self.slant:
-            return self
-        if self.columns:
-            problem = "a tier of columns has no upright gutters between panels to lean"
-        elif len(self.panels) == 1:
-            problem = "this tier has one panel, so there is no gutter to lean"
-        elif any(placement.insets for placement in self.panels):
-            problem = "an inset is set into a square corner, which a slanted panel lacks"
-        else:
-            return self
-        raise RuleViolationError(
-            f"`slant` leans the gutters between panels; {problem}", rule="page-layout"
-        )
+        _check_slant(self)
+        return self
 
     @property
     def placed(self) -> tuple[tuple[str, tuple[str | int, ...]], ...]:
@@ -2318,6 +2355,33 @@ class Tier(Strict):
             for index, stacked in enumerate(column.panels)
             for entry in _read_with_insets(stacked, ("columns", column_index, "panels", index))
         )
+
+
+def _check_one_kind(tier: Tier) -> None:
+    """`Tier.check_one_kind`, outside the class so that mutmut mutates it."""
+    if bool(tier.panels) == bool(tier.columns):
+        raise RuleViolationError(
+            "a tier holds either `panels:` or `columns:`, and this one has "
+            + ("both" if tier.panels else "neither"),
+            rule="page-layout",
+        )
+
+
+def _check_slant(tier: Tier) -> None:
+    """`Tier.check_slant`, outside the class so that mutmut mutates it."""
+    if not tier.slant:
+        return
+    if tier.columns:
+        problem = "a tier of columns has no upright gutters between panels to lean"
+    elif len(tier.panels) == 1:
+        problem = "this tier has one panel, so there is no gutter to lean"
+    elif any(placement.insets for placement in tier.panels):
+        problem = "an inset is set into a square corner, which a slanted panel lacks"
+    else:
+        return
+    raise RuleViolationError(
+        f"`slant` leans the gutters between panels; {problem}", rule="page-layout"
+    )
 
 
 class PageSpec(Strict):
@@ -2373,40 +2437,45 @@ class PageLayout(Strict):
     @model_validator(mode="after")
     def check_room(self) -> Self:
         """Every tier must have room for its panels and every page for its tiers."""
-        usable_width = self.page.width - 2 * self.page.margin
-        usable_height = self.page.height - 2 * self.page.margin
-        for page_index, page in enumerate(self.pages):
-            tiers_height = usable_height - self.page.tier_gutter * (len(page.tiers) - 1)
-            if tiers_height <= 0:
-                raise RuleViolationError(
-                    f"page {page_index + 1} has no room for {len(page.tiers)} tiers between "
-                    "its margins and tier gutters",
-                    rule="page-layout",
-                    loc=("pages", page_index),
-                )
-            total_height = sum(tier.height for tier in page.tiers)
-            for tier_index, tier in enumerate(page.tiers):
-                loc: tuple[str | int, ...] = ("pages", page_index, "tiers", tier_index)
-                where = f"tier {tier_index + 1} of page {page_index + 1}"
-                across = len(tier.panels) or len(tier.columns)
-                what = "panels" if tier.panels else "columns"
-                if usable_width - self.page.gutter * (across - 1) <= 0:
-                    raise RuleViolationError(
-                        f"{where} has no room for {across} {what} between its margins and gutters",
-                        rule="page-layout",
-                        loc=loc,
-                    )
-                height = tiers_height * tier.height / total_height
-                for column_index, column in enumerate(tier.columns):
-                    if height - self.page.tier_gutter * (len(column.panels) - 1) <= 0:
-                        raise RuleViolationError(
-                            f"column {column_index + 1} of {where} has no room for "
-                            f"{len(column.panels)} panels between its tier gutters",
-                            rule="page-layout",
-                            loc=(*loc, "columns", column_index),
-                        )
-                _check_stacks_are_blocked(tier, loc, where)
+        _check_room(self)
         return self
+
+
+def _check_room(layout: PageLayout) -> None:
+    """`PageLayout.check_room`, outside the class so that mutmut mutates it."""
+    usable_width = layout.page.width - 2 * layout.page.margin
+    usable_height = layout.page.height - 2 * layout.page.margin
+    for page_index, page in enumerate(layout.pages):
+        tiers_height = usable_height - layout.page.tier_gutter * (len(page.tiers) - 1)
+        if tiers_height <= 0:
+            raise RuleViolationError(
+                f"page {page_index + 1} has no room for {len(page.tiers)} tiers between "
+                "its margins and tier gutters",
+                rule="page-layout",
+                loc=("pages", page_index),
+            )
+        total_height = sum(tier.height for tier in page.tiers)
+        for tier_index, tier in enumerate(page.tiers):
+            loc: tuple[str | int, ...] = ("pages", page_index, "tiers", tier_index)
+            where = f"tier {tier_index + 1} of page {page_index + 1}"
+            across = len(tier.panels) or len(tier.columns)
+            what = "panels" if tier.panels else "columns"
+            if usable_width - layout.page.gutter * (across - 1) <= 0:
+                raise RuleViolationError(
+                    f"{where} has no room for {across} {what} between its margins and gutters",
+                    rule="page-layout",
+                    loc=loc,
+                )
+            height = tiers_height * tier.height / total_height
+            for column_index, column in enumerate(tier.columns):
+                if height - layout.page.tier_gutter * (len(column.panels) - 1) <= 0:
+                    raise RuleViolationError(
+                        f"column {column_index + 1} of {where} has no room for "
+                        f"{len(column.panels)} panels between its tier gutters",
+                        rule="page-layout",
+                        loc=(*loc, "columns", column_index),
+                    )
+            _check_stacks_are_blocked(tier, loc, where)
 
 
 def _check_stacks_are_blocked(tier: Tier, loc: tuple[str | int, ...], where: str) -> None:
