@@ -21,7 +21,14 @@ from pydantic_core import ErrorDetails
 from scenet import compile_source, parse_panel
 from scenet.assets.artwork import ArtworkContract
 from scenet.assets.contract import PuppetSpec, load_puppet
-from scenet.diagnostics import Diagnostic, diagnose_file, diagnose_source
+from scenet.diagnostics import (
+    Diagnostic,
+    Position,
+    Region,
+    diagnose_file,
+    diagnose_script,
+    diagnose_source,
+)
 from scenet.errors import AssetError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import _say_what_to_write, errors_of
 from scenet.frontends.script_front import parse_script
@@ -401,6 +408,18 @@ class TestMistypedValues:
         source = "panel: {size: ['1000', 800]}\n" + CAST
         assert [finding.rule for finding in diagnose_source(source)] == ["invalid-field"]
 
+    @pytest.mark.parametrize("value", ["5", "[left]", "{side: left}", "sideways"])
+    def test_an_off_panel_that_is_neither_a_yes_nor_a_side_names_the_sides(self, value: str):
+        """A list once escaped the check as a TypeError, and `scenet check` crashed."""
+        source = CAST + f"script:\n  - say: {{by: alice, text: Hi, off_panel: {value}}}\n"
+        found = diagnose_source(source)
+        assert [(finding.rule, finding.path) for finding in found] == [
+            ("invalid-field", ("script", 0, "say", "off_panel"))
+        ]
+        assert "'left', 'right', 'top', 'bottom'" in found[0].message
+        with pytest.raises(PanelSyntaxError, match="the side of the frame"):
+            parse_panel(source)
+
     def test_true_is_still_a_yes(self):
         source = CAST + "script:\n  - sfx: {text: BANG, hollow: true}\n"
         (sfx,) = parse_panel(source).script
@@ -431,6 +450,18 @@ class TestEveryReader:
         found = diagnose_file(path)
         assert [finding.rule for finding in found] == ["yaml-tag"]
         assert _where(found[0]) == _span(source, "!!str")
+
+    def test_a_refusal_over_several_lines_of_front_matter_is_at_its_first_line(self):
+        """A span cannot be one line's columns when it ends on another line."""
+        source = (
+            "---\ncast: {ALICE: {reference: alice}}\nfoo: {[a,\n   b]: x}\n---\n\n"
+            "PANEL 1\n\nALICE\nHi.\n"
+        )
+        (found,) = diagnose_script(source)
+        assert found.rule == "syntax"
+        assert found.region == Region(
+            start=Position(line=3, column=1), end=Position(line=3, column=10)
+        )
 
     def test_an_anchor_in_a_script_directive_is_refused(self):
         source = (

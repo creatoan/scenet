@@ -1519,11 +1519,15 @@ class SayEvent(Strict):
 
 def _check_off_panel(value: object) -> object:
     """`SayEvent.check_off_panel`, outside the class so that mutmut mutates it."""
-    if isinstance(value, bool) or value in {side.value for side in Side}:
+    if isinstance(value, bool):
         return value
-    said = mistyped(value, "bool") if isinstance(value, str) else None
-    if said is not None:
-        raise ValueError(said)
+    if isinstance(value, str):
+        # Only text can be a side: a list or a mapping cannot even be looked up among them.
+        if value in {side.value for side in Side}:
+            return value
+        said = mistyped(value, "bool")
+        if said is not None:
+            raise ValueError(said)
     sides = ", ".join(f"'{side.value}'" for side in Side)
     raise ValueError(
         f"off_panel is true, false, or the side of the frame the speaker is on: {sides}; "
