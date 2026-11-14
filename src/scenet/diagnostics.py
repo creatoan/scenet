@@ -505,7 +505,7 @@ RULES: dict[str, Rule] = {
             "is in. Each must be a relative path, the file must be there, and it must be a "
             "TrueType or OpenType font with a Unicode character map, since lettering is "
             "measured against it. A document compiled from text with no file behind it has "
-            "no folder, and so can name no font. In a comic script, a font a panel names in its own " 
+            "no folder, and so can name no font. In a comic script, a font a panel names in its own "
             "`@lettering:` directive is reported at that directive's line."
         ),
         help=(
