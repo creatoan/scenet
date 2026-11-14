@@ -21,6 +21,9 @@ below 1.0 means.
 
 ### Fixed
 
+- **A comic script's panel directives locate their own faults** (#473). A bad puppet in an `@cast:`
+  or a missing font in an `@lettering:` is reported at the directive's line, while faults in
+  front-matter declarations still point there and are reported once.
 - **The weekly mutation run finishes again, and covers the front ends and the core** (#345). It
   had not completed since 2026-10-12: three runs reached the 120-minute limit, and the fourth
   failed in mutmut's clean run on a test that reads the generated `emit/cmyk.py`, which mutmut

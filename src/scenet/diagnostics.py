@@ -375,7 +375,11 @@ RULES: dict[str, Rule] = {
     ),
     "unknown-puppet": Rule(
         summary="Reference to a character the library does not contain",
-        description="A cast member's `reference` names a puppet that is not installed.",
+        description=(
+            "A cast member's `reference` names a puppet that is not installed. In a comic script, "
+            "a member a panel introduces with its own `@cast:` directive is reported at that "
+            "directive's line; a member declared in the front matter is reported there."
+        ),
         help=(
             "Check the name against the shipped library, or name a puppet of your own by "
             "its file, relative to the document: `reference: puppets/name.puppet.yaml`."
@@ -501,7 +505,9 @@ RULES: dict[str, Rule] = {
             "is in. Each must be a relative path, the file must be there, and it must be a "
             "TrueType or OpenType font with a Unicode character map, since lettering is "
             "measured against it. A document compiled from text with no file behind it has "
-            "no folder, and so can name no font."
+            "no folder, and so can name no font. In a comic script, "
+            "a font a panel names in its own `@lettering:` directive "
+            "is reported at that directive's line."
         ),
         help=(
             "Check the path against the document's folder, write it relative to that "
@@ -1791,8 +1797,8 @@ def diagnose_script(
     base = _folder(source, base)
     # Once per document, not once per panel: every panel resolves its cast against it.
     library = library or default_library()
-    found = _diagnose_script_cast(text, panels, source, library=library, base=base)
-    found += _diagnose_script_lettering(text, panels, source, base=base)
+    found = _diagnose_script_cast(text, document, source, library=library, base=base)
+    found += _diagnose_script_lettering(text, document, source, base=base)
     found += _diagnose_script_setting(text, document, source, base=base)
     found += _diagnose_script_figures(text, document, source, base=base)
     if _errors(found):
@@ -1955,32 +1961,36 @@ def _diagnose_script_figures(
 
 def _diagnose_script_lettering(
     text: str,
-    panels: dict[str, PanelIR],
+    document: ScriptDocument,
     source: Path | None,
     *,
     base: Folder | None,
 ) -> list[Diagnostic]:
-    """Read a script's declared fonts, reporting a front-matter fault once, where it is.
+    """Read a script's fonts, reporting each fault where it is declared.
 
-    The same reasoning as `_diagnose_script_cast`: every panel inherits the front matter,
-    so a bad font there is found once per panel and is one fault. One a panel declares
-    itself, in an `@lettering:` directive, keeps its panel's name.
+    Every panel inherits the front matter, so a bad font there is found once and points
+    into the front matter. A font a panel declares itself in an `@lettering:` directive
+    keeps its panel's name and points at that directive.
     """
     front, declared = _script_front_matter(text)
+    lines = normalise_text(text).split("\n")
     found: list[Diagnostic] = []
-    for name, panel in panels.items():
+    for name, panel in document.panels.items():
         for item in _diagnose_lettering(panel, declared, front, source, prefix=(), base=base):
             if _has_path(declared, item.path):
                 if item not in found:
                     found.append(item)
             else:
+                written = document.lines[name]
                 found.append(
                     Diagnostic(
                         rule=item.rule,
                         message=item.message,
                         path=(name, *item.path),
                         source=source,
-                        region=DOCUMENT_START,
+                        region=_script_line(
+                            lines, written.directives.get(("lettering",), written.heading)
+                        ),
                     )
                 )
     return found
@@ -1988,27 +1998,26 @@ def _diagnose_script_lettering(
 
 def _diagnose_script_cast(
     text: str,
-    panels: dict[str, PanelIR],
+    document: ScriptDocument,
     source: Path | None,
     *,
     library: PuppetLibrary | None,
     base: Folder | None,
 ) -> list[Diagnostic]:
-    """Resolve a script's cast, reporting each front-matter fault once, where it is.
+    """Resolve a script's cast, reporting each fault at its declaration.
 
-    Every panel inherits the front-matter cast, so checking panel by panel finds the
-    same bad name once per panel. A fault in a member the front matter declares is
-    reported once, against the front matter, with no panel in its path. A member a
-    panel introduces itself -- through an `@cast:` directive -- keeps its panel name,
-    and the start of the document, since no line of YAML holds it. A fault inside a
-    puppet file stays in that file, once however many panels cast it.
+    Every panel inherits the front-matter cast, so a bad member there is found in each
+    panel but reported once, against the front matter. A member introduced by a panel's
+    `@cast:` keeps its panel name and points at that directive. A fault inside a puppet
+    file stays in that file, once however many panels cast it.
     """
     front, declared = _script_front_matter(text)
     cast = declared.get("cast")
     shared = cast if isinstance(cast, dict) else {}
 
+    lines = normalise_text(text).split("\n")
     found: list[Diagnostic] = []
-    for name, panel in panels.items():
+    for name, panel in document.panels.items():
         for item in _diagnose_cast(panel, front, source, prefix=(), library=library, base=base):
             if item.source != source:
                 if item not in found:
@@ -2025,7 +2034,12 @@ def _diagnose_script_cast(
                         message=item.message,
                         path=(name, *item.path),
                         source=source,
-                        region=DOCUMENT_START,
+                        region=_script_line(
+                            lines,
+                            document.lines[name].directives.get(
+                                ("cast",), document.lines[name].heading
+                            ),
+                        ),
                     )
                 )
 
@@ -2035,7 +2049,7 @@ def _diagnose_script_cast(
     unseen = {
         actor: member
         for actor, member in shared.items()
-        if all(actor not in panel.cast for panel in panels.values())
+        if all(actor not in panel.cast for panel in document.panels.values())
     }
     if unseen:
         try:

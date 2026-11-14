@@ -1312,10 +1312,10 @@
         "font"
       ],
       "region": [
+        5,
         1,
-        1,
-        1,
-        2
+        5,
+        38
       ],
       "rule": "font-file",
       "source": "tests/finding_corpus/a-font-a-script-panel-names.script"
@@ -1332,10 +1332,10 @@
         "font"
       ],
       "region": [
+        5,
         1,
-        1,
-        1,
-        2
+        5,
+        38
       ],
       "rule": "font-file",
       "source": "tests/finding_corpus/a-font-a-script-panel-names.script"
@@ -3174,10 +3174,10 @@
         "reference"
       ],
       "region": [
+        2,
         1,
-        1,
-        1,
-        2
+        2,
+        36
       ],
       "rule": "unknown-puppet",
       "source": "tests/finding_corpus/a-script-with-no-front-matter.script"
@@ -3195,10 +3195,10 @@
         "reference"
       ],
       "region": [
+        2,
         1,
-        1,
-        1,
-        2
+        2,
+        36
       ],
       "rule": "unknown-puppet",
       "source": "tests/finding_corpus/a-script-with-no-front-matter.script"

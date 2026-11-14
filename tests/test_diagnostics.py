@@ -1159,6 +1159,22 @@ class TestScriptCastFindings:
         assert pose.region is not None
         assert pose.region.start.line == 5
 
+    def test_a_panel_cast_fault_points_at_its_directive(self):
+        script = "PANEL 1\n@cast: {ALICE: {reference: nobody}}\nALICE\nHello.\n"
+        (found,) = diagnose_script(script)
+        assert found.rule == "unknown-puppet"
+        assert found.path == ("1", "cast", "ALICE", "reference")
+        assert found.region is not None
+        assert found.region.start.line == 2
+
+    def test_a_panel_font_fault_points_at_its_directive(self):
+        script = "PANEL 1\n@lettering: {font: fonts/missing.ttf}\n"
+        (found,) = diagnose_script(script)
+        assert found.rule == "font-file"
+        assert found.path == ("1", "lettering", "font")
+        assert found.region is not None
+        assert found.region.start.line == 2
+
 
 class TestSceneDefaultFindings:
     """Keys alongside `panels:` are defaults every panel inherits. A fault in one is one
