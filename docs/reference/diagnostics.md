@@ -1447,7 +1447,7 @@ cast: {alice: {reference: alice, pose: pointing}}
 | Keys | [`cast.<id>.reference`](language/cast.md#castidreference) |
 | Since | 0.3 |
 
-**Why it happens.** A cast member's `reference` names a puppet that is not installed. In a comic script, a member a panel introduces with its own `@cast:` directive is reported at that directive's line; a member declared in the front matter is reported there. In a comic script, a member a panel introduces with its own `@cast:` directive is reported at that directive's line; a member declared in the front matter is reported there.
+**Why it happens.** A cast member's `reference` names a puppet that is not installed. In a comic script, a member a panel introduces with its own `@cast:` directive is reported at that directive's line; a member declared in the front matter is reported there.
 
 **How to fix it.** Check the name against the shipped library, or name a puppet of your own by its file, relative to the document: `reference: puppets/name.puppet.yaml`.
 
