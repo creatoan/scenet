@@ -3177,7 +3177,7 @@
         2,
         1,
         2,
-        38
+        36
       ],
       "rule": "unknown-puppet",
       "source": "tests/finding_corpus/a-script-with-no-front-matter.script"
@@ -3198,7 +3198,7 @@
         2,
         1,
         2,
-        38
+        36
       ],
       "rule": "unknown-puppet",
       "source": "tests/finding_corpus/a-script-with-no-front-matter.script"
