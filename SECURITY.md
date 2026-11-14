@@ -24,9 +24,10 @@ reaches the network. What it reads and what it serves:
 - **Documents.** Panels, scenes and comic scripts, which are YAML or YAML front matter; so are
   artwork contracts and puppet files. YAML is read as
   [Scenet YAML](https://creatoan.github.io/scenet/reference/language/yaml_profile.html), a
-  strict profile built from PyYAML's safe parts: it refuses every tag, so a malicious document
-  cannot construct arbitrary Python objects, and every anchor and alias, so none can expand
-  without bound; it refuses a repeated key and a document nested too deeply as well.
+  strict profile built from the parts of PyYAML that `yaml.safe_load` uses, never `yaml.load`.
+  It refuses every tag, so a malicious document cannot construct arbitrary Python objects, and
+  every anchor and alias, so none can expand without bound; it refuses a repeated key and a
+  document nested too deeply as well.
   Everything is then validated through pydantic models before it reaches the solver.
 - **Files a document names**: a lettering font, read by fontTools; a PNG or JPEG picture to
   letter over, whose header Scenet reads itself, without an imaging library; the picture's

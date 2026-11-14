@@ -1,4 +1,5 @@
 # The look written out for each of them.
+camera: {shot: long_shot}
 cast:
   alice: {reference: alice, pose: pointing, at: left_third}
   bob: {reference: alice, pose: pointing, at: right_third}

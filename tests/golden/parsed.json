@@ -286,7 +286,7 @@
   "tests/rule_corpus/fixed/unknown-pose.panel.yaml": "9e4071b1fb2a965bf1977ef9919b38d30f150960673a46b2a5ba169b14e0b1c4",
   "tests/rule_corpus/fixed/unknown-puppet.panel.yaml": "f33a85fd748f4c8594346620ef69456c8248df056ee6fa7c89ea49a6e99382e6",
   "tests/rule_corpus/fixed/word-limit.panel.yaml": "985730b10690677742e5d890713471f9c757e78d641229190101426b6d6dab25",
-  "tests/rule_corpus/fixed/yaml-anchor.panel.yaml": "63e7abe9676b4fc3bc370facd1c85ed70ded00565a6adb01e4cb632fc9e78c14",
+  "tests/rule_corpus/fixed/yaml-anchor.panel.yaml": "776aba457aee80ebf039334b7e287b63dfbf3b4cb93257d4306796d9038434a9",
   "tests/rule_corpus/fixed/yaml-merge-key.panel.yaml": "b204e3a95fff1ce674549bf7dc56933de9f72ca90c5e43ab1c71bb8b29217bb2",
   "tests/rule_corpus/fixed/yaml-tag.panel.yaml": "696a25aba5cb66c13123066db1b86c321a05dbef4568d20b8b511accf7d0ba87",
   "tests/rule_corpus/font-file.panel.yaml": "e96a61d790a2c93534123a5f60b17299e5c780b348cc363da367a8ff2feca7f6",
@@ -318,7 +318,7 @@
   "tests/rule_corpus/unknown-pose.panel.yaml": "613767351380ab8ebae389ab1d9ee40c19b7fa1ab891051cd468fb02e3660749",
   "tests/rule_corpus/unknown-puppet.panel.yaml": "67acb998ea515c6c58d19fe3573db42bd55bedfcbbf21f4ae24270461fce9353",
   "tests/rule_corpus/word-limit.panel.yaml": "233adbc1db7179a27ca57709a5d2fa96f3aeeef89a5da8275c64df082b2f093e",
-  "tests/rule_corpus/yaml-anchor.panel.yaml": "353f2ed26f163908266c0d070720a8d02d83bff90ae0bb028d13efab991477da",
+  "tests/rule_corpus/yaml-anchor.panel.yaml": "856360319d5c6eeb97b0903557fde9d8086df40f85110f9a94e3340f4cf13b15",
   "tests/rule_corpus/yaml-merge-key.panel.yaml": "e99687236ceb98019beb4f4cd836289aedfdf55b7b904b6f8f55bb8a593f98b3",
   "tests/rule_corpus/yaml-tag.panel.yaml": "0841ba8074e52ce99e9261a70d7c76ed4bb1a19cdb4e23eeb3d18afef45ef04b"
 }

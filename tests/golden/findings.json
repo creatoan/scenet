@@ -8042,9 +8042,9 @@
       "message": "'&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults",
       "path": [],
       "region": [
-        3,
+        4,
         10,
-        3,
+        4,
         15
       ],
       "rule": "yaml-anchor",
@@ -8058,9 +8058,9 @@
       "message": "'&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults",
       "path": [],
       "region": [
-        3,
+        4,
         10,
-        3,
+        4,
         15
       ],
       "rule": "yaml-anchor",

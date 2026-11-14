@@ -6606,6 +6606,7 @@ Checked as `yaml-anchor.panel.yaml`:
 
 ```yaml
 # An anchor and an alias, to give bob the look alice has.
+camera: {shot: long_shot}
 cast:
   alice: &look {reference: alice, pose: pointing}
   bob: *look
@@ -6614,13 +6615,14 @@ cast:
 `scenet check yaml-anchor.panel.yaml` says:
 
 ```text
-yaml-anchor.panel.yaml:3:10: yaml-anchor: '&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults
+yaml-anchor.panel.yaml:4:10: yaml-anchor: '&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults
 ```
 
 Fixed:
 
 ```yaml
 # The look written out for each of them.
+camera: {shot: long_shot}
 cast:
   alice: {reference: alice, pose: pointing, at: left_third}
   bob: {reference: alice, pose: pointing, at: right_third}

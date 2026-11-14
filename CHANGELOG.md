@@ -14,6 +14,15 @@ below 1.0 means.
 (#352), a strict profile with JSON's data model. `scenet check` names each construct below where
 it is written, and says what to write instead.
 
+### Added
+
+- **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
+  each end in a job that calls `.github/workflows/scheduled-report.yml`: a failure opens an issue
+  titled `Scheduled run failed: <workflow>`, a further one comments on it, and the next success
+  closes it. It holds `issues: write` alone, and is shell over the `gh` CLI with no action. A
+  test lists every workflow with a `schedule:` trigger and fails if one does not end in it; the
+  link check can be dispatched with `force-failure` and `report` to watch it work.
+
 ### Changed (breaking)
 
 - **Tags are refused** (#352): `!!binary`, `!!str`, `!!set`, `!!timestamp` and any `!custom`,
@@ -50,15 +59,6 @@ it is written, and says what to write instead.
   editor validating with them agrees.
 - **A key written twice is located at the key** (#352), its whole span, as every refusal of the
   profile is; it was the key's first character.
-
-### Added
-
-- **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
-  each end in a job that calls `.github/workflows/scheduled-report.yml`: a failure opens an issue
-  titled `Scheduled run failed: <workflow>`, a further one comments on it, and the next success
-  closes it. It holds `issues: write` alone, and is shell over the `gh` CLI with no action. A
-  test lists every workflow with a `schedule:` trigger and fails if one does not end in it; the
-  link check can be dispatched with `force-failure` and `report` to watch it work.
 
 ### Fixed
 
