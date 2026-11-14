@@ -375,7 +375,11 @@ RULES: dict[str, Rule] = {
     ),
     "unknown-puppet": Rule(
         summary="Reference to a character the library does not contain",
-        description="A cast member's `reference` names a puppet that is not installed.",
+        description=(
+            "A cast member's `reference` names a puppet that is not installed. In a comic script, "
+            "a member a panel introduces with its own `@cast:` directive is reported at that "
+            "directive's line; a member declared in the front matter is reported there."
+        ),
         help=(
             "Check the name against the shipped library, or name a puppet of your own by "
             "its file, relative to the document: `reference: puppets/name.puppet.yaml`."
@@ -501,7 +505,8 @@ RULES: dict[str, Rule] = {
             "is in. Each must be a relative path, the file must be there, and it must be a "
             "TrueType or OpenType font with a Unicode character map, since lettering is "
             "measured against it. A document compiled from text with no file behind it has "
-            "no folder, and so can name no font."
+            "no folder, and so can name no font. In a comic script, a font a panel names in its own " 
+            "`@lettering:` directive is reported at that directive's line."
         ),
         help=(
             "Check the path against the document's folder, write it relative to that "

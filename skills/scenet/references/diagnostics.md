@@ -464,7 +464,7 @@ setting: {image: art/figures.png}
 | Keys | [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`lettering.font.bold_italic`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontbold_italic), [`lettering.font.display`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontdisplay), [`lettering.font.italic`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontitalic), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular) |
 | Since | 0.11 |
 
-**Why it happens.** `lettering.font` names font files, read relative to the folder the document is in. Each must be a relative path, the file must be there, and it must be a TrueType or OpenType font with a Unicode character map, since lettering is measured against it. A document compiled from text with no file behind it has no folder, and so can name no font.
+**Why it happens.** `lettering.font` names font files, read relative to the folder the document is in. Each must be a relative path, the file must be there, and it must be a TrueType or OpenType font with a Unicode character map, since lettering is measured against it. A document compiled from text with no file behind it has no folder, and so can name no font. In a comic script, a font a panel names in its own `@lettering:` directive is reported at that directive's line.
 
 **How to fix it.** Check the path against the document's folder, write it relative to that folder, or point it at a .ttf or .otf file.
 
@@ -1283,7 +1283,7 @@ cast: {alice: {reference: alice, pose: pointing}}
 | Keys | [`cast.<id>.reference`](https://creatoan.github.io/scenet/reference/language/cast.html#castidreference) |
 | Since | 0.3 |
 
-**Why it happens.** A cast member's `reference` names a puppet that is not installed.
+**Why it happens.** A cast member's `reference` names a puppet that is not installed. In a comic script, a member a panel introduces with its own `@cast:` directive is reported at that directive's line; a member declared in the front matter is reported there.
 
 **How to fix it.** Check the name against the shipped library, or name a puppet of your own by its file, relative to the document: `reference: puppets/name.puppet.yaml`.
 
