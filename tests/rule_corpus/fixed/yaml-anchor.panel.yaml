@@ -1,0 +1,4 @@
+# The look written out for each of them.
+cast:
+  alice: {reference: alice, pose: pointing, at: left_third}
+  bob: {reference: alice, pose: pointing, at: right_third}

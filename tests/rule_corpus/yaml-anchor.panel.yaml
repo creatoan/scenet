@@ -1,0 +1,4 @@
+# An anchor and an alias, to give bob the look alice has.
+cast:
+  alice: &look {reference: alice, pose: pointing}
+  bob: *look

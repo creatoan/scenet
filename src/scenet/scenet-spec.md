@@ -67,6 +67,10 @@ so always check.
   before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
   they are read.
 - **Shots are named** — `medium_shot`, `close_up` — never a percentage of the panel.
+- **Write Scenet YAML** (the `language` part's first page). A line such as `No`, `1984` or
+  `12:30` needs no quotes: it is lettered as written. A yes-or-no is `true` or `false`, never
+  `yes` or `on`; a number is decimal, as JSON writes it, never `0x400`, `01750` or `1_0`. No
+  tags, anchors, aliases or merge keys.
 - **Prose in a comic script is kept and never interpreted.** Staging that matters goes
   in the front matter.
 
@@ -94,7 +98,12 @@ Coordinates do not appear anywhere in the language; producing them is the compil
 It is read strictly. An unknown key is an error rather than ignored, and so is a key written twice
 in one mapping, such as two cast members called `alice`. YAML requires keys to be unique, but the
 usual Python parser keeps the last and drops the first without a word, which would quietly lose a
-character or a panel. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+character or a panel.
+
+The YAML itself is [Scenet YAML](#scenet-yaml), a strict profile with JSON's data model, so
+ordinary dialogue is never mistyped: `text: No`, `text: 1984` and `text: 12:30` letter what they
+say, and `cast: {on: …, no: …}` names two actors. Tags, anchors, aliases and merge keys are
+refused, each where it is written.
 
 ## The layers
 
@@ -220,6 +229,127 @@ ever wanted, [resvg](https://github.com/linebender/resvg) is the candidate: it s
 `feTurbulence`, aims at the whole specification rather than the common cases, and ships around 1600
 SVG-to-PNG regression tests — which matters because the W3C SVG test suite was abandoned long ago,
 making resvg's the practical conformance reference.
+
+## Scenet YAML
+
+A panel, a scene, a puppet file, an artwork contract and a comic script's front matter are
+written in **Scenet YAML**: YAML, read by a strict profile whose data model is JSON's. Ordinary
+dialogue is never mistyped — `No`, `1984` and `12:30` are lines like any other — and the parts of
+YAML that no panel needs are refused. This page is normative: it says what every Scenet document
+may hold, and the compiler, `scenet check`, the playground and the model server read it
+through the same loader, `scenet.safe_yaml`.
+
+| Feature | Rule |
+|---|---|
+| Implicit typing | YAML 1.2's JSON schema only: `true`, `false`, `null` (or no value at all), and integers and floats as JSON writes them. Every other plain scalar is text, exactly as written |
+| A scalar where the language expects text | Its source text, as written: `text: No`, `text: 1984` and `text: 12:30` letter `No`, `1984` and `12:30` |
+| Keys | Text, as written: `cast: {on: …, no: …}` names two actors, `on` and `no`. A key is a name, never a list or a mapping, and is written once per mapping |
+| Tags (`!!binary`, `!!str`, `!!set`, `!!timestamp`, any `!custom`) | Refused, as [`yaml-tag`](https://creatoan.github.io/scenet/reference/diagnostics.html#yaml-tag) |
+| Anchors and aliases (`&name`, `*name`) | Refused, as [`yaml-anchor`](https://creatoan.github.io/scenet/reference/diagnostics.html#yaml-anchor): a scene's defaults and `over:` cover reuse |
+| Merge keys (`<<:`) | Refused, as [`yaml-merge-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#yaml-merge-key) |
+| Multi-document streams | Refused: a file is one document |
+| Flow style, comments, block scalars, quoting | Kept |
+| Tabs | Never in indentation, nor between tokens: [`syntax`](https://creatoan.github.io/scenet/reference/diagnostics.html#syntax), saying which line to indent with spaces. Inside quotes and block scalars a tab is text |
+
+Each refusal is one finding, at exactly the text at fault, under its own rule.
+
+### Typing
+
+A **plain** scalar — one written without quotes — is typed by its spelling, and only these
+spellings are anything but text:
+
+| Written | Read as |
+|---|---|
+| `true`, `false` | a yes or a no |
+| `null`, or nothing after the colon | no value |
+| `0`, `1984`, `-3` | an integer: an optional minus, then `0` or digits that do not start with `0` |
+| `1.5`, `-0.25`, `1e3`, `2.5E-1` | a float: an integer, then a point and digits, or an exponent, or both |
+
+Everything else is text: `yes`, `No`, `on`, `OFF`, `y`, `n`, `True`, `FALSE`, `~`, `Null`,
+`01750`, `0o17`, `0x400`, `0b101`, `1_0`, `+5`, `.5`, `.inf`, `.nan`, `12:30`, `190:20:30`,
+`2024-05-01`. A **quoted** scalar is always text, and so is a block scalar (`|`, `>`).
+
+YAML 1.1, which most YAML readers in Python still implement, read many of those as something
+else — `No` as false, `01750` as the octal 1000, `12:30` as the sexagesimal 750, `2024-05-01` as a
+date. Scenet YAML does not. The spellings it does type are JSON's, so a document means the same
+thing read as YAML or as JSON.
+
+#### Where the language expects text
+
+A dialogue line, a caption, a sound effect, an actor id, a pose's name, a description: every value
+the language takes as text takes a scalar as **the text it was written as**. A number keeps its
+spelling, so `1.50` letters `1.50` and not `1.5`.
+
+```yaml
+cast:
+  no: {reference: alice, at: left_third}
+  on: {reference: bob, at: right_third, facing: left}
+script:
+  - say: {by: no, text: No}
+  - say: {by: on, text: 1984}
+  - caption: {text: 12:30}
+```
+
+`null` is never text: it means no value, so `text: null` is a missing line. Quote it, `'null'`,
+to letter the word.
+
+#### Where the language expects a yes or a number
+
+A yes-or-no is `true` or `false`, and a number is written as JSON writes it. Text is never read as
+either, not even quoted — `'800'` is text — and a finding says what to write instead:
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - sfx: {text: BANG, hollow: yes}
+```
+
+`scenet check` says `'yes' is text in Scenet YAML, which reads only true and false as a yes or a
+no: write true`. For `size: [0x400, 01750]` it gives one finding for each number, saying to write
+`1024` and `1750` — and that YAML 1.1 read `01750` as the octal 1000, which is the height a 0.13
+compile drew.
+
+### What is refused
+
+**Tags.** A tag makes a value something it does not look like — `!!binary aGVsbG8=` lettered
+`hello` — and makes the reader build whatever type it names. Scenet YAML has none. Where text is
+expected, a number or `true` is the text it looks like anyway, so `!!str` is never needed:
+
+```yaml
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: !!str 1984}
+```
+
+**Anchors and aliases.** An alias expands wherever it is used, without bound: a few lines can
+stand for a document too big to hold. The language has its own reuse — every panel of a scene
+inherits what the scene says beside `panels:`, and a panel inherits another's with
+[`over:`](#scene-documents) — so `&name` and `*name` are refused. An unquoted line that starts with `*`,
+as Markdown stresses a word, is an alias too: quote it, or stress the word with underscores,
+`_told_`.
+
+```yaml
+cast:
+  alice: &look {reference: alice, pose: pointing}
+  bob: *look
+```
+
+**Merge keys.** `<<:` copied another mapping's keys in YAML 1.1 and is an ordinary key in YAML
+1.2, so what it meant depended on the reader. It is refused; inherit with a scene's defaults or
+`over:`.
+
+**Tabs.** YAML never allowed a tab in indentation, and the parser said so as "found character
+'\t' that cannot start any token". Scenet says which line is indented with a tab, and to indent it
+with spaces.
+
+### Editors and the schema
+
+The JSON Schemas `scenet schema` prints, which the VS Code extension validates with, agree with
+this profile wherever a schema can: every text field accepts a number and a boolean, as the
+compiler does, and `hollow: yes` is flagged as not a boolean. A schema sees values, not how they
+were spelled, so an editor that reads YAML 1.2's core schema still takes `0x400`, `True` and `.inf`
+for a number and a boolean, and an anchor for reuse. `scenet check`, which the extension runs on
+save, reports each where it is written.
 
 ## `panel`
 
@@ -5200,6 +5330,9 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`unknown-place`](#unknown-place) | error | Reference to a place the library does not have |
 | [`unknown-pose`](#unknown-pose) | error | Reference to a pose the character does not have |
 | [`unknown-puppet`](#unknown-puppet) | error | Reference to a character the library does not contain |
+| [`yaml-anchor`](#yaml-anchor) | error | A YAML anchor or alias is written |
+| [`yaml-merge-key`](#yaml-merge-key) | error | A YAML merge key is written |
+| [`yaml-tag`](#yaml-tag) | error | A YAML tag is written |
 | [`dropped-relation`](#dropped-relation) | note | A shared staging relation does not apply in a panel its actor is left out of |
 | [`looks-like-dialogue`](#looks-like-dialogue) | note | A line in a comic script is set like dialogue but is not read as dialogue |
 | [`panel-count`](#panel-count) | note | A comic script's PAGE heading states a count its panels do not match |
@@ -5452,7 +5585,7 @@ setting:
 | Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
 | Since | 0.10 |
 
-**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
+**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
 
 **How to fix it.** Delete or rename one of the two; the message says which lines they are on.
 
@@ -6146,7 +6279,7 @@ script:
 | Keys | None: it is about the whole document, not about one key |
 | Since | 0.3 |
 
-**Why it happens.** The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A comic script's front matter is YAML too, and is read the same way.
+**Why it happens.** The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A tab where YAML expects a space -- it never accepts one in indentation -- is said to be one, and so is a key that is a list or a mapping rather than a name. A comic script's front matter is YAML too, and is read the same way.
 
 **How to fix it.** Fix the reported position; YAML errors cascade, so re-check after each fix.
 
@@ -6454,6 +6587,115 @@ Fixed:
 ```yaml
 # `alice`, a character the library has.
 cast: {alice: {reference: alice}}
+```
+
+### `yaml-anchor`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML anchor or alias is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no anchors (`&name`) or aliases (`*name`). Reuse is the language's own -- a scene's defaults, and `over:` -- and an alias expands wherever it is used, without bound: a few lines can stand for a document too big to hold. An unquoted value that starts with `*`, as Markdown stresses a word, is an alias too.
+
+**How to fix it.** Write the value out where it is used, or inherit it with `over:` or a scene's defaults. For a line that starts with `*`, quote it, or stress the word with underscores: `_told_`.
+
+Checked as `yaml-anchor.panel.yaml`:
+
+```yaml
+# An anchor and an alias, to give bob the look alice has.
+cast:
+  alice: &look {reference: alice, pose: pointing}
+  bob: *look
+```
+
+`scenet check yaml-anchor.panel.yaml` says:
+
+```text
+yaml-anchor.panel.yaml:3:10: yaml-anchor: '&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults
+```
+
+Fixed:
+
+```yaml
+# The look written out for each of them.
+cast:
+  alice: {reference: alice, pose: pointing, at: left_third}
+  bob: {reference: alice, pose: pointing, at: right_third}
+```
+
+### `yaml-merge-key`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML merge key is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no merge key. `<<:` copied another mapping's keys into this one in YAML 1.1 and is a key like any other in YAML 1.2, so what it meant depended on which reader read it. A scene's defaults and `over:` say what a panel inherits, in the language's own terms.
+
+**How to fix it.** Write the keys out, or inherit them with `over:` or a scene's defaults.
+
+Checked as `yaml-merge-key.panel.yaml`:
+
+```yaml
+# A merge key, to copy another camera's keys into this one.
+camera: {<<: {shot: wide, angle: low}, shot: medium_shot}
+cast: {alice: {reference: alice}}
+```
+
+`scenet check yaml-merge-key.panel.yaml` says:
+
+```text
+yaml-merge-key.panel.yaml:2:10: yaml-merge-key: '<<' is a YAML merge key, and Scenet YAML has no merge keys: write the keys out, or inherit them with `over:` or a scene's defaults
+```
+
+Fixed:
+
+```yaml
+# The keys written out.
+camera: {shot: medium_shot, angle: low}
+cast: {alice: {reference: alice}}
+```
+
+### `yaml-tag`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML tag is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no tags (`!!binary`, `!!str`, `!!set`, or any `!custom`): a value means what it says. A tag made a value something it does not look like -- `!!binary aGVsbG8=` lettered `hello` -- and made the reader build whatever type it named, a confusion for an author and an attack surface for a compiler that reads untrusted documents. Where the language expects text, a number or `true` is the text it looks like anyway, so `!!str` is never needed.
+
+**How to fix it.** Delete the tag. To make a value text, quote it.
+
+Checked as `yaml-tag.panel.yaml`:
+
+```yaml
+# A tag makes the line something it does not look like: `!!binary` lettered `hello`.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: !!binary aGVsbG8=}
+```
+
+`scenet check yaml-tag.panel.yaml` says:
+
+```text
+yaml-tag.panel.yaml:4:28: yaml-tag: '!!binary' is a YAML tag, and Scenet YAML has no tags: a value means what it says. Delete the tag, and quote the value if it is text
+```
+
+Fixed:
+
+```yaml
+# The line, written as it is lettered.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: hello}
 ```
 
 ## Notes from `scenet check`
@@ -7128,7 +7370,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "by": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7159,7 +7405,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "tone": {
           "$ref": "#/$defs/CaptionTone",
@@ -7250,7 +7500,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "expression": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7275,7 +7529,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "figure": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7304,7 +7562,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "pose": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7317,7 +7579,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "reference": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7389,7 +7655,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "bold_italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -7402,7 +7672,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "display": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -7415,7 +7689,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -7428,7 +7706,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "regular": {
               "description": "The font file dialogue and `spoken` captions are lettered in, relative to the document. Written alone, as `font: fonts/Comic.ttf`, it letters every face.",
               "title": "Regular",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             }
           },
           "required": [
@@ -7653,7 +7935,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "object": {
               "description": "The other actor id. For `looking_at`, it may be somebody heard from off panel.",
               "title": "Object",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             "predicate": {
               "$ref": "#/$defs/Predicate",
@@ -7662,7 +7948,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
             "subject": {
               "description": "The actor id the relation is about.",
               "title": "Subject",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             }
           },
           "required": [
@@ -7683,7 +7973,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "by": {
           "description": "Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.",
           "title": "By",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "kind": {
           "$ref": "#/$defs/BalloonKind",
@@ -7724,7 +8018,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "required": [
@@ -7846,7 +8144,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "image": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7912,7 +8214,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "from": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -7957,7 +8263,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "The sound, lettered exactly as written, in the display face.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "required": [
@@ -8078,7 +8388,11 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
     "description": {
       "anyOf": [
         {
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         {
           "type": "null"
@@ -10607,7 +10921,8 @@ A document of two pages, laid side by side, its panels named by page and number,
 #
 # A panel's name is text, so it can say where the panel is: `2-1` is the first panel of
 # page two, the name a comic script gives a panel when its numbers start again on each
-# page. Quoted, since YAML would read some such names as numbers.
+# page. The quotes do no harm and are not needed: Scenet YAML reads a name as the
+# text it is, `2-1` or `2` alike.
 #
 # On page two, an inset sits in the top right corner of its panel and says `read: after`,
 # which is the default written out: it is read after the panel it is set into.

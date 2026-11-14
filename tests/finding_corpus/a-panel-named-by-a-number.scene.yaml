@@ -1,5 +1,0 @@
-# YAML reads the unquoted 1 as a number, and a panel is named by text.
-cast: {alice: {reference: alice}}
-panels:
-  1: {}
-  two: {}

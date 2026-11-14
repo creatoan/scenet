@@ -21,6 +21,7 @@ from pydantic_core import ErrorDetails
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.ir import PUPPET_KEYS, Predicate, Relation
 from scenet.places import PLACES, Place
+from scenet.safe_yaml import mistyped
 
 __all__ = [
     "LANGUAGE_REFERENCE",
@@ -382,7 +383,60 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
             for other in errors
         )
     ]
-    return _merge_misspellings(errors)
+    return _merge_misspellings(_say_what_to_write(errors))
+
+
+#: pydantic's error for text in a yes-or-no or a number field: which it was, and the name
+#: pydantic gives that branch of a union in an error's location.
+_EXPECTED = {
+    "bool_type": ("bool", "bool"),
+    "float_type": ("number", "float"),
+    "int_type": ("number", "int"),
+}
+
+
+def _say_what_to_write(errors: list[ErrorDetails]) -> list[ErrorDetails]:
+    """Say what to write for text a yes-or-no or a number field was given.
+
+    `hollow: yes` and `margin: 1_0` are text in Scenet YAML, which pydantic calls "not a
+    valid boolean" -- true, and no help. Where the text spells a yes, a no or a number
+    some other reader would take, the message says what to write instead
+    (:func:`mistyped <scenet.safe_yaml.mistyped>`).
+
+    A field that is a yes-or-no or something else -- a placement's `bleed`, `true` or a list
+    of sides -- fails in both, and pydantic reports each, under a location naming the
+    branch. The text `yes` was meant for the yes-or-no, so it becomes one finding, at the
+    field.
+    """
+    rewritten: dict[int, ErrorDetails] = {}
+    dropped: set[int] = set()
+    for index, error in enumerate(errors):
+        kind = _EXPECTED.get(error["type"])
+        written = error.get("input")
+        if kind is None or not isinstance(written, str):
+            continue
+        expected, branch = kind
+        message = mistyped(written, expected)
+        if message is None:
+            continue
+        loc = tuple(error["loc"])
+        if loc and loc[-1] == branch:
+            # A union's branch: the field is the one before it, and so are its siblings.
+            loc = loc[:-1]
+            dropped |= {
+                other
+                for other, sibling in enumerate(errors)
+                if other != index
+                and len(sibling["loc"]) == len(loc) + 1
+                and tuple(sibling["loc"][:-1]) == loc
+            }
+        said = error.copy()
+        said["loc"] = loc
+        said["msg"] = message
+        rewritten[index] = said
+    return [
+        rewritten.get(index, error) for index, error in enumerate(errors) if index not in dropped
+    ]
 
 
 def _merge_misspellings(errors: list[ErrorDetails]) -> list[ErrorDetails]:
@@ -506,40 +560,6 @@ def summarise(exc: ValidationError, *, what: str = "panel") -> str:
 LAYOUT_KEYS = ("page", "pages")
 
 
-def panel_name_problem(name: object) -> str | None:
-    """Say what is wrong with a key of `panels:`, if anything.
-
-    A panel's name is text, as a cast member's id is: it names the panel's files, and a
-    page's `use:` takes text. YAML reads an unquoted `1:` as a number and `null:` as
-    nothing, and a scene mixing one with a named panel could not even sort its names.
-
-    Args:
-        name: A key of the `panels:` mapping, as YAML read it.
-
-    Returns:
-        The message to report, or `None` for a name that is text.
-
-    Example:
-        >>> from scenet.frontends.common import panel_name_problem
-        >>> panel_name_problem("establishing") is None
-        True
-        >>> panel_name_problem(1)
-        "panel name 1 is a number, not text; quote it to use it as a name: '1'"
-    """
-    if isinstance(name, str):
-        return None
-    # Spelled as YAML spells it, which is what the author will search the file for.
-    if name is None:
-        written, kind = "null", "nothing"
-    elif isinstance(name, bool):
-        written, kind = str(name).lower(), "a yes-or-no value"
-    elif isinstance(name, int | float):
-        written, kind = str(name), "a number"
-    else:
-        written, kind = str(name), f"a {type(name).__name__}"
-    return f"panel name {written} is {kind}, not text; quote it to use it as a name: '{written}'"
-
-
 def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
     """Rewrite the surface form of `page:` and `pages:` into what `PageLayout` validates.
 
@@ -580,11 +600,18 @@ def normalise_layout(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _with_named_panels(holder: dict[str, Any]) -> dict[str, Any]:
-    """A copy of a tier or column, each bare name under its `panels:` made `{use: name}`."""
+    """A copy of a tier or column, each bare name under its `panels:` made `{use: name}`.
+
+    A name is text as written, so `1` and `true` name the panels `1` and `true`
+    (:func:`as_written <scenet.safe_yaml.as_written>`); `null` names none, and is left for
+    validation to refuse.
+    """
     panels = holder.get("panels")
     if not isinstance(panels, list):
         return {**holder}
     return {
         **holder,
-        "panels": [{"use": entry} if isinstance(entry, str) else entry for entry in panels],
+        "panels": [
+            {"use": entry} if isinstance(entry, str | int | float) else entry for entry in panels
+        ],
     }

@@ -105,6 +105,10 @@ def _label(node: Schema) -> str | None:
     if "$ref" in node:
         return _owner(node["$ref"])
     kind = node.get("type")
+    if isinstance(kind, list):
+        # A text field also takes a number and a boolean, as the text it is written as: it
+        # is text all the same.
+        return "string" if "string" in kind else None
     return kind if isinstance(kind, str) else None
 
 
@@ -189,6 +193,12 @@ def _accepts(node: Schema, value: object, definitions: Schema) -> bool:
     kind = node.get("type")
     if kind is None:
         return True
+    # A text field's `type` is a list: it takes a number and a boolean too.
+    return any(_is_of(one, value) for one in (kind if isinstance(kind, list) else [kind]))
+
+
+def _is_of(kind: str, value: object) -> bool:
+    """Whether a value is of one JSON Schema `type`."""
     expected: dict[str, tuple[type, ...]] = {
         "null": (type(None),),
         "boolean": (bool,),

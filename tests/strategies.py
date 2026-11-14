@@ -13,20 +13,31 @@ fonts can draw. A new shot type or a new expression is drawn the day it lands.
 Each strategy returns a :class:`Drawn`, which keeps the authored document beside its
 YAML text, so a test can derive what it expects -- the margin, say -- from what was
 written rather than from what the compiler made of it.
+
+**The YAML is written as an author writes it, not as PyYAML would.** `yaml.safe_dump`
+quotes `No`, `1984` and `on`, because YAML 1.1 reads them as a boolean and a number.
+Scenet YAML letters them as written (#352), so :func:`dump` leaves every string unquoted
+that Scenet YAML can read back as the same text -- and the strategies draw such lines,
+and such actor ids, on purpose.
 """
 
 import hashlib
+import math
 import string
 import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cache
 from itertools import pairwise
-from typing import Any
+from typing import IO, Any
 
 import yaml
 from fontTools.ttLib import TTFont
 from hypothesis import strategies as st
+from yaml.emitter import Emitter
+from yaml.nodes import ScalarNode
+from yaml.representer import SafeRepresenter
+from yaml.serializer import Serializer
 
 from scenet import (
     AnchorX,
@@ -45,18 +56,79 @@ from scenet import (
 )
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.places import Place
+from scenet.safe_yaml import NULL_TAG, ProfileResolver
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
 from tests.images import contract, jpeg, png
 
-__all__ = ["LIBRARY", "Drawn", "panels", "words"]
+__all__ = ["AS_WRITTEN", "LIBRARY", "Drawn", "dump", "panels", "words"]
 
 #: The shipped puppets, loaded once. `default_library()` reads the files on every call.
 LIBRARY: PuppetLibrary = default_library()
 
-# Actor ids that YAML would read as something other than a string. `safe_dump` quotes
-# them, but a staging sentence is split on whitespace and never re-read as YAML, so they
-# are kept out rather than relied on.
-_RESERVED = frozenset({"y", "n", "yes", "no", "on", "off", "true", "false", "null"})
+#: Lines YAML 1.1 read as something other than text -- a boolean, a number, a time of day
+#: in base 60, a date -- which Scenet YAML letters exactly as written. Drawn whole, since
+#: a line with any other word in it was always text.
+AS_WRITTEN = (
+    "No",
+    "no",
+    "Yes",
+    "on",
+    "OFF",
+    "y",
+    "true",
+    "false",
+    "1984",
+    "007",
+    "-3",
+    "1.50",
+    "1e3",
+    "0x400",
+    "12:30",
+    "2024-05-01",
+)
+
+#: Actor ids YAML 1.1 read as a boolean, which are names like any other in Scenet YAML:
+#: keys are text as written, and so is a speaker's `by`.
+_YES_AND_NO_IDS = ("on", "no", "yes", "off", "y", "n", "true", "false")
+
+
+class _AsAuthored(Emitter, Serializer, SafeRepresenter, ProfileResolver):
+    """PyYAML's safe dumper, deciding what to quote by Scenet YAML's resolver."""
+
+    def __init__(self, stream: IO[str], **options: Any) -> None:
+        Emitter.__init__(self, stream, allow_unicode=options.get("allow_unicode"))
+        Serializer.__init__(self)
+        SafeRepresenter.__init__(self, default_flow_style=False, sort_keys=False)
+        ProfileResolver.__init__(self)
+
+
+def _text(dumper: SafeRepresenter, data: str) -> ScalarNode:
+    """A string, unquoted wherever Scenet YAML reads it back as the same text.
+
+    Given the tag the profile's resolver reads it as, `1984` and `true` are written plain --
+    and read back where text is expected as the text they are. `null` never is, so it is
+    quoted.
+    """
+    tag = ProfileResolver().resolve(ScalarNode, data, (True, False))
+    return dumper.represent_scalar("tag:yaml.org,2002:str" if tag == NULL_TAG else tag, data)
+
+
+def _number(dumper: SafeRepresenter, data: float) -> ScalarNode:
+    """A float; one that is not finite as the text YAML 1.1 wrote it as, `.nan` or `.inf`."""
+    if math.isfinite(data):
+        return dumper.represent_float(data)
+    return dumper.represent_scalar(
+        "tag:yaml.org,2002:str", SafeRepresenter.represent_float(dumper, data).value
+    )
+
+
+_AsAuthored.add_representer(str, _text)
+_AsAuthored.add_representer(float, _number)
+
+
+def dump(document: object) -> str:
+    """A document as YAML, as an author writes it: see the module's docstring."""
+    return yaml.dump(document, Dumper=_AsAuthored, allow_unicode=True)
 
 
 #: How many lines of script a panel may hold at each of the tightest shots.
@@ -93,7 +165,7 @@ class Drawn:
 
     @property
     def text(self) -> str:
-        return yaml.safe_dump(self.document, sort_keys=False, allow_unicode=True)
+        return dump(self.document)
 
     @property
     def margin(self) -> float:
@@ -120,14 +192,18 @@ def _letterable() -> str:
 
 
 def words(min_words: int = 1, max_words: int = 12) -> st.SearchStrategy[str]:
-    """A line of 1 to 12 words, written as an author would: single spaces, no newlines."""
+    """A line of 1 to 12 words, written as an author would: single spaces, no newlines.
+
+    Sometimes one of :data:`AS_WRITTEN`, which YAML 1.1 would not have read as text.
+    """
     word = st.text(alphabet=_letterable(), min_size=1, max_size=10)
-    return st.lists(word, min_size=min_words, max_size=max_words).map(" ".join)
+    line = st.lists(word, min_size=min_words, max_size=max_words).map(" ".join)
+    return st.one_of(st.sampled_from(AS_WRITTEN), line) if min_words <= 1 else line
 
 
 def _actor_ids() -> st.SearchStrategy[str]:
-    return st.from_regex(r"[a-z][a-z0-9_]{0,7}", fullmatch=True).filter(
-        lambda name: name not in _RESERVED
+    return st.one_of(
+        st.sampled_from(_YES_AND_NO_IDS), st.from_regex(r"[a-z][a-z0-9_]{0,7}", fullmatch=True)
     )
 
 
@@ -420,7 +496,7 @@ class DrawnScene:
 
     @property
     def text(self) -> str:
-        return yaml.safe_dump(self.document, sort_keys=False, allow_unicode=True)
+        return dump(self.document)
 
     @property
     def page_margin(self) -> float:
@@ -765,7 +841,7 @@ class Mistake:
 
 
 def _dump(document: object) -> str:
-    return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
+    return dump(document)
 
 
 def _with_two_actors(document: dict[str, Any]) -> tuple[dict[str, Any], str, str]:

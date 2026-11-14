@@ -51,6 +51,9 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`unknown-place`](#unknown-place) | error | Reference to a place the library does not have |
 | [`unknown-pose`](#unknown-pose) | error | Reference to a pose the character does not have |
 | [`unknown-puppet`](#unknown-puppet) | error | Reference to a character the library does not contain |
+| [`yaml-anchor`](#yaml-anchor) | error | A YAML anchor or alias is written |
+| [`yaml-merge-key`](#yaml-merge-key) | error | A YAML merge key is written |
+| [`yaml-tag`](#yaml-tag) | error | A YAML tag is written |
 | [`dropped-relation`](#dropped-relation) | note | A shared staging relation does not apply in a panel its actor is left out of |
 | [`looks-like-dialogue`](#looks-like-dialogue) | note | A line in a comic script is set like dialogue but is not read as dialogue |
 | [`panel-count`](#panel-count) | note | A comic script's PAGE heading states a count its panels do not match |
@@ -333,7 +336,7 @@ setting:
 | Keys | Any key that holds a mapping: [`camera`](language/camera.md#camera), [`caption`](language/script.md#caption), [`cast`](language/cast.md#cast), [`lettering`](language/lettering.md#lettering), [`lettering.font`](language/lettering.md#letteringfont), [`page`](language/page.md#page), [`panel`](language/panel.md#panel), [`panels`](language/scene.md#panels), [`say`](language/script.md#say), [`setting`](language/setting.md#setting), [`sfx`](language/script.md#sfx) |
 | Since | 0.10 |
 
-**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. A merge key's override (`<<: *base`, then the key again) is not a repeat. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
+**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
 
 **How to fix it.** Delete or rename one of the two; the message says which lines they are on.
 
@@ -1121,7 +1124,7 @@ script:
 | Keys | None: it is about the whole document, not about one key |
 | Since | 0.3 |
 
-**Why it happens.** The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A comic script's front matter is YAML too, and is read the same way.
+**Why it happens.** The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A tab where YAML expects a space -- it never accepts one in indentation -- is said to be one, and so is a key that is a list or a mapping rather than a name. A comic script's front matter is YAML too, and is read the same way.
 
 **How to fix it.** Fix the reported position; YAML errors cascade, so re-check after each fix.
 
@@ -1474,6 +1477,130 @@ Fixed:
 
 # `alice`, a character the library has.
 cast: {alice: {reference: alice}}
+```
+
+### `yaml-anchor`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML anchor or alias is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no anchors (`&name`) or aliases (`*name`). Reuse is the language's own -- a scene's defaults, and `over:` -- and an alias expands wherever it is used, without bound: a few lines can stand for a document too big to hold. An unquoted value that starts with `*`, as Markdown stresses a word, is an alias too.
+
+**How to fix it.** Write the value out where it is used, or inherit it with `over:` or a scene's defaults. For a line that starts with `*`, quote it, or stress the word with underscores: `_told_`.
+
+Checked as `yaml-anchor.panel.yaml`:
+
+```{scenet-example}
+:gives: yaml-anchor
+:beside: examples/gallery
+
+# An anchor and an alias, to give bob the look alice has.
+cast:
+  alice: &look {reference: alice, pose: pointing}
+  bob: *look
+```
+
+`scenet check yaml-anchor.panel.yaml` says:
+
+```text
+yaml-anchor.panel.yaml:3:10: yaml-anchor: '&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults
+```
+
+Fixed:
+
+```{scenet-example}
+:beside: examples/gallery
+
+# The look written out for each of them.
+cast:
+  alice: {reference: alice, pose: pointing, at: left_third}
+  bob: {reference: alice, pose: pointing, at: right_third}
+```
+
+### `yaml-merge-key`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML merge key is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no merge key. `<<:` copied another mapping's keys into this one in YAML 1.1 and is a key like any other in YAML 1.2, so what it meant depended on which reader read it. A scene's defaults and `over:` say what a panel inherits, in the language's own terms.
+
+**How to fix it.** Write the keys out, or inherit them with `over:` or a scene's defaults.
+
+Checked as `yaml-merge-key.panel.yaml`:
+
+```{scenet-example}
+:gives: yaml-merge-key
+:beside: examples/gallery
+
+# A merge key, to copy another camera's keys into this one.
+camera: {<<: {shot: wide, angle: low}, shot: medium_shot}
+cast: {alice: {reference: alice}}
+```
+
+`scenet check yaml-merge-key.panel.yaml` says:
+
+```text
+yaml-merge-key.panel.yaml:2:10: yaml-merge-key: '<<' is a YAML merge key, and Scenet YAML has no merge keys: write the keys out, or inherit them with `over:` or a scene's defaults
+```
+
+Fixed:
+
+```{scenet-example}
+:beside: examples/gallery
+
+# The keys written out.
+camera: {shot: medium_shot, angle: low}
+cast: {alice: {reference: alice}}
+```
+
+### `yaml-tag`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A YAML tag is written |
+| Keys | None: it is about the whole document, not about one key |
+| Since | 0.14 |
+
+**Why it happens.** Scenet YAML has no tags (`!!binary`, `!!str`, `!!set`, or any `!custom`): a value means what it says. A tag made a value something it does not look like -- `!!binary aGVsbG8=` lettered `hello` -- and made the reader build whatever type it named, a confusion for an author and an attack surface for a compiler that reads untrusted documents. Where the language expects text, a number or `true` is the text it looks like anyway, so `!!str` is never needed.
+
+**How to fix it.** Delete the tag. To make a value text, quote it.
+
+Checked as `yaml-tag.panel.yaml`:
+
+```{scenet-example}
+:gives: yaml-tag
+:beside: examples/gallery
+
+# A tag makes the line something it does not look like: `!!binary` lettered `hello`.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: !!binary aGVsbG8=}
+```
+
+`scenet check yaml-tag.panel.yaml` says:
+
+```text
+yaml-tag.panel.yaml:4:28: yaml-tag: '!!binary' is a YAML tag, and Scenet YAML has no tags: a value means what it says. Delete the tag, and quote the value if it is text
+```
+
+Fixed:
+
+```{scenet-example}
+:beside: examples/gallery
+
+# The line, written as it is lettered.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: hello}
 ```
 
 ## Notes from `scenet check`

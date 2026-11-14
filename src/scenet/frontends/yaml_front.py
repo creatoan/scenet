@@ -28,12 +28,11 @@ from scenet.frontends.common import (
     first_fault,
     normalise,
     normalise_layout,
-    panel_name_problem,
     summarise,
 )
 from scenet.ir import Direction, PageLayout, PanelIR, check_placements
 from scenet.paths import read_document
-from scenet.safe_yaml import DuplicateKeyError, describe, load
+from scenet.safe_yaml import ProfileError, describe, load
 
 
 def _load_document(text: str, source: Path | None) -> dict[str, Any]:
@@ -54,9 +53,9 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
         # YAML can construct arbitrary Python objects. And one that refuses a key written
         # twice, which plain PyYAML would drop without a word.
         data = load(text)
-    except DuplicateKeyError as exc:
+    except ProfileError as exc:
         raise PanelSyntaxError(
-            f"line {exc.line}: {exc.summary}", source=source, rule="duplicate-key"
+            f"line {exc.line}: {exc.summary}", source=source, rule=exc.rule
         ) from exc
     except yaml.YAMLError as exc:
         raise PanelSyntaxError(f"invalid YAML: {describe(exc)}", source=source) from exc
@@ -321,10 +320,6 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
     if not isinstance(panels, dict):
         raise PanelSyntaxError("'panels' must be a mapping of name to panel", source=source)
     for name, document in panels.items():
-        if (problem := panel_name_problem(name)) is not None:
-            raise PanelSyntaxError(
-                problem, source=source, rule="invalid-field", loc=("panels", name)
-            )
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)
         if DIRECTION_KEY in document:

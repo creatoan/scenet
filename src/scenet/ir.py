@@ -21,18 +21,22 @@ from pydantic import (
     ConfigDict,
     Discriminator,
     Field,
+    GetJsonSchemaHandler,
     ModelWrapValidatorHandler,
+    StrictBool,
+    StrictFloat,
     Tag,
     ValidationError,
     ValidationInfo,
     field_validator,
     model_validator,
 )
-from pydantic.json_schema import SkipJsonSchema
-from pydantic_core import InitErrorDetails
+from pydantic.json_schema import JsonSchemaValue, SkipJsonSchema
+from pydantic_core import CoreSchema, InitErrorDetails
 
 from scenet.emphasis import EmphasisError, parse
 from scenet.errors import RuleViolationError
+from scenet.safe_yaml import as_written, mistyped
 
 __all__ = [
     "AnchorX",
@@ -77,6 +81,7 @@ __all__ = [
     "Spans",
     "StackedPanel",
     "Strict",
+    "Text",
     "Tier",
     "TimeOfDay",
     "TypeSize",
@@ -123,10 +128,43 @@ def _holdable(value: str) -> str:
     return value
 
 
+class WithJsonSchemaTypes:
+    """Say in the JSON Schema that a text field also takes a number and a boolean.
+
+    pydantic's own `json_schema_input_type` replaces the field's schema, and with it a
+    `minLength`; this widens `type` and keeps everything else.
+    """
+
+    def __get_pydantic_json_schema__(
+        self, schema: CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        """The schema pydantic makes, with `type` a list: string, number, boolean."""
+        made = handler(schema)
+        if made.get("type") == "string":
+            made["type"] = ["string", "number", "boolean"]
+        return made
+
+
+#: Text, as an author wrote it. Scenet YAML types `1984`, `1.50` and `true` as a number
+#: and a boolean (:mod:`scenet.safe_yaml`), but where the language expects text that is
+#: what they are: `text: 1984` letters 1984, and `by: 1984` names the actor keyed `1984`.
+#: The schema says so, or an editor validating with it would flag a line that compiles.
+#:
+#: Every `str` a document can reach is one of these, and every `bool` and number is
+#: strict -- `StrictBool`, `StrictFloat` -- or pydantic would read the text `yes` as true
+#: and `01750` as 1750, the very mistypings the profile exists to prevent. A test walks
+#: every model to hold both.
+Text = Annotated[str, BeforeValidator(as_written), WithJsonSchemaTypes()]
+
+
 #: A string that is written into the SVG -- dialogue, a caption, an actor id. Refused at
 #: parse time rather than escaped at emission, because there is no escaping it: XML 1.0
 #: has no way to write these characters, not even as a character reference.
-SvgText = Annotated[str, AfterValidator(_holdable)]
+SvgText = Annotated[Text, AfterValidator(_holdable)]
+
+#: A key that is written into the SVG -- a figure's name. A key is text as written already,
+#: so it is no :data:`Text`, and the schema's `propertyNames` says only that it is a string.
+SvgKey = Annotated[str, AfterValidator(_holdable)]
 
 
 def _balanced(value: str) -> str:
@@ -981,11 +1019,11 @@ class PanelSpec(Strict):
         :class:`PanelIR <scenet.ir.PanelIR>`, whose `panel` it is.
     """
 
-    size: tuple[float, float] = (1000.0, 1000.0)
+    size: tuple[StrictFloat, StrictFloat] = (1000.0, 1000.0)
     """The panel's width and height, `[width, height]`, in panel units: everything else is
     measured against them. Printed, a unit is a tenth of a millimetre.
     """
-    margin: float = Field(default=0.0, ge=0.0)
+    margin: StrictFloat = Field(default=0.0, ge=0.0)
     """An inset on all four sides, in panel units. Balloons, captions and sound effects keep
     inside it; figures may run past it, as comics let them.
     """
@@ -1107,19 +1145,19 @@ class FontSpec(Strict):
         :class:`FontMetrics <scenet.solve.text.FontMetrics>`, a font read for measuring.
     """
 
-    regular: str
+    regular: Text
     """The font file dialogue and `spoken` captions are lettered in, relative to the document.
     Written alone, as `font: fonts/Comic.ttf`, it letters every face.
     """
-    italic: str | None = None
+    italic: Text | None = None
     """The font file every caption but a `spoken` one is lettered in. Left out, they are set in
     `regular`.
     """
-    bold_italic: str | None = None
+    bold_italic: Text | None = None
     """The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic`, or
     `regular` when there is no italic, and a note says so.
     """
-    display: str | None = None
+    display: Text | None = None
     """The font file sound effects are lettered in. Left out, the shipped display face, Bangers,
     whatever the other faces are.
     """
@@ -1146,7 +1184,7 @@ class LetteringSpec(Strict):
         :class:`FontSpec <scenet.ir.FontSpec>`, the files it letters in.
     """
 
-    size: float | None = Field(default=None, gt=0.0)
+    size: StrictFloat | None = Field(default=None, gt=0.0)
     """The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left out,
     3.5% of the height the panel letters against: its own, or one tier of a three-tier page.
     """
@@ -1272,13 +1310,13 @@ class CastMember(Strict):
         :class:`AnchorX <scenet.ir.AnchorX>` and :class:`Facing <scenet.ir.Facing>`, what it takes.
     """
 
-    reference: str | None = None
+    reference: Text | None = None
     """The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file,
     relative to the document. Written instead of `figure`.
     """
-    pose: str = "standing_neutral"
+    pose: Text = "standing_neutral"
     """A pose the puppet declares, by name."""
-    expression: str = "neutral"
+    expression: Text = "neutral"
     """An expression the puppet declares, by name."""
     marks: tuple[Mark, ...] = ()
     """Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in
@@ -1393,13 +1431,13 @@ class Relation(Strict):
         :class:`Predicate <scenet.ir.Predicate>`, every relation there is.
     """
 
-    subject: str
+    subject: Text
     """The actor id the relation is about."""
     predicate: Predicate
     """How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `behind`,
     `looking_at` or `ground_shared_with`.
     """
-    object: str
+    object: Text
     """The other actor id. For `looking_at`, it may be somebody heard from off panel."""
 
     @model_validator(mode="after")
@@ -1459,7 +1497,7 @@ class SayEvent(Strict):
     """
     kind: BalloonKind = BalloonKind.SPEECH
     """The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`."""
-    off_panel: bool | Side = False
+    off_panel: StrictBool | Side = False
     """The speaker is outside the panel: `true`, or the side of the frame they are on. The tail
     ends on the frame there.
     """
@@ -1483,6 +1521,9 @@ def _check_off_panel(value: object) -> object:
     """`SayEvent.check_off_panel`, outside the class so that mutmut mutates it."""
     if isinstance(value, bool) or value in {side.value for side in Side}:
         return value
+    said = mistyped(value, "bool") if isinstance(value, str) else None
+    if said is not None:
+        raise ValueError(said)
     sides = ", ".join(f"'{side.value}'" for side in Side)
     raise ValueError(
         f"off_panel is true, false, or the side of the frame the speaker is on: {sides}; "
@@ -1628,7 +1669,7 @@ class SfxEvent(Strict):
     """Always `sfx`: the key the entry is written under in a script."""
     text: SvgText = Field(min_length=1)
     """The sound, lettered exactly as written, in the display face."""
-    source: str | None = Field(default=None, alias="from")
+    source: Text | None = Field(default=None, alias="from")
     """Written `from`: the actor id the sound comes from, which it is placed near."""
     prefer: PlacementZone | None = None
     """Where the effect would like to sit, one of nine zones of the panel: on its own, or as a
@@ -1638,13 +1679,13 @@ class SfxEvent(Strict):
     """How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type
     size.
     """
-    rotate: float = Field(default=0.0, ge=-45.0, le=45.0)
+    rotate: StrictFloat = Field(default=0.0, ge=-45.0, le=45.0)
     """How far the effect is turned clockwise, in degrees, from -45 to 45."""
-    arc: float = Field(default=0.0, ge=-120.0, le=120.0)
+    arc: StrictFloat = Field(default=0.0, ge=-120.0, le=120.0)
     """How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle
     up, negative down.
     """
-    hollow: bool = False
+    hollow: StrictBool = False
     """`true` letters the effect as an outline with no fill, so the art shows through: an open
     effect.
     """
@@ -2105,19 +2146,19 @@ class PageFormat(Strict):
         :class:`PageLayout <scenet.ir.PageLayout>`, which holds it.
     """
 
-    size: tuple[float, float] = (2000.0, 3000.0)
+    size: tuple[StrictFloat, StrictFloat] = (2000.0, 3000.0)
     """The page's width and height: the trim, the size the printed page is cut to, in the units
     a panel uses. Printed, a unit is a tenth of a millimetre.
     """
-    margin: float = Field(default=100.0, ge=0.0)
+    margin: StrictFloat = Field(default=100.0, ge=0.0)
     """The blank border inside the page's edge, on all four sides."""
-    gutter: float = Field(default=40.0, ge=0.0)
+    gutter: StrictFloat = Field(default=40.0, ge=0.0)
     """The gap between two panels, or two columns, side by side in a tier."""
-    tier_gutter: float = Field(default=60.0, ge=0.0)
+    tier_gutter: StrictFloat = Field(default=60.0, ge=0.0)
     """The gap between two tiers, and between two panels stacked in a column. Wider than
     `gutter`, as in print, so a tier reads as one row.
     """
-    bleed: float = Field(default=0.0, ge=0.0)
+    bleed: StrictFloat = Field(default=0.0, ge=0.0)
     """How far the printed sheet runs past the trim on every side, so art that reaches the edge
     can be cut cleanly: 30 is 3 mm. Paper around the page; nothing on it moves.
     """
@@ -2201,11 +2242,11 @@ class Inset(Strict):
         what it takes.
     """
 
-    use: str
+    use: Text
     """The name of a panel under `panels:`, set into this one."""
     at: Corner
     """The corner of its parent the inset sits in, a gutter in from both edges."""
-    size: float = Field(gt=0.0, le=0.5)
+    size: StrictFloat = Field(gt=0.0, le=0.5)
     """The inset's width and height, as a fraction of its parent's: above 0, at most 0.5."""
     read: InsetOrder = InsetOrder.AFTER
     """When the inset is read: `after` its parent, or `before` it."""
@@ -2227,13 +2268,13 @@ class PanelPlacement(Strict):
         :class:`Inset <scenet.ir.Inset>`, a panel set into this one.
     """
 
-    use: str
+    use: Text
     """The name of a panel under `panels:`. Writing the name alone means `{use: name}`."""
-    width: float = Field(default=1.0, gt=0.0)
+    width: StrictFloat = Field(default=1.0, gt=0.0)
     """The panel's share of its tier's width, relative to its neighbours."""
     insets: tuple[Inset, ...] = ()
     """Panels set into its corners, and drawn over it."""
-    bleed: bool | tuple[Side, ...] = False
+    bleed: StrictBool | tuple[Side, ...] = False
     """Run the frame past the trim to the bleed line, with no border there: `true` on every side
     that reaches the page's margin, or a list of those sides.
     """
@@ -2254,13 +2295,13 @@ class StackedPanel(Strict):
         :class:`Column <scenet.ir.Column>`, whose `panels` holds them.
     """
 
-    use: str
+    use: Text
     """The name of a panel under `panels:`. Writing the name alone means `{use: name}`."""
-    height: float = Field(default=1.0, gt=0.0)
+    height: StrictFloat = Field(default=1.0, gt=0.0)
     """The panel's share of its column's height, relative to the others in it."""
     insets: tuple[Inset, ...] = ()
     """Panels set into its corners, and drawn over it."""
-    bleed: bool | tuple[Side, ...] = False
+    bleed: StrictBool | tuple[Side, ...] = False
     """Run the frame past the trim to the bleed line, with no border there: `true` on every side
     that reaches the page's margin, or a list of those sides.
     """
@@ -2291,7 +2332,7 @@ class Column(Strict):
         :class:`StackedPanel <scenet.ir.StackedPanel>`, one panel in it.
     """
 
-    width: float = Field(default=1.0, gt=0.0)
+    width: StrictFloat = Field(default=1.0, gt=0.0)
     """The column's share of its tier's width, relative to the other columns."""
     panels: tuple[StackedPanel, ...] = Field(min_length=1)
     """The panels in the column, read top to bottom."""
@@ -2319,7 +2360,7 @@ class Tier(Strict):
         :class:`PageSpec <scenet.ir.PageSpec>`, whose `tiers` holds them.
     """
 
-    height: float = Field(default=1.0, gt=0.0)
+    height: StrictFloat = Field(default=1.0, gt=0.0)
     """The tier's share of the page's height, relative to the other tiers."""
     panels: tuple[PanelPlacement, ...] = ()
     """The panels in the tier, in reading order: left to right, or right to left for a comic
@@ -2329,7 +2370,7 @@ class Tier(Strict):
     """In place of `panels`: columns side by side, each a stack of panels read top to bottom
     before the next.
     """
-    slant: float = Field(default=0.0, ge=-30.0, le=30.0)
+    slant: StrictFloat = Field(default=0.0, ge=-30.0, le=30.0)
     """How far the gutters between the tier's panels lean, in degrees, from -30 to 30. Positive
     leans the top of each gutter to the right.
     """
