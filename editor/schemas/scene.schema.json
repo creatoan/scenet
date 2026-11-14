@@ -58,7 +58,11 @@
         "by": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -89,7 +93,11 @@
           "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "tone": {
           "$ref": "#/$defs/CaptionTone",
@@ -180,7 +188,11 @@
         "expression": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -205,7 +217,11 @@
         "figure": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -234,7 +250,11 @@
         "pose": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -247,7 +267,11 @@
         "reference": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -357,7 +381,11 @@
             "bold_italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -370,7 +398,11 @@
             "display": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -383,7 +415,11 @@
             "italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -396,7 +432,11 @@
             "regular": {
               "description": "The font file dialogue and `spoken` captions are lettered in, relative to the document. Written alone, as `font: fonts/Comic.ttf`, it letters every face.",
               "title": "Regular",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             }
           },
           "required": [
@@ -441,7 +481,11 @@
         "use": {
           "description": "The name of a panel under `panels:`, set into this one.",
           "title": "Use",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "required": [
@@ -638,7 +682,11 @@
       "anyOf": [
         {
           "description": "A panel's name, which stands for `{use: name}`.",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         {
           "additionalProperties": false,
@@ -671,7 +719,11 @@
             "use": {
               "description": "The name of a panel under `panels:`. Writing the name alone means `{use: name}`.",
               "title": "Use",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             "width": {
               "default": 1.0,
@@ -803,7 +855,11 @@
         "expression": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -828,7 +884,11 @@
         "figure": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -857,7 +917,11 @@
         "pose": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -870,7 +934,11 @@
         "reference": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -915,7 +983,11 @@
             "bold_italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -928,7 +1000,11 @@
             "display": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -941,7 +1017,11 @@
             "italic": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -954,7 +1034,11 @@
             "regular": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 },
                 {
                   "type": "null"
@@ -1159,7 +1243,11 @@
         "image": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -1295,7 +1383,11 @@
             "object": {
               "description": "The other actor id. For `looking_at`, it may be somebody heard from off panel.",
               "title": "Object",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             "predicate": {
               "$ref": "#/$defs/Predicate",
@@ -1304,7 +1396,11 @@
             "subject": {
               "description": "The actor id the relation is about.",
               "title": "Subject",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             }
           },
           "required": [
@@ -1325,7 +1421,11 @@
         "by": {
           "description": "Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.",
           "title": "By",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "kind": {
           "$ref": "#/$defs/BalloonKind",
@@ -1366,7 +1466,11 @@
           "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "required": [
@@ -1488,7 +1592,11 @@
         "image": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -1554,7 +1662,11 @@
         "from": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -1599,7 +1711,11 @@
           "description": "The sound, lettered exactly as written, in the display face.",
           "minLength": 1,
           "title": "Text",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "required": [
@@ -1661,7 +1777,11 @@
       "anyOf": [
         {
           "description": "A panel's name, which stands for `{use: name}`.",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1701,7 +1821,11 @@
             "use": {
               "description": "The name of a panel under `panels:`. Writing the name alone means `{use: name}`.",
               "title": "Use",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             }
           },
           "required": [
@@ -1953,7 +2077,11 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ]
               },
               {
                 "type": "null"

@@ -657,6 +657,20 @@ How far the print PDF goes toward PDF/X-4, and why it claims nothing.
 | RGB pictures | Device RGB under a CMYK output intent is not PDF/X-4; an `ICCBased` space says what the numbers mean. The ICC's `sRGB2014.icc` "may be copied, distributed, embedded" unaltered. | Every RGB and indexed-RGB picture tagged with `sRGB2014.icc`, written once; grey and CMYK pictures left in their device space, so black stays K alone. |
 | What can check it | veraPDF's profiles are PDF/A, PDF/UA and WTPDF; PDFBox's preflight is PDF/A-1b; the free X-1a checkers do not read X-4. Acrobat Pro, callas pdfToolbox and Enfocus PitStop check PDF/X-4. | No claim: none of those was available, and a claim nothing has checked is worse than none. |
 
+### Scenet YAML — YAML 1.2's JSON schema, and StrictYAML's Norway problem
+
+[YAML 1.2.2, §10.2, the JSON schema](https://yaml.org/spec/1.2.2/) ·
+[StrictYAML, *The Norway Problem*](https://hitchdev.com/strictyaml/why/implicit-typing-removed/)
+
+How [Scenet YAML](../reference/language/yaml_profile.md) types a plain scalar, and why it is not
+StrictYAML.
+
+| Question | What the sources say | What Scenet does |
+|---|---|---|
+| Which spellings are typed | YAML 1.2's JSON schema resolves `true`, `false`, `null` and JSON's integers and floats, and nothing else; its core schema adds `True`, `~`, `0x`, `0o` and `.inf`. | The JSON schema's spellings, and an empty value as `null`; every other plain scalar is text. A document means the same read as YAML or as JSON. |
+| What implicit typing costs | StrictYAML's example: `NO`, Norway's country code, read as false in a list of countries. | The same failure, in Scenet's own documents: `text: No`, `text: 1984`, `01750` as 1000. Where the language expects text, a scalar is the text it was written as. |
+| StrictYAML itself | Types every value by a schema the program declares, and refuses flow style. | Not used: the schema here is the pydantic models, which already say what each value is, and flow style (`{by: alice, text: Hi}`) is how dialogue is written. A second YAML implementation would also be one more package through the licence gate; the profile is a few PyYAML parts replaced. |
+
 ### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
 
 **Load-bearing** for `--conditioning`, as formats and consumers rather than as code.

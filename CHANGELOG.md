@@ -10,6 +10,10 @@ below 1.0 means.
 
 ## [Unreleased]
 
+**Upgrading from 0.13.0.** Every document is now read as [Scenet YAML](https://creatoan.github.io/scenet/reference/language/yaml_profile.html)
+(#352), a strict profile with JSON's data model. `scenet check` names each construct below where
+it is written, and says what to write instead.
+
 ### Added
 
 - **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
@@ -19,8 +23,48 @@ below 1.0 means.
   test lists every workflow with a `schedule:` trigger and fails if one does not end in it; the
   link check can be dispatched with `force-failure` and `report` to watch it work.
 
+### Changed (breaking)
+
+- **Tags are refused** (#352): `!!binary`, `!!str`, `!!set`, `!!timestamp` and any `!custom`,
+  as the new rule `yaml-tag`, at the tag. `text: !!binary aGVsbG8=` lettered `hello`; write the
+  value itself, quoted if it is text.
+- **Anchors and aliases are refused** (#352): `&name` and `*name`, as the new rule `yaml-anchor`,
+  at the first one written. They expanded without bound; a scene's defaults and `over:` are the
+  language's reuse.
+- **Merge keys are refused** (#352): `<<:`, as the new rule `yaml-merge-key`, at the key.
+- **`yes`, `no`, `on`, `off`, `y`, `n` and the capitalised `True`, `False` are text** (#352), so a
+  yes-or-no field refuses them: `hollow: yes` and `off_panel: on` compiled, and now give one
+  `invalid-field` finding that says to write `true`. Only `true` and `false` are a yes or a no.
+- **A number is written as JSON writes it** (#352): `0x400`, `0o17`, `01750`, `1_0`, `+5`, `.5`,
+  `1:30` and `.inf` are text, and a number field refuses each with one `invalid-field` finding
+  that says what to write. `panel: {size: [0x400, 01750]}` drew a panel 1024 by 1000 without a
+  word, YAML 1.1 having read `01750` as octal; it now says to write `1024` and `1750`.
+- **Text is never read as a number or a yes-or-no** (#352): `margin: '10'` and `hollow: 'true'`
+  were accepted, the quotes ignored, and are now `invalid-field`, saying to drop the quotes. A
+  puppet's and an artwork contract's numbers are held to the same, and an artwork contract's
+  `size` to whole numbers: `640.0` is refused, as `640` is a picture's width.
+- **`~`, `Null` and `NULL` are text** (#352). Only `null`, or no value at all, is no value.
+- **A key is a name** (#352): one that is a list or a mapping is refused, as `syntax`.
+- **A tab where YAML expects a space** says so, as `syntax`, with the line to indent with
+  spaces, rather than PyYAML's "found character '\t' that cannot start any token".
+
+### Changed
+
+- **Ordinary dialogue is never mistyped** (#352). Where the language expects text, a scalar is
+  the text it was written as: `text: No`, `text: 1984`, `text: 12:30`, `text: 2024-05-01` and
+  `text: 1.50` letter exactly that, where 0.13 refused the first four and would have lettered
+  `1.5`. Keys are text as written too, so `cast: {on: …, no: …}` names the actors `on` and `no`,
+  and `by: 1984` names the actor keyed `1984`. `1` and `1.0` are two keys, no longer one. The
+  JSON Schemas say every text field accepts a number and a boolean, as the compiler does, so an
+  editor validating with them agrees.
+- **A key written twice is located at the key** (#352), its whole span, as every refusal of the
+  profile is; it was the key's first character.
+
 ### Fixed
 
+- **`off_panel: [left]` is a finding, no longer a crash** (#352). An `off_panel:` written as a
+  list or a mapping ended `scenet check` and `scenet build` with a `TypeError`; it is now one
+  `invalid-field` finding at the value, naming the four sides.
 - **The weekly mutation run finishes again, and covers the front ends and the core** (#345). It
   had not completed since 2026-10-12: three runs reached the 120-minute limit, and the fourth
   failed in mutmut's clean run on a test that reads the generated `emit/cmyk.py`, which mutmut

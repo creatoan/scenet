@@ -763,6 +763,15 @@ class TestPositionsInAwkwardShapes:
     def test_an_empty_document_locates_nothing(self):
         assert locate("", ("panel",)) is None
 
+    @pytest.mark.parametrize("tail", ["", "more: c\n"])
+    def test_a_yaml_error_on_a_line_is_at_its_column(self, tail: str):
+        """A refusal of the profile is located by its own span; PyYAML's own errors by
+        their mark. One on the last line is where it is, not moved to the line's end."""
+        finding = diagnose_source(f"title: x\nkey: a: b\n{tail}")
+        assert [(item.rule, item.region) for item in finding] == [
+            ("syntax", Region(start=Position(line=2, column=7), end=Position(line=2, column=8)))
+        ]
+
     def test_a_yaml_error_without_a_mark_falls_back_to_the_start(self):
         assert syntax_error_region(yaml.YAMLError("no mark on this one")) == DOCUMENT_START
 

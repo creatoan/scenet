@@ -83,7 +83,7 @@ from scenet.ir import (
     unholdable,
 )
 from scenet.paths import read_document
-from scenet.safe_yaml import DuplicateKeyError, describe, load
+from scenet.safe_yaml import ProfileError, describe, load
 
 # Leading blank lines are tolerated. A script pasted out of an editor or produced by a
 # templating step very often starts with one, and refusing it would be a baffling
@@ -502,13 +502,14 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
     padded = "\n" * text.count("\n", 0, match.start(1)) + match.group(1)
     try:
         loaded = load(padded)
-    except DuplicateKeyError as exc:
+    except ProfileError as exc:
         # The cast is what usually repeats.
         raise ScriptSyntaxError(
             f"line {exc.line}: in the front matter, {exc.summary}",
             source=source,
             line=exc.line,
-            rule="duplicate-key",
+            rule=exc.rule,
+            columns=(exc.column, exc.end_column) if exc.end_line == exc.line else None,
         ) from exc
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
@@ -1607,12 +1608,12 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
         return True
     try:
         draft.settings[key] = load(value)
-    except DuplicateKeyError as exc:
+    except ProfileError as exc:
         raise ScriptSyntaxError(
             f"line {number}: in directive '@{key}', {exc.summary}",
             source=source,
             line=number,
-            rule="duplicate-key",
+            rule=exc.rule,
         ) from exc
     except yaml.YAMLError as exc:
         raise ScriptSyntaxError(

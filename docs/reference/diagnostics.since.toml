@@ -51,3 +51,6 @@
 "unknown-pose" = "0.6"
 "unknown-puppet" = "0.3"
 "word-limit" = "0.11"
+"yaml-anchor" = "0.14"
+"yaml-merge-key" = "0.14"
+"yaml-tag" = "0.14"

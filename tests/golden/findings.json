@@ -1529,7 +1529,7 @@
         3,
         1,
         3,
-        30
+        5
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-front-matter-with-a-key-twice.script"
@@ -1545,7 +1545,7 @@
         3,
         1,
         3,
-        30
+        5
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-front-matter-with-a-key-twice.script"
@@ -1593,7 +1593,7 @@
         4,
         1,
         4,
-        30
+        5
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-key-twice-after-a-blank-line.script"
@@ -1609,7 +1609,7 @@
         4,
         1,
         4,
-        30
+        5
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-key-twice-after-a-blank-line.script"
@@ -2312,82 +2312,6 @@
       ],
       "rule": "balloon-placement",
       "source": "tests/finding_corpus/a-page-too-small-to-letter.scene.yaml"
-    }
-  ],
-  "tests/finding_corpus/a-panel-named-by-a-number.scene.yaml": [
-    {
-      "fingerprint": "4c0cb11d3ac3090feebede2a64b328e1",
-      "level": "error",
-      "message": "panel name 1 is a number, not text; quote it to use it as a name: '1'",
-      "path": [
-        "panels",
-        1
-      ],
-      "region": [
-        4,
-        6,
-        4,
-        8
-      ],
-      "rule": "invalid-field",
-      "source": "tests/finding_corpus/a-panel-named-by-a-number.scene.yaml"
-    }
-  ],
-  "tests/finding_corpus/a-panel-named-by-a-number.scene.yaml --deep": [
-    {
-      "fingerprint": "4c0cb11d3ac3090feebede2a64b328e1",
-      "level": "error",
-      "message": "panel name 1 is a number, not text; quote it to use it as a name: '1'",
-      "path": [
-        "panels",
-        1
-      ],
-      "region": [
-        4,
-        6,
-        4,
-        8
-      ],
-      "rule": "invalid-field",
-      "source": "tests/finding_corpus/a-panel-named-by-a-number.scene.yaml"
-    }
-  ],
-  "tests/finding_corpus/a-panel-named-null.scene.yaml": [
-    {
-      "fingerprint": "4d64cde857af358580ccd16837d7ae32",
-      "level": "error",
-      "message": "panel name null is nothing, not text; quote it to use it as a name: 'null'",
-      "path": [
-        "panels",
-        null
-      ],
-      "region": [
-        3,
-        1,
-        6,
-        1
-      ],
-      "rule": "invalid-field",
-      "source": "tests/finding_corpus/a-panel-named-null.scene.yaml"
-    }
-  ],
-  "tests/finding_corpus/a-panel-named-null.scene.yaml --deep": [
-    {
-      "fingerprint": "4d64cde857af358580ccd16837d7ae32",
-      "level": "error",
-      "message": "panel name null is nothing, not text; quote it to use it as a name: 'null'",
-      "path": [
-        "panels",
-        null
-      ],
-      "region": [
-        3,
-        1,
-        6,
-        1
-      ],
-      "rule": "invalid-field",
-      "source": "tests/finding_corpus/a-panel-named-null.scene.yaml"
     }
   ],
   "tests/finding_corpus/a-panel-of-no-height.panel.yaml": [
@@ -6511,7 +6435,7 @@
         4,
         1,
         4,
-        2
+        7
       ],
       "rule": "duplicate-key",
       "source": "tests/rule_corpus/duplicate-key.panel.yaml"
@@ -6527,7 +6451,7 @@
         4,
         1,
         4,
-        2
+        7
       ],
       "rule": "duplicate-key",
       "source": "tests/rule_corpus/duplicate-key.panel.yaml"
@@ -7091,6 +7015,12 @@
   "tests/rule_corpus/fixed/unknown-puppet.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/word-limit.panel.yaml": [],
   "tests/rule_corpus/fixed/word-limit.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/yaml-anchor.panel.yaml": [],
+  "tests/rule_corpus/fixed/yaml-anchor.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/yaml-merge-key.panel.yaml": [],
+  "tests/rule_corpus/fixed/yaml-merge-key.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/yaml-tag.panel.yaml": [],
+  "tests/rule_corpus/fixed/yaml-tag.panel.yaml --deep": [],
   "tests/rule_corpus/font-file.panel.yaml": [
     {
       "fingerprint": "05bb0e2336e8c4ebf89bfb1bc4741e7a",
@@ -8103,6 +8033,102 @@
       ],
       "rule": "word-limit",
       "source": "tests/rule_corpus/word-limit.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-anchor.panel.yaml": [
+    {
+      "fingerprint": "262fad51c366d47024c4bcd46dbca5e6",
+      "level": "error",
+      "message": "'&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults",
+      "path": [],
+      "region": [
+        4,
+        10,
+        4,
+        15
+      ],
+      "rule": "yaml-anchor",
+      "source": "tests/rule_corpus/yaml-anchor.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-anchor.panel.yaml --deep": [
+    {
+      "fingerprint": "262fad51c366d47024c4bcd46dbca5e6",
+      "level": "error",
+      "message": "'&look' is a YAML anchor, and Scenet YAML has no anchors or aliases: write the value out where it is used, or inherit it with `over:` or a scene's defaults",
+      "path": [],
+      "region": [
+        4,
+        10,
+        4,
+        15
+      ],
+      "rule": "yaml-anchor",
+      "source": "tests/rule_corpus/yaml-anchor.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-merge-key.panel.yaml": [
+    {
+      "fingerprint": "d8acd85cc98aa554e1a1fa15d40e6870",
+      "level": "error",
+      "message": "'<<' is a YAML merge key, and Scenet YAML has no merge keys: write the keys out, or inherit them with `over:` or a scene's defaults",
+      "path": [],
+      "region": [
+        2,
+        10,
+        2,
+        12
+      ],
+      "rule": "yaml-merge-key",
+      "source": "tests/rule_corpus/yaml-merge-key.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-merge-key.panel.yaml --deep": [
+    {
+      "fingerprint": "d8acd85cc98aa554e1a1fa15d40e6870",
+      "level": "error",
+      "message": "'<<' is a YAML merge key, and Scenet YAML has no merge keys: write the keys out, or inherit them with `over:` or a scene's defaults",
+      "path": [],
+      "region": [
+        2,
+        10,
+        2,
+        12
+      ],
+      "rule": "yaml-merge-key",
+      "source": "tests/rule_corpus/yaml-merge-key.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-tag.panel.yaml": [
+    {
+      "fingerprint": "1e5cfa784356185fdb8a6ced2cb1f4ce",
+      "level": "error",
+      "message": "'!!binary' is a YAML tag, and Scenet YAML has no tags: a value means what it says. Delete the tag, and quote the value if it is text",
+      "path": [],
+      "region": [
+        4,
+        28,
+        4,
+        36
+      ],
+      "rule": "yaml-tag",
+      "source": "tests/rule_corpus/yaml-tag.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/yaml-tag.panel.yaml --deep": [
+    {
+      "fingerprint": "1e5cfa784356185fdb8a6ced2cb1f4ce",
+      "level": "error",
+      "message": "'!!binary' is a YAML tag, and Scenet YAML has no tags: a value means what it says. Delete the tag, and quote the value if it is text",
+      "path": [],
+      "region": [
+        4,
+        28,
+        4,
+        36
+      ],
+      "rule": "yaml-tag",
+      "source": "tests/rule_corpus/yaml-tag.panel.yaml"
     }
   ]
 }

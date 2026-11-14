@@ -42,10 +42,18 @@ class TestRepeatedKeys:
             load("setting: {place: docks, place: street}\n")
         assert caught.value.key == "place"
 
-    def test_keys_that_load_as_the_same_value_are_a_repeat(self):
-        """`1`, `1.0` and `true` are three keys in the text and one in the result."""
-        with pytest.raises(DuplicateKeyError):
-            load("{1: a, 1.0: b}\n")
+    def test_a_key_quoted_and_unquoted_is_a_repeat(self):
+        """Keys are compared as the text they are: `no` and `'no'` are one key."""
+        with pytest.raises(DuplicateKeyError) as caught:
+            load("cast: {no: {}, 'no': {}}\n")
+        assert caught.value.key == "no"
+
+    def test_it_spans_the_second_key(self):
+        with pytest.raises(DuplicateKeyError) as caught:
+            load("cast:\n  alice: {}\n  alice: {}\n")
+        error = caught.value
+        assert (error.line, error.column, error.end_line, error.end_column) == (3, 3, 3, 8)
+        assert error.rule == "duplicate-key"
 
     def test_the_message_says_where_both_are(self):
         with pytest.raises(DuplicateKeyError, match="line 2") as caught:
@@ -77,16 +85,6 @@ class TestWhatIsStillAllowed:
         source = "cast:\n  alice: {reference: alice}\nstaging: []\nscript: [{say: {by: alice}}]\n"
         assert load(source) == yaml.safe_load(source)
 
-    def test_a_merge_key_override_is_not_a_repeat(self):
-        """`<<: *base` then the key again is how YAML spells an override. PyYAML puts the
-        merged keys into the mapping before it builds it, so the check has to look at
-        the keys as written."""
-        source = "base: &base {shot: close_up, angle: low}\npanel: {<<: *base, shot: long_shot}\n"
-        assert load(source) == {
-            "base": {"shot": "close_up", "angle": "low"},
-            "panel": {"shot": "long_shot", "angle": "low"},
-        }
-
     def test_an_empty_document(self):
         assert load("") is None
 
@@ -107,7 +105,7 @@ class TestWhatIsStillAllowed:
         assert load(text) == yaml.safe_load(text)
 
     def test_it_is_safe(self):
-        """It builds on `SafeLoader`: no tag constructs an arbitrary Python object."""
+        """No tag constructs an arbitrary Python object: every tag is refused (#352)."""
         with pytest.raises(yaml.YAMLError):
             load("!!python/object/apply:os.system ['echo hi']\n")
 

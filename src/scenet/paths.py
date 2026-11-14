@@ -35,8 +35,9 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError
+from scenet.frontends.common import errors_of
 from scenet.frontends.positions import Position, Region, locate
-from scenet.safe_yaml import DuplicateKeyError, describe, load
+from scenet.safe_yaml import ProfileError, describe, load
 
 __all__ = [
     "Folder",
@@ -379,8 +380,12 @@ def read_model[M: BaseModel](
         raise error("it is not UTF-8 text", file=declared, loc=loc) from exc
     try:
         raw = load(text)
-    except DuplicateKeyError as exc:
-        raise error(exc.summary, file=declared, region=_whole_line(exc.line), loc=loc) from exc
+    except ProfileError as exc:
+        region = Region(
+            start=Position(line=exc.line, column=exc.column),
+            end=Position(line=exc.end_line, column=exc.end_column),
+        )
+        raise error(exc.summary, file=declared, region=region, loc=loc) from exc
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
         region = _whole_line(mark.line + 1) if mark is not None else None
@@ -393,7 +398,7 @@ def read_model[M: BaseModel](
     try:
         return model.model_validate(raw), text, data
     except ValidationError as exc:
-        first = exc.errors()[0]
+        first = errors_of(exc)[0]
         original = (first.get("ctx") or {}).get("error")
         if isinstance(original, RuleViolationError):
             inner, message = original.loc, str(original)

@@ -352,9 +352,14 @@ def _kinds(node: dict[str, Any]) -> list[str]:
             words.append("a number" if kind == "number" else "a whole number")
         elif kind == "boolean":
             words.append("`true` or `false`")
-        elif kind == "string":
+        elif kind in ("string", TEXT_TYPES):
             words.append("text")
     return list(dict.fromkeys(words))
+
+
+#: The `type` of a field the language takes as text: a number or `true` written there is the
+#: text it was written as (`docs/reference/language/yaml_profile.md`), so it is text.
+TEXT_TYPES = ["string", "number", "boolean"]
 
 
 def type_of(node: dict[str, Any]) -> str:
@@ -508,7 +513,17 @@ DIAGNOSTICS_PAGE = "../diagnostics.md"
 
 #: Rules about a whole document or a comic script's own form, which no key gives.
 DOCUMENT_RULES = frozenset(
-    {"syntax", "not-a-mapping", "internal", "duplicate-panel", "panel-count", "looks-like-dialogue"}
+    {
+        "syntax",
+        "not-a-mapping",
+        "internal",
+        "duplicate-panel",
+        "panel-count",
+        "looks-like-dialogue",
+        "yaml-tag",
+        "yaml-anchor",
+        "yaml-merge-key",
+    }
 )
 
 

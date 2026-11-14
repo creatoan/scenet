@@ -457,7 +457,7 @@ def _accept_panel_names(definitions: dict[str, Any]) -> None:
             "description": placement.get("description", ""),
             "anyOf": [
                 {
-                    "type": "string",
+                    "type": ["string", "number", "boolean"],
                     "description": "A panel's name, which stands for `{use: name}`.",
                 },
                 mapping,

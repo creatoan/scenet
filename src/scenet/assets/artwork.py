@@ -39,13 +39,13 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, model_validator
 from shapely.geometry import Polygon
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.positions import locate
 from scenet.images import SuppliedImage
-from scenet.ir import PanelIR, SayEvent, SfxEvent, SvgText
+from scenet.ir import PanelIR, SayEvent, SfxEvent, SvgKey, Text
 from scenet.paths import Folder, NamedFileError, read_model
 
 __all__ = [
@@ -73,13 +73,13 @@ FIGURE_RULE = "unknown-figure"
 CONTRACT_SUFFIX = ".art.yaml"
 
 #: A point in the picture's pixels: `x` rightward, `y` downward, from its top left.
-Pixel = tuple[float, float]
+Pixel = tuple[StrictFloat, StrictFloat]
 
 #: A region of the picture: a simple polygon, three corners or more.
 Outline = Annotated[tuple[Pixel, ...], Field(min_length=3)]
 
 #: A figure's name, as the cast's `figure:` gives it.
-FigureName = Annotated[SvgText, Field(min_length=1)]
+FigureName = Annotated[SvgKey, Field(min_length=1)]
 
 
 class _Strict(BaseModel):
@@ -99,7 +99,7 @@ class ArtworkFace(_Strict):
 
     center: Pixel
     """The face's centre, `[x, y]` in the picture's pixels, from its top left."""
-    radius: Annotated[float, Field(gt=0)]
+    radius: Annotated[StrictFloat, Field(gt=0)]
     """How far the face reaches, in pixels. Generous is safer than tight: no lettering overlaps
     this disc, and a tail stops on its edge.
     """
@@ -123,7 +123,7 @@ class ArtworkFigure(_Strict):
 class ArtworkContract(_Strict):
     """Everything the solver may know about a supplied picture's content."""
 
-    size: tuple[Annotated[int, Field(gt=0)], Annotated[int, Field(gt=0)]]
+    size: tuple[Annotated[StrictInt, Field(gt=0)], Annotated[StrictInt, Field(gt=0)]]
     """The picture's size in pixels, `[width, height]`, as it was measured. It must be the
     picture's own.
     """
@@ -202,7 +202,7 @@ class LoadedContract:
         sha256: The digest of its bytes.
     """
 
-    path: str
+    path: Text
     contract: ArtworkContract
     sha256: str
 

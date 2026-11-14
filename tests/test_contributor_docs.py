@@ -407,9 +407,12 @@ def test_the_bug_report_takes_any_document_and_its_files():
 # ---------------------------------------------------------------- the changelog
 
 
-#: Keep a Changelog's kinds, in its order, then the two this project adds after them.
+#: Keep a Changelog's kinds, in its order, then the two this project adds after them, and
+#: "Changed (breaking)" before "Changed": what a document that compiled must now change,
+#: before 1.0.0 freezes the language (#352).
 KINDS = (
     "Added",
+    "Changed (breaking)",
     "Changed",
     "Deprecated",
     "Removed",

@@ -6,7 +6,7 @@
       "tool": {
         "driver": {
           "name": "scenet",
-          "version": "0.12.0",
+          "version": "0.13.0",
           "informationUri": "https://github.com/creatoan/scenet",
           "rules": [
             {
@@ -34,7 +34,7 @@
                 "text": "The document is not valid YAML"
               },
               "fullDescription": {
-                "text": "The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A comic script's front matter is YAML too, and is read the same way."
+                "text": "The file could not be parsed at all, so nothing further could be checked. Usually an unclosed bracket or quote, or a line indented inconsistently with the ones around it -- and a line that lines up with no line above it is said to be, with how far in the line it likely goes with is. A tab where YAML expects a space -- it never accepts one in indentation -- is said to be one, and so is a key that is a list or a mapping rather than a name. A comic script's front matter is YAML too, and is read the same way."
               },
               "helpUri": "https://creatoan.github.io/scenet/reference/diagnostics.html#syntax",
               "help": {

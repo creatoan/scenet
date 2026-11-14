@@ -77,11 +77,16 @@ class TestInYaml:
         assert finding.path == ("description",)
         assert "U+0007" in finding.message
 
-    @pytest.mark.parametrize("value", ["{text: Alice waits.}", "[Alice, waits]", "5"])
+    @pytest.mark.parametrize("value", ["{text: Alice waits.}", "[Alice, waits]"])
     def test_anything_but_text_is_one_finding(self, value: str):
         finding = _only(diagnose_source(f"{CAST}description: {value}\n"))
         assert finding.rule == "invalid-field"
         assert finding.path == ("description",)
+
+    @pytest.mark.parametrize("value", ["5", "1.50", "true", "9:14"])
+    def test_a_number_or_a_yes_is_the_text_it_is_written_as(self, value: str):
+        """Scenet YAML takes a scalar where text is expected as written (#352)."""
+        assert parse_panel(f"{CAST}description: {value}\n").description == value
 
     def test_prose_written_as_the_setting_points_at_it(self):
         """The one place the language refused prose now says where prose belongs."""
