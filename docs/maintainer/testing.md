@@ -449,12 +449,12 @@ gallery are what guard them.
 | `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `frontends/script` | `frontends/script_front.py` | 2,182 | 60 | 97.3% | 97% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 502 | 4 | 99.2% | 99% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 374 | 4 | 98.9% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
+| `frontends/script` | `frontends/script_front.py` | 2,183 | 60 | 97.3% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
+| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 358 | 4 | 98.9% | 98% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `ir` | `ir.py` | 683 | 16 | 97.7% | 97% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `diagnostics` | `diagnostics.py` | 1,612 | 74 | 95.4% | 95% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
+| `ir` | `ir.py` | 708 | 16 | 97.5% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
 threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
@@ -1040,9 +1040,11 @@ here:
 
 #### The definitive run
 
-[`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) ran the six legs of these modules from nothing, on the commit that holds every test
-below. It is the run their survivors are numbered from, and every survivor it left is in a
-table here: each is a change no output can show. Each mutant killed before it was also applied
+[`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) ran the six legs of these modules from nothing. It is the run `core`'s
+survivors are numbered from. Scenet YAML ([#352](https://github.com/creatoan/scenet/issues/352)) changed the other five, which were run from
+nothing again: [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) numbers the survivors of `frontends/common` and `diagnostics`, and
+[`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253), on the commit that holds every test below, those of `frontends/yaml`,
+`frontends/script` and `ir`. Every survivor these runs left is in a table here: each is a change no output can show. Each mutant killed before it was also applied
 by hand to see a test fail, on the way.
 
 #### `core.py`
@@ -1082,7 +1084,7 @@ see.
 
 #### `ir.py`
 
-683 mutants and 16 survivors, 97.7% killed.
+708 mutants and 16 survivors, 97.5% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1097,7 +1099,7 @@ see.
 
 #### `diagnostics.py`
 
-1,612 mutants and 74 survivors, 95.4% killed.
+1,617 mutants and 74 survivors, 95.4% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1134,8 +1136,8 @@ see.
 
 #### `frontends/`
 
-`frontends/common`: 502 mutants and 4 survivors, 99.2% killed. `frontends/yaml`: 374 mutants and 4 survivors, 98.9% killed.
-`frontends/script`: 2,182 mutants and 60 survivors, 97.3% killed.
+`frontends/common`: 556 mutants and 4 survivors, 99.3% killed. `frontends/yaml`: 358 mutants and 4 survivors, 98.9% killed.
+`frontends/script`: 2,183 mutants and 60 survivors, 97.3% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
