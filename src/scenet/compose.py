@@ -19,7 +19,7 @@ to creep in, which is exactly the continuity error comics readers notice.
         over: p1                      # everything from p1...
         camera: {shot: close_up}      # ...except the framing
 
-Taking something away is JSON Merge Patch's rule (RFC 7386): "If the value is null,
+Taking something away is JSON Merge Patch's rule (RFC 7396): "If the value is null,
 remove". `cast: {bob: null}` leaves Bob out of a panel that would otherwise inherit him.
 """
 

@@ -93,7 +93,7 @@ it, so treat it as a distribution format rather than a protocol.
 
 ## An agent that loads skills
 
-[Agent Skills](https://agentskills.io/) is an open format that many coding agents load: Claude
+[Agent Skills](https://agentskills.io/home) is an open format that many coding agents load: Claude
 Code, Codex, GitHub Copilot, Cursor, Antigravity CLI and more. A skill is a folder with a
 `SKILL.md` in it. Scenet's is
 [`skills/scenet`](https://github.com/creatoan/scenet/tree/main/skills/scenet) in the

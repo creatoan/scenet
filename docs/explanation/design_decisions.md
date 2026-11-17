@@ -747,8 +747,8 @@ Sources:
 - pydata-sphinx-theme, [version switcher](https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html)
   and [warning banner](https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/announcements.html)
 - GitHub,
-  [triggering a workflow from a workflow](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow),
-  [`workflow_run`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_run)
+  [triggering a workflow from a workflow](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow),
+  [`workflow_run`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run)
   and [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
 - [upload-pages-artifact](https://github.com/actions/upload-pages-artifact) on links
 - Vite, [relative base](https://vite.dev/guide/build.html#relative-base)

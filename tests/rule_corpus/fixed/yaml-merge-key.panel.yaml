@@ -1,0 +1,3 @@
+# The keys written out.
+camera: {shot: medium_shot, angle: low}
+cast: {alice: {reference: alice}}

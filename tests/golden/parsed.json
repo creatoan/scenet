@@ -122,8 +122,6 @@
   "tests/finding_corpus/a-page-in-a-panel.panel.yaml": "39878119f2e6093c38914d0e389557f3d86280610280f49ff4a576d74fe5dd35",
   "tests/finding_corpus/a-page-that-is-a-number.scene.yaml": "ea9193e1044c083ddd001584aecc19140a0fc7659c885deb4efe40c43fc2e4e3",
   "tests/finding_corpus/a-page-too-small-to-letter.scene.yaml": "b8fcca496ff69bfae0d06dae4cd985897bcac7c1970f6995cf2b370e0aa12486",
-  "tests/finding_corpus/a-panel-named-by-a-number.scene.yaml": "5bd18918bd972c5081be2153566adcc26fbbf2df1cef5e7f3d397a77b63736b6",
-  "tests/finding_corpus/a-panel-named-null.scene.yaml": "88ac370c93fe92a3803972a228dd4192c5d4ca0b53c1f81425eb71c78963687c",
   "tests/finding_corpus/a-panel-of-no-height.panel.yaml": "3706fbce33d34075ce9ce7dd0bc2b6566aeebcc7e5846b8af8cb37b3f06cb5c8",
   "tests/finding_corpus/a-panel-of-one-unit.panel.yaml": "496c8a0d37ab081cfa7c95661800b166bb3b3b2aedb8714f6c4b6e40e402727c",
   "tests/finding_corpus/a-panel-placed-twice.scene.yaml": "454e881856a67fb84954f8bcc57969bf81f09a04dd753d8d01fa5c90c845a4b2",
@@ -288,6 +286,9 @@
   "tests/rule_corpus/fixed/unknown-pose.panel.yaml": "9e4071b1fb2a965bf1977ef9919b38d30f150960673a46b2a5ba169b14e0b1c4",
   "tests/rule_corpus/fixed/unknown-puppet.panel.yaml": "f33a85fd748f4c8594346620ef69456c8248df056ee6fa7c89ea49a6e99382e6",
   "tests/rule_corpus/fixed/word-limit.panel.yaml": "985730b10690677742e5d890713471f9c757e78d641229190101426b6d6dab25",
+  "tests/rule_corpus/fixed/yaml-anchor.panel.yaml": "776aba457aee80ebf039334b7e287b63dfbf3b4cb93257d4306796d9038434a9",
+  "tests/rule_corpus/fixed/yaml-merge-key.panel.yaml": "b204e3a95fff1ce674549bf7dc56933de9f72ca90c5e43ab1c71bb8b29217bb2",
+  "tests/rule_corpus/fixed/yaml-tag.panel.yaml": "696a25aba5cb66c13123066db1b86c321a05dbef4568d20b8b511accf7d0ba87",
   "tests/rule_corpus/font-file.panel.yaml": "e96a61d790a2c93534123a5f60b17299e5c780b348cc363da367a8ff2feca7f6",
   "tests/rule_corpus/image-file.panel.yaml": "8b20d61602a23908f96b7e883721f904139e9ffe8284fff3dd7884afd6516ec9",
   "tests/rule_corpus/inset-covers-face.scene.yaml": "2e3781956a71a6530f750d009b9fb8dd204b1738703e19bda0d92aec6522ec0b",
@@ -316,5 +317,8 @@
   "tests/rule_corpus/unknown-place.panel.yaml": "662a8c0b368e1c6aa708653ac351965e4677c573ea36a8ef99f1350c77f10f06",
   "tests/rule_corpus/unknown-pose.panel.yaml": "613767351380ab8ebae389ab1d9ee40c19b7fa1ab891051cd468fb02e3660749",
   "tests/rule_corpus/unknown-puppet.panel.yaml": "67acb998ea515c6c58d19fe3573db42bd55bedfcbbf21f4ae24270461fce9353",
-  "tests/rule_corpus/word-limit.panel.yaml": "233adbc1db7179a27ca57709a5d2fa96f3aeeef89a5da8275c64df082b2f093e"
+  "tests/rule_corpus/word-limit.panel.yaml": "233adbc1db7179a27ca57709a5d2fa96f3aeeef89a5da8275c64df082b2f093e",
+  "tests/rule_corpus/yaml-anchor.panel.yaml": "856360319d5c6eeb97b0903557fde9d8086df40f85110f9a94e3340f4cf13b15",
+  "tests/rule_corpus/yaml-merge-key.panel.yaml": "e99687236ceb98019beb4f4cd836289aedfdf55b7b904b6f8f55bb8a593f98b3",
+  "tests/rule_corpus/yaml-tag.panel.yaml": "0841ba8074e52ce99e9261a70d7c76ed4bb1a19cdb4e23eeb3d18afef45ef04b"
 }

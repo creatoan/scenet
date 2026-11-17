@@ -1,0 +1,4 @@
+# A tag makes the line something it does not look like: `!!binary` lettered `hello`.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: !!binary aGVsbG8=}
