@@ -356,6 +356,9 @@ note as information rather than a red squiggle.
 |---|---|---|
 | [`scenet/syntax`](diagnostics.md#syntax) | error | The file is not valid YAML, or is empty; in a comic script, its front matter. A line indented to match no line above it is said to be |
 | [`scenet/duplicate-key`](diagnostics.md#duplicate-key) | error | A key written twice in one mapping, which YAML would drop silently; in a comic script, a directive written twice in one panel, or `@script:` |
+| [`scenet/yaml-tag`](diagnostics.md#yaml-tag) | error | A YAML tag, `!!binary` or any other: [Scenet YAML](language/yaml_profile.md) has none |
+| [`scenet/yaml-anchor`](diagnostics.md#yaml-anchor) | error | A YAML anchor or alias, `&name` or `*name`: reuse is a scene's defaults and `over:` |
+| [`scenet/yaml-merge-key`](diagnostics.md#yaml-merge-key) | error | A YAML merge key, `<<:` |
 | [`scenet/not-a-mapping`](diagnostics.md#not-a-mapping) | error | The top level is a list or a scalar |
 | [`scenet/unknown-key`](diagnostics.md#unknown-key) | error | A key the language does not define — usually a typo |
 | [`scenet/missing-field`](diagnostics.md#missing-field) | error | A required value was not supplied |

@@ -10,7 +10,12 @@ Coordinates do not appear anywhere in the language; producing them is the compil
 It is read strictly. An unknown key is an error rather than ignored, and so is a key written twice
 in one mapping, such as two cast members called `alice`. YAML requires keys to be unique, but the
 usual Python parser keeps the last and drops the first without a word, which would quietly lose a
-character or a panel. A merge key's override (`<<: *base`, then the key again) is not a repeat.
+character or a panel.
+
+The YAML itself is [Scenet YAML](yaml_profile.md), a strict profile with JSON's data model, so
+ordinary dialogue is never mistyped: `text: No`, `text: 1984` and `text: 12:30` letter what they
+say, and `cast: {on: …, no: …}` names two actors. Tags, anchors, aliases and merge keys are
+refused, each where it is written.
 
 ## The layers
 
@@ -140,6 +145,7 @@ making resvg's the practical conformance reference.
 ```{toctree}
 :hidden:
 
+yaml_profile
 panel
 camera
 setting

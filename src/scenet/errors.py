@@ -464,6 +464,9 @@ class ScriptSyntaxError(PanelSyntaxError):
             editor drawing a squiggle. Structured diagnostics need it as a number.
             There is no column: a script line is prose, and pointing at a character
             within it would imply a precision the parser does not have.
+        columns: One-based first column and the column just past the last, for a fault
+            in the front matter, which is YAML and is located as exactly as a YAML
+            document's: a tag or an anchor the profile refuses. `None` everywhere else.
 
     Example:
         >>> from scenet import ScriptSyntaxError, compile_script
@@ -484,6 +487,7 @@ class ScriptSyntaxError(PanelSyntaxError):
         source: Path | None = None,
         line: int | None = None,
         rule: str | None = None,
+        columns: tuple[int, int] | None = None,
     ) -> None:
         """Build the error, keeping the line number as data as well as prose.
 
@@ -492,8 +496,10 @@ class ScriptSyntaxError(PanelSyntaxError):
             source: Path the script came from, if it was read from disk.
             line: One-based line the fault is on, if known.
             rule: Catalogue identifier, when the parser knows which rule was broken.
+            columns: Where on that line the fault is, for one in the front matter.
         """
         self.line = line
+        self.columns = columns
         super().__init__(message, source=source, rule=rule)
 
 

@@ -442,19 +442,20 @@ gallery are what guard them.
 |---|---|---|---|---|---|---|
 | `solve/balloons` | `solve/balloons.py` | 1,371 | 29 | 97.9% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `solve/backdrop` | `solve/backdrop.py` | 1,060 | 8 | 99.2% | 99% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `solve/text` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py`, `solve/text.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/text` | `solve/text.py` | 839 | 86 | 89.7% | 89% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
+| `solve/staging` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py` | 448 | 11 | 97.5% | 97% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
 | `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf` | `emit/pdf.py` | 1,388 | 32 | 97.7% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 979 | 47 | 95.2% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `frontends/script` | `frontends/script_front.py` | 2,182 | 60 | 97.3% | 97% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 502 | 4 | 99.2% | 99% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 374 | 4 | 98.9% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
+| `frontends/script` | `frontends/script_front.py` | 2,183 | 60 | 97.3% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
+| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 358 | 4 | 98.9% | 98% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `ir` | `ir.py` | 683 | 16 | 97.7% | 97% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `diagnostics` | `diagnostics.py` | 1,612 | 74 | 95.4% | 95% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
+| `ir` | `ir.py` | 708 | 16 | 97.7% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
 threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
@@ -473,6 +474,17 @@ measured them from nothing, each in its own job:
 function every document goes through runs most of the suite before a test fails, and all of it
 when none does. It is two legs now, measured on their own by
 [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598).
+
+`solve/text` held `solve/text.py` with the staging modules, and the scheduled run of
+16 November ran it out of time with 54 of its 1,287 mutants untried
+([#485](https://github.com/creatoan/scenet/issues/485)); `emit/drawing` took twice as long as
+before. Two tests of the gallery's goldens had grown dear: comparing the outputs read every
+document's findings and readings again, which their own tests already hold, and a mutant of
+any function in `solve/` or `emit/` runs both. They compare the outputs only now, and
+`solve/text.py`, which held three fifths of the leg's cost, is a leg of its own. Both legs were
+measured on their own by
+[`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164), in which no leg
+took more than 90 minutes.
 
 ### Baseline
 
@@ -1040,9 +1052,11 @@ here:
 
 #### The definitive run
 
-[`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) ran the six legs of these modules from nothing, on the commit that holds every test
-below. It is the run their survivors are numbered from, and every survivor it left is in a
-table here: each is a change no output can show. Each mutant killed before it was also applied
+[`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) ran the six legs of these modules from nothing. It is the run `core`'s
+survivors are numbered from. Scenet YAML ([#352](https://github.com/creatoan/scenet/issues/352)) changed the other five, which were run from
+nothing again: [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) numbers the survivors of `frontends/common` and `diagnostics`, and
+[`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253), on the commit that holds every test below, those of `frontends/yaml`,
+`frontends/script` and `ir`. Every survivor these runs left is in a table here: each is a change no output can show. Each mutant killed before it was also applied
 by hand to see a test fail, on the way.
 
 #### `core.py`
@@ -1082,7 +1096,7 @@ see.
 
 #### `ir.py`
 
-683 mutants and 16 survivors, 97.7% killed.
+708 mutants and 16 survivors, 97.5% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1097,7 +1111,7 @@ see.
 
 #### `diagnostics.py`
 
-1,612 mutants and 74 survivors, 95.4% killed.
+1,617 mutants and 74 survivors, 95.4% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1112,19 +1126,19 @@ see.
 | `_over_the_word_limits` 29 | the panel's note inserted second, not first | Findings are sorted into source order before they are returned. |
 | `_diagnose_panel` 1 | `deep` defaults to true | Both callers pass it. |
 | `_diagnose_panel` 4, 6 | `settle` without where a left-out voice stood | That only puts the voice's balloon on its side, which no check reads. |
-| `_diagnose_scene` 104, 105, 107 | a panel's own `direction:` kept, or stripped from the others | It is reported where it is written, and a panel's direction changes no other finding of it. |
-| `_diagnose_scene` 112, 113 | the path of a composition error with none | Every composition error is at the `over:` it is about. |
-| `_diagnose_scene` 164 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
-| `_diagnose_scene` 169, 170, 171, 186, 194 | where a left-out voice stood, lost or read without the defaults | That only puts the voice's balloon on its side, which no check reads. |
-| `_diagnose_scene` 199 | a path inside another file read as the document's | No path inside a puppet file or a contract is a path the document's defaults hold. |
-| `_diagnose_scene` 235, 236, 239, 240 | `compile_book` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
+| `_diagnose_scene` 80, 81, 83 | a panel's own `direction:` kept, or stripped from the others | It is reported where it is written, and a panel's direction changes no other finding of it. |
+| `_diagnose_scene` 88, 89 | the path of a composition error with none | Every composition error is at the `over:` it is about. |
+| `_diagnose_scene` 140 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `_diagnose_scene` 145, 146, 147, 162, 170 | where a left-out voice stood, lost or read without the defaults | That only puts the voice's balloon on its side, which no check reads. |
+| `_diagnose_scene` 175 | a path inside another file read as the document's | No path inside a puppet file or a contract is a path the document's defaults hold. |
+| `_diagnose_scene` 211, 212, 215, 216 | `compile_book` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
 | `_has_path` 9 | an index one past the end | A path inherited from a default is never longer than the default's list. |
 | `_in_source_order` 7, 8, 9, 10, 11, 12, 13 | the place a finding with no region sorts at | Every finding has a region. |
 | `diagnose_script` 8, 10 | the parser not told the file | The file only prefixes the text of its errors, which a finding leaves out. |
-| `diagnose_script` 78 | the notes replacing the findings before them | Those are errors only, and with an error the notes are never reached. |
-| `diagnose_script` 101 | `len(path) > 1` to `> 2` | A word count's path is `("script",)` or four steps long. |
-| `diagnose_script` 123, 124, 127, 128 | `compile_script` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
-| `diagnose_script` 144, 147 | a compile error with no panel | A script has no pages yet, so every compile error is a panel's and names it. |
+| `diagnose_script` 97 | the notes replacing the findings before them | Those are errors only, and with an error the notes are never reached. |
+| `diagnose_script` 120 | `len(path) > 1` to `> 2` | A word count's path is `("script",)` or four steps long. |
+| `diagnose_script` 142, 143, 146, 147 | `compile_script` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
+| `diagnose_script` 163, 166 | a compile error with no panel | A script has no pages yet, so every compile error is a panel's and names it. |
 | `_script_line` 3, 5 | a line past the end | No finding is on a line past the end. |
 | `_script_front_matter` 6, 13, 28 | an empty front matter written, counted from `None`, or not a mapping | Without front matter no finding is located in it; counting from `None` is counting from the start; front matter that is not a mapping is refused first. |
 | `_diagnose_script_setting` 24, 42, 44 | `continue` to `break`, or the heading's line as no line | `_diagnose_setting` gives at most one finding a panel; a picture a panel does not declare is named by its `@setting:`. |
@@ -1134,21 +1148,21 @@ see.
 
 #### `frontends/`
 
-`frontends/common`: 502 mutants and 4 survivors, 99.2% killed. `frontends/yaml`: 374 mutants and 4 survivors, 98.9% killed.
-`frontends/script`: 2,182 mutants and 60 survivors, 97.3% killed.
+`frontends/common`: 556 mutants and 4 survivors, 99.3% killed. `frontends/yaml`: 358 mutants and 4 survivors, 98.9% killed.
+`frontends/script`: 2,183 mutants and 60 survivors, 97.3% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
 | `_figures_stand_alone` 55 | `next(iter(camera), None)` without its default | An empty camera returns before it, so the mapping always has a first key. |
 | `_merge_misspellings` 53, 56 | `n=1` left out, or 2 | Only the first match is read, and `get_close_matches` puts the best first. |
 | `normalise_layout` 16 | a page that is not a mapping kept as `None` | pydantic refuses `None` in the words it refuses any page that is not a mapping. |
-| `_validate_panels` 73, 80 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `_validate_panels` 59, 66 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
 | `syntax_error_region` 24 | `getattr(mark, "buffer")` without its default | Every PyYAML mark has a `buffer`, `None` when it holds no text. |
 | `syntax_error_region` 30 | `rstrip("\0")` to `rstrip("XX\0XX")` | An `X` goes too only off a buffer whose last line has no newline, and the mark of an error at its end is then on that line, so the count of lines is never read. |
 | `_PanelDraft.line_of` 5, 6, 7, 15 | a fault's event index read otherwise | No fault of a script panel is at `("script",)`, at `("script", i)` or past its last event. |
 | `_PanelDraft.line_of` 19, 21 | `max(..., key=len)` without its key | The directives a fault falls under are prefixes of its path, so the longest is also the greatest. |
 | `_split_front_matter` 7, 19 | `count("\n", 0, ...)` from `None` | Counting from `None` is counting from the start. |
-| `_split_front_matter` 65, 66 | the branch with no line | Every YAML error has a mark. |
+| `_split_front_matter` 68, 69 | the branch with no line | Every YAML error has a mark. |
 | `_check_prose` 4 | words joined by `"XX XX"` | `unholdable` names the first character it cannot hold, and the join adds none. |
 | `_recognisable` 7, 9 | `count=1` left out, or 2 | The heading pattern is anchored at the start, so it matches once at most. |
 | `_read_page_heading` 30 | a note of `"XXXX"` | A note of `"XXXX"` is no count. |
@@ -1166,7 +1180,7 @@ see.
 | `_inherited_casts` 11, 14, 15 | `zip(..., strict=True)` relaxed | The names are made from the panels, one each. |
 | `_inherited_casts` 22, 28 | a panel before any PAGE heading looked up by page | Without pages, every panel is named by its label, which the lookup falls back to; with pages, a panel before the first is refused. |
 | `_read_script` 1 | `offset` defaults to 1 | Its one caller passes it. |
-| `_apply_directive` 94 | `key == "cast"` always true | Every other directive's value is not a mapping, which `_reserved_name` reads as no name. |
+| `_apply_directive` 92 | `key == "cast"` always true | Every other directive's value is not a mapping, which `_reserved_name` reads as no name. |
 | `_camera_word` 25 | French words of more than four letters, not three | No French shot or angle is four letters long. |
 | `_check_direction` 6 | the front matter's length `None` | Then every line is searched, and the key's first line is the front matter's. |
 | `parse_script_document` 25, 45 | the front matter's length `None` | Then every line is searched, and the key's first line is the front matter's. |

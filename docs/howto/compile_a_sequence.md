@@ -89,7 +89,7 @@ assert alice.reference == "alice"
 ### Leaving something out
 
 A third rule takes something away: **`null` removes what it would have inherited**, as JSON Merge
-Patch ([RFC 7386](https://www.rfc-editor.org/rfc/rfc7386)) has it — "If the value is null,
+Patch ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)) has it — "If the value is null,
 remove". It reaches whatever lies beneath, the panel it is `over:` and the scene's defaults alike.
 A cast member who goes takes every staging relation that names them along, since none can hold in
 a panel they are not in; `scenet check` notes each one as `dropped-relation`.

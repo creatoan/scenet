@@ -92,6 +92,21 @@ class TestTheLegs:
         for leg in holding:
             assert _matching(leg.paths) <= files, leg.name
 
+    def test_text_is_a_leg_of_its_own(self, mutation: ModuleType):
+        """With the staging modules beside it, `solve/text` ran out of time (#485).
+
+        Every function of the solver runs under most of the suite, the golden outputs
+        above all, so each survivor costs minutes. Its 44 functions are most of the
+        leg's mutants; the camera, the cast and the staging go in a leg of their own.
+        """
+        (text,) = [leg for leg in mutation.LEGS if leg.name == "solve/text"]
+        assert _matching(text.paths) == {"src/scenet/solve/text.py"}
+        (staging,) = [leg for leg in mutation.LEGS if leg.name == "solve/staging"]
+        assert _matching(staging.paths) == {
+            f"src/scenet/solve/{name}.py"
+            for name in ("__init__", "camera", "figures", "speakers", "staging")
+        }
+
     def test_names_and_artifact_keys_are_unique(self, mutation: ModuleType):
         names = [leg.name for leg in mutation.LEGS]
         keys = [leg.key for leg in mutation.LEGS]
