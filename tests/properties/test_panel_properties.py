@@ -17,6 +17,7 @@ from scenet.diagnostics import diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.svg import render
 from scenet.errors import BalloonPlacementError, LayoutError, SfxPlacementError
+from scenet.frontends.yaml_front import parse_panel
 from scenet.pipeline import CompileResult, compile_source
 from tests.invariants import (
     assert_accessible,
@@ -26,7 +27,7 @@ from tests.invariants import (
     assert_words_are_carried,
     without_access,
 )
-from tests.strategies import LIBRARY, Drawn, panels
+from tests.strategies import AS_WRITTEN, LIBRARY, Drawn, panels
 
 #: The only ways a valid panel may fail to compile: it has no layout, or no room for its
 #: lettering. Anything else escaping the compiler is a bug.
@@ -57,6 +58,21 @@ def _compile(drawn: Drawn) -> PanelCore | None:
 
 def _font_sizes(core: PanelCore) -> list[float]:
     return [box.font_size for box in (*core.balloons, *core.captions, *core.sfx)]
+
+
+@given(panels())
+def test_every_line_and_speaker_is_read_as_written(drawn: Drawn):
+    """`No`, `1984` and `on` are written unquoted, as an author writes them, and are the text
+    and the actor ids they look like (#352): the IR holds exactly what the document says."""
+    script = [next(iter(entry.values())) for entry in drawn.document.get("script", [])]
+    for entry in script:
+        event("a line YAML 1.1 mistyped" if entry["text"] in AS_WRITTEN else "a line of words")
+    panel = parse_panel(drawn.text)
+    assert [said.text for said in panel.script] == [entry["text"] for entry in script]
+    assert [getattr(said, "by", None) for said in panel.script] == [
+        entry.get("by") for entry in script
+    ]
+    assert list(panel.cast) == list(drawn.document.get("cast", {}))
 
 
 @given(panels())

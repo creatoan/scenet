@@ -267,6 +267,7 @@ UNPICTURED = {
     "keys": "the A-Z index: a table, whose cards show the pictures",
     "puppet": "a file a cast names: its example casts the gallery's puppet, compiled",
     "artwork": "a file beside a picture: its example letters the gallery's, compiled",
+    "yaml_profile": "how every document is read, not a block: its examples compile in place",
 }
 
 

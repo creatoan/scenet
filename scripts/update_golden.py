@@ -373,7 +373,21 @@ def committed() -> tuple[dict[str, bytes], dict[str, str]]:
 
 
 def differences(written: dict[str, bytes]) -> list[str]:
-    """Every output that differs from its golden, or exists on only one side."""
+    """Every golden that differs from what the gallery and the corpora give now."""
+    names = output_differences(written)
+    if not FINDINGS.is_file() or FINDINGS.read_bytes() != findings():
+        names.append(FINDINGS.relative_to(ROOT).as_posix())
+    if not PARSED.is_file() or PARSED.read_bytes() != parsed():
+        names.append(PARSED.relative_to(ROOT).as_posix())
+    return names
+
+
+def output_differences(written: dict[str, bytes]) -> list[str]:
+    """Every output that differs from its golden, or exists on only one side.
+
+    The findings and the readings are left out: `tests/test_golden.py` holds them one
+    document at a time, and comparing them here as well read every document again.
+    """
     cores, digests = goldens(written)
     kept_cores, kept_digests = committed()
     names = sorted(
@@ -391,10 +405,6 @@ def differences(written: dict[str, bytes]) -> list[str]:
         for stale in sorted(GALLERY_PICTURES.glob("*"))
         if stale not in shown_now
     ]
-    if not FINDINGS.is_file() or FINDINGS.read_bytes() != findings():
-        names.append(FINDINGS.relative_to(ROOT).as_posix())
-    if not PARSED.is_file() or PARSED.read_bytes() != parsed():
-        names.append(PARSED.relative_to(ROOT).as_posix())
     return names
 
 

@@ -76,6 +76,7 @@ SKILL_REFERENCES = ("language", "shot-types", "comic-script", "characters", "dia
 #: from the pages themselves, so a renamed page cannot leave a stale title behind.
 LLMS_DOCUMENTS = {
     "reference/language/index": "every block and key of the YAML language, a page each",
+    "reference/language/yaml_profile": "normative: the strict YAML every document is read as",
     "howto/write_a_comic_script": "the comic-script format, which a chat model can write unaided",
     "reference/shot_types": "normative: what each camera shot frames",
     "reference/cli": "`scenet build`, `scenet check`, `scenet schema` and `scenet mcp`",
@@ -376,6 +377,10 @@ so always check.
   before it (above-and-right in a manga, `direction: rtl`), so write the lines in the order
   they are read.
 - **Shots are named** — `medium_shot`, `close_up` — never a percentage of the panel.
+- **Write Scenet YAML** (the `language` part's first page). A line such as `No`, `1984` or
+  `12:30` needs no quotes: it is lettered as written. A yes-or-no is `true` or `false`, never
+  `yes` or `on`; a number is decimal, as JSON writes it, never `0x400`, `01750` or `1_0`. No
+  tags, anchors, aliases or merge keys.
 - **Prose in a comic script is kept and never interpreted.** Staging that matters goes
   in the front matter.
 

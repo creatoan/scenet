@@ -51,7 +51,7 @@ update_golden = _load_updater()
 class TestTheGalleryMatchesItsGoldens:
     def test_every_output_is_byte_identical_to_its_golden(self, tmp_path: Path):
         written = update_golden.build(update_golden.gallery(), tmp_path)
-        stale = update_golden.differences(written)
+        stale = update_golden.output_differences(written)
         assert not stale, (
             f"{len(stale)} outputs differ from their goldens: {', '.join(stale[:10])}"
             + (" ..." if len(stale) > 10 else "")
@@ -71,7 +71,35 @@ class TestTheGalleryMatchesItsGoldens:
         written = update_golden.build(update_golden.gallery()[:1], tmp_path)
         name = next(name for name in written if name.endswith(".core.json"))
         written[name] = written[name].replace(b".", b",", 1)
-        assert name in update_golden.differences(written)
+        assert name in update_golden.output_differences(written)
+
+    def test_the_outputs_are_compared_without_reading_any_document_again(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Findings and readings are held one document at a time, below (#485).
+
+        Comparing them again here doubled this test, and made the one-document test above
+        check every document: 0.4 s became three minutes. Every mutant of `solve/` and
+        `emit/` reaches both tests, so the weekly mutation run doubled with them, and a
+        leg ran out of time.
+        """
+
+        def again() -> bytes:
+            raise AssertionError("the outputs' comparison read every document again")
+
+        monkeypatch.setattr(update_golden, "findings", again)
+        monkeypatch.setattr(update_golden, "parsed", again)
+        assert update_golden.output_differences({})
+
+    def test_the_check_still_holds_the_findings_and_the_readings(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """`update_golden.py --check` is every golden, those two included."""
+        monkeypatch.setattr(update_golden, "findings", lambda: b"stale")
+        monkeypatch.setattr(update_golden, "parsed", lambda: b"stale")
+        stale = update_golden.differences({})
+        assert update_golden.FINDINGS.relative_to(ROOT).as_posix() in stale
+        assert update_golden.PARSED.relative_to(ROOT).as_posix() in stale
 
 
 class TestEveryFindingIsItsGolden:

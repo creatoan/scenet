@@ -2338,7 +2338,8 @@ A document of two pages, laid side by side, its panels named by page and number,
 #
 # A panel's name is text, so it can say where the panel is: `2-1` is the first panel of
 # page two, the name a comic script gives a panel when its numbers start again on each
-# page. Quoted, since YAML would read some such names as numbers.
+# page. The quotes do no harm and are not needed: Scenet YAML reads a name as the
+# text it is, `2-1` or `2` alike.
 #
 # On page two, an inset sits in the top right corner of its panel and says `read: after`,
 # which is the default written out: it is read after the panel it is set into.

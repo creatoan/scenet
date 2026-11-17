@@ -7,7 +7,11 @@
         "joint": {
           "description": "The joint it rides along with.",
           "title": "Joint",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "offset": {
           "default": [
@@ -42,7 +46,11 @@
         "at": {
           "description": "The joint it is centred on.",
           "title": "At",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "offset": {
           "default": [
@@ -84,12 +92,20 @@
         "from": {
           "description": "The joint the bone starts at.",
           "title": "From",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "to": {
           "description": "The joint the bone ends at.",
           "title": "To",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "width": {
           "description": "How thick it is drawn, in the puppet's own units.",
@@ -172,7 +188,11 @@
           "default": "head",
           "description": "The joint the face is centred on: the head, unless the puppet says otherwise.",
           "title": "Joint",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "offset": {
           "default": [
@@ -227,7 +247,11 @@
           "default": "head",
           "description": "The joint the feature rides, practically always `head`.",
           "title": "Joint",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "offset": {
           "default": [
@@ -267,7 +291,11 @@
           "default": "eyes",
           "description": "The anchor the line of sight starts at, conventionally `eyes`. It must be declared.",
           "title": "Origin",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "title": "GazeSpec",
@@ -299,7 +327,11 @@
         "parent": {
           "anyOf": [
             {
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             {
               "type": "null"
@@ -414,7 +446,11 @@
     "name": {
       "description": "The name a cast member's `reference` uses.",
       "title": "Name",
-      "type": "string"
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
     },
     "parts": {
       "default": [],
@@ -450,7 +486,11 @@
       "default": "root",
       "description": "The joint every other one hangs from.",
       "title": "Root",
-      "type": "string"
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
     },
     "root_landmark": {
       "$ref": "#/$defs/Landmark",

@@ -90,7 +90,6 @@ from scenet.frontends.common import (
     errors_of,
     normalise,
     normalise_layout,
-    panel_name_problem,
     rule_for_pydantic,
 )
 from scenet.frontends.positions import (
@@ -111,7 +110,7 @@ from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placeme
 from scenet.lettering import FONT_RULE, typeface_for
 from scenet.paths import Folder, NamedFileError
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
-from scenet.safe_yaml import DuplicateKeyError, describe, load
+from scenet.safe_yaml import ProfileError, describe, load
 from scenet.solve.page import resolve_frames
 
 __all__ = [
@@ -177,8 +176,10 @@ RULES: dict[str, Rule] = {
             "The file could not be parsed at all, so nothing further could be checked. "
             "Usually an unclosed bracket or quote, or a line indented inconsistently "
             "with the ones around it -- and a line that lines up with no line above it is "
-            "said to be, with how far in the line it likely goes with is. A comic script's "
-            "front matter is YAML too, and is read the same way."
+            "said to be, with how far in the line it likely goes with is. A tab where YAML "
+            "expects a space -- it never accepts one in indentation -- is said to be one, "
+            "and so is a key that is a list or a mapping rather than a name. A comic "
+            "script's front matter is YAML too, and is read the same way."
         ),
         help="Fix the reported position; YAML errors cascade, so re-check after each fix.",
     ),
@@ -188,12 +189,49 @@ RULES: dict[str, Rule] = {
             "YAML requires every key in a mapping to be unique, but the parser Scenet "
             "reads it with builds the document anyway and keeps only the last value -- so "
             "a panel, a cast member or a pose written twice would lose the first without "
-            "a word, and the rest would compile. A merge key's override (`<<: *base`, "
-            "then the key again) is not a repeat. In a comic script, the same goes for a "
-            "directive written twice in one panel, and for an `@script:` directive, which "
-            "would replace the panel's cues."
+            "a word, and the rest would compile. Keys are compared as written, so `1` and "
+            "`1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same "
+            "goes for a directive written twice in one panel, and for an `@script:` "
+            "directive, which would replace the panel's cues."
         ),
         help="Delete or rename one of the two; the message says which lines they are on.",
+    ),
+    "yaml-tag": Rule(
+        summary="A YAML tag is written",
+        description=(
+            "Scenet YAML has no tags (`!!binary`, `!!str`, `!!set`, or any `!custom`): a "
+            "value means what it says. A tag made a value something it does not look like "
+            "-- `!!binary aGVsbG8=` lettered `hello` -- and made the reader build whatever "
+            "type it named, a confusion for an author and an attack surface for a compiler "
+            "that reads untrusted documents. Where the language expects text, a number or "
+            "`true` is the text it looks like anyway, so `!!str` is never needed."
+        ),
+        help="Delete the tag. To make a value text, quote it.",
+    ),
+    "yaml-anchor": Rule(
+        summary="A YAML anchor or alias is written",
+        description=(
+            "Scenet YAML has no anchors (`&name`) or aliases (`*name`). Reuse is the "
+            "language's own -- a scene's defaults, and `over:` -- and an alias expands "
+            "wherever it is used, without bound: a few lines can stand for a document too "
+            "big to hold. An unquoted value that starts with `*`, as Markdown stresses a "
+            "word, is an alias too."
+        ),
+        help=(
+            "Write the value out where it is used, or inherit it with `over:` or a scene's "
+            "defaults. For a line that starts with `*`, quote it, or stress the word with "
+            "underscores: `_told_`."
+        ),
+    ),
+    "yaml-merge-key": Rule(
+        summary="A YAML merge key is written",
+        description=(
+            "Scenet YAML has no merge key. `<<:` copied another mapping's keys into this "
+            "one in YAML 1.1 and is a key like any other in YAML 1.2, so what it meant "
+            "depended on which reader read it. A scene's defaults and `over:` say what a "
+            "panel inherits, in the language's own terms."
+        ),
+        help="Write the keys out, or inherit them with `over:` or a scene's defaults.",
     ),
     "not-a-mapping": Rule(
         summary="The document is not a mapping",
@@ -946,16 +984,11 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
     """
     try:
         data = load(text)
-    except DuplicateKeyError as exc:
-        # Located at the second key, which is the one to delete or rename; the message
-        # names the line of the first.
+    except ProfileError as exc:
+        # Located at exactly the text at fault: for a repeated key, the second, which is
+        # the one to delete or rename; the message names the line of the first.
         return None, [
-            Diagnostic(
-                rule="duplicate-key",
-                message=exc.summary,
-                source=source,
-                region=syntax_error_region(exc),
-            )
+            Diagnostic(rule=exc.rule, message=exc.summary, source=source, region=_span(exc))
         ]
     except yaml.YAMLError as exc:
         return None, [
@@ -988,6 +1021,14 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
         ]
 
     return data, []
+
+
+def _span(exc: ProfileError) -> Region:
+    """The text a refusal of the YAML profile covers, as a finding's region."""
+    return Region(
+        start=Position(line=exc.line, column=exc.column),
+        end=Position(line=exc.end_line, column=exc.end_column),
+    )
 
 
 def _asset_diagnostic(
@@ -1456,17 +1497,7 @@ def _diagnose_scene(
 
     found: list[Diagnostic] = []
     for name, document in panels.items():
-        if (problem := panel_name_problem(name)) is not None:
-            found.append(
-                Diagnostic(
-                    rule="invalid-field",
-                    message=problem,
-                    path=("panels", name),
-                    source=source,
-                    region=locate(text, ("panels", name)) or DOCUMENT_START,
-                )
-            )
-        elif not isinstance(document, dict):
+        if not isinstance(document, dict):
             found.append(
                 Diagnostic(
                     rule="invalid-field",
@@ -1774,7 +1805,12 @@ def diagnose_script(
                 rule=_rule_for_scenet_error(exc),
                 message=_message_of(exc),
                 source=source,
-                region=_script_line(lines, exc.line or 1),
+                region=_script_line(lines, exc.line or 1)
+                if exc.columns is None or exc.line is None
+                else Region(
+                    start=Position(line=exc.line, column=exc.columns[0]),
+                    end=Position(line=exc.line, column=exc.columns[1]),
+                ),
             )
         ]
     except ScenetError as exc:

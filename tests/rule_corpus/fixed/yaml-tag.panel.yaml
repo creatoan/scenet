@@ -1,0 +1,4 @@
+# The line, written as it is lettered.
+cast: {alice: {reference: alice}}
+script:
+  - say: {by: alice, text: hello}

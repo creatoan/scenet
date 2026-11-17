@@ -21,6 +21,7 @@ from pydantic import (
     ConfigDict,
     Discriminator,
     Field,
+    StrictFloat,
     Tag,
     ValidationError,
     model_validator,
@@ -35,6 +36,7 @@ from scenet.errors import (
     UnknownPuppetError,
 )
 from scenet.frontends.common import summarise
+from scenet.ir import Text
 from scenet.paths import Folder, NamedFileError, read_model, record_dependency
 from scenet.safe_yaml import load
 
@@ -138,20 +140,20 @@ class JointSpec(Strict):
     swings the upper arm and takes the forearm and hand with it.
     """
 
-    parent: str | None = None
+    parent: Text | None = None
     """The joint it hangs from. Left out for the root."""
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[StrictFloat, StrictFloat] = (0.0, 0.0)
     """Where it is from its parent in the rest pose, in the puppet's own units."""
 
 
 class BonePart(Strict):
     """A limb segment drawn as a capsule between two joints."""
 
-    from_joint: str = Field(alias="from")
+    from_joint: Text = Field(alias="from")
     """The joint the bone starts at."""
-    to_joint: str = Field(alias="to")
+    to_joint: Text = Field(alias="to")
     """The joint the bone ends at."""
-    width: float = Field(gt=0)
+    width: StrictFloat = Field(gt=0)
     """How thick it is drawn, in the puppet's own units."""
 
     model_config = ConfigDict(
@@ -162,11 +164,11 @@ class BonePart(Strict):
 class BlobPart(Strict):
     """A rounded mass -- the head, or a torso -- centred on a joint."""
 
-    at: str
+    at: Text
     """The joint it is centred on."""
-    radius: float = Field(gt=0)
+    radius: StrictFloat = Field(gt=0)
     """Its radius, in the puppet's own units."""
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[StrictFloat, StrictFloat] = (0.0, 0.0)
     """Where its centre is from that joint, in the puppet's own units."""
 
 
@@ -217,9 +219,9 @@ class AnchorSpec(Strict):
     tail terminates at `mouth`, and it neither knows nor cares how the head is drawn.
     """
 
-    joint: str
+    joint: Text
     """The joint it rides along with."""
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[StrictFloat, StrictFloat] = (0.0, 0.0)
     """Where it is from that joint, in the puppet's own units, before posing."""
 
 
@@ -273,11 +275,11 @@ class FeatureSpec(Strict):
     landmarks into the one namespace that is supposed to be free of them.
     """
 
-    joint: str = "head"
+    joint: Text = "head"
     """The joint the feature rides, practically always `head`."""
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[StrictFloat, StrictFloat] = (0.0, 0.0)
     """Where the feature is from that joint, in the puppet's own units, before posing."""
-    size: float = Field(default=0.0, ge=0.0)
+    size: StrictFloat = Field(default=0.0, ge=0.0)
     """How big the feature is drawn, in the puppet's own units: an eye's radius, a brow's or a
     mouth's half-width, a nose's length.
     """
@@ -361,11 +363,11 @@ class FaceSpec(Strict):
     them, because a stylised character genuinely may have no eyebrows.
     """
 
-    joint: str = "head"
+    joint: Text = "head"
     """The joint the face is centred on: the head, unless the puppet says otherwise."""
-    radius: float = Field(gt=0)
+    radius: StrictFloat = Field(gt=0)
     """The face's radius, in the puppet's own units: the circle no balloon covers."""
-    offset: tuple[float, float] = (0.0, 0.0)
+    offset: tuple[StrictFloat, StrictFloat] = (0.0, 0.0)
     """Where the face's centre is from that joint, in the puppet's own units."""
     features: dict[Feature, FeatureSpec] = Field(default_factory=dict)
     """What is drawn inside the face, by feature. Empty for a plain round head."""
@@ -379,7 +381,7 @@ class GazeSpec(Strict):
     angle by hand.
     """
 
-    origin: str = "eyes"
+    origin: Text = "eyes"
     """The anchor the line of sight starts at, conventionally `eyes`. It must be declared."""
 
 
@@ -401,17 +403,17 @@ class PuppetSpec(Strict):
         :class:`Landmark <scenet.assets.contract.Landmark>`, the crop lines it declares.
     """
 
-    name: str
+    name: Text
     """The name a cast member's `reference` uses."""
-    units_per_head: float = Field(gt=0)
+    units_per_head: StrictFloat = Field(gt=0)
     """How many of the puppet's own units one head height is."""
-    landmarks: dict[Landmark, float]
+    landmarks: dict[Landmark, StrictFloat]
     """Each vertical body landmark, as a distance down from the top of the head, in head
     units: the crop lines a shot type names.
     """
     joints: dict[str, JointSpec]
     """The skeleton, by joint name."""
-    root: str = "root"
+    root: Text = "root"
     """The joint every other one hangs from."""
     # Which landmark the root joint physically sits at. The skeleton is built outward
     # from the root, while landmarks are measured downward from the top of the head;
@@ -427,7 +429,7 @@ class PuppetSpec(Strict):
     """Where the face is, and what is drawn in it."""
     gaze: GazeSpec = GazeSpec()
     """Where the puppet's line of sight starts."""
-    poses: dict[str, dict[str, float]] = Field(default_factory=dict)
+    poses: dict[str, dict[str, StrictFloat]] = Field(default_factory=dict)
     """Named poses, each a set of joint angles."""
     expressions: dict[str, ExpressionSpec] = Field(default_factory=dict)
     """Named expressions, each a state of brow, eyes and mouth."""
