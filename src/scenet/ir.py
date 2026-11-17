@@ -11,6 +11,7 @@ wrong picture.
 
 import re
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
@@ -138,16 +139,19 @@ HOLDABLE_PATTERN = f"^[^{NOT_IN_XML}]*$"
 LETTERED_PATTERN = f"^[^{NOT_IN_XML}]*[^{NOT_IN_XML}{WHITE_SPACE}][^{NOT_IN_XML}]*$"
 
 
+@dataclass(frozen=True, slots=True)
 class Pattern:
     """Say in the JSON Schema, as a `pattern`, what a string's validator refuses.
 
     The validator stays a function, whose finding says what is wrong where a pattern can
     only say that the string does not match; the pattern says it again, so an editor and
     a model refuse the same strings. A test holds the two to each other.
+
+    A dataclass, so it has no `__init__` of its own: one would run only as this module is
+    imported, before mutmut chooses a mutant, and no test could kill a mutant of it.
     """
 
-    def __init__(self, pattern: str) -> None:
-        self.pattern = pattern
+    pattern: str
 
     def __get_pydantic_json_schema__(
         self, schema: CoreSchema, handler: GetJsonSchemaHandler
