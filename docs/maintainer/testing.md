@@ -454,7 +454,7 @@ gallery are what guard them.
 | `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 | `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 358 | 4 | 98.9% | 98% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `ir` | `ir.py` | 708 | 16 | 97.7% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `ir` | `ir.py` | 718 | 16 | 97.8% | 97% | [`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) |
 | `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
@@ -1055,8 +1055,9 @@ here:
 [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) ran the six legs of these modules from nothing. It is the run `core`'s
 survivors are numbered from. Scenet YAML ([#352](https://github.com/creatoan/scenet/issues/352)) changed the other five, which were run from
 nothing again: [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) numbers the survivors of `frontends/common` and `diagnostics`, and
-[`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253), on the commit that holds every test below, those of `frontends/yaml`,
-`frontends/script` and `ir`. Every survivor these runs left is in a table here: each is a change no output can show. Each mutant killed before it was also applied
+[`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253), on the commit that holds every test below, those of `frontends/yaml`
+and `frontends/script`. Strict validation ([#353](https://github.com/creatoan/scenet/issues/353)) changed `ir.py` again, and
+[`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) numbers its survivors, the same sixteen. Every survivor these runs left is in a table here: each is a change no output can show. Each mutant killed before it was also applied
 by hand to see a test fail, on the way.
 
 #### `core.py`
@@ -1096,7 +1097,7 @@ see.
 
 #### `ir.py`
 
-708 mutants and 16 survivors, 97.5% killed.
+718 mutants and 16 survivors, 97.8% killed.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
