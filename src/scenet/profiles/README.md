@@ -1,7 +1,7 @@
 # sRGB2014.icc
 
 The International Color Consortium's sRGB profile (IEC 61966-2-1), ICC version 2, as published at
-[color.org](https://www.color.org/srgbprofiles.xalter), unaltered. SHA-256
+[color.org](https://registry.color.org/rgb-registry/srgbprofiles), unaltered. SHA-256
 `384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a`.
 
 The print PDF tags every RGB picture with it, written once per file, so a print workflow reads

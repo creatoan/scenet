@@ -80,7 +80,7 @@ alerts across runs.
 ## Code scanning availability
 
 Code scanning is free for public repositories. Private and internal repositories need
-[GitHub Code Security enabled](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github).
+[GitHub Code Security enabled](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/integrate-with-existing-tools/upload-sarif-file).
 The workflow grants `security-events: write`, which the SARIF upload requires.
 
 If Code Security is not available, use `--format text` instead. It prints one

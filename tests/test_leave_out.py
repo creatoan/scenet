@@ -2,7 +2,7 @@
 
 Until now a panel could add to what it inherits and change it, but never take anything
 away: `merge` replaces and recurses, and a scene's shared cast was in every panel whether
-it belonged there or not. JSON Merge Patch (RFC 7386) settled this long ago: "If the value
+it belonged there or not. JSON Merge Patch (RFC 7396) settled this long ago: "If the value
 is null, remove". So `cast: {bob: null}` takes Bob out of that panel, and the staging
 relations that name him with him -- each with a `dropped-relation` note, as a comic
 script's `(OP)` already does.

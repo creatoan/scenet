@@ -1646,7 +1646,7 @@ compiler must decide the line breaks before it can place anything.
 ![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](https://creatoan.github.io/scenet/images/gallery/14-lettering.svg)
 
 A double dash, a dash or an ellipsis written as a word of its own -- `out --`, `... maybe` -- is
-never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+never a place to break. [Blambot](https://blambot.com/pages/comic-book-grammar-tradition) sets one with no
 space before or after it, so it belongs to its word: it stays on the line of the word before it,
 or of the word after it when it opens the balloon. The space is still lettered as written. A line
 of text, a caption and an actor id may not contain a control character other than tab, line feed
@@ -2776,7 +2776,7 @@ and a panel drawn `over` another writes its own or has one generated. And
 ### `null` leaves something out
 
 A `null` removes what a panel would have inherited, as JSON Merge Patch
-([RFC 7386](https://www.rfc-editor.org/rfc/rfc7386)) has it -- "If the value is null, remove". It
+([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)) has it -- "If the value is null, remove". It
 reaches whatever lies beneath, the panel it is `over` and the scene's defaults alike, at any depth
 reached through mappings: `camera: null`, `cast: {bob: null}`, `setting: {place: null}`.
 

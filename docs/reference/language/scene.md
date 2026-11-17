@@ -32,7 +32,7 @@ and a panel drawn `over` another writes its own or has one generated. And
 ## `null` leaves something out
 
 A `null` removes what a panel would have inherited, as JSON Merge Patch
-([RFC 7386](https://www.rfc-editor.org/rfc/rfc7386)) has it -- "If the value is null, remove". It
+([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)) has it -- "If the value is null, remove". It
 reaches whatever lies beneath, the panel it is `over` and the scene's defaults alike, at any depth
 reached through mappings: `camera: null`, `cast: {bob: null}`, `setting: {place: null}`.
 

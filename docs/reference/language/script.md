@@ -129,7 +129,7 @@ compiler must decide the line breaks before it can place anything.
 ![Alice and Bob, with a long line of Alice's broken across several lines of her balloon](../../images/gallery/14-lettering.svg)
 
 A double dash, a dash or an ellipsis written as a word of its own -- `out --`, `... maybe` -- is
-never a place to break. [Blambot](https://blambot.com/articles_grammar.shtml) sets one with no
+never a place to break. [Blambot](https://blambot.com/pages/comic-book-grammar-tradition) sets one with no
 space before or after it, so it belongs to its word: it stays on the line of the word before it,
 or of the word after it when it opens the balloon. The space is still lettered as written. A line
 of text, a caption and an actor id may not contain a control character other than tab, line feed

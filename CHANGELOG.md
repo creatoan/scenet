@@ -82,6 +82,12 @@ it is written, and says what to write instead.
   than a branch. The playground's state after the `#` is no longer checked as an anchor, and the
   hosts that answer every automated client with an error (the ACM Digital Library and its DOIs,
   ScienceDirect, PubMed Central, GNOME's GitLab, BlankComic) are skipped, by host, each with the reason.
+- **A link to one of the site's own pages is checked by the build that has it** (#486). The
+  weekly link check fetched the profile page, which this CHANGELOG links, from the published
+  site, which has it only from the next release. Built, a link to a page of the site is now
+  that build's own page, and the build fails on a page or an anchor it does not have, on every
+  pull request. Links whose address moved for good now name the new one, and JSON Merge Patch
+  is cited as RFC 7396, which made RFC 7386 obsolete.
 
 ## [0.13.0] - 2026-11-12
 
@@ -1495,7 +1501,7 @@ language, and diagnostics in comic scripts and shared casts now point at the rig
   [`llms.txt`](https://creatoan.github.io/scenet/llms.txt). It is what to hand a chat app
   that cannot run code, such as NotebookLM, which can then write a comic script for you to
   compile. [`skills/scenet`](https://github.com/creatoan/scenet/tree/main/skills/scenet) is
-  an [Agent Skill](https://agentskills.io/) for coding agents. All of it is generated from
+  an [Agent Skill](https://agentskills.io/home) for coding agents. All of it is generated from
   the compiler's own sources, and a test fails if a committed copy goes stale. (#11)
 - **`scenet mcp`, an MCP server**, so a model can validate its own panel, read findings
   that name the rule, the line and the fix, and render the result with nobody relaying

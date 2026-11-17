@@ -245,6 +245,65 @@ html_context = {
 _PLAYGROUND = f"{html_baseurl}playground/"
 
 
+# -- Links to the site's own pages ---------------------------------------------
+#
+# The CHANGELOG, which "What's new" includes, and a rule's help link the site's pages by
+# their full address, the only kind that works on GitHub and in a terminal. Left as they
+# are, the weekly link check fetched each from the published site, which has a page added on
+# `main` only once it is released: the profile page was "404" for as long (#486). So each is
+# this build's own page. Read, the link loses its address, and the link check, which
+# collects links before the builder resolves them, has nothing to fetch; resolved, it is
+# given the builder's own relative address. A page or an anchor this build does not have is
+# a warning, which `-W` fails, on every build. Another version's pages, the playground, the
+# spec pack and the schemas are not pages of this build, and the link check fetches them as
+# before.
+
+_SITE_PAGE = re.compile(
+    rf"^{re.escape(html_baseurl)}(?!dev/|v\d+\.\d+/)((?:[\w-]+/)*[\w-]+)\.html(?:#(.*))?$"
+)
+
+#: The page and anchor a link names while it waits for the builder's address.
+_SITE_LINK = "scenet_site_page"
+
+
+def _site_page(target: str) -> tuple[str, str] | None:
+    """The document and anchor a link to one of the site's pages names, if it names one."""
+    match = _SITE_PAGE.match(target)
+    return (match.group(1), match.group(2) or "") if match else None
+
+
+def _site_links_are_this_builds(app: Sphinx, doctree: nodes.document) -> None:
+    for reference in doctree.findall(nodes.reference):
+        found = _site_page(reference.get("refuri", ""))
+        if found is None:
+            continue
+        page, fragment = found
+        if page not in app.env.found_docs:
+            _logger.warning(
+                f"{reference['refuri']} is a link to a page this documentation does not have",
+                location=reference,
+            )
+            continue
+        del reference["refuri"]
+        reference[_SITE_LINK] = f"{page}#{fragment}"
+
+
+def _site_links_resolve(app: Sphinx, doctree: nodes.document, docname: str) -> None:
+    for reference in doctree.findall(nodes.reference):
+        link = reference.get(_SITE_LINK)
+        if link is None:
+            continue
+        page, fragment = link.split("#", 1)
+        address = app.builder.get_relative_uri(docname, page)
+        reference["refuri"] = f"{address}#{fragment}" if fragment else address
+        if fragment and fragment not in {
+            id_ for node in app.env.get_doctree(page).findall(nodes.Element) for id_ in node["ids"]
+        }:
+            _logger.warning(
+                f"{page} has no anchor #{fragment}, which this page links to", location=reference
+            )
+
+
 #: Where the Markdown links the package's source: on main, the only one GitHub can show.
 _SOURCE = "https://github.com/creatoan/scenet/blob/main/src/"
 
@@ -650,7 +709,9 @@ def setup(app: Sphinx) -> None:
     # and it is shown as text, which is what a script is.
     app.add_lexer("scenet-script", TextLexer)
     app.connect("doctree-read", _heading_slugs_are_ids)
+    app.connect("doctree-read", _site_links_are_this_builds)
     app.connect("doctree-resolved", _playground_links_stay_in_their_version)
     app.connect("doctree-resolved", _source_links_follow_their_version)
     app.connect("doctree-resolved", _no_raw_markup)
+    app.connect("doctree-resolved", _site_links_resolve)
     app.connect("build-finished", _every_public_name_is_documented)

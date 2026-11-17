@@ -328,7 +328,7 @@ than a parallel one.
 
 ### Sound effects — Comicraft, Blambot, COO and AccessComics2
 
-[The Comicraft Glossary of Lettering Terms](https://balloontales.com/?p=418) ·
+[The Comicraft Glossary of Lettering Terms](https://balloontales.com/the-comicraft-glossary-of-lettering-terms/) ·
 [COO: Comic Onomatopoeia Dataset](https://arxiv.org/abs/2207.04675) ·
 [AccessComics2](https://doi.org/10.1145/3555720)
 
@@ -601,7 +601,7 @@ asks and what renderers and editors do, which differ.
 [ICC registry, CGATS21-2-CRPC6](https://registry.color.org/cmyk-registry/) ·
 [GRACoL2013_CRPC6.icc](https://registry.color.org/profile-registry/GRACoL2013_CRPC6) ·
 [littleCMS](https://www.littlecms.com/) ·
-[Adobe, black point compensation](https://www.color.org/WP40-Black_Point_Compensation_2010-07-27.pdf)
+[Adobe, black point compensation](https://archive.color.org/files/WP40-Black_Point_Compensation_2010-07-27.pdf)
 
 How a tinted palette is printed: each colour converted, once, to CMYK under a registered
 printing condition, as a layout program converts artwork -- relative colorimetric with black point
@@ -645,7 +645,7 @@ How a face is carried into the print PDF for live text.
 [ISO 15930-7:2010, PDF/X-4, in the Library of Congress format description](https://www.loc.gov/preservation/digital/formats/fdd/fdd000124.shtml) ·
 [ISO 32000-1, §14.11.5, output intents](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf) ·
 [ICC registry, CGATS21-2-CRPC6](https://registry.color.org/cmyk-registry/cgats21-2-crpc6) ·
-[ICC, sRGB profiles](https://www.color.org/srgbprofiles.xalter) ·
+[ICC, sRGB profiles](https://registry.color.org/rgb-registry/srgbprofiles) ·
 [veraPDF validation profiles](https://docs.verapdf.org/cli/validation/)
 
 How far the print PDF goes toward PDF/X-4, and why it claims nothing.
@@ -741,7 +741,7 @@ eye.
 | **Graphviz / DOT** | Useful only as a debug dump of the scene graph. Graph layout optimises for edge crossings and hierarchy, which has nothing to do with pictorial composition. A dead end as a layout engine. |
 | **POV-Ray SDL** | A CSG raytracer scene language. Historically interesting as an early declarative scene description, but nothing transfers. |
 | **D3.js** | A DOM data-binding library rather than a layout engine, and this project is Python. Its underlying idea is already covered by Vega-Lite. |
-| **[MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)** | 478 3-D landmarks. A *detection output*, not a notation: 478 points is a measurement of a face, and a drawn face has nothing like that much detail to place. Its landmark indices are useful as a **mapping target**, and are recorded as one in the asset contract. Its face *detector* could propose the faces of an artwork contract, from a helper outside the compiler and never as a dependency of it; see [Magi](#magi-a-helper-that-could-propose-a-contract). |
+| **[MediaPipe Face Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker)** | 478 3-D landmarks. A *detection output*, not a notation: 478 points is a measurement of a face, and a drawn face has nothing like that much detail to place. Its landmark indices are useful as a **mapping target**, and are recorded as one in the asset contract. Its face *detector* could propose the faces of an artwork contract, from a helper outside the compiler and never as a dependency of it; see [Magi](#magi-a-helper-that-could-propose-a-contract). |
 | **ARKit / MediaPipe blendshapes** | 52 continuous coefficients that "loosely correspond to FACS Action Units". Continuous blending is the wrong model for comics, which use a small set of conventionalised glyphs rather than interpolations between them. |
 | **[FACS](https://www.sciencedirect.com/topics/computer-science/facial-action-coding-system)** | Codes anatomical muscle actions for *observation*, is continuous, and is documented as weak on the lower face. Wrong direction, wrong granularity. |
 | **A-star pathfinding for balloon tails** | Frequently suggested, and wrong. A tail is a short tapered stroke from balloon rim to mouth; grid-based A-star produces jagged paths that look nothing like drawn tails. A straight tail with a collision test, bending to a single-control-point Bézier only when obstructed, is both simpler and better. |
