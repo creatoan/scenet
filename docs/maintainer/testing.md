@@ -442,8 +442,8 @@ gallery are what guard them.
 |---|---|---|---|---|---|---|
 | `solve/balloons` | `solve/balloons.py` | 1,371 | 29 | 97.9% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `solve/backdrop` | `solve/backdrop.py` | 1,060 | 8 | 99.2% | 99% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `solve/text` | `solve/text.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `solve/staging` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/text` | `solve/text.py` | 839 | 86 | 89.7% | 89% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
+| `solve/staging` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py` | 448 | 11 | 97.5% | 97% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
 | `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf` | `emit/pdf.py` | 1,388 | 32 | 97.7% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 979 | 47 | 95.2% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
@@ -454,7 +454,7 @@ gallery are what guard them.
 | `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 | `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 358 | 4 | 98.9% | 98% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `ir` | `ir.py` | 708 | 16 | 97.5% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
+| `ir` | `ir.py` | 708 | 16 | 97.7% | 97% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
@@ -474,6 +474,17 @@ measured them from nothing, each in its own job:
 function every document goes through runs most of the suite before a test fails, and all of it
 when none does. It is two legs now, measured on their own by
 [`43429063598`](https://github.com/creatoan/scenet/actions/runs/43429063598).
+
+`solve/text` held `solve/text.py` with the staging modules, and the scheduled run of
+16 November ran it out of time with 54 of its 1,287 mutants untried
+([#485](https://github.com/creatoan/scenet/issues/485)); `emit/drawing` took twice as long as
+before. Two tests of the gallery's goldens had grown dear: comparing the outputs read every
+document's findings and readings again, which their own tests already hold, and a mutant of
+any function in `solve/` or `emit/` runs both. They compare the outputs only now, and
+`solve/text.py`, which held three fifths of the leg's cost, is a leg of its own. Both legs were
+measured on their own by
+[`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164), in which no leg
+took more than 90 minutes.
 
 ### Baseline
 

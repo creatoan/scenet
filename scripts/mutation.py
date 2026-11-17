@@ -75,15 +75,15 @@ def _in(directory: str, *names: str) -> tuple[str, ...]:
 LEGS: tuple[Leg, ...] = (
     Leg("solve/balloons", _in("solve/", "balloons.py"), 97, 97.9, 1371, 29, 43410981157),
     Leg("solve/backdrop", _in("solve/", "backdrop.py"), 99, 99.2, 1060, 8, 43410981157),
-    Leg("solve/text", _in("solve/", "text.py"), 92, 92.5, 1284, 96, 43410981157),
+    Leg("solve/text", _in("solve/", "text.py"), 89, 89.7, 839, 86, 44108642164),
     Leg(
         "solve/staging",
         _in("solve/", "__init__.py", "camera.py", "figures.py", "speakers.py", "staging.py"),
-        92,
-        92.5,
-        1284,
-        96,
-        43410981157,
+        97,
+        97.5,
+        448,
+        11,
+        44108642164,
     ),
     Leg(
         "solve/page",
@@ -156,7 +156,7 @@ LEGS: tuple[Leg, ...] = (
         43606025253,
     ),
     Leg("core", _in("", "core.py"), 98, 98.6, 351, 5, 43478921809),
-    Leg("ir", _in("", "ir.py"), 97, 97.5, 708, 16, 43606025253),
+    Leg("ir", _in("", "ir.py"), 97, 97.7, 708, 16, 43606025253),
     Leg("diagnostics", _in("", "diagnostics.py"), 95, 95.4, 1617, 74, 43597307790),
 )
 
