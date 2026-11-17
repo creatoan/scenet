@@ -442,7 +442,8 @@ gallery are what guard them.
 |---|---|---|---|---|---|---|
 | `solve/balloons` | `solve/balloons.py` | 1,371 | 29 | 97.9% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `solve/backdrop` | `solve/backdrop.py` | 1,060 | 8 | 99.2% | 99% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `solve/text` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py`, `solve/text.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/text` | `solve/text.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/staging` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py` | 1,284 | 96 | 92.5% | 92% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf` | `emit/pdf.py` | 1,388 | 32 | 97.7% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 979 | 47 | 95.2% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
