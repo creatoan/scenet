@@ -139,7 +139,8 @@ class TestPanelSchema:
 
     def test_every_script_verb_is_offered(self):
         """One wrapper per verb the frontend accepts, so neither side can add one alone."""
-        branches = panel_schema()["properties"]["script"]["items"]["anyOf"]
+        script, _ = panel_schema()["properties"]["script"]["anyOf"]
+        branches = script["items"]["anyOf"]
         assert {verb for branch in branches for verb in branch["required"]} == KNOWN_VERBS
 
     def test_the_ir_schema_is_not_what_is_published(self):

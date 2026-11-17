@@ -277,6 +277,7 @@ NEVER_REACHES_A_CALLER: dict[tuple[str, str], str] = {
     # pydantic catches what a validator raises and re-raises its own `ValidationError`,
     # which a frontend turns into a `PanelSyntaxError` with a location.
     ("ir.py", "_holdable"): "called by validators only",
+    ("ir.py", "_visible"): "called by validators only",
     ("ir.py", "_check_marks"): "the body of a validator",
     ("ir.py", "_check_off_panel"): "the body of a validator",
     ("core.py", "_check_runs"): "called by validators only",
@@ -287,6 +288,8 @@ NEVER_REACHES_A_CALLER: dict[tuple[str, str], str] = {
     ("solve/text.py", "__post_init__"): "the solver builds a run with a face per character",
     ("emit/pdf.py", "_veil"): "a veil is always painted in an ink",
     ("emit/pdf.py", "_path"): "every shape the emitter draws has a path",
+    ("schema.py", "_accept_nulls"): "no definition is reached through a mapping and a list",
+    ("schema.py", "loosen"): "the same, from inside `_accept_nulls`",
     # Internal names, never reached through a public one.
     ("assets/kinematics.py", "anchor"): "a posed puppet's anchors are looked up internally",
     ("spec_pack.py", "part"): "the spec pack's parts are named by the package itself",

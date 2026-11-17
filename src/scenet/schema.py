@@ -10,7 +10,8 @@ anybody types.** The YAML frontend accepts conveniences that
 - script entries tagged by verb, `- say: {by: alice, text: ...}`;
 - a setting that names a `place` instead of listing masses;
 - in a scene, panels that state only what differs from what they inherit;
-- `null` for a cast member, which leaves an inherited one out (`settle`).
+- `null` for a key, which is the key not written: in a scene, it leaves out what a panel
+  would inherit (`settle`).
 
 Publishing the IR's schema made an editor flag every one of those as an error -- 21 of
 the 22 gallery documents, on lines that compiled. So the published schema starts from
@@ -20,7 +21,10 @@ field, enum and docstring still comes from the models; only the shape changes.
 Example:
     >>> from scenet.schema import panel_schema
     >>> schema = panel_schema()
-    >>> sorted(schema["properties"]["script"]["items"]["anyOf"][0]["properties"])
+    >>> script = schema["properties"]["script"]
+    >>> [branch.get("type") for branch in script["anyOf"]]
+    ['array', 'null']
+    >>> sorted(script["anyOf"][0]["items"]["anyOf"][0]["properties"])
     ['say']
 """
 
@@ -31,7 +35,7 @@ from typing import Any
 from scenet.assets.artwork import ArtworkContract
 from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
 from scenet.compose import DESCRIPTION_KEY, DIRECTION_KEY
-from scenet.ir import PUPPET_KEYS, PageLayout, PanelIR, Predicate
+from scenet.ir import PUPPET_KEYS, CaptionKind, PageLayout, PanelIR, Predicate
 from scenet.places import Place
 
 __all__ = ["artwork_schema", "panel_schema", "puppet_schema", "scene_schema"]
@@ -117,6 +121,9 @@ def panel_schema() -> dict[str, Any]:
     _accept_one_font_file(definitions)
     _accept_cast_removal(schema)
     _puppet_or_figure(definitions)
+    _positive_size(definitions)
+    _speaker_only_when_spoken(definitions)
+    _accept_nulls(schema, definitions)
     _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
@@ -214,6 +221,7 @@ def scene_schema() -> dict[str, Any]:
     _summaries(layout)
     definitions.update(layout.pop("$defs"))
     _accept_panel_names(definitions)
+    _one_kind_of_tier(definitions)
 
     scene = {
         "$schema": DIALECT,
@@ -233,9 +241,46 @@ def scene_schema() -> dict[str, Any]:
             },
         },
         "additionalProperties": False,
+        # Mirror `diagnose_source` and `parse_scene_document`: without `panels:` a document is
+        # one panel, and there is nothing for a page to lay out.
+        "dependentRequired": {"page": ["panels"], "pages": ["panels"]},
     }
     _for_authors(scene)
     return scene
+
+
+def _one_kind_of_tier(definitions: dict[str, Any]) -> None:
+    """Mirror `_check_one_kind` and `_check_slant`: what a tier holds, and when it leans.
+
+    A tier holds panels or columns, never both and never neither. A slant leans the upright
+    gutters between two panels or more, which a tier of columns does not have, and makes
+    corners no inset can be set into. That a page's panels are the scene's, and that its
+    margins leave room, compares one value with another, which a schema cannot.
+    """
+    tier: dict[str, Any] = definitions["Tier"]
+    # Each a key written with an entry in it, said under `not` for the reason
+    # `_puppet_or_figure` gives. Under `allOf`, since a `oneOf` beside `type` reads to an
+    # editor as the shapes a tier may take, where this is one shape and a condition on it.
+    tier["allOf"] = [
+        {
+            "oneOf": [
+                {"required": [key], "not": {"properties": {key: {"maxItems": 0}}}}
+                for key in ("panels", "columns")
+            ]
+        }
+    ]
+    inset = {
+        "type": "object",
+        "required": ["insets"],
+        "properties": {"insets": {"minItems": 1}},
+    }
+    tier["if"] = {"required": ["slant"], "properties": {"slant": {"not": {"const": 0}}}}
+    tier["then"] = {
+        "properties": {
+            "columns": {"maxItems": 0},
+            "panels": {"minItems": 2, "items": {"not": inset}},
+        }
+    }
 
 
 def _puppet_or_figure(definitions: dict[str, Any]) -> None:
@@ -248,12 +293,22 @@ def _puppet_or_figure(definitions: dict[str, Any]) -> None:
     figure.
     """
     member: dict[str, Any] = definitions["CastMember"]
-    member["anyOf"] = [{"required": ["reference"]}, {"required": ["figure"]}]
+    # Written, and not as `null`, which `settle` takes away: a key is there only then. Not
+    # "is a string", since `figure: 1984` names a figure too, and is text as written.
+    written = {"not": {"type": "null"}}
+    # The test for null is under `not`, not `properties`, which an editor would read as
+    # the key's own description, empty here, in place of the one it has. It requires the
+    # key itself, so in a scene, whose panels need not name either (`_inheritable` drops
+    # the outer `required`), a member that leaves both out still passes.
+    member["anyOf"] = [
+        {"required": [key], "not": {"required": [key], "properties": {key: {"type": "null"}}}}
+        for key in ("reference", "figure")
+    ]
     member["not"] = {
         "required": ["reference", "figure"],
-        "properties": {"reference": {"type": "string"}, "figure": {"type": "string"}},
+        "properties": {"reference": written, "figure": written},
     }
-    member["if"] = {"required": ["figure"], "properties": {"figure": {"type": "string"}}}
+    member["if"] = {"required": ["figure"], "properties": {"figure": written}}
     member["then"] = {"properties": {key: {"type": "null"} for key in PUPPET_KEYS}}
     # `settle` removes a null before anything reads it, so a puppet's key written as null
     # -- over an inherited puppet that becomes a figure -- is accepted, as it compiles.
@@ -289,6 +344,96 @@ def _default_pose(schema: dict[str, Any]) -> None:
     schema["required"].append("poses")
     poses: dict[str, Any] = schema["properties"]["poses"]
     poses["required"] = [DEFAULT_POSE]
+
+
+def _positive_size(definitions: dict[str, Any]) -> None:
+    """Mirror `_check_positive_panel_spec`: a panel is wider and taller than nothing.
+
+    Its other half, a margin that leaves room, compares two numbers, which a schema
+    cannot; `scenet check` says both under `panel-geometry`.
+    """
+    size: dict[str, Any] = definitions["PanelSpec"]["properties"]["size"]
+    for side in size["prefixItems"]:
+        side["exclusiveMinimum"] = 0
+
+
+def _speaker_only_when_spoken(definitions: dict[str, Any]) -> None:
+    """Mirror `_check_speaker_is_meaningful`: only a quoted caption names who speaks.
+
+    A caption of any other kind -- or of none, which is `locale` -- may write `by` only as
+    `null`, which is a caption in a list, so a value the model reads as no speaker.
+    """
+    caption: dict[str, Any] = definitions["CaptionEvent"]
+    quoted = [kind.value for kind in CaptionKind if kind.is_quoted]
+    caption["if"] = {"required": ["kind"], "properties": {"kind": {"enum": quoted}}}
+    caption["else"] = {"properties": {"by": {"type": "null"}}}
+
+
+def _accept_nulls(schema: dict[str, Any], definitions: dict[str, Any]) -> None:
+    """Mirror `settle`: in any document, a key whose value is `null` is a key not written.
+
+    `settle` takes every such key away before anything reads the document -- in a single
+    panel as in a scene, where it is how a panel leaves out what it inherits -- at any
+    depth reached through mappings, and never inside a list, whose entries Merge Patch
+    treats as values. So the schema takes a `null` wherever that is, except for a key the
+    mapping requires, which taken away leaves the mapping without it.
+
+    Raises:
+        ValueError: A definition is reached both through mappings and from inside a list,
+            where it would need to be two definitions. None is; this says so if one ever is.
+    """
+    in_lists = _reached_from_lists(schema, definitions)
+    seen: set[str] = set()
+
+    def loosen(node: dict[str, Any]) -> None:
+        if "$ref" in node:
+            name = node["$ref"].rsplit("/", 1)[1]
+            if name in in_lists:
+                raise ValueError(f"{name} is reached through a mapping and from a list")
+            if name not in seen:
+                seen.add(name)
+                loosen(definitions[name])
+            return
+        required = set(node.get("required", ()))
+        properties: dict[str, Any] = node.get("properties", {})
+        for key, value in properties.items():
+            loosen(value)
+            if key not in required:
+                properties[key] = _removable(value)
+        values = node.get("additionalProperties")
+        if isinstance(values, dict):
+            loosen(values)
+            node["additionalProperties"] = _removable(values)
+        for combinator in ("anyOf", "oneOf", "allOf"):
+            for branch in node.get(combinator, ()):
+                loosen(branch)
+
+    loosen(schema)
+
+
+def _reached_from_lists(schema: dict[str, Any], definitions: dict[str, Any]) -> set[str]:
+    """The definitions a document reaches from inside a list, where `settle` never goes."""
+    seen: set[tuple[str, bool]] = set()
+
+    def visit(node: object, *, in_list: bool) -> None:
+        if isinstance(node, list):
+            for item in node:
+                visit(item, in_list=in_list)
+            return
+        if not isinstance(node, dict):
+            return
+        reference = node.get("$ref")
+        if isinstance(reference, str):
+            name = reference.rsplit("/", 1)[1]
+            if (name, in_list) not in seen:
+                seen.add((name, in_list))
+                visit(definitions[name], in_list=in_list)
+        for key, value in node.items():
+            if key != "$defs":
+                visit(value, in_list=in_list or key in ("items", "prefixItems"))
+
+    visit(schema, in_list=False)
+    return {name for name, in_list in seen if in_list}
 
 
 def _accept_cast_removal(schema: dict[str, Any]) -> None:
@@ -442,7 +587,16 @@ def _accept_named_places(definitions: dict[str, Any]) -> None:
             for pair in EXCLUSIVE_SETTING_KEYS
         ]
     }
-    setting["dependentRequired"] = {"fit": ["image"]}
+    # A fit needs an image beside it -- and `dependentRequired` would take `image: null`,
+    # which `settle` removes, for one, and hold `fit: null`, which it removes too, to it.
+    setting["dependentSchemas"] = {
+        "fit": {
+            "anyOf": [
+                {"properties": {"fit": {"type": "null"}}},
+                {"required": ["image"], "properties": {"image": {"not": {"type": "null"}}}},
+            ]
+        }
+    }
 
 
 def _accept_panel_names(definitions: dict[str, Any]) -> None:
@@ -480,7 +634,9 @@ def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str,
 
     # A key one field needs beside it may be inherited as much as a required one.
     loosened = {
-        key: value for key, value in node.items() if key not in ("required", "dependentRequired")
+        key: value
+        for key, value in node.items()
+        if key not in ("required", "dependentRequired", "dependentSchemas")
     }
     if isinstance(node.get("additionalProperties"), dict):
         loosened["additionalProperties"] = _inheritable(node["additionalProperties"], definitions)

@@ -1627,7 +1627,7 @@ script:
 ### `say.text`
 
 <!-- facts: say.text -->
-The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.
+The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -1879,7 +1879,7 @@ script:
 ### `caption.text`
 
 <!-- facts: caption.text -->
-What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.
+What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -2109,7 +2109,7 @@ script:
 ### `sfx.text`
 
 <!-- facts: sfx.text -->
-The sound, lettered exactly as written, in the display face.
+The sound, lettered exactly as written, in the display face. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -2785,6 +2785,11 @@ panel they are not in, and `scenet check` notes each one as `dropped-relation`. 
 the member left out is heard from off panel: `bob looking_at carol` still holds when Carol speaks
 `off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
 merged into.
+
+The rule is the same in a single panel, which inherits nothing: there a `null` is a key not
+written, so `camera: null` is the default camera, as `camera:` with no value is. The JSON Schema
+says so too. A key the mapping does not have stays unknown whatever its value: `colour: null` is
+`unknown-key`, as `colour: red` is.
 
 ```yaml
 cast:
@@ -7352,12 +7357,26 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "How the panel is framed.",
       "properties": {
         "angle": {
-          "$ref": "#/$defs/CameraAngle",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CameraAngle"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "eye_level",
           "description": "The camera's height: `low` looks up, leaving little air above the head; `high` looks down, leaving more."
         },
         "shot": {
-          "$ref": "#/$defs/ShotType",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ShotType"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "medium_shot",
           "description": "How tightly the camera frames the cast, named by where the frame cuts the body, from `long_shot` to `extreme_close_up`. The tightest it may go: the camera steps back when the cast does not fit."
         }
@@ -7368,10 +7387,30 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
     "CaptionEvent": {
       "additionalProperties": false,
       "description": "One caption box: the panel speaking in its own voice.",
+      "else": {
+        "properties": {
+          "by": {
+            "type": "null"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "spoken"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "properties": {
         "by": {
           "anyOf": [
             {
+              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
               "type": [
                 "string",
                 "number",
@@ -7404,8 +7443,8 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left."
         },
         "text": {
-          "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.",
-          "minLength": 1,
+          "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.",
+          "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
             "string",
@@ -7451,11 +7490,31 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "additionalProperties": false,
       "anyOf": [
         {
+          "not": {
+            "properties": {
+              "reference": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "reference"
+            ]
+          },
           "required": [
             "reference"
           ]
         },
         {
+          "not": {
+            "properties": {
+              "figure": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "figure"
+            ]
+          },
           "required": [
             "figure"
           ]
@@ -7465,7 +7524,9 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "if": {
         "properties": {
           "figure": {
-            "type": "string"
+            "not": {
+              "type": "null"
+            }
           }
         },
         "required": [
@@ -7475,10 +7536,14 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "not": {
         "properties": {
           "figure": {
-            "type": "string"
+            "not": {
+              "type": "null"
+            }
           },
           "reference": {
-            "type": "string"
+            "not": {
+              "type": "null"
+            }
           }
         },
         "required": [
@@ -7531,6 +7596,7 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "figure": {
           "anyOf": [
             {
+              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
               "type": [
                 "string",
                 "number",
@@ -7837,30 +7903,46 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "The panel's own dimensions.",
       "properties": {
         "margin": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 0.0,
           "description": "An inset on all four sides, in panel units. Balloons, captions and sound effects keep inside it; figures may run past it, as comics let them.",
-          "minimum": 0.0,
-          "title": "Margin",
-          "type": "number"
+          "title": "Margin"
         },
         "size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": [
             1000.0,
             1000.0
           ],
           "description": "The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre.",
-          "maxItems": 2,
-          "minItems": 2,
-          "prefixItems": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "title": "Size",
-          "type": "array"
+          "title": "Size"
         }
       },
       "title": "PanelSpec",
@@ -7974,6 +8056,7 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "properties": {
         "by": {
           "description": "Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.",
+          "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "By",
           "type": [
             "string",
@@ -8017,8 +8100,8 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room."
         },
         "text": {
-          "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.",
-          "minLength": 1,
+          "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.",
+          "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
             "string",
@@ -8036,10 +8119,30 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
     },
     "SettingSpec": {
       "additionalProperties": false,
-      "dependentRequired": {
-        "fit": [
-          "image"
-        ]
+      "dependentSchemas": {
+        "fit": {
+          "anyOf": [
+            {
+              "properties": {
+                "fit": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "image": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              },
+              "required": [
+                "image"
+              ]
+            }
+          ]
+        }
       },
       "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.",
       "not": {
@@ -8146,6 +8249,7 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
         "image": {
           "anyOf": [
             {
+              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
               "type": [
                 "string",
                 "number",
@@ -8188,12 +8292,26 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them."
         },
         "time": {
-          "$ref": "#/$defs/TimeOfDay",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeOfDay"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "day",
           "description": "When the panel happens, which sets the two ends of the value ladder: the foreground's value and the atmosphere's."
         },
         "weather": {
-          "$ref": "#/$defs/Weather",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Weather"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "clear",
           "description": "What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cloud, and fall over everything, the cast included."
         }
@@ -8262,8 +8380,8 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
           "description": "How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size."
         },
         "text": {
-          "description": "The sound, lettered exactly as written, in the display face.",
-          "minLength": 1,
+          "description": "The sound, lettered exactly as written, in the display face. Never empty, nor only white space.",
+          "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
             "string",
@@ -8364,7 +8482,14 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
   "description": "A complete, validated panel: the language's real definition.",
   "properties": {
     "camera": {
-      "$ref": "#/$defs/CameraSpec",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CameraSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": {
         "angle": "eye_level",
         "shot": "medium_shot"
@@ -8372,24 +8497,35 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "How the cast is framed: the shot, and the camera's height."
     },
     "cast": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/CastMember"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CastMember"
+              },
+              {
+                "description": "Leaves a cast member this panel would inherit out of it, and every staging relation that names them.",
+                "type": "null"
+              }
+            ]
           },
-          {
-            "description": "Leaves a cast member this panel would inherit out of it, and every staging relation that names them.",
-            "type": "null"
-          }
-        ]
-      },
+          "propertyNames": {
+            "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing.",
-      "title": "Cast",
-      "type": "object"
+      "title": "Cast"
     },
     "description": {
       "anyOf": [
         {
+          "pattern": "^[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*$",
           "type": [
             "string",
             "number",
@@ -8405,12 +8541,26 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "title": "Description"
     },
     "direction": {
-      "$ref": "#/$defs/Direction",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Direction"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": "ltr",
       "description": "Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored."
     },
     "lettering": {
-      "$ref": "#/$defs/LetteringSpec",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LetteringSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": {
         "font": null,
         "size": null
@@ -8418,12 +8568,26 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "How the lettering is set: the dialogue type size, and the font files."
     },
     "palette": {
-      "$ref": "#/$defs/Palette",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Palette"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": "mono",
       "description": "What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each value in a colour with the same lightness. Colour never changes a value, so a tinted panel is, in monochrome, the mono one. Inherited like any default; a panel may have its own."
     },
     "panel": {
-      "$ref": "#/$defs/PanelSpec",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PanelSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": {
         "margin": 0.0,
         "size": [
@@ -8434,56 +8598,70 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "The panel's frame: its size and margin, in panel units."
     },
     "script": {
+      "anyOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "say": {
+                    "$ref": "#/$defs/SayEvent",
+                    "description": "A line of dialogue, in a balloon whose tail points at the speaker."
+                  }
+                },
+                "required": [
+                  "say"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "caption": {
+                    "$ref": "#/$defs/CaptionEvent",
+                    "description": "A caption: a box in which the panel speaks in its own voice, with no tail."
+                  }
+                },
+                "required": [
+                  "caption"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "sfx": {
+                    "$ref": "#/$defs/SfxEvent",
+                    "description": "A sound effect: letters lettered into the picture, with no balloon."
+                  }
+                },
+                "required": [
+                  "sfx"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": [],
       "description": "What is said and heard, in the order it is read: `say` for a balloon, `caption` for a box, `sfx` for a sound effect.",
-      "items": {
-        "anyOf": [
-          {
-            "additionalProperties": false,
-            "properties": {
-              "say": {
-                "$ref": "#/$defs/SayEvent",
-                "description": "A line of dialogue, in a balloon whose tail points at the speaker."
-              }
-            },
-            "required": [
-              "say"
-            ],
-            "type": "object"
-          },
-          {
-            "additionalProperties": false,
-            "properties": {
-              "caption": {
-                "$ref": "#/$defs/CaptionEvent",
-                "description": "A caption: a box in which the panel speaks in its own voice, with no tail."
-              }
-            },
-            "required": [
-              "caption"
-            ],
-            "type": "object"
-          },
-          {
-            "additionalProperties": false,
-            "properties": {
-              "sfx": {
-                "$ref": "#/$defs/SfxEvent",
-                "description": "A sound effect: letters lettered into the picture, with no balloon."
-              }
-            },
-            "required": [
-              "sfx"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "title": "Script",
-      "type": "array"
+      "title": "Script"
     },
     "setting": {
-      "$ref": "#/$defs/SettingSpec",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SettingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": {
         "fit": null,
         "horizon": "mid",
@@ -8495,13 +8673,20 @@ The panel schema follows. Conforming to a schema is necessary, not sufficient: s
       "description": "Where and when the panel happens: a named place, tonal masses or a picture behind the cast, with the time of day and the weather."
     },
     "staging": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Relation"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": [],
       "description": "How the cast stand to each other, as sentences: `alice left_of bob`. One relation each.",
-      "items": {
-        "$ref": "#/$defs/Relation"
-      },
-      "title": "Staging",
-      "type": "array"
+      "title": "Staging"
     }
   },
   "title": "Scenet panel",

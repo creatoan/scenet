@@ -1541,7 +1541,7 @@ script:
 ### `say.text`
 
 <!-- facts: say.text -->
-The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.
+The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -1793,7 +1793,7 @@ script:
 ### `caption.text`
 
 <!-- facts: caption.text -->
-What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.
+What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -2023,7 +2023,7 @@ script:
 ### `sfx.text`
 
 <!-- facts: sfx.text -->
-The sound, lettered exactly as written, in the display face.
+The sound, lettered exactly as written, in the display face. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -2699,6 +2699,11 @@ panel they are not in, and `scenet check` notes each one as `dropped-relation`. 
 the member left out is heard from off panel: `bob looking_at carol` still holds when Carol speaks
 `off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
 merged into.
+
+The rule is the same in a single panel, which inherits nothing: there a `null` is a key not
+written, so `camera: null` is the default camera, as `camera:` with no value is. The JSON Schema
+says so too. A key the mapping does not have stays unknown whatever its value: `colour: null` is
+`unknown-key`, as `colour: red` is.
 
 ```yaml
 cast:

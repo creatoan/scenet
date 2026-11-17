@@ -110,7 +110,7 @@ script:
 ## `say.text`
 
 <!-- facts: say.text -->
-The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic.
+The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -362,7 +362,7 @@ script:
 ## `caption.text`
 
 <!-- facts: caption.text -->
-What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed.
+What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.
 
 | | |
 |---|---|
@@ -592,7 +592,7 @@ script:
 ## `sfx.text`
 
 <!-- facts: sfx.text -->
-The sound, lettered exactly as written, in the display face.
+The sound, lettered exactly as written, in the display face. Never empty, nor only white space.
 
 | | |
 |---|---|

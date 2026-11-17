@@ -17,7 +17,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`caption.by`](script.md#captionby) | panel, scene | Who is speaking, for a `spoken` caption only: any name, in the cast or not. | 0.4 |
 | [`caption.kind`](script.md#captionkind) | panel, scene | What the box is doing: `locale` for a place and time, `monologue` for an inner voice, `spoken` for speech from off panel, `editorial` for the writer's voice. | 0.4 |
 | [`caption.prefer`](script.md#captionprefer) | panel, scene | Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left. | 0.4 |
-| [`caption.text`](script.md#captiontext) | panel, scene | What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. | 0.4 |
+| [`caption.text`](script.md#captiontext) | panel, scene | What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space. | 0.4 |
 | [`caption.tone`](script.md#captiontone) | panel, scene | What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`. | 0.6 |
 | [`cast`](cast.md#cast) | panel, scene | Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing. | 0.1 |
 | [`cast.<id>.at`](cast.md#castidat) | panel, scene | Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it. | 0.1 |
@@ -104,7 +104,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`say.off_panel`](script.md#sayoff_panel) | panel, scene | The speaker is outside the panel: `true`, or the side of the frame they are on. The tail ends on the frame there. | 0.11 |
 | [`say.prefer`](script.md#sayprefer) | panel, scene | Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it. | 0.1 |
 | [`say.size`](script.md#saysize) | panel, scene | `small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room. | 0.11 |
-| [`say.text`](script.md#saytext) | panel, scene | The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. | 0.1 |
+| [`say.text`](script.md#saytext) | panel, scene | The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space. | 0.1 |
 | [`script`](script.md#script) | panel, scene | What is said and heard, in the order it is read: `say` for a balloon, `caption` for a box, `sfx` for a sound effect. | 0.1 |
 | [`setting`](setting.md#setting) | panel, scene | Where and when the panel happens: a named place, tonal masses or a picture behind the cast, with the time of day and the weather. | 0.6 |
 | [`setting.fit`](setting.md#settingfit) | panel, scene | How the picture fills the panel: `cover` fills it and crops what overhangs, equally on both sides; `contain` shows the whole picture. Left out, `cover`. | 0.12 |
@@ -124,7 +124,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`sfx.prefer`](script.md#sfxprefer) | panel, scene | Where the effect would like to sit, one of nine zones of the panel: on its own, or as a pull on an effect that has a `from`. | 0.11 |
 | [`sfx.rotate`](script.md#sfxrotate) | panel, scene | How far the effect is turned clockwise, in degrees, from -45 to 45. | 0.11 |
 | [`sfx.size`](script.md#sfxsize) | panel, scene | How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size. | 0.11 |
-| [`sfx.text`](script.md#sfxtext) | panel, scene | The sound, lettered exactly as written, in the display face. | 0.11 |
+| [`sfx.text`](script.md#sfxtext) | panel, scene | The sound, lettered exactly as written, in the display face. Never empty, nor only white space. | 0.11 |
 | [`size`](artwork.md#size) | artwork contract | The picture's size in pixels, `[width, height]`, as it was measured. It must be the picture's own. | 0.12 |
 | [`staging`](staging.md#staging) | panel, scene | How the cast stand to each other, as sentences: `alice left_of bob`. One relation each. | 0.1 |
 | [`staging[].object`](staging.md#stagingobject) | panel, scene | The other actor id. For `looking_at`, it may be somebody heard from off panel. | 0.1 |

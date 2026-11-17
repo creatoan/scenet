@@ -42,6 +42,11 @@ the member left out is heard from off panel: `bob looking_at carol` still holds 
 `off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
 merged into.
 
+The rule is the same in a single panel, which inherits nothing: there a `null` is a key not
+written, so `camera: null` is the default camera, as `camera:` with no value is. The JSON Schema
+says so too. A key the mapping does not have stays unknown whatever its value: `colour: null` is
+`unknown-key`, as `colour: red` is.
+
 ```{scenet-example}
 cast:
   alice: {reference: alice, at: left_third}

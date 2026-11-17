@@ -21,6 +21,7 @@ that Scenet YAML can read back as the same text -- and the strategies draw such 
 and such actor ids, on purpose.
 """
 
+import copy
 import hashlib
 import math
 import string
@@ -60,7 +61,7 @@ from scenet.safe_yaml import NULL_TAG, ProfileResolver
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
 from tests.images import contract, jpeg, png
 
-__all__ = ["AS_WRITTEN", "LIBRARY", "Drawn", "dump", "panels", "words"]
+__all__ = ["AS_WRITTEN", "LIBRARY", "Drawn", "Mutant", "dump", "mutants", "panels", "words"]
 
 #: The shipped puppets, loaded once. `default_library()` reads the files on every call.
 LIBRARY: PuppetLibrary = default_library()
@@ -1154,3 +1155,163 @@ def mistakes(draw: st.DrawFn, kind: str) -> Mistake:
     }
     actor = next(iter(document["cast"]))
     return MISTAKES[kind](document, actor, draw)
+
+
+# ---------------------------------------------------------------- mutated documents
+
+#: What a mutation writes in place of a value, beside a key, or at the end of a list: a
+#: value of each type the language reads, each written the way a slip writes it -- a
+#: number quoted, a flag as a word, text that is blank -- and words the language uses
+#: somewhere, in places it does not. No `.nan` or `.inf`: JSON cannot carry either, so a
+#: JSON Schema has nothing to say about them, and the validator refuses both anyway.
+ODD_VALUES: tuple[object, ...] = (
+    None,
+    "",
+    " ",
+    "\t \n",
+    "words",
+    "1000",
+    "true",
+    "left",
+    "top_left",
+    "speech",
+    "spoken",
+    "medium_shot",
+    "a left_of b",
+    "fonts/Comic.ttf",
+    "bell\x07",
+    0,
+    1,
+    -5,
+    2.5,
+    46,
+    100000,
+    True,
+    False,
+    [],
+    {},
+    ["words"],
+    {"words": 1},
+)
+
+#: Keys a mutation adds: one the language has nowhere, and ones it has somewhere, which
+#: written in the wrong mapping are as unknown as the first.
+ODD_KEYS = (
+    "colour",
+    "by",
+    "kind",
+    "size",
+    "text",
+    "off_panel",
+    "hollow",
+    "figure",
+    "reference",
+    "image",
+    "fit",
+    "place",
+    "masses",
+    "horizon",
+    "margin",
+    "shot",
+    "angle",
+    "tone",
+    "prefer",
+    "from",
+    "camera",
+)
+
+_Path = tuple[str | int, ...]
+
+
+def _value_paths(node: object, path: _Path = ()) -> list[_Path]:
+    """Every path to a value in a document, its containers included, the root left out."""
+    found: list[_Path] = [path] if path else []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            found += _value_paths(value, (*path, key))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            found += _value_paths(value, (*path, index))
+    return found
+
+
+def _containers(node: object, path: _Path = ()) -> list[_Path]:
+    """Every path to a mapping or a list in a document, the root included."""
+    found: list[_Path] = []
+    if isinstance(node, dict | list):
+        found.append(path)
+        items = node.items() if isinstance(node, dict) else enumerate(node)
+        for key, value in items:
+            found += _containers(value, (*path, key))
+    return found
+
+
+def _at(document: Any, path: _Path) -> Any:
+    for step in path:
+        document = document[step]
+    return document
+
+
+@st.composite
+def _mutation(draw: st.DrawFn, document: dict[str, Any]) -> str:
+    """Make one mutation to `document`, in place, and say which kind it was."""
+    kind = draw(st.sampled_from(("replace", "remove", "add")))
+    if kind == "replace":
+        path = draw(st.sampled_from(_value_paths(document)))
+        # Sometimes a value from elsewhere in the same document: right in its own
+        # place, a number or a word the language uses, and wrong in this one.
+        elsewhere = [_at(document, other) for other in _value_paths(document)]
+        value = draw(st.sampled_from(ODD_VALUES) | st.sampled_from(elsewhere))
+        _at(document, path[:-1])[path[-1]] = copy.deepcopy(value)
+        return f"replace {type(value).__name__}"
+    containers = [path for path in _containers(document) if _at(document, path) or kind == "add"]
+    path = draw(st.sampled_from(containers))
+    container = _at(document, path)
+    if kind == "remove":
+        if isinstance(container, dict):
+            del container[draw(st.sampled_from(list(container)))]
+        else:
+            del container[draw(st.integers(0, len(container) - 1))]
+        return f"remove from a {type(container).__name__}"
+    value = copy.deepcopy(draw(st.sampled_from(ODD_VALUES)))
+    if isinstance(container, dict):
+        container[draw(st.sampled_from(ODD_KEYS))] = value
+    else:
+        container.append(value)
+    return f"add to a {type(container).__name__}"
+
+
+@dataclass(frozen=True, slots=True)
+class Mutant:
+    """A generated document, with up to three mutations made to it, or none.
+
+    Attributes:
+        document: The document, as written.
+        mutations: What was done to it, for `hypothesis.event` statistics.
+    """
+
+    document: dict[str, Any]
+    mutations: tuple[str, ...]
+
+    @property
+    def text(self) -> str:
+        return dump(self.document)
+
+
+@st.composite
+def mutants(draw: st.DrawFn, of: st.SearchStrategy[Drawn | DrawnScene] | None = None) -> Mutant:
+    """A document `of` draws, valid or broken in up to three places.
+
+    Without `of`, a single panel :func:`panels` draws, naming no file.
+
+    Unlike :func:`mistakes`, which makes one mistake and knows the finding it must
+    produce, a mutation knows nothing about what it breaks -- or whether it breaks
+    anything: deleting a key with a default, or writing `1` where `1` was, leaves the
+    document as valid as it was. That is what holding the published schema to the
+    validator needs, a document either may be right or wrong about.
+    """
+    document = copy.deepcopy(draw(panels(images=False) if of is None else of).document)
+    mutations = tuple(
+        draw(_mutation(document)) for _ in range(draw(st.integers(min_value=0, max_value=3)))
+    )
+    return Mutant(document, mutations)

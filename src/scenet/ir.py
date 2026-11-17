@@ -31,6 +31,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.config import JsonDict
 from pydantic.json_schema import JsonSchemaValue, SkipJsonSchema
 from pydantic_core import CoreSchema, InitErrorDetails
 
@@ -114,7 +115,47 @@ class Strict(BaseModel):
 #: Characters XML 1.0 cannot hold at all, escaped or not: the C0 controls other than tab,
 #: line feed and carriage return, lone surrogates, and the two noncharacters U+FFFE and
 #: U+FFFF. A string reaching the SVG with one in it makes a document no parser accepts.
-_NOT_IN_XML = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+#:
+#: The inside of a regular expression's character class, written in the escapes Python's
+#: and ECMAScript's patterns share, so the schema says it in the same words. ECMAScript
+#: reads it as Python does with the `u` flag, as JSON Schema 2020-12 asks: without it, a
+#: character beyond U+FFFF is two surrogates, and refused.
+NOT_IN_XML = r"\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff"
+_NOT_IN_XML = re.compile(f"[{NOT_IN_XML}]")
+
+#: White space, as Python's `str.isspace` has it -- which is what `str.split` and
+#: `str.strip` read -- spelled out, because the two pattern languages disagree about `\s`:
+#: ECMAScript's has U+FEFF, and not U+001C to U+001F or U+0085. A test holds it to
+#: `str.isspace`, character by character.
+WHITE_SPACE = r"\t\n\x0b\x0c\r\x1c-\x1f \x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000"
+_VISIBLE = re.compile(f"[^{WHITE_SPACE}]")
+
+#: Every character one an SVG can hold: what any text written into it is.
+HOLDABLE_PATTERN = f"^[^{NOT_IN_XML}]*$"
+
+#: Every character one an SVG can hold, and at least one that is not white space: what a
+#: line of lettering is.
+LETTERED_PATTERN = f"^[^{NOT_IN_XML}]*[^{NOT_IN_XML}{WHITE_SPACE}][^{NOT_IN_XML}]*$"
+
+
+class Pattern:
+    """Say in the JSON Schema, as a `pattern`, what a string's validator refuses.
+
+    The validator stays a function, whose finding says what is wrong where a pattern can
+    only say that the string does not match; the pattern says it again, so an editor and
+    a model refuse the same strings. A test holds the two to each other.
+    """
+
+    def __init__(self, pattern: str) -> None:
+        self.pattern = pattern
+
+    def __get_pydantic_json_schema__(
+        self, schema: CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        """The schema pydantic makes, with this pattern in place of any an inner type set."""
+        made = handler(schema)
+        made["pattern"] = self.pattern
+        return made
 
 
 def _holdable(value: str) -> str:
@@ -124,6 +165,20 @@ def _holdable(value: str) -> str:
         raise ValueError(
             f"contains U+{ord(found.group()):04X}, a control character an SVG cannot "
             "hold; delete it"
+        )
+    return value
+
+
+def _visible(value: str) -> str:
+    """Refuse lettering with nothing to letter: empty, or only white space.
+
+    A blank balloon is never what was meant -- a line left to fill in, or a word lost to a
+    quoting slip -- and lettered, it is an empty shape with a tail.
+    """
+    if _VISIBLE.search(value) is None:
+        raise ValueError(
+            "the text is empty or only white space, so there is nothing to letter; write the "
+            "words, or delete the entry"
         )
     return value
 
@@ -160,11 +215,16 @@ Text = Annotated[str, BeforeValidator(as_written), WithJsonSchemaTypes()]
 #: A string that is written into the SVG -- dialogue, a caption, an actor id. Refused at
 #: parse time rather than escaped at emission, because there is no escaping it: XML 1.0
 #: has no way to write these characters, not even as a character reference.
-SvgText = Annotated[Text, AfterValidator(_holdable)]
+SvgText = Annotated[Text, AfterValidator(_holdable), Pattern(HOLDABLE_PATTERN)]
 
-#: A key that is written into the SVG -- a figure's name. A key is text as written already,
-#: so it is no :data:`Text`, and the schema's `propertyNames` says only that it is a string.
+#: A key that is written into the SVG -- an actor id, a figure's name. A key is text as
+#: written already, so it is no :data:`Text`. Its pattern is the mapping's to state, as
+#: :data:`KEYS_AN_SVG_HOLDS`: given one here, pydantic would write it as
+#: `patternProperties`, which lets any key that does not match through unchecked.
 SvgKey = Annotated[str, AfterValidator(_holdable)]
+
+#: What a mapping keyed by :data:`SvgKey` says of its keys, in the schema.
+KEYS_AN_SVG_HOLDS: JsonDict = {"propertyNames": {"pattern": HOLDABLE_PATTERN}}
 
 
 def _balanced(value: str) -> str:
@@ -176,9 +236,13 @@ def _balanced(value: str) -> str:
     return value
 
 
+#: Text that is lettered: something in it to see, and every character one an SVG holds.
+#: A sound effect's letters, and what a line of lettering is before its emphasis is read.
+Words = Annotated[SvgText, AfterValidator(_visible), Pattern(LETTERED_PATTERN)]
+
 #: A line that is lettered -- dialogue or a caption -- and so may stress a word by writing
 #: it between underscores: `I _told_ you`. See :mod:`scenet.emphasis`.
-LetteredText = Annotated[SvgText, AfterValidator(_balanced)]
+LetteredText = Annotated[Words, AfterValidator(_balanced)]
 
 
 def unholdable(value: str) -> str | None:
@@ -222,9 +286,22 @@ def _said(value: str) -> str:
     return value
 
 
+#: The characters an SVG cannot hold that are not white space either. A description's
+#: white space is made one space (`as_one_line`) before anything else reads it, so
+#: U+000B or U+001C in one is a break in how it was typed, and only these are refused.
+NOT_IN_XML_NOR_SPACE = r"\x00-\x08\x0e-\x1b\ud800-\udfff\ufffe\uffff"
+
+#: A description as written: no character an SVG cannot hold but white space, and at
+#: least one that is not white space, since white space alone is made the empty string.
+DESCRIPTION_PATTERN = (
+    f"^[^{NOT_IN_XML_NOR_SPACE}]*[^{NOT_IN_XML_NOR_SPACE}{WHITE_SPACE}][^{NOT_IN_XML_NOR_SPACE}]*$"
+)
+
 #: What a panel shows, in words, for a reader who cannot see it -- one line of prose,
 #: carried and never interpreted.
-Description = Annotated[SvgText, BeforeValidator(as_one_line), AfterValidator(_said)]
+Description = Annotated[
+    SvgText, BeforeValidator(as_one_line), AfterValidator(_said), Pattern(DESCRIPTION_PATTERN)
+]
 
 
 class ShotType(StrEnum):
@@ -1487,9 +1564,9 @@ class SayEvent(Strict):
     """Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`,
     the name of somebody nobody draws.
     """
-    text: LetteredText = Field(min_length=1)
+    text: LetteredText
     """The line, as one string; the compiler breaks it into lines. A word between underscores,
-    `_word_`, is stressed, and lettered in bold italic.
+    `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.
     """
     prefer: PlacementZone | None = None
     """Where the balloon would like to sit, one of nine zones of the panel. The weakest
@@ -1564,9 +1641,9 @@ class CaptionEvent(Strict):
 
     verb: Literal["caption"] = "caption"
     """Always `caption`: the key the entry is written under in a script."""
-    text: LetteredText = Field(min_length=1)
+    text: LetteredText
     """What the box says, as one string; line breaks are computed. A word between underscores,
-    `_word_`, is stressed.
+    `_word_`, is stressed. Never empty, nor only white space.
     """
     kind: CaptionKind = CaptionKind.LOCALE
     """What the box is doing: `locale` for a place and time, `monologue` for an inner voice,
@@ -1671,8 +1748,10 @@ class SfxEvent(Strict):
 
     verb: Literal["sfx"] = "sfx"
     """Always `sfx`: the key the entry is written under in a script."""
-    text: SvgText = Field(min_length=1)
-    """The sound, lettered exactly as written, in the display face."""
+    text: Words
+    """The sound, lettered exactly as written, in the display face. Never empty, nor only white
+    space.
+    """
     source: Text | None = Field(default=None, alias="from")
     """Written `from`: the actor id the sound comes from, which it is placed near."""
     prefer: PlacementZone | None = None
@@ -1782,7 +1861,9 @@ class PanelIR(Strict):
     """
     lettering: LetteringSpec = LetteringSpec()
     """How the lettering is set: the dialogue type size, and the font files."""
-    cast: dict[SvgText, CastMember] = Field(default_factory=dict)
+    cast: dict[SvgKey, CastMember] = Field(
+        default_factory=dict, json_schema_extra=KEYS_AN_SVG_HOLDS
+    )
     """Who is in the panel: each actor id, chosen by the author, and the puppet that plays them
     or the figure a picture draws. Their order means nothing.
     """

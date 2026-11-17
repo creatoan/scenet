@@ -32,7 +32,7 @@ from scenet.diagnostics import (
 from scenet.errors import AssetError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import _say_what_to_write, errors_of
 from scenet.frontends.script_front import parse_script
-from scenet.ir import PageLayout, PanelIR, SfxEvent
+from scenet.ir import HOLDABLE_PATTERN, LETTERED_PATTERN, PageLayout, PanelIR, SfxEvent
 from scenet.safe_yaml import (
     ProfileError,
     WrittenFloat,
@@ -558,11 +558,12 @@ class TestTheModels:
         text field keeps its other constraints."""
         text = panel_schema()["$defs"]["CaptionEvent"]["properties"]["text"]
         assert text["type"] == ["string", "number", "boolean"]
-        assert text["minLength"] == 1
+        assert text["pattern"] == LETTERED_PATTERN
 
     def test_a_key_stays_a_string_in_the_schema(self):
+        """Typed by `propertyNames` alone, which says nothing of `type`: a key is text."""
         figures = artwork_schema()["properties"]["figures"]
-        assert figures["propertyNames"] == {"minLength": 1}
+        assert figures["propertyNames"] == {"minLength": 1, "pattern": HOLDABLE_PATTERN}
 
 
 # --- What to write instead ---------------------------------------------------------------

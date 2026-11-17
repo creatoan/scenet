@@ -25,10 +25,14 @@ remove". `cast: {bob: null}` leaves Bob out of a panel that would otherwise inhe
 
 from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Any
+from functools import cache
+from types import UnionType
+from typing import Annotated, Any, Union, get_args, get_origin
+
+from pydantic import BaseModel
 
 from scenet.errors import CompositionError
-from scenet.ir import Predicate
+from scenet.ir import PanelIR, Predicate, SettingSpec
 
 __all__ = [
     "OVER_KEY",
@@ -304,9 +308,65 @@ def _heard(script: object, leaving: Collection[str]) -> set[str]:
     }
 
 
-def _without_nulls(mapping: dict[str, Any]) -> dict[str, Any]:
-    return {
-        key: _without_nulls(value) if isinstance(value, dict) else value
-        for key, value in mapping.items()
-        if value is not None
-    }
+@dataclass(frozen=True, slots=True)
+class _Each:
+    """A mapping whose keys the author chooses -- the cast -- each value read as `model`."""
+
+    model: "Reader"
+
+
+#: What reads a mapping in a document: the model whose fields its keys are, `_Each`, or
+#: `None` for a mapping the language does not know, under a key it does not know.
+Reader = type[BaseModel] | _Each | None
+
+#: Keys a mapping is written with that its model has no field for, because the frontend
+#: rewrites them before the model reads it: a setting's `place`, which `expand_place`
+#: turns into masses.
+_SURFACE_KEYS: dict[type[BaseModel], tuple[str, ...]] = {SettingSpec: ("place",)}
+
+
+def _reader(annotation: object) -> Reader:
+    """What reads a field's value, where that value is a mapping."""
+    origin = get_origin(annotation)
+    if origin is Annotated:
+        return _reader(get_args(annotation)[0])
+    if origin is Union or origin is UnionType:
+        return next(
+            (found for found in map(_reader, get_args(annotation)) if found is not None), None
+        )
+    if origin is dict:
+        return _Each(_reader(get_args(annotation)[1]))
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    return None
+
+
+@cache
+def _keys(model: type[BaseModel]) -> dict[str, Reader]:
+    """Every key a mapping read as `model` may be written with, and what reads its value."""
+    keys = dict.fromkeys(_SURFACE_KEYS.get(model, ()))
+    for name, info in model.model_fields.items():
+        keys[info.alias or name] = _reader(info.annotation)
+    return keys
+
+
+def _without_nulls(mapping: dict[str, Any], reader: Reader = PanelIR) -> dict[str, Any]:
+    """The mapping with every key whose value is `null` taken away, at any depth.
+
+    Except a key the language does not have there: `colour: null` is a typo like
+    `colour: red`, so it is kept, for validation to report as the unknown key it is --
+    which is what the schema says of it.
+    """
+    keys = _keys(reader) if isinstance(reader, type) else None
+    kept: dict[str, Any] = {}
+    for key, value in mapping.items():
+        if keys is not None and key not in keys:
+            kept[key] = value
+            continue
+        if value is None:
+            continue
+        inner = (
+            keys[key] if keys is not None else reader.model if isinstance(reader, _Each) else None
+        )
+        kept[key] = _without_nulls(value, inner) if isinstance(value, dict) else value
+    return kept

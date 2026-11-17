@@ -47,6 +47,14 @@ it is written, and says what to write instead.
 - **A key is a name** (#352): one that is a list or a mapping is refused, as `syntax`.
 - **A tab where YAML expects a space** says so, as `syntax`, with the line to indent with
   spaces, rather than PyYAML's "found character '\t' that cannot start any token".
+- **Lettering is never blank** (#353): a `say`, `caption` or `sfx` whose `text` is empty or only
+  white space -- `text: ' '`, `text: "\t"` -- lettered an empty balloon, and is now one
+  `invalid-field` finding at the text. The JSON Schemas refuse it too, and a `description` of
+  only white space, which `scenet check` already refused.
+- **An unknown key is unknown when its value is `null`** (#353): `colour: null`, or `kind: null`
+  in a camera, was taken away unread and the panel compiled. It is now `unknown-key`, as
+  `colour: red` is. A `null` on a key the language has still means the key is not written, in a
+  single panel as in a scene.
 
 ### Changed
 
@@ -62,6 +70,16 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **The JSON Schemas accept exactly what `scenet check` accepts** (#353), for every rule a schema
+  can state; a property test holds the two to each other on generated panels and scenes, and
+  names the rules no schema can (an id the cast must have, a file that must be read, arithmetic
+  between two values). The panel schema took no `null` where a key had no default: `camera:
+  null` compiled and was flagged. It refused nothing of these, which `scenet check` does: a
+  control character an SVG cannot hold, in any text or actor id; `reference: null` as a member's
+  only name; `figure: 1984` beside a `reference`; a `fit` beside `image: null`; a `by` on a
+  caption that is not `spoken`; a panel size of zero or less. The scene schema now also refuses
+  a tier that holds both `panels` and `columns` or neither, a `slant` with no gutter to lean,
+  and `page:` or `pages:` without `panels:`.
 - **`off_panel: [left]` is a finding, no longer a crash** (#352). An `off_panel:` written as a
   list or a mapping ended `scenet check` and `scenet build` with a `TypeError`; it is now one
   `invalid-field` finding at the value, naming the four sides.

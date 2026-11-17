@@ -45,7 +45,7 @@ from shapely.geometry import Polygon
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.positions import locate
 from scenet.images import SuppliedImage
-from scenet.ir import PanelIR, SayEvent, SfxEvent, SvgKey, Text
+from scenet.ir import HOLDABLE_PATTERN, PanelIR, SayEvent, SfxEvent, SvgKey, Text
 from scenet.paths import Folder, NamedFileError, read_model
 
 __all__ = [
@@ -127,7 +127,10 @@ class ArtworkContract(_Strict):
     """The picture's size in pixels, `[width, height]`, as it was measured. It must be the
     picture's own.
     """
-    figures: dict[FigureName, ArtworkFigure] = Field(default_factory=dict)
+    figures: dict[FigureName, ArtworkFigure] = Field(
+        default_factory=dict,
+        json_schema_extra={"propertyNames": {"minLength": 1, "pattern": HOLDABLE_PATTERN}},
+    )
     """Each figure the picture draws, by the name a cast member's `figure` gives it. Every face
     here is kept clear of lettering, cast or not.
     """
