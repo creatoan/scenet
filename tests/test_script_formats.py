@@ -101,8 +101,14 @@ class TestPageHeadings:
         ("heading", "page"), [("PAGE A.B", "A.B"), ("PAGE 3.5", "3.5"), ("PAGE 4B..", "4B.")]
     )
     def test_a_full_stop_inside_the_label_stays(self, heading: str, page: str):
+        """The label is read as written, so its panels' names hold a full stop -- which no
+        identifier does, `.` being reserved (#355): refused at the panel's heading."""
         script = f"PAGE ZERO\nPANEL 1\n{heading}\nPANEL 1\n"
-        assert list(panels(script)) == ["0-1", f"{page}-1"]
+        with pytest.raises(ScriptSyntaxError) as raised:
+            panels(script)
+        assert raised.value.rule == "invalid-identifier"
+        assert raised.value.line == 7  # the second PANEL 1, under the front matter `panels` adds
+        assert f"'{page}-1' is not an id" in str(raised.value)
 
 
 class TestAHostileLineIsReadQuickly:
@@ -532,7 +538,7 @@ class TestReservedNames:
     def test_a_label_cannot_be_a_cast_member(self, name: str):
         with pytest.raises(ScriptSyntaxError, match="reserved") as raised:
             parse_script(f"---\ncast: {{{name}: {{reference: alice}}}}\n---\nPANEL 1\n")
-        assert raised.value.rule == "invalid-field"
+        assert raised.value.rule == "invalid-identifier"
 
     def test_nor_in_a_panels_own_cast(self):
         with pytest.raises(ScriptSyntaxError, match="reserved") as raised:

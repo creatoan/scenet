@@ -131,12 +131,13 @@ class TestBuild:
         assert sum(name.endswith(".pose.json") for name in _files(tmp_path)) == 2
 
     def test_a_panel_named_like_an_export_is_refused_and_nothing_written(self, tmp_path: Path):
+        """Refused as the document is read: `.` is never part of a panel's name (#355)."""
         source = _write(
             tmp_path,
             "x.scene.yaml",
             "cast: {a: {reference: alice}}\npanels:\n  p: {}\n  p.depth: {}\n",
         )
-        assert main(["build", str(source), "--conditioning", "--quiet"]) == 2
+        assert main(["build", str(source), "--conditioning", "--quiet"]) == 1
         assert _files(tmp_path) == ["x.scene.yaml"]
 
     def test_every_file_is_utf8_with_lf(self, tmp_path: Path):

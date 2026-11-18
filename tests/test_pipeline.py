@@ -16,6 +16,7 @@ import yaml
 
 from scenet.assets.contract import default_library
 from scenet.core import PanelCore
+from scenet.diagnostics import diagnose_source
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import fmt, render
@@ -370,13 +371,36 @@ class TestIdentifiersCannotInjectMarkup:
     an identifier that can close its own attribute is a scripting vector and not merely
     malformed XML. `xml.sax.saxutils.escape` does not escape quotation marks, which is
     exactly the gap this covers.
+
+    A document can no longer name an actor or a panel so: an identifier holds letters,
+    digits, `_` and `-` (#355). A Panel Core is an interchange document of its own, read
+    and rendered as it is written, so the emitters still escape what it carries.
     """
 
     HOSTILE = 'x" onload=alert(1) y="'
 
+    @staticmethod
+    def _renamed(name: str) -> PanelCore:
+        """A panel whose actor, and the speaker of its line, a Core calls `name`."""
+        core = compile_source(
+            "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Hi}\n"
+        ).core
+        return core.model_copy(
+            update={
+                "actors": tuple(actor.model_copy(update={"id": name}) for actor in core.actors),
+                "balloons": tuple(
+                    balloon.model_copy(update={"speaker": name}) for balloon in core.balloons
+                ),
+            }
+        )
+
+    @pytest.mark.parametrize("hostile", [HOSTILE, "</text><script/>"])
+    def test_a_document_cannot_name_one(self, hostile: str):
+        found = diagnose_source(f"cast:\n  '{hostile}': {{reference: alice}}\n")
+        assert [item.rule for item in found] == ["invalid-identifier"]
+
     def test_actor_id_stays_inside_its_attribute(self):
-        source = f"cast:\n  '{self.HOSTILE}': {{reference: alice}}\n"
-        svg = render(compile_source(source).core)
+        svg = render(self._renamed(self.HOSTILE))
 
         assert "onload" in svg, "the identifier should survive, escaped"
         root = ElementTree.fromstring(svg)
@@ -387,8 +411,7 @@ class TestIdentifiersCannotInjectMarkup:
 
     def test_actor_id_stays_inside_its_attribute_in_the_overlay(self):
         """The overlay goes through `innerHTML` too, from the playground's Overlay tab."""
-        source = f"cast:\n  '{self.HOSTILE}': {{reference: alice}}\n"
-        svg = render_debug(compile_source(source).core)
+        svg = render_debug(self._renamed(self.HOSTILE))
 
         root = ElementTree.fromstring(svg)
         groups = root.iter("{http://www.w3.org/2000/svg}g")
@@ -398,20 +421,15 @@ class TestIdentifiersCannotInjectMarkup:
     def test_actor_id_stays_inside_its_label_in_the_overlay(self):
         """The overlay labels actors and speakers in text, which needs escaping too."""
         hostile = "</text><script/>"
-        source = (
-            f"cast:\n  '{hostile}': {{reference: alice}}\n"
-            f"script:\n  - say: {{by: '{hostile}', text: Hi}}\n"
-        )
-        root = ElementTree.fromstring(render_debug(compile_source(source).core))
+        root = ElementTree.fromstring(render_debug(self._renamed(hostile)))
 
         assert not list(root.iter("{http://www.w3.org/2000/svg}script"))
         texts = "".join(t.text or "" for t in root.iter("{http://www.w3.org/2000/svg}text"))
         assert hostile in texts
 
     def test_panel_name_stays_inside_its_attribute(self):
-        source = f"panels:\n  '{self.HOSTILE}': {{cast: {{a: {{reference: alice}}}}}}\n"
-        panels = compile_scene(source)
-        strip = render_strip([(name, result.core) for name, result in panels.items()])
+        core = compile_source("cast: {a: {reference: alice}}\n").core
+        strip = render_strip([(self.HOSTILE, core)])
 
         root = ElementTree.fromstring(strip)
         groups = root.iter("{http://www.w3.org/2000/svg}g")
@@ -420,9 +438,8 @@ class TestIdentifiersCannotInjectMarkup:
     def test_panel_name_never_reaches_a_reference(self):
         """Ids inside a strip are prefixed by position, not by name. Attribute escaping
         keeps a name inside its quotes, but nothing would keep it inside `url(#...)`."""
-        source = f"panels:\n  '{self.HOSTILE}': {{cast: {{a: {{reference: alice}}}}}}\n"
-        panels = compile_scene(source)
-        strip = render_strip([(name, result.core) for name, result in panels.items()])
+        core = compile_source("cast: {a: {reference: alice}}\n").core
+        strip = render_strip([(self.HOSTILE, core)])
 
         assert 'clip-path="url(#p1-frame)"' in strip
         assert all("onload" not in ref for ref in re.findall(r"url\(#[^)]*\)", strip))

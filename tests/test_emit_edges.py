@@ -240,9 +240,13 @@ class TestPaintersOrder:
         assert svg.index('id="actor-z"') < svg.index('id="actor-a"')
 
     def test_figures_at_one_depth_are_drawn_in_order_of_their_ids(self):
-        """`a` before `a!`, as strings sort -- though the rendered group for `a!` would
-        sort first, since `!` comes before the closing quote."""
+        """`a` before `a-b`, as strings sort.
+
+        An id could hold `!` once, and the rendered group for `a!` would have sorted first,
+        `!` coming before the closing quote. No identifier holds a character that sorts
+        before it now (#355), so the two orders agree; the ids' is the one kept.
+        """
         svg = render(
-            compile_source('cast:\n  a: {reference: alice}\n  "a!": {reference: bob}\n').core
+            compile_source("cast:\n  a: {reference: alice}\n  a-b: {reference: bob}\n").core
         )
-        assert svg.index('id="actor-a"') < svg.index('id="actor-a!"')
+        assert svg.index('id="actor-a"') < svg.index('id="actor-a-b"')
