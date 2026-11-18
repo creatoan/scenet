@@ -37,6 +37,7 @@ per-panel settings as `@` directives. ::
     I know.
 """
 
+import copy
 import re
 import unicodedata
 from collections.abc import Collection, Mapping
@@ -1751,11 +1752,16 @@ class PanelLines:
             cue, a caption's or a sound effect's own line.
         directives: The line each of its directives was written on, by the path in the
             panel it sets: `("setting",)` for `@setting:`.
+        written: What its own directives set, as read and before the front matter is merged
+            in: `{"cast": {"ALICE": {"pose": "pointing"}}}` for `@cast: {ALICE: {pose:
+            pointing}}`. A fault at a path written here is the panel's, even where the front
+            matter declares the same key.
     """
 
     heading: int
     events: tuple[int, ...]
     directives: Mapping[tuple[str, ...], int] = field(default_factory=dict[tuple[str, ...], int])
+    written: Mapping[str, Any] = field(default_factory=dict[str, Any])
 
 
 @dataclass(frozen=True, slots=True)
@@ -1836,7 +1842,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         ...     "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n"
         ... )
         >>> document.lines["1"]
-        PanelLines(heading=4, events=(5,), directives={})
+        PanelLines(heading=4, events=(5,), directives={}, written={})
     """
     # Anything that reaches here as a string gets the treatment a file would have had,
     # and the same whatever editor saved it.
@@ -1895,6 +1901,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
                 heading=draft.line,
                 events=tuple(draft.event_lines),
                 directives=dict(draft.directive_lines),
+                written=copy.deepcopy(draft.settings),
             )
             for name, draft in panels.items()
         },

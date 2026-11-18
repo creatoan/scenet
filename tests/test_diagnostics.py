@@ -1184,6 +1184,62 @@ class TestScriptCastFindings:
         assert found.region is not None
         assert found.region.start.line == 2
 
+    # A panel directive can override what the front matter declares. When the panel's own
+    # value is the faulty one, the fault is the panel's, at its directive (#490).
+
+    @pytest.mark.parametrize(
+        ("name", "rule", "path", "line"),
+        [
+            ("a-puppet", "unknown-puppet", ("2", "cast", "ALICE", "reference"), 10),
+            ("a-pose", "unknown-pose", ("2", "cast", "ALICE", "pose"), 10),
+            ("a-font", "font-file", ("2", "lettering", "font"), 9),
+            ("a-picture", "image-file", ("2", "setting", "image"), 9),
+        ],
+    )
+    def test_a_panel_override_is_reported_at_its_directive(self, name, rule, path, line):
+        corpus = Path(__file__).parent / "finding_corpus"
+        (found,) = diagnose_file(corpus / f"{name}-a-script-panel-overrides.script")
+        assert (found.rule, found.path) == (rule, path)
+        assert found.region is not None
+        assert found.region.start.line == line
+
+    def test_a_bad_front_matter_and_a_bad_override_are_two_faults(self):
+        script = (
+            "---\ncast: {ALICE: {reference: bobby}}\n---\n"
+            "PANEL 1\nALICE\nHi.\n\n"
+            "PANEL 2\n@cast: {ALICE: {reference: nobody}}\nALICE\nHello.\n"
+            "\nPANEL 3\nALICE\nBye.\n"
+        )
+        front, panel = diagnose_script(script)
+        assert front.path == ("cast", "ALICE", "reference")
+        assert front.region is not None
+        assert front.region.start.line == 2
+        assert panel.path == ("2", "cast", "ALICE", "reference")
+        assert panel.region is not None
+        assert panel.region.start.line == 9
+
+    def test_a_panel_that_writes_the_same_bad_value_has_its_own_fault(self):
+        # Fixing the front matter would leave panel 2's own `bobby`, so both are named.
+        script = (
+            "---\ncast: {ALICE: {reference: bobby}}\n---\n"
+            "PANEL 1\nALICE\nHi.\n\n"
+            "PANEL 2\n@cast: {ALICE: {reference: bobby, pose: pointing}}\nALICE\nHello.\n"
+        )
+        front, panel = diagnose_script(script)
+        assert front.path == ("cast", "ALICE", "reference")
+        assert panel.path == ("2", "cast", "ALICE", "reference")
+
+    def test_a_panel_override_of_another_key_leaves_the_front_matter_fault_there(self):
+        script = (
+            "---\ncast: {ALICE: {reference: bobby}}\n---\n"
+            "PANEL 1\nALICE\nHi.\n\n"
+            "PANEL 2\n@cast: {ALICE: {pose: pointing}}\nALICE\nHello.\n"
+        )
+        (found,) = diagnose_script(script)
+        assert found.path == ("cast", "ALICE", "reference")
+        assert found.region is not None
+        assert found.region.start.line == 2
+
 
 class TestSceneDefaultFindings:
     """Keys alongside `panels:` are defaults every panel inherits. A fault in one is one

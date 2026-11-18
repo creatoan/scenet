@@ -86,6 +86,11 @@ it is written, and says what to write instead.
 - **A comic script's panel directives locate their own faults** (#473). A bad puppet in an `@cast:`
   or a missing font in an `@lettering:` is reported at the directive's line, while faults in
   front-matter declarations still point there and are reported once.
+- **A panel directive that overrides the front matter is reported at the directive** (#490). An
+  `@cast:`, `@lettering:` or `@setting:` that gives a panel its own puppet, pose, font or picture
+  where the front matter declares one was reported against the front matter, at a value that
+  was fine. It is now the panel's fault, at its directive's line; a fault in the front matter
+  itself is still reported once, there.
 - **The weekly mutation run finishes again, and covers the front ends and the core** (#345). It
   had not completed since 2026-10-12: three runs reached the 120-minute limit, and the fourth
   failed in mutmut's clean run on a test that reads the generated `emit/cmyk.py`, which mutmut

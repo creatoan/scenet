@@ -1,0 +1,10 @@
+---
+# Panel 2 replaces the font every panel inherits with one that is not there.
+lettering: {font: ../../examples/gallery/fonts/ComicNeue-Regular.ttf}
+---
+PANEL 1
+Caption: Hi.
+
+PANEL 2
+@lettering: {font: fonts/missing.ttf}
+Caption: Hello.

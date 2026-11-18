@@ -101,6 +101,7 @@ from scenet.frontends.positions import (
 )
 from scenet.frontends.script_front import (
     FRONT_MATTER,
+    PanelLines,
     ScriptDocument,
     normalise_text,
     parse_script_document,
@@ -1917,6 +1918,18 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     return padded, loaded if isinstance(loaded, dict) else {}
 
 
+def _from_front_matter(
+    path: tuple[str | int, ...], declared: dict[str, Any], written: PanelLines
+) -> bool:
+    """Whether a fault a panel found is the front matter's, to report once, there.
+
+    It is when the front matter writes the value at `path` and the panel's own directives
+    do not write it again. A panel that overrides it -- `@cast: {ALICE: {reference:
+    nobody}}` over a front-matter `ALICE` -- has a fault of its own, at its directive.
+    """
+    return _has_path(declared, path) and not _has_path(written.written, path)
+
+
 def _diagnose_script_setting(
     text: str,
     document: ScriptDocument,
@@ -1933,12 +1946,12 @@ def _diagnose_script_setting(
     lines = normalise_text(text).split("\n")
     found: list[Diagnostic] = []
     for name, panel in document.panels.items():
+        written = document.lines[name]
         for item in _diagnose_setting(panel, front, source, prefix=(), base=base):
-            if _has_path(declared, item.path):
+            if _from_front_matter(item.path, declared, written):
                 if item not in found:
                     found.append(item)
                 continue
-            written = document.lines[name]
             found.append(
                 Diagnostic(
                     rule=item.rule,
@@ -1972,7 +1985,7 @@ def _diagnose_script_figures(
     for name, panel in document.panels.items():
         written = document.lines[name]
         for item in _diagnose_figures(panel, front, source, prefix=(), base=base):
-            if item.source != source or _has_path(declared, item.path):
+            if item.source != source or _from_front_matter(item.path, declared, written):
                 if item not in found:
                     found.append(item)
                 continue
@@ -2012,12 +2025,12 @@ def _diagnose_script_lettering(
     lines = normalise_text(text).split("\n")
     found: list[Diagnostic] = []
     for name, panel in document.panels.items():
+        written = document.lines[name]
         for item in _diagnose_lettering(panel, declared, front, source, prefix=(), base=base):
-            if _has_path(declared, item.path):
+            if _from_front_matter(item.path, declared, written):
                 if item not in found:
                     found.append(item)
             else:
-                written = document.lines[name]
                 found.append(
                     Diagnostic(
                         rule=item.rule,
@@ -2054,13 +2067,14 @@ def _diagnose_script_cast(
     lines = normalise_text(text).split("\n")
     found: list[Diagnostic] = []
     for name, panel in document.panels.items():
+        written = document.lines[name]
         for item in _diagnose_cast(panel, front, source, prefix=(), library=library, base=base):
             if item.source != source:
                 if item not in found:
                     found.append(item)
                 continue
             actor = item.path[1]
-            if actor in shared:
+            if actor in shared and not _has_path(written.written, item.path):
                 if item not in found:
                     found.append(item)
             else:
@@ -2071,10 +2085,7 @@ def _diagnose_script_cast(
                         path=(name, *item.path),
                         source=source,
                         region=_script_line(
-                            lines,
-                            document.lines[name].directives.get(
-                                ("cast",), document.lines[name].heading
-                            ),
+                            lines, written.directives.get(("cast",), written.heading)
                         ),
                     )
                 )

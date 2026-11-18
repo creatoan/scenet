@@ -1341,6 +1341,46 @@
       "source": "tests/finding_corpus/a-font-a-script-panel-names.script"
     }
   ],
+  "tests/finding_corpus/a-font-a-script-panel-overrides.script": [
+    {
+      "fingerprint": "38f6db608a5b1637e89c0ad0b12a9337",
+      "level": "error",
+      "message": "font file 'fonts/missing.ttf' was not found beside the document",
+      "path": [
+        "2",
+        "lettering",
+        "font"
+      ],
+      "region": [
+        9,
+        1,
+        9,
+        38
+      ],
+      "rule": "font-file",
+      "source": "tests/finding_corpus/a-font-a-script-panel-overrides.script"
+    }
+  ],
+  "tests/finding_corpus/a-font-a-script-panel-overrides.script --deep": [
+    {
+      "fingerprint": "38f6db608a5b1637e89c0ad0b12a9337",
+      "level": "error",
+      "message": "font file 'fonts/missing.ttf' was not found beside the document",
+      "path": [
+        "2",
+        "lettering",
+        "font"
+      ],
+      "region": [
+        9,
+        1,
+        9,
+        38
+      ],
+      "rule": "font-file",
+      "source": "tests/finding_corpus/a-font-a-script-panel-overrides.script"
+    }
+  ],
   "tests/finding_corpus/a-font-that-is-not-one.panel.yaml": [
     {
       "fingerprint": "5b5913d037d7d6cdba862fe0ea62cd07",
@@ -2665,6 +2705,46 @@
       "source": "tests/finding_corpus/a-picture-a-panel-cannot-find.script"
     }
   ],
+  "tests/finding_corpus/a-picture-a-script-panel-overrides.script": [
+    {
+      "fingerprint": "dee753d49d2c10fa61f3a23db4758a84",
+      "level": "error",
+      "message": "image file 'art/missing.png' was not found beside the document",
+      "path": [
+        "2",
+        "setting",
+        "image"
+      ],
+      "region": [
+        9,
+        1,
+        9,
+        35
+      ],
+      "rule": "image-file",
+      "source": "tests/finding_corpus/a-picture-a-script-panel-overrides.script"
+    }
+  ],
+  "tests/finding_corpus/a-picture-a-script-panel-overrides.script --deep": [
+    {
+      "fingerprint": "dee753d49d2c10fa61f3a23db4758a84",
+      "level": "error",
+      "message": "image file 'art/missing.png' was not found beside the document",
+      "path": [
+        "2",
+        "setting",
+        "image"
+      ],
+      "region": [
+        9,
+        1,
+        9,
+        35
+      ],
+      "rule": "image-file",
+      "source": "tests/finding_corpus/a-picture-a-script-panel-overrides.script"
+    }
+  ],
   "tests/finding_corpus/a-picture-that-is-not-one.panel.yaml": [
     {
       "fingerprint": "1043979b902ca7666cf8f3683efe6ee0",
@@ -2739,6 +2819,90 @@
       ],
       "rule": "image-file",
       "source": "tests/finding_corpus/a-picture-the-front-matter-cannot-find.script"
+    }
+  ],
+  "tests/finding_corpus/a-pose-a-script-panel-overrides.script": [
+    {
+      "fingerprint": "5f3cfa6cd544314ea579affaf191cbee",
+      "level": "error",
+      "message": "puppet 'alice' has no pose 'flying'; available: ['arms_crossed', 'hands_on_hips', 'pointing', 'standing_neutral']",
+      "path": [
+        "2",
+        "cast",
+        "ALICE",
+        "pose"
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        31
+      ],
+      "rule": "unknown-pose",
+      "source": "tests/finding_corpus/a-pose-a-script-panel-overrides.script"
+    }
+  ],
+  "tests/finding_corpus/a-pose-a-script-panel-overrides.script --deep": [
+    {
+      "fingerprint": "5f3cfa6cd544314ea579affaf191cbee",
+      "level": "error",
+      "message": "puppet 'alice' has no pose 'flying'; available: ['arms_crossed', 'hands_on_hips', 'pointing', 'standing_neutral']",
+      "path": [
+        "2",
+        "cast",
+        "ALICE",
+        "pose"
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        31
+      ],
+      "rule": "unknown-pose",
+      "source": "tests/finding_corpus/a-pose-a-script-panel-overrides.script"
+    }
+  ],
+  "tests/finding_corpus/a-puppet-a-script-panel-overrides.script": [
+    {
+      "fingerprint": "d18a782b2aabe32ebcfe763d605b7f46",
+      "level": "error",
+      "message": "unknown character 'nobody'; the library has ['alice', 'bob']",
+      "path": [
+        "2",
+        "cast",
+        "ALICE",
+        "reference"
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        36
+      ],
+      "rule": "unknown-puppet",
+      "source": "tests/finding_corpus/a-puppet-a-script-panel-overrides.script"
+    }
+  ],
+  "tests/finding_corpus/a-puppet-a-script-panel-overrides.script --deep": [
+    {
+      "fingerprint": "d18a782b2aabe32ebcfe763d605b7f46",
+      "level": "error",
+      "message": "unknown character 'nobody'; the library has ['alice', 'bob']",
+      "path": [
+        "2",
+        "cast",
+        "ALICE",
+        "reference"
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        36
+      ],
+      "rule": "unknown-puppet",
+      "source": "tests/finding_corpus/a-puppet-a-script-panel-overrides.script"
     }
   ],
   "tests/finding_corpus/a-puppet-and-a-figure.panel.yaml": [

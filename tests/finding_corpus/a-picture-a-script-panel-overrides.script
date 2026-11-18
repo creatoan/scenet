@@ -1,0 +1,10 @@
+---
+# Panel 2 replaces the picture every panel inherits with one that is not there.
+setting: {image: ../../examples/gallery/art/figures.png}
+---
+PANEL 1
+Caption: Hi.
+
+PANEL 2
+@setting: {image: art/missing.png}
+Caption: Hello.

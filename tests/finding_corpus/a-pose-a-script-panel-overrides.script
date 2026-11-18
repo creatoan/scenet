@@ -1,0 +1,12 @@
+---
+# Panel 2 gives ALICE a pose her puppet does not have.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.
+
+PANEL 2
+@cast: {ALICE: {pose: flying}}
+ALICE
+Hello.

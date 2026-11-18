@@ -1,0 +1,12 @@
+---
+# Panel 2 gives ALICE a puppet of its own, which the library does not have.
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hi.
+
+PANEL 2
+@cast: {ALICE: {reference: nobody}}
+ALICE
+Hello.
