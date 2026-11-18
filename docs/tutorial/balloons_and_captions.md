@@ -161,7 +161,8 @@ A line may be spoken by somebody the panel does not draw.
 [`off_panel`](../reference/language/script.md#sayoff_panel) names the side of the frame they
 are on, `left`, `right`, `top` or `bottom`, and the tail ends on the frame there; `true`
 lets the compiler take the nearer side. The speaker in
-[`by`](../reference/language/script.md#sayby) is then any name at all, cast or not.
+[`by`](../reference/language/script.md#sayby) is then anybody at all, cast or not, named by an
+[identifier](../reference/language/identifiers.md) as every actor is.
 
 ```{code-block} yaml
 :caption: knock.scene.yaml

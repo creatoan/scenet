@@ -61,7 +61,7 @@ panels:
 ## `panels`
 
 <!-- facts: panels -->
-Panels in reading order. Each may inherit from another with `over`.
+Panels in reading order, each under its name, an identifier. Each may inherit from another with `over`.
 
 | | |
 |---|---|
@@ -69,7 +69,7 @@ Panels in reading order. Each may inherit from another with `over`.
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`composition`](../diagnostics.md#composition) |
 <!-- /facts -->
 
 The panels, in reading order: the order they are written in is the order a strip draws them and a

@@ -272,10 +272,9 @@ class TestOutputsNeverReplaceEachOther:
         ("panels", "flags", "clash"),
         [
             ("{one: {}, strip: {}}", ["--strip"], "story.strip.svg"),
-            ("{x: {}, x.debug: {}}", ["--debug"], "story.x.debug.svg"),
             ("{One: {}, one: {}}", [], "story.one.svg"),
         ],
-        ids=["strip", "debug-overlay", "case"],
+        ids=["strip", "case"],
     )
     def test_a_clash_is_a_usage_error_and_nothing_is_written(
         self, tmp_path: Path, capsys, panels: str, flags: list[str], clash: str
@@ -290,14 +289,32 @@ class TestOutputsNeverReplaceEachOther:
         assert main(["build", str(source), "--quiet"]) == 0
         assert _written(tmp_path) == ["story.one.svg", "story.strip.svg"]
 
-    @pytest.mark.parametrize("name", ["a/b", "a\\\\b"], ids=["slash", "backslash"])
-    def test_a_name_that_cannot_be_a_file_is_a_usage_error_not_a_traceback(
-        self, tmp_path: Path, capsys, name: str
+    @pytest.mark.parametrize(
+        ("name", "said"),
+        [
+            ("a/b", "'/' is reserved"),
+            ("a\\\\b", "U+005C"),
+            ("x.debug", "'.' is reserved"),
+            ("../../evil", "'.' is reserved"),
+        ],
+        ids=["slash", "backslash", "debug-overlay", "climbing-out"],
+    )
+    def test_a_name_that_cannot_be_a_file_is_refused_as_check_refuses_it(
+        self, tmp_path: Path, capsys, name: str, said: str
     ):
+        """Refused by validation, as `scenet check` refuses it, before any file is named (#355).
+
+        `x.debug` used to be a panel whose SVG `--debug` would write over panel `x`'s
+        overlay; a full stop is reserved now, so no panel has that name.
+        """
         source = _scene(tmp_path, f'{{one: {{}}, "{name}": {{}}}}')
-        assert main(["build", str(source)]) == 2
+        assert main(["build", str(source)]) == 1
         assert _written(tmp_path) == []
-        assert "cannot be part of a file name" in capsys.readouterr().err
+        error = capsys.readouterr().err
+        assert said in error
+        assert "Traceback" not in error
+        assert main(["check", str(source)]) == 1
+        assert "invalid-identifier" in capsys.readouterr().err
 
 
 class TestStripNeedsMoreThanOnePanel:

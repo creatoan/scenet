@@ -38,6 +38,7 @@ from pydantic_core import CoreSchema, InitErrorDetails
 
 from scenet.emphasis import EmphasisError, parse
 from scenet.errors import RuleViolationError
+from scenet.identifiers import LABEL_WORDS, Grammar
 from scenet.safe_yaml import as_written, mistyped
 
 __all__ = [
@@ -206,7 +207,7 @@ class WithJsonSchemaTypes:
 
 #: Text, as an author wrote it. Scenet YAML types `1984`, `1.50` and `true` as a number
 #: and a boolean (:mod:`scenet.safe_yaml`), but where the language expects text that is
-#: what they are: `text: 1984` letters 1984, and `by: 1984` names the actor keyed `1984`.
+#: what they are: `text: 1984` letters 1984, and `use: 1984` names the panel keyed `1984`.
 #: The schema says so, or an editor validating with it would flag a line that compiles.
 #:
 #: Every `str` a document can reach is one of these, and every `bool` and number is
@@ -221,14 +222,9 @@ Text = Annotated[str, BeforeValidator(as_written), WithJsonSchemaTypes()]
 #: has no way to write these characters, not even as a character reference.
 SvgText = Annotated[Text, AfterValidator(_holdable), Pattern(HOLDABLE_PATTERN)]
 
-#: A key that is written into the SVG -- an actor id, a figure's name. A key is text as
-#: written already, so it is no :data:`Text`. Its pattern is the mapping's to state, as
-#: :data:`KEYS_AN_SVG_HOLDS`: given one here, pydantic would write it as
-#: `patternProperties`, which lets any key that does not match through unchecked.
+#: A key that is written into the SVG -- a figure's name. A key is text as written already,
+#: so it is no :data:`Text`.
 SvgKey = Annotated[str, AfterValidator(_holdable)]
-
-#: What a mapping keyed by :data:`SvgKey` says of its keys, in the schema.
-KEYS_AN_SVG_HOLDS: JsonDict = {"propertyNames": {"pattern": HOLDABLE_PATTERN}}
 
 
 def _balanced(value: str) -> str:
@@ -672,6 +668,64 @@ class Predicate(StrEnum):
     BEHIND = "behind"
     LOOKING_AT = "looking_at"
     GROUND_SHARED_WITH = "ground_shared_with"
+
+
+#: The words no actor id or panel name may be, compared without case: a staging
+#: sentence's predicates, which it reads as its verb, and the labels a comic script reads as
+#: a caption or a sound effect. See :mod:`scenet.identifiers`.
+RESERVED_WORDS: tuple[str, ...] = (*(predicate.value for predicate in Predicate), *LABEL_WORDS)
+
+#: The grammar every actor id and panel name follows.
+IDENTIFIERS = Grammar(RESERVED_WORDS)
+
+#: The pattern an identifier matches, which the JSON Schema states and the validator holds.
+IDENTIFIER_PATTERN = IDENTIFIERS.pattern
+
+#: What a mapping keyed by identifiers -- a cast -- says of its keys, in the schema. Given to
+#: the key type instead, pydantic would write it as `patternProperties`, which lets any key
+#: that does not match through unchecked.
+KEYS_ARE_IDENTIFIERS: JsonDict = {
+    "propertyNames": {"type": "string", "pattern": IDENTIFIER_PATTERN}
+}
+
+
+def _identifier(value: str) -> str:
+    """Refuse a name that is not an identifier, saying which part of the grammar it breaks."""
+    problem = IDENTIFIERS.problem(value)
+    if problem is not None:
+        raise RuleViolationError(problem, rule="invalid-identifier")
+    return value
+
+
+def _an_id_is_text(value: object) -> object:
+    """Refuse a number or a yes-or-no where an actor is named, saying to quote it.
+
+    A key is text as written, so `cast: {1984: ...}` keys the actor `1984`. A value is not:
+    the schema sees `1984` and `1984.0` as one number, and only the text as written can be an
+    id, so an id written as a value is text, and is quoted when it looks like a number.
+    """
+    if isinstance(value, bool | int | float):
+        written = as_written(value)
+        what = "a yes-or-no" if isinstance(value, bool) else "a number"
+        raise RuleViolationError(
+            f"an actor id is a name, and {written} unquoted is {what}; write '{written}', in "
+            "quotes",
+            rule="invalid-identifier",
+        )
+    return value
+
+
+#: A key that is an actor id: an identifier (:mod:`scenet.identifiers`).
+Identifier = Annotated[str, AfterValidator(_identifier)]
+
+#: An actor id written as a value, where it may name somebody nobody declares: `by:`. Text,
+#: never a number, and an identifier.
+ActorId = Annotated[
+    str,
+    BeforeValidator(_an_id_is_text),
+    AfterValidator(_identifier),
+    Pattern(IDENTIFIER_PATTERN),
+]
 
 
 class BalloonKind(StrEnum):
@@ -1564,9 +1618,10 @@ class SayEvent(Strict):
 
     verb: Literal["say"] = "say"
     """Always `say`: the key the entry is written under in a script."""
-    by: SvgText
+    by: ActorId
     """Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`,
-    the name of somebody nobody draws.
+    the id of somebody nobody draws, which follows the same grammar. Quoted if it looks like a
+    number: `by: '1984'`.
     """
     text: LetteredText
     """The line, as one string; the compiler breaks it into lines. A word between underscores,
@@ -1865,11 +1920,12 @@ class PanelIR(Strict):
     """
     lettering: LetteringSpec = LetteringSpec()
     """How the lettering is set: the dialogue type size, and the font files."""
-    cast: dict[SvgKey, CastMember] = Field(
-        default_factory=dict, json_schema_extra=KEYS_AN_SVG_HOLDS
+    cast: dict[Identifier, CastMember] = Field(
+        default_factory=dict, json_schema_extra=KEYS_ARE_IDENTIFIERS
     )
     """Who is in the panel: each actor id, chosen by the author, and the puppet that plays them
-    or the figure a picture draws. Their order means nothing.
+    or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter
+    or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
     """
     staging: tuple[Relation, ...] = ()
     """How the cast stand to each other, as sentences: `alice left_of bob`. One relation each."""

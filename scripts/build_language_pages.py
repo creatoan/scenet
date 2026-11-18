@@ -449,7 +449,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "setting.horizon": ("conflicting-setting",),
     "setting.image": ("image-file", "conflicting-setting", "artwork-contract"),
     "setting.fit": ("cropped-mouth",),
-    "cast": ("conflicting-cast", "layout", "camera-retreated"),
+    "cast": ("invalid-identifier", "conflicting-cast", "layout", "camera-retreated"),
     "cast.<id>.reference": ("unknown-puppet", "puppet-file", "conflicting-cast"),
     "cast.<id>.figure": ("unknown-figure", "conflicting-cast", "artwork-contract"),
     "cast.<id>.pose": ("unknown-pose", "conflicting-cast"),
@@ -469,7 +469,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "staging[].object": ("unknown-actor", "reflexive-relation"),
     "staging[].predicate": ("ordering-cycle",),
     "script": ("balloon-placement", "word-limit"),
-    "say.by": ("unknown-actor", "off-panel-speaker"),
+    "say.by": ("invalid-identifier", "unknown-actor", "off-panel-speaker"),
     "say.text": ("unbalanced-emphasis", "word-limit", "balloon-placement", "bold-italic-stand-in"),
     "say.prefer": ("curved-tail",),
     "say.off_panel": ("off-panel-speaker",),
@@ -503,7 +503,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "insets[].use": ("page-layout",),
     "insets[].size": ("page-layout", "inset-covers-face"),
     "insets[].at": ("inset-covers-face",),
-    "panels": ("duplicate-key", "composition"),
+    "panels": ("invalid-identifier", "duplicate-key", "composition"),
     "over": ("composition",),
 }
 

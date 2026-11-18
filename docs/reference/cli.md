@@ -363,6 +363,7 @@ note as information rather than a red squiggle.
 | [`scenet/unknown-key`](diagnostics.md#unknown-key) | error | A key the language does not define — usually a typo |
 | [`scenet/missing-field`](diagnostics.md#missing-field) | error | A required value was not supplied |
 | [`scenet/invalid-field`](diagnostics.md#invalid-field) | error | A known key holding the wrong type or an out-of-range value |
+| [`scenet/invalid-identifier`](diagnostics.md#invalid-identifier) | error | An actor id or a panel name outside the [identifier grammar](language/identifiers.md): a space, a reserved character or word |
 | [`scenet/panel-geometry`](diagnostics.md#panel-geometry) | error | Non-positive size, or margins leaving no usable area |
 | [`scenet/unknown-actor`](diagnostics.md#unknown-actor) | error | An id in `staging` or `script` that is not in `cast` |
 | [`scenet/off-panel-speaker`](diagnostics.md#off-panel-speaker) | error | A line spoken from off panel by somebody drawn in the panel |

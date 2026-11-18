@@ -33,6 +33,7 @@ from scenet.errors import AssetError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.common import _say_what_to_write, errors_of
 from scenet.frontends.script_front import parse_script
 from scenet.ir import HOLDABLE_PATTERN, LETTERED_PATTERN, PageLayout, PanelIR, SfxEvent
+from scenet.ir import _an_id_is_text as an_id_is_text
 from scenet.safe_yaml import (
     ProfileError,
     WrittenFloat,
@@ -331,10 +332,13 @@ class TestTextAsWritten:
             ("no", ("No",)),
         ]
 
-    def test_a_numeric_actor_id_is_the_same_id_as_key_and_as_speaker(self):
-        source = "cast: {1984: {reference: alice}}\nscript:\n  - say: {by: 1984, text: Hello.}\n"
+    def test_a_numeric_actor_id_is_a_key_as_written_and_a_speaker_in_quotes(self):
+        """A key is text as written; `by:` is a value, where 1984 is a number (#355)."""
+        source = "cast: {1984: {reference: alice}}\nscript:\n  - say: {by: '1984', text: Hello.}\n"
         assert diagnose_source(source) == []
         assert set(parse_panel(source).cast) == {"1984"}
+        (found,) = diagnose_source(source.replace("'1984'", "1984"))
+        assert (found.rule, found.path) == ("invalid-identifier", ("script", 0, "say", "by"))
 
     def test_a_description_is_taken_as_written(self):
         source = CAST + "description: 12:30\n"
@@ -523,10 +527,11 @@ def _scalars(schema: object, inside_text: bool, found: list[tuple[str, bool, boo
     if kind in {"str", "bool", "int", "float"}:
         found.append((str(kind), bool(schema.get("strict")), inside_text))
     function: Any = schema.get("function")
+    # Or refuses what is not text, as an actor id written as a value does (#355).
     wraps = (
         kind == "function-before"
         and isinstance(function, dict)
-        and function.get("function") is as_written
+        and function.get("function") in {as_written, an_id_is_text}
     )
     for key, value in schema.items():
         if key in {

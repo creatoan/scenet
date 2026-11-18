@@ -22,7 +22,8 @@ import yaml
 
 from scenet import __version__, default_library
 from scenet.diagnostics import COMPILE_NOTES, RULES, diagnose_source
-from scenet.schema import panel_schema
+from scenet.ir import IDENTIFIER_PATTERN
+from scenet.schema import IDENTIFIER, panel_schema
 from scenet.spec_pack import SPEC_PARTS, part, spec_pack_text
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -170,7 +171,12 @@ class TestSpecPack:
         body = part("schema")
         block = re.search(r"```json\n(.*?)\n```", body, re.DOTALL)
         assert block, "the schema part must hold one fenced JSON block"
-        assert json.loads(block.group(1)) == panel_schema()
+        published = panel_schema()
+        shown = json.loads(block.group(1))
+        # One pattern is shortened, Unicode spelled out by code point, and nothing else.
+        assert shown["$defs"][IDENTIFIER].pop("pattern") == build_spec.ELIDED_PATTERN
+        assert published["$defs"][IDENTIFIER].pop("pattern") == IDENTIFIER_PATTERN
+        assert shown == published
 
     def test_every_rule_and_compile_note_has_its_entry(self):
         """The same entries as the diagnostics reference: why, how to fix it, and the pair."""

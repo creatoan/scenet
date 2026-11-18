@@ -94,6 +94,7 @@ from scenet.frontends.common import (
 )
 from scenet.frontends.positions import (
     DOCUMENT_START,
+    KEY,
     Position,
     Region,
     locate,
@@ -107,7 +108,14 @@ from scenet.frontends.script_front import (
     parse_script_document,
 )
 from scenet.images import IMAGE_RULE, load_image
-from scenet.ir import CaptionEvent, PageLayout, PanelIR, SayEvent, check_placements
+from scenet.ir import (
+    IDENTIFIERS,
+    CaptionEvent,
+    PageLayout,
+    PanelIR,
+    SayEvent,
+    check_placements,
+)
 from scenet.lettering import FONT_RULE, typeface_for
 from scenet.paths import Folder, NamedFileError
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
@@ -266,6 +274,24 @@ RULES: dict[str, Rule] = {
         help=(
             "Check the field's type and permitted values on its card, from "
             f"{LANGUAGE_REFERENCE}keys.html."
+        ),
+    ),
+    "invalid-identifier": Rule(
+        summary="An actor id or a panel name does not follow the identifier grammar",
+        description=(
+            "An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with "
+            "the marks that accent a letter, and start with a letter or a digit: `alice`, "
+            "`Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name "
+            "becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for "
+            "references between documents, `chapter/panel` and `file#panel`. So are the words "
+            "a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic "
+            "script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their "
+            "French twins), in any case. An id written as a value, `by:`, is text: a number "
+            "there is quoted."
+        ),
+        help=(
+            "Rename it, in every place it is written: `old man` could be `old_man`, `a/b` "
+            "`a-b`. The message says which part of the grammar the name breaks."
         ),
     ),
     "panel-geometry": Rule(
@@ -1393,14 +1419,21 @@ def _diagnose_panel(
         normalised = normalise(data)
     except ScenetError as exc:
         path = _path_for_scenet_error(exc, prefix)
+        # An actor id with a space in it breaks the staging sentence that names it, which
+        # is all `normalise` can say. Validation would say what is wrong with the id, and
+        # does not run, so the cast's keys are checked here: the fault is in both places.
+        cast = data.get("cast")
         return [
+            *_unusable_keys(
+                cast if isinstance(cast, dict) else {}, (*prefix, "cast"), text, source
+            ),
             Diagnostic(
                 rule=_rule_for_scenet_error(exc),
                 message=_message_of(exc),
                 path=path,
                 source=source,
                 region=locate(text, path) or DOCUMENT_START,
-            )
+            ),
         ]
 
     try:
@@ -1452,6 +1485,27 @@ def _diagnose_panel(
                 )
             )
 
+    return found
+
+
+def _unusable_keys(
+    mapping: dict[Any, Any], path: tuple[str | int, ...], text: str, source: Path | None
+) -> list[Diagnostic]:
+    """One `invalid-identifier` finding at each key of `mapping` that is not an identifier."""
+    found: list[Diagnostic] = []
+    for name in mapping:
+        problem = IDENTIFIERS.problem(str(name))
+        if problem is not None:
+            at = (*path, str(name), KEY)
+            found.append(
+                Diagnostic(
+                    rule="invalid-identifier",
+                    message=problem,
+                    path=at,
+                    source=source,
+                    region=locate(text, at) or DOCUMENT_START,
+                )
+            )
     return found
 
 
@@ -1516,6 +1570,11 @@ def _diagnose_scene(
             )
     if found:
         return found
+
+    # A panel's name is an identifier: it is part of the name of every file the panel is
+    # written to, and what a page or an `over:` names it by. Each panel is checked all the
+    # same, so a fault inside one with a bad name is found in the same run.
+    found.extend(_unusable_keys(panels, ("panels",), text, source))
 
     # A panel's own direction is one finding where it is written, and the panel is then
     # checked as the document's, so a fault elsewhere in it is still found.
@@ -1667,6 +1726,9 @@ def _has_path(document: object, path: tuple[str | int, ...]) -> bool:
                 node = node[step]
             case list(), int() if 0 <= step < len(node):
                 node = node[step]
+            case _, str() if step == KEY:
+                # The key the step before named, which was there to be stepped through.
+                continue
             case _:
                 return False
     return True

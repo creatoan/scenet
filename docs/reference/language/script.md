@@ -81,7 +81,7 @@ script:
 ## `say.by`
 
 <!-- facts: say.by -->
-Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws.
+Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the id of somebody nobody draws, which follows the same grammar. Quoted if it looks like a number: `by: '1984'`.
 
 | | |
 |---|---|
@@ -89,7 +89,7 @@ Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_p
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unknown-actor`](../diagnostics.md#unknown-actor), [`off-panel-speaker`](../diagnostics.md#off-panel-speaker) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`unknown-actor`](../diagnostics.md#unknown-actor), [`off-panel-speaker`](../diagnostics.md#off-panel-speaker) |
 <!-- /facts -->
 
 The tail of the balloon points at this actor's mouth -- the `mouth` anchor of their puppet, or of

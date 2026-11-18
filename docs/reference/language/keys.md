@@ -19,7 +19,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`caption.prefer`](script.md#captionprefer) | panel, scene | Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left. | 0.4 |
 | [`caption.text`](script.md#captiontext) | panel, scene | What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space. | 0.4 |
 | [`caption.tone`](script.md#captiontone) | panel, scene | What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`. | 0.6 |
-| [`cast`](cast.md#cast) | panel, scene | Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing. | 0.1 |
+| [`cast`](cast.md#cast) | panel, scene | Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing. | 0.1 |
 | [`cast.<id>.at`](cast.md#castidat) | panel, scene | Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it. | 0.1 |
 | [`cast.<id>.expression`](cast.md#castidexpression) | panel, scene | An expression the puppet declares, by name. | 0.5 |
 | [`cast.<id>.facing`](cast.md#castidfacing) | panel, scene | Which way the figure is turned, `left` or `right`, gaze and all. | 0.1 |
@@ -83,7 +83,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`panel`](panel.md#panel) | panel, scene | The panel's frame: its size and margin, in panel units. | 0.1 |
 | [`panel.margin`](panel.md#panelmargin) | panel, scene | An inset on all four sides, in panel units. Balloons, captions and sound effects keep inside it; figures may run past it, as comics let them. | 0.1 |
 | [`panel.size`](panel.md#panelsize) | panel, scene | The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre. | 0.1 |
-| [`panels`](scene.md#panels) | scene | Panels in reading order. Each may inherit from another with `over`. | 0.1 |
+| [`panels`](scene.md#panels) | scene | Panels in reading order, each under its name, an identifier. Each may inherit from another with `over`. | 0.1 |
 | [`panels[].bleed`](page.md#panelsbleed) | scene | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of those sides. | 0.13 |
 | [`panels[].insets`](page.md#panelsinsets) | scene | Panels set into its corners, and drawn over it. | 0.10 |
 | [`panels[].use`](page.md#panelsuse) | scene | The name of a panel under `panels:`. Writing the name alone means `{use: name}`. | 0.10 |
@@ -99,7 +99,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`root`](puppet.md#root) | puppet | The joint every other one hangs from. | 0.13 |
 | [`root_landmark`](puppet.md#root_landmark) | puppet | The landmark the root joint sits at. | 0.13 |
 | [`say`](script.md#say) | panel, scene | A line of dialogue, in a balloon whose tail points at the speaker. | 0.1 |
-| [`say.by`](script.md#sayby) | panel, scene | Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the name of somebody nobody draws. | 0.1 |
+| [`say.by`](script.md#sayby) | panel, scene | Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the id of somebody nobody draws, which follows the same grammar. Quoted if it looks like a number: `by: '1984'`. | 0.1 |
 | [`say.kind`](script.md#saykind) | panel, scene | The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`. | 0.1 |
 | [`say.off_panel`](script.md#sayoff_panel) | panel, scene | The speaker is outside the panel: `true`, or the side of the frame they are on. The tail ends on the frame there. | 0.11 |
 | [`say.prefer`](script.md#sayprefer) | panel, scene | Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it. | 0.1 |

@@ -79,7 +79,8 @@ def parse_relation(text: str) -> Relation:
     match = RELATION_RE.match(text)
     if not match:
         raise PanelSyntaxError(
-            f"staging entry {text!r} is not of the form 'subject predicate object'"
+            f"staging entry {text!r} is not of the form 'subject predicate object', three "
+            "words: an actor id is one word, with no space in it"
         )
     subject, predicate_text, obj = match.groups()
     try:

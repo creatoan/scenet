@@ -51,6 +51,21 @@ it is written, and says what to write instead.
   white space -- `text: ' '`, `text: "\t"` -- lettered an empty balloon, and is now one
   `invalid-field` finding at the text. The JSON Schemas refuse it too, and a `description` of
   only white space, which `scenet check` already refused.
+- **Actor ids and panel names follow one grammar** (#355): 1 to 64 letters, digits, `_` and `-`,
+  with the marks that accent a letter, starting with a letter or a digit, as the new rule
+  `invalid-identifier`, at the name. `Zoé` and `健` are ids; `old man`, `-x` and `""` are not.
+  `.`, `/`, `:`, `#` and `@` are reserved for references between documents, and so, in any case,
+  are the staging predicates (`left_of`, `behind`, ...) and a comic script's labels (`CAP`,
+  `CAPTION`, `SFX` and their French twins), in YAML as in a script. `scenet check` passed a cast
+  keyed `a/b` or `left_of`, and a panel called `../../evil` was refused only by `scenet build`;
+  each is now a finding at the key, in `check`, `build` and the JSON Schemas alike, which state the
+  grammar as `$defs/Identifier`. A comic script refuses a `PANEL 1.5` or a `PAGE 3.5`, whose panels'
+  names hold a full stop, at the heading. The gallery's `25-columns` renames its panel `behind` to
+  `warning`. The language reference's new page, Identifiers, specifies the qualified reference
+  `chapter/panel` a book will use, and reserves `file#panel`.
+- **An actor id written as `by:` is text** (#355): `by: 1984` gives one `invalid-identifier`
+  finding that says to write `by: '1984'`. A key is still text as written, so `cast: {1984: …}`
+  keys the actor `1984`.
 - **An unknown key is unknown when its value is `null`** (#353): `colour: null`, or `kind: null`
   in a camera, was taken away unread and the panel compiled. It is now `unknown-key`, as
   `colour: red` is. A `null` on a key the language has still means the key is not written, in a
@@ -61,8 +76,8 @@ it is written, and says what to write instead.
 - **Ordinary dialogue is never mistyped** (#352). Where the language expects text, a scalar is
   the text it was written as: `text: No`, `text: 1984`, `text: 12:30`, `text: 2024-05-01` and
   `text: 1.50` letter exactly that, where 0.13 refused the first four and would have lettered
-  `1.5`. Keys are text as written too, so `cast: {on: …, no: …}` names the actors `on` and `no`,
-  and `by: 1984` names the actor keyed `1984`. `1` and `1.0` are two keys, no longer one. The
+  `1.5`. Keys are text as written too, so `cast: {on: …, no: …}` names the actors `on` and `no`.
+  `1` and `1.0` are two keys, no longer one. The
   JSON Schemas say every text field accepts a number and a boolean, as the compiler does, so an
   editor validating with them agrees.
 - **A key written twice is located at the key** (#352), its whole span, as every refusal of the

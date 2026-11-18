@@ -113,8 +113,10 @@ nothing under it is reported rather than dropped. Turns, arcs and hollow letters
 see [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx).
 
 `CAP`, `CAPTION` and `SFX` are checked before speaker cues, because as far as the cue pattern
-is concerned each is a perfectly good character name. So they are reserved: none can be a cast
-member's id. A caption or a sound effect with its text to follow also wins over a cue waiting for
+is concerned each is a perfectly good character name. So they are reserved, with their French
+twins, in a script as in YAML: none can be a cast member's id. A cast member's id is an
+[identifier](https://creatoan.github.io/scenet/reference/language/identifiers.html), as in YAML: letters, digits, `_` and `-`, so a
+doctor is `DR_NO` rather than `DR. NO`, whose full stop is reserved. A caption or a sound effect with its text to follow also wins over a cue waiting for
 its line — `BOB (whisper)` then `CAPTION: Later.` is a caption, and a note says Bob had nothing
 to say.
 

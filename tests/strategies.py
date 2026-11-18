@@ -56,6 +56,7 @@ from scenet import (
     Weather,
 )
 from scenet.assets.contract import PuppetLibrary, default_library
+from scenet.ir import RESERVED_WORDS
 from scenet.places import Place
 from scenet.safe_yaml import NULL_TAG, ProfileResolver
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
@@ -89,8 +90,9 @@ AS_WRITTEN = (
 )
 
 #: Actor ids YAML 1.1 read as a boolean, which are names like any other in Scenet YAML:
-#: keys are text as written, and so is a speaker's `by`.
-_YES_AND_NO_IDS = ("on", "no", "yes", "off", "y", "n", "true", "false")
+#: keys are text as written, and so is a speaker's `by`. Not `true` or `false`, which a key
+#: may be but a `by:` names only in quotes (#355), and :func:`dump` writes them plain.
+_YES_AND_NO_IDS = ("on", "no", "yes", "off", "y", "n")
 
 
 class _AsAuthored(Emitter, Serializer, SafeRepresenter, ProfileResolver):
@@ -203,8 +205,10 @@ def words(min_words: int = 1, max_words: int = 12) -> st.SearchStrategy[str]:
 
 
 def _actor_ids() -> st.SearchStrategy[str]:
+    """Identifiers: a word, never one the grammar reserves, as `behind` and `cap` are (#355)."""
+    words = st.from_regex(r"[a-z][a-z0-9_]{0,7}", fullmatch=True)
     return st.one_of(
-        st.sampled_from(_YES_AND_NO_IDS), st.from_regex(r"[a-z][a-z0-9_]{0,7}", fullmatch=True)
+        st.sampled_from(_YES_AND_NO_IDS), words.filter(lambda name: name not in RESERVED_WORDS)
     )
 
 

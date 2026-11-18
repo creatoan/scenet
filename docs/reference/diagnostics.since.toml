@@ -26,6 +26,7 @@
 "inset-covers-face" = "0.10"
 "internal" = "0.3"
 "invalid-field" = "0.3"
+"invalid-identifier" = "0.14"
 "italic-stand-in" = "0.11"
 "layout" = "0.3"
 "looks-like-dialogue" = "0.11"

@@ -18,7 +18,11 @@ from dataclasses import dataclass
 
 import yaml
 
-__all__ = ["Position", "Region", "locate"]
+__all__ = ["KEY", "Position", "Region", "locate"]
+
+#: The last step of a path to a mapping's key rather than to its value, as pydantic writes
+#: one: `("cast", "old man", "[key]")` is the key `old man`.
+KEY = "[key]"
 
 
 @dataclass(frozen=True, slots=True, order=True)
@@ -98,7 +102,8 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
 
     Args:
         text: The YAML source.
-        path: A pydantic-style location, as in `("script", 0, "say", "by")`.
+        path: A pydantic-style location, as in `("script", 0, "say", "by")`. Ending in
+            :data:`KEY`, it names the key the step before it is written under.
 
     Returns:
         The region, or `None` if the text does not compose at all -- in which case the
@@ -110,6 +115,9 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
         >>> region = locate("cast:\n  alice: {reference: alice}\n", ("cast", "alice"))
         >>> region.start.line
         2
+        >>> key = locate("cast: {alice: {}}\n", ("cast", "alice", "[key]"))
+        >>> key.start.column, key.end.column
+        (8, 13)
     """
     try:
         node = yaml.compose(text)
@@ -121,6 +129,9 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
     deepest = node
     key: yaml.Node | None = None
     for step in path:
+        if step == KEY and key is not None:
+            # The key itself rather than its value: an actor id or a panel name refused.
+            return _mark_to_region(key)
         child = _descend(deepest, step)
         if child is None:
             break

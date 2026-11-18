@@ -351,7 +351,8 @@ class TestCharactersSvgCannotCarry:
     def test_one_in_an_actor_id_is_one_located_finding(self):
         source = 'cast:\n  alice: {reference: alice}\n  "b\\x1bb": {reference: bob}\n'
         (found,) = diagnose_source(source, source=Path("x.panel.yaml"))
-        assert found.rule == "invalid-field"
+        # An actor id is an identifier, which no control character is part of (#355).
+        assert found.rule == "invalid-identifier"
         assert found.path[:2] == ("cast", "b\x1bb")
         assert "U+001B" in found.message
         assert found.region is not None

@@ -1,0 +1,6 @@
+# An actor id with a space in it: an id is one word, so a staging sentence can name it.
+cast:
+  old man: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+script:
+  - say: {by: bob, text: "Who are you?"}

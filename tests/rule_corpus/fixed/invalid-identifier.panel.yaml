@@ -1,0 +1,8 @@
+# One word, joined by an underscore, which a staging sentence names like any other id.
+cast:
+  old_man: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+staging:
+  - old_man left_of bob
+script:
+  - say: {by: bob, text: "Who are you?"}

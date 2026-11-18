@@ -1239,33 +1239,33 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script": [
     {
-      "fingerprint": "f0ca41d0e1017c5b0514f1087ea30c08",
+      "fingerprint": "8a6c5955bf8f0d79ed289952baf5bdc1",
       "level": "error",
-      "message": "line 2: 'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         2,
-        1,
+        9,
         2,
-        34
+        12
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script"
     }
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script --deep": [
     {
-      "fingerprint": "f0ca41d0e1017c5b0514f1087ea30c08",
+      "fingerprint": "8a6c5955bf8f0d79ed289952baf5bdc1",
       "level": "error",
-      "message": "line 2: 'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         2,
-        1,
+        9,
         2,
-        34
+        12
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script"
     }
   ],
@@ -3103,33 +3103,33 @@
   ],
   "tests/finding_corpus/a-reserved-name-in-quotes.script": [
     {
-      "fingerprint": "de03518de55d9d46ebc28a0be62a8749",
+      "fingerprint": "d6b53735a96a8c299afc831e16d20dec",
       "level": "error",
-      "message": "'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        3,
+        8,
+        3,
+        13
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/a-reserved-name-in-quotes.script"
     }
   ],
   "tests/finding_corpus/a-reserved-name-in-quotes.script --deep": [
     {
-      "fingerprint": "de03518de55d9d46ebc28a0be62a8749",
+      "fingerprint": "d6b53735a96a8c299afc831e16d20dec",
       "level": "error",
-      "message": "'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        3,
+        8,
+        3,
+        13
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/a-reserved-name-in-quotes.script"
     }
   ],
@@ -4034,9 +4034,9 @@
   ],
   "tests/finding_corpus/directive-reserved-cast.script": [
     {
-      "fingerprint": "01c625ab6460d7450f0fc6c2ebebe09e",
+      "fingerprint": "d4a0a94734c14f5f7ccf85574023608a",
       "level": "error",
-      "message": "line 5: 'CAPTION' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         5,
@@ -4044,15 +4044,15 @@
         5,
         37
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/directive-reserved-cast.script"
     }
   ],
   "tests/finding_corpus/directive-reserved-cast.script --deep": [
     {
-      "fingerprint": "01c625ab6460d7450f0fc6c2ebebe09e",
+      "fingerprint": "d4a0a94734c14f5f7ccf85574023608a",
       "level": "error",
-      "message": "line 5: 'CAPTION' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         5,
@@ -4060,7 +4060,7 @@
         5,
         37
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/directive-reserved-cast.script"
     }
   ],
@@ -4374,33 +4374,33 @@
   ],
   "tests/finding_corpus/front-matter-reserved-cast.script": [
     {
-      "fingerprint": "98d59affacb806b0a8b637f4050f63a6",
+      "fingerprint": "c2a417c1b746ba1c3ec9188d5d03f506",
       "level": "error",
-      "message": "line 3: 'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         3,
-        1,
+        8,
         3,
-        32
+        11
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/front-matter-reserved-cast.script"
     }
   ],
   "tests/finding_corpus/front-matter-reserved-cast.script --deep": [
     {
-      "fingerprint": "98d59affacb806b0a8b637f4050f63a6",
+      "fingerprint": "c2a417c1b746ba1c3ec9188d5d03f506",
       "level": "error",
-      "message": "line 3: 'SFX' is reserved: a line that starts with it is a caption or a sound effect, never a speaker's cue. Give the cast member another id",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
       "path": [],
       "region": [
         3,
-        1,
+        8,
         3,
-        32
+        11
       ],
-      "rule": "invalid-field",
+      "rule": "invalid-identifier",
       "source": "tests/finding_corpus/front-matter-reserved-cast.script"
     }
   ],
@@ -7017,6 +7017,8 @@
   "tests/rule_corpus/fixed/inset-covers-face.scene.yaml --deep": [],
   "tests/rule_corpus/fixed/invalid-field.panel.yaml": [],
   "tests/rule_corpus/fixed/invalid-field.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/invalid-identifier.panel.yaml": [],
+  "tests/rule_corpus/fixed/invalid-identifier.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/italic-stand-in.panel.yaml": [
     {
       "fingerprint": "e2017cd2e99730416eba07ef7d3c9ab4",
@@ -7299,6 +7301,46 @@
       ],
       "rule": "invalid-field",
       "source": "tests/rule_corpus/invalid-field.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/invalid-identifier.panel.yaml": [
+    {
+      "fingerprint": "7ac4cfa2aa49f51493599859b61bc195",
+      "level": "error",
+      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "path": [
+        "cast",
+        "old man",
+        "[key]"
+      ],
+      "region": [
+        3,
+        3,
+        3,
+        10
+      ],
+      "rule": "invalid-identifier",
+      "source": "tests/rule_corpus/invalid-identifier.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/invalid-identifier.panel.yaml --deep": [
+    {
+      "fingerprint": "7ac4cfa2aa49f51493599859b61bc195",
+      "level": "error",
+      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "path": [
+        "cast",
+        "old man",
+        "[key]"
+      ],
+      "region": [
+        3,
+        3,
+        3,
+        10
+      ],
+      "rule": "invalid-identifier",
+      "source": "tests/rule_corpus/invalid-identifier.panel.yaml"
     }
   ],
   "tests/rule_corpus/italic-stand-in.panel.yaml": [

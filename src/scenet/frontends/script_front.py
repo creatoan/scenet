@@ -71,7 +71,10 @@ from scenet.frontends.common import (
     rule_for_pydantic,
     summarise,
 )
+from scenet.frontends.positions import KEY, locate
+from scenet.identifiers import LABEL_WORDS
 from scenet.ir import (
+    IDENTIFIERS,
     BalloonKind,
     CameraAngle,
     CaptionKind,
@@ -241,18 +244,9 @@ SMALL_TYPE = {
 SIDES = {side.value: side for side in Side}
 
 # Labels a line starts with that are never a speaker: a cast member called `CAP` would be
-# read as a caption every time it spoke. Compared without regard to case.
-RESERVED_NAMES = {
-    "cap",
-    "caption",
-    "sfx",
-    "récitatif",
-    "recitatif",
-    "narratif",
-    "cartouche",
-    "onomatopée",
-    "onomatopee",
-}
+# read as a caption every time it spoke. Compared without regard to case. Reserved in YAML
+# too, as every identifier's grammar reserves them (`scenet.identifiers`).
+RESERVED_NAMES = frozenset(LABEL_WORDS)
 
 # Quotation marks a writer puts around speech, which the compiler adds itself where they
 # belong. Spelled as code points, so no editor turns one into another.
@@ -1173,6 +1167,7 @@ class _Reader:
             for event in draft.events:
                 _take_off_quotes(event)
         drafts = _name_panels(self.drafts, self.source)
+        _check_panel_names(drafts, self.source)
         names = {id(draft): name for name, draft in drafts.items()}
         notes = [
             ScriptNote(
@@ -1487,19 +1482,39 @@ def _inherited_casts(scanned: list[_ScannedPanel]) -> list[frozenset[str]]:
     return [cast_of(panel, frozenset()) for panel in scanned]
 
 
-def _reserved_name(cast: object) -> str | None:
-    """A cast member whose id is a label, `CAP` say, which could never speak."""
+def _unusable_name(cast: object) -> tuple[str, str] | None:
+    """The first cast member whose id is not an identifier, and what is wrong with it.
+
+    `CAP` is a label, so a cast member called it could never speak; `DR. NO` holds a
+    reserved character. The grammar is every frontend's (`scenet.identifiers`).
+    """
     if not isinstance(cast, dict):
         return None
-    return next((str(name) for name in cast if str(name).lower() in RESERVED_NAMES), None)
+    for name in cast:
+        problem = IDENTIFIERS.problem(str(name))
+        if problem is not None:
+            return str(name), problem
+    return None
 
 
-def _reserved_message(name: str) -> str:
-    """Why a cast member cannot be called `name`."""
-    return (
-        f"'{name}' is reserved: a line that starts with it is a caption or a sound effect, "
-        "never a speaker's cue. Give the cast member another id"
-    )
+def _check_panel_names(drafts: dict[str, _PanelDraft], source: Path | None) -> None:
+    """Refuse a panel whose name is not an identifier, at its heading.
+
+    A name is the heading's label, or its page's and its own, `2-1`: `PANEL 1.5` and
+    `PAGE 3.5` give names with a reserved full stop in them.
+
+    Raises:
+        ScriptSyntaxError: Rule `invalid-identifier`, at the first such panel's heading.
+    """
+    for name, draft in drafts.items():
+        problem = IDENTIFIERS.problem(name)
+        if problem is not None:
+            raise ScriptSyntaxError(
+                f"line {draft.line}: PANEL {draft.label}: {problem}",
+                source=source,
+                line=draft.line,
+                rule="invalid-identifier",
+            )
 
 
 def _read_script(
@@ -1622,13 +1637,13 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
-    reserved = _reserved_name(draft.settings[key]) if key == "cast" else None
-    if reserved is not None:
+    unusable = _unusable_name(draft.settings[key]) if key == "cast" else None
+    if unusable is not None:
         raise ScriptSyntaxError(
-            f"line {number}: {_reserved_message(reserved)}",
+            f"line {number}: {unusable[1]}",
             source=source,
             line=number,
-            rule="invalid-field",
+            rule="invalid-identifier",
         )
     return True
 
@@ -1868,21 +1883,26 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     _check_direction(front_matter.get(DIRECTION_KEY), text, offset, source)
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
-    reserved = _reserved_name(cast)
-    if reserved is not None:
-        line = next(
-            (
-                number
-                for number, written in enumerate(text.split("\n"), start=1)
-                if re.search(rf"(?<![\w-]){re.escape(reserved)}\s*:", written)
-            ),
-            None,
+    unusable = _unusable_name(cast)
+    if unusable is not None:
+        name, problem = unusable
+        # Located in the front matter as YAML sees it, each marker line left blank so that
+        # every line is the file's: the key, quoted or not, flow style or block.
+        block = "\n".join(
+            "" if written.strip() == "---" else written for written in text.split("\n")[:offset]
         )
+        region = locate(block, ("cast", name, KEY))
+        line = region.start.line if region is not None else None
         raise ScriptSyntaxError(
-            f"{f'line {line}: ' if line else ''}{_reserved_message(reserved)}",
+            f"{f'line {line}: ' if line else ''}{problem}",
             source=source,
             line=line,
-            rule="invalid-field",
+            rule="invalid-identifier",
+            columns=(
+                (region.start.column, region.end.column)
+                if region is not None and region.end.line == region.start.line
+                else None
+            ),
         )
     reading = _read_script(
         body, source, offset=offset, cast=frozenset(cast if isinstance(cast, dict) else ())

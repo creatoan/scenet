@@ -31,6 +31,7 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`image-file`](#image-file) | error | A supplied picture cannot be read |
 | [`internal`](#internal) | error | The compiler failed in a way it does not have a rule for |
 | [`invalid-field`](#invalid-field) | error | A field has the wrong shape or value |
+| [`invalid-identifier`](#invalid-identifier) | error | An actor id or a panel name does not follow the identifier grammar |
 | [`layout`](#layout) | error | No layout satisfies the panel's constraints |
 | [`missing-field`](#missing-field) | error | A required field is missing |
 | [`not-a-mapping`](#not-a-mapping) | error | The document is not a mapping |
@@ -576,6 +577,49 @@ Fixed:
 # `close_up` is a shot type the language has.
 camera: {shot: close_up}
 cast: {alice: {reference: alice}}
+```
+
+### `invalid-identifier`
+
+| | |
+|---|---|
+| Level | error |
+| Says | An actor id or a panel name does not follow the identifier grammar |
+| Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
+| Since | 0.14 |
+
+**Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. An id written as a value, `by:`, is text: a number there is quoted.
+
+**How to fix it.** Rename it, in every place it is written: `old man` could be `old_man`, `a/b` `a-b`. The message says which part of the grammar the name breaks.
+
+Checked as `invalid-identifier.panel.yaml`:
+
+```yaml
+# An actor id with a space in it: an id is one word, so a staging sentence can name it.
+cast:
+  old man: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+script:
+  - say: {by: bob, text: "Who are you?"}
+```
+
+`scenet check invalid-identifier.panel.yaml` says:
+
+```text
+invalid-identifier.panel.yaml:3:3: invalid-identifier: 'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels
+```
+
+Fixed:
+
+```yaml
+# One word, joined by an underscore, which a staging sentence names like any other id.
+cast:
+  old_man: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+staging:
+  - old_man left_of bob
+script:
+  - say: {by: bob, text: "Who are you?"}
 ```
 
 ### `layout`

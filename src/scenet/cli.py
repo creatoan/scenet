@@ -358,8 +358,6 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     base.parent.mkdir(parents=True, exist_ok=True)
 
     single = len(book.panels) == 1 and "panel" in book.panels
-    if _refuse_unusable_names(book):
-        return 2
     printed = _printed(book)
     pdf = (
         _print(book, printed, base, live_text=args.live_text, mono=args.mono) if args.pdf else None
@@ -555,37 +553,17 @@ def _outputs(
     return outputs
 
 
-#: Characters a panel's name cannot hold once it is part of a file name. Both
-#: separators, on every platform, so a document builds the same everywhere.
-_UNUSABLE_IN_A_NAME = ("/", "\\")
-
-
-def _refuse_unusable_names(book: Book) -> bool:
-    """Report a panel whose name would make its file a path into another directory.
-
-    Returns:
-        Whether one was refused.
-    """
-    unusable = sorted(
-        name for name in book.panels if any(mark in name for mark in _UNUSABLE_IN_A_NAME)
-    )
-    if unusable:
-        print(
-            f"scenet: panel name {unusable[0]!r} cannot be part of a file name, because "
-            "'/' and '\\' separate directories; rename the panel",
-            file=sys.stderr,
-        )
-        return True
-    return False
-
-
 def _refuse_clashes(outputs: list[_Output]) -> bool:
-    """Report two outputs that would be written to the same file.
+    r"""Report two outputs that would be written to the same file.
 
-    A panel named `page-1`, `strip` or `x.debug` would otherwise silently replace a page,
-    the strip or panel `x`'s overlay -- exactly the kind of loss Scenet refuses everywhere
-    else. Paths are compared ignoring case, because Windows and macOS do, and a document
-    should build the same set of files everywhere.
+    A panel named `page-1` or `strip` would otherwise silently replace a page or the strip
+    -- exactly the kind of loss Scenet refuses everywhere else. Paths are compared ignoring
+    case, because Windows and macOS do, and a document should build the same set of files
+    everywhere.
+
+    A name that would climb out of the folder, or end in `.debug`, is no panel's: `.`, `/`
+    and `\` are never part of an identifier, and validation refuses it before anything
+    is built.
 
     Returns:
         Whether a clash was refused.

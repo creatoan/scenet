@@ -35,12 +35,24 @@ from typing import Any
 from scenet.assets.artwork import ArtworkContract
 from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
 from scenet.compose import DESCRIPTION_KEY, DIRECTION_KEY
-from scenet.ir import PUPPET_KEYS, CaptionKind, PageLayout, PanelIR, Predicate
+from scenet.identifiers import GRAMMAR
+from scenet.ir import (
+    IDENTIFIER_PATTERN,
+    PUPPET_KEYS,
+    CaptionKind,
+    PageLayout,
+    PanelIR,
+    Predicate,
+)
 from scenet.places import Place
 
 __all__ = ["artwork_schema", "panel_schema", "puppet_schema", "scene_schema"]
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
+
+#: The definition every actor id and panel name refers to, so its pattern -- some twelve
+#: thousand characters, the letters of Unicode spelled out -- is written once.
+IDENTIFIER = "Identifier"
 
 #: Docstring sections written for the Python reference, which an editor showing a
 #: description to someone writing YAML leaves out: everything from the first of them on.
@@ -115,6 +127,7 @@ def panel_schema() -> dict[str, Any]:
     """
     schema = PanelIR.model_json_schema()
     definitions: dict[str, Any] = schema["$defs"]
+    _one_identifier(schema, definitions)
     _accept_staging_sentences(definitions)
     _accept_verb_tagged_script(schema, definitions)
     _accept_named_places(definitions)
@@ -235,8 +248,12 @@ def scene_schema() -> dict[str, Any]:
             "panels": {
                 "type": "object",
                 "description": (
-                    "Panels in reading order. Each may inherit from another with `over`."
+                    "Panels in reading order, each under its name, an identifier. Each may "
+                    "inherit from another with `over`."
                 ),
+                # Mirror `_validate_panels`: a name is part of every file the panel is
+                # written to, and what a page or an `over:` names it by.
+                "propertyNames": {"$ref": f"#/$defs/{IDENTIFIER}"},
                 "additionalProperties": member,
             },
         },
@@ -247,6 +264,38 @@ def scene_schema() -> dict[str, Any]:
     }
     _for_authors(scene)
     return scene
+
+
+def _one_identifier(schema: dict[str, Any], definitions: dict[str, Any]) -> None:
+    """Write the identifier's pattern once, as a definition the cast keys and `by` refer to.
+
+    The models state it where it is used -- `KEYS_ARE_IDENTIFIERS`, `ActorId` -- so each
+    model's own schema stands alone; the published one says it once.
+    """
+    reference = {"$ref": f"#/$defs/{IDENTIFIER}"}
+
+    def visit(node: object) -> None:
+        if isinstance(node, dict):
+            if node.get("pattern") == IDENTIFIER_PATTERN:
+                del node["pattern"]
+                node.pop("type", None)
+                node.update(reference)
+            for value in node.values():
+                visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+
+    visit(schema)
+    definitions[IDENTIFIER] = {
+        "title": IDENTIFIER,
+        "description": (
+            f"An actor id or a panel name. {GRAMMAR}. The letters, digits and marks are "
+            "Unicode's, spelled out by code point, so every reader of this schema agrees."
+        ),
+        "type": "string",
+        "pattern": IDENTIFIER_PATTERN,
+    }
 
 
 def _one_kind_of_tier(definitions: dict[str, Any]) -> None:

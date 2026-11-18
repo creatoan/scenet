@@ -1,7 +1,7 @@
 # `cast`
 
 <!-- facts: cast -->
-Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. Their order means nothing.
+Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
 
 | | |
 |---|---|
@@ -9,11 +9,11 @@ Who is in the panel: each actor id, chosen by the author, and the puppet that pl
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
-`ALICE` -- and every other block names the cast by them: the {term}`staging`, the script, a sound's source.
+`ALICE`, `Zoé` -- each an [identifier](identifiers.md), and every other block names the cast by them: the {term}`staging`, the script, a sound's source.
 Ids are case-sensitive, and their order means nothing: [`staging`](staging.md#staging) and
 [`at`](#castidat) decide who stands where.
 

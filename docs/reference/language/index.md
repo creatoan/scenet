@@ -17,6 +17,11 @@ ordinary dialogue is never mistyped: `text: No`, `text: 1984` and `text: 12:30` 
 say, and `cast: {on: …, no: …}` names two actors. Tags, anchors, aliases and merge keys are
 refused, each where it is written.
 
+An actor id and a panel name are [identifiers](identifiers.md): letters, digits, `_` and `-`,
+starting with a letter or a digit, `Zoé` and `健` as well as `alice`. `.`, `/`, `:`, `#` and `@`
+are reserved for references between documents, and the words of a staging sentence and of a
+comic script's labels are reserved too.
+
 ## The layers
 
 A panel is written in blocks, each saying one kind of thing about it. What the compiler
@@ -146,6 +151,7 @@ making resvg's the practical conformance reference.
 :hidden:
 
 yaml_profile
+identifiers
 panel
 camera
 setting

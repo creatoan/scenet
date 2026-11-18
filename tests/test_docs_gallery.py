@@ -268,6 +268,7 @@ UNPICTURED = {
     "puppet": "a file a cast names: its example casts the gallery's puppet, compiled",
     "artwork": "a file beside a picture: its example letters the gallery's, compiled",
     "yaml_profile": "how every document is read, not a block: its examples compile in place",
+    "identifiers": "what an id may be, not a block: its examples compile in place",
 }
 
 

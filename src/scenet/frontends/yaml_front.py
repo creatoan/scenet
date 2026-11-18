@@ -30,7 +30,8 @@ from scenet.frontends.common import (
     normalise_layout,
     summarise,
 )
-from scenet.ir import Direction, PageLayout, PanelIR, check_placements
+from scenet.frontends.positions import KEY
+from scenet.ir import IDENTIFIERS, Direction, PageLayout, PanelIR, check_placements
 from scenet.paths import read_document
 from scenet.safe_yaml import ProfileError, describe, load
 
@@ -322,6 +323,13 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
     for name, document in panels.items():
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)
+        problem = IDENTIFIERS.problem(str(name))
+        if problem is not None:
+            # Refused here, where `scenet check` refuses it, rather than when its file is
+            # named: a name that climbs out of the folder, `../../evil`, never gets that far.
+            raise PanelSyntaxError(
+                problem, source=source, rule="invalid-identifier", loc=("panels", name, KEY)
+            )
         if DIRECTION_KEY in document:
             # Looked for before `over:` is resolved, so it is found in the panel that wrote
             # it, `null` included: no panel can write one, so no panel can pass one on.

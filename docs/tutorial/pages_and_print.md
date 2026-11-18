@@ -171,7 +171,7 @@ relative to the other columns, and each panel a
 # by `width`, and each column down into its panels by `height`. A column of one
 # panel spans the tier's whole height.
 #
-# The stack is read down before across -- `where`, then `behind`, then `turn` --
+# The stack is read down before across -- `where`, then `warning`, then `turn` --
 # because the tall panel beside it blocks the way across. That is what about nine
 # readers in ten do with this layout (Cohn, 2013). Two stacks side by side block
 # nothing, readers go across them, and they are refused.
@@ -184,7 +184,7 @@ pages:
       - panels: [spotted]
       - height: 2
         columns:
-          - {width: 3, panels: [where, {use: behind, height: 1.5}]}
+          - {width: 3, panels: [where, {use: warning, height: 1.5}]}
           - {width: 2, panels: [turn]}
       - panels: [laugh]
 
@@ -207,7 +207,7 @@ panels:
     script:
       - say: {by: bob, text: "Why? What is it?"}
 
-  behind:
+  warning:
     camera: {shot: medium_shot}
     cast:
       alice: {reference: alice, pose: pointing, expression: shouting, facing: right}

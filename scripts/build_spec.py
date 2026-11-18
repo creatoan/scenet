@@ -41,7 +41,7 @@ from scenet import CastMember, default_library
 from scenet.assets.artwork import CONTRACT_SUFFIX
 from scenet.assets.contract import PUPPET_SUFFIX
 from scenet.diagnostics import RULE_NAMESPACE
-from scenet.schema import panel_schema
+from scenet.schema import IDENTIFIER, panel_schema
 from scenet.spec_pack import MARKER, RESOURCE, SPEC_PARTS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -77,6 +77,7 @@ SKILL_REFERENCES = ("language", "shot-types", "comic-script", "characters", "dia
 LLMS_DOCUMENTS = {
     "reference/language/index": "every block and key of the YAML language, a page each",
     "reference/language/yaml_profile": "normative: the strict YAML every document is read as",
+    "reference/language/identifiers": "normative: what an actor id or a panel name may be",
     "howto/write_a_comic_script": "the comic-script format, which a chat model can write unaided",
     "reference/shot_types": "normative: what each camera shot frames",
     "reference/cli": "`scenet build`, `scenet check`, `scenet schema` and `scenet mcp`",
@@ -460,8 +461,19 @@ SCHEMAS = {
 }
 
 
+#: What the spec pack shows in place of the identifier's pattern, which spells out every
+#: letter, digit and mark of Unicode by code point: some thirty thousand characters of JSON
+#: that a reader learns nothing from, which its definition's description says in words.
+ELIDED_PATTERN = (
+    "<shortened here: the grammar, with Unicode's letters, digits and marks spelled out by code "
+    "point; the published schema has it whole>"
+)
+
+
 def _schema() -> str:
-    document = json.dumps(panel_schema(), indent=2, sort_keys=True)
+    schema = panel_schema()
+    schema["$defs"][IDENTIFIER]["pattern"] = ELIDED_PATTERN
+    document = json.dumps(schema, indent=2, sort_keys=True)
     published = "\n".join(
         f"- <{SITE}/schemas/{name}.schema.json>: {what}" for name, what in SCHEMAS.items()
     )
@@ -470,8 +482,9 @@ def _schema() -> str:
         "The schemas are generated from the compiler's own models, and describe the syntax "
         "people write, including staging sentences such as `alice left_of bob`. Four are "
         f"published:\n\n{published}\n\n"
-        "The panel schema follows. Conforming to a schema is necessary, not sufficient: see "
-        "the note on schema validity in the preamble.\n\n" + _fence(document, "json")
+        "The panel schema follows, its `Identifier` pattern shortened. Conforming to a schema "
+        "is necessary, not sufficient: see the note on schema validity in the preamble.\n\n"
+        + _fence(document, "json")
     )
 
 
