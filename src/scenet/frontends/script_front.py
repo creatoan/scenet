@@ -71,7 +71,7 @@ from scenet.frontends.common import (
     rule_for_pydantic,
     summarise,
 )
-from scenet.frontends.positions import KEY, locate
+from scenet.frontends.positions import DOCUMENT_START, KEY, locate
 from scenet.identifiers import LABEL_WORDS
 from scenet.ir import (
     IDENTIFIERS,
@@ -1891,16 +1891,19 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         block = "\n".join(
             "" if written.strip() == "---" else written for written in text.split("\n")[:offset]
         )
-        region = locate(block, ("cast", name, KEY))
-        line = region.start.line if region is not None else None
+        # The block was read as YAML already, so it composes and the key is in it: the
+        # document's start is never where this points.
+        region = locate(block, ("cast", name, KEY)) or DOCUMENT_START
+        line = region.start.line
         raise ScriptSyntaxError(
-            f"{f'line {line}: ' if line else ''}{problem}",
+            f"line {line}: {problem}",
             source=source,
             line=line,
             rule="invalid-identifier",
+            # A key written over two lines, `? "DR.` then `NO"`, has no one line's columns.
             columns=(
                 (region.start.column, region.end.column)
-                if region is not None and region.end.line == region.start.line
+                if region.end.line == region.start.line
                 else None
             ),
         )

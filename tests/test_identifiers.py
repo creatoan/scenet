@@ -23,7 +23,8 @@ from jsonschema.protocols import Validator
 
 from scenet import parse_scene_document
 from scenet.diagnostics import RULES, diagnose_script, diagnose_source
-from scenet.errors import PanelSyntaxError
+from scenet.errors import PanelSyntaxError, ScriptSyntaxError
+from scenet.frontends.script_front import parse_script_document
 from scenet.identifier_tables import CASES, UNICODE_VERSION
 from scenet.identifiers import (
     GRAMMAR,
@@ -345,6 +346,51 @@ class TestAnIdWrittenAsAValue:
         text = "cast: {1984: {reference: alice}}\nscript:\n  - say: {by: '1984', text: Hello.}\n"
         assert _schema_accepts(PANEL_SCHEMA, text)
         assert _errors(text, "panel") == []
+
+
+class TestBuild:
+    def test_a_panel_name_is_refused_at_its_key_in_its_file(self):
+        """What `scenet build` reports names the file and the key, as `check` does."""
+        source = Path("x.scene.yaml")
+        with pytest.raises(PanelSyntaxError) as raised:
+            parse_scene_document("panels: {one: {}, 'a b': {}}\n", source=source)
+        assert raised.value.rule == RULE
+        assert raised.value.loc == ("panels", "a b", "[key]")
+        assert raised.value.source == source
+
+
+class TestAScriptsRefusal:
+    """Where a comic script's refusal points, and in which file."""
+
+    SOURCE = Path("x.script")
+
+    def _refused(self, text: str) -> ScriptSyntaxError:
+        with pytest.raises(ScriptSyntaxError) as raised:
+            parse_script_document(text, source=self.SOURCE)
+        assert raised.value.rule == RULE
+        assert raised.value.source == self.SOURCE
+        return raised.value
+
+    def test_a_panel_name_is_refused_in_its_file(self):
+        found = self._refused("PANEL 1.5\nALICE\nHi.\n")
+        assert found.line == 1
+
+    def test_a_front_matter_key_is_refused_at_its_columns(self):
+        found = self._refused(
+            "---\ncast: {ALICE: {reference: alice}, a/b: {reference: bob}}\n---\n"
+        )
+        assert (found.line, found.columns) == (2, (35, 38))
+        assert str(found).startswith("x.script: line 2: 'a/b' is not an id")
+
+    def test_a_key_written_over_two_lines_has_no_columns(self):
+        found = self._refused('---\ncast:\n  ? "DR.\n    NO"\n  : {reference: alice}\n---\n')
+        assert (found.line, found.columns) == (3, None)
+
+    def test_only_a_cast_directive_names_actors(self):
+        """`@setting:` keys are the language's keys, refused as unknown, not as ids."""
+        text = "PANEL 1\n@setting: {place: docks, time of day: night}\n"
+        (found,) = diagnose_script(text, library=LIBRARY)
+        assert found.rule == "unknown-key"
 
 
 class TestAScript:
