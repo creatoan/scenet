@@ -164,11 +164,13 @@ def _why(name: str, reserved: re.Pattern[str]) -> str:
 
 
 def _why_as_a_whole(name: str, reserved: re.Pattern[str]) -> str:
-    """Which part of the grammar `name`, every character of which an identifier may hold, breaks."""
+    """Which part of the grammar `name`, every character of which an identifier may hold, breaks.
+
+    Starting well, it is a reserved word or too long: no reserved word is, so nothing else
+    is left once the first two are not the reason.
+    """
     if _STARTS.fullmatch(name[0]) is None:
         return f"it starts with {_code_point(name[0])}, which is not a letter or a digit"
-    if len(name) > MAX_LENGTH:
-        return f"it is {len(name)} characters long"
     if reserved.search(name) is not None:
         return "it is a reserved word"
-    return "it does not follow the grammar"  # pragma: no cover -- every way is named above
+    return f"it is {len(name)} characters long, more than {MAX_LENGTH}"

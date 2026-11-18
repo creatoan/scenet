@@ -59,7 +59,7 @@ TABLE: dict[str, tuple[str, str | None]] = {
     "a reserved word and more": ("left_ofs", None),
     "a reserved word inside": ("caps", None),
     "empty": ("", "empty"),
-    "too long": ("a" * (MAX_LENGTH + 1), "65 characters"),
+    "too long": ("a" * (MAX_LENGTH + 1), "65 characters long"),
     "a slash": ("a/b", "'/' is reserved"),
     "a full stop": ("x.debug", "'.' is reserved"),
     "a colon": ("a:b", "':' is reserved"),
@@ -267,6 +267,41 @@ class TestTheGrammar:
         grammar = Grammar(("spam",))
         assert grammar.problem("SPAM") is not None
         assert grammar.problem("left_of") is None
+
+    @pytest.mark.parametrize(
+        ("name", "said"),
+        [
+            ("", "'' is not an id: it is empty"),
+            (
+                "a b",
+                "'a b' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'",
+            ),
+            (
+                f"a{chr(9)}b",
+                "'a<U+0009>b' is not an id: U+0009 is not a letter, a digit, a mark, '_' or '-'",
+            ),
+            (
+                f"a{chr(0x1F600)}",
+                "'a<U+1F600>' is not an id: U+1F600 is not a letter, a digit, a mark, '_' or '-'",
+            ),
+            (
+                "-a",
+                "'-a' is not an id: it starts with '-' (U+002D), which is not a letter or a digit",
+            ),
+            (
+                f"{chr(0x301)}a",
+                f"'{chr(0x301)}a' is not an id: it starts with U+0301, which is not a letter or a "
+                "digit",
+            ),
+            ("a" * 65, f"'{'a' * 65}' is not an id: it is 65 characters long, more than 64"),
+            ("Left_Of", "'Left_Of' is not an id: it is a reserved word"),
+        ],
+        ids=["empty", "space", "tab", "emoji", "hyphen", "mark", "long", "word"],
+    )
+    def test_a_refusal_says_exactly_what_is_wrong(self, name: str, said: str):
+        """A character shown as itself is printable ASCII or one an id may hold; any other
+        is its code point alone, so a message never carries a control character."""
+        assert IDENTIFIERS.problem(name) == f"{said}. {GRAMMAR}"
 
     @pytest.mark.parametrize("after", ["a", ""], ids=["between", "alone"])
     def test_the_pattern_is_the_validator_on_every_character(self, after: str):
