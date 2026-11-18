@@ -342,6 +342,20 @@ class TestAnIdWrittenAsAValue:
         assert (found.rule, found.path) == (RULE, ("script", 0, "say", "by"))
         assert "'1984'" in found.message
 
+    @pytest.mark.parametrize(
+        ("written", "said"),
+        [
+            ("1984", "1984 unquoted is a number; write '1984'"),
+            ("1.50", "1.50 unquoted is a number; write '1.50'"),
+            ("true", "true unquoted is a yes-or-no; write 'true'"),
+        ],
+        ids=["integer", "float", "yes"],
+    )
+    def test_it_says_what_the_value_was_read_as(self, written: str, said: str):
+        text = f"script:\n  - say: {{by: {written}, text: Hello., off_panel: true}}\n"
+        (found,) = diagnose_source(text, source=Path("x.panel.yaml"), library=LIBRARY)
+        assert found.message == f"an actor id is a name, and {said}, in quotes"
+
     def test_quoted_it_names_the_actor(self):
         text = "cast: {1984: {reference: alice}}\nscript:\n  - say: {by: '1984', text: Hello.}\n"
         assert _schema_accepts(PANEL_SCHEMA, text)
