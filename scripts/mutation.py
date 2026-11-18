@@ -157,6 +157,7 @@ LEGS: tuple[Leg, ...] = (
     ),
     Leg("core", _in("", "core.py"), 98, 98.6, 351, 5, 43478921809),
     Leg("ir", _in("", "ir.py"), 97, 97.8, 718, 16, 44133756281),
+    Leg("identifiers", _in("", "identifiers.py"), 100, 100.0, 45, 0, 44388306912),
     Leg("diagnostics", _in("", "diagnostics.py"), 95, 95.4, 1617, 74, 43597307790),
 )
 

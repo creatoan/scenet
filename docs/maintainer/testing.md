@@ -355,7 +355,7 @@ them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in 
 `MemoryError` and counts as killed. A test process needs under 1 GB.
 
 `[tool.mutmut]` in `pyproject.toml` limits it to `solve/`, `emit/`, `frontends/`, `core.py`,
-`ir.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
+`ir.py`, `identifiers.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
 coverage floor, doctests or the documentation examples. To run one leg locally, narrow it
 first, as its job does, and restore the file after:
 
@@ -399,6 +399,8 @@ code, the docstring left out:
 | `emit/turbulence.py::_alpha` | `@functools.lru_cache` | 20 |
 | `frontends/script_front.py::ScriptDocument.direction` | `@property` | 1 |
 | `frontends/yaml_front.py::SceneDocument.direction` | `@property` | 1 |
+| `identifiers.py::_compiled` | `@functools.cache` | 3 |
+| `identifiers.py::Grammar.pattern` | `@property` | 1 |
 | `ir.py::PlacementZone.fractions` | `@property` | 4 |
 | `ir.py::CaptionKind.is_italic` | `@property` | 1 |
 | `ir.py::CaptionKind.is_quoted` | `@property` | 1 |
@@ -455,6 +457,7 @@ gallery are what guard them.
 | `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 358 | 4 | 98.9% | 98% | [`43606025253`](https://github.com/creatoan/scenet/actions/runs/43606025253) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
 | `ir` | `ir.py` | 718 | 16 | 97.8% | 97% | [`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) |
+| `identifiers` | `identifiers.py` | 45 | 0 | 100.0% | 100% | [`44388306912`](https://github.com/creatoan/scenet/actions/runs/44388306912) |
 | `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
