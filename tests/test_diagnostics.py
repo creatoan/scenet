@@ -1345,3 +1345,71 @@ class TestEveryRaisedRuleIsCatalogued:
         assert found.rule == "internal"
         (result,) = to_sarif([found])["runs"][0]["results"]
         assert result["ruleId"] == "scenet/internal"
+
+
+class TestWhereAnInheritedFaultIsReported:
+    """Faults a panel inherits, each where a reader looks for it (#357's mutation run).
+
+    A scene's default is reported once, at the default -- through a list and a key as well
+    as a mapping -- and a script panel drawn `@over:` another reports what it inherited at
+    its own heading, since it writes no directive of its own to point at.
+    """
+
+    SOURCE = Path("x.scene.yaml")
+
+    def test_a_default_inside_a_list_is_reported_once_at_the_default(self):
+        text = (
+            "cast: {alice: {reference: alice}}\n"
+            "setting: {masses: [{kind: ground, colour: red}, {kind: sky, colour: blue}]}\n"
+            "panels: {one: {}, two: {}}\n"
+        )
+        found = diagnose_source(text, source=self.SOURCE)
+        assert [(item.rule, item.path) for item in found] == [
+            ("unknown-key", ("setting", "masses", 0, "colour")),
+            ("unknown-key", ("setting", "masses", 1, "colour")),
+        ]
+
+    def test_a_default_cast_key_is_reported_once_at_the_default(self):
+        text = "cast: {'a b': {reference: alice}}\npanels: {one: {}, two: {}}\n"
+        found = diagnose_source(text, source=self.SOURCE)
+        assert [(item.rule, item.path) for item in found] == [
+            ("invalid-identifier", ("cast", "a b", "[key]")),
+        ]
+
+    @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            ("cast: {'a b': {reference: alice}}\n", "panel"),
+            ("cast: {'a b': {reference: alice}}\nstaging: [a b left_of c]\n", "panel"),
+            ("cast: {a: {reference: alice}}\npanels: {'a b': {}}\n", "scene"),
+        ],
+        ids=["a cast key", "a cast key beside a sentence", "a panel name"],
+    )
+    def test_an_id_finding_names_its_file(self, text: str, kind: str):
+        source = Path(f"x.{kind}.yaml")
+        found = [item for item in diagnose_source(text, source=source) if item.rule == RULE_ID]
+        assert found
+        assert {item.source for item in found} == {source}
+
+    @pytest.mark.parametrize(
+        ("directive", "rule"),
+        [
+            ("@cast: {BOB: {reference: nobody}}", "unknown-puppet"),
+            ("@cast: {ALICE: {reference: nobody}}", "unknown-puppet"),
+            ("@lettering: {font: fonts/missing.ttf}", "font-file"),
+        ],
+        ids=["a member of its own", "a member of the front matter's", "lettering"],
+    )
+    def test_a_script_panel_over_another_reports_at_its_heading(self, directive: str, rule: str):
+        """Never at the front matter, whose own value is sound: what the panel inherits is the
+        overriding panel's."""
+        script = (
+            "---\ncast: {ALICE: {reference: alice}}\n---\n"
+            f"PANEL 1\n{directive}\nALICE\nHello.\n\nPANEL 2\n@over: 1\nALICE\nAgain.\n"
+        )
+        found = diagnose_script(script)
+        assert [(item.rule, item.path[0]) for item in found] == [(rule, "1"), (rule, "2")]
+        assert [item.region.start.line for item in found if item.region] == [5, 9]
+
+
+RULE_ID = "invalid-identifier"

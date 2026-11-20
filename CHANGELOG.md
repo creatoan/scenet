@@ -113,6 +113,10 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
+  (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
+  `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.
+  It is now panel 2's, at its heading.
 - **A fault in a comic script's flow-style front matter is located at its line** (#357):
   `{description: …}`, `{direction: upward}` and `{pages: …}` written on one line under `---`
   were reported at the `---` above them.

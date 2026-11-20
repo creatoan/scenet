@@ -550,6 +550,14 @@ class TestExtensionKeys:
         # The directive is no prose: the panel has no description of its own.
         assert document.descriptions["1"] == ()
 
+    def test_an_extension_in_a_panels_cast_is_nobody_who_speaks(self):
+        """`x-ray: Hello.` is a line only if somebody called `x-ray` is cast, and nobody is."""
+        text = "PANEL 1\n@cast: {x-ray: {reference: alice}, BOB: {reference: bob}}\n"
+        document = parse_script_document(text + "x-ray: Hello.\nBOB\nHi.\n")
+        assert document.descriptions["1"] == ("x-ray: Hello.",)
+        assert [event.text for event in document.panels["1"].script] == ["Hi."]
+        assert list(document.panels["1"].cast) == ["BOB"]
+
     def test_in_a_puppet_file(self):
         text = kid("name: kid\n", "x-tool: t\nname: kid\n")
         text = text.replace("  head_top: 0\n", "  head_top: 0\n  x-where: crown\n")

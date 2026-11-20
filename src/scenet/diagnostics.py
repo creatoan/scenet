@@ -59,6 +59,7 @@ from scenet.assets.contract import (
 from scenet.compose import (
     DIRECTION_KEY,
     NOT_DEFAULTS,
+    OVER_KEY,
     merge,
     own_direction,
     relation_text,
@@ -101,7 +102,6 @@ from scenet.frontends.positions import (
 )
 from scenet.frontends.script_front import (
     FRONT_MATTER,
-    PanelLines,
     ScriptDocument,
     normalise_text,
     parse_script_document,
@@ -2089,16 +2089,34 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     return padded, stripped(loaded) if isinstance(loaded, dict) else {}
 
 
+def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:
+    """What a panel's directives set, with those of every panel it is drawn `@over:`.
+
+    A panel over another inherits that one's directives, and the front matter only beneath
+    both: what it inherits is written in the script, not in the front matter.
+    """
+    chain: list[dict[str, Any]] = []
+    while name in document.lines and len(chain) < len(document.lines):
+        written = document.lines[name].written
+        chain.append(dict(written))
+        name = str(written.get(OVER_KEY, ""))
+    inherited: dict[str, Any] = {}
+    for written in reversed(chain):
+        inherited = merge(inherited, written)
+    return inherited
+
+
 def _from_front_matter(
-    path: tuple[str | int, ...], declared: dict[str, Any], written: PanelLines
+    path: tuple[str | int, ...], declared: dict[str, Any], written: dict[str, Any]
 ) -> bool:
     """Whether a fault a panel found is the front matter's, to report once, there.
 
-    It is when the front matter writes the value at `path` and the panel's own directives
-    do not write it again. A panel that overrides it -- `@cast: {ALICE: {reference:
-    nobody}}` over a front-matter `ALICE` -- has a fault of its own, at its directive.
+    It is when the front matter writes the value at `path` and the panel's directives, with
+    those it inherits through `@over:` (`_written_through`), do not write it again. A panel
+    that overrides it -- `@cast: {ALICE: {reference: nobody}}` over a front-matter `ALICE`
+    -- has a fault of its own, at its directive.
     """
-    return _has_path(declared, path) and not _has_path(written.written, path)
+    return _has_path(declared, path) and not _has_path(written, path)
 
 
 def _diagnose_script_setting(
@@ -2119,7 +2137,7 @@ def _diagnose_script_setting(
     for name, panel in document.panels.items():
         written = document.lines[name]
         for item in _diagnose_setting(panel, front, source, prefix=(), base=base):
-            if _from_front_matter(item.path, declared, written):
+            if _from_front_matter(item.path, declared, _written_through(document, name)):
                 if item not in found:
                     found.append(item)
                 continue
@@ -2156,7 +2174,9 @@ def _diagnose_script_figures(
     for name, panel in document.panels.items():
         written = document.lines[name]
         for item in _diagnose_figures(panel, front, source, prefix=(), base=base):
-            if item.source != source or _from_front_matter(item.path, declared, written):
+            if item.source != source or _from_front_matter(
+                item.path, declared, _written_through(document, name)
+            ):
                 if item not in found:
                     found.append(item)
                 continue
@@ -2198,7 +2218,7 @@ def _diagnose_script_lettering(
     for name, panel in document.panels.items():
         written = document.lines[name]
         for item in _diagnose_lettering(panel, declared, front, source, prefix=(), base=base):
-            if _from_front_matter(item.path, declared, written):
+            if _from_front_matter(item.path, declared, _written_through(document, name)):
                 if item not in found:
                     found.append(item)
             else:
@@ -2245,7 +2265,7 @@ def _diagnose_script_cast(
                     found.append(item)
                 continue
             actor = item.path[1]
-            if actor in shared and not _has_path(written.written, item.path):
+            if actor in shared and not _has_path(_written_through(document, name), item.path):
                 if item not in found:
                     found.append(item)
             else:
