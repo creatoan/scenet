@@ -37,6 +37,7 @@ from scenet.errors import (
 )
 from scenet.frontends.common import summarise
 from scenet.ir import Text
+from scenet.namespace import ASSET_KEYS, AssetHead, language_fault, split_head, stripped
 from scenet.paths import Folder, NamedFileError, read_model, record_dependency
 from scenet.safe_yaml import load
 
@@ -862,7 +863,13 @@ def load_puppet(path: Path) -> PuppetSpec:
         raise MalformedAssetError(str(exc), source=path) from exc
     if not isinstance(data, dict):
         raise MalformedAssetError("expected a mapping at the top level", source=path)
+    # Its extension keys are nobody's, and its language and schema are the file's own.
+    head, data = split_head(stripped(data), ASSET_KEYS)
+    later = language_fault(head)
+    if later is not None:
+        raise MalformedAssetError(f"scenet: {later}", source=path)
     try:
+        AssetHead.model_validate(head)
         return PuppetSpec.model_validate(data)
     except ValidationError as exc:
         raise MalformedAssetError(summarise(exc, what="puppet"), source=path) from exc

@@ -493,7 +493,10 @@ PANEL 1
 
 Everything in the front matter is a default every panel inherits — exactly the same
 mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults) — and so a
-`description`, which says what one panel shows, is refused there.
+`description`, which says what one panel shows, is refused there, and so is a `script`, since a
+script's lines are its cues. The front matter also holds the
+[document's own keys](https://creatoan.github.io/scenet/reference/language/document.html): `scenet: 1`, `$schema`, `meta`, and
+`kind: scene`, which is the only kind a comic script is.
 
 `direction: rtl` there makes the whole script read from the top right, as a manga does; see
 [`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction). It is the script's, never one panel's, so

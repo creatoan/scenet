@@ -1,0 +1,4 @@
+# The version is the whole document's, so a panel of a scene has none of its own.
+scenet: 1
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {scenet: 1}}

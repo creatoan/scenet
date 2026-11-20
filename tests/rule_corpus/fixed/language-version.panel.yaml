@@ -1,0 +1,3 @@
+# Written in language 1, the language this Scenet reads.
+scenet: 1
+cast: {alice: {reference: alice}}

@@ -11,7 +11,10 @@ anybody types.** The YAML frontend accepts conveniences that
 - a setting that names a `place` instead of listing masses;
 - in a scene, panels that state only what differs from what they inherit;
 - `null` for a key, which is the key not written: in a scene, it leaves out what a panel
-  would inherit (`settle`).
+  would inherit (`settle`);
+- the document's own keys, `scenet`, `$schema`, `meta` and `kind`, which the frontend takes
+  off before the models read it (`split_head`), and a key starting with `x-` in any
+  mapping, which it takes out (`without_extensions`).
 
 Publishing the IR's schema made an editor flag every one of those as an error -- 21 of
 the 22 gallery documents, on lines that compiled. So the published schema starts from
@@ -34,8 +37,8 @@ from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
 from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
-from scenet.compose import DESCRIPTION_KEY, DIRECTION_KEY
-from scenet.identifiers import GRAMMAR
+from scenet.compose import DIRECTION_KEY, NOT_DEFAULTS
+from scenet.identifiers import EXTENSION_PREFIX, GRAMMAR
 from scenet.ir import (
     IDENTIFIER_PATTERN,
     PUPPET_KEYS,
@@ -44,6 +47,7 @@ from scenet.ir import (
     PanelIR,
     Predicate,
 )
+from scenet.namespace import DOCUMENT_KEYS, KIND_KEY, AssetHead, DocumentHead, Kind
 from scenet.places import Place
 
 __all__ = ["artwork_schema", "panel_schema", "puppet_schema", "scene_schema"]
@@ -53,6 +57,12 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 #: The definition every actor id and panel name refers to, so its pattern -- some twelve
 #: thousand characters, the letters of Unicode spelled out -- is written once.
 IDENTIFIER = "Identifier"
+
+#: The pattern every extension key matches, in any mapping: `x-`, then anything.
+EXTENSION_PATTERN = f"^{EXTENSION_PREFIX}"
+
+#: What an extension key holds, in the schema: anything at all.
+EXTENSION = {"description": "An extension: a key a tool writes, which Scenet ignores."}
 
 #: Docstring sections written for the Python reference, which an editor showing a
 #: description to someone writing YAML leaves out: everything from the first of them on.
@@ -127,6 +137,8 @@ def panel_schema() -> dict[str, Any]:
     """
     schema = PanelIR.model_json_schema()
     definitions: dict[str, Any] = schema["$defs"]
+    _with_head(schema, DocumentHead, definitions)
+    _only_kinds(schema, Kind.PANEL)
     _one_identifier(schema, definitions)
     _accept_staging_sentences(definitions)
     _accept_verb_tagged_script(schema, definitions)
@@ -137,6 +149,7 @@ def panel_schema() -> dict[str, Any]:
     _positive_size(definitions)
     _speaker_only_when_spoken(definitions)
     _accept_nulls(schema, definitions)
+    _accept_extensions(schema)
     _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
@@ -157,9 +170,11 @@ def artwork_schema() -> dict[str, Any]:
     Example:
         >>> from scenet.schema import artwork_schema
         >>> sorted(artwork_schema()["properties"])
-        ['figures', 'keep_out', 'size']
+        ['$schema', 'figures', 'keep_out', 'meta', 'scenet', 'size']
     """
     schema = ArtworkContract.model_json_schema()
+    _with_head(schema, AssetHead, schema.setdefault("$defs", {}))
+    _accept_extensions(schema)
     _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
@@ -185,8 +200,10 @@ def puppet_schema() -> dict[str, Any]:
         ['name', 'units_per_head', 'landmarks', 'joints', 'face', 'poses']
     """
     schema = PuppetSpec.model_json_schema()
+    _with_head(schema, AssetHead, schema.setdefault("$defs", {}))
     _every_landmark(schema)
     _default_pose(schema)
+    _accept_extensions(schema)
     _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
@@ -207,13 +224,17 @@ def scene_schema() -> dict[str, Any]:
     """
     panel = panel_schema()
     definitions: dict[str, Any] = panel.pop("$defs")
+    # The document's own keys are the scene's, never a panel's: `split_head`.
+    head = {key: value for key, value in panel["properties"].items() if key in DOCUMENT_KEYS}
     properties = {
         key: _removable(_inheritable(value, definitions))
         for key, value in panel["properties"].items()
+        if key not in DOCUMENT_KEYS
     }
-    # A description says what one picture shows, so a panel may have one but the scene
-    # may not offer one to every panel: `compose.NOT_A_DEFAULT`.
-    defaults = {key: value for key, value in properties.items() if key != DESCRIPTION_KEY}
+    # A description says what one picture shows, and a script what one panel says, so a
+    # panel may have one but the scene may not offer one to every panel:
+    # `compose.NOT_DEFAULTS`.
+    defaults = {key: value for key, value in properties.items() if key not in NOT_DEFAULTS}
 
     member = {key: value for key, value in panel.items() if key not in ("title", "$schema")}
     # A direction is the whole document's, never one panel's: `panel-direction` (#68).
@@ -242,6 +263,7 @@ def scene_schema() -> dict[str, Any]:
         "$defs": definitions,
         "type": "object",
         "properties": {
+            **head,
             **defaults,
             "page": layout["properties"]["page"],
             "pages": layout["properties"]["pages"],
@@ -262,8 +284,76 @@ def scene_schema() -> dict[str, Any]:
         # one panel, and there is nothing for a page to lay out.
         "dependentRequired": {"page": ["panels"], "pages": ["panels"]},
     }
+    _only_kinds(scene, Kind.PANEL, Kind.SCENE)
+    _kind_is_the_shape(scene)
+    _accept_extensions(scene)
     _for_authors(scene)
     return scene
+
+
+def _with_head(schema: dict[str, Any], model: type[AssetHead], definitions: dict[str, Any]) -> None:
+    """Mirror `split_head`: the document's own keys, which no model of its content has.
+
+    Written first, as a document writes them.
+    """
+    head = model.model_json_schema(ref_template="#/$defs/{model}")
+    definitions.update(head.pop("$defs", {}))
+    schema["properties"] = {**head["properties"], **schema["properties"]}
+
+
+def _only_kinds(schema: dict[str, Any], *kinds: Kind) -> None:
+    """Mirror `kind_fault` and `_no_book`: the kinds a document checked with this schema is.
+
+    Said under `not`, for the reason `_puppet_or_figure` gives: the key keeps the one
+    description, and the definition of the kinds stays whole.
+    """
+    kind: dict[str, Any] = schema["properties"][KIND_KEY]
+    kind["not"] = {"enum": [value.value for value in Kind if value not in kinds]}
+
+
+def _kind_is_the_shape(scene: dict[str, Any]) -> None:
+    """Mirror `kind_fault`: a document that says it is a scene has `panels:`, and a panel not.
+
+    Under `allOf`, since a condition beside `type` is a condition on one shape, not a
+    choice between shapes.
+    """
+    scene["allOf"] = [
+        {
+            "if": {"required": [KIND_KEY], "properties": {KIND_KEY: {"const": Kind.SCENE.value}}},
+            "then": {"required": ["panels"]},
+        },
+        {
+            "if": {"required": [KIND_KEY], "properties": {KIND_KEY: {"const": Kind.PANEL.value}}},
+            "then": {"not": {"required": ["panels"]}},
+        },
+    ]
+
+
+def _accept_extensions(schema: dict[str, Any]) -> None:
+    """Mirror `without_extensions`: every mapping takes a key that starts with `x-`.
+
+    Whatever it holds, since nothing reads it. A mapping whose keys the author chooses --
+    the cast, the panels -- takes one too: no identifier starts with `x-`, so its key is
+    never an actor's or a panel's, and its value is never read as one.
+    """
+
+    def visit(node: object) -> None:
+        if isinstance(node, list):
+            for item in node:
+                visit(item)
+            return
+        if not isinstance(node, dict):
+            return
+        for value in list(node.values()):
+            visit(value)
+        if node.get("type") == "object":
+            node.setdefault("patternProperties", {})[EXTENSION_PATTERN] = EXTENSION
+        names = node.get("propertyNames")
+        extension = {"pattern": EXTENSION_PATTERN}
+        if isinstance(names, dict) and extension not in names.get("anyOf", ()):
+            node["propertyNames"] = {"anyOf": [names, extension]}
+
+    visit(schema)
 
 
 def _one_identifier(schema: dict[str, Any], definitions: dict[str, Any]) -> None:

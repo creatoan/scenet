@@ -1,0 +1,3 @@
+# The panels are written here, in the document that lays them out.
+cast: {alice: {reference: alice}}
+panels: {one: {}}

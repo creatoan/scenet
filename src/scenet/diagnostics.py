@@ -57,9 +57,8 @@ from scenet.assets.contract import (
     load_puppet_file,
 )
 from scenet.compose import (
-    DESCRIPTION_KEY,
     DIRECTION_KEY,
-    NOT_A_DEFAULT,
+    NOT_DEFAULTS,
     merge,
     own_direction,
     relation_text,
@@ -117,6 +116,16 @@ from scenet.ir import (
     check_placements,
 )
 from scenet.lettering import FONT_RULE, typeface_for
+from scenet.namespace import (
+    DOCUMENT_KEYS,
+    DocumentHead,
+    Kind,
+    kind_fault,
+    language_fault,
+    own_document_key,
+    split_head,
+    stripped,
+)
 from scenet.paths import Folder, NamedFileError
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
 from scenet.safe_yaml import ProfileError, describe, load
@@ -256,7 +265,12 @@ RULES: dict[str, Rule] = {
             "Validation is strict everywhere: unknown keys are rejected rather than "
             "ignored. A misspelled key that was silently dropped would produce a panel "
             "that is subtly wrong with no indication of why, which for a language meant "
-            "to be precise is the worst possible failure."
+            "to be precise is the worst possible failure. The one exception is a key that "
+            "starts with `x-`, in lower case: an extension, which a tool writes to annotate "
+            "a document and Scenet ignores, in any mapping. A key written where the "
+            "language has it but not there is unknown too, and said to be: a description "
+            "or a script beside `panels:`, which no panel inherits, and a document's own "
+            "keys -- `scenet`, `meta`, `kind` -- on one of its panels."
         ),
         help=f"Check the spelling against every key there is: {LANGUAGE_REFERENCE}keys.html.",
     ),
@@ -286,12 +300,57 @@ RULES: dict[str, Rule] = {
             "references between documents, `chapter/panel` and `file#panel`. So are the words "
             "a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic "
             "script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their "
-            "French twins), in any case. An id written as a value, `by:`, is text: a number "
-            "there is quoted."
+            "French twins), in any case. No id starts with `x-`, which marks an extension "
+            "key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An "
+            "id written as a value, `by:`, is text: a number there is quoted."
         ),
         help=(
             "Rename it, in every place it is written: `old man` could be `old_man`, `a/b` "
             "`a-b`. The message says which part of the grammar the name breaks."
+        ),
+    ),
+    "language-version": Rule(
+        summary="The document is written for a later version of the language",
+        description=(
+            "`scenet:` at the top of a document -- a panel, a scene, a puppet, an artwork "
+            "contract, a comic script's front matter -- names the language it is written in: "
+            "the Scenet language's major version, a whole number, which is not the version "
+            "of the package. Left out, it is 1. A document of a later language than this "
+            "Scenet reads is not one of this language with mistakes in it, so nothing else "
+            "in it is checked: this is its one finding."
+        ),
+        help=(
+            "Compile it with a Scenet that reads its language, or write it in this one and "
+            "set `scenet:` to the language this Scenet reads, which the message names."
+        ),
+    ),
+    "not-yet": Rule(
+        summary="A key kept for a later version of the language is written",
+        description=(
+            "Some keys are kept for a later version of the language, so that a document "
+            "written today cannot mean something else by them then: `include`, to read one "
+            "document into another, `defaults`, and `kind: book`. Today they do nothing, "
+            "and a key that did nothing would lose what it holds without a word, so each is "
+            "refused where it is written. Written as `null`, a key is not written at all."
+        ),
+        help=(
+            "Delete it. Write here what an `include` would bring in; a default of a scene "
+            "is any key written beside `panels:`; a book is not yet, so lay the panels out "
+            "as a scene's pages."
+        ),
+    ),
+    "document-kind": Rule(
+        summary="The document says it is a kind it is not",
+        description=(
+            "`kind:` at the top of a document says which kind it is: `panel`, or `scene` "
+            "for one with `panels:`. A document is read by its shape whether it says or "
+            "not, so `kind` only confirms it -- and one that says it is a scene with no "
+            "`panels:`, a panel with them, or a comic script that says it is a panel, says "
+            "two things, of which one is wrong."
+        ),
+        help=(
+            "Write the kind the document is, or leave `kind` out: the message says which. "
+            "A comic script is always a scene."
         ),
     ),
     "panel-geometry": Rule(
@@ -1053,7 +1112,8 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
             )
         ]
 
-    return data, []
+    # Nothing past here reads an extension key, at any depth.
+    return stripped(data), []
 
 
 def _span(exc: ProfileError) -> Region:
@@ -1509,23 +1569,50 @@ def _unusable_keys(
     return found
 
 
-def _scene_description(data: dict[str, Any], text: str, source: Path | None) -> list[Diagnostic]:
-    """A description beside `panels:`, as one finding where it is written.
+def _not_defaults(data: dict[str, Any], text: str, source: Path | None) -> list[Diagnostic]:
+    """A description or a script beside `panels:`, each as one finding where it is written.
 
-    It says what one picture shows, so it is no default: the panels are checked without
-    it, as `build` refuses it before reading them.
+    A description says what one picture shows, and a script what one panel says, so neither
+    is a default: the panels are checked without them, as `build` refuses them before
+    reading the panels.
     """
-    if DESCRIPTION_KEY not in data:
-        return []
     return [
         Diagnostic(
             rule="unknown-key",
-            message=NOT_A_DEFAULT,
-            path=(DESCRIPTION_KEY,),
+            message=why,
+            path=(key,),
             source=source,
-            region=locate(text, (DESCRIPTION_KEY,)) or DOCUMENT_START,
+            region=locate(text, (key,)) or DOCUMENT_START,
         )
+        for key, why in NOT_DEFAULTS.items()
+        if key in data
     ]
+
+
+def _broken(fault: RuleViolationError, text: str, source: Path | None) -> Diagnostic:
+    """A rule the frontend found broken, at the path it names: a finding where it is."""
+    return Diagnostic(
+        rule=fault.rule,
+        message=str(fault),
+        path=fault.loc,
+        source=source,
+        region=locate(text, fault.loc) or DOCUMENT_START,
+    )
+
+
+def _diagnose_head(
+    head: dict[str, Any], text: str, source: Path | None, *, shape: Kind
+) -> list[Diagnostic]:
+    """The document's own keys, each fault where it is written, as the frontend reads them.
+
+    A document of a later language never gets here: that is its one finding.
+    """
+    try:
+        DocumentHead.model_validate(head)
+    except ValidationError as exc:
+        return _from_validation_error(exc, text, source)
+    fault = kind_fault(head, shape)
+    return [] if fault is None else [_broken(fault, text, source)]
 
 
 def _diagnose_scene(
@@ -1589,10 +1676,23 @@ def _diagnose_scene(
         )
         for name in own
     )
+    # So is one of the document's own keys, its language and the rest: each one finding,
+    # and the panel checked without it.
+    found.extend(
+        Diagnostic(
+            rule="unknown-key",
+            message=own_document_key(key, "at the top of the document"),
+            path=("panels", name, key),
+            source=source,
+            region=locate(text, ("panels", name, key)) or DOCUMENT_START,
+        )
+        for name, document in panels.items()
+        for key in DOCUMENT_KEYS
+        if key in document
+    )
+    taken = (DIRECTION_KEY, *DOCUMENT_KEYS)
     panels = {
-        name: {key: value for key, value in document.items() if key != DIRECTION_KEY}
-        if name in own
-        else document
+        name: {key: value for key, value in document.items() if key not in taken}
         for name, document in panels.items()
     }
 
@@ -1617,12 +1717,12 @@ def _diagnose_scene(
     # at a size it will never be drawn at.
     paged = layout is not None and bool(layout.pages)
 
-    found.extend(_scene_description(data, text, source))
+    found.extend(_not_defaults(data, text, source))
     # `page:` and `pages:` lay the panels out; they are not defaults every panel inherits.
     defaults = {
         key: value
         for key, value in data.items()
-        if key not in ("panels", DESCRIPTION_KEY) and key not in LAYOUT_KEYS
+        if key != "panels" and key not in NOT_DEFAULTS and key not in LAYOUT_KEYS
     }
     standing = resolve_beneath(panels)
     for name, document in composed.items():
@@ -1775,9 +1875,14 @@ def diagnose_source(
         >>> found[0].rule
         'panel-geometry'
     """
-    data, refused = _read_mapping(text, source)
-    if data is None:
+    written, refused = _read_mapping(text, source)
+    if written is None:
         return refused
+    head, data = split_head(written, DOCUMENT_KEYS)
+    # A document of a later language is not this one's to read: that is all there is to say.
+    later = language_fault(head)
+    if later is not None:
+        return [_broken(later, text, source)]
     base = _folder(source, base)
     # Once per document, not once per panel: every panel resolves its cast against it.
     library = library or default_library()
@@ -1788,8 +1893,10 @@ def diagnose_source(
     # distinction; the checker has to make it too.
     if "panels" in data:
         return _in_source_order(
-            _diagnose_scene(data, text, source, library=library, deep=deep, base=base)
+            _diagnose_head(head, text, source, shape=Kind.SCENE)
+            + _diagnose_scene(data, text, source, library=library, deep=deep, base=base)
         )
+    found = _diagnose_head(head, text, source, shape=Kind.PANEL)
 
     # Without `panels:` there is nothing for a page to lay out. Said as a page-layout
     # finding, as the frontend says it, rather than as an unknown key on a single panel.
@@ -1797,6 +1904,7 @@ def diagnose_source(
     if misplaced:
         path: tuple[str | int, ...] = (misplaced[0],)
         return [
+            *found,
             Diagnostic(
                 rule="page-layout",
                 message=(
@@ -1806,11 +1914,12 @@ def diagnose_source(
                 path=path,
                 source=source,
                 region=locate(text, path) or DOCUMENT_START,
-            )
+            ),
         ]
 
     return _in_source_order(
-        _diagnose_panel(data, text, source, prefix=(), library=library, deep=deep, base=base)
+        found
+        + _diagnose_panel(data, text, source, prefix=(), library=library, deep=deep, base=base)
     )
 
 
@@ -1977,7 +2086,7 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     padded = "\n" * normalised.count("\n", 0, match.start(1)) + match.group(1) + "\n"
     # parse_script has already loaded this successfully, so it cannot fail here.
     loaded = load(padded)
-    return padded, loaded if isinstance(loaded, dict) else {}
+    return padded, stripped(loaded) if isinstance(loaded, dict) else {}
 
 
 def _from_front_matter(

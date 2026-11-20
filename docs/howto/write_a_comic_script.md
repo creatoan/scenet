@@ -491,7 +491,10 @@ PANEL 1
 
 Everything in the front matter is a default every panel inherits — exactly the same
 mechanism as [shared defaults in a sequence](compile_a_sequence.md#shared-defaults) — and so a
-`description`, which says what one panel shows, is refused there.
+`description`, which says what one panel shows, is refused there, and so is a `script`, since a
+script's lines are its cues. The front matter also holds the
+[document's own keys](../reference/language/document.md): `scenet: 1`, `$schema`, `meta`, and
+`kind: scene`, which is the only kind a comic script is.
 
 `direction: rtl` there makes the whole script read from the top right, as a manga does; see
 [`direction`](../reference/language/direction.md#direction). It is the script's, never one panel's, so

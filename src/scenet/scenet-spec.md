@@ -110,6 +110,12 @@ starting with a letter or a digit, `Zoé` and `健` as well as `alice`. `.`, `/`
 are reserved for references between documents, and the words of a staging sentence and of a
 comic script's labels are reserved too.
 
+A document may say a few things of [itself](#a-documents-own-keys), at its top: `scenet: 1`, the language
+it is written in, which is not the version of the package; `$schema`, for an editor; `meta`, for a
+tool; and `kind`, `panel` or `scene`. A key that starts with `x-` is an
+[extension](#extension-keys), which Scenet ignores in any mapping, so no identifier starts
+with `x-`.
+
 ## The layers
 
 A panel is written in blocks, each saying one kind of thing about it. What the compiler
@@ -489,6 +495,179 @@ Schema 2020-12 reads them — and ends on `(?![\s\S])` rather than `$`, which in
 before a final line break. A schema validator and `scenet check` refuse the same names; a test
 runs every row of a table of names through the schema, the validator and the comic-script
 frontend, and holds the three to one verdict.
+
+## A document's own keys
+
+Every document -- a panel, a scene, a comic script's front matter, a puppet file, an artwork
+contract -- may say a few things of itself at its top: the language it is written in, the schema an
+editor checks it with, and whatever a tool keeps about it. A panel and a scene may also say which
+kind of document they are. None of these is a panel's: beside `panels:`, they are not defaults any
+panel inherits, and on a panel under `panels:` each is `unknown-key`.
+
+```yaml
+scenet: 1
+$schema: https://creatoan.github.io/scenet/schemas/scene.schema.json
+kind: scene
+meta: {title: The wait, written-by: Scenet contributors}
+cast:
+  alice: {reference: alice, at: left_third}
+  bob: {reference: bob, at: right_third}
+panels:
+  wide: {}
+  close: {over: wide, camera: {shot: close_up}}
+```
+
+And any key that starts with `x-` is an [extension](#extension-keys), which Scenet ignores wherever
+it is written.
+
+### `scenet`
+
+<!-- facts: scenet -->
+The language the document is written in: the major version of the Scenet language, an integer, which is not the version of the package. Left out, it is 1. A document written for a later language is refused, with nothing else said of it.
+
+| | |
+|---|---|
+| Where | The top of any document: a `.panel.yaml`, a `.scene.yaml`, an artwork contract, a puppet file. In a comic script: the front matter only |
+| Type | a whole number |
+| Values | 1 |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`language-version`](https://creatoan.github.io/scenet/reference/diagnostics.html#language-version) |
+<!-- /facts -->
+
+The language is Scenet's own version number, separate from the version of the package: a release
+that only adds to the language, or fixes the compiler, keeps it. It is written as a whole number,
+never quoted: `scenet: '1'` is text, and `invalid-field`, as are `scenet: 1.5` and `scenet: true`.
+JSON has one kind of number, so `scenet: 1.0` is the number 1 to a JSON Schema, and to Scenet too.
+It is written in [the page's example](#a-documents-own-keys).
+
+A document written for a later language than this Scenet reads is not one of this language with
+mistakes in it. So nothing else in it is checked, and `scenet check` says one thing,
+`language-version`:
+
+```text
+x.panel.yaml:1:9: language-version: written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2
+```
+
+### `$schema`
+
+<!-- facts: $schema -->
+The JSON Schema an editor checks the document with: a path or a URL. Scenet reads its own schema, whatever this says.
+
+| | |
+|---|---|
+| Where | The top of any document: a `.panel.yaml`, a `.scene.yaml`, an artwork contract, a puppet file. In a comic script: the front matter only |
+| Type | text |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field) |
+<!-- /facts -->
+
+An editor that reads JSON Schema, VS Code's YAML extension among them, takes `$schema` as the
+schema to check the document with. The four Scenet publishes are in
+[`editor/schemas/`](https://github.com/creatoan/scenet/tree/main/editor/schemas). Scenet itself
+reads its own, whatever this names. It is written in [the page's example](#a-documents-own-keys).
+
+### `meta`
+
+<!-- facts: meta -->
+What a tool keeps about the document: a mapping of anything, which Scenet reads nothing of yet. A later version of the language gives it a shape.
+
+| | |
+|---|---|
+| Where | The top of any document: a `.panel.yaml`, a `.scene.yaml`, an artwork contract, a puppet file. In a comic script: the front matter only |
+| Type | a mapping |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
+<!-- /facts -->
+
+A mapping of anything: a title, an author, a tool's notes. Nothing reads it yet, and a later version
+of the language will give it a shape, so keep to a mapping. Anything that is not a mapping is
+`invalid-field`. It is written in [the page's example](#a-documents-own-keys).
+
+### `kind`
+
+<!-- facts: kind -->
+Which kind of document it is: `panel`, or `scene` for one with `panels:`. A document is read by its shape whether it says or not, so one that says it is a scene and has no `panels:` is refused, as is the other way round. `book` is kept for a later version of the language.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; the top of a `.scene.yaml`. In a comic script: the front matter only, where it is `scene` |
+| Type | a name |
+| Values | `panel`, `scene`, `book` |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`document-kind`](https://creatoan.github.io/scenet/reference/diagnostics.html#document-kind), [`not-yet`](https://creatoan.github.io/scenet/reference/diagnostics.html#not-yet) |
+<!-- /facts -->
+
+A document is read by its **shape**, whether it says its kind or not: one with `panels:` is a
+scene, and one without is a panel. `kind` confirms it, so a document that says one thing and is
+another is `document-kind`, at the `kind`: `kind: scene` with no `panels:`, or `kind: panel` with
+them. A comic script is always a scene. `kind: book` is kept for a later version of the language,
+which reads books, and is `not-yet`. It is written in [the page's example](#a-documents-own-keys).
+
+### `include`
+
+<!-- facts: include -->
+Kept for a later version of the language, which will read one document into another. Refused until then.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; the top of a `.scene.yaml`. In a comic script: the front matter only |
+| Type | nothing yet: only `null`, which is not writing it |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`not-yet`](https://creatoan.github.io/scenet/reference/diagnostics.html#not-yet) |
+<!-- /facts -->
+
+Kept for a later version of the language, which will read one document into another. Until then it
+is `not-yet`, where it is written: a key that did nothing would lose what it holds without a word.
+`include: null` is the key not written, as `null` is for any key. No document can write it yet,
+so [the page's example](#a-documents-own-keys) does not.
+
+### `defaults`
+
+<!-- facts: defaults -->
+Kept for a later version of the language. Refused until then: in a scene, a key written beside `panels:` is a default every panel inherits.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; the top of a `.scene.yaml`. In a comic script: the front matter only |
+| Type | nothing yet: only `null`, which is not writing it |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`not-yet`](https://creatoan.github.io/scenet/reference/diagnostics.html#not-yet) |
+<!-- /facts -->
+
+Kept for a later version of the language, and `not-yet` until then. Today a default of a scene is
+any key written beside `panels:`, which every panel inherits, as in [the page's example](#a-documents-own-keys).
+
+### Extension keys
+
+A key that starts with `x-`, in lower case, is an **extension**: a tool writes it to annotate a
+document, and Scenet ignores it and everything under it. It may be written in any mapping of any
+document -- at the top, in a panel, in a cast member, in a script entry, in a page -- and the JSON
+Schemas take it everywhere too, holding anything.
+
+```yaml
+x-generator: storyboard-tool 3
+cast:
+  alice: {reference: alice, x-colour-note: red coat}
+script:
+  - say: {by: alice, text: Over here!}
+    x-take: 2
+```
+
+`X-note`, in a capital, is no extension: it is a key like any other, and `unknown-key` unless the
+language has it. In a comic script, a directive `@x-note: ...` is an extension too, and is neither a
+directive nor the panel's prose.
+
+So no [identifier](#identifiers) starts with `x-`. Under `cast:` or `panels:`, a key that does is
+an extension, never an actor or a panel: nothing can stage it, place it on a page, or be drawn
+`over` it. Written as a value, `by: x-ray` is `invalid-identifier`. Any other mapping whose keys an
+author chooses -- a puppet's poses, an artwork contract's figures -- is the same: an `x-` key there
+is an extension, never a pose or a figure.
 
 ## `panel`
 
@@ -1661,11 +1840,11 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the panel's cues, captions and sound effects, in the order written |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the panel's cues, captions and sound effects, in the order written |
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key) |
 | In the gallery | [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order) |
 <!-- /facts -->
 
@@ -1716,7 +1895,7 @@ A line of dialogue, in a balloon whose tail points at the speaker.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a cue in capitals, `ALICE`, with the line under it or after a colon |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a cue in capitals, `ALICE`, with the line under it or after a colon |
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
@@ -1741,7 +1920,7 @@ Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_p
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the cue's name, `ALICE` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the cue's name, `ALICE` |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -1770,7 +1949,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the lines under the cue, or after `ALICE:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the lines under the cue, or after `ALICE:` |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -1835,7 +2014,7 @@ Where the balloon would like to sit, one of nine zones of the panel. The weakest
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -1867,7 +2046,7 @@ The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `BOB (whisper)`, `(shout)`, `(thought)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a parenthetical: `BOB (whisper)`, `(shout)`, `(thought)` |
 | Type | a name |
 | Values | `speech`, `thought`, `whisper`, `shout` |
 | Default | `speech` |
@@ -1906,7 +2085,7 @@ script:
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `BOB (small)` or `BOB (weak)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `BOB (small)` or `BOB (weak)` |
 | Type | a name |
 | Values | `normal`, `small` |
 | Default | `normal` |
@@ -1934,7 +2113,7 @@ The speaker is outside the panel: `true`, or the side of the frame they are on. 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `ALICE (OP)`, or `ALICE (OP, left)` with a side |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `ALICE (OP)`, or `ALICE (OP, left)` with a side |
 | Type | `true` or `false`, or a name |
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
@@ -1985,7 +2164,7 @@ A caption: a box in which the panel speaks in its own voice, with no tail.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAPTION:` or `CAP:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `CAPTION:` or `CAP:` |
 | Type | a mapping |
 | Default | none |
 | Since | 0.4 |
@@ -2022,7 +2201,7 @@ What the box says, as one string; line breaks are computed. A word between under
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `CAPTION:`, or the lines under `CAP:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: after `CAPTION:`, or the lines under `CAP:` |
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
@@ -2047,7 +2226,7 @@ What the box is doing: `locale` for a place and time, `monologue` for an inner v
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `CAPTION (monologue):` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a parenthetical: `CAPTION (monologue):` |
 | Type | a name |
 | Values | `locale`, `monologue`, `spoken`, `editorial` |
 | Default | `locale` |
@@ -2084,7 +2263,7 @@ What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper,
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `paper`, `pale`, `ink`, `warm` (since 0.13) |
 | Default | `paper` |
@@ -2147,7 +2326,7 @@ Where the box would like to sit, one of nine zones of the panel. Left out, where
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -2174,7 +2353,7 @@ Who is speaking, for a `spoken` caption only: any name, in the cast or not.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAP/ALICE`, or `ALICE (V.O.)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `CAP/ALICE`, or `ALICE (V.O.)` |
 | Type | text |
 | Default | none |
 | Since | 0.4 |
@@ -2207,7 +2386,7 @@ A sound effect: letters lettered into the picture, with no balloon.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX: BLAM` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX: BLAM` |
 | Type | a mapping |
 | Default | none |
 | Since | 0.11 |
@@ -2252,7 +2431,7 @@ The sound, lettered exactly as written, in the display face. Never empty, nor on
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `SFX:`, or the line under it |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: after `SFX:`, or the line under it |
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
@@ -2278,7 +2457,7 @@ Written `from`: the actor id the sound comes from, which it is placed near.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (BOB): KRAK` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX (BOB): KRAK` |
 | Type | text |
 | Default | none |
 | Since | 0.11 |
@@ -2304,7 +2483,7 @@ Where the effect would like to sit, one of nine zones of the panel: on its own, 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -2333,7 +2512,7 @@ How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dial
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (large): KRAK` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX (large): KRAK` |
 | Type | a name |
 | Values | `small`, `medium`, `large` |
 | Default | `medium` |
@@ -2361,7 +2540,7 @@ How far the effect is turned clockwise, in degrees, from -45 to 45.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a number |
 | Values | -45 to 45 |
 | Default | `0` |
@@ -2387,7 +2566,7 @@ How far the line of letters bends, in degrees, from -120 to 120: positive bows i
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a number |
 | Values | -120 to 120 |
 | Default | `0` |
@@ -2413,7 +2592,7 @@ script:
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | `true` or `false` |
 | Default | `false` |
 | Since | 0.11 |
@@ -2906,11 +3085,15 @@ Two rules, and they are worth knowing precisely, with a third that takes somethi
   would be worse than a clear rule. So `marks: []` clears the marks a member inherited.
 - **`null` leaves something out**; see [below](#null-leaves-something-out).
 
-Two keys do not follow the rules. A [`description`](#description) says what one
+Some keys do not follow the rules. A [`description`](#description) says what one
 picture shows, so it is never a default and never inherited: beside `panels:` it is `unknown-key`,
-and a panel drawn `over` another writes its own or has one generated. And
+and a panel drawn `over` another writes its own or has one generated. A
+[`script`](#script) is what one panel says, so it is no default either: beside `panels:` it
+is `unknown-key`, and is written on the panel that says it, or on one the others are drawn `over`.
 [`direction`](#direction) is only ever the document's: on a panel it is
-`panel-direction`, since a sequence is read one way throughout.
+`panel-direction`, since a sequence is read one way throughout. And the
+[document's own keys](#a-documents-own-keys) -- `scenet`, `$schema`, `meta`, `kind` -- are the scene's, never a
+default: on a panel under `panels:` each is `unknown-key`.
 
 ### `null` leaves something out
 
@@ -5326,7 +5509,10 @@ PANEL 1
 
 Everything in the front matter is a default every panel inherits — exactly the same
 mechanism as [shared defaults in a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html#shared-defaults) — and so a
-`description`, which says what one panel shows, is refused there.
+`description`, which says what one panel shows, is refused there, and so is a `script`, since a
+script's lines are its cues. The front matter also holds the
+[document's own keys](https://creatoan.github.io/scenet/reference/language/document.html): `scenet: 1`, `$schema`, `meta`, and
+`kind: scene`, which is the only kind a comic script is.
 
 `direction: rtl` there makes the whole script read from the top right, as a manga does; see
 [`direction`](https://creatoan.github.io/scenet/reference/language/direction.html#direction). It is the script's, never one panel's, so
@@ -5449,6 +5635,7 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`composition`](#composition) | error | An `over:` chain cannot be resolved |
 | [`conflicting-cast`](#conflicting-cast) | error | A cast member is a puppet and a figure, or a cast mixes the two |
 | [`conflicting-setting`](#conflicting-setting) | error | A setting says what is behind the cast twice |
+| [`document-kind`](#document-kind) | error | The document says it is a kind it is not |
 | [`duplicate-key`](#duplicate-key) | error | A key is written twice in one mapping |
 | [`duplicate-panel`](#duplicate-panel) | error | Two panels in a comic script have the same name |
 | [`figure-staging`](#figure-staging) | error | Staging or a camera for figures a picture draws |
@@ -5457,9 +5644,11 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`internal`](#internal) | error | The compiler failed in a way it does not have a rule for |
 | [`invalid-field`](#invalid-field) | error | A field has the wrong shape or value |
 | [`invalid-identifier`](#invalid-identifier) | error | An actor id or a panel name does not follow the identifier grammar |
+| [`language-version`](#language-version) | error | The document is written for a later version of the language |
 | [`layout`](#layout) | error | No layout satisfies the panel's constraints |
 | [`missing-field`](#missing-field) | error | A required field is missing |
 | [`not-a-mapping`](#not-a-mapping) | error | The document is not a mapping |
+| [`not-yet`](#not-yet) | error | A key kept for a later version of the language is written |
 | [`off-panel-speaker`](#off-panel-speaker) | error | A line is spoken from off panel by somebody drawn in the panel |
 | [`ordering-cycle`](#ordering-cycle) | error | Horizontal ordering contains a cycle |
 | [`page-layout`](#page-layout) | error | A page cannot lay out what it says |
@@ -5723,13 +5912,50 @@ setting:
   place: shore
 ```
 
+### `document-kind`
+
+| | |
+|---|---|
+| Level | error |
+| Says | The document says it is a kind it is not |
+| Keys | [`kind`](https://creatoan.github.io/scenet/reference/language/document.html#kind) |
+| Since | 0.14 |
+
+**Why it happens.** `kind:` at the top of a document says which kind it is: `panel`, or `scene` for one with `panels:`. A document is read by its shape whether it says or not, so `kind` only confirms it -- and one that says it is a scene with no `panels:`, a panel with them, or a comic script that says it is a panel, says two things, of which one is wrong.
+
+**How to fix it.** Write the kind the document is, or leave `kind` out: the message says which. A comic script is always a scene.
+
+Checked as `document-kind.scene.yaml`:
+
+```yaml
+# The document says it is one panel, and holds its panels under `panels:`.
+kind: panel
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+```
+
+`scenet check document-kind.scene.yaml` says:
+
+```text
+document-kind.scene.yaml:2:7: document-kind: this document says `kind: panel`, but it holds its panels under `panels:`, which makes it a scene: write `kind: scene`, or leave `kind` out
+```
+
+Fixed:
+
+```yaml
+# A document with `panels:` is a scene, and says so.
+kind: scene
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+```
+
 ### `duplicate-key`
 
 | | |
 |---|---|
 | Level | error |
 | Says | A key is written twice in one mapping |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
 | Since | 0.10 |
 
 **Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
@@ -6013,7 +6239,7 @@ cast: {alice: {reference: alice}}
 | Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
 | Since | 0.14 |
 
-**Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. An id written as a value, `by:`, is text: a number there is quoted.
+**Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. No id starts with `x-`, which marks an extension key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An id written as a value, `by:`, is text: a number there is quoted.
 
 **How to fix it.** Rename it, in every place it is written: `old man` could be `old_man`, `a/b` `a-b`. The message says which part of the grammar the name breaks.
 
@@ -6031,7 +6257,7 @@ script:
 `scenet check invalid-identifier.panel.yaml` says:
 
 ```text
-invalid-identifier.panel.yaml:3:3: invalid-identifier: 'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels
+invalid-identifier.panel.yaml:3:3: invalid-identifier: 'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key
 ```
 
 Fixed:
@@ -6045,6 +6271,41 @@ staging:
   - old_man left_of bob
 script:
   - say: {by: bob, text: "Who are you?"}
+```
+
+### `language-version`
+
+| | |
+|---|---|
+| Level | error |
+| Says | The document is written for a later version of the language |
+| Keys | [`scenet`](https://creatoan.github.io/scenet/reference/language/document.html#scenet) |
+| Since | 0.14 |
+
+**Why it happens.** `scenet:` at the top of a document -- a panel, a scene, a puppet, an artwork contract, a comic script's front matter -- names the language it is written in: the Scenet language's major version, a whole number, which is not the version of the package. Left out, it is 1. A document of a later language than this Scenet reads is not one of this language with mistakes in it, so nothing else in it is checked: this is its one finding.
+
+**How to fix it.** Compile it with a Scenet that reads its language, or write it in this one and set `scenet:` to the language this Scenet reads, which the message names.
+
+Checked as `language-version.panel.yaml`:
+
+```yaml
+# Written for a later language than this Scenet reads: nothing else in it is read.
+scenet: 2
+cast: {alice: {reference: alice}}
+```
+
+`scenet check language-version.panel.yaml` says:
+
+```text
+language-version.panel.yaml:2:9: language-version: written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2
+```
+
+Fixed:
+
+```yaml
+# Written in language 1, the language this Scenet reads.
+scenet: 1
+cast: {alice: {reference: alice}}
 ```
 
 ### `layout`
@@ -6154,6 +6415,42 @@ Fixed:
 cast:
   alice: {reference: alice}
   bob: {reference: bob}
+```
+
+### `not-yet`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A key kept for a later version of the language is written |
+| Keys | [`defaults`](https://creatoan.github.io/scenet/reference/language/document.html#defaults), [`include`](https://creatoan.github.io/scenet/reference/language/document.html#include), [`kind`](https://creatoan.github.io/scenet/reference/language/document.html#kind) |
+| Since | 0.14 |
+
+**Why it happens.** Some keys are kept for a later version of the language, so that a document written today cannot mean something else by them then: `include`, to read one document into another, `defaults`, and `kind: book`. Today they do nothing, and a key that did nothing would lose what it holds without a word, so each is refused where it is written. Written as `null`, a key is not written at all.
+
+**How to fix it.** Delete it. Write here what an `include` would bring in; a default of a scene is any key written beside `panels:`; a book is not yet, so lay the panels out as a scene's pages.
+
+Checked as `not-yet.scene.yaml`:
+
+```yaml
+# `include` is kept for a later language, which reads one document into another.
+include: [chapter-1.scene.yaml]
+cast: {alice: {reference: alice}}
+panels: {one: {}}
+```
+
+`scenet check not-yet.scene.yaml` says:
+
+```text
+not-yet.scene.yaml:2:10: not-yet: 'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include
+```
+
+Fixed:
+
+```yaml
+# The panels are written here, in the document that lays them out.
+cast: {alice: {reference: alice}}
+panels: {one: {}}
 ```
 
 ### `off-panel-speaker`
@@ -6649,10 +6946,10 @@ setting: {image: art/figures.png}
 |---|---|
 | Level | error |
 | Says | Unknown key |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), [`script`](https://creatoan.github.io/scenet/reference/language/script.html#script) |
 | Since | 0.3 |
 
-**Why it happens.** Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure.
+**Why it happens.** Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure. The one exception is a key that starts with `x-`, in lower case: an extension, which a tool writes to annotate a document and Scenet ignores, in any mapping. A key written where the language has it but not there is unknown too, and said to be: a description or a script beside `panels:`, which no panel inherits, and a document's own keys -- `scenet`, `meta`, `kind` -- on one of its panels.
 
 **How to fix it.** Check the spelling against every key there is: https://creatoan.github.io/scenet/reference/language/keys.html.
 
@@ -7540,6 +7837,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "CameraSpec": {
       "additionalProperties": false,
       "description": "How the panel is framed.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "angle": {
           "anyOf": [
@@ -7590,6 +7892,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         "required": [
           "kind"
         ]
+      },
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
       },
       "properties": {
         "by": {
@@ -7735,6 +8042,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "reference",
           "figure"
         ]
+      },
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
       },
       "properties": {
         "at": {
@@ -7904,6 +8216,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         },
         {
           "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
           "properties": {
             "bold_italic": {
               "anyOf": [
@@ -7986,14 +8303,29 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       "type": "string"
     },
     "Identifier": {
-      "description": "An actor id or a panel name. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels. The letters, digits and marks are Unicode's, spelled out by code point, so every reader of this schema agrees.",
+      "description": "An actor id or a panel name. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key. The letters, digits and marks are Unicode's, spelled out by code point, so every reader of this schema agrees.",
       "pattern": "<shortened here: the grammar, with Unicode's letters, digits and marks spelled out by code point; the published schema has it whole>",
       "title": "Identifier",
+      "type": "string"
+    },
+    "Kind": {
+      "description": "Which kind of document it is: one panel, a scene of panels, or a book of scenes.",
+      "enum": [
+        "panel",
+        "scene",
+        "book"
+      ],
+      "title": "Kind",
       "type": "string"
     },
     "LetteringSpec": {
       "additionalProperties": false,
       "description": "How a panel is lettered.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "font": {
           "anyOf": [
@@ -8039,6 +8371,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "Mass": {
       "additionalProperties": false,
       "description": "One tonal mass in the backdrop: what it is, how far back, how wide.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "kind": {
           "$ref": "#/$defs/MassKind",
@@ -8092,6 +8429,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "PanelSpec": {
       "additionalProperties": false,
       "description": "The panel's own dimensions.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "margin": {
           "anyOf": [
@@ -8206,6 +8548,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         },
         {
           "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
           "properties": {
             "object": {
               "description": "The other actor id. For `looking_at`, it may be somebody heard from off panel.",
@@ -8244,6 +8591,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "SayEvent": {
       "additionalProperties": false,
       "description": "One line of dialogue.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "by": {
           "$ref": "#/$defs/Identifier",
@@ -8407,6 +8759,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           }
         ]
       },
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "fit": {
           "anyOf": [
@@ -8508,6 +8865,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "SfxEvent": {
       "additionalProperties": false,
       "description": "A sound effect: letters that are part of the picture.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "arc": {
           "default": 0.0,
@@ -8666,7 +9028,29 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "A complete, validated panel: the language's real definition.",
+  "patternProperties": {
+    "^x-": {
+      "description": "An extension: a key a tool writes, which Scenet ignores."
+    }
+  },
   "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The JSON Schema an editor checks the document with: a path or a URL. Scenet reads its own schema, whatever this says.",
+      "title": "Schema"
+    },
     "camera": {
       "anyOf": [
         {
@@ -8696,8 +9080,20 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               }
             ]
           },
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
           "propertyNames": {
-            "$ref": "#/$defs/Identifier"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Identifier"
+              },
+              {
+                "pattern": "^x-"
+              }
+            ]
           },
           "type": "object"
         },
@@ -8707,6 +9103,12 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       ],
       "description": "Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zo\u00e9`, `old_man`. Their order means nothing.",
       "title": "Cast"
+    },
+    "defaults": {
+      "default": null,
+      "description": "Kept for a later version of the language. Refused until then: in a scene, a key written beside `panels:` is a default every panel inherits.",
+      "title": "Defaults",
+      "type": "null"
     },
     "description": {
       "anyOf": [
@@ -8738,6 +9140,30 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       "default": "ltr",
       "description": "Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored."
     },
+    "include": {
+      "default": null,
+      "description": "Kept for a later version of the language, which will read one document into another. Refused until then.",
+      "title": "Include",
+      "type": "null"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Kind"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Which kind of document it is: `panel`, or `scene` for one with `panels:`. A document is read by its shape whether it says or not, so one that says it is a scene and has no `panels:` is refused, as is the other way round. `book` is kept for a later version of the language.",
+      "not": {
+        "enum": [
+          "scene",
+          "book"
+        ]
+      }
+    },
     "lettering": {
       "anyOf": [
         {
@@ -8752,6 +9178,25 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         "size": null
       },
       "description": "How the lettering is set: the dialogue type size, and the font files."
+    },
+    "meta": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What a tool keeps about the document: a mapping of anything, which Scenet reads nothing of yet. A later version of the language gives it a shape.",
+      "title": "Meta"
     },
     "palette": {
       "anyOf": [
@@ -8783,6 +9228,21 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       },
       "description": "The panel's frame: its size and margin, in panel units."
     },
+    "scenet": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The language the document is written in: the major version of the Scenet language, an integer, which is not the version of the package. Left out, it is 1. A document written for a later language is refused, with nothing else said of it.",
+      "title": "Scenet"
+    },
     "script": {
       "anyOf": [
         {
@@ -8790,6 +9250,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
             "anyOf": [
               {
                 "additionalProperties": false,
+                "patternProperties": {
+                  "^x-": {
+                    "description": "An extension: a key a tool writes, which Scenet ignores."
+                  }
+                },
                 "properties": {
                   "say": {
                     "$ref": "#/$defs/SayEvent",
@@ -8803,6 +9268,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               },
               {
                 "additionalProperties": false,
+                "patternProperties": {
+                  "^x-": {
+                    "description": "An extension: a key a tool writes, which Scenet ignores."
+                  }
+                },
                 "properties": {
                   "caption": {
                     "$ref": "#/$defs/CaptionEvent",
@@ -8816,6 +9286,11 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               },
               {
                 "additionalProperties": false,
+                "patternProperties": {
+                  "^x-": {
+                    "description": "An extension: a key a tool writes, which Scenet ignores."
+                  }
+                },
                 "properties": {
                   "sfx": {
                     "$ref": "#/$defs/SfxEvent",
@@ -9298,7 +9773,11 @@ It gives the note `camera-retreated`: no fault, since a note never stops a docum
 # this.
 #
 # Mappings merge recursively; lists replace wholesale. Anything alongside `panels:` is
-# a default every panel inherits.
+# a default every panel inherits -- but the document's own keys at the top, which say
+# which language it is written in and that it is a scene.
+
+scenet: 1
+kind: scene
 
 panel: {size: [700, 560]}
 
@@ -9424,6 +9903,14 @@ A margin keeps the lettering in, while the actors may bleed off the edge.
 # than a required one, so a crowded panel lets a figure run off the edge instead of
 # refusing to compile. Lettering has no such licence: text that leaves the panel is
 # text nobody can read.
+#
+# Its top says what it is: a panel of language 1, checked in an editor with the published
+# schema, and a title a tool keeps, which Scenet reads nothing of.
+
+scenet: 1
+$schema: https://creatoan.github.io/scenet/schemas/panel.schema.json
+kind: panel
+meta: {title: The margin}
 
 panel:
   size: [900, 700]

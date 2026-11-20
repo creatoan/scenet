@@ -26,14 +26,16 @@ SPEECH = "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Over he
 #: Three pages of one format, 1000 wide: two panels on the first, one on each of the rest.
 THREE_PAGES = """
 cast: {a: {reference: alice}}
-script:
-  - say: {by: a, text: Over here.}
 page: {size: [1000, 1500]}
 pages:
   - tiers: [{panels: [one, two]}]
   - tiers: [{panels: [three]}]
   - tiers: [{panels: [four]}]
-panels: {one: {}, two: {}, three: {}, four: {}}
+panels:
+  one: {script: [{say: {by: a, text: Over here.}}]}
+  two: {over: one}
+  three: {over: one}
+  four: {over: one}
 """
 
 

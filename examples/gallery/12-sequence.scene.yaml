@@ -3,7 +3,11 @@
 # this.
 #
 # Mappings merge recursively; lists replace wholesale. Anything alongside `panels:` is
-# a default every panel inherits.
+# a default every panel inherits -- but the document's own keys at the top, which say
+# which language it is written in and that it is a scene.
+
+scenet: 1
+kind: scene
 
 panel: {size: [700, 560]}
 

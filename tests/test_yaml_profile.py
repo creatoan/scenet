@@ -568,7 +568,10 @@ class TestTheModels:
     def test_a_key_stays_a_string_in_the_schema(self):
         """Typed by `propertyNames` alone, which says nothing of `type`: a key is text."""
         figures = artwork_schema()["properties"]["figures"]
-        assert figures["propertyNames"] == {"minLength": 1, "pattern": HOLDABLE_PATTERN}
+        # Or an extension's key, which every mapping takes (#357).
+        assert figures["propertyNames"] == {
+            "anyOf": [{"minLength": 1, "pattern": HOLDABLE_PATTERN}, {"pattern": "^x-"}]
+        }
 
 
 # --- What to write instead ---------------------------------------------------------------

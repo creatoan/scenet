@@ -3,6 +3,11 @@
     "ArtworkFace": {
       "additionalProperties": false,
       "description": "A face, as a disc no lettering may cover.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "center": {
           "description": "The face's centre, `[x, y]` in the picture's pixels, from its top left.",
@@ -36,6 +41,11 @@
     "ArtworkFigure": {
       "additionalProperties": false,
       "description": "One figure the picture draws.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "body": {
           "anyOf": [
@@ -102,15 +112,49 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Everything the solver may know about a supplied picture's content.",
+  "patternProperties": {
+    "^x-": {
+      "description": "An extension: a key a tool writes, which Scenet ignores."
+    }
+  },
   "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The JSON Schema an editor checks the document with: a path or a URL. Scenet reads its own schema, whatever this says.",
+      "title": "Schema"
+    },
     "figures": {
       "additionalProperties": {
         "$ref": "#/$defs/ArtworkFigure"
       },
       "description": "Each figure the picture draws, by the name a cast member's `figure` gives it. Every face here is kept clear of lettering, cast or not.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "propertyNames": {
-        "minLength": 1,
-        "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        "anyOf": [
+          {
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$"
+          },
+          {
+            "pattern": "^x-"
+          }
+        ]
       },
       "title": "Figures",
       "type": "object"
@@ -137,6 +181,40 @@
       },
       "title": "Keep Out",
       "type": "array"
+    },
+    "meta": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What a tool keeps about the document: a mapping of anything, which Scenet reads nothing of yet. A later version of the language gives it a shape.",
+      "title": "Meta"
+    },
+    "scenet": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The language the document is written in: the major version of the Scenet language, an integer, which is not the version of the package. Left out, it is 1. A document written for a later language is refused, with nothing else said of it.",
+      "title": "Scenet"
     },
     "size": {
       "description": "The picture's size in pixels, `[width, height]`, as it was measured. It must be the picture's own.",

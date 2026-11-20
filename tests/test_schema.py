@@ -90,6 +90,13 @@ class TestPanelSchema:
     def test_top_level_keys_match_the_language(self):
         properties = panel_schema()["properties"]
         assert set(properties) == {
+            # The document's own keys (#357).
+            "scenet",
+            "$schema",
+            "meta",
+            "kind",
+            "include",
+            "defaults",
             "panel",
             "camera",
             "setting",
@@ -294,10 +301,20 @@ class TestSceneSchema:
         panel = panel_schema()["properties"]
         scene = scene_schema()["properties"]
         member = scene["panels"]["additionalProperties"]["properties"]
-        # A direction is the whole document's: a scene's, never one panel's (#68).
-        assert set(panel) - set(member) == {"direction"}
-        # A description says what one panel shows: a panel's, never a scene's default.
-        assert set(panel) - set(scene) == {"description"}
+        # A direction is the whole document's: a scene's, never one panel's (#68). So are
+        # the document's own keys (#357).
+        assert set(panel) - set(member) == {
+            "direction",
+            "scenet",
+            "$schema",
+            "meta",
+            "kind",
+            "include",
+            "defaults",
+        }
+        # A description says what one panel shows, and a script what one panel says: a
+        # panel's, never a scene's default (#357).
+        assert set(panel) - set(scene) == {"description", "script"}
 
     def test_a_panel_of_a_scene_is_offered_no_direction(self):
         member = scene_schema()["properties"]["panels"]["additionalProperties"]

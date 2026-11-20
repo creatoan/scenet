@@ -1866,7 +1866,11 @@ Panels that follow one another, each written as what changes from the panel befo
 # this.
 #
 # Mappings merge recursively; lists replace wholesale. Anything alongside `panels:` is
-# a default every panel inherits.
+# a default every panel inherits -- but the document's own keys at the top, which say
+# which language it is written in and that it is a scene.
+
+scenet: 1
+kind: scene
 
 panel: {size: [700, 560]}
 
@@ -1970,6 +1974,14 @@ A margin keeps the lettering in, while the actors may bleed off the edge.
 # than a required one, so a crowded panel lets a figure run off the edge instead of
 # refusing to compile. Lettering has no such licence: text that leaves the panel is
 # text nobody can read.
+#
+# Its top says what it is: a panel of language 1, checked in an editor with the published
+# schema, and a title a tool keeps, which Scenet reads nothing of.
+
+scenet: 1
+$schema: https://creatoan.github.io/scenet/schemas/panel.schema.json
+kind: panel
+meta: {title: The margin}
 
 panel:
   size: [900, 700]

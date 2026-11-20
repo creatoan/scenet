@@ -1,0 +1,4 @@
+# A document with `panels:` is a scene, and says so.
+kind: scene
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}

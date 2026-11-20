@@ -1222,6 +1222,11 @@ ODD_KEYS = (
     "prefer",
     "from",
     "camera",
+    # The document's own keys, and an extension, which any mapping takes (#357).
+    "scenet",
+    "meta",
+    "include",
+    "x-note",
 )
 
 _Path = tuple[str | int, ...]
