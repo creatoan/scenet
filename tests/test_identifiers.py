@@ -56,6 +56,8 @@ TABLE: dict[str, tuple[str, str | None]] = {
     "a panel and a letter": ("4B", None),
     "with an underscore": ("old_man", None),
     "with a hyphen": ("mary-jane", None),
+    "a capital X and a hyphen": ("X-ray", None),
+    "an x and no hyphen": ("xray", None),
     "the longest": ("a" * MAX_LENGTH, None),
     "a reserved word and more": ("left_ofs", None),
     "a reserved word inside": ("caps", None),

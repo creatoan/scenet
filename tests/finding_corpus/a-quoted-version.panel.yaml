@@ -1,0 +1,3 @@
+# The version is a number, and a quoted one is text.
+scenet: '1'
+cast: {alice: {reference: alice}}

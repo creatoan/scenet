@@ -6,6 +6,7 @@
 # Mined from the tags by `uv run python scripts/build_language_pages.py --mine-since`.
 
 [keys]
+"$schema" = "0.14"
 "anchors" = "0.13"
 "anchors.<anchor>.joint" = "0.13"
 "anchors.<anchor>.offset" = "0.13"
@@ -29,6 +30,7 @@
 "columns[].panels" = "0.10"
 "columns[].panels[].height" = "0.10"
 "columns[].width" = "0.10"
+"defaults" = "0.14"
 "description" = "0.12"
 "direction" = "0.12"
 "expressions" = "0.13"
@@ -51,6 +53,7 @@
 "figures.<name>.mouth" = "0.12"
 "gaze" = "0.13"
 "gaze.origin" = "0.13"
+"include" = "0.14"
 "insets[].at" = "0.10"
 "insets[].read" = "0.10"
 "insets[].size" = "0.10"
@@ -59,6 +62,7 @@
 "joints.<joint>.offset" = "0.13"
 "joints.<joint>.parent" = "0.13"
 "keep_out" = "0.12"
+"kind" = "0.14"
 "landmarks" = "0.13"
 "landmarks.head_top" = "0.13"
 "lettering" = "0.11"
@@ -68,6 +72,7 @@
 "lettering.font.italic" = "0.11"
 "lettering.font.regular" = "0.11"
 "lettering.size" = "0.11"
+"meta" = "0.14"
 "name" = "0.13"
 "over" = "0.1"
 "page" = "0.10"
@@ -104,6 +109,7 @@
 "say.prefer" = "0.1"
 "say.size" = "0.11"
 "say.text" = "0.1"
+"scenet" = "0.14"
 "script" = "0.1"
 "setting" = "0.6"
 "setting.fit" = "0.12"

@@ -1,0 +1,8 @@
+---
+# A script written for a later language.
+scenet: 2
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.

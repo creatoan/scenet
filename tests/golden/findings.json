@@ -299,6 +299,42 @@
   "examples/gallery/72-three-horizons.scene.yaml --deep": [],
   "examples/gallery/73-panels-that-bleed.scene.yaml": [],
   "examples/gallery/73-panels-that-bleed.scene.yaml --deep": [],
+  "tests/finding_corpus/a-book.scene.yaml": [
+    {
+      "fingerprint": "51a1e57720d72eb11d9ba8f98416e76a",
+      "level": "error",
+      "message": "'kind: book' is not yet in the language: a later version will read books. Write `kind: scene` for a scene, or leave `kind` out",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/a-book.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-book.scene.yaml --deep": [
+    {
+      "fingerprint": "51a1e57720d72eb11d9ba8f98416e76a",
+      "level": "error",
+      "message": "'kind: book' is not yet in the language: a later version will read books. Write `kind: scene` for a scene, or leave `kind` out",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/a-book.scene.yaml"
+    }
+  ],
   "tests/finding_corpus/a-broken-puppet-file-then-an-unknown-puppet.script": [
     {
       "fingerprint": "317527b6b960fd23c34e3a57a8dadf28",
@@ -633,43 +669,37 @@
   ],
   "tests/finding_corpus/a-default-script-every-panel-inherits.scene.yaml": [
     {
-      "fingerprint": "921e1279b0d1d813978c81ac64906c9b",
+      "fingerprint": "076b588f8ec88a7e0194db17e801bc18",
       "level": "error",
-      "message": "script entry 0 is spoken by unknown actor 'nobody'; cast is ['alice']. If they speak from outside the panel, say so with off_panel",
+      "message": "'script' is what one panel says, so it is not a default every panel inherits: write it on the panel that says it, or on one the others are drawn `over`",
       "path": [
-        "script",
-        0,
-        "say",
-        "by"
+        "script"
       ],
       "region": [
         3,
-        21,
+        9,
         3,
-        27
+        44
       ],
-      "rule": "unknown-actor",
+      "rule": "unknown-key",
       "source": "tests/finding_corpus/a-default-script-every-panel-inherits.scene.yaml"
     }
   ],
   "tests/finding_corpus/a-default-script-every-panel-inherits.scene.yaml --deep": [
     {
-      "fingerprint": "921e1279b0d1d813978c81ac64906c9b",
+      "fingerprint": "076b588f8ec88a7e0194db17e801bc18",
       "level": "error",
-      "message": "script entry 0 is spoken by unknown actor 'nobody'; cast is ['alice']. If they speak from outside the panel, say so with off_panel",
+      "message": "'script' is what one panel says, so it is not a default every panel inherits: write it on the panel that says it, or on one the others are drawn `over`",
       "path": [
-        "script",
-        0,
-        "say",
-        "by"
+        "script"
       ],
       "region": [
         3,
-        21,
+        9,
         3,
-        27
+        44
       ],
-      "rule": "unknown-actor",
+      "rule": "unknown-key",
       "source": "tests/finding_corpus/a-default-script-every-panel-inherits.scene.yaml"
     }
   ],
@@ -1175,15 +1205,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-description.script": [
     {
-      "fingerprint": "faba137a3fc1b2f61c2e1f1dc116214a",
+      "fingerprint": "2baa48f24dcae527bd7802294af62987",
       "level": "error",
-      "message": "'description' describes one panel, so it is not a default every panel inherits; write it on the panel it describes",
+      "message": "line 2: 'description' describes one panel, so it is not a default every panel inherits; write it on the panel it describes",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        15,
+        2,
+        24
       ],
       "rule": "unknown-key",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-description.script"
@@ -1191,15 +1221,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-description.script --deep": [
     {
-      "fingerprint": "faba137a3fc1b2f61c2e1f1dc116214a",
+      "fingerprint": "2baa48f24dcae527bd7802294af62987",
       "level": "error",
-      "message": "'description' describes one panel, so it is not a default every panel inherits; write it on the panel it describes",
+      "message": "line 2: 'description' describes one panel, so it is not a default every panel inherits; write it on the panel it describes",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        15,
+        2,
+        24
       ],
       "rule": "unknown-key",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-description.script"
@@ -1207,15 +1237,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-direction.script": [
     {
-      "fingerprint": "62432c130c061d4197a113f0e42fcfa2",
+      "fingerprint": "de4489d89c5d8f2db05347771fc180cb",
       "level": "error",
-      "message": "'direction' is 'ltr' or 'rtl', not 'upward'",
+      "message": "line 2: 'direction' is 'ltr' or 'rtl', not 'upward'",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        13,
+        2,
+        19
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-direction.script"
@@ -1223,15 +1253,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-direction.script --deep": [
     {
-      "fingerprint": "62432c130c061d4197a113f0e42fcfa2",
+      "fingerprint": "de4489d89c5d8f2db05347771fc180cb",
       "level": "error",
-      "message": "'direction' is 'ltr' or 'rtl', not 'upward'",
+      "message": "line 2: 'direction' is 'ltr' or 'rtl', not 'upward'",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        13,
+        2,
+        19
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-a-direction.script"
@@ -1239,9 +1269,9 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script": [
     {
-      "fingerprint": "8a6c5955bf8f0d79ed289952baf5bdc1",
+      "fingerprint": "1e829c8c9ac1fb4960b3f4c72c8f2736",
       "level": "error",
-      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         2,
@@ -1255,9 +1285,9 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-a-reserved-name.script --deep": [
     {
-      "fingerprint": "8a6c5955bf8f0d79ed289952baf5bdc1",
+      "fingerprint": "1e829c8c9ac1fb4960b3f4c72c8f2736",
       "level": "error",
-      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 2: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         2,
@@ -1271,15 +1301,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-pages.script": [
     {
-      "fingerprint": "eb3bd13df7c968d090e88243a9155dd0",
+      "fingerprint": "0dfe5f021b3dab1eecb8d022fac79424",
       "level": "error",
-      "message": "a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
+      "message": "line 2: a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        9,
+        2,
+        11
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-pages.script"
@@ -1287,15 +1317,15 @@
   ],
   "tests/finding_corpus/a-flow-style-front-matter-with-pages.script --deep": [
     {
-      "fingerprint": "eb3bd13df7c968d090e88243a9155dd0",
+      "fingerprint": "0dfe5f021b3dab1eecb8d022fac79424",
       "level": "error",
-      "message": "a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
+      "message": "line 2: a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        2,
+        9,
+        2,
+        11
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/a-flow-style-front-matter-with-pages.script"
@@ -1503,7 +1533,7 @@
       "path": [],
       "region": [
         5,
-        1,
+        14,
         5,
         23
       ],
@@ -1519,7 +1549,7 @@
       "path": [],
       "region": [
         5,
-        1,
+        14,
         5,
         23
       ],
@@ -1687,8 +1717,86 @@
       "source": "tests/finding_corpus/a-key-twice-in-a-directive.script"
     }
   ],
+  "tests/finding_corpus/a-later-language-with-unknown-keys.panel.yaml": [
+    {
+      "fingerprint": "c75148dd791760d176d9eec13203cc1b",
+      "level": "error",
+      "message": "written for Scenet language 3; this is language 1. Compile it with a later Scenet, one that reads language 3",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/finding_corpus/a-later-language-with-unknown-keys.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-later-language-with-unknown-keys.panel.yaml --deep": [
+    {
+      "fingerprint": "c75148dd791760d176d9eec13203cc1b",
+      "level": "error",
+      "message": "written for Scenet language 3; this is language 1. Compile it with a later Scenet, one that reads language 3",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/finding_corpus/a-later-language-with-unknown-keys.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-line-before-any-panel.script": [],
   "tests/finding_corpus/a-line-before-any-panel.script --deep": [],
+  "tests/finding_corpus/a-line-by-an-extension-name.panel.yaml": [
+    {
+      "fingerprint": "4dc40ab83ba83130e4d69b7bc34608e1",
+      "level": "error",
+      "message": "'x-ray' is not an id: it starts with 'x-', which marks an extension key, one Scenet ignores wherever it is written. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
+      "path": [
+        "script",
+        0,
+        "say",
+        "by"
+      ],
+      "region": [
+        3,
+        21,
+        3,
+        26
+      ],
+      "rule": "invalid-identifier",
+      "source": "tests/finding_corpus/a-line-by-an-extension-name.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-line-by-an-extension-name.panel.yaml --deep": [
+    {
+      "fingerprint": "4dc40ab83ba83130e4d69b7bc34608e1",
+      "level": "error",
+      "message": "'x-ray' is not an id: it starts with 'x-', which marks an extension key, one Scenet ignores wherever it is written. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
+      "path": [
+        "script",
+        0,
+        "say",
+        "by"
+      ],
+      "region": [
+        3,
+        21,
+        3,
+        26
+      ],
+      "rule": "invalid-identifier",
+      "source": "tests/finding_corpus/a-line-by-an-extension-name.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-line-that-reads-like-a-cue.script": [],
   "tests/finding_corpus/a-line-that-reads-like-a-cue.script --deep": [],
   "tests/finding_corpus/a-long-caption-after-a-sound.panel.yaml": [
@@ -2945,6 +3053,42 @@
       "source": "tests/finding_corpus/a-puppet-and-a-figure.panel.yaml"
     }
   ],
+  "tests/finding_corpus/a-quoted-version.panel.yaml": [
+    {
+      "fingerprint": "fd162aa1c4c8d53e9dff09fd3d865a1a",
+      "level": "error",
+      "message": "'1' is quoted, so it is text: write 1, without the quotes",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        12
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-quoted-version.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-quoted-version.panel.yaml --deep": [
+    {
+      "fingerprint": "fd162aa1c4c8d53e9dff09fd3d865a1a",
+      "level": "error",
+      "message": "'1' is quoted, so it is text: write 1, without the quotes",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        12
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-quoted-version.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-relation-dropped-by-a-panel-s-cast.script": [
     {
       "fingerprint": "d363389cf377d68e93795190e5dba3c2",
@@ -3103,9 +3247,9 @@
   ],
   "tests/finding_corpus/a-reserved-name-in-quotes.script": [
     {
-      "fingerprint": "d6b53735a96a8c299afc831e16d20dec",
+      "fingerprint": "e11d31e0e59dc7d4a58bbd7a0c17c958",
       "level": "error",
-      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         3,
@@ -3119,9 +3263,9 @@
   ],
   "tests/finding_corpus/a-reserved-name-in-quotes.script --deep": [
     {
-      "fingerprint": "d6b53735a96a8c299afc831e16d20dec",
+      "fingerprint": "e11d31e0e59dc7d4a58bbd7a0c17c958",
       "level": "error",
-      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         3,
@@ -3169,6 +3313,42 @@
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/a-say-that-is-a-line.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-scene-kind-with-no-panels.panel.yaml": [
+    {
+      "fingerprint": "6aba8f2a5238ea1cf32052d2bd6f179f",
+      "level": "error",
+      "message": "this document says `kind: scene`, but it has no `panels:`, so it is one panel: write `kind: panel`, or put its panels under `panels:`",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/finding_corpus/a-scene-kind-with-no-panels.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-scene-kind-with-no-panels.panel.yaml --deep": [
+    {
+      "fingerprint": "6aba8f2a5238ea1cf32052d2bd6f179f",
+      "level": "error",
+      "message": "this document says `kind: scene`, but it has no `panels:`, so it is one panel: write `kind: panel`, or put its panels under `panels:`",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/finding_corpus/a-scene-kind-with-no-panels.panel.yaml"
     }
   ],
   "tests/finding_corpus/a-scene-panel-with-no-room.scene.yaml": [],
@@ -3612,6 +3792,78 @@
       "source": "tests/finding_corpus/a-tier-of-panels-and-columns.scene.yaml"
     }
   ],
+  "tests/finding_corpus/a-version-directive.script": [
+    {
+      "fingerprint": "4bf5fc8e8ba6c4a16ac860a2321be11d",
+      "level": "error",
+      "message": "line 5: 'scenet' says something of the whole document, so a panel cannot have one of its own: write it once, in the front matter",
+      "path": [],
+      "region": [
+        5,
+        1,
+        5,
+        11
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/a-version-directive.script"
+    }
+  ],
+  "tests/finding_corpus/a-version-directive.script --deep": [
+    {
+      "fingerprint": "4bf5fc8e8ba6c4a16ac860a2321be11d",
+      "level": "error",
+      "message": "line 5: 'scenet' says something of the whole document, so a panel cannot have one of its own: write it once, in the front matter",
+      "path": [],
+      "region": [
+        5,
+        1,
+        5,
+        11
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/a-version-directive.script"
+    }
+  ],
+  "tests/finding_corpus/a-version-in-a-panel.scene.yaml": [
+    {
+      "fingerprint": "5360060c5e6a6fc3e251b8427b667cb3",
+      "level": "error",
+      "message": "'scenet' says something of the whole document, so a panel cannot have one of its own: write it once, at the top of the document",
+      "path": [
+        "panels",
+        "two",
+        "scenet"
+      ],
+      "region": [
+        4,
+        33,
+        4,
+        34
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/a-version-in-a-panel.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-version-in-a-panel.scene.yaml --deep": [
+    {
+      "fingerprint": "5360060c5e6a6fc3e251b8427b667cb3",
+      "level": "error",
+      "message": "'scenet' says something of the whole document, so a panel cannot have one of its own: write it once, at the top of the document",
+      "path": [
+        "panels",
+        "two",
+        "scenet"
+      ],
+      "region": [
+        4,
+        33,
+        4,
+        34
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/a-version-in-a-panel.scene.yaml"
+    }
+  ],
   "tests/finding_corpus/a-voice-over-with-nothing-under-it.script": [
     {
       "fingerprint": "34426aa269e4968c04a9864d812305bb",
@@ -3686,6 +3938,42 @@
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/an-empty-description.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/an-extension-key-in-capitals.panel.yaml": [
+    {
+      "fingerprint": "32fe01901d902bb9c92250d3aba9b63a",
+      "level": "error",
+      "message": "Extra inputs are not permitted",
+      "path": [
+        "X-generator"
+      ],
+      "region": [
+        2,
+        14,
+        2,
+        20
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/an-extension-key-in-capitals.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/an-extension-key-in-capitals.panel.yaml --deep": [
+    {
+      "fingerprint": "32fe01901d902bb9c92250d3aba9b63a",
+      "level": "error",
+      "message": "Extra inputs are not permitted",
+      "path": [
+        "X-generator"
+      ],
+      "region": [
+        2,
+        14,
+        2,
+        20
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/an-extension-key-in-capitals.panel.yaml"
     }
   ],
   "tests/finding_corpus/an-inline-line-of-two-kinds.script": [
@@ -4000,6 +4288,42 @@
   ],
   "tests/finding_corpus/casts-over-panels-on-pages.script": [],
   "tests/finding_corpus/casts-over-panels-on-pages.script --deep": [],
+  "tests/finding_corpus/defaults-beside-panels.scene.yaml": [
+    {
+      "fingerprint": "3fc2f5f56a53d882c264368a91e76557",
+      "level": "error",
+      "message": "'defaults' is not yet in the language: a later version will read it, to give the panels of a scene what they share. Delete it; in a scene, a key written beside `panels:` is a default every panel inherits",
+      "path": [
+        "defaults"
+      ],
+      "region": [
+        2,
+        11,
+        2,
+        37
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/defaults-beside-panels.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/defaults-beside-panels.scene.yaml --deep": [
+    {
+      "fingerprint": "3fc2f5f56a53d882c264368a91e76557",
+      "level": "error",
+      "message": "'defaults' is not yet in the language: a later version will read it, to give the panels of a scene what they share. Delete it; in a scene, a key written beside `panels:` is a default every panel inherits",
+      "path": [
+        "defaults"
+      ],
+      "region": [
+        2,
+        11,
+        2,
+        37
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/defaults-beside-panels.scene.yaml"
+    }
+  ],
   "tests/finding_corpus/direction-directive.script": [
     {
       "fingerprint": "28cb5a0ecf95d506e26cd04ee990782f",
@@ -4034,9 +4358,9 @@
   ],
   "tests/finding_corpus/directive-reserved-cast.script": [
     {
-      "fingerprint": "d4a0a94734c14f5f7ccf85574023608a",
+      "fingerprint": "2de5ac0ea040e19a186e5c569e775e50",
       "level": "error",
-      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         5,
@@ -4050,9 +4374,9 @@
   ],
   "tests/finding_corpus/directive-reserved-cast.script --deep": [
     {
-      "fingerprint": "d4a0a94734c14f5f7ccf85574023608a",
+      "fingerprint": "2de5ac0ea040e19a186e5c569e775e50",
       "level": "error",
-      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 5: 'CAPTION' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         5,
@@ -4252,7 +4576,7 @@
       "path": [],
       "region": [
         4,
-        1,
+        14,
         4,
         23
       ],
@@ -4268,7 +4592,7 @@
       "path": [],
       "region": [
         4,
-        1,
+        14,
         4,
         23
       ],
@@ -4284,7 +4608,7 @@
       "path": [],
       "region": [
         3,
-        1,
+        12,
         3,
         18
       ],
@@ -4300,12 +4624,76 @@
       "path": [],
       "region": [
         3,
-        1,
+        12,
         3,
         18
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/front-matter-direction-wrong.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-include.script": [
+    {
+      "fingerprint": "9ced0f48a5d14962d2dd9f253e69e52a",
+      "level": "error",
+      "message": "line 3: in the front matter, 'include': 'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include",
+      "path": [],
+      "region": [
+        3,
+        10,
+        3,
+        21
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/front-matter-include.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-include.script --deep": [
+    {
+      "fingerprint": "9ced0f48a5d14962d2dd9f253e69e52a",
+      "level": "error",
+      "message": "line 3: in the front matter, 'include': 'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include",
+      "path": [],
+      "region": [
+        3,
+        10,
+        3,
+        21
+      ],
+      "rule": "not-yet",
+      "source": "tests/finding_corpus/front-matter-include.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-kind-panel.script": [
+    {
+      "fingerprint": "7001873b69ab40176e84f89b25a70c1b",
+      "level": "error",
+      "message": "line 3: a comic script is a scene, whose panels are its PANEL headings, so its kind is `scene`: write `kind: scene`, or leave `kind` out",
+      "path": [],
+      "region": [
+        3,
+        7,
+        3,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/finding_corpus/front-matter-kind-panel.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-kind-panel.script --deep": [
+    {
+      "fingerprint": "7001873b69ab40176e84f89b25a70c1b",
+      "level": "error",
+      "message": "line 3: a comic script is a scene, whose panels are its PANEL headings, so its kind is `scene`: write `kind: scene`, or leave `kind` out",
+      "path": [],
+      "region": [
+        3,
+        7,
+        3,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/finding_corpus/front-matter-kind-panel.script"
     }
   ],
   "tests/finding_corpus/front-matter-not-a-mapping.script": [
@@ -4342,15 +4730,15 @@
   ],
   "tests/finding_corpus/front-matter-pages.script": [
     {
-      "fingerprint": "8e3f8998de7e347bfb9eee32fc8988a3",
+      "fingerprint": "7600edf50c277246513f7073a84699b3",
       "level": "error",
-      "message": "a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
+      "message": "line 4: a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        4,
+        8,
+        4,
+        10
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/front-matter-pages.script"
@@ -4358,15 +4746,15 @@
   ],
   "tests/finding_corpus/front-matter-pages.script --deep": [
     {
-      "fingerprint": "8e3f8998de7e347bfb9eee32fc8988a3",
+      "fingerprint": "7600edf50c277246513f7073a84699b3",
       "level": "error",
-      "message": "a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
+      "message": "line 4: a comic script's pages come from its PAGE headings, so its front matter has no `pages:`; `page:` sets their format",
       "path": [],
       "region": [
-        1,
-        1,
-        1,
-        4
+        4,
+        8,
+        4,
+        10
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/front-matter-pages.script"
@@ -4374,9 +4762,9 @@
   ],
   "tests/finding_corpus/front-matter-reserved-cast.script": [
     {
-      "fingerprint": "c2a417c1b746ba1c3ec9188d5d03f506",
+      "fingerprint": "5f70efaae0b35bd6e103a957a21fc207",
       "level": "error",
-      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         3,
@@ -4390,9 +4778,9 @@
   ],
   "tests/finding_corpus/front-matter-reserved-cast.script --deep": [
     {
-      "fingerprint": "c2a417c1b746ba1c3ec9188d5d03f506",
+      "fingerprint": "5f70efaae0b35bd6e103a957a21fc207",
       "level": "error",
-      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "line 3: 'SFX' is not an id: it is a reserved word. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [],
       "region": [
         3,
@@ -4402,6 +4790,70 @@
       ],
       "rule": "invalid-identifier",
       "source": "tests/finding_corpus/front-matter-reserved-cast.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-script.script": [
+    {
+      "fingerprint": "baa3d287680bf89b85e3e48f0bbfcc18",
+      "level": "error",
+      "message": "line 4: a comic script's lines are its cues, captions and sound effects, each under its PANEL heading, so its front matter has no 'script'",
+      "path": [],
+      "region": [
+        4,
+        9,
+        4,
+        43
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/front-matter-script.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-script.script --deep": [
+    {
+      "fingerprint": "baa3d287680bf89b85e3e48f0bbfcc18",
+      "level": "error",
+      "message": "line 4: a comic script's lines are its cues, captions and sound effects, each under its PANEL heading, so its front matter has no 'script'",
+      "path": [],
+      "region": [
+        4,
+        9,
+        4,
+        43
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/front-matter-script.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-version-later.script": [
+    {
+      "fingerprint": "43af989fb705de1aaf0f616b8c350c20",
+      "level": "error",
+      "message": "line 3: written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2",
+      "path": [],
+      "region": [
+        3,
+        9,
+        3,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/finding_corpus/front-matter-version-later.script"
+    }
+  ],
+  "tests/finding_corpus/front-matter-version-later.script --deep": [
+    {
+      "fingerprint": "43af989fb705de1aaf0f616b8c350c20",
+      "level": "error",
+      "message": "line 3: written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2",
+      "path": [],
+      "region": [
+        3,
+        9,
+        3,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/finding_corpus/front-matter-version-later.script"
     }
   ],
   "tests/finding_corpus/front-matter-yaml-broken.script": [
@@ -4476,6 +4928,42 @@
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/marks-listed-twice.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/meta-that-is-a-list.panel.yaml": [
+    {
+      "fingerprint": "583ee68190dc1f464f52a113c71f314a",
+      "level": "error",
+      "message": "Input should be a valid dictionary",
+      "path": [
+        "meta"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/meta-that-is-a-list.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/meta-that-is-a-list.panel.yaml --deep": [
+    {
+      "fingerprint": "583ee68190dc1f464f52a113c71f314a",
+      "level": "error",
+      "message": "Input should be a valid dictionary",
+      "path": [
+        "meta"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/meta-that-is-a-list.panel.yaml"
     }
   ],
   "tests/finding_corpus/no-panel-headings.script": [
@@ -6549,6 +7037,42 @@
   ],
   "tests/rule_corpus/curved-tail.panel.yaml": [],
   "tests/rule_corpus/curved-tail.panel.yaml --deep": [],
+  "tests/rule_corpus/document-kind.scene.yaml": [
+    {
+      "fingerprint": "5ea9be7bb2cdb9c903eb3de68e56f697",
+      "level": "error",
+      "message": "this document says `kind: panel`, but it holds its panels under `panels:`, which makes it a scene: write `kind: scene`, or leave `kind` out",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/rule_corpus/document-kind.scene.yaml"
+    }
+  ],
+  "tests/rule_corpus/document-kind.scene.yaml --deep": [
+    {
+      "fingerprint": "5ea9be7bb2cdb9c903eb3de68e56f697",
+      "level": "error",
+      "message": "this document says `kind: panel`, but it holds its panels under `panels:`, which makes it a scene: write `kind: scene`, or leave `kind` out",
+      "path": [
+        "kind"
+      ],
+      "region": [
+        2,
+        7,
+        2,
+        12
+      ],
+      "rule": "document-kind",
+      "source": "tests/rule_corpus/document-kind.scene.yaml"
+    }
+  ],
   "tests/rule_corpus/dropped-relation.script": [
     {
       "fingerprint": "b591dc9427c8511196704ac3c305e4ed",
@@ -6891,6 +7415,8 @@
   ],
   "tests/rule_corpus/fixed/curved-tail.panel.yaml": [],
   "tests/rule_corpus/fixed/curved-tail.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/document-kind.scene.yaml": [],
+  "tests/rule_corpus/fixed/document-kind.scene.yaml --deep": [],
   "tests/rule_corpus/fixed/dropped-relation.script": [],
   "tests/rule_corpus/fixed/dropped-relation.script --deep": [],
   "tests/rule_corpus/fixed/duplicate-key.panel.yaml": [],
@@ -7059,6 +7585,8 @@
       "source": "tests/rule_corpus/fixed/italic-stand-in.panel.yaml"
     }
   ],
+  "tests/rule_corpus/fixed/language-version.panel.yaml": [],
+  "tests/rule_corpus/fixed/language-version.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/layout.panel.yaml": [],
   "tests/rule_corpus/fixed/layout.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/looks-like-dialogue.script": [],
@@ -7067,6 +7595,8 @@
   "tests/rule_corpus/fixed/missing-field.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/not-a-mapping.panel.yaml": [],
   "tests/rule_corpus/fixed/not-a-mapping.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/not-yet.scene.yaml": [],
+  "tests/rule_corpus/fixed/not-yet.scene.yaml --deep": [],
   "tests/rule_corpus/fixed/off-panel-speaker.panel.yaml": [],
   "tests/rule_corpus/fixed/off-panel-speaker.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/ordering-cycle.panel.yaml": [],
@@ -7305,9 +7835,9 @@
   ],
   "tests/rule_corpus/invalid-identifier.panel.yaml": [
     {
-      "fingerprint": "7ac4cfa2aa49f51493599859b61bc195",
+      "fingerprint": "7488a0c94a874e802a501b5aa90812cd",
       "level": "error",
-      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [
         "cast",
         "old man",
@@ -7325,9 +7855,9 @@
   ],
   "tests/rule_corpus/invalid-identifier.panel.yaml --deep": [
     {
-      "fingerprint": "7ac4cfa2aa49f51493599859b61bc195",
+      "fingerprint": "7488a0c94a874e802a501b5aa90812cd",
       "level": "error",
-      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels",
+      "message": "'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key",
       "path": [
         "cast",
         "old man",
@@ -7381,6 +7911,42 @@
       ],
       "rule": "font-file",
       "source": "tests/rule_corpus/italic-stand-in.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/language-version.panel.yaml": [
+    {
+      "fingerprint": "168a67fbd8572f457c7f60b9751e4eaa",
+      "level": "error",
+      "message": "written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/rule_corpus/language-version.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/language-version.panel.yaml --deep": [
+    {
+      "fingerprint": "168a67fbd8572f457c7f60b9751e4eaa",
+      "level": "error",
+      "message": "written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2",
+      "path": [
+        "scenet"
+      ],
+      "region": [
+        2,
+        9,
+        2,
+        10
+      ],
+      "rule": "language-version",
+      "source": "tests/rule_corpus/language-version.panel.yaml"
     }
   ],
   "tests/rule_corpus/layout.panel.yaml": [],
@@ -7510,6 +8076,42 @@
       ],
       "rule": "not-a-mapping",
       "source": "tests/rule_corpus/not-a-mapping.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/not-yet.scene.yaml": [
+    {
+      "fingerprint": "1dc5849e33425404b470aa3898f22811",
+      "level": "error",
+      "message": "'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include",
+      "path": [
+        "include"
+      ],
+      "region": [
+        2,
+        10,
+        2,
+        32
+      ],
+      "rule": "not-yet",
+      "source": "tests/rule_corpus/not-yet.scene.yaml"
+    }
+  ],
+  "tests/rule_corpus/not-yet.scene.yaml --deep": [
+    {
+      "fingerprint": "1dc5849e33425404b470aa3898f22811",
+      "level": "error",
+      "message": "'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include",
+      "path": [
+        "include"
+      ],
+      "region": [
+        2,
+        10,
+        2,
+        32
+      ],
+      "rule": "not-yet",
+      "source": "tests/rule_corpus/not-yet.scene.yaml"
     }
   ],
   "tests/rule_corpus/off-panel-speaker.panel.yaml": [

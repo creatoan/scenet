@@ -58,7 +58,8 @@ def _section(card: Any) -> str:
 class TestEveryKeyHasOneCard:
     def test_there_is_a_card_for_each_key_of_the_four_schemas(self):
         families = {card.family for card in CARDS.values()}
-        assert families == {"document", "artwork", "puppet"}
+        # And the keys every document writes at its top, one card each (#357).
+        assert families == {"document", "artwork", "puppet", "any"}
         assert len(CARDS) > 120
 
     @pytest.mark.parametrize("name", NAMES)
@@ -165,7 +166,12 @@ class TestDiagnostics:
 
 #: The complete examples the puppet and artwork cards share, one on each page: a puppet file
 #: is a whole skeleton, and a contract needs its picture, so no card has one of its own.
-SHARED_EXAMPLES = {"puppet": "a-puppet-file", "artwork": "an-artwork-contract"}
+SHARED_EXAMPLES = {
+    "puppet": "a-puppet-file",
+    "artwork": "an-artwork-contract",
+    # Two of its keys are refused until a later language, so no card can show its own (#357).
+    "document": "a-documents-own-keys",
+}
 
 
 class TestEveryCardShowsItsKey:

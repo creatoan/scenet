@@ -23,11 +23,15 @@ Two rules, and they are worth knowing precisely, with a third that takes somethi
   would be worse than a clear rule. So `marks: []` clears the marks a member inherited.
 - **`null` leaves something out**; see [below](#null-leaves-something-out).
 
-Two keys do not follow the rules. A [`description`](description.md#description) says what one
+Some keys do not follow the rules. A [`description`](description.md#description) says what one
 picture shows, so it is never a default and never inherited: beside `panels:` it is `unknown-key`,
-and a panel drawn `over` another writes its own or has one generated. And
+and a panel drawn `over` another writes its own or has one generated. A
+[`script`](script.md#script) is what one panel says, so it is no default either: beside `panels:` it
+is `unknown-key`, and is written on the panel that says it, or on one the others are drawn `over`.
 [`direction`](direction.md#direction) is only ever the document's: on a panel it is
-`panel-direction`, since a sequence is read one way throughout.
+`panel-direction`, since a sequence is read one way throughout. And the
+[document's own keys](document.md) -- `scenet`, `$schema`, `meta`, `kind` -- are the scene's, never a
+default: on a panel under `panels:` each is `unknown-key`.
 
 ## `null` leaves something out
 

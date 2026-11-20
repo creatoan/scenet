@@ -16,8 +16,9 @@ hips, he shouts "Fine. Talk."
 ## A scene, panel by panel
 
 A scene's [`panels`](../reference/language/scene.md#panels) maps a name to each panel, in
-reading order. Every key a panel can hold may also be written beside `panels:`, as a default
-every panel inherits. A panel may also inherit from another one, by naming it in
+reading order. Nearly every key a panel can hold may also be written beside `panels:`, as a
+default every panel inherits: all but a `description` and a `script`, which say what one panel
+shows and says. A panel may also inherit from another one, by naming it in
 [`over`](../reference/language/scene.md#over), and state only what differs.
 
 ```{code-block} yaml
@@ -28,7 +29,11 @@ every panel inherits. A panel may also inherit from another one, by naming it in
 # this.
 #
 # Mappings merge recursively; lists replace wholesale. Anything alongside `panels:` is
-# a default every panel inherits.
+# a default every panel inherits -- but the document's own keys at the top, which say
+# which language it is written in and that it is a scene.
+
+scenet: 1
+kind: scene
 
 panel: {size: [700, 560]}
 
@@ -90,6 +95,11 @@ hands_on_hips}}`: Bob keeps his puppet, his place and his facing from `reaction`
 his pose changes; Alice is untouched. But a list is replaced whole: a panel that writes
 `staging:` or `script:` writes all of it. That is why `reaction` has only Bob's line, not
 Alice's as well.
+
+What a document says of itself is no layer at all: `scenet: 1`, the language it is written
+in, and [`kind: scene`](../reference/language/document.md#kind), which says it is a scene, are
+written at its top and are nobody's default. See
+[a document's own keys](../reference/language/document.md).
 
 ## Leaving something out
 

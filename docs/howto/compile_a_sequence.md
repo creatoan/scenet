@@ -140,7 +140,8 @@ A `null` inside a list is left as it is: a list is replaced whole, never merged 
 ## Shared defaults
 
 Anything alongside `panels:` is a default every panel inherits, which saves restating the
-panel size on each one:
+panel size on each one -- except a `description` and a `script`, which say what one panel shows
+and says, and the [document's own keys](../reference/language/document.md), such as `scenet: 1`:
 
 ```python
 from scenet import compile_scene

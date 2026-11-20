@@ -1,0 +1,4 @@
+# `defaults` is kept for a later language: what is beside `panels:` is the default today.
+defaults: {camera: {shot: close_up}}
+cast: {alice: {reference: alice}}
+panels: {one: {}}

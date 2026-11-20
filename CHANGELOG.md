@@ -22,8 +22,36 @@ it is written, and says what to write instead.
   closes it. It holds `issues: write` alone, and is shell over the `gh` CLI with no action. A
   test lists every workflow with a `schedule:` trigger and fails if one does not end in it; the
   link check can be dispatched with `force-failure` and `report` to watch it work.
+- **A document says which language it is written in** (#357): `scenet: 1`, at the top of a
+  panel, a scene, a puppet file or an artwork contract, or in a comic script's front matter. It
+  is the language's major version, a whole number, separate from the package's version, and left
+  out it is 1. A document written for a later language is the one finding `language-version`,
+  with nothing else said of it; `scenet: '1'` is `invalid-field`. The new reference page
+  "A document's own keys" has it.
+- **`$schema` and `meta` at the top of any document** (#357): the schema an editor checks it
+  with, and a mapping of whatever a tool keeps about it, which Scenet reads nothing of yet.
+- **`kind: panel` or `kind: scene`** (#357), at the top of a panel or a scene, or `kind: scene`
+  in a comic script's front matter. A document is still read by its shape -- with `panels:` it is
+  a scene -- and one whose `kind` says otherwise is the new rule `document-kind`, at the `kind`.
+- **Extension keys** (#357): a key that starts with `x-`, in lower case, is accepted and
+  ignored in any mapping of any document -- at the top, in a panel, a cast member, a script
+  entry, a page -- and the JSON Schemas take it everywhere. In a comic script, `@x-note: ...` is
+  one too: it was read as the panel's prose.
 
 ### Changed (breaking)
+
+- **A script beside `panels:` is refused** (#357), as a description already was: it gave every
+  panel of the scene the same lines without a word. `script:` there is now one `unknown-key`
+  finding, at the key, that says to write it on the panel that says it, or on one the others are
+  drawn `over`; so is `script:` in a comic script's front matter, whose lines are its cues.
+- **No actor id or panel name starts with `x-`** (#357), which marks an extension key: under
+  `cast:` or `panels:`, such a key is ignored, never an actor or a panel, and `by: x-ray` is
+  `invalid-identifier`. `X-ray`, in a capital, is an id.
+- **`include`, `defaults` and `kind: book` are reserved** (#357) for a later version of the
+  language, each refused as the new rule `not-yet` where it is written: a key that did nothing
+  would lose what it holds without a word. `scenet`, `$schema`, `meta` and `kind` are the
+  document's, so on a panel under `panels:`, or as a comic script's directive, each is
+  `unknown-key`.
 
 - **Tags are refused** (#352): `!!binary`, `!!str`, `!!set`, `!!timestamp` and any `!custom`,
   as the new rule `yaml-tag`, at the tag. `text: !!binary aGVsbG8=` lettered `hello`; write the
@@ -85,6 +113,13 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
+  (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
+  `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.
+  It is now panel 2's, at its heading.
+- **A fault in a comic script's flow-style front matter is located at its line** (#357):
+  `{description: …}`, `{direction: upward}` and `{pages: …}` written on one line under `---`
+  were reported at the `---` above them.
 - **The JSON Schemas accept exactly what `scenet check` accepts** (#353), for every rule a schema
   can state; a property test holds the two to each other on generated panels and scenes, and
   names the rules no schema can (an id the cast must have, a file that must be read, arithmetic
