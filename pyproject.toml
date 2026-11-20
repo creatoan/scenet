@@ -215,6 +215,7 @@ only_mutate = [
     "src/scenet/core.py",
     "src/scenet/ir.py",
     "src/scenet/identifiers.py",
+    "src/scenet/namespace.py",
     "src/scenet/diagnostics.py",
 ]
 # Inside a mutant: no coverage floor, no doctests, no Sybil -- only the tests that reach

@@ -355,7 +355,7 @@ them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in 
 `MemoryError` and counts as killed. A test process needs under 1 GB.
 
 `[tool.mutmut]` in `pyproject.toml` limits it to `solve/`, `emit/`, `frontends/`, `core.py`,
-`ir.py`, `identifiers.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
+`ir.py`, `identifiers.py`, `namespace.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
 coverage floor, doctests or the documentation examples. To run one leg locally, narrow it
 first, as its job does, and restore the file after:
 
@@ -458,6 +458,7 @@ gallery are what guard them.
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
 | `ir` | `ir.py` | 718 | 16 | 97.8% | 97% | [`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) |
 | `identifiers` | `identifiers.py` | 45 | 0 | 100.0% | 100% | [`44388306912`](https://github.com/creatoan/scenet/actions/runs/44388306912) |
+| `namespace` | `namespace.py` | 96 | 0 | 100.0% | 100% | [`44802728686`](https://github.com/creatoan/scenet/actions/runs/44802728686) |
 | `diagnostics` | `diagnostics.py` | 1,617 | 74 | 95.4% | 95% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
