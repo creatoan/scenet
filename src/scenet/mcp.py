@@ -65,17 +65,27 @@ import base64
 import binascii
 import inspect
 import json
+import logging
 import re
 from collections.abc import Callable
 from typing import Annotated, Any, Literal
 
 from mcp.server import MCPServer
-from mcp.server.mcpserver.exceptions import ToolError
-from mcp.types import EmbeddedResource, TextContent, TextResourceContents, ToolAnnotations
+from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError, UnexpectedToolError
+from mcp.types import (
+    CallToolResult,
+    EmbeddedResource,
+    InputRequiredResult,
+    TextContent,
+    TextResourceContents,
+    ToolAnnotations,
+)
 from pydantic import BaseModel, Field
 
 from scenet import __version__
 from scenet.assets.contract import PuppetSpec, default_library, is_puppet_file, load_puppet_file
+from scenet.cli import describe_failure
 from scenet.diagnostics import (
     RULE_NAMESPACE,
     RULES,
@@ -542,6 +552,30 @@ TOOLS: tuple[tuple[str, str, Callable[..., Any]], ...] = (
 )
 
 
+_LOG = logging.getLogger(__name__)
+
+
+class _Server(MCPServer[Any]):
+    """The SDK's server, with a crash in a tool reported as the bug it is.
+
+    The SDK already turns any exception a tool raises into an error result, so a crash
+    never ends the session; but the result says only "Error executing tool render",
+    which nobody can act on. Here it says what the command line says of the same crash:
+    an internal error, its type and message, and where to report it. The traceback goes
+    to the server's log, on stderr, and never to the client.
+    """
+
+    async def call_tool(
+        self, name: str, arguments: dict[str, Any], context: Context[Any, Any] | None = None
+    ) -> CallToolResult | InputRequiredResult:
+        try:
+            return await super().call_tool(name, arguments, context)
+        except UnexpectedToolError as exc:
+            crash = exc.__cause__ if isinstance(exc.__cause__, Exception) else exc
+            _LOG.error("tool %r crashed", name, exc_info=crash)
+            raise ToolError(describe_failure(crash)) from crash
+
+
 def build_server() -> MCPServer[Any]:
     """Build the server with every tool registered, without starting it.
 
@@ -551,7 +585,7 @@ def build_server() -> MCPServer[Any]:
     Returns:
         The server, ready to run on any transport.
     """
-    server: MCPServer[Any] = MCPServer(
+    server: MCPServer[Any] = _Server(
         name="scenet",
         title="Scenet",
         version=__version__,

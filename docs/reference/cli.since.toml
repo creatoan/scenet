@@ -5,6 +5,7 @@
 # Mined from the tags by `uv run python scripts/mine_cli_since.py`.
 
 [top-level]
+"--traceback" = "0.14"
 "--version" = "0.1"
 
 [commands]

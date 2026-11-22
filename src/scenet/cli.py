@@ -5,6 +5,7 @@ import importlib
 import json
 import os
 import sys
+import traceback
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
@@ -34,6 +35,19 @@ output. No generative image model is involved at any stage.
 See https://creatoan.github.io/scenet/reference/language/ for the language.
 """
 
+#: Where a bug is reported: what an internal error says to do.
+ISSUES = "https://github.com/creatoan/scenet/issues"
+
+#: The status of a fault in Scenet itself rather than in a document or a file:
+#: `EX_SOFTWARE` from BSD's `sysexits.h`, which tells a script "not your input".
+EXIT_INTERNAL = 70
+
+#: The status of a command stopped by Ctrl-C: 128 plus `SIGINT`, as a shell reports it.
+EXIT_INTERRUPTED = 130
+
+#: Set to anything but empty or `0`, the same as `--traceback`.
+DEBUG_VARIABLE = "SCENET_DEBUG"
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the `scenet` command.
@@ -51,6 +65,14 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=f"scenet {__version__}")
+    parser.add_argument(
+        "--traceback",
+        action="store_true",
+        help=(
+            f"print the traceback of an internal error, for its report; {DEBUG_VARIABLE}=1 "
+            "does the same"
+        ),
+    )
 
     subcommands = parser.add_subparsers(dest="command")
     build = subcommands.add_parser("build", help="compile a panel source to SVG")
@@ -288,7 +310,7 @@ def run_build(args: argparse.Namespace) -> int:
         try:
             status = _run_build_once(args, dependencies)
         except Exception as exc:
-            print(f"scenet: initial watch build failed: {exc}", file=sys.stderr)
+            print(f"scenet: initial watch build failed: {describe_failure(exc)}", file=sys.stderr)
             status = 1
 
         # A bad initial save, missing source or output-name clash is recoverable in watch
@@ -300,7 +322,7 @@ def run_build(args: argparse.Namespace) -> int:
             try:
                 _run_build_once(args, attempted)
             except Exception as exc:
-                print(f"scenet: watch rebuild failed: {exc}", file=sys.stderr)
+                print(f"scenet: watch rebuild failed: {describe_failure(exc)}", file=sys.stderr)
             finally:
                 dependencies.update(attempted)
 
@@ -336,14 +358,7 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     try:
         book = compile_book_file(source, dependencies=dependencies)
     except ScenetError as exc:
-        # Every ScenetError is "your panel cannot be compiled" rather than "scenet
-        # broke", so they all get a plain message instead of a traceback.
-        #
-        # KeyError stringifies as repr(args[0]), which wraps the message in whichever
-        # quote style avoids escaping -- so a message containing an apostrophe comes
-        # out double-quoted. Reading args[0] directly sidesteps that entirely.
-        message = str(exc.args[0]) if isinstance(exc, KeyError) and exc.args else str(exc)
-        print(f"scenet: {message}", file=sys.stderr)
+        print(f"scenet: {_compile_failure(exc)}", file=sys.stderr)
         return 1
 
     # `foo.panel.yaml` becomes `foo.svg`, not `foo.panel.svg`.
@@ -387,6 +402,24 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         for note in notes:
             print(f"note: {note}")
     return 0
+
+
+def _compile_failure(exc: ScenetError) -> str:
+    """What `build` says of a document it could not compile, in one line.
+
+    Every ScenetError is "your panel cannot be compiled" rather than "scenet broke", so
+    they all get a plain message instead of a traceback.
+    """
+    # A file that cannot be read is an `OSError` too, and says which and why as any other
+    # file the system refuses does.
+    if isinstance(exc, OSError):
+        return describe_failure(exc)
+    # KeyError stringifies as repr(args[0]), which wraps the message in whichever quote
+    # style avoids escaping -- so a message containing an apostrophe comes out
+    # double-quoted. Reading args[0] directly sidesteps that entirely.
+    if isinstance(exc, KeyError) and exc.args:
+        return str(exc.args[0])
+    return str(exc)
 
 
 def _write(path: Path, content: str | bytes) -> None:
@@ -717,10 +750,15 @@ def run_schema(args: argparse.Namespace) -> int:
     if args.output is None:
         _print_document(document)
     else:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(document, encoding="utf-8", newline="\n")
+        _write_document(args.output, document)
         print(f"wrote {args.output}")
     return 0
+
+
+def _write_document(output: Path, document: str) -> None:
+    """Write a document where `-o` said, creating its folder."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(document, encoding="utf-8", newline="\n")
 
 
 def _print_document(document: str) -> None:
@@ -786,7 +824,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     Returns:
         A process exit status. `0` on success, `1` for a document that will not
-        compile, `2` for a usage error or a missing file.
+        compile or a file the system will not read or write, `2` for a usage error or a
+        missing file, `70` for a fault in Scenet itself, `130` when stopped by Ctrl-C.
+
+    No traceback reaches the terminal unless asked for: a document's fault and a file's
+    are one line each, and anything else is one line saying it is a bug and where to
+    report it, with the traceback under `--traceback` or `SCENET_DEBUG=1`.
 
     Example:
         >>> from scenet.cli import main
@@ -797,6 +840,76 @@ def main(argv: Sequence[str] | None = None) -> int:
     """
     parser = build_parser()
     args = parser.parse_args(argv)
+    try:
+        return _dispatch(parser, args)
+    except KeyboardInterrupt:
+        return EXIT_INTERRUPTED
+    except BrokenPipeError:
+        # The reader of stdout left, as `head` does once it has its lines: there is
+        # nobody to tell. stdout is pointed at the null device so that the interpreter's
+        # own flush at exit does not fail all over again.
+        _silence_stdout()
+        return 1
+    except Exception as exc:
+        if _debugging(args):
+            traceback.print_exception(exc, file=sys.stderr)
+        print(f"scenet: {describe_failure(exc)}", file=sys.stderr)
+        if not isinstance(exc, OSError):
+            print(
+                f"scenet: run it again with --traceback, or with {DEBUG_VARIABLE}=1, to see "
+                "where it happened",
+                file=sys.stderr,
+            )
+            return EXIT_INTERNAL
+        return 1
+
+
+def describe_failure(exc: Exception) -> str:
+    """One line saying what went wrong, for an exception no command handled.
+
+    An `OSError` is the system refusing a file, and says which file and why. Anything else
+    is a bug in Scenet, and says so, with where to report it.
+
+    Args:
+        exc: The exception.
+
+    Returns:
+        The line, without the program's name that every message starts with.
+
+    Example:
+        >>> from scenet.cli import describe_failure
+        >>> describe_failure(PermissionError(13, "Permission denied", "out/a.svg"))
+        'out/a.svg: Permission denied'
+    """
+    if isinstance(exc, OSError):
+        reason = exc.strerror or str(exc) or type(exc).__name__
+        if exc.filename is None:
+            return reason
+        if exc.filename2 is None:
+            return f"{exc.filename}: {reason}"
+        return f"{exc.filename} -> {exc.filename2}: {reason}"
+    said = " ".join(str(exc).split())
+    what = f"{type(exc).__name__}: {said}" if said else type(exc).__name__
+    return f"internal error ({what}) -- this is a bug; please report it at {ISSUES}"
+
+
+def _debugging(args: argparse.Namespace) -> bool:
+    """Whether a traceback was asked for, by flag or by the environment."""
+    return bool(args.traceback) or os.environ.get(DEBUG_VARIABLE, "") not in ("", "0")
+
+
+def _silence_stdout() -> None:
+    """Point stdout at the null device, where a closed pipe can no longer fail a write."""
+    try:
+        null = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(null, sys.stdout.fileno())
+    except (OSError, ValueError):
+        # No descriptor underneath, as under a test's capture: nothing will flush to it.
+        return
+
+
+def _dispatch(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    """Run the command the arguments name."""
     if args.command == "build":
         return run_build(args)
     if args.command == "check":

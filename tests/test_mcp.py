@@ -527,15 +527,20 @@ class TestCommand:
         assert captured.out == ""
         assert "pip install 'scenet[mcp]'" in captured.err
 
-    def test_an_unrelated_import_failure_is_not_disguised(self, monkeypatch: pytest.MonkeyPatch):
-        """Only a missing `mcp` means a missing extra; anything else is a real bug."""
+    def test_an_unrelated_import_failure_is_not_disguised(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        """Only a missing `mcp` means a missing extra; anything else is a real bug, and
+        is reported as one (#377)."""
 
         def broken(name: str) -> None:
             raise ImportError("something else entirely", name="not_mcp")
 
         monkeypatch.setattr(importlib, "import_module", broken)
-        with pytest.raises(ImportError, match="something else"):
-            main(["mcp"])
+        assert main(["mcp"]) == 70
+        err = capsys.readouterr().err
+        assert "internal error (ImportError: something else entirely)" in err
+        assert "pip install" not in err
 
 
 class TestServeCallsTheSdk:

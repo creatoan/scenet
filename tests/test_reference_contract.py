@@ -19,6 +19,8 @@ The `bash` examples in the reference are run too, by `tests/shell_examples.py`.
 """
 
 import argparse
+import errno
+import importlib
 import json
 import re
 import shlex
@@ -106,10 +108,13 @@ def _implemented_options(command: str) -> set[str]:
     return {option for action in _actions(command) for option in action.option_strings}
 
 
-def _exit_codes(command: str) -> set[int]:
-    section = _section(command)
-    table = section[section.index("### Exit status") :]
-    return {int(code) for code in re.findall(r"^\| (\d) \|", table, re.MULTILINE)}
+def _exit_codes(command: str | None) -> set[int]:
+    """The codes a command's table lists; with no command, the table every command shares."""
+    section = (
+        REFERENCE[: REFERENCE.index("## `scenet build`")] if command is None else _section(command)
+    )
+    table = section[section.index("## Exit status" if command is None else "### Exit status") :]
+    return {int(code) for code in re.findall(r"^\| (\d+) \|", table, re.MULTILINE)}
 
 
 # ---------------------------------------------------------------- options
@@ -144,7 +149,7 @@ class TestOptions:
         long_forms = {option for option in _implemented_options(command) if option.startswith("--")}
         assert long_forms <= defined
 
-    def test_the_top_level_has_only_version(self):
+    def test_the_top_level_options_are_the_documented_ones(self):
         parser = build_parser()
         options = {
             option
@@ -152,9 +157,18 @@ class TestOptions:
             if not isinstance(action, argparse._HelpAction | argparse._SubParsersAction)
             for option in action.option_strings
         }
-        synopsis = re.search(r"scenet \[([^\]]+)\]", REFERENCE)
-        assert synopsis, "the reference opens with `scenet [--version] <command>`"
+        synopsis = re.search(r"^scenet ((?:\[[^\]]+\] )+)<command>", REFERENCE, re.MULTILINE)
+        assert synopsis, "the reference opens with `scenet [--version] ... <command>`"
         assert options == set(_OPTION.findall(synopsis.group(1)))
+
+    def test_every_top_level_option_has_a_definition_and_a_release(self):
+        top = REFERENCE[: REFERENCE.index("## `scenet build`")]
+        for option in SINCE["top-level"]:
+            if option == "--version":
+                continue  # it has a section of its own
+            block = re.search(rf"^`{option}`\n((?:: .*\n)(?:  .*\n)*)", top, re.MULTILINE)
+            assert block, f"{option} has no definition above the commands"
+            assert f"*Since {SINCE['top-level'][option]}.*" in block.group(1)
 
     @pytest.mark.parametrize(("command", "option"), [("check", "--format"), ("mcp", "--transport")])
     def test_the_choices_are_the_documented_ones(self, command: str, option: str):
@@ -186,26 +200,77 @@ def _source(tmp_path: Path, text: str, name: str = "duel.panel.yaml") -> Path:
     return path
 
 
-def _build_scenarios(tmp_path: Path) -> dict[int, Callable[[], int]]:
+def _failing(
+    monkeypatch: pytest.MonkeyPatch, where: str, error: BaseException, argv: Callable[[], list[str]]
+) -> Callable[[], int]:
+    """A run of the command in which `where`, a module attribute it calls, raises `error`."""
+
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise error
+
+    def run() -> int:
+        module, name = where.rsplit(".", 1)
+        with monkeypatch.context() as patch:
+            patch.setattr(importlib.import_module(module), name, fail)
+            return main(argv())
+
+    return run
+
+
+def _faults(
+    monkeypatch: pytest.MonkeyPatch, where: str, argv: Callable[[], list[str]]
+) -> dict[int, Callable[[], int]]:
+    """The two codes every command shares: a bug in Scenet, and Ctrl-C."""
+    return {
+        70: _failing(monkeypatch, where, RuntimeError("a bug"), argv),
+        130: _failing(monkeypatch, where, KeyboardInterrupt(), argv),
+    }
+
+
+def _build_scenarios(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[int, Callable[[], int]]:
     return {
         0: lambda: main(["build", str(_source(tmp_path, PANEL)), "--quiet"]),
         1: lambda: main(["build", str(_source(tmp_path, UNCOMPILABLE))]),
         2: lambda: main(["build", str(tmp_path / "missing.panel.yaml")]),
+        **_faults(
+            monkeypatch,
+            "scenet.cli.compile_book_file",
+            lambda: ["build", str(_source(tmp_path, PANEL))],
+        ),
     }
 
 
-def _check_scenarios(tmp_path: Path) -> dict[int, Callable[[], int]]:
+def _check_scenarios(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[int, Callable[[], int]]:
     return {
         0: lambda: main(["check", "--quiet", str(_source(tmp_path, PANEL))]),
         1: lambda: main(["check", str(_source(tmp_path, BROKEN))]),
         2: lambda: main(["check", str(_source(tmp_path, PANEL, "duel.txt"))]),
+        **_faults(
+            monkeypatch,
+            "scenet.cli.diagnose_file",
+            lambda: ["check", str(_source(tmp_path, PANEL))],
+        ),
     }
 
 
-def _schema_scenarios(tmp_path: Path) -> dict[int, Callable[[], int]]:
+def _under_a_file(tmp_path: Path) -> str:
+    """A path whose folder cannot be made, because a file has its name."""
+    (tmp_path / "taken").write_text("a file, not a folder", encoding="utf-8")
+    return str(tmp_path / "taken" / "panel.schema.json")
+
+
+def _schema_scenarios(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[int, Callable[[], int]]:
     return {
         0: lambda: main(["schema", "-o", str(tmp_path / "panel.schema.json")]),
+        1: lambda: main(["schema", "-o", _under_a_file(tmp_path)]),
         2: lambda: main(["schema", "-o", str(tmp_path)]),
+        **_faults(monkeypatch, "scenet.cli.panel_schema", lambda: ["schema"]),
     }
 
 
@@ -230,7 +295,13 @@ def _mcp_scenarios(monkeypatch: pytest.MonkeyPatch) -> dict[int, Callable[[], in
             patch.setattr("scenet.cli.importlib.import_module", missing)
             return main(["mcp"])
 
-    return {0: disconnected, 2: without_the_extra}
+    taken = OSError(errno.EADDRINUSE, "Address already in use")
+    return {
+        0: disconnected,
+        1: _failing(monkeypatch, "scenet.mcp.serve", taken, lambda: ["mcp"]),
+        2: without_the_extra,
+        **_faults(monkeypatch, "scenet.mcp.serve", lambda: ["mcp"]),
+    }
 
 
 class TestExitStatus:
@@ -242,12 +313,13 @@ class TestExitStatus:
         self, command: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
     ):
         scenarios = {
-            "build": lambda: _build_scenarios(tmp_path),
-            "check": lambda: _check_scenarios(tmp_path),
-            "schema": lambda: _schema_scenarios(tmp_path),
+            "build": lambda: _build_scenarios(tmp_path, monkeypatch),
+            "check": lambda: _check_scenarios(tmp_path, monkeypatch),
+            "schema": lambda: _schema_scenarios(tmp_path, monkeypatch),
             "mcp": lambda: _mcp_scenarios(monkeypatch),
         }[command]()
         assert set(scenarios) == _exit_codes(command)
+        assert _exit_codes(command) <= _exit_codes(None)
         for code, scenario in scenarios.items():
             assert scenario() == code, f"`scenet {command}` scenario for {code}"
 
@@ -360,7 +432,7 @@ class TestEveryCommandAndOptionSaysWhenItCame:
     def test_the_versions_were_mined_for_every_command_and_option(self):
         assert sorted(SINCE["commands"]) == sorted(COMMANDS)
         assert sorted(SINCE["options"]) == OPTIONS
-        assert SINCE["top-level"] == {"--version": "0.1"}
+        assert SINCE["top-level"] == {"--version": "0.1", "--traceback": "0.14"}
 
     @pytest.mark.parametrize("command", COMMANDS)
     def test_a_command_says_its_release(self, command: str):

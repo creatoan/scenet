@@ -37,6 +37,13 @@ it is written, and says what to write instead.
   ignored in any mapping of any document -- at the top, in a panel, a cast member, a script
   entry, a page -- and the JSON Schemas take it everywhere. In a comic script, `@x-note: ...` is
   one too: it was read as the panel's prose.
+- **No traceback reaches a user** (#377). A file the system will not read or write -- a
+  read-only folder, a full disk, an output name that is a folder -- is one line naming the file
+  and the reason, exit 1. Ctrl-C exits 130, with nothing printed; a `--watch` still ends with 0.
+  Anything else is an internal error: one line with the exception's type and message and where
+  to report it, exit 70, and the traceback only with the new `scenet --traceback` or
+  `SCENET_DEBUG=1`. The MCP server reports a crash in a tool the same way, as an error result,
+  and keeps serving. The exit codes are listed in the command-line reference.
 
 ### Changed (breaking)
 
@@ -113,6 +120,9 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **`scenet check` on a file that is not UTF-8 is a `syntax` finding** (#377), the one line
+  `scenet build` already printed for it, rather than a traceback. A source that vanishes while
+  `build` reads it names the file in one line, as a missing file does.
 - **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
   (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
   `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.

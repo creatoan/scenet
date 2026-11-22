@@ -2318,8 +2318,17 @@ def diagnose_file(
     Raises:
         OSError: The file cannot be read. Not reported as a finding, because a file that
             cannot be opened is a problem with the invocation rather than with a panel.
+            Bytes that are not UTF-8 are a `syntax` finding: that is the document's fault.
     """
-    text = path.read_text(encoding="utf-8")
+    data = path.read_bytes()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        # What `build` says of the same file, so the two agree on it.
+        message = (
+            f"not UTF-8 text: byte {exc.start} is {data[exc.start]:#04x}; save the file as UTF-8"
+        )
+        return [Diagnostic(rule="syntax", message=message, source=path)]
     if path.suffix.lower() == ".script":
         return diagnose_script(text, source=path, library=library, deep=deep)
     return diagnose_source(text, source=path, library=library, deep=deep)

@@ -1,12 +1,42 @@
 # Command line
 
 ```
-scenet [--version] <command> [options]
+scenet [--version] [--traceback] <command> [options]
 ```
 
 Four commands: `build` compiles a document, `check` validates one without compiling it,
 `schema` emits the JSON Schema, and `mcp` serves all of that to a model. A bare `scenet` prints help to stderr and exits **2**
 — it did nothing, and a script chaining off its status should not read that as success.
+
+## Exit status
+
+Every command exits with one of these. Each command's own table says what its 0, 1 and 2
+mean for it.
+
+| Code | Meaning |
+|---|---|
+| 0 | It did what was asked |
+| 1 | A document has an error, or a file could not be read or written |
+| 2 | Usage error |
+| 70 | An internal error: a bug in Scenet |
+| 130 | Stopped by Ctrl-C |
+
+No traceback reaches the terminal. A document's fault is one line saying what is wrong
+with it. A file the system will not read or write is one line naming the file and the
+system's reason — a folder that is read-only, a disk that is full, an output name that is a
+folder. Ctrl-C stops the command at once, with nothing printed. Anything else is a bug, and
+says so in one line, with the exception's type and message and where to report it:
+
+```text
+scenet: internal error (RuntimeError: …) -- this is a bug; please report it at https://github.com/creatoan/scenet/issues
+scenet: run it again with --traceback, or with SCENET_DEBUG=1, to see where it happened
+```
+
+`--traceback`
+: Print the traceback of an internal error, above its line, for the report. Setting the
+  environment variable `SCENET_DEBUG` to anything but empty or `0` does the same. The status
+  is 70 either way.
+  *Since 0.14.*
 
 ## `scenet build`
 
@@ -184,12 +214,14 @@ a file name and is refused the same way.
 | Code | Meaning |
 |---|---|
 | 0 | Compiled |
-| 1 | The document could not be compiled — reported as a plain message, not a traceback |
+| 1 | The document could not be compiled — reported as a plain message, not a traceback — or a file could not be read or written |
 | 2 | Usage error, or the source file does not exist or has an extension no frontend reads |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C; a `--watch` ends with 0 instead, since that is how it is meant to end |
 
 Every error the compiler raises inherits `ScenetError`, and all of them mean "your panel
-cannot be compiled" rather than "scenet broke". They print as one line. A traceback from
-`scenet` is a bug worth reporting.
+cannot be compiled" rather than "scenet broke". They print as one line. Anything else is
+an internal error, reported as [above](#exit-status).
 
 ### Examples
 
@@ -332,8 +364,10 @@ published schema — are what make a generate/validate/repair loop work.
 | Code | Meaning |
 |---|---|
 | 0 | No document has an error; notes may have been printed |
-| 1 | At least one error |
+| 1 | At least one error, or a file could not be read or written |
 | 2 | Usage error, or a source file does not exist or has an extension no frontend reads |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C |
 
 The status means the same thing in both formats, so CI can key off it without parsing
 anything.
@@ -562,7 +596,10 @@ The output is sorted and indented, so it is stable under version control.
 | Code | Meaning |
 |---|---|
 | 0 | The schema was written |
+| 1 | The file could not be written |
 | 2 | Usage error, or `-o` names a directory |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C |
 
 ## `scenet mcp`
 
@@ -610,7 +647,10 @@ without the extra.
 | Code | Meaning |
 |---|---|
 | 0 | The client disconnected |
+| 1 | The server could not start: the port is taken, say |
 | 2 | Usage error, or the `mcp` extra is not installed |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C |
 
 ```bash
 scenet mcp
