@@ -71,7 +71,13 @@ from scenet.geom import Point as GeomPoint
 from scenet.images import SuppliedImage, load_image
 from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, SettingSpec, Side
 from scenet.lettering import Lettering, typeface_for
-from scenet.paths import Folder, read_document, record_dependency, track_dependencies
+from scenet.paths import (
+    Folder,
+    contained,
+    read_document,
+    record_dependency,
+    track_dependencies,
+)
 from scenet.places import place_of
 from scenet.solve.backdrop import ResolvedBackdrop, solve_backdrop
 from scenet.solve.balloons import place_script
@@ -1036,6 +1042,7 @@ def compile_file(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> CompileResult:
     """Compile one panel from a file.
 
@@ -1043,6 +1050,9 @@ def compile_file(
         path: A `*.panel.yaml` document.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
+        root: A folder every file the document names must be inside, once `..` and
+            symbolic links are followed; one outside it is refused. For a document from
+            someone else. `None`, the default, reads wherever the document points.
 
     Returns:
         The compiled panel.
@@ -1082,7 +1092,8 @@ def compile_file(
         :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for any document and
         its pages.
     """
-    return compile_ir(load_panel(path), library=library, metrics=metrics, base=path.parent)
+    with contained(root):
+        return compile_ir(load_panel(path), library=library, metrics=metrics, base=path.parent)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1570,6 +1581,7 @@ def compile_book_file(
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
     dependencies: set[Path] | None = None,
+    root: Path | None = None,
 ) -> Book:
     r"""Compile any supported document and its pages, choosing the frontend by extension.
 
@@ -1579,6 +1591,9 @@ def compile_book_file(
         metrics: Font to measure lettering against.
         dependencies: Optional set to populate with paths read during compilation, each
             resolved.
+        root: A folder every file the document names must be inside, once `..` and
+            symbolic links are followed; one outside it is refused. For a document from
+            someone else. `None`, the default, reads wherever the document points.
 
     Returns:
         Every panel, and the pages they are laid out on -- none for a single panel or a
@@ -1636,7 +1651,7 @@ def compile_book_file(
         raise SourceError(
             f"unsupported extension '{path.suffix}'; expected one of {supported}", source=path
         )
-    with track_dependencies(dependencies):
+    with track_dependencies(dependencies), contained(root):
         record_dependency(path)
         return _compile_document(loader(path), library, metrics, path.parent)
 

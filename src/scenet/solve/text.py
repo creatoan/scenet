@@ -33,6 +33,7 @@ from fontTools.pens.basePen import BasePen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 
+from scenet import limits
 from scenet.emphasis import parse
 from scenet.errors import MalformedAssetError
 from scenet.ir import Face
@@ -435,7 +436,7 @@ class FontMetrics:
         # their digest, so a drawing can be refused a file that merely shares a name.
         # It also means no file stays open behind a lazily read font.
         if data is None:
-            data = read_file(Path(path))
+            data = read_file(Path(path), limit=limits.FONT_BYTES, what="a font")
         self.sha256 = self.digest(data)
         self._data = data
         try:

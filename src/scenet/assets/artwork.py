@@ -34,7 +34,7 @@ place, and nothing could tell.
 """
 
 import hashlib
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Annotated, Self
@@ -266,10 +266,17 @@ def load_contract(
     )
     if contract.size != (image.width, image.height):
         width, height = contract.size
+        # Read from disk, the contract may be any file the document reached: what it says
+        # is not said back. Sent with the document, it is its sender's.
+        said = (
+            f"a picture {width} by {height} pixels, and {image.href!r} is {image.width} by "
+            f"{image.height}"
+            if isinstance(base, Mapping)
+            else "a picture of another size"
+        )
         raise ContractError(
-            f"it was measured on a picture {width} by {height} pixels, and "
-            f"{image.href!r} is {image.width} by {image.height}: measure it again on "
-            "this one, or scale every coordinate in it",
+            f"it was measured on {said}: measure it again on this one, or scale every "
+            "coordinate in it",
             file=path,
             inner=("size",),
             region=locate(text, ("size",)),

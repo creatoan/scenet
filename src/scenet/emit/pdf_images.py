@@ -29,6 +29,14 @@ from scenet.errors import RenderError
 SIGNATURE = bytes.fromhex("89504e470d0a1a0a")
 GREY, RGB, PALETTE, GREY_ALPHA, RGBA = 0, 2, 3, 4, 6
 CHANNELS = {GREY: 1, RGB: 3, PALETTE: 1, GREY_ALPHA: 2, RGBA: 4}
+#: The bit depths PNG defines for each colour type; no other pair is a PNG.
+DEPTHS = {
+    GREY: frozenset({1, 2, 4, 8, 16}),
+    RGB: frozenset({8, 16}),
+    PALETTE: frozenset({1, 2, 4, 8}),
+    GREY_ALPHA: frozenset({8, 16}),
+    RGBA: frozenset({8, 16}),
+}
 
 #: JPEG start-of-frame markers PDF readers decode: baseline, extended and progressive.
 READABLE_FRAMES = {0xC0, 0xC1, 0xC2}
@@ -152,6 +160,10 @@ def _chunks(data: bytes, name: str) -> _Png:
     if header is None or not image:
         raise RenderError(f"{name} is a PNG with no image data in it")
     width, height, depth, colour, _, _, interlace = header
+    if depth not in DEPTHS.get(colour, ()):
+        raise RenderError(
+            f"{name} is a PNG of colour type {colour} at {depth} bits, which PNG does not define"
+        )
     return _Png(width, height, depth, colour, interlace == 1, palette, transparency, bytes(image))
 
 
@@ -192,10 +204,7 @@ def _passed(png: _Png) -> str:
 
 def _decoded(png: _Png, name: str) -> Embedded:
     """Decode a PNG, then store its samples uncompressed, alpha apart."""
-    try:
-        raw = zlib.decompress(png.data)
-    except zlib.error as exc:
-        raise RenderError(f"{name} is a PNG whose image data cannot be read: {exc}") from exc
+    raw = _inflated(png, name)
     channels = CHANNELS[png.kind]
     rows = (
         _deinterlaced(raw, png, channels)
@@ -225,6 +234,45 @@ def _decoded(png: _Png, name: str) -> Embedded:
     if colour == channels:
         return Embedded(entries + _key(png), bytes(colour_bytes))
     return Embedded(entries, bytes(colour_bytes), _mask(png, depth, bytes(alpha_bytes)))
+
+
+def _inflated(png: _Png, name: str) -> bytes:
+    """The image data inflated, to exactly the size its header gives, or refused.
+
+    Never inflated further than that, and one byte: a few kilobytes of zeros can inflate to
+    gigabytes, and its header says how many bytes a picture of its size holds.
+    """
+    size = _data_size(png)
+    inflater = zlib.decompressobj()
+    try:
+        raw = inflater.decompress(png.data, size + 1)
+    except zlib.error as exc:
+        raise RenderError(f"{name} is a PNG whose image data cannot be read: {exc}") from exc
+    if len(raw) != size:
+        said = "inflates past" if len(raw) > size else "falls short of"
+        raise RenderError(
+            f"{name} is a PNG whose image data {said} the {png.width} by {png.height} pixels "
+            "its header gives"
+        )
+    return raw
+
+
+def _data_size(png: _Png) -> int:
+    """How many bytes a PNG's image data inflates to.
+
+    Each row is its filter byte and its samples, for the whole picture or, interlaced, for
+    each of Adam7's passes.
+    """
+    channels = CHANNELS[png.kind]
+    if not png.interlaced:
+        return png.height * (1 + (png.width * channels * png.depth + 7) // 8)
+    size = 0
+    for x0, y0, dx, dy in ADAM7:
+        across = (png.width - x0 + dx - 1) // dx if png.width > x0 else 0
+        down = (png.height - y0 + dy - 1) // dy if png.height > y0 else 0
+        if across and down:
+            size += down * (1 + (across * channels * png.depth + 7) // 8)
+    return size
 
 
 def _expanded(png: _Png, samples: list[list[int]]) -> Embedded:

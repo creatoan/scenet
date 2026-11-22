@@ -26,6 +26,7 @@ import struct
 from dataclasses import dataclass, field
 from typing import Final, Literal
 
+from scenet import limits
 from scenet.errors import PanelSyntaxError
 from scenet.paths import Folder, read_relative
 
@@ -103,7 +104,9 @@ def load_image(declared: str, base: Folder | None, *, loc: tuple[str | int, ...]
         >>> image.media_type, image.width, image.height
         ('image/jpeg', 4000, 3000)
     """
-    data = read_relative(declared, base, what="image", rule=IMAGE_RULE, loc=loc)
+    data = read_relative(
+        declared, base, what="image", rule=IMAGE_RULE, loc=loc, limit=limits.IMAGE_BYTES
+    )
     try:
         media_type, width, height = measure(data)
     except _UnmeasurableError as exc:

@@ -22,9 +22,12 @@ Every failure -- a path that is absolute or has no folder to be read from, a fil
 missing, a file that is not a font -- is rule `font-file`, located at the face it names.
 """
 
+from collections import OrderedDict
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
+from scenet import limits
 from scenet.errors import PanelSyntaxError
 from scenet.ir import Face, LetteringSpec
 from scenet.paths import Folder, read_relative
@@ -35,8 +38,13 @@ __all__ = ["FONT_RULE", "Lettering", "load_font", "typeface_for"]
 #: The rule every font fault is reported under.
 FONT_RULE = "font-file"
 
-#: Fonts read so far, by the digest of their bytes.
-_BY_CONTENT: dict[str, FontMetrics] = {}
+#: How many faces a document declared are kept, parsed, for the next compile that
+#: declares the same bytes. A server compiling documents from many users would otherwise
+#: keep every face it was ever sent, for the life of the process.
+FONT_CACHE_ENTRIES = 32
+
+#: Fonts read lately, by the digest of their bytes, the one used last at the end.
+_BY_CONTENT: OrderedDict[str, FontMetrics] = OrderedDict()
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,10 +81,16 @@ def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...])
             as resolved: findings are output too, and an absolute path in one would make
             it differ between two checkouts.
     """
-    data = read_relative(declared, base, what="font", rule=FONT_RULE, loc=loc)
+    data = read_relative(
+        declared, base, what="font", rule=FONT_RULE, loc=loc, limit=limits.FONT_BYTES
+    )
 
-    known = _BY_CONTENT.get(FontMetrics.digest(data))
+    digest = FontMetrics.digest(data)
+    known = _BY_CONTENT.get(digest)
     if known is not None:
+        # Another thread may have just let it go; it is the same font either way.
+        with suppress(KeyError):
+            _BY_CONTENT.move_to_end(digest)
         return known
     try:
         metrics = FontMetrics(Path(declared), data=data)
@@ -91,6 +105,11 @@ def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...])
             loc=loc,
         ) from exc
     _BY_CONTENT[metrics.sha256] = metrics
+    while len(_BY_CONTENT) > FONT_CACHE_ENTRIES:
+        try:
+            _BY_CONTENT.popitem(last=False)
+        except KeyError:
+            break
     return metrics
 
 

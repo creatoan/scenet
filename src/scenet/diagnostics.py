@@ -47,7 +47,7 @@ import yaml
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
-from scenet import __version__
+from scenet import __version__, limits
 from scenet.assets.artwork import load_contract, pictureless, undrawn
 from scenet.assets.contract import (
     PuppetLibrary,
@@ -126,7 +126,7 @@ from scenet.namespace import (
     split_head,
     stripped,
 )
-from scenet.paths import Folder, NamedFileError
+from scenet.paths import Folder, NamedFileError, contained, read_bounded
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
 from scenet.safe_yaml import ProfileError, describe, load
 from scenet.solve.page import resolve_frames
@@ -2301,7 +2301,11 @@ def _diagnose_script_cast(
 
 
 def diagnose_file(
-    path: Path, *, library: PuppetLibrary | None = None, deep: bool = False
+    path: Path,
+    *,
+    library: PuppetLibrary | None = None,
+    deep: bool = False,
+    root: Path | None = None,
 ) -> list[Diagnostic]:
     """Check a document on disk, choosing the frontend by extension.
 
@@ -2311,16 +2315,21 @@ def diagnose_file(
             against. Defaults to the two shipped puppets.
         deep: Also run the full compiler on any panel that passes every cheap check.
             See `diagnose_source`.
+        root: A folder every file the document names must be inside, as for
+            :func:`compile_file <scenet.pipeline.compile_file>`; one outside it is a finding
+            of the read's rule.
 
     Returns:
         Findings in source order, empty if the document is valid.
 
     Raises:
-        OSError: The file cannot be read. Not reported as a finding, because a file that
-            cannot be opened is a problem with the invocation rather than with a panel.
-            Bytes that are not UTF-8 are a `syntax` finding: that is the document's fault.
+        OSError: The file cannot be read, or is not a regular file, or is larger than
+            :data:`DOCUMENT_BYTES <scenet.limits.DOCUMENT_BYTES>`. Not reported as a
+            finding, because a file that cannot be opened is a problem with the invocation
+            rather than with a panel. Bytes that are not UTF-8 are a `syntax` finding: that
+            is the document's fault.
     """
-    data = path.read_bytes()
+    data = read_bounded(path, limits.DOCUMENT_BYTES, what="a document")
     try:
         text = data.decode()
     except UnicodeDecodeError as exc:
@@ -2329,9 +2338,10 @@ def diagnose_file(
             f"not UTF-8 text: byte {exc.start} is {data[exc.start]:#04x}; save the file as UTF-8"
         )
         return [Diagnostic(rule="syntax", message=message, source=path)]
-    if path.suffix.lower() == ".script":
-        return diagnose_script(text, source=path, library=library, deep=deep)
-    return diagnose_source(text, source=path, library=library, deep=deep)
+    with contained(root):
+        if path.suffix.lower() == ".script":
+            return diagnose_script(text, source=path, library=library, deep=deep)
+        return diagnose_source(text, source=path, library=library, deep=deep)
 
 
 def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, Any]:

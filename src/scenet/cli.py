@@ -163,6 +163,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="rebuild when a source or compilation dependency changes",
     )
+    build.add_argument(
+        "--root",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "read every file a document names from inside DIR, and refuse one outside it, "
+            "through .. or a symbolic link: for a document from someone else"
+        ),
+    )
 
     check = subcommands.add_parser(
         "check",
@@ -212,6 +221,15 @@ def build_parser() -> argparse.ArgumentParser:
             "also run the full compiler on documents that pass every cheap check, to "
             "additionally catch layout and balloon-placement failures; costs a real "
             "compile, including font metrics, so off by default"
+        ),
+    )
+    check.add_argument(
+        "--root",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "read every file a document names from inside DIR, and refuse one outside it, "
+            "through .. or a symbolic link: for a document from someone else"
         ),
     )
 
@@ -355,11 +373,11 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     if not source.exists():
         print(f"scenet: no such file: {source}", file=sys.stderr)
         return 2
-    if _refuse_unsupported([source]) or _refuse_output(args.output):
+    if _refuse_unsupported([source]) or _refuse_output(args.output) or _refuse_root(args.root):
         return 2
 
     try:
-        book = compile_book_file(source, dependencies=dependencies)
+        book = compile_book_file(source, dependencies=dependencies, root=args.root)
     except ScenetError as exc:
         print(f"scenet: {_compile_failure(exc)}", file=sys.stderr)
         return 1
@@ -702,6 +720,18 @@ def _refuse_output(written: str | None) -> bool:
     return True
 
 
+def _refuse_root(root: Path | None) -> bool:
+    """Report a `--root` that is not a folder.
+
+    Returns:
+        Whether it was refused.
+    """
+    if root is not None and not root.is_dir():
+        print(f"scenet: --root {root} is not a folder", file=sys.stderr)
+        return True
+    return False
+
+
 def _refuse_directory(output: Path | None) -> bool:
     """Report an `-o` that names a directory, for a command that writes one file.
 
@@ -738,12 +768,12 @@ def run_check(args: argparse.Namespace) -> int:
         return 2
     # Checked as `build` would read it, or not at all: calling a file `build` refuses
     # "ok" would be a confident false clean.
-    if _refuse_unsupported(sources) or _refuse_directory(args.output):
+    if _refuse_unsupported(sources) or _refuse_directory(args.output) or _refuse_root(args.root):
         return 2
 
     found: list[Diagnostic] = []
     for path in sources:
-        found.extend(diagnose_file(path, deep=args.deep))
+        found.extend(diagnose_file(path, deep=args.deep, root=args.root))
     # A note reports a house limit, and the document still compiles: only an error fails.
     status = 1 if any(item.level == "error" for item in found) else 0
 

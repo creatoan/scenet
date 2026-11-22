@@ -21,10 +21,27 @@ Some of those files are text an author writes: a picture's artwork contract, a p
 a cast member names. :func:`read_model <scenet.paths.read_model>` reads one the same
 way for both, and a fault in it is a :exc:`NamedFileError <scenet.paths.NamedFileError>`,
 located in the file as well as where the document names it.
+
+.. rubric:: What is read, and what is not
+
+Only a regular file is read: a folder, a device or a pipe is refused by what it is, before
+it is opened, since opening a pipe waits for a writer and a device may never end. A file is
+read up to its bound in :mod:`scenet.limits <scenet.limits>`, and one larger is refused by
+its size. Inside :func:`contained <scenet.paths.contained>` -- `--root` on the command line
+-- every file a document names must resolve inside the root folder, symbolic links
+followed, and one that does not is refused without being opened.
+
+A file a document names, read from disk, may be one its author never had. A fault in it is
+reported by its line and what kind of fault it is, and never by what it holds: no value and
+no key it writes is quoted back. A file sent with the document, in a mapping, is its
+sender's, who is told which key is wrong.
 """
 
+import errno
+import os
 import posixpath
 import re
+import stat
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -34,6 +51,7 @@ from typing import ClassVar
 import yaml
 from pydantic import BaseModel, ValidationError
 
+from scenet import limits
 from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import errors_of
 from scenet.frontends.positions import Position, Region, locate
@@ -44,6 +62,8 @@ __all__ = [
     "Folder",
     "NamedFileError",
     "check_relative",
+    "contained",
+    "read_bounded",
     "read_document",
     "read_file",
     "read_model",
@@ -54,6 +74,38 @@ __all__ = [
 ]
 
 _DEPENDENCIES: ContextVar[set[Path] | None] = ContextVar("scenet_dependencies", default=None)
+_ROOT: ContextVar[Path | None] = ContextVar("scenet_root", default=None)
+
+
+@contextmanager
+def contained(root: Path | None) -> Generator[None, None, None]:
+    """Read every file a document names from inside one folder, and refuse any other.
+
+    For a document from someone else: `..` and symbolic links may otherwise reach any file
+    the process can read. A path is resolved, links followed, before it is opened, and one
+    that resolves outside the root is a finding of the read's rule, located where the
+    document names it. Files sent in a mapping are not on disk, and are not affected.
+
+    Each thread and each `asyncio` task has its own root, as it has its own dependencies.
+
+    Args:
+        root: The folder, or `None` for no containment.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet.paths import contained, read_relative
+        >>> with contained(Path("comic")):
+        ...     read_relative("../secret.png", Path("comic"), what="image", rule="image-file")
+        Traceback (most recent call last):
+          ...
+        scenet.errors.PanelSyntaxError: image file '../secret.png' is outside the root folder, \
+the only one this compile may read from
+    """
+    token = _ROOT.set(None if root is None else root.resolve())
+    try:
+        yield
+    finally:
+        _ROOT.reset(token)
 
 
 @contextmanager
@@ -123,28 +175,114 @@ def resolve_relative(
     return base / declared
 
 
-def read_file(path: Path) -> bytes:
-    """Read a file a caller names -- not one a document names -- whole.
+class NotRegularFileError(OSError):
+    """A path to something that is not a regular file: a folder, a device, a pipe."""
+
+    def __init__(self, path: Path) -> None:
+        """Build the error.
+
+        Args:
+            path: The path.
+        """
+        super().__init__(errno.EINVAL, "not a regular file", str(path))
+
+
+class FileTooLargeError(OSError):
+    """A regular file larger than the most Scenet reads of it.
+
+    Attributes:
+        limit: The bound, in bytes.
+    """
+
+    def __init__(self, path: Path, limit: int, what: str) -> None:
+        """Build the error.
+
+        Args:
+            path: The file.
+            limit: The bound, in bytes.
+            what: What the file is, for the message: `a document`, say.
+        """
+        self.limit = limit
+        super().__init__(
+            errno.EFBIG,
+            f"larger than {limits.describe(limit)}, the most Scenet reads of {what}",
+            str(path),
+        )
+
+
+def read_bounded(path: Path, limit: int | None, *, what: str = "a file") -> bytes:
+    """Read a regular file whole, if it is no larger than a bound.
+
+    What it is and how big are read first, and a folder, a device, a pipe, or a file over
+    the bound is refused without being opened -- opening a pipe would wait for a writer.
+    It is checked again once opened, in case it was swapped in between, and never more than
+    one byte past the bound is read.
 
     Args:
-        path: The file, as the caller gave it.
+        path: The file.
+        limit: The most bytes to read, or `None` for no bound.
+        what: What the file is, for the message of a file too large: `a document`, say.
 
     Returns:
         Its bytes.
 
     Raises:
-        FileReadError: The system will not read it. A :exc:`MissingFileError
-            <scenet.errors.MissingFileError>` when it is not there; either keeps the
-            system's `errno`, `strerror` and `filename`, and is an `OSError`.
+        NotRegularFileError: It is not a regular file. An `OSError`.
+        FileTooLargeError: It is larger than `limit`. An `OSError`.
+        OSError: The system will not read it.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet.paths import read_bounded
+        >>> read_bounded(Path("."), 10)
+        Traceback (most recent call last):
+          ...
+        scenet.paths.NotRegularFileError: [Errno 22] not a regular file: '.'
+    """
+    status = path.stat()
+    if not stat.S_ISREG(status.st_mode):
+        raise NotRegularFileError(path)
+    if limit is not None and status.st_size > limit:
+        raise FileTooLargeError(path, limit, what)
+    # Not blocking where the system has the flag, in case a pipe was put in its place
+    # since: opened that way, it is opened at once, and refused below.
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0)
+    with os.fdopen(os.open(path, flags), "rb") as file:
+        if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
+            raise NotRegularFileError(path)
+        data = file.read() if limit is None else file.read(limit + 1)
+    if limit is not None and len(data) > limit:
+        raise FileTooLargeError(path, limit, what)
+    return data
+
+
+def read_file(path: Path, *, limit: int | None = None, what: str = "a file") -> bytes:
+    """Read a file a caller names -- not one a document names -- whole.
+
+    Args:
+        path: The file, as the caller gave it.
+        limit: The most bytes to read, or `None` for no bound.
+        what: What the file is, for the message of a file too large: `a font`, say.
+
+    Returns:
+        Its bytes.
+
+    Raises:
+        FileReadError: The system will not read it, or it is not a regular file, or it is
+            larger than `limit`. A :exc:`MissingFileError <scenet.errors.MissingFileError>`
+            when it is not there; either keeps the system's `errno`, `strerror` and
+            `filename`, and is an `OSError`.
     """
     try:
-        return path.read_bytes()
+        return read_bounded(path, limit, what=what)
     except OSError as exc:
         raise FileReadError.of(exc) from exc
 
 
 def read_document(path: Path, *, error: type[PanelSyntaxError] = PanelSyntaxError) -> str:
     """Read a document a caller names, as UTF-8 text.
+
+    No more than :data:`DOCUMENT_BYTES <scenet.limits.DOCUMENT_BYTES>` is read.
 
     Args:
         path: The document.
@@ -155,12 +293,15 @@ def read_document(path: Path, *, error: type[PanelSyntaxError] = PanelSyntaxErro
         Its text, read as :meth:`pathlib.Path.read_text` reads it.
 
     Raises:
-        FileReadError: The system will not read it.
+        FileReadError: The system will not read it, or it is not a regular file, or it is
+            larger than the bound.
         PanelSyntaxError: Rule `syntax`: it is not UTF-8, so it is no document at all.
             Raised as `error`.
     """
     try:
-        return path.read_text(encoding="utf-8")
+        data = read_bounded(path, limits.DOCUMENT_BYTES, what="a document")
+        # As `Path.read_text` reads it: a line may end in CR LF or CR.
+        return data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
     except UnicodeDecodeError as exc:
         raise error(
             f"not UTF-8 text: byte {exc.start} is {exc.object[exc.start]:#04x}; save the "
@@ -179,6 +320,7 @@ def read_relative(
     what: str,
     rule: str,
     loc: tuple[str | int, ...] = (),
+    limit: int | None = None,
 ) -> bytes:
     """Read a file a document names, from its folder or from the files sent with it.
 
@@ -189,26 +331,47 @@ def read_relative(
         what: What the file is, for the message: `font`, say.
         rule: The rule every failure is reported under.
         loc: Where in the document the path was written.
+        limit: The most bytes to read. Defaults to :data:`DOCUMENT_BYTES
+            <scenet.limits.DOCUMENT_BYTES>`, the bound on a text file.
 
     Returns:
         The file's bytes.
 
     Raises:
         PanelSyntaxError: Anything :func:`resolve_relative` refuses, or the file is not
-            there, or cannot be read. The message names the path as written, never as
-            resolved: a finding is output too, and a folder in it would differ between
-            two checkouts.
+            there, or cannot be read, or is not a regular file, or is larger than the
+            bound, or is outside the root of :func:`contained`. The message names the path
+            as written, never as resolved: a finding is output too, and a folder in it
+            would differ between two checkouts.
 
     Example:
         >>> from scenet.paths import read_relative
         >>> read_relative("./art/a.png", {"art/a.png": b"..."}, what="image", rule="image-file")
         b'...'
     """
+    bound = limits.DOCUMENT_BYTES if limit is None else limit
     if base is None or isinstance(base, Path):
         path = resolve_relative(declared, base, what=what, rule=rule, loc=loc)
         record_dependency(path)
         try:
-            return path.read_bytes()
+            _refuse_outside(path)
+            return read_bounded(path, bound)
+        except _OutsideError as exc:
+            raise PanelSyntaxError(
+                f"{what} file {declared!r} is outside the root folder, the only one this "
+                "compile may read from",
+                rule=rule,
+                loc=loc,
+            ) from exc
+        except NotRegularFileError as exc:
+            raise PanelSyntaxError(
+                f"{what} file {declared!r} is not a regular file; a folder, a device or a "
+                "pipe is never read",
+                rule=rule,
+                loc=loc,
+            ) from exc
+        except FileTooLargeError as exc:
+            raise _too_large(declared, bound, what=what, rule=rule, loc=loc) from exc
         except FileNotFoundError as exc:
             raise _not_found(declared, what=what, rule=rule, loc=loc) from exc
         # `ValueError` too: a path the file system cannot spell is a path that cannot be
@@ -225,7 +388,38 @@ def read_relative(
     found = sent.get(posixpath.normpath(declared))
     if found is None:
         raise _not_found(declared, what=what, rule=rule, loc=loc)
+    if len(found) > bound:
+        raise _too_large(declared, bound, what=what, rule=rule, loc=loc)
     return found
+
+
+class _OutsideError(Exception):
+    """A path that resolves outside the root folder."""
+
+
+def _refuse_outside(path: Path) -> None:
+    """Refuse a path outside the root of :func:`contained`, once links are followed."""
+    root = _ROOT.get()
+    if root is None:
+        return
+    # A loop of links is `RuntimeError` on 3.12 and `OSError` later; either is no way in.
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise _OutsideError from exc
+    if not resolved.is_relative_to(root):
+        raise _OutsideError
+
+
+def _too_large(
+    declared: str, limit: int, *, what: str, rule: str, loc: tuple[str | int, ...]
+) -> PanelSyntaxError:
+    return PanelSyntaxError(
+        f"{what} file {declared!r} is larger than {limits.describe(limit)}, the most Scenet "
+        f"reads of one {what} file",
+        rule=rule,
+        loc=loc,
+    )
 
 
 def _not_found(
@@ -373,9 +567,13 @@ def read_model[M: BaseModel](
         NamedFileError: The error given, for a file that is there and wrong, located in it
             too: not UTF-8 text, not YAML, a key written twice, not a mapping, written for
             a later language, or not what the model allows -- the first fault, at the key
-            that is wrong.
+            that is wrong. Read from disk, the message quotes nothing the file holds; sent
+            in a mapping, it names the key and the value.
     """
     data = read_relative(declared, base, what=what, rule=error.RULE, loc=loc)
+    # Sent with the document, the file is its sender's, and quoting it tells them nothing
+    # they did not have. Read from disk, it may be any file the document reached.
+    quoted = isinstance(base, Mapping)
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -387,13 +585,17 @@ def read_model[M: BaseModel](
             start=Position(line=exc.line, column=exc.column),
             end=Position(line=exc.end_line, column=exc.end_column),
         )
-        raise error(exc.summary, file=declared, region=region, loc=loc) from exc
+        summary = exc.summary if quoted else "it is not Scenet YAML"
+        raise error(summary, file=declared, region=region, loc=loc) from exc
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
         region = _whole_line(mark.line + 1) if mark is not None else None
         problem = getattr(exc, "problem", None) or describe(exc)
         raise error(
-            f"it is not valid YAML: {problem}", file=declared, region=region, loc=loc
+            f"it is not valid YAML: {problem}" if quoted else "it is not valid YAML",
+            file=declared,
+            region=region,
+            loc=loc,
         ) from exc
     if not isinstance(raw, dict):
         raise error(f"it must be a mapping of {holds}", file=declared, loc=loc)
@@ -403,7 +605,7 @@ def read_model[M: BaseModel](
     later = language_fault(head)
     if later is not None:
         raise error(
-            f"scenet: {later}",
+            f"scenet: {later}" if quoted else "its `scenet:` is not a language this Scenet reads",
             file=declared,
             inner=later.loc,
             region=locate(text, later.loc),
@@ -421,6 +623,8 @@ def read_model[M: BaseModel](
             inner = _untagged(tuple(first["loc"]), tags)
             message = unknown_key if first["type"] == "extra_forbidden" else first["msg"]
         where = ".".join(str(part) for part in inner)
+        if not quoted:
+            where, message = "", _unquoted(first["type"], original, unknown_key)
         raise error(
             f"{where}: {message}" if where else message,
             file=declared,
@@ -428,6 +632,17 @@ def read_model[M: BaseModel](
             region=locate(text, inner),
             loc=loc,
         ) from exc
+
+
+def _unquoted(kind: str, original: object, unknown_key: str) -> str:
+    """What is wrong at a place in a file, in words that quote nothing it holds."""
+    if isinstance(original, RuleViolationError):
+        return "a value it does not allow here"
+    if kind == "extra_forbidden":
+        return unknown_key
+    if kind == "missing":
+        return "a key it needs is missing here"
+    return "a value it does not allow here"
 
 
 def _untagged(loc: tuple[str | int, ...], tags: frozenset[str]) -> tuple[str | int, ...]:
