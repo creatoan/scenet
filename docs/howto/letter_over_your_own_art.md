@@ -51,9 +51,11 @@ scenet check examples/gallery/34-supplied-art.scene.yaml
 scenet build examples/gallery/34-supplied-art.scene.yaml
 ```
 
-Written anywhere else, or put on the web as an `<img>`, or turned into a PNG, a linked picture is
-not found — an SVG shown as an image loads no file it links to. `--embed-images` writes the
-picture's bytes into the SVG instead, so the file stands alone:
+Written anywhere else, the picture is copied beside the SVG, at the path it is linked by, and
+the build says so: `-o out/` writes `out/art/…` beside `out/…svg`. Put on the web as an `<img>`,
+or turned into a PNG, a linked picture is not found — an SVG shown as an image loads no file it
+links to. `--embed-images` writes the picture's bytes into the SVG instead, so the file stands
+alone:
 
 ```bash
 scenet build examples/gallery/34-supplied-art.scene.yaml -o out/ --embed-images

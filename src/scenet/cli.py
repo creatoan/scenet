@@ -4,9 +4,11 @@ import argparse
 import importlib
 import json
 import os
+import posixpath
 import sys
 import traceback
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 
@@ -85,7 +87,8 @@ def build_parser() -> argparse.ArgumentParser:
         "-o",
         "--output",
         help=(
-            "output SVG path, or a directory to write into under the default name "
+            "the SVG to write, a name ending in .svg; or a folder to write into under the "
+            "default name: one that exists, or a name ending in / or with no extension "
             "(default: alongside the source)"
         ),
     )
@@ -352,7 +355,7 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     if not source.exists():
         print(f"scenet: no such file: {source}", file=sys.stderr)
         return 2
-    if _refuse_unsupported([source]):
+    if _refuse_unsupported([source]) or _refuse_output(args.output):
         return 2
 
     try:
@@ -370,7 +373,6 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         .removesuffix(".scene")
     )
     base = _output_base(args.output, source, f"{stem}.svg")
-    base.parent.mkdir(parents=True, exist_ok=True)
 
     single = len(book.panels) == 1 and "panel" in book.panels
     printed = _printed(book)
@@ -378,21 +380,27 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
         _print(book, printed, base, live_text=args.live_text, mono=args.mono) if args.pdf else None
     )
     outputs = [] if isinstance(pdf, int) else _outputs(book, base, args, single=single, pdf=pdf)
+    copies = _Copies() if args.embed_images else _copies(book, source, base)
+    outputs += copies.outputs
     refused = pdf if isinstance(pdf, int) else 2 if _refuse_clashes(outputs) else 0
     if refused:
         return refused
 
     # Everything is checked before anything is written, so a refusal leaves no half-built
-    # set of files behind.
+    # set of files behind -- not even the folder they would have gone in.
     for path, content in outputs:
+        path.parent.mkdir(parents=True, exist_ok=True)
         _write(path, content())
+    # Said whatever `--quiet` asked: a file that was there is gone.
+    for replaced in copies.replaced:
+        print(f"scenet: {replaced}", file=sys.stderr)
 
     if not args.quiet:
         for path, _ in outputs:
             print(f"wrote {path}")
         # What reading the document noticed, each naming its line, then what the compiler
         # decided in each panel, then what print leaves out.
-        notes = [*book.notes, *_links_away_from(book, source, base, embedded=args.embed_images)]
+        notes = [*book.notes, *copies.notes]
         for name, result in book.panels.items():
             notes += [note if single else f"{name}: {note}" for note in result.notes]
         if args.pdf:
@@ -436,15 +444,9 @@ def _print(
     """The print PDF, built before anything is written; or the status a refusal exits with.
 
     A picture print cannot carry fails the whole build, and leaves no half-built set of
-    files behind. So does an `-o` naming a PDF: it names the SVG, and the PDF goes beside it.
+    files behind. An `-o` naming a PDF never gets here: `-o` names the SVG, or a folder, and
+    the PDF goes beside it.
     """
-    if base.suffix.lower() == ".pdf":
-        print(
-            f"scenet: -o names the SVG, and {base} would be written as both it and the PDF "
-            "beside it; give -o a .svg name or a folder",
-            file=sys.stderr,
-        )
-        return 2
     try:
         return render_pdf(
             book.pages,
@@ -464,29 +466,64 @@ def _printed(book: Book) -> dict[str, PanelCore]:
     return printed_panels(book.pages, {name: result.core for name, result in book.panels.items()})
 
 
-def _links_away_from(book: Book, source: Path, base: Path, *, embedded: bool) -> list[str]:
-    """What to say about pictures linked from an SVG written away from its document.
+@dataclass(frozen=True)
+class _Copies:
+    """The pictures a build copies beside its SVGs, and what it says about them."""
+
+    #: Each picture to write, where its SVG links it.
+    outputs: list["_Output"] = field(default_factory=list)
+    #: What to say of each picture linked, copied or not.
+    notes: list[str] = field(default_factory=list)
+    #: What to say, whatever `--quiet` asked, of each file a copy replaces.
+    replaced: list[str] = field(default_factory=list)
+
+
+def _copies(book: Book, source: Path, base: Path) -> _Copies:
+    """The pictures to copy beside the SVGs, so that each link finds its picture there.
 
     A link is the path the document wrote, which a viewer reads from beside the SVG. Beside
-    the document -- where `build` writes by default -- that finds the picture; anywhere
-    else it does not, and the SVG would show nothing where the picture should be. The
-    path is not rewritten to climb back: librsvg refuses a link out of the SVG's folder,
-    so that would only move the failure.
+    the document -- where `build` writes by default -- that finds the picture already;
+    anywhere else, the picture is copied to that path beside the SVG, so the SVG shows it
+    wherever it was written. The path is not rewritten instead: librsvg refuses a link out of
+    the SVG's folder, so that would only move the failure. For the same reason a picture
+    the document reaches with `..` is not copied, since its copy would land outside the
+    folder the build writes in; a note says so.
+
+    A file already where a copy goes is left alone when it is the picture, and replaced when
+    it is not -- which the build says, since nothing is lost silently.
     """
-    if embedded or base.parent.resolve() == source.parent.resolve():
-        return []
     linked = sorted(
         {
-            result.core.backdrop.image.href
+            (result.core.backdrop.image.href, result.core.backdrop.image.sha256)
             for result in book.panels.values()
             if result.core.backdrop is not None and result.core.backdrop.image is not None
         }
     )
-    return [
-        f"{href} is linked, and a viewer looks for it beside the SVG, in {base.parent}, "
-        "not beside the document; copy it there, or build with --embed-images"
-        for href in linked
-    ]
+    copies = _Copies()
+    for href, digest in linked:
+        target = base.parent / href
+        if target.resolve() == (source.parent / href).resolve():
+            continue
+        if posixpath.normpath(href).startswith(".."):
+            copies.notes.append(
+                f"{href} is linked, and is outside the document's folder, so it was not copied "
+                f"beside the SVG, in {base.parent}; build with --embed-images, or beside the "
+                "document"
+            )
+            continue
+        data = book.images[digest]
+        if target.is_file():
+            if target.stat().st_size == len(data) and target.read_bytes() == data:
+                continue
+            copies.replaced.append(
+                f"replaced {target}, which was not the picture {href} the document links"
+            )
+        copies.outputs.append((target, partial(bytes, data)))
+        copies.notes.append(
+            f"{href} is linked, so it was copied beside the SVG, to {target}; build with "
+            "--embed-images for an SVG that stands alone"
+        )
+    return copies
 
 
 #: One file `build` will write, and how to produce what goes in it -- deferred, so that
@@ -619,9 +656,10 @@ def _refuse_clashes(outputs: list[_Output]) -> bool:
 def _output_base(written: str | None, source: Path, default: str) -> Path:
     """Where `build` writes its main output, from what `-o` said.
 
-    A path naming a directory -- one that exists, or one written with a trailing
-    separator, as `out/` -- takes the default name inside it, as `cp` does. Anything
-    else is the file to write, whether or not it has a suffix.
+    A path naming a folder -- one that exists, one written with a trailing separator, as
+    `out/`, or one with no extension, as `out` -- takes the default name inside it, as `cp`
+    does, and is made if it is not there. Anything else is the SVG to write, and ends in
+    `.svg`: :func:`_refuse_output <scenet.cli._refuse_output>` has refused the rest.
 
     Args:
         written: The `-o` argument exactly as given, or `None` when there was none.
@@ -634,10 +672,34 @@ def _output_base(written: str | None, source: Path, default: str) -> Path:
     if written is None:
         return source.with_name(default)
     path = Path(written)
+    return path / default if _names_folder(written) else path
+
+
+def _names_folder(written: str) -> bool:
+    """Whether an `-o` is a folder: one there, or a name ending in a separator or bare."""
     separators = tuple(separator for separator in (os.sep, os.altsep) if separator)
-    if written.endswith(separators) or path.is_dir():
-        return path / default
-    return path
+    path = Path(written)
+    return written.endswith(separators) or path.is_dir() or not path.suffix
+
+
+def _refuse_output(written: str | None) -> bool:
+    """Report an `-o` for `build` that is neither a folder nor an SVG's name.
+
+    Every SVG a build writes ends in `.svg`, and every other output is named after the
+    main SVG, so `-o out.pdf` would put an SVG in a file named for a PDF -- and the PDF
+    `--pdf` writes beside it on top of it.
+
+    Returns:
+        Whether it was refused.
+    """
+    if written is None or _names_folder(written) or Path(written).suffix.lower() == ".svg":
+        return False
+    print(
+        f"scenet: -o names the SVG, which ends in .svg, or a folder; {written} is neither: "
+        f"write {Path(written).with_suffix('.svg')} for the file, or {written}/ for a folder",
+        file=sys.stderr,
+    )
+    return True
 
 
 def _refuse_directory(output: Path | None) -> bool:

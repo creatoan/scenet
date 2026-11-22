@@ -127,12 +127,12 @@ class TestBuild:
             "story.two.svg",
         ]
 
-    def test_a_path_with_no_directory_is_still_a_file(self, panel_file: Path, tmp_path: Path):
-        """Only an existing directory, or a trailing separator, means a directory: a
-        new name without a suffix is still the file to write, as it always was."""
+    def test_a_name_with_no_extension_is_a_directory(self, panel_file: Path, tmp_path: Path):
+        """`-o plain` used to write an SVG called `plain`, with no `.svg` (#460): every SVG
+        written ends in `.svg`, so a bare name is the folder to write into."""
         target = tmp_path / "plain"
         assert main(["build", str(panel_file), "-o", str(target), "--quiet"]) == 0
-        assert target.is_file()
+        assert (target / "scene.svg").is_file()
 
     def test_core_flag_writes_the_intermediate_tier(self, panel_file: Path, tmp_path: Path, capsys):
         target = tmp_path / "out.svg"

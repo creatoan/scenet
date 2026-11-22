@@ -57,10 +57,13 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 
 `-o`, `--output PATH`
 : Where to write. Defaults to the source's name with an `.svg` extension, alongside it.
-  Note that `duel.panel.yaml` becomes `duel.svg`, not `duel.panel.svg`. A directory, one that
-  exists or one written with a trailing `/` such as `out/`, takes that default name inside
-  it, so `-o .` writes `duel.svg` to the current directory. Any other path is the SVG file
-  itself, and every other output is named after it.
+  Note that `duel.panel.yaml` becomes `duel.svg`, not `duel.panel.svg`. A folder takes that
+  default name inside it, and is made if it is not there: one that exists, whatever its name,
+  one written with a trailing `/` such as `out/`, or a name with no extension such as `out`.
+  So `-o .` writes `duel.svg` to the current directory, and `-o out` writes `out/duel.svg`. A
+  name ending in `.svg` is the SVG file itself, and every other output is named after it.
+  Any other extension is a usage error, exit 2, and nothing is written: every SVG written ends
+  in `.svg`, and `-o out.pdf` would put an SVG in a file named for a PDF.
   *Since 0.1.*
 
 `--core`
@@ -116,9 +119,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 : Write each [supplied picture](language/setting.md#settingimage) into the SVG as a
   `data:` URI, so the file stands alone. By default a picture is linked by the path the
   document wrote, which a viewer reads from beside the SVG: that finds it when the SVG is
-  written beside the document, as it is by default. Written anywhere else, the build says so
-  in a `note:`, since the link will not resolve there; an SVG shown as an `<img>`, or turned
-  into a PNG, loads no linked file at all. Embedding is byte-identical for the same picture.
+  written beside the document, as it is by default. Written anywhere else, the picture is
+  copied beside the SVG, at that path — `-o out/` writes `out/art/p01.png` for a document
+  that names `art/p01.png` — and a `note:` says so, so the SVG shows it wherever it was
+  written. A file already there that is the picture is left alone; one that is not is
+  replaced, and the build says so on stderr even with `--quiet`. A picture the document
+  reaches with `..` is not copied, since its copy would land outside the folder written to,
+  and a `note:` says so. An SVG shown as an `<img>`, or turned into a PNG, loads no linked
+  file at all. Embedding is byte-identical for the same picture.
   *Since 0.12.*
 
 `--strip`
@@ -150,8 +158,8 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   where the compiler tells you it did something you did not ask for. Each kind has a name,
   listed with what to do about it in
   [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes) — all but
-  what the build says about its files: a linked picture written away from its document, and
-  what `--pdf` leaves out.
+  what the build says about its files: a linked picture copied beside the SVG, or one that
+  could not be, and what `--pdf` leaves out. A file a picture's copy replaced is said even so.
   *Since 0.1.*
 
 `--watch`
@@ -164,6 +172,17 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   *Since 0.13.*
 
 ### Output naming
+
+Every SVG written ends in `.svg`, and every output is named after the main SVG, which `-o`
+names or puts in a folder:
+
+```
+duel.panel.yaml -o out.svg  →  out.svg, out.core.json, out.pdf
+duel.panel.yaml -o out      →  out/duel.svg, out/duel.core.json, out/duel.pdf
+duel.panel.yaml -o out.txt  →  exit 2, nothing written
+```
+
+The same holds for `--core`, `--debug`, `--conditioning`, `--pdf` and `--watch`.
 
 A single-panel document writes to the requested name. A multi-panel document suffixes each
 panel with its own name, so the mapping back to the source stays obvious:

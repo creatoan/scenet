@@ -492,7 +492,31 @@ class TestBehaviour:
         assert main(["build", str(_source(tmp_path, PANEL)), "--quiet"]) == 0
         assert _files(tmp_path) == ["duel.svg"]
 
-    @pytest.mark.parametrize("written", [".", "out/"])
+    @pytest.mark.parametrize(
+        ("written", "expected"),
+        [
+            ("out.svg", ["out.core.json", "out.pdf", "out.svg"]),
+            ("out", ["out/duel.core.json", "out/duel.pdf", "out/duel.svg"]),
+            ("out.txt", []),
+        ],
+    )
+    def test_the_output_naming_table(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, written: str, expected: list[str]
+    ):
+        """The rows under "Output naming": `-o` names the SVG, a folder, or is refused."""
+        source = _source(tmp_path, PANEL)
+        monkeypatch.chdir(tmp_path)
+        status = main(["build", str(source), "-o", written, "--core", "--pdf", "--quiet"])
+        assert status == (0 if expected else 2)
+        written_files = sorted(
+            path.relative_to(tmp_path).as_posix()
+            for path in tmp_path.rglob("*")
+            if path.is_file() and path != source
+        )
+        assert written_files == expected
+        assert f"duel.panel.yaml -o {written}" in REFERENCE
+
+    @pytest.mark.parametrize("written", [".", "out/", "out"])
     def test_a_directory_takes_the_default_name(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, written: str
     ):

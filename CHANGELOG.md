@@ -47,6 +47,12 @@ it is written, and says what to write instead.
 
 ### Changed (breaking)
 
+- **`scenet build -o out` writes into a folder `out`** (#460), as `-o out/` did: a name with no
+  extension is a folder, made if it is not there. It used to be the SVG itself, written with no
+  `.svg`, beside `out.pdf`, and a scene's panels as `out.one` and `out.page-1`. A name ending
+  in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
+  usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
+
 - **A script beside `panels:` is refused** (#357), as a description already was: it gave every
   panel of the scene the same lines without a word. `script:` there is now one `unknown-key`
   finding, at the key, that says to write it on the panel that says it, or on one the others are
@@ -119,6 +125,12 @@ it is written, and says what to write instead.
   profile is; it was the key's first character.
 
 ### Fixed
+
+- **A linked picture is copied beside the SVG** (#460) when `scenet build` writes anywhere but
+  beside the document, at the path the SVG links it by, so the SVG shows it there; a note says
+  so. A file already there that is not the picture is replaced, and the build says so even with
+  `--quiet`. A picture the document reaches with `..` is not copied, and a note says why. A
+  refused build no longer makes the folder it would have written in.
 
 - **`scenet check` on a file that is not UTF-8 is a `syntax` finding** (#377), the one line
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while

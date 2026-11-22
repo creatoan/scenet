@@ -239,13 +239,15 @@ class TestTheCommandLine:
         assert 'xlink:href="art/street.png"' in (comic / "p1.svg").read_text(encoding="utf-8")
         assert "linked" not in capsys.readouterr().out
 
-    def test_elsewhere_a_note_says_the_link_will_not_resolve(
+    def test_elsewhere_it_is_copied_beside_the_svg_and_a_note_says_so(
         self, comic: Path, tmp_path: Path, capsys
     ):
+        """The link would not resolve there, so the picture goes where it points (#460)."""
         out = tmp_path / "out"
         assert main(["build", str(comic / "p1.panel.yaml"), "-o", f"{out}{os.sep}"]) == 0
         written = capsys.readouterr().out
-        assert "art/street.png" in written
+        assert (out / "art" / "street.png").read_bytes() == PICTURE
+        assert "art/street.png is linked, so it was copied beside the SVG" in written
         assert "--embed-images" in written
 
     def test_quiet_says_nothing(self, comic: Path, tmp_path: Path, capsys):

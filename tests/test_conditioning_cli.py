@@ -167,9 +167,18 @@ class TestDeterminism:
             with pytest.MonkeyPatch.context() as patch:
                 patch.chdir(cwd)
                 assert main(["build", path, "-o", f"{out}/", "--conditioning", "--quiet"]) == 0
-            builds.append({p.name: p.read_bytes() for p in out.iterdir()})
+            # The pictures it links are copied beside it, in their folder (#460).
+            builds.append(
+                {
+                    p.relative_to(out).as_posix(): p.read_bytes()
+                    for p in out.rglob("*")
+                    if p.is_file()
+                }
+            )
         assert builds[0] == builds[1] == builds[2]
         for name, data in builds[0].items():
+            if not name.endswith((".svg", ".json")):
+                continue  # a picture copied beside the SVGs, as it was supplied
             text = data.decode("utf-8")
             for leak in (str(tmp_path), str(ROOT), ROOT.as_posix()):
                 assert leak not in text, name
