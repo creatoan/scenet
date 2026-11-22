@@ -1,0 +1,4 @@
+# The document says it is one panel, and holds its panels under `panels:`.
+kind: panel
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}

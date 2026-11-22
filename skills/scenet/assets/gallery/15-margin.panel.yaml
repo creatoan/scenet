@@ -5,6 +5,14 @@
 # than a required one, so a crowded panel lets a figure run off the edge instead of
 # refusing to compile. Lettering has no such licence: text that leaves the panel is
 # text nobody can read.
+#
+# Its top says what it is: a panel of language 1, checked in an editor with the published
+# schema, and a title a tool keeps, which Scenet reads nothing of.
+
+scenet: 1
+$schema: https://creatoan.github.io/scenet/schemas/panel.schema.json
+kind: panel
+meta: {title: The margin}
 
 panel:
   size: [900, 700]

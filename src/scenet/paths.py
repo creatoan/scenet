@@ -37,6 +37,7 @@ from pydantic import BaseModel, ValidationError
 from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import errors_of
 from scenet.frontends.positions import Position, Region, locate
+from scenet.namespace import ASSET_KEYS, AssetHead, language_fault, split_head, stripped
 from scenet.safe_yaml import ProfileError, describe, load
 
 __all__ = [
@@ -370,8 +371,9 @@ def read_model[M: BaseModel](
             :func:`read_relative <scenet.paths.read_relative>` reports it -- located where
             the document names the file.
         NamedFileError: The error given, for a file that is there and wrong, located in it
-            too: not UTF-8 text, not YAML, a key written twice, not a mapping, or not what
-            the model allows -- the first fault, at the key that is wrong.
+            too: not UTF-8 text, not YAML, a key written twice, not a mapping, written for
+            a later language, or not what the model allows -- the first fault, at the key
+            that is wrong.
     """
     data = read_relative(declared, base, what=what, rule=error.RULE, loc=loc)
     try:
@@ -395,7 +397,20 @@ def read_model[M: BaseModel](
         ) from exc
     if not isinstance(raw, dict):
         raise error(f"it must be a mapping of {holds}", file=declared, loc=loc)
+    # Its extension keys are nobody's, and its own keys -- its language, its schema -- are
+    # not the model's: a file of a later language is that, and nothing else (#357).
+    head, raw = split_head(stripped(raw), ASSET_KEYS)
+    later = language_fault(head)
+    if later is not None:
+        raise error(
+            f"scenet: {later}",
+            file=declared,
+            inner=later.loc,
+            region=locate(text, later.loc),
+            loc=loc,
+        )
     try:
+        AssetHead.model_validate(head)
         return model.model_validate(raw), text, data
     except ValidationError as exc:
         first = errors_of(exc)[0]

@@ -1,0 +1,8 @@
+---
+# A script's lines are its cues: its front matter has no `script:`.
+cast: {ALICE: {reference: alice}}
+script: [{say: {by: ALICE, text: Hello.}}]
+---
+PANEL 1
+ALICE
+Hello.

@@ -53,6 +53,7 @@ from scenet.compose import (
     DIRECTION_KEY,
     NOT_A_DEFAULT,
     OVER_KEY,
+    SCRIPT_KEY,
     looks_toward,
     merge,
     names,
@@ -71,7 +72,7 @@ from scenet.frontends.common import (
     rule_for_pydantic,
     summarise,
 )
-from scenet.frontends.positions import DOCUMENT_START, KEY, locate
+from scenet.frontends.positions import DOCUMENT_START, KEY, Region, locate
 from scenet.identifiers import LABEL_WORDS
 from scenet.ir import (
     IDENTIFIERS,
@@ -85,6 +86,19 @@ from scenet.ir import (
     ShotType,
     Side,
     unholdable,
+)
+from scenet.namespace import (
+    DOCUMENT_KEYS,
+    EXTENSION_PREFIX,
+    DocumentHead,
+    Kind,
+    is_extension,
+    kind_fault,
+    language_fault,
+    own_document_key,
+    split_head,
+    stripped,
+    without_extensions,
 )
 from scenet.paths import read_document
 from scenet.safe_yaml import ProfileError, describe, load
@@ -136,6 +150,9 @@ BOLD_LABEL = re.compile(r"^(\*\*|__)(\S(?:.*?\S)?)\1(.*)$")
 # `--` is two hyphens, Dark Horse's carry-over mark, and is not one.
 HORIZONTAL_RULE = re.compile(r"^([-*_])(?:[ \t]*\1){2,}$")
 DIRECTIVE = re.compile(r"^@(\w+)\s*:\s*(.+)$")
+# `@x-note: ...`: an extension, which a tool writes and Scenet ignores, as it ignores an
+# `x-` key in any mapping (#357). A directive is one of the panel's keys.
+EXTENSION_DIRECTIVE = re.compile(rf"^@{re.escape(EXTENSION_PREFIX)}[^\s:]*\s*:")
 # A cue is a character name in capitals, then any parentheticals -- `BOB (OP) (whisper)`, or
 # one with commas, `BOB (OP, whisper)` -- and an optional colon. Any letter may start it,
 # not only A to Z: `HÉLÈNE` is a name in capitals, and her lines used to be filed as prose.
@@ -519,7 +536,8 @@ def _split_front_matter(text: str, source: Path | None) -> tuple[dict[str, Any],
         return {}, text[match.end() :], consumed
     if not isinstance(loaded, dict):
         raise ScriptSyntaxError("front matter must be a mapping", source=source)
-    return loaded, text[match.end() :], consumed
+    # Nothing past here reads an extension key, at any depth.
+    return stripped(loaded), text[match.end() :], consumed
 
 
 def _number_value(token: str) -> int | None:
@@ -1457,7 +1475,7 @@ def _panel_casts(body: str) -> list[frozenset[str]]:
             except yaml.YAMLError:
                 continue  # reported, at its line, when the panel itself is read
             if isinstance(members, dict):
-                scanned[-1].cast.update(str(name) for name in members)
+                scanned[-1].cast.update(str(name) for name in members if not is_extension(name))
     return _inherited_casts(scanned)
 
 
@@ -1582,10 +1600,20 @@ def _name_panels(drafts: list[_PanelDraft], source: Path | None) -> dict[str, _P
 
 def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | None) -> bool:
     """Handle an `@key: value` line. Returns whether the line was one."""
+    if EXTENSION_DIRECTIVE.match(line):
+        # An extension: the line is the tool's, and nothing of the panel.
+        return True
     directive = DIRECTIVE.match(line)
     if not directive:
         return False
     key, value = directive.group(1), directive.group(2).strip()
+    if key in DOCUMENT_KEYS:
+        raise ScriptSyntaxError(
+            f"line {number}: {own_document_key(key, 'in the front matter')}",
+            source=source,
+            line=number,
+            rule="unknown-key",
+        )
     if key == "script":
         raise ScriptSyntaxError(
             f"line {number}: a panel's script is written by its cues, captions and sound "
@@ -1623,7 +1651,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
         draft.settings[key] = value
         return True
     try:
-        draft.settings[key] = load(value)
+        draft.settings[key] = without_extensions(load(value))
     except ProfileError as exc:
         raise ScriptSyntaxError(
             f"line {number}: in directive '@{key}', {exc.summary}",
@@ -1809,18 +1837,42 @@ class ScriptDocument:
         return next((panel.direction for panel in self.panels.values()), Direction.LTR)
 
 
-def _front_matter_line(text: str, offset: int, key: str) -> int | None:
-    """The line a top-level key of the front matter is written on, if it is there.
+def _front_matter_region(text: str, offset: int, path: tuple[str | int, ...]) -> Region:
+    """Where in the file a key of the front matter is written, block style or flow style.
 
-    A top-level key starts a line of the front matter, which is the first `offset` lines.
+    Located in the front matter as YAML sees it, each marker line left blank so that every
+    line is the file's. The block was read as YAML already, so it composes and the key is in
+    it: the document's start is never where this points.
     """
-    return next(
-        (
-            number
-            for number, written in enumerate(text.split("\n")[:offset], start=1)
-            if re.match(rf"{key}\s*:", written)
+    block = "\n".join(
+        "" if written.strip() == "---" else written for written in text.split("\n")[:offset]
+    )
+    return locate(block, path) or DOCUMENT_START
+
+
+def _front_matter_fault(
+    message: str,
+    text: str,
+    offset: int,
+    path: tuple[str | int, ...],
+    *,
+    rule: str,
+    source: Path | None,
+) -> ScriptSyntaxError:
+    """A fault of the front matter, at the key or the value `path` names, as its line says."""
+    region = _front_matter_region(text, offset, path)
+    line = region.start.line
+    return ScriptSyntaxError(
+        f"line {line}: {message}",
+        source=source,
+        line=line,
+        rule=rule,
+        # A key written over two lines, `? "DR.` then `NO"`, has no one line's columns.
+        columns=(
+            (region.start.column, region.end.column)
+            if region.end.line == region.start.line
+            else None
         ),
-        None,
     )
 
 
@@ -1835,14 +1887,65 @@ def _check_direction(value: object, text: str, offset: int, source: Path | None)
     """
     if value is None or value in {direction.value for direction in Direction}:
         return
-    line = _front_matter_line(text, offset, DIRECTION_KEY)
     allowed = " or ".join(f"'{direction.value}'" for direction in Direction)
-    raise ScriptSyntaxError(
-        f"{f'line {line}: ' if line else ''}'direction' is {allowed}, not {value!r}",
-        source=source,
-        line=line,
+    raise _front_matter_fault(
+        f"'direction' is {allowed}, not {value!r}",
+        text,
+        offset,
+        (DIRECTION_KEY,),
         rule="invalid-field",
+        source=source,
     )
+
+
+#: Why a comic script's front matter has no `script:`: its lines are written as cues.
+NO_FRONT_MATTER_SCRIPT = (
+    "a comic script's lines are its cues, captions and sound effects, each under its PANEL "
+    "heading, so its front matter has no 'script'"
+)
+
+#: Why a comic script says it is a panel in vain.
+A_SCRIPT_IS_A_SCENE = (
+    "a comic script is a scene, whose panels are its PANEL headings, so its kind is `scene`: "
+    "write `kind: scene`, or leave `kind` out"
+)
+
+
+def _check_head(
+    front_matter: dict[str, Any], text: str, offset: int, source: Path | None
+) -> dict[str, Any]:
+    """The front matter without the document's own keys, each checked at its line.
+
+    Raises:
+        ScriptSyntaxError: A later language, alone; a key of the wrong shape; one kept for
+            later; a kind no script is; or a `script:`.
+    """
+    head, rest = split_head(front_matter, DOCUMENT_KEYS)
+    fault = language_fault(head)
+    if fault is None:
+        try:
+            DocumentHead.model_validate(head)
+        except ValidationError as exc:
+            rule, loc = rule_for_pydantic(errors_of(exc)[0])
+            message = str(errors_of(exc)[0]["msg"]).removeprefix("Value error, ")
+            raise _front_matter_fault(
+                f"in the front matter, '{loc[0]}': {message}",
+                text,
+                offset,
+                loc,
+                rule=rule,
+                source=source,
+            ) from exc
+        fault = kind_fault(head, Kind.SCENE, why=A_SCRIPT_IS_A_SCENE)
+    if fault is not None:
+        raise _front_matter_fault(
+            str(fault), text, offset, fault.loc, rule=fault.rule, source=source
+        )
+    if SCRIPT_KEY in rest:
+        raise _front_matter_fault(
+            NO_FRONT_MATTER_SCRIPT, text, offset, (SCRIPT_KEY,), rule="unknown-key", source=source
+        )
+    return rest
 
 
 def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDocument:
@@ -1863,22 +1966,22 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     # and the same whatever editor saved it.
     text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
+    front_matter = _check_head(front_matter, text, offset, source)
     if "pages" in front_matter:
-        raise ScriptSyntaxError(
+        raise _front_matter_fault(
             "a comic script's pages come from its PAGE headings, so its front matter has no "
             "`pages:`; `page:` sets their format",
-            source=source,
+            text,
+            offset,
+            ("pages",),
             rule="page-layout",
+            source=source,
         )
     if DESCRIPTION_KEY in front_matter:
         # The front matter is merged under every panel, and a description says what one
         # picture shows.
-        line = _front_matter_line(text, offset, DESCRIPTION_KEY)
-        raise ScriptSyntaxError(
-            f"{f'line {line}: ' if line else ''}{NOT_A_DEFAULT}",
-            source=source,
-            line=line,
-            rule="unknown-key",
+        raise _front_matter_fault(
+            NOT_A_DEFAULT, text, offset, (DESCRIPTION_KEY,), rule="unknown-key", source=source
         )
     _check_direction(front_matter.get(DIRECTION_KEY), text, offset, source)
     page_format = front_matter.pop("page", None)
@@ -1886,26 +1989,9 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     unusable = _unusable_name(cast)
     if unusable is not None:
         name, problem = unusable
-        # Located in the front matter as YAML sees it, each marker line left blank so that
-        # every line is the file's: the key, quoted or not, flow style or block.
-        block = "\n".join(
-            "" if written.strip() == "---" else written for written in text.split("\n")[:offset]
-        )
-        # The block was read as YAML already, so it composes and the key is in it: the
-        # document's start is never where this points.
-        region = locate(block, ("cast", name, KEY)) or DOCUMENT_START
-        line = region.start.line
-        raise ScriptSyntaxError(
-            f"line {line}: {problem}",
-            source=source,
-            line=line,
-            rule="invalid-identifier",
-            # A key written over two lines, `? "DR.` then `NO"`, has no one line's columns.
-            columns=(
-                (region.start.column, region.end.column)
-                if region.end.line == region.start.line
-                else None
-            ),
+        # At the key, quoted or not, flow style or block.
+        raise _front_matter_fault(
+            problem, text, offset, ("cast", name, KEY), rule="invalid-identifier", source=source
         )
     reading = _read_script(
         body, source, offset=offset, cast=frozenset(cast if isinstance(cast, dict) else ())

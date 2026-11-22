@@ -136,7 +136,7 @@ LEGS: tuple[Leg, ...] = (
         43,
         43410981157,
     ),
-    Leg("frontends/script", _in("frontends/", "script_front.py"), 97, 97.3, 2183, 60, 43606025253),
+    Leg("frontends/script", _in("frontends/", "script_front.py"), 97, 97.5, 2312, 58, 44802722199),
     Leg(
         "frontends/common",
         _in("frontends/", "__init__.py", "common.py"),
@@ -149,16 +149,17 @@ LEGS: tuple[Leg, ...] = (
     Leg(
         "frontends/yaml",
         _in("frontends/", "positions.py", "yaml_front.py"),
-        98,
-        98.9,
-        358,
+        99,
+        99.1,
+        447,
         4,
-        43606025253,
+        44802722199,
     ),
     Leg("core", _in("", "core.py"), 98, 98.6, 351, 5, 43478921809),
     Leg("ir", _in("", "ir.py"), 97, 97.8, 718, 16, 44133756281),
-    Leg("identifiers", _in("", "identifiers.py"), 100, 100.0, 45, 0, 44388306912),
-    Leg("diagnostics", _in("", "diagnostics.py"), 95, 95.4, 1617, 74, 43597307790),
+    Leg("identifiers", _in("", "identifiers.py"), 100, 100.0, 46, 0, 44802722199),
+    Leg("namespace", _in("", "namespace.py"), 100, 100.0, 96, 0, 44802728686),
+    Leg("diagnostics", _in("", "diagnostics.py"), 95, 95.4, 1824, 84, 44802722199),
 )
 
 

@@ -3,6 +3,11 @@
     "AnchorSpec": {
       "additionalProperties": false,
       "description": "A named point that rides along with a joint.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "joint": {
           "description": "The joint it rides along with.",
@@ -42,6 +47,11 @@
     "BlobPart": {
       "additionalProperties": false,
       "description": "A rounded mass -- the head, or a torso -- centred on a joint.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "at": {
           "description": "The joint it is centred on.",
@@ -88,6 +98,11 @@
     "BonePart": {
       "additionalProperties": false,
       "description": "A limb segment drawn as a capsule between two joints.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "from": {
           "description": "The joint the bone starts at.",
@@ -137,6 +152,11 @@
     "ExpressionSpec": {
       "additionalProperties": false,
       "description": "One named expression, as a state per feature.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "brow": {
           "$ref": "#/$defs/BrowState",
@@ -172,14 +192,31 @@
     "FaceSpec": {
       "additionalProperties": false,
       "description": "The region a balloon may never cover, and what is drawn inside it.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "features": {
           "additionalProperties": {
             "$ref": "#/$defs/FeatureSpec"
           },
           "description": "What is drawn inside the face, by feature. Empty for a plain round head.",
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
           "propertyNames": {
-            "$ref": "#/$defs/Feature"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Feature"
+              },
+              {
+                "pattern": "^x-"
+              }
+            ]
           },
           "title": "Features",
           "type": "object"
@@ -242,6 +279,11 @@
     "FeatureSpec": {
       "additionalProperties": false,
       "description": "Where one facial feature sits, and how big it is.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "joint": {
           "default": "head",
@@ -286,6 +328,11 @@
     "GazeSpec": {
       "additionalProperties": false,
       "description": "Where a character's line of sight starts.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "origin": {
           "default": "eyes",
@@ -304,6 +351,11 @@
     "JointSpec": {
       "additionalProperties": false,
       "description": "One joint in the skeleton.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "offset": {
           "default": [
@@ -379,12 +431,39 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "The complete geometric contract for one character.",
+  "patternProperties": {
+    "^x-": {
+      "description": "An extension: a key a tool writes, which Scenet ignores."
+    }
+  },
   "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The JSON Schema an editor checks the document with: a path or a URL. Scenet reads its own schema, whatever this says.",
+      "title": "Schema"
+    },
     "anchors": {
       "additionalProperties": {
         "$ref": "#/$defs/AnchorSpec"
       },
       "description": "Named attachment points, such as `mouth` and `eyes`, each on a joint.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "title": "Anchors",
       "type": "object"
     },
@@ -393,6 +472,11 @@
         "$ref": "#/$defs/ExpressionSpec"
       },
       "description": "Named expressions, each a state of brow, eyes and mouth.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "title": "Expressions",
       "type": "object"
     },
@@ -412,6 +496,11 @@
         "$ref": "#/$defs/JointSpec"
       },
       "description": "The skeleton, by joint name.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "title": "Joints",
       "type": "object"
     },
@@ -420,6 +509,11 @@
         "type": "number"
       },
       "description": "Each vertical body landmark, as a distance down from the top of the head, in head units: the crop lines a shot type names.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "properties": {
         "head_top": {
           "const": 0,
@@ -427,7 +521,14 @@
         }
       },
       "propertyNames": {
-        "$ref": "#/$defs/Landmark"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Landmark"
+          },
+          {
+            "pattern": "^x-"
+          }
+        ]
       },
       "required": [
         "head_top",
@@ -442,6 +543,25 @@
       ],
       "title": "Landmarks",
       "type": "object"
+    },
+    "meta": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What a tool keeps about the document: a mapping of anything, which Scenet reads nothing of yet. A later version of the language gives it a shape.",
+      "title": "Meta"
     },
     "name": {
       "description": "The name a cast member's `reference` uses.",
@@ -473,9 +593,19 @@
         "additionalProperties": {
           "type": "number"
         },
+        "patternProperties": {
+          "^x-": {
+            "description": "An extension: a key a tool writes, which Scenet ignores."
+          }
+        },
         "type": "object"
       },
       "description": "Named poses, each a set of joint angles.",
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
       "required": [
         "standing_neutral"
       ],
@@ -496,6 +626,21 @@
       "$ref": "#/$defs/Landmark",
       "default": "waist",
       "description": "The landmark the root joint sits at."
+    },
+    "scenet": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The language the document is written in: the major version of the Scenet language, an integer, which is not the version of the package. Left out, it is 1. A document written for a later language is refused, with nothing else said of it.",
+      "title": "Scenet"
     },
     "units_per_head": {
       "description": "How many of the puppet's own units one head height is.",

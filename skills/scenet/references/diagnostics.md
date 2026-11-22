@@ -24,6 +24,7 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`composition`](#composition) | error | An `over:` chain cannot be resolved |
 | [`conflicting-cast`](#conflicting-cast) | error | A cast member is a puppet and a figure, or a cast mixes the two |
 | [`conflicting-setting`](#conflicting-setting) | error | A setting says what is behind the cast twice |
+| [`document-kind`](#document-kind) | error | The document says it is a kind it is not |
 | [`duplicate-key`](#duplicate-key) | error | A key is written twice in one mapping |
 | [`duplicate-panel`](#duplicate-panel) | error | Two panels in a comic script have the same name |
 | [`figure-staging`](#figure-staging) | error | Staging or a camera for figures a picture draws |
@@ -32,9 +33,11 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`internal`](#internal) | error | The compiler failed in a way it does not have a rule for |
 | [`invalid-field`](#invalid-field) | error | A field has the wrong shape or value |
 | [`invalid-identifier`](#invalid-identifier) | error | An actor id or a panel name does not follow the identifier grammar |
+| [`language-version`](#language-version) | error | The document is written for a later version of the language |
 | [`layout`](#layout) | error | No layout satisfies the panel's constraints |
 | [`missing-field`](#missing-field) | error | A required field is missing |
 | [`not-a-mapping`](#not-a-mapping) | error | The document is not a mapping |
+| [`not-yet`](#not-yet) | error | A key kept for a later version of the language is written |
 | [`off-panel-speaker`](#off-panel-speaker) | error | A line is spoken from off panel by somebody drawn in the panel |
 | [`ordering-cycle`](#ordering-cycle) | error | Horizontal ordering contains a cycle |
 | [`page-layout`](#page-layout) | error | A page cannot lay out what it says |
@@ -298,13 +301,50 @@ setting:
   place: shore
 ```
 
+### `document-kind`
+
+| | |
+|---|---|
+| Level | error |
+| Says | The document says it is a kind it is not |
+| Keys | [`kind`](https://creatoan.github.io/scenet/reference/language/document.html#kind) |
+| Since | 0.14 |
+
+**Why it happens.** `kind:` at the top of a document says which kind it is: `panel`, or `scene` for one with `panels:`. A document is read by its shape whether it says or not, so `kind` only confirms it -- and one that says it is a scene with no `panels:`, a panel with them, or a comic script that says it is a panel, says two things, of which one is wrong.
+
+**How to fix it.** Write the kind the document is, or leave `kind` out: the message says which. A comic script is always a scene.
+
+Checked as `document-kind.scene.yaml`:
+
+```yaml
+# The document says it is one panel, and holds its panels under `panels:`.
+kind: panel
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+```
+
+`scenet check document-kind.scene.yaml` says:
+
+```text
+document-kind.scene.yaml:2:7: document-kind: this document says `kind: panel`, but it holds its panels under `panels:`, which makes it a scene: write `kind: scene`, or leave `kind` out
+```
+
+Fixed:
+
+```yaml
+# A document with `panels:` is a scene, and says so.
+kind: scene
+cast: {alice: {reference: alice}}
+panels: {one: {}, two: {}}
+```
+
 ### `duplicate-key`
 
 | | |
 |---|---|
 | Level | error |
 | Says | A key is written twice in one mapping |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
 | Since | 0.10 |
 
 **Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
@@ -588,7 +628,7 @@ cast: {alice: {reference: alice}}
 | Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
 | Since | 0.14 |
 
-**Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. An id written as a value, `by:`, is text: a number there is quoted.
+**Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. No id starts with `x-`, which marks an extension key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An id written as a value, `by:`, is text: a number there is quoted.
 
 **How to fix it.** Rename it, in every place it is written: `old man` could be `old_man`, `a/b` `a-b`. The message says which part of the grammar the name breaks.
 
@@ -606,7 +646,7 @@ script:
 `scenet check invalid-identifier.panel.yaml` says:
 
 ```text
-invalid-identifier.panel.yaml:3:3: invalid-identifier: 'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels
+invalid-identifier.panel.yaml:3:3: invalid-identifier: 'old man' is not an id: ' ' (U+0020) is not a letter, a digit, a mark, '_' or '-'. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key
 ```
 
 Fixed:
@@ -620,6 +660,41 @@ staging:
   - old_man left_of bob
 script:
   - say: {by: bob, text: "Who are you?"}
+```
+
+### `language-version`
+
+| | |
+|---|---|
+| Level | error |
+| Says | The document is written for a later version of the language |
+| Keys | [`scenet`](https://creatoan.github.io/scenet/reference/language/document.html#scenet) |
+| Since | 0.14 |
+
+**Why it happens.** `scenet:` at the top of a document -- a panel, a scene, a puppet, an artwork contract, a comic script's front matter -- names the language it is written in: the Scenet language's major version, a whole number, which is not the version of the package. Left out, it is 1. A document of a later language than this Scenet reads is not one of this language with mistakes in it, so nothing else in it is checked: this is its one finding.
+
+**How to fix it.** Compile it with a Scenet that reads its language, or write it in this one and set `scenet:` to the language this Scenet reads, which the message names.
+
+Checked as `language-version.panel.yaml`:
+
+```yaml
+# Written for a later language than this Scenet reads: nothing else in it is read.
+scenet: 2
+cast: {alice: {reference: alice}}
+```
+
+`scenet check language-version.panel.yaml` says:
+
+```text
+language-version.panel.yaml:2:9: language-version: written for Scenet language 2; this is language 1. Compile it with a later Scenet, one that reads language 2
+```
+
+Fixed:
+
+```yaml
+# Written in language 1, the language this Scenet reads.
+scenet: 1
+cast: {alice: {reference: alice}}
 ```
 
 ### `layout`
@@ -729,6 +804,42 @@ Fixed:
 cast:
   alice: {reference: alice}
   bob: {reference: bob}
+```
+
+### `not-yet`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A key kept for a later version of the language is written |
+| Keys | [`defaults`](https://creatoan.github.io/scenet/reference/language/document.html#defaults), [`include`](https://creatoan.github.io/scenet/reference/language/document.html#include), [`kind`](https://creatoan.github.io/scenet/reference/language/document.html#kind) |
+| Since | 0.14 |
+
+**Why it happens.** Some keys are kept for a later version of the language, so that a document written today cannot mean something else by them then: `include`, to read one document into another, `defaults`, and `kind: book`. Today they do nothing, and a key that did nothing would lose what it holds without a word, so each is refused where it is written. Written as `null`, a key is not written at all.
+
+**How to fix it.** Delete it. Write here what an `include` would bring in; a default of a scene is any key written beside `panels:`; a book is not yet, so lay the panels out as a scene's pages.
+
+Checked as `not-yet.scene.yaml`:
+
+```yaml
+# `include` is kept for a later language, which reads one document into another.
+include: [chapter-1.scene.yaml]
+cast: {alice: {reference: alice}}
+panels: {one: {}}
+```
+
+`scenet check not-yet.scene.yaml` says:
+
+```text
+not-yet.scene.yaml:2:10: not-yet: 'include' is not yet in the language: a later version will read it, to read one document into another. Delete it; write here what it would include
+```
+
+Fixed:
+
+```yaml
+# The panels are written here, in the document that lays them out.
+cast: {alice: {reference: alice}}
+panels: {one: {}}
 ```
 
 ### `off-panel-speaker`
@@ -1224,10 +1335,10 @@ setting: {image: art/figures.png}
 |---|---|
 | Level | error |
 | Says | Unknown key |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), [`script`](https://creatoan.github.io/scenet/reference/language/script.html#script) |
 | Since | 0.3 |
 
-**Why it happens.** Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure.
+**Why it happens.** Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure. The one exception is a key that starts with `x-`, in lower case: an extension, which a tool writes to annotate a document and Scenet ignores, in any mapping. A key written where the language has it but not there is unknown too, and said to be: a description or a script beside `panels:`, which no panel inherits, and a document's own keys -- `scenet`, `meta`, `kind` -- on one of its panels.
 
 **How to fix it.** Check the spelling against every key there is: https://creatoan.github.io/scenet/reference/language/keys.html.
 

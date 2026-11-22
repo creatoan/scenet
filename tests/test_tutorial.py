@@ -31,6 +31,7 @@ import pytest
 import yaml
 
 from scenet.diagnostics import COMPILE_NOTES, RULES
+from scenet.namespace import NOT_YET_KEYS
 from tests import myst
 from tests.doc_examples import fences
 from tests.shell_examples import Transcript, commands, run_transcript, transcripts
@@ -278,11 +279,13 @@ def _linked() -> set[tuple[str, str]]:
 
 
 #: The keys the tour must introduce: every key of a panel or a scene, and the top-level keys
-#: of the two files a document can name beside it, a puppet and an artwork contract.
+#: of the two files a document can name beside it, a puppet and an artwork contract. Not
+#: those kept for a later language, which no document can write yet (#357).
 MAJOR = sorted(
     name
     for name, card in CARDS.items()
-    if card.family == "document" or (card.owner in ("Puppet", "Artwork") and "." not in name)
+    if (card.family == "document" or (card.owner in ("Puppet", "Artwork") and "." not in name))
+    and name not in NOT_YET_KEYS
 )
 
 

@@ -1,0 +1,3 @@
+# Written for a later language than this Scenet reads: nothing else in it is read.
+scenet: 2
+cast: {alice: {reference: alice}}

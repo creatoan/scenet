@@ -220,6 +220,25 @@ _ROWS: dict[str, tuple[str, bool]] = {
     "a blank line": ("script: [{say: {by: alice, text: ' '}}]\n", False),
     "a blank sound": ("script: [{sfx: {text: ' '}}]\n", False),
     "a blank description": ("description: ' '\n", False),
+    # The document's own keys and the extensions (#357).
+    "language 1": ("scenet: 1\n", True),
+    "a later language": ("scenet: 2\n", False),
+    "a quoted language": ("scenet: '1'\n", False),
+    "language 0": ("scenet: 0\n", False),
+    "a schema and meta": ("$schema: x.json\nmeta: {a: [1]}\n", True),
+    "meta a list": ("meta: [1]\n", False),
+    "the kind": ("kind: panel\n", True),
+    "the kind of a scene": ("kind: scene\n", False),
+    "a book": ("kind: book\n", False),
+    "an include": ("include: [a.yaml]\n", False),
+    "an include of null": ("include: null\n", True),
+    "defaults": ("defaults: {}\n", False),
+    "extensions at depth": (
+        "x-a: 1\ncamera: {x-b: 2}\nscript: [{say: {by: alice, text: Hi., x-c: 3}, x-d: 4}]\n",
+        True,
+    ),
+    "an extension beside the cast": ("x-e: {}\n", True),
+    "a capital X": ("X-a: 1\n", False),
 }
 
 
@@ -284,6 +303,12 @@ _SCENE_ROWS: dict[str, tuple[str, bool]] = {
         "pages: [{tiers: [{slant: 5, panels: [b, {use: a, insets: [{use: c, size: 0.3}]}]}]}]\n",
         False,
     ),
+    # The document's own keys, a script refused as a default, and extensions (#357).
+    "a scene of language 1": ("scenet: 1\nkind: scene\nmeta: {}\n", True),
+    "a scene that says it is a panel": ("kind: panel\n", False),
+    "a script beside panels": ("script: [{say: {by: alice, text: Hi.}}]\n", False),
+    "a script of null beside panels": ("script: null\n", False),
+    "extensions in a page": ("pages: [{x-a: 1, tiers: [{x-b: 2, panels: [a]}]}]\n", True),
 }
 
 

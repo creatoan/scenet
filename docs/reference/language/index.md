@@ -22,6 +22,12 @@ starting with a letter or a digit, `Zoé` and `健` as well as `alice`. `.`, `/`
 are reserved for references between documents, and the words of a staging sentence and of a
 comic script's labels are reserved too.
 
+A document may say a few things of [itself](document.md), at its top: `scenet: 1`, the language
+it is written in, which is not the version of the package; `$schema`, for an editor; `meta`, for a
+tool; and `kind`, `panel` or `scene`. A key that starts with `x-` is an
+[extension](document.md#extension-keys), which Scenet ignores in any mapping, so no identifier starts
+with `x-`.
+
 ## The layers
 
 A panel is written in blocks, each saying one kind of thing about it. What the compiler
@@ -152,6 +158,7 @@ making resvg's the practical conformance reference.
 
 yaml_profile
 identifiers
+document
 panel
 camera
 setting

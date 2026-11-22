@@ -1,0 +1,3 @@
+# An extension key starts with `x-`, in lower case; `X-` is a key like any other.
+X-generator: a tool
+cast: {alice: {reference: alice}}

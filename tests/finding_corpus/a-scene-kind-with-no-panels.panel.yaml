@@ -1,0 +1,3 @@
+# A document that says it is a scene, and is one panel.
+kind: scene
+cast: {alice: {reference: alice}}

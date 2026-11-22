@@ -1,0 +1,3 @@
+# `meta` is a mapping of whatever a tool keeps about the document.
+meta: [a, b]
+cast: {alice: {reference: alice}}
