@@ -433,7 +433,7 @@ panels:
       - say: {by: alice, text: "Not yet."}
 
   wave:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: waving, expression: happy, at: center}
@@ -441,7 +441,7 @@ panels:
       - say: {by: pip, text: "Hello, boat!"}
 
   enormous:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: arms_up, expression: surprise, at: center}
@@ -449,7 +449,7 @@ panels:
       - say: {by: pip, text: "It's enormous!"}
 
   loud:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {expression: scared, at: center}

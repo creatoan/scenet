@@ -6,4 +6,4 @@ pages:
   - tiers:
       - panels: [one]
   - tiers:
-      - panels: [{use: two, insets: [{use: three, at: top_left, size: 0.5}]}]
+      - panels: [{use: two, insets: [{use: three, at: top_left, scale: 0.5}]}]

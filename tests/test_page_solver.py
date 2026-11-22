@@ -18,7 +18,7 @@ from scenet.solve.page import _slanted, _with_insets, resolve_frames
 
 
 def _inset(use: str, at: Corner, size: float = 0.25) -> Inset:
-    return Inset(use=use, at=at, size=size)
+    return Inset(use=use, at=at, scale=size)
 
 
 def _panel(*insets: Inset) -> PanelPlacement:
@@ -133,7 +133,7 @@ class TestWhereAPageMistakeIsReported:
                                     {"use": "x"},
                                     {
                                         "use": "y",
-                                        "insets": [{"use": "i", "at": "top_left", "size": 0.5}],
+                                        "insets": [{"use": "i", "at": "top_left", "scale": 0.5}],
                                     },
                                 ]
                             },

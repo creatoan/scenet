@@ -19,7 +19,7 @@ from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.ir import PUPPET_KEYS, Predicate, Relation
+from scenet.ir import PUPPET_KEYS, RETIRED_KEYS, Predicate, Relation, retired_key, retired_value
 from scenet.places import PLACES, Place
 from scenet.safe_yaml import mistyped
 
@@ -384,7 +384,39 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
             for other in errors
         )
     ]
-    return _merge_misspellings(_say_what_to_write(errors))
+    return _merge_misspellings(_name_what_replaced(_say_what_to_write(errors)))
+
+
+def _name_what_replaced(errors: list[ErrorDetails]) -> list[ErrorDetails]:
+    """Say what to write for a value or a key the language took before 1.0 (#361).
+
+    `shot: wide` fails as any unknown shot does, and `insets: [{size: 0.2}]` as an unknown
+    key beside a missing `scale`: both are one spelling that moved, so each becomes one
+    finding, where it is written, naming what replaced it.
+    """
+    dropped: set[int] = set()
+    said: dict[int, ErrorDetails] = {}
+    for index, error in enumerate(errors):
+        loc = tuple(error["loc"])
+        if not loc or not isinstance(loc[-1], str):
+            continue
+        message = None
+        if error["type"] == "enum":
+            message = retired_value(loc[-1], error.get("input"))
+        elif error["type"] == "extra_forbidden" and len(loc) >= 3 and isinstance(loc[-2], int):
+            within = loc[-3]
+            message = retired_key(within, loc[-1]) if isinstance(within, str) else None
+            if message is not None:
+                instead = RETIRED_KEYS[str(within)][loc[-1]]
+                dropped |= {
+                    other
+                    for other, sibling in enumerate(errors)
+                    if sibling["type"] == "missing"
+                    and tuple(sibling["loc"]) == (*loc[:-1], instead)
+                }
+        if message is not None:
+            said[index] = {**error, "msg": message}
+    return [said.get(index, error) for index, error in enumerate(errors) if index not in dropped]
 
 
 #: pydantic's error for text in a yes-or-no or a number field: which it was, and the name

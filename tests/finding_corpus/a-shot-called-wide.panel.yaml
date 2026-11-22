@@ -1,0 +1,5 @@
+# `wide` was a second name for `long_shot`, and is no shot since 0.14: the finding names
+# the one to write.
+camera:
+  shot: wide
+cast: {a: {reference: alice}}

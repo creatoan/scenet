@@ -68,10 +68,9 @@ __all__ = [
 #: Each rung of the shot ladder, as a letterer's script would name it.
 SHOTS: dict[ShotType, str] = {
     ShotType.LONG_SHOT: "Long shot",
-    ShotType.WIDE: "Long shot",
     ShotType.FULL_SHOT: "Full shot",
-    ShotType.MEDIUM_FULL: "Medium full shot",
-    ShotType.COWBOY: "Cowboy shot",
+    ShotType.MEDIUM_FULL_SHOT: "Medium full shot",
+    ShotType.COWBOY_SHOT: "Cowboy shot",
     ShotType.MEDIUM_SHOT: "Medium shot",
     ShotType.MEDIUM_CLOSE_UP: "Medium close-up",
     ShotType.CLOSE_UP: "Close-up",

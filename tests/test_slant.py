@@ -237,7 +237,7 @@ class TestMistakes:
             ("{slant: 10, columns: [{panels: [a]}, {panels: [b]}]}", "column"),
             ("{slant: 10, panels: [a]}", "one panel"),
             (
-                "{slant: 10, panels: [{use: a, insets: [{use: b, at: top_left, size: 0.2}]}, c]}",
+                "{slant: 10, panels: [{use: a, insets: [{use: b, at: top_left, scale: 0.2}]}, c]}",
                 "inset",
             ),
         ],

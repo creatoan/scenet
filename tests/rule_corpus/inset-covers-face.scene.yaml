@@ -15,4 +15,4 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}

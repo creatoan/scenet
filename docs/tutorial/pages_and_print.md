@@ -252,7 +252,7 @@ A panel on a page may have [`insets`](../reference/language/page.md#panelsinsets
 panels set into its corners and drawn over it. An inset names a panel to
 [`use`](../reference/language/page.md#insetsuse), the corner it sits
 [`at`](../reference/language/page.md#insetsat), its
-[`size`](../reference/language/page.md#insetssize) as a fraction of its parent, and when it
+[`scale`](../reference/language/page.md#insetsscale) as a fraction of its parent, and when it
 is [`read`](../reference/language/page.md#insetsread): `after` its parent, the default, or
 `before`.
 
@@ -284,8 +284,8 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.22, read: before}
-              - {use: worry, at: bottom_right, size: 0.35}
+              - {use: clock, at: top_left, scale: 0.22, read: before}
+              - {use: worry, at: bottom_right, scale: 0.35}
       - panels: [arrive, {use: shrug, width: 1.5}]
 
 panels:
@@ -444,7 +444,7 @@ pages:
       - height: 1.5
         panels:
           - use: '2-1'
-            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+            insets: [{use: '2-2', at: top_right, scale: 0.35, read: after}]
       - panels: ['2-3']
 
 panels:

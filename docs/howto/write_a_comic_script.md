@@ -364,7 +364,7 @@ and the usual abbreviations are read: `GP`, `P.A.`. The *échelle des plans* map
 |---|---|---|---|
 | plan d'ensemble | PE | the setting, figures small | `long_shot` |
 | plan moyen | PM | head to foot | `full_shot` |
-| plan américain | PA | mid-thigh | `cowboy` |
+| plan américain | PA | mid-thigh | `cowboy_shot` |
 | plan rapproché taille, plan mi-moyen | PRT, PMM | the waist | `medium_shot` |
 | plan rapproché poitrine, plan rapproché | PRP, PR | the chest | `medium_close_up` |
 | plan rapproché épaule, plan épaule | | the shoulders | `close_up` |
@@ -376,7 +376,7 @@ face: the BnF's *Créer une BD* ("coupé souvent au-dessus des épaules… s'att
 Lyon academy's sheet (at the neck), and French Wikipedia's ladder, which has its own
 *plan rapproché épaule* between *plan rapproché* and *gros plan*. Quebec's OQLF defines *gros plan*
 at the shoulders instead; writing `plan rapproché épaule` gets that framing. *Plan général* and
-*plan italien* have no rung of their own, and `medium_full` no French name; none is invented. The
+*plan italien* have no rung of their own, and `medium_full_shot` no French name; none is invented. The
 angles are *plongée* (`high`), *contre-plongée* (`low`) and *angle normal* (`eye_level`).
 
 Two planches in the gallery walk the ladder from the farthest shot to the nearest:

@@ -907,7 +907,7 @@
     "pullback": 1.0,
     "reference": "puppets/pip.puppet.yaml",
     "scale": 2.05,
-    "shot": "cowboy"
+    "shot": "cowboy_shot"
   },
   "captions": [],
   "description": "Cowboy shot. The docks at dusk. Pip, centre, waving, happy.",

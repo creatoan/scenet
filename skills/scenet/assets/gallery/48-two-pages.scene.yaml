@@ -27,7 +27,7 @@ pages:
       - height: 1.5
         panels:
           - use: '2-1'
-            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+            insets: [{use: '2-2', at: top_right, scale: 0.35, read: after}]
       - panels: ['2-3']
 
 panels:

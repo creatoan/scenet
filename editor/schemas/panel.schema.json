@@ -1157,10 +1157,9 @@
       "description": "How tightly the camera frames the cast.",
       "enum": [
         "long_shot",
-        "wide",
         "full_shot",
-        "medium_full",
-        "cowboy",
+        "medium_full_shot",
+        "cowboy_shot",
         "medium_shot",
         "medium_close_up",
         "close_up",

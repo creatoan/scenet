@@ -57,7 +57,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`include`](document.md#include) | panel, scene | Kept for a later version of the language, which will read one document into another. Refused until then. | 0.14 |
 | [`insets[].at`](page.md#insetsat) | scene | The corner of its parent the inset sits in, a gutter in from both edges. | 0.10 |
 | [`insets[].read`](page.md#insetsread) | scene | When the inset is read: `after` its parent, or `before` it. | 0.10 |
-| [`insets[].size`](page.md#insetssize) | scene | The inset's width and height, as a fraction of its parent's: above 0, at most 0.5. | 0.10 |
+| [`insets[].scale`](page.md#insetsscale) | scene | The inset's width and height, as a fraction of its parent's: above 0, at most 0.5. | 0.14 |
 | [`insets[].use`](page.md#insetsuse) | scene | The name of a panel under `panels:`, set into this one. | 0.10 |
 | [`joints`](puppet.md#joints) | puppet | The skeleton, by joint name. | 0.13 |
 | [`joints.<joint>.offset`](puppet.md#jointsjointoffset) | puppet | Where it is from its parent in the rest pose, in the puppet's own units. | 0.13 |
@@ -142,3 +142,51 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`tiers[].slant`](page.md#tiersslant) | scene | How far the gutters between the tier's panels lean, in degrees, from -30 to 30. Positive leans the top of each gutter to the right. | 0.10 |
 | [`units_per_head`](puppet.md#units_per_head) | puppet | How many of the puppet's own units one head height is. | 0.13 |
 <!-- end: generated -->
+
+## One name, several meanings
+
+**Reviewed for 1.0.** After 1.0 no key is renamed, so before it every key written in more than one
+place was read against the others, and either renamed or kept knowingly. This table is that review:
+each name, every place it is written, what it means there, and why it stays. A key added later
+under a name already in use is added here too, or the test suite fails.
+
+Two names were changed by the review: an inset's `size` is its `scale`, since `size` is a width
+and height or a type size everywhere else, and the shot `wide`, a second name for `long_shot`, is
+gone. `medium_full` and `cowboy` are `medium_full_shot` and `cowboy_shot`, as the
+[shot ladder](../shot_types.md#table) explains. Each old spelling is refused with a finding that
+says what to write instead.
+
+| Name | Where | What it means there | Why it stays |
+|---|---|---|---|
+| `at` | `cast.<id>.at`, `insets[].at`, `parts[].at` | Where along the panel's width a figure would like to stand; the corner of its parent an inset sits in; the joint a puppet's part is centred on | Each is *where this sits*, said in the words of the thing it sits on: a panel's width, a frame's corners, a skeleton's joints. No value is valid in two of them, so a value written in the wrong one is refused |
+| `bleed` | `page.bleed`, `panels[].bleed` | How far the sheet runs past the trim; whether a panel's frame runs out to that line | One idea, the bleed: the page says how much there is, a panel whether it uses it |
+| `by` | `caption.by`, `say.by` | Who is speaking | The same meaning in both |
+| `face` | `face`, `figures.<name>.face` | The face a puppet draws on its head; where the face of a figure in a supplied picture is | The same thing, a face no lettering covers: a puppet draws its own, a picture's is located |
+| `from` | `parts[].from`, `sfx.from` | The joint a puppet's bone starts at; the actor a sound comes from | Both are *where it starts*; one is in a puppet file and one in a panel, so they never meet |
+| `height` | `columns[].panels[].height`, `tiers[].height` | A share of the height, relative to the neighbours: a panel's in its column, a tier's on the page | The same meaning in both |
+| `joint` | `anchors.<anchor>.joint`, `face.joint`, `face.features.<feature>.joint` | The joint a thing rides along with | The same meaning in all three |
+| `kind` | `kind`, `caption.kind`, `say.kind`, `setting.masses[].kind` | Which of a closed set this is: a document, a caption box, a balloon, a mass | Always the same question, *which kind of this*, with the answers each place offers |
+| `margin` | `page.margin`, `panel.margin` | The blank border inside an edge: the page's, the panel's | The same meaning in both |
+| `mouth` | `expressions.<expression>.mouth`, `figures.<name>.mouth` | The mouth's state in an expression; where a figure's mouth is in a picture | The same mouth: drawn by a puppet in a state, or located in a picture as the end of a tail |
+| `offset` | `anchors.<anchor>.offset`, `face.offset`, `face.features.<feature>.offset`, `joints.<joint>.offset`, `parts[].offset` | Where a thing is from its joint, in the puppet's own units | The same meaning in all five |
+| `panels` | `panels`, `tiers[].panels`, `columns[].panels` | The scene's panels, each with its name; the panels a tier or a column holds, by name | The same panels, held by the scene and placed by the page, each in reading order |
+| `prefer` | `say.prefer`, `caption.prefer`, `sfx.prefer` | Where the lettering would like to sit, one of nine zones | The same meaning in all three |
+| `radius` | `face.radius`, `figures.<name>.face.radius`, `parts[].radius` | A circle's radius: a face's, a part's | The same meaning in all three |
+| `size` | `panel.size`, `page.size`, `size`, `lettering.size`, `say.size`, `sfx.size`, `face.features.<feature>.size` | A width and height: a panel's, a page's, a picture's; how large type is: the dialogue size, a line's (`small`), a sound's (`small` to `large`); how big a face feature is drawn | Two meanings, an extent and a type size, each always written the same way: an extent as `[width, height]`, a type size as a number or a word. A third, an inset's fraction, became `scale` |
+| `text` | `say.text`, `caption.text`, `sfx.text` | What is lettered | The same meaning in all three |
+| `use` | `tiers[].panels[].use`, `insets[].use` | The panel placed here, by name | The same meaning in both |
+| `width` | `tiers[].panels[].width`, `columns[].width`, `parts[].width` | A share of the width, relative to the neighbours; how thick a puppet's part is drawn | A share on a page and a thickness in a puppet file, which never meet; each is a width in its own units |
+
+## Where, in words
+
+Five keys say where something is with a word rather than a number. They share one vocabulary,
+`left`, `right`, `top`, `bottom` and `center`, composed the same way everywhere, and each offers
+the words that make sense where it is written. Reviewed for 1.0: kept as they are.
+
+| Key | Its words | Where they are |
+|---|---|---|
+| `cast.<id>.at` | `left_edge`, `left_third`, `center`, `right_third`, `right_edge` | Along the panel's width, where a figure stands |
+| `say.prefer`, `caption.prefer`, `sfx.prefer` | `top_left` … `bottom_right`, nine zones, with `center` and `middle` | In the panel, in three rows of three |
+| `insets[].at` | `top_left`, `top_right`, `bottom_left`, `bottom_right` | The four corners of a frame, named as the corner zones are |
+| `setting.masses[].spans` | `full`, `left`, `center`, `right` | The part of the panel's width a mass covers |
+| `say.off_panel`, `panels[].bleed` | `left`, `right`, `top`, `bottom` | The sides of a frame |

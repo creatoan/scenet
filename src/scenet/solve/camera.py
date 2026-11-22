@@ -57,18 +57,13 @@ SHOT_TABLE: dict[ShotType, ShotSpec] = {
     # which is the whole content of the shot, so the gap is now a real rung -- a long
     # shot fills roughly two thirds of what a full shot does.
     ShotType.LONG_SHOT: ShotSpec(Landmark.FEET, 0.28, footroom=0.10),
-    # `wide` is a synonym for `long_shot`, not a wider shot. The two are used
-    # interchangeably in the literature -- "a long shot (also called a wide shot)" --
-    # and the language keeps both because writers reach for both. They are identical on
-    # purpose, and the shot ladder example says so rather than looking broken.
-    ShotType.WIDE: ShotSpec(Landmark.FEET, 0.28, footroom=0.10),
     ShotType.FULL_SHOT: ShotSpec(Landmark.FEET, 0.05, footroom=0.04),
     # Medium full -- the "three-quarter shot" -- cuts at the KNEES. The cowboy or
     # American shot cuts at MID_THIGH, from 1930s Westerns framing to include the
     # holster. Both were MID_THIGH here, which made them the same shot and collapsed a
     # rung of the ladder with nothing to notice.
-    ShotType.MEDIUM_FULL: ShotSpec(Landmark.KNEES, 0.08),
-    ShotType.COWBOY: ShotSpec(Landmark.MID_THIGH, 0.08),
+    ShotType.MEDIUM_FULL_SHOT: ShotSpec(Landmark.KNEES, 0.08),
+    ShotType.COWBOY_SHOT: ShotSpec(Landmark.MID_THIGH, 0.08),
     ShotType.MEDIUM_SHOT: ShotSpec(Landmark.WAIST, 0.10),
     ShotType.MEDIUM_CLOSE_UP: ShotSpec(Landmark.CHEST, 0.10),
     ShotType.CLOSE_UP: ShotSpec(Landmark.SHOULDERS, 0.08),

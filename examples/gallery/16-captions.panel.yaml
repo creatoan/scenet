@@ -13,7 +13,7 @@ panel:
   size: [1400, 950]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: arms_crossed, at: left_third}

@@ -93,8 +93,8 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.22, read: before}
-              - {use: worry, at: bottom_right, size: 0.35}
+              - {use: clock, at: top_left, scale: 0.22, read: before}
+              - {use: worry, at: bottom_right, scale: 0.35}
       - panels: [arrive, shrug]
 ```
 

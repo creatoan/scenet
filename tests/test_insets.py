@@ -46,8 +46,8 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: face, at: bottom_right, size: 0.3}
-              - {use: clock, at: top_left, size: 0.2, read: before}
+              - {use: face, at: bottom_right, scale: 0.3}
+              - {use: clock, at: top_left, scale: 0.2, read: before}
 panels:
   street:
     camera: {shot: long_shot}
@@ -91,7 +91,7 @@ class TestTheLayout:
         assert [f.panel for f in page.frames] == ["clock", "street", "face"]
 
     def test_after_is_the_default(self):
-        (page,) = compile_book(scene("[{use: a, at: top_right, size: 0.25}]")).pages
+        (page,) = compile_book(scene("[{use: a, at: top_right, scale: 0.25}]")).pages
         assert [f.panel for f in page.frames] == ["street", "a"]
 
     def test_an_inset_is_compiled_at_its_frame(self):
@@ -104,7 +104,7 @@ class TestTheLayout:
             "pages:\n"
             "  - tiers:\n"
             "      - columns:\n"
-            "          - panels: [{use: t, insets: [{use: i, at: top_left, size: 0.25}]}]\n"
+            "          - panels: [{use: t, insets: [{use: i, at: top_left, scale: 0.25}]}]\n"
             "          - panels: [a, b]\n"
             "panels: {t: {}, i: {}, a: {}, b: {}}\n"
         )
@@ -168,7 +168,7 @@ class TestTheParent:
         assert "exclusions" not in json.loads(core.to_json())
 
     def test_an_inset_over_a_face_is_noted(self):
-        source = SCENE.replace("at: top_left, size: 0.2", "at: top_left, size: 0.5")
+        source = SCENE.replace("at: top_left, scale: 0.2", "at: top_left, scale: 0.5")
         notes = compile_book(source).panels["street"].notes
         assert any("inset" in note and "alice" in note for note in notes)
 
@@ -244,21 +244,21 @@ class TestMistakes:
     @pytest.mark.parametrize(
         ("source", "said"),
         [
-            (scene("[{use: ghost, at: top_left, size: 0.2}]"), "ghost"),
-            (scene("[{use: street, at: top_left, size: 0.2}]"), "twice"),
+            (scene("[{use: ghost, at: top_left, scale: 0.2}]"), "ghost"),
+            (scene("[{use: street, at: top_left, scale: 0.2}]"), "twice"),
             (
                 "cast: {x: {reference: alice}}\n"
                 "pages: [{tiers: [{panels: [{use: street, insets: "
-                "[{use: a, at: top_left, size: 0.2}]}, a]}]}]\n"
+                "[{use: a, at: top_left, scale: 0.2}]}, a]}]}]\n"
                 "panels: {street: {}, a: {}}\n",
                 "twice",
             ),
             (
-                scene("[{use: a, at: top_left, size: 0.2}, {use: b, at: top_left, size: 0.1}]"),
+                scene("[{use: a, at: top_left, scale: 0.2}, {use: b, at: top_left, scale: 0.1}]"),
                 "overlap",
             ),
             (
-                scene("[{use: a, at: top_left, size: 0.5}, {use: b, at: top_right, size: 0.5}]"),
+                scene("[{use: a, at: top_left, scale: 0.5}, {use: b, at: top_right, scale: 0.5}]"),
                 "overlap",
             ),
         ],
@@ -272,13 +272,13 @@ class TestMistakes:
     @pytest.mark.parametrize("size", [0, -0.1, 0.51, 1])
     def test_a_size_is_more_than_nothing_and_at_most_half(self, size: float):
         with pytest.raises(PanelSyntaxError):
-            parse_scene_document(scene(f"[{{use: a, at: top_left, size: {size}}}]"))
+            parse_scene_document(scene(f"[{{use: a, at: top_left, scale: {size}}}]"))
 
     @pytest.mark.parametrize(
         ("field", "value"), [("at", "middle"), ("read", "during")], ids=["corner", "read"]
     )
     def test_a_corner_and_an_order_are_named(self, field: str, value: str):
-        base = {"use": "a", "at": "top_left", "size": 0.2, field: value}
+        base = {"use": "a", "at": "top_left", "scale": 0.2, field: value}
         inset = "{" + ", ".join(f"{k}: {v}" for k, v in base.items()) + "}"
         with pytest.raises(PanelSyntaxError):
             parse_scene_document(scene(f"[{inset}]"))
@@ -290,7 +290,7 @@ class TestMistakes:
             "      - panels:\n"
             "          - use: street\n"
             "            insets:\n"
-            "              - {use: ghost, at: top_left, size: 0.2}\n"
+            "              - {use: ghost, at: top_left, scale: 0.2}\n"
             "panels: {street: {}}\n"
         )
         (finding,) = diagnose_source(source)
@@ -307,8 +307,8 @@ class TestMistakes:
             "      - panels:\n"
             "          - use: street\n"
             "            insets:\n"
-            "              - {use: a, at: top_left, size: 0.2}\n"
-            "              - {use: b, at: top_left, size: 0.3}\n"
+            "              - {use: a, at: top_left, scale: 0.2}\n"
+            "              - {use: b, at: top_left, scale: 0.3}\n"
             "panels: {street: {}, a: {}, b: {}}\n"
         )
         (finding,) = diagnose_source(source)
@@ -330,7 +330,7 @@ class TestTheEditorSchema:
             assert f'"{member.value}"' in text, member
 
     def test_it_refuses_an_inset_without_a_corner(self):
-        document = yaml.safe_load(scene("[{use: a, size: 0.2}]"))
+        document = yaml.safe_load(scene("[{use: a, scale: 0.2}]"))
         assert list(Draft202012Validator(scene_schema()).iter_errors(document)) != []
 
 
@@ -360,7 +360,7 @@ class TestAnInsetFitsInsideItsParent:
         "          - {use: big, width: 10}\n"
         "          - use: thin\n"
         "            width: 0.5\n"
-        "            insets: [{use: wee, at: top_left, size: 0.5}]\n"
+        "            insets: [{use: wee, at: top_left, scale: 0.5}]\n"
         "          - {use: more, width: 10}\n"
     )
     SHORT = (
@@ -371,7 +371,7 @@ class TestAnInsetFitsInsideItsParent:
         "  - tiers:\n"
         "      - {height: 10, panels: [tall]}\n"
         "      - height: 0.5\n"
-        "        panels: [{use: low, insets: [{use: wee, at: bottom_right, size: 0.5}]}]\n"
+        "        panels: [{use: low, insets: [{use: wee, at: bottom_right, scale: 0.5}]}]\n"
         "      - {height: 10, panels: [rest]}\n"
     )
 

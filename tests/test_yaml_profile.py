@@ -213,7 +213,7 @@ REFUSALS: list[tuple[str, str, str, str]] = [
         "tag",
     ),
     (CAST + "script:\n  - say: {by: alice, text: !!str 1984}\n", "yaml-tag", "!!str", "quote"),
-    ("camera: !shot {shot: wide}\n" + CAST, "yaml-tag", "!shot", "tag"),
+    ("camera: !shot {shot: long_shot}\n" + CAST, "yaml-tag", "!shot", "tag"),
     ("panel: {size: !!set {1, 2}}\n" + CAST, "yaml-tag", "!!set", "tag"),
     ("cast: {alice: &a {reference: alice}}\n", "yaml-anchor", "&a", "anchor"),
     (
@@ -223,11 +223,11 @@ REFUSALS: list[tuple[str, str, str, str]] = [
         "over:",
     ),
     (CAST + "script:\n  - say: {by: alice, text: *told you}\n", "yaml-anchor", "*told", "_told_"),
-    ("camera: {<<: {shot: wide}}\n" + CAST, "yaml-merge-key", "<<", "merge key"),
-    ("camera:\n  <<: {shot: wide}\n" + CAST, "yaml-merge-key", "<<", "merge key"),
+    ("camera: {<<: {shot: long_shot}}\n" + CAST, "yaml-merge-key", "<<", "merge key"),
+    ("camera:\n  <<: {shot: long_shot}\n" + CAST, "yaml-merge-key", "<<", "merge key"),
     ("cast:\n\talice: {reference: alice}\n", "syntax", "\t", "indented with a tab"),
     (CAST + "script:\n  - say:\n    \tby: alice\n", "syntax", "\t", "indented with a tab"),
-    ("camera:\t{shot: wide}\n" + CAST, "syntax", "\t", "tab"),
+    ("camera:\t{shot: long_shot}\n" + CAST, "syntax", "\t", "tab"),
 ]
 
 

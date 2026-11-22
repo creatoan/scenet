@@ -44,7 +44,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:
@@ -143,7 +143,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:

@@ -73,7 +73,7 @@ panel:
   size: [1100, 850]
 
 camera:
-  shot: cowboy
+  shot: cowboy_shot
 
 cast:
   alice: {reference: alice, at: left_third, expression: angry}
@@ -130,7 +130,7 @@ pages:
 
 panels:
   door:
-    camera: {shot: wide}
+    camera: {shot: long_shot}
     script:
       - caption: {text: "The same evening.", kind: locale}
       - say: {by: alice, text: "Can I come in?"}

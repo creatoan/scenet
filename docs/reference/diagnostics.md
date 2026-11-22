@@ -395,7 +395,7 @@ Checked as `duplicate-key.panel.yaml`:
 # `camera` twice: YAML would keep the second and drop the first without a word.
 camera: {shot: close_up}
 cast: {alice: {reference: alice}}
-camera: {shot: wide}
+camera: {shot: long_shot}
 ```
 
 `scenet check duplicate-key.panel.yaml` says:
@@ -410,7 +410,7 @@ Fixed:
 :beside: examples/gallery
 
 # `camera` once, with the shot that was meant.
-camera: {shot: wide}
+camera: {shot: long_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -1718,7 +1718,7 @@ Checked as `yaml-merge-key.panel.yaml`:
 :beside: examples/gallery
 
 # A merge key, to copy another camera's keys into this one.
-camera: {<<: {shot: wide, angle: low}, shot: medium_shot}
+camera: {<<: {shot: long_shot, angle: low}, shot: medium_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -2303,7 +2303,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}
 ```
 
 `scenet build inset-covers-face.scene.yaml` says:
@@ -2334,7 +2334,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: bottom_left, size: 0.3}
+              - {use: clock, at: bottom_left, scale: 0.3}
 ```
 
 ### `italic-stand-in`

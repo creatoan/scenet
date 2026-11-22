@@ -1,0 +1,9 @@
+# An inset's fraction of its parent is its `scale` since 0.14: `size` is a width and height,
+# or a type size, everywhere else.
+cast: {a: {reference: alice}}
+panels: {street: {}, clock: {}}
+pages:
+  - tiers:
+      - panels:
+          - use: street
+            insets: [{use: clock, at: top_left, size: 0.3}]

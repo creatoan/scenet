@@ -269,7 +269,7 @@ class TestCheckFindsIt:
     def test_a_script_directive_is_reported_at_its_line(self, folder: Path):
         script = (
             "---\ncast: {ALICE: {reference: alice}}\n---\n"
-            "PANEL 1\n@shot: wide\n@setting: {image: art/missing.png}\nALICE\nHi.\n"
+            "PANEL 1\n@shot: long_shot\n@setting: {image: art/missing.png}\nALICE\nHi.\n"
         )
         found = diagnose_script(script, base=folder)
         assert [(item.rule, item.path) for item in found] == [

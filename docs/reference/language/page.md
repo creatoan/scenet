@@ -540,7 +540,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.3}
+              - {use: clock, at: top_left, scale: 0.3}
 ```
 
 **See also:** [`insets[].read`](#insetsread).
@@ -655,7 +655,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, face: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: face, at: bottom_right, size: 0.3}]}]
+      - panels: [{use: street, insets: [{use: face, at: bottom_right, scale: 0.3}]}]
 ```
 
 **See also:** [`panels[].insets`](#panelsinsets).
@@ -683,14 +683,14 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_right, size: 0.25}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_right, scale: 0.25}]}]
 ```
 
-**See also:** [`insets[].size`](#insetssize).
+**See also:** [`insets[].scale`](#insetsscale).
 
-## `insets[].size`
+## `insets[].scale`
 
-<!-- facts: insets[].size -->
+<!-- facts: insets[].scale -->
 The inset's width and height, as a fraction of its parent's: above 0, at most 0.5.
 
 | | |
@@ -699,7 +699,7 @@ The inset's width and height, as a fraction of its parent's: above 0, at most 0.
 | Type | a number |
 | Values | above 0, at most 0.5 |
 | Default | none |
-| Since | 0.10 |
+| Since | 0.14 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`inset-covers-face`](../diagnostics.md#inset-covers-face) |
 <!-- /facts -->
 
@@ -711,7 +711,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.45}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_left, scale: 0.45}]}]
 ```
 
 **See also:** [`insets[].at`](#insetsat).
@@ -741,7 +741,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.25, read: before}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_left, scale: 0.25, read: before}]}]
 ```
 
 **See also:** the {term}`reading order` of a page, [`pages`](#pages).

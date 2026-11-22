@@ -1026,7 +1026,7 @@
     "pullback": 1.0,
     "reference": "alice",
     "scale": 1.48,
-    "shot": "medium_full"
+    "shot": "medium_full_shot"
   },
   "captions": [],
   "description": "Medium full shot. Alice, left, pointing; Bob, right, arms crossed.",

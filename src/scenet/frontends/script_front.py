@@ -85,6 +85,7 @@ from scenet.ir import (
     SfxSize,
     ShotType,
     Side,
+    retired_value,
     unholdable,
 )
 from scenet.namespace import (
@@ -293,8 +294,8 @@ FRENCH_SHOTS = {
     "pe": "long_shot",
     "plan moyen": "full_shot",
     "pm": "full_shot",
-    "plan americain": "cowboy",
-    "pa": "cowboy",
+    "plan americain": "cowboy_shot",
+    "pa": "cowboy_shot",
     "plan rapproche taille": "medium_shot",
     "plan mi moyen": "medium_shot",
     "prt": "medium_shot",
@@ -1690,6 +1691,14 @@ def _camera_word(key: str, value: str, number: int, source: Path | None, panel: 
     translated = french.get(_folded(value))
     if translated is not None:
         return translated
+    retired = retired_value(key, value, prefix="@")
+    if retired is not None:
+        raise ScriptSyntaxError(
+            f"line {number}: in PANEL {panel}, {retired}",
+            source=source,
+            line=number,
+            rule="invalid-field",
+        )
     named = sorted({_FRENCH_SPELLINGS.get(word, word) for word in french if len(word) > 3})
     raise ScriptSyntaxError(
         f"line {number}: in PANEL {panel}, unknown {key} '{value}'; known are "

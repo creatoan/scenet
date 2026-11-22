@@ -95,6 +95,15 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **The vocabulary is reviewed for 1.0** (#361). Every key written in more than one place was
+  read against the others, and the review is a table in "All keys, A to Z". Three spellings
+  moved, and each old one is one finding, where it is written, that says what to write instead:
+  - **`shot: wide` is gone**: it was a second name for `long_shot`. Write `long_shot`.
+  - **`medium_full` and `cowboy` are `medium_full_shot` and `cowboy_shot`**, the two rungs of
+    the ladder that lacked the word. A comic script's *plan américain* is `cowboy_shot`, and Panel
+    Core's `camera.shot` writes the new names.
+  - **An inset's `size` is its `scale`**: `insets: [{use: clock, at: top_left, scale: 0.3}]`.
+    `size` stays a panel's and a page's width and height, and a type size.
 - **A script beside `panels:` is refused** (#357), as a description already was: it gave every
   panel of the scene the same lines without a word. `script:` there is now one `unknown-key`
   finding, at the key, that says to write it on the panel that says it, or on one the others are

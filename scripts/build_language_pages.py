@@ -533,7 +533,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "panels[].bleed": ("page-layout",),
     "panels[].insets": ("page-layout", "inset-covers-face"),
     "insets[].use": ("page-layout",),
-    "insets[].size": ("page-layout", "inset-covers-face"),
+    "insets[].scale": ("page-layout", "inset-covers-face"),
     "insets[].at": ("inset-covers-face",),
     "panels": ("invalid-identifier", "duplicate-key", "composition"),
     "over": ("composition",),

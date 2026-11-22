@@ -56,7 +56,7 @@
 "include" = "0.14"
 "insets[].at" = "0.10"
 "insets[].read" = "0.10"
-"insets[].size" = "0.10"
+"insets[].scale" = "0.14"
 "insets[].use" = "0.10"
 "joints" = "0.13"
 "joints.<joint>.offset" = "0.13"
@@ -143,3 +143,5 @@
 
 [values]
 "caption.tone=warm" = "0.13"
+"camera.shot=cowboy_shot" = "0.14"
+"camera.shot=medium_full_shot" = "0.14"

@@ -631,9 +631,9 @@
   ],
   "tests/finding_corpus/a-default-no-panel-overrides.scene.yaml": [
     {
-      "fingerprint": "78a4f19899f93c09c35f269445c7fd31",
+      "fingerprint": "b7cf2be6aa177c86f2c645a037bccc4c",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"
@@ -650,9 +650,9 @@
   ],
   "tests/finding_corpus/a-default-no-panel-overrides.scene.yaml --deep": [
     {
-      "fingerprint": "78a4f19899f93c09c35f269445c7fd31",
+      "fingerprint": "b7cf2be6aa177c86f2c645a037bccc4c",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"
@@ -2715,9 +2715,9 @@
       "source": "tests/finding_corpus/a-panel-with-its-own-direction.scene.yaml"
     },
     {
-      "fingerprint": "e11da6af6f6e3edc79fae75fcadf2459",
+      "fingerprint": "c631e1be0f0ffd5733e45e6618ea4a38",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "panels",
         "two",
@@ -2754,9 +2754,9 @@
       "source": "tests/finding_corpus/a-panel-with-its-own-direction.scene.yaml"
     },
     {
-      "fingerprint": "e11da6af6f6e3edc79fae75fcadf2459",
+      "fingerprint": "c631e1be0f0ffd5733e45e6618ea4a38",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "panels",
         "two",
@@ -3546,6 +3546,76 @@
       "source": "tests/finding_corpus/a-setting-that-is-a-word.panel.yaml"
     }
   ],
+  "tests/finding_corpus/a-shot-called-wide.panel.yaml": [
+    {
+      "fingerprint": "2470a4339f698ad7fdb87dad3c776e15",
+      "level": "error",
+      "message": "'wide' is no longer a shot: write 'long_shot', the same shot",
+      "path": [
+        "camera",
+        "shot"
+      ],
+      "region": [
+        4,
+        9,
+        4,
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-shot-called-wide.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-shot-called-wide.panel.yaml --deep": [
+    {
+      "fingerprint": "2470a4339f698ad7fdb87dad3c776e15",
+      "level": "error",
+      "message": "'wide' is no longer a shot: write 'long_shot', the same shot",
+      "path": [
+        "camera",
+        "shot"
+      ],
+      "region": [
+        4,
+        9,
+        4,
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-shot-called-wide.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-shot-without-its-suffix.script": [
+    {
+      "fingerprint": "576accd541d0eec5c2119e04a069976d",
+      "level": "error",
+      "message": "line 5: in PANEL 1, 'cowboy' is now 'cowboy_shot': write '@shot: cowboy_shot'",
+      "path": [],
+      "region": [
+        5,
+        1,
+        5,
+        14
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-shot-without-its-suffix.script"
+    }
+  ],
+  "tests/finding_corpus/a-shot-without-its-suffix.script --deep": [
+    {
+      "fingerprint": "576accd541d0eec5c2119e04a069976d",
+      "level": "error",
+      "message": "line 5: in PANEL 1, 'cowboy' is now 'cowboy_shot': write '@shot: cowboy_shot'",
+      "path": [],
+      "region": [
+        5,
+        1,
+        5,
+        14
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-shot-without-its-suffix.script"
+    }
+  ],
   "tests/finding_corpus/a-slanted-tier-of-columns.scene.yaml": [
     {
       "fingerprint": "b3a85268df25b0684b6be072f0f1454d",
@@ -4008,6 +4078,58 @@
       "source": "tests/finding_corpus/an-inline-line-of-two-kinds.script"
     }
   ],
+  "tests/finding_corpus/an-inset-with-a-size.scene.yaml": [
+    {
+      "fingerprint": "5951f752503f8496e059b62eb5e1e1f0",
+      "level": "error",
+      "message": "an inset's 'size' is now its 'scale': write 'scale', a fraction of its parent",
+      "path": [
+        "pages",
+        0,
+        "tiers",
+        0,
+        "panels",
+        0,
+        "insets",
+        0,
+        "size"
+      ],
+      "region": [
+        9,
+        55,
+        9,
+        58
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/an-inset-with-a-size.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/an-inset-with-a-size.scene.yaml --deep": [
+    {
+      "fingerprint": "5951f752503f8496e059b62eb5e1e1f0",
+      "level": "error",
+      "message": "an inset's 'size' is now its 'scale': write 'scale', a fraction of its parent",
+      "path": [
+        "pages",
+        0,
+        "tiers",
+        0,
+        "panels",
+        0,
+        "insets",
+        0,
+        "size"
+      ],
+      "region": [
+        9,
+        55,
+        9,
+        58
+      ],
+      "rule": "unknown-key",
+      "source": "tests/finding_corpus/an-inset-with-a-size.scene.yaml"
+    }
+  ],
   "tests/finding_corpus/an-inset-with-no-room-on-page-two.scene.yaml": [
     {
       "fingerprint": "5b6e271d0780a50ac828b547ce65e109",
@@ -4027,7 +4149,7 @@
         9,
         38,
         9,
-        75
+        76
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/an-inset-with-no-room-on-page-two.scene.yaml"
@@ -4052,7 +4174,7 @@
         9,
         38,
         9,
-        75
+        76
       ],
       "rule": "page-layout",
       "source": "tests/finding_corpus/an-inset-with-no-room-on-page-two.scene.yaml"
@@ -6124,9 +6246,9 @@
   ],
   "tests/finding_corpus/two-faults-in-one-camera.panel.yaml": [
     {
-      "fingerprint": "9f84b457d6269e7aa37a2215995f690d",
+      "fingerprint": "30bd6a201f15d01a6d02d4ef2c348023",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"
@@ -6160,9 +6282,9 @@
   ],
   "tests/finding_corpus/two-faults-in-one-camera.panel.yaml --deep": [
     {
-      "fingerprint": "9f84b457d6269e7aa37a2215995f690d",
+      "fingerprint": "30bd6a201f15d01a6d02d4ef2c348023",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"
@@ -6516,9 +6638,9 @@
   ],
   "tests/finding_corpus/unknown-shot-word.script": [
     {
-      "fingerprint": "8fde1440caf39cb3b3844eaf6b817855",
+      "fingerprint": "4e8f32822f3290f0258be788e1af5897",
       "level": "error",
-      "message": "line 5: in PANEL 1, unknown shot 'wide_angle'; known are long_shot, wide, full_shot, medium_full, cowboy, medium_shot, medium_close_up, close_up, big_close_up, extreme_close_up, or in French gros plan, plan américain, plan d'ensemble, plan mi-moyen, plan moyen, plan rapproché, plan rapproché poitrine, plan rapproché taille, plan rapproché épaule, plan épaule, très gros plan",
+      "message": "line 5: in PANEL 1, unknown shot 'wide_angle'; known are long_shot, full_shot, medium_full_shot, cowboy_shot, medium_shot, medium_close_up, close_up, big_close_up, extreme_close_up, or in French gros plan, plan américain, plan d'ensemble, plan mi-moyen, plan moyen, plan rapproché, plan rapproché poitrine, plan rapproché taille, plan rapproché épaule, plan épaule, très gros plan",
       "path": [],
       "region": [
         5,
@@ -6532,9 +6654,9 @@
   ],
   "tests/finding_corpus/unknown-shot-word.script --deep": [
     {
-      "fingerprint": "8fde1440caf39cb3b3844eaf6b817855",
+      "fingerprint": "4e8f32822f3290f0258be788e1af5897",
       "level": "error",
-      "message": "line 5: in PANEL 1, unknown shot 'wide_angle'; known are long_shot, wide, full_shot, medium_full, cowboy, medium_shot, medium_close_up, close_up, big_close_up, extreme_close_up, or in French gros plan, plan américain, plan d'ensemble, plan mi-moyen, plan moyen, plan rapproché, plan rapproché poitrine, plan rapproché taille, plan rapproché épaule, plan épaule, très gros plan",
+      "message": "line 5: in PANEL 1, unknown shot 'wide_angle'; known are long_shot, full_shot, medium_full_shot, cowboy_shot, medium_shot, medium_close_up, close_up, big_close_up, extreme_close_up, or in French gros plan, plan américain, plan d'ensemble, plan mi-moyen, plan moyen, plan rapproché, plan rapproché poitrine, plan rapproché taille, plan rapproché épaule, plan épaule, très gros plan",
       "path": [],
       "region": [
         5,
@@ -7797,9 +7919,9 @@
   "tests/rule_corpus/inset-covers-face.scene.yaml --deep": [],
   "tests/rule_corpus/invalid-field.panel.yaml": [
     {
-      "fingerprint": "1f316c953577a1f87fd2a6ed0eda258e",
+      "fingerprint": "db6fc5403f9515cb0432658a1f3f867d",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"
@@ -7816,9 +7938,9 @@
   ],
   "tests/rule_corpus/invalid-field.panel.yaml --deep": [
     {
-      "fingerprint": "1f316c953577a1f87fd2a6ed0eda258e",
+      "fingerprint": "db6fc5403f9515cb0432658a1f3f867d",
       "level": "error",
-      "message": "Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
+      "message": "Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'",
       "path": [
         "camera",
         "shot"

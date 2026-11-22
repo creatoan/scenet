@@ -51,7 +51,7 @@ SFX (medium): ZZAK
 
 PANEL 2
 @over: 1
-@shot: cowboy
+@shot: cowboy_shot
 Closer. Hana does not turn round.
 
 HANA (thinking)
@@ -61,7 +61,7 @@ REN (small)
 ...sorry.
 
 PANEL 3
-@shot: cowboy
+@shot: cowboy_shot
 @lettering: {size: 18}
 Ren bows low. Hana looks at him at last.
 

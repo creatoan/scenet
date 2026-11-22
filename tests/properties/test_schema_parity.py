@@ -275,7 +275,9 @@ def test_blank_text_is_found_where_it_is_written(entry: str, path: tuple[str | i
 
 def test_a_null_beside_an_unknown_key_is_still_unknown():
     """`settle` takes a null away only where the language has the key (#353)."""
-    text = "cast: {alice: {reference: alice}}\ncamera: {shot: wide, kind: null}\ncolour: null\n"
+    text = (
+        "cast: {alice: {reference: alice}}\ncamera: {shot: long_shot, kind: null}\ncolour: null\n"
+    )
     found = diagnose_source(text, source=Path("x.panel.yaml"), library=LIBRARY)
     assert [(item.rule, item.path) for item in found] == [
         ("unknown-key", ("camera", "kind")),
@@ -300,7 +302,7 @@ _SCENE_ROWS: dict[str, tuple[str, bool]] = {
         False,
     ),
     "a slant beside an inset": (
-        "pages: [{tiers: [{slant: 5, panels: [b, {use: a, insets: [{use: c, size: 0.3}]}]}]}]\n",
+        "pages: [{tiers: [{slant: 5, panels: [b, {use: a, insets: [{use: c, scale: 0.3}]}]}]}]\n",
         False,
     ),
     # The document's own keys, a script refused as a default, and extensions (#357).

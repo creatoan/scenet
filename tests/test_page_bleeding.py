@@ -100,7 +100,10 @@ class TestTheKey:
         """An inset sits a gutter inside its parent, so it reaches no edge to bleed past."""
         with pytest.raises(ValidationError, match="bleed"):
             PanelPlacement.model_validate(
-                {"use": "a", "insets": [{"use": "b", "at": "top_left", "size": 0.3, "bleed": True}]}
+                {
+                    "use": "a",
+                    "insets": [{"use": "b", "at": "top_left", "scale": 0.3, "bleed": True}],
+                }
             )
 
     def test_the_schema_offers_it(self):
@@ -162,7 +165,7 @@ class TestTheFrames:
 
     def test_an_inset_of_a_bleeding_panel_stays_where_it_was(self):
         def page(bleed: bool) -> PageSpec:
-            inset = {"use": "small", "at": "top_left", "size": 0.3}
+            inset = {"use": "small", "at": "top_left", "scale": 0.3}
             big = {"use": "big", "insets": [inset], "bleed": bleed}
             return PageSpec.model_validate({"tiers": [{"panels": [big]}]})
 

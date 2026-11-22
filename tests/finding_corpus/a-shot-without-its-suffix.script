@@ -1,0 +1,8 @@
+---
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+@shot: cowboy
+
+ALICE
+Draw.

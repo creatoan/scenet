@@ -113,8 +113,8 @@ INSETS = (
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.2, read: before}
-              - {use: face, at: bottom_right, size: 0.3}
+              - {use: clock, at: top_left, scale: 0.2, read: before}
+              - {use: face, at: bottom_right, scale: 0.3}
           - door
 panels: {street: {}, clock: {}, face: {}, door: {}}
 """

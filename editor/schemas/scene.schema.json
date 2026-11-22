@@ -568,11 +568,11 @@
           "default": "after",
           "description": "When the inset is read: `after` its parent, or `before` it."
         },
-        "size": {
+        "scale": {
           "description": "The inset's width and height, as a fraction of its parent's: above 0, at most 0.5.",
           "exclusiveMinimum": 0.0,
           "maximum": 0.5,
-          "title": "Size",
+          "title": "Scale",
           "type": "number"
         },
         "use": {
@@ -588,7 +588,7 @@
       "required": [
         "use",
         "at",
-        "size"
+        "scale"
       ],
       "title": "Inset",
       "type": "object"
@@ -1912,10 +1912,9 @@
       "description": "How tightly the camera frames the cast.",
       "enum": [
         "long_shot",
-        "wide",
         "full_shot",
-        "medium_full",
-        "cowboy",
+        "medium_full_shot",
+        "cowboy_shot",
         "medium_shot",
         "medium_close_up",
         "close_up",

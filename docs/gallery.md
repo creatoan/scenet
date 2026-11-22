@@ -52,7 +52,7 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: worry, at: bottom_right, size: 0.33}
+              - {use: worry, at: bottom_right, scale: 0.33}
       - panels: [platform]
 
 panels:
@@ -191,7 +191,7 @@ Learn it in the tour: [Camera and staging](tutorial/camera_and_staging.md).
 
 Every shot type from long shot to extreme close-up, each defined by where it crops the body and how much headroom it leaves.
 
-![A strip of 10 panels. Long shot. Alice, centre, pointing. Long shot. Alice, centre, pointing. Full shot. Alice, centre, pointing. Medium full shot. Alice, left, pointing. Cowboy shot. Alice, left, pointing. Medium shot. Alice, left, pointing. Medium close-up. Alice, left, pointing. Close-up. Alice, left, pointing. Big close-up. Alice, left, pointing. Extreme close-up. Alice, left, pointing.](images/gallery/02-shot-ladder.strip.svg)
+![A strip of 9 panels. Long shot. Alice, centre, pointing. Full shot. Alice, centre, pointing. Medium full shot. Alice, left, pointing. Cowboy shot. Alice, left, pointing. Medium shot. Alice, left, pointing. Medium close-up. Alice, left, pointing. Close-up. Alice, left, pointing. Big close-up. Alice, left, pointing. Extreme close-up. Alice, left, pointing.](images/gallery/02-shot-ladder.strip.svg)
 
 [Open in the playground](https://creatoan.github.io/scenet/playground/#example=02-shot-ladder.scene.yaml) · [Read about it](reference/shot_types.md)
 
@@ -205,14 +205,9 @@ Every shot type from long shot to extreme close-up, each defined by where it cro
 # fraction of panel height. Watch where the frame cuts the body as you go down: feet,
 # feet, knees, mid-thigh, waist, chest, shoulders, chin, eyes.
 #
-# `wide` and `long_shot` are DELIBERATELY IDENTICAL. They are synonyms -- the literature
-# uses them interchangeably -- and the language keeps both because writers reach for
-# both. The two panels look the same because they are the same shot, not because
-# something is broken.
-#
-# `medium_full` and `cowboy` are NOT synonyms, though they were briefly implemented as
-# though they were. Medium full cuts at the knees; the cowboy shot cuts at mid-thigh,
-# a framing that comes from 1930s Westerns needing the holster in frame.
+# `medium_full_shot` and `cowboy_shot` are NOT synonyms, though they were briefly
+# implemented as though they were. Medium full cuts at the knees; the cowboy shot cuts
+# at mid-thigh, a framing that comes from 1930s Westerns needing the holster in frame.
 #
 # The two widest shots leave ground beneath the feet. That is footroom, and it is not
 # decoration: the crop lands the FEET landmark on the frame edge, but the shin is drawn
@@ -226,10 +221,9 @@ cast:
 
 panels:
   long_shot:        {camera: {shot: long_shot}}
-  wide:             {camera: {shot: wide}}          # same as long_shot, on purpose
   full_shot:        {camera: {shot: full_shot}}
-  medium_full:      {camera: {shot: medium_full}}   # knees
-  cowboy:           {camera: {shot: cowboy}}        # mid-thigh
+  medium_full_shot: {camera: {shot: medium_full_shot}}   # knees
+  cowboy_shot:      {camera: {shot: cowboy_shot}}        # mid-thigh
   medium_shot:      {camera: {shot: medium_shot}}
   medium_close_up:  {camera: {shot: medium_close_up}}
   close_up:         {camera: {shot: close_up}}
@@ -297,7 +291,7 @@ panel:
   size: [1200, 800]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
@@ -509,7 +503,7 @@ panel:
   size: [1300, 900]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
@@ -590,7 +584,7 @@ panel:
   size: [1200, 800]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, at: left_third}
@@ -636,7 +630,7 @@ panel:
   size: [1400, 950]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: arms_crossed, at: left_third}
@@ -1011,7 +1005,7 @@ panel:
   size: [1100, 850]
 
 camera:
-  shot: cowboy
+  shot: cowboy_shot
 
 cast:
   alice: {reference: alice, at: left_third, expression: angry}
@@ -1069,7 +1063,7 @@ pages:
 
 panels:
   door:
-    camera: {shot: wide}
+    camera: {shot: long_shot}
     script:
       - caption: {text: "The same evening.", kind: locale}
       - say: {by: alice, text: "Can I come in?"}
@@ -2202,8 +2196,8 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.22, read: before}
-              - {use: worry, at: bottom_right, size: 0.35}
+              - {use: clock, at: top_left, scale: 0.22, read: before}
+              - {use: worry, at: bottom_right, scale: 0.35}
       - panels: [arrive, {use: shrug, width: 1.5}]
 
 panels:
@@ -2371,7 +2365,7 @@ pages:
       - height: 1.5
         panels:
           - use: '2-1'
-            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+            insets: [{use: '2-2', at: top_right, scale: 0.35, read: after}]
       - panels: ['2-3']
 
 panels:
@@ -2879,7 +2873,7 @@ SFX (medium): ZZAK
 
 PANEL 2
 @over: 1
-@shot: cowboy
+@shot: cowboy_shot
 Closer. Hana does not turn round.
 
 HANA (thinking)
@@ -2889,7 +2883,7 @@ REN (small)
 ...sorry.
 
 PANEL 3
-@shot: cowboy
+@shot: cowboy_shot
 @lettering: {size: 18}
 Ren bows low. Hana looks at him at last.
 
@@ -3482,7 +3476,7 @@ panels:
       - say: {by: alice, text: "Not yet."}
 
   wave:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: waving, expression: happy, at: center}
@@ -3490,7 +3484,7 @@ panels:
       - say: {by: pip, text: "Hello, boat!"}
 
   enormous:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: arms_up, expression: surprise, at: center}
@@ -3498,7 +3492,7 @@ panels:
       - say: {by: pip, text: "It's enormous!"}
 
   loud:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {expression: scared, at: center}
@@ -3559,7 +3553,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:
@@ -3663,7 +3657,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:
@@ -4182,11 +4176,11 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}
 
 # Try this: delete the "# " that starts the last line. A panel is placed on a page once,
 # and the clock already is: the error `page-layout`, on that line.
-#               - {use: clock, at: bottom_left, size: 0.25}
+#               - {use: clock, at: bottom_left, scale: 0.25}
 ```
 
 </details>

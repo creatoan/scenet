@@ -154,7 +154,7 @@ def _with_insets(
     after: list[Frame] = []
     cleared: list[tuple[str, BBox]] = []
     for index, inset in enumerate(placement.insets):
-        width, height = area.width * inset.size, area.height * inset.size
+        width, height = area.width * inset.scale, area.height * inset.scale
         left = inset.at in (Corner.TOP_LEFT, Corner.BOTTOM_LEFT)
         top = inset.at in (Corner.TOP_LEFT, Corner.TOP_RIGHT)
         x = area.x + gutter if left else area.right - gutter - width
@@ -166,7 +166,7 @@ def _with_insets(
             raise RuleViolationError(
                 f"inset '{inset.use}' does not fit in panel '{placement.use}': a "
                 f"{_fmt(area.width)} by {_fmt(area.height)} frame has no room for an inset "
-                f"{_fmt(inset.size * 100)}% of its size a gutter in from its corner, so "
+                f"{_fmt(inset.scale * 100)}% of its size a gutter in from its corner, so "
                 "make the panel larger, the inset smaller, or the gutter narrower",
                 rule="page-layout",
                 loc=(*loc, "insets", index),

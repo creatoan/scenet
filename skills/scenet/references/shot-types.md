@@ -50,21 +50,24 @@ A comic script may name these in French; see
 
 | `shot` | Crop landmark | Headroom | Footroom | Reads as |
 |---|---|---|---|---|
-| `long_shot` (alias `wide`) | `feet` | 0.28 | 0.10 | Figure small in its environment |
+| `long_shot` | `feet` | 0.28 | 0.10 | Figure small in its environment |
 | `full_shot` | `feet` | 0.05 | 0.04 | Whole body, environment secondary |
-| `medium_full` | `knees` | 0.08 | — | The three-quarter shot |
-| `cowboy` | `mid_thigh` | 0.08 | — | Stance and confrontation |
+| `medium_full_shot` | `knees` | 0.08 | — | The three-quarter shot |
+| `cowboy_shot` | `mid_thigh` | 0.08 | — | Stance and confrontation |
 | `medium_shot` | `waist` | 0.10 | — | The conversational default |
 | `medium_close_up` | `chest` | 0.10 | — | Emphasis on the speaker |
 | `close_up` | `shoulders` | 0.08 | — | Emotion; face dominates |
 | `big_close_up` | `chin` | 0.05 | — | Intensity |
 | `extreme_close_up` | `eyes` | 0.00 | 0.45 | Crops through the face deliberately |
 
-**`wide` is an exact synonym for `long_shot`.** The two are used interchangeably in the
-literature and the language keeps both because writers reach for both.
+**Every rung is named as the literature names it**, an *X shot* or an *X close-up*:
+`medium_full_shot` and `cowboy_shot` were `medium_full` and `cowboy` until 0.14, the two rungs
+without the word. The language once also took `wide`, an exact synonym for `long_shot`; two
+names for one rung made a reader look for a difference that was not there, so it is gone. Each
+old spelling is refused with a finding that names the one to write.
 
-**`medium_full` and `cowboy` are not synonyms**, though they were briefly implemented as
-though they were. Medium full — the three-quarter shot — cuts at the knees. The cowboy
+**`medium_full_shot` and `cowboy_shot` are not synonyms**, though they were briefly implemented
+as though they were. Medium full — the three-quarter shot — cuts at the knees. The cowboy
 or American shot cuts at mid-thigh, a framing that comes from 1930s Westerns needing the
 holster in shot. Naming two shots and drawing one collapses a rung of the ladder, and
 nothing about the output makes that visible.

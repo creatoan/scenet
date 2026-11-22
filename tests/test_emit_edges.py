@@ -44,7 +44,7 @@ INSETS = """
 cast: {a: {reference: alice}}
 page: {size: [1000, 1500]}
 pages:
-  - tiers: [{panels: [{use: one, insets: [{use: two, at: top_left, size: 0.3}]}]}]
+  - tiers: [{panels: [{use: one, insets: [{use: two, at: top_left, scale: 0.3}]}]}]
 panels: {one: {}, two: {}}
 """
 

@@ -28,14 +28,9 @@ first:
 # fraction of panel height. Watch where the frame cuts the body as you go down: feet,
 # feet, knees, mid-thigh, waist, chest, shoulders, chin, eyes.
 #
-# `wide` and `long_shot` are DELIBERATELY IDENTICAL. They are synonyms -- the literature
-# uses them interchangeably -- and the language keeps both because writers reach for
-# both. The two panels look the same because they are the same shot, not because
-# something is broken.
-#
-# `medium_full` and `cowboy` are NOT synonyms, though they were briefly implemented as
-# though they were. Medium full cuts at the knees; the cowboy shot cuts at mid-thigh,
-# a framing that comes from 1930s Westerns needing the holster in frame.
+# `medium_full_shot` and `cowboy_shot` are NOT synonyms, though they were briefly
+# implemented as though they were. Medium full cuts at the knees; the cowboy shot cuts
+# at mid-thigh, a framing that comes from 1930s Westerns needing the holster in frame.
 #
 # The two widest shots leave ground beneath the feet. That is footroom, and it is not
 # decoration: the crop lands the FEET landmark on the frame edge, but the shin is drawn
@@ -49,10 +44,9 @@ cast:
 
 panels:
   long_shot:        {camera: {shot: long_shot}}
-  wide:             {camera: {shot: wide}}          # same as long_shot, on purpose
   full_shot:        {camera: {shot: full_shot}}
-  medium_full:      {camera: {shot: medium_full}}   # knees
-  cowboy:           {camera: {shot: cowboy}}        # mid-thigh
+  medium_full_shot: {camera: {shot: medium_full_shot}}   # knees
+  cowboy_shot:      {camera: {shot: cowboy_shot}}        # mid-thigh
   medium_shot:      {camera: {shot: medium_shot}}
   medium_close_up:  {camera: {shot: medium_close_up}}
   close_up:         {camera: {shot: close_up}}
@@ -60,7 +54,7 @@ panels:
   extreme_close_up: {camera: {shot: extreme_close_up}}
 ```
 
-![A strip of 10 panels. Long shot. Alice, centre, pointing. Long shot. Alice, centre, pointing. Full shot. Alice, centre, pointing. Medium full shot. Alice, left, pointing. Cowboy shot. Alice, left, pointing. Medium shot. Alice, left, pointing. Medium close-up. Alice, left, pointing. Close-up. Alice, left, pointing. Big close-up. Alice, left, pointing. Extreme close-up. Alice, left, pointing.](../images/gallery/02-shot-ladder.strip.svg)
+![A strip of 9 panels. Long shot. Alice, centre, pointing. Full shot. Alice, centre, pointing. Medium full shot. Alice, left, pointing. Cowboy shot. Alice, left, pointing. Medium shot. Alice, left, pointing. Medium close-up. Alice, left, pointing. Close-up. Alice, left, pointing. Big close-up. Alice, left, pointing. Extreme close-up. Alice, left, pointing.](../images/gallery/02-shot-ladder.strip.svg)
 
 It is a document of several panels, a **scene**: what is written beside `panels:` is shared
 by each of them, and each panel adds what is its own, here only its camera. [Chapter

@@ -809,7 +809,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@shot: close_up` in a panel, or a French *échelle des plans* name |
 | Type | a name |
-| Values | `long_shot`, `wide`, `full_shot`, `medium_full`, `cowboy`, `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
+| Values | `long_shot`, `full_shot`, `medium_full_shot` (since 0.14), `cowboy_shot` (since 0.14), `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
 | Default | `medium_shot` |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated), [`cropped-marks`](https://creatoan.github.io/scenet/reference/diagnostics.html#cropped-marks), [`slant-cuts-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#slant-cuts-face) |
@@ -819,7 +819,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 `shot` decides the **scale** of every actor, by naming where the frame cuts the body rather than
 what fraction of the panel a figure fills: `medium_shot` cuts at the waist, `close_up` at the
 shoulders. It is the single most consequential value in a panel. What each shot frames, in head
-heights, is in [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html); `wide` is another name for `long_shot`.
+heights, is in [Shot types](https://creatoan.github.io/scenet/reference/shot_types.html).
 
 **The camera retreats.** The shot is the tightest the camera may go, not a promise. When the
 cast does not fit across the panel at that framing, the camera moves back just far enough for
@@ -3735,7 +3735,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.3}
+              - {use: clock, at: top_left, scale: 0.3}
 ```
 
 **See also:** [`insets[].read`](#insetsread).
@@ -3850,7 +3850,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, face: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: face, at: bottom_right, size: 0.3}]}]
+      - panels: [{use: street, insets: [{use: face, at: bottom_right, scale: 0.3}]}]
 ```
 
 **See also:** [`panels[].insets`](#panelsinsets).
@@ -3878,14 +3878,14 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_right, size: 0.25}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_right, scale: 0.25}]}]
 ```
 
-**See also:** [`insets[].size`](#insetssize).
+**See also:** [`insets[].scale`](#insetsscale).
 
-### `insets[].size`
+### `insets[].scale`
 
-<!-- facts: insets[].size -->
+<!-- facts: insets[].scale -->
 The inset's width and height, as a fraction of its parent's: above 0, at most 0.5.
 
 | | |
@@ -3894,7 +3894,7 @@ The inset's width and height, as a fraction of its parent's: above 0, at most 0.
 | Type | a number |
 | Values | above 0, at most 0.5 |
 | Default | none |
-| Since | 0.10 |
+| Since | 0.14 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`inset-covers-face`](https://creatoan.github.io/scenet/reference/diagnostics.html#inset-covers-face) |
 <!-- /facts -->
 
@@ -3906,7 +3906,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.45}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_left, scale: 0.45}]}]
 ```
 
 **See also:** [`insets[].at`](#insetsat).
@@ -3936,7 +3936,7 @@ cast: {alice: {reference: alice}}
 panels: {street: {}, clock: {}}
 pages:
   - tiers:
-      - panels: [{use: street, insets: [{use: clock, at: top_left, size: 0.25, read: before}]}]
+      - panels: [{use: street, insets: [{use: clock, at: top_left, scale: 0.25, read: before}]}]
 ```
 
 **See also:** the reading order of a page, [`pages`](#pages).
@@ -4954,21 +4954,24 @@ A comic script may name these in French; see
 
 | `shot` | Crop landmark | Headroom | Footroom | Reads as |
 |---|---|---|---|---|
-| `long_shot` (alias `wide`) | `feet` | 0.28 | 0.10 | Figure small in its environment |
+| `long_shot` | `feet` | 0.28 | 0.10 | Figure small in its environment |
 | `full_shot` | `feet` | 0.05 | 0.04 | Whole body, environment secondary |
-| `medium_full` | `knees` | 0.08 | — | The three-quarter shot |
-| `cowboy` | `mid_thigh` | 0.08 | — | Stance and confrontation |
+| `medium_full_shot` | `knees` | 0.08 | — | The three-quarter shot |
+| `cowboy_shot` | `mid_thigh` | 0.08 | — | Stance and confrontation |
 | `medium_shot` | `waist` | 0.10 | — | The conversational default |
 | `medium_close_up` | `chest` | 0.10 | — | Emphasis on the speaker |
 | `close_up` | `shoulders` | 0.08 | — | Emotion; face dominates |
 | `big_close_up` | `chin` | 0.05 | — | Intensity |
 | `extreme_close_up` | `eyes` | 0.00 | 0.45 | Crops through the face deliberately |
 
-**`wide` is an exact synonym for `long_shot`.** The two are used interchangeably in the
-literature and the language keeps both because writers reach for both.
+**Every rung is named as the literature names it**, an *X shot* or an *X close-up*:
+`medium_full_shot` and `cowboy_shot` were `medium_full` and `cowboy` until 0.14, the two rungs
+without the word. The language once also took `wide`, an exact synonym for `long_shot`; two
+names for one rung made a reader look for a difference that was not there, so it is gone. Each
+old spelling is refused with a finding that names the one to write.
 
-**`medium_full` and `cowboy` are not synonyms**, though they were briefly implemented as
-though they were. Medium full — the three-quarter shot — cuts at the knees. The cowboy
+**`medium_full_shot` and `cowboy_shot` are not synonyms**, though they were briefly implemented
+as though they were. Medium full — the three-quarter shot — cuts at the knees. The cowboy
 or American shot cuts at mid-thigh, a framing that comes from 1930s Westerns needing the
 holster in shot. Naming two shots and drawing one collapses a rung of the ladder, and
 nothing about the output makes that visible.
@@ -5386,7 +5389,7 @@ and the usual abbreviations are read: `GP`, `P.A.`. The *échelle des plans* map
 |---|---|---|---|
 | plan d'ensemble | PE | the setting, figures small | `long_shot` |
 | plan moyen | PM | head to foot | `full_shot` |
-| plan américain | PA | mid-thigh | `cowboy` |
+| plan américain | PA | mid-thigh | `cowboy_shot` |
 | plan rapproché taille, plan mi-moyen | PRT, PMM | the waist | `medium_shot` |
 | plan rapproché poitrine, plan rapproché | PRP, PR | the chest | `medium_close_up` |
 | plan rapproché épaule, plan épaule | | the shoulders | `close_up` |
@@ -5398,7 +5401,7 @@ face: the BnF's *Créer une BD* ("coupé souvent au-dessus des épaules… s'att
 Lyon academy's sheet (at the neck), and French Wikipedia's ladder, which has its own
 *plan rapproché épaule* between *plan rapproché* and *gros plan*. Quebec's OQLF defines *gros plan*
 at the shoulders instead; writing `plan rapproché épaule` gets that framing. *Plan général* and
-*plan italien* have no rung of their own, and `medium_full` no French name; none is invented. The
+*plan italien* have no rung of their own, and `medium_full_shot` no French name; none is invented. The
 angles are *plongée* (`high`), *contre-plongée* (`low`) and *angle normal* (`eye_level`).
 
 Two planches in the gallery walk the ladder from the farthest shot to the nearest:
@@ -5972,7 +5975,7 @@ Checked as `duplicate-key.panel.yaml`:
 # `camera` twice: YAML would keep the second and drop the first without a word.
 camera: {shot: close_up}
 cast: {alice: {reference: alice}}
-camera: {shot: wide}
+camera: {shot: long_shot}
 ```
 
 `scenet check duplicate-key.panel.yaml` says:
@@ -5985,7 +5988,7 @@ Fixed:
 
 ```yaml
 # `camera` once, with the shot that was meant.
-camera: {shot: wide}
+camera: {shot: long_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -7136,7 +7139,7 @@ Checked as `yaml-merge-key.panel.yaml`:
 
 ```yaml
 # A merge key, to copy another camera's keys into this one.
-camera: {<<: {shot: wide, angle: low}, shot: medium_shot}
+camera: {<<: {shot: long_shot, angle: low}, shot: medium_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -7660,7 +7663,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}
 ```
 
 `scenet build inset-covers-face.scene.yaml` says:
@@ -7689,7 +7692,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: bottom_left, size: 0.3}
+              - {use: clock, at: bottom_left, scale: 0.3}
 ```
 
 ### `italic-stand-in`
@@ -8962,10 +8965,9 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       "description": "How tightly the camera frames the cast.",
       "enum": [
         "long_shot",
-        "wide",
         "full_shot",
-        "medium_full",
-        "cowboy",
+        "medium_full_shot",
+        "cowboy_shot",
         "medium_shot",
         "medium_close_up",
         "close_up",
@@ -9409,14 +9411,9 @@ Every shot type from long shot to extreme close-up, each defined by where it cro
 # fraction of panel height. Watch where the frame cuts the body as you go down: feet,
 # feet, knees, mid-thigh, waist, chest, shoulders, chin, eyes.
 #
-# `wide` and `long_shot` are DELIBERATELY IDENTICAL. They are synonyms -- the literature
-# uses them interchangeably -- and the language keeps both because writers reach for
-# both. The two panels look the same because they are the same shot, not because
-# something is broken.
-#
-# `medium_full` and `cowboy` are NOT synonyms, though they were briefly implemented as
-# though they were. Medium full cuts at the knees; the cowboy shot cuts at mid-thigh,
-# a framing that comes from 1930s Westerns needing the holster in frame.
+# `medium_full_shot` and `cowboy_shot` are NOT synonyms, though they were briefly
+# implemented as though they were. Medium full cuts at the knees; the cowboy shot cuts
+# at mid-thigh, a framing that comes from 1930s Westerns needing the holster in frame.
 #
 # The two widest shots leave ground beneath the feet. That is footroom, and it is not
 # decoration: the crop lands the FEET landmark on the frame edge, but the shin is drawn
@@ -9430,10 +9427,9 @@ cast:
 
 panels:
   long_shot:        {camera: {shot: long_shot}}
-  wide:             {camera: {shot: wide}}          # same as long_shot, on purpose
   full_shot:        {camera: {shot: full_shot}}
-  medium_full:      {camera: {shot: medium_full}}   # knees
-  cowboy:           {camera: {shot: cowboy}}        # mid-thigh
+  medium_full_shot: {camera: {shot: medium_full_shot}}   # knees
+  cowboy_shot:      {camera: {shot: cowboy_shot}}        # mid-thigh
   medium_shot:      {camera: {shot: medium_shot}}
   medium_close_up:  {camera: {shot: medium_close_up}}
   close_up:         {camera: {shot: close_up}}
@@ -9485,7 +9481,7 @@ panel:
   size: [1300, 900]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
@@ -9552,7 +9548,7 @@ panel:
   size: [1200, 800]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, at: left_third}
@@ -9587,7 +9583,7 @@ panel:
   size: [1200, 800]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
@@ -9957,7 +9953,7 @@ panel:
   size: [1400, 950]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: arms_crossed, at: left_third}
@@ -10531,8 +10527,8 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: clock, at: top_left, size: 0.22, read: before}
-              - {use: worry, at: bottom_right, size: 0.35}
+              - {use: clock, at: top_left, scale: 0.22, read: before}
+              - {use: worry, at: bottom_right, scale: 0.35}
       - panels: [arrive, {use: shrug, width: 1.5}]
 
 panels:
@@ -10668,7 +10664,7 @@ panel:
   size: [1100, 850]
 
 camera:
-  shot: cowboy
+  shot: cowboy_shot
 
 cast:
   alice: {reference: alice, at: left_third, expression: angry}
@@ -10719,7 +10715,7 @@ pages:
 
 panels:
   door:
-    camera: {shot: wide}
+    camera: {shot: long_shot}
     script:
       - caption: {text: "The same evening.", kind: locale}
       - say: {by: alice, text: "Can I come in?"}
@@ -11081,7 +11077,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:
@@ -11178,7 +11174,7 @@ pages:
           - width: 1.2
             panels:
               - use: street
-                insets: [{use: clock, at: bottom_left, size: 0.4}]
+                insets: [{use: clock, at: bottom_left, scale: 0.4}]
       - panels: [phone, wait]
 
 panels:
@@ -11286,7 +11282,7 @@ pages:
         panels:
           - use: street
             insets:
-              - {use: worry, at: bottom_right, size: 0.33}
+              - {use: worry, at: bottom_right, scale: 0.33}
       - panels: [platform]
 
 panels:
@@ -11806,7 +11802,7 @@ pages:
       - height: 1.5
         panels:
           - use: '2-1'
-            insets: [{use: '2-2', at: top_right, size: 0.35, read: after}]
+            insets: [{use: '2-2', at: top_right, scale: 0.35, read: after}]
       - panels: ['2-3']
 
 panels:
@@ -12411,11 +12407,11 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}
 
 # Try this: delete the "# " that starts the last line. A panel is placed on a page once,
 # and the clock already is: the error `page-layout`, on that line.
-#               - {use: clock, at: bottom_left, size: 0.25}
+#               - {use: clock, at: bottom_left, scale: 0.25}
 ```
 
 ## A slant through a face
@@ -12639,7 +12635,7 @@ SFX (medium): ZZAK
 
 PANEL 2
 @over: 1
-@shot: cowboy
+@shot: cowboy_shot
 Closer. Hana does not turn round.
 
 HANA (thinking)
@@ -12649,7 +12645,7 @@ REN (small)
 ...sorry.
 
 PANEL 3
-@shot: cowboy
+@shot: cowboy_shot
 @lettering: {size: 18}
 Ren bows low. Hana looks at him at last.
 
@@ -12994,7 +12990,7 @@ panels:
       - say: {by: alice, text: "Not yet."}
 
   wave:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: waving, expression: happy, at: center}
@@ -13002,7 +12998,7 @@ panels:
       - say: {by: pip, text: "Hello, boat!"}
 
   enormous:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {pose: arms_up, expression: surprise, at: center}
@@ -13010,7 +13006,7 @@ panels:
       - say: {by: pip, text: "It's enormous!"}
 
   loud:
-    camera: {shot: cowboy}
+    camera: {shot: cowboy_shot}
     cast:
       alice: null
       pip: {expression: scared, at: center}

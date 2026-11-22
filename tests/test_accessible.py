@@ -281,7 +281,7 @@ class TestAPage:
         book = compile_book(
             "cast: {a: {reference: alice}}\npage: {size: [1000, 1500]}\n"
             "pages: [{tiers: [{panels: [{use: one, insets: [{use: two, at: top_left, "
-            "size: 0.3}]}]}]}]\npanels: {one: {}, two: {}}\n"
+            "scale: 0.3}]}]}]}]\npanels: {one: {}, two: {}}\n"
         )
         cores = {name: result.core for name, result in book.panels.items()}
         root = _root(render_page(book.pages[0], cores))

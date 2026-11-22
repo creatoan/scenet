@@ -332,15 +332,74 @@ class ShotType(StrEnum):
     """
 
     LONG_SHOT = "long_shot"
-    WIDE = "wide"
     FULL_SHOT = "full_shot"
-    MEDIUM_FULL = "medium_full"
-    COWBOY = "cowboy"
+    MEDIUM_FULL_SHOT = "medium_full_shot"
+    COWBOY_SHOT = "cowboy_shot"
     MEDIUM_SHOT = "medium_shot"
     MEDIUM_CLOSE_UP = "medium_close_up"
     CLOSE_UP = "close_up"
     BIG_CLOSE_UP = "big_close_up"
     EXTREME_CLOSE_UP = "extreme_close_up"
+
+
+#: Values the language took before 1.0 and no longer does, under the key they were written
+#: for, each with the value to write instead. Kept so that the finding refusing one can say
+#: what to write: no document takes them, and none will (#361).
+RETIRED_VALUES: dict[str, dict[str, str]] = {
+    "shot": {
+        # An exact synonym: two names for one rung made a reader wonder what differed.
+        "wide": ShotType.LONG_SHOT.value,
+        # The two rungs the literature calls a *shot*, which the language did not.
+        "medium_full": ShotType.MEDIUM_FULL_SHOT.value,
+        "cowboy": ShotType.COWBOY_SHOT.value,
+    },
+}
+
+#: Keys the language took before 1.0 and no longer does, under the list of mappings they
+#: were written in, each with the key to write instead.
+RETIRED_KEYS: dict[str, dict[str, str]] = {
+    # `size` is a panel's and a page's width and height, and how large a line or a sound is
+    # lettered: an inset's fraction of its parent was one meaning more, and is its `scale`.
+    "insets": {"size": "scale"},
+}
+
+
+def retired_value(key: str, written: object, *, prefix: str = "") -> str | None:
+    """Why a value is no longer the language's, and what to write instead, if it was.
+
+    `prefix` comes before the key the message says to write: `@` in a comic script.
+
+    Example:
+        >>> from scenet.ir import retired_value
+        >>> retired_value("shot", "wide")
+        "'wide' is no longer a shot: write 'long_shot', the same shot"
+        >>> retired_value("shot", "cowboy")
+        "'cowboy' is now 'cowboy_shot': write 'shot: cowboy_shot'"
+        >>> retired_value("shot", "close_up") is None
+        True
+    """
+    instead = RETIRED_VALUES.get(key, {}).get(written) if isinstance(written, str) else None
+    if instead is None:
+        return None
+    if written == "wide":
+        return f"'wide' is no longer a shot: write '{instead}', the same shot"
+    return f"'{written}' is now '{instead}': write '{prefix}{key}: {instead}'"
+
+
+def retired_key(within: str, key: object) -> str | None:
+    """Why a key is no longer the language's where it was written, and what to write.
+
+    Example:
+        >>> from scenet.ir import retired_key
+        >>> retired_key("insets", "size")
+        "an inset's 'size' is now its 'scale': write 'scale', a fraction of its parent"
+        >>> retired_key("panel", "size") is None
+        True
+    """
+    instead = RETIRED_KEYS.get(within, {}).get(key) if isinstance(key, str) else None
+    if instead is None:
+        return None
+    return f"an inset's '{key}' is now its '{instead}': write '{instead}', a fraction of its parent"
 
 
 class CameraAngle(StrEnum):
@@ -2340,7 +2399,7 @@ class Corner(StrEnum):
 
     Example:
         >>> from scenet import Corner, Inset
-        >>> Inset(use="detail", at="top_right", size=0.3).at is Corner.TOP_RIGHT
+        >>> Inset(use="detail", at="top_right", scale=0.3).at is Corner.TOP_RIGHT
         True
 
     See Also:
@@ -2358,7 +2417,7 @@ class InsetOrder(StrEnum):
 
     Example:
         >>> from scenet import Inset, InsetOrder
-        >>> Inset(use="detail", at="top_right", size=0.3).read is InsetOrder.AFTER
+        >>> Inset(use="detail", at="top_right", scale=0.3).read is InsetOrder.AFTER
         True
 
     See Also:
@@ -2378,7 +2437,7 @@ class Inset(Strict):
 
     Example:
         >>> from scenet import Inset
-        >>> inset = Inset(use="detail", at="bottom_left", size=0.25)
+        >>> inset = Inset(use="detail", at="bottom_left", scale=0.25)
         >>> inset.read.value
         'after'
 
@@ -2391,7 +2450,7 @@ class Inset(Strict):
     """The name of a panel under `panels:`, set into this one."""
     at: Corner
     """The corner of its parent the inset sits in, a gutter in from both edges."""
-    size: StrictFloat = Field(gt=0.0, le=0.5)
+    scale: StrictFloat = Field(gt=0.0, le=0.5)
     """The inset's width and height, as a fraction of its parent's: above 0, at most 0.5."""
     read: InsetOrder = InsetOrder.AFTER
     """When the inset is read: `after` its parent, or `before` it."""

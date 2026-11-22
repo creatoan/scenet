@@ -38,7 +38,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@shot: close_up` in a panel, or a French *échelle des plans* name |
 | Type | a name |
-| Values | `long_shot`, `wide`, `full_shot`, `medium_full`, `cowboy`, `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
+| Values | `long_shot`, `full_shot`, `medium_full_shot` (since 0.14), `cowboy_shot` (since 0.14), `medium_shot`, `medium_close_up`, `close_up`, `big_close_up`, `extreme_close_up` |
 | Default | `medium_shot` |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`camera-retreated`](../diagnostics.md#camera-retreated), [`cropped-marks`](../diagnostics.md#cropped-marks), [`slant-cuts-face`](../diagnostics.md#slant-cuts-face) |
@@ -48,7 +48,7 @@ How tightly the camera frames the cast, named by where the frame cuts the body, 
 `shot` decides the **scale** of every actor, by naming where the frame cuts the body rather than
 what fraction of the panel a figure fills: `medium_shot` cuts at the waist, `close_up` at the
 shoulders. It is the single most consequential value in a panel. What each shot frames, in head
-heights, is in [Shot types](../shot_types.md); `wide` is another name for `long_shot`.
+heights, is in [Shot types](../shot_types.md).
 
 **The camera retreats.** The shot is the tightest the camera may go, not a promise. When the
 cast does not fit across the panel at that framing, the camera moves back just far enough for

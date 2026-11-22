@@ -31,7 +31,7 @@ panel:
   size: [1300, 900]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: pointing,     at: left_third}
@@ -138,7 +138,7 @@ panel:
   size: [1200, 800]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, at: left_third}
@@ -236,7 +236,7 @@ panel:
   size: [1400, 950]
 
 camera:
-  shot: medium_full
+  shot: medium_full_shot
 
 cast:
   alice: {reference: alice, pose: arms_crossed, at: left_third}

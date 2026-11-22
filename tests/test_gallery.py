@@ -722,7 +722,7 @@ class TestWhatADocumentWrites:
     def test_a_script_writes_its_front_matter_and_directives_not_its_prose(self, tmp_path: Path):
         script = tmp_path / "x.script"
         script.write_text(
-            "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\n@shot: wide\n"
+            "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\n@shot: long_shot\n"
             "@setting: {place: docks}\nThe top_left of a dark night.\n\nA\nmiddle_center!\n",
             encoding="utf-8",
         )

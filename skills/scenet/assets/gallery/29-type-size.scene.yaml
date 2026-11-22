@@ -27,7 +27,7 @@ pages:
 
 panels:
   door:
-    camera: {shot: wide}
+    camera: {shot: long_shot}
     script:
       - caption: {text: "The same evening.", kind: locale}
       - say: {by: alice, text: "Can I come in?"}
