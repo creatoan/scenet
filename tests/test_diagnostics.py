@@ -884,10 +884,18 @@ panels:
         (found,) = diagnose_source(cyclic, source=Path("s.scene.yaml"))
         assert found.rule == "composition"
 
-    def test_panels_must_be_a_mapping(self):
-        (found,) = diagnose_source("panels: [1, 2]\n", source=Path("s.scene.yaml"))
+    def test_panels_must_be_a_mapping_or_a_list(self):
+        (found,) = diagnose_source("panels: 3\n", source=Path("s.scene.yaml"))
         assert found.rule == "invalid-field"
         assert "mapping" in found.message
+        assert "list" in found.message
+
+    def test_each_item_of_the_list_form_is_a_mapping(self):
+        found = diagnose_source("panels: [1, 2]\n", source=Path("s.scene.yaml"))
+        assert [(item.rule, item.path) for item in found] == [
+            ("invalid-field", ("panels", 0)),
+            ("invalid-field", ("panels", 1)),
+        ]
 
     def test_a_panel_that_is_not_a_mapping_is_reported(self):
         (found,) = diagnose_source("panels:\n  a: 3\n", source=Path("s.scene.yaml"))
