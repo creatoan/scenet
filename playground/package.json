@@ -15,7 +15,7 @@
   "dependencies": {
     "monaco-editor": "0.54.0",
     "monaco-yaml": "^5.5.1",
-    "pyodide": "^314.0.7"
+    "pyodide": "^314.0.8"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
