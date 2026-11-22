@@ -25,9 +25,9 @@ from typing import Any, Protocol
 # The `fonts` packages publish each face through entry_points at install time, so
 # the attribute exists at runtime but cannot be seen statically.
 from fonts.ttf import (
-    SourceSansPro,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
-    SourceSansProBoldIt,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
-    SourceSansProIt,  # ty: ignore[import-not-found]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansPro,  # ty: ignore[missing-module-member]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansProBoldIt,  # ty: ignore[missing-module-member]  # pyright: ignore[reportAttributeAccessIssue]
+    SourceSansProIt,  # ty: ignore[missing-module-member]  # pyright: ignore[reportAttributeAccessIssue]
 )
 from fontTools.pens.basePen import BasePen
 from fontTools.pens.svgPathPen import SVGPathPen
