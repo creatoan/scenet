@@ -1,21 +1,36 @@
 # `cast`
 
 <!-- facts: cast -->
-Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
+Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zoé`, `old_man`.
 
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
 `ALICE`, `Zoé` -- each an [identifier](identifiers.md), and every other block names the cast by them: the {term}`staging`, the script, a sound's source.
-Ids are case-sensitive, and their order means nothing: [`staging`](staging.md#staging) and
-[`at`](#castidat) decide who stands where.
+Ids are case-sensitive. [`staging`](staging.md#staging) and [`at`](#castidat) decide who stands
+where, but **the order the cast is written in is part of the language**: the first member is the
+one the camera frames, and the cast is described and drawn in that order.
+
+A tool that sorts the keys of a mapping changes that order without a word, so the cast may also be
+written as a list, each member saying its [`id`](#castid). The two forms are one language: the list
+is read as the mapping it stands for, before a scene's defaults and `over:` are merged, so a list
+in one panel merges per actor with a mapping in the panel it is drawn over. Each key is one form or
+the other, never a mix: a list's item written as a mapping's entry, `- bob: {reference: bob}`, is
+`missing-field`, with the item as it should be. A list has no item for nobody, so a member is left
+out with the mapping's `bob: null`.
+
+```{scenet-example}
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third, facing: left}
+```
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](../../images/gallery/11-poses.svg)
 
@@ -39,6 +54,34 @@ cast:
 ```
 
 **See also:** [`staging`](staging.md#staging), [`say.by`](script.md#sayby).
+
+## `cast[].id`
+
+<!-- facts: cast[].id -->
+The actor id of the cast member, in the list form of `cast`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`duplicate-key`](../diagnostics.md#duplicate-key) |
+<!-- /facts -->
+
+In the list form of `cast`, the actor id each member gives itself, which the mapping form writes as
+its key. It is an [identifier](identifiers.md), as a key is, and text: `id: 1984` is
+`invalid-identifier`, quoted `id: '1984'`. Two members of one id are `duplicate-key`, at the
+second, which names the item of the first.
+
+```{scenet-example}
+cast:
+  - id: alice
+    reference: alice
+    pose: pointing
+```
+
+**See also:** [`cast`](#cast), [`panels[].name`](scene.md#panelsname).
 
 ## `cast.<id>.reference`
 

@@ -1982,9 +1982,9 @@ class PanelIR(Strict):
     cast: dict[Identifier, CastMember] = Field(
         default_factory=dict, json_schema_extra=KEYS_ARE_IDENTIFIERS
     )
-    """Who is in the panel: each actor id, chosen by the author, and the puppet that plays them
-    or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter
-    or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
+    """Who is in the panel, the first being the one the camera frames: each actor under their
+    id, or a list of cast members each with their `id`, and the puppet that plays them or the
+    figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zoé`, `old_man`.
     """
     staging: tuple[Relation, ...] = ()
     """How the cast stand to each other, as sentences: `alice left_of bob`. One relation each."""

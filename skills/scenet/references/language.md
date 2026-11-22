@@ -1260,21 +1260,36 @@ cast: {alice: {reference: alice}}
 ## `cast`
 
 <!-- facts: cast -->
-Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
+Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zoé`, `old_man`.
 
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
 `ALICE`, `Zoé` -- each an [identifier](#identifiers), and every other block names the cast by them: the staging, the script, a sound's source.
-Ids are case-sensitive, and their order means nothing: [`staging`](#staging) and
-[`at`](#castidat) decide who stands where.
+Ids are case-sensitive. [`staging`](#staging) and [`at`](#castidat) decide who stands
+where, but **the order the cast is written in is part of the language**: the first member is the
+one the camera frames, and the cast is described and drawn in that order.
+
+A tool that sorts the keys of a mapping changes that order without a word, so the cast may also be
+written as a list, each member saying its [`id`](#castid). The two forms are one language: the list
+is read as the mapping it stands for, before a scene's defaults and `over:` are merged, so a list
+in one panel merges per actor with a mapping in the panel it is drawn over. Each key is one form or
+the other, never a mix: a list's item written as a mapping's entry, `- bob: {reference: bob}`, is
+`missing-field`, with the item as it should be. A list has no item for nobody, so a member is left
+out with the mapping's `bob: null`.
+
+```yaml
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third, facing: left}
+```
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
 
@@ -1298,6 +1313,34 @@ cast:
 ```
 
 **See also:** [`staging`](#staging), [`say.by`](#sayby).
+
+### `cast[].id`
+
+<!-- facts: cast[].id -->
+The actor id of the cast member, in the list form of `cast`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
+<!-- /facts -->
+
+In the list form of `cast`, the actor id each member gives itself, which the mapping form writes as
+its key. It is an [identifier](#identifiers), as a key is, and text: `id: 1984` is
+`invalid-identifier`, quoted `id: '1984'`. Two members of one id are `duplicate-key`, at the
+second, which names the item of the first.
+
+```yaml
+cast:
+  - id: alice
+    reference: alice
+    pose: pointing
+```
+
+**See also:** [`cast`](#cast), [`panels[].name`](#panelsname).
 
 ### `cast.<id>.reference`
 
@@ -1672,7 +1715,7 @@ The actor id the relation is about.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -1699,7 +1742,7 @@ How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `beh
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | a name |
 | Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
 | Default | none: required |
@@ -1728,7 +1771,7 @@ The other actor id. For `looking_at`, it may be somebody heard from off panel.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -3045,21 +3088,22 @@ panels:
 ### `panels`
 
 <!-- facts: panels -->
-Panels in reading order, each under its name, an identifier. Each may inherit from another with `over`.
+The panels, in the order they are read: a mapping of each panel under its name, an identifier, or a list of panels each with its `name`, which no tool that sorts keys can reorder. Each may inherit from another with `over`.
 
 | | |
 |---|---|
 | Where | A `.scene.yaml`. In a comic script: the script's `PANEL` headings |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
 <!-- /facts -->
 
-The panels, in reading order: the order they are written in is the order a strip draws them and a
-screen reader reads them, unless pages lay them out. A name is text, as an actor id is, and is
-written once: two panels of one name are `duplicate-key`. Everything a `.panel.yaml` takes may be
-written under each, and `over` besides.
+The panels, in reading order. **The order they are written in is normative**: it is the order a
+strip draws them and a screen reader reads them, unless pages lay them out, and it is part of the
+document as much as any key. A name is text, as an actor id is, and is written once: two panels of
+one name are `duplicate-key`. Everything a `.panel.yaml` takes may be written under each, and
+`over` besides.
 
 ```yaml
 panel: {size: [700, 500]}
@@ -3068,6 +3112,56 @@ panels:
   first: {camera: {shot: full_shot}}
   second: {camera: {shot: close_up}}
 ```
+
+A tool that sorts keys -- PyYAML's `dump` does unless told not to, and `json.dumps` with
+`sort_keys` -- reorders a mapping, and with it the comic, without a word. So the panels may also be
+written as a list, each saying its [`name`](#panelsname), in an order no tool reorders:
+
+```yaml
+panel: {size: [700, 500]}
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: first
+    camera: {shot: full_shot}
+  - name: second
+    over: first
+    camera: {shot: close_up}
+```
+
+The two forms are one language. A list is read as the mapping it stands for before anything else
+happens to it -- before `over:` is resolved and a scene's defaults are merged -- so the two build
+the same panels, and a scene may write its panels as a list and a cast as a mapping. Each key is one
+form or the other: an item written as a mapping's entry, `- second: {...}`, is `missing-field`,
+with the item as it should be.
+
+### `panels[].name`
+
+<!-- facts: panels[].name -->
+The panel's name, in the list form of `panels`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
+<!-- /facts -->
+
+In the list form of `panels`, the name each panel gives itself, which the mapping form writes as
+its key: what a page, an `over:` and every file the panel is written to name it by. It is an
+[identifier](#identifiers), and text: `name: 1` is `invalid-identifier`, quoted `name: '1'`. Two
+panels of one name are `duplicate-key`, at the second, which names the item of the first.
+
+```yaml
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: one
+  - name: two
+pages: [{tiers: [{panels: [one, two]}]}]
+```
+
+**See also:** [`cast[].id`](#castid), [`pages`](#pages).
 
 **See also:** [`pages`](#pages), [Compile a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html).
 

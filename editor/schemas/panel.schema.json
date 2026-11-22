@@ -177,6 +177,215 @@
       "title": "CaptionTone",
       "type": "string"
     },
+    "CastEntry": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "reference": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "reference"
+            ]
+          },
+          "required": [
+            "reference"
+          ]
+        },
+        {
+          "not": {
+            "properties": {
+              "figure": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "figure"
+            ]
+          },
+          "required": [
+            "figure"
+          ]
+        }
+      ],
+      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.",
+      "if": {
+        "properties": {
+          "figure": {
+            "not": {
+              "type": "null"
+            }
+          }
+        },
+        "required": [
+          "figure"
+        ]
+      },
+      "not": {
+        "properties": {
+          "figure": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "reference": {
+            "not": {
+              "type": "null"
+            }
+          }
+        },
+        "required": [
+          "reference",
+          "figure"
+        ]
+      },
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
+      "properties": {
+        "at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnchorX"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "center",
+          "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "neutral",
+          "description": "An expression the puppet declares, by name.",
+          "title": "Expression"
+        },
+        "facing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Facing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "right",
+          "description": "Which way the figure is turned, `left` or `right`, gaze and all."
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.",
+          "title": "Figure"
+        },
+        "id": {
+          "$ref": "#/$defs/Identifier",
+          "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Mark"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.",
+          "title": "Marks"
+        },
+        "pose": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "standing_neutral",
+          "description": "A pose the puppet declares, by name.",
+          "title": "Pose"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.",
+          "title": "Reference"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "then": {
+        "properties": {
+          "at": {
+            "type": "null"
+          },
+          "expression": {
+            "type": "null"
+          },
+          "facing": {
+            "type": "null"
+          },
+          "marks": {
+            "type": "null"
+          },
+          "pose": {
+            "type": "null"
+          }
+        }
+      },
+      "type": "object"
+    },
     "CastMember": {
       "additionalProperties": false,
       "anyOf": [
@@ -1278,6 +1487,9 @@
               }
             ]
           },
+          "items": {
+            "$ref": "#/$defs/CastEntry"
+          },
           "patternProperties": {
             "^x-": {
               "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -1293,13 +1505,16 @@
               }
             ]
           },
-          "type": "object"
+          "type": [
+            "object",
+            "array"
+          ]
         },
         {
           "type": "null"
         }
       ],
-      "description": "Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zo\u00e9`, `old_man`. Their order means nothing.",
+      "description": "Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zo\u00e9`, `old_man`.",
       "title": "Cast"
     },
     "defaults": {

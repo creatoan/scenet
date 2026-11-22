@@ -1,0 +1,5 @@
+# A mapping's entry written as an item of the list form: the finding writes the item as it
+# should be.
+cast:
+  - {id: alice, reference: alice}
+  - bob: {reference: bob, at: right_third}

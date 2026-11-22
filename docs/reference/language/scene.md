@@ -65,21 +65,22 @@ panels:
 ## `panels`
 
 <!-- facts: panels -->
-Panels in reading order, each under its name, an identifier. Each may inherit from another with `over`.
+The panels, in the order they are read: a mapping of each panel under its name, an identifier, or a list of panels each with its `name`, which no tool that sorts keys can reorder. Each may inherit from another with `over`.
 
 | | |
 |---|---|
 | Where | A `.scene.yaml`. In a comic script: the script's `PANEL` headings |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`composition`](../diagnostics.md#composition) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition) |
 <!-- /facts -->
 
-The panels, in reading order: the order they are written in is the order a strip draws them and a
-screen reader reads them, unless pages lay them out. A name is text, as an actor id is, and is
-written once: two panels of one name are `duplicate-key`. Everything a `.panel.yaml` takes may be
-written under each, and `over` besides.
+The panels, in reading order. **The order they are written in is normative**: it is the order a
+strip draws them and a screen reader reads them, unless pages lay them out, and it is part of the
+document as much as any key. A name is text, as an actor id is, and is written once: two panels of
+one name are `duplicate-key`. Everything a `.panel.yaml` takes may be written under each, and
+`over` besides.
 
 ```{scenet-example}
 panel: {size: [700, 500]}
@@ -88,6 +89,56 @@ panels:
   first: {camera: {shot: full_shot}}
   second: {camera: {shot: close_up}}
 ```
+
+A tool that sorts keys -- PyYAML's `dump` does unless told not to, and `json.dumps` with
+`sort_keys` -- reorders a mapping, and with it the comic, without a word. So the panels may also be
+written as a list, each saying its [`name`](#panelsname), in an order no tool reorders:
+
+```{scenet-example}
+panel: {size: [700, 500]}
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: first
+    camera: {shot: full_shot}
+  - name: second
+    over: first
+    camera: {shot: close_up}
+```
+
+The two forms are one language. A list is read as the mapping it stands for before anything else
+happens to it -- before `over:` is resolved and a scene's defaults are merged -- so the two build
+the same panels, and a scene may write its panels as a list and a cast as a mapping. Each key is one
+form or the other: an item written as a mapping's entry, `- second: {...}`, is `missing-field`,
+with the item as it should be.
+
+## `panels[].name`
+
+<!-- facts: panels[].name -->
+The panel's name, in the list form of `panels`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition) |
+<!-- /facts -->
+
+In the list form of `panels`, the name each panel gives itself, which the mapping form writes as
+its key: what a page, an `over:` and every file the panel is written to name it by. It is an
+[identifier](identifiers.md), and text: `name: 1` is `invalid-identifier`, quoted `name: '1'`. Two
+panels of one name are `duplicate-key`, at the second, which names the item of the first.
+
+```{scenet-example}
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: one
+  - name: two
+pages: [{tiers: [{panels: [one, two]}]}]
+```
+
+**See also:** [`cast[].id`](cast.md#castid), [`pages`](page.md#pages).
 
 **See also:** [`pages`](page.md#pages), [Compile a sequence](../../howto/compile_a_sequence.md).
 

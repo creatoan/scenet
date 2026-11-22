@@ -81,7 +81,7 @@ The actor id the relation is about.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -108,7 +108,7 @@ How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `beh
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | a name |
 | Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
 | Default | none: required |
@@ -137,7 +137,7 @@ The other actor id. For `looking_at`, it may be somebody heard from off panel.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |

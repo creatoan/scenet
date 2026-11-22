@@ -79,6 +79,11 @@ ANY_FAMILY, ANY_OWNER = "any", "Document"
 #: default: what a scene's top writes beside `panels:` is otherwise for every panel.
 DOCUMENT_TOP = ("kind", "include", "defaults")
 
+#: An item of a list form (#356), by its definition: the model the mapping form's value is,
+#: whose keys it holds and shares a card with, and the key it names itself by, which has a
+#: card of its own.
+ENTRIES = {"CastEntry": ("CastMember", "id"), "PanelEntry": ("Panel", "name")}
+
 #: Keys that hold a mapping of anything, whose keys no rule says are unknown.
 FREE_MAPPINGS = ("meta",)
 
@@ -156,13 +161,18 @@ def occurrences(kind: str, schema: dict[str, Any]) -> list[Occurrence]:
     """
     found: list[Occurrence] = []
 
-    def walk(node: object, path: str, owner: str, seen: frozenset[str]) -> None:
+    def walk(node: object, path: str, owner: str, seen: frozenset[str], naming: str = "") -> None:
         if not isinstance(node, dict):
             return
         if "$ref" in node:
             name = node["$ref"].rsplit("/", 1)[1]
-            if name not in seen:
-                walk(schema["$defs"][name], path, name.removeprefix("Partial"), seen | {name})
+            definition = name.removeprefix("Partial")
+            if definition in ENTRIES:
+                # An item holds the keys of the mapping form's value, on their cards.
+                held, naming_key = ENTRIES[definition]
+                walk(schema["$defs"][name], path, held, seen | {name}, naming_key)
+            elif name not in seen:
+                walk(schema["$defs"][name], path, definition, seen | {name})
         for combinator in ("anyOf", "oneOf", "allOf"):
             for branch in node.get(combinator, []):
                 walk(branch, path, owner, seen)
@@ -179,6 +189,9 @@ def occurrences(kind: str, schema: dict[str, Any]) -> list[Occurrence]:
             key_owner = owner
             if kind == "scene" and not path and key not in SCENE_KEYS:
                 key_owner = "Panel"
+            if key == naming:
+                # The key an item names itself by, which the mapping form writes as its key.
+                key_owner = f"{owner}Entry"
             if isinstance(value, dict):
                 found.append(Occurrence(kind, child, key_owner, key, value, key in required))
             walk(value, child, key_owner, seen)
@@ -211,7 +224,7 @@ class Card:
         """The page of `docs/reference/language/` the card is on."""
         if self.family in PAGE_OF_FAMILY:
             return PAGE_OF_FAMILY[self.family]
-        if self.name in ("panels", "over"):
+        if self.name in ("panels", "over", "panels[].name"):
             return "scene"
         word = re.split(r"[.\[]", self.name, maxsplit=1)[0]
         return PAGE_OF_WORD.get(word, "page" if word == "panels" else word)
@@ -536,6 +549,8 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "insets[].scale": ("page-layout", "inset-covers-face"),
     "insets[].at": ("inset-covers-face",),
     "panels": ("invalid-identifier", "duplicate-key", "composition"),
+    "panels[].name": ("invalid-identifier", "duplicate-key", "composition"),
+    "cast[].id": ("invalid-identifier", "duplicate-key"),
     "over": ("composition",),
     "scenet": ("language-version",),
     "kind": ("document-kind", "not-yet"),
@@ -570,8 +585,7 @@ def _script_form(card: Card) -> str | None:
         return SCRIPT_FORMS[card.name]
     word = re.split(r"[.\[]", card.name, maxsplit=1)[0]
     if word in ("panel", "setting", "cast", "staging", "lettering", "palette"):
-        block = card.name.split(".")[0]
-        return f"`@{block}:` in a panel, or `{block}:` in the front matter"
+        return f"`@{word}:` in a panel, or `{word}:` in the front matter"
     return None
 
 

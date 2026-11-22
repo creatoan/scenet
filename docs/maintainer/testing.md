@@ -524,7 +524,7 @@ gallery are what guard them.
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `frontends/script` | `frontends/script_front.py` | 2,312 | 58 | 97.5% | 97% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
-| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py`, `frontends/forms.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
 | `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 447 | 4 | 99.1% | 99% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
 | `ir` | `ir.py` | 718 | 16 | 97.8% | 97% | [`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) |

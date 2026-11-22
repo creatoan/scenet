@@ -1,0 +1,9 @@
+# In the list form of `panels`, two items of one `name` are the key written twice: one finding,
+# at the second.
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: street
+  - name: close
+    over: street
+  - name: street
+    camera: {shot: close_up}

@@ -20,6 +20,7 @@ A scene is held to the same, with three rules more beyond its schema, which chec
 panel as written, before it inherits anything.
 """
 
+import dataclasses
 import json
 import re
 import sys
@@ -35,6 +36,7 @@ from jsonschema.protocols import Validator
 from pydantic import TypeAdapter, ValidationError
 
 from scenet.diagnostics import RULES, diagnose_source
+from scenet.frontends.forms import as_lists
 from scenet.ir import (
     DESCRIPTION_PATTERN,
     HOLDABLE_PATTERN,
@@ -45,7 +47,7 @@ from scenet.ir import (
     Words,
 )
 from scenet.safe_yaml import load
-from tests.strategies import LIBRARY, Mutant, mutants, scenes
+from tests.strategies import LIBRARY, Drawn, DrawnScene, Mutant, mutants, panels, scenes
 
 REPO = Path(__file__).resolve().parents[2]
 SCHEMAS = REPO / "editor" / "schemas"
@@ -67,6 +69,10 @@ INEXPRESSIBLE: dict[str, str] = {
     "image-file": "a picture must be a file that can be read",
     "artwork-contract": "a picture's contract is a file beside it",
     "font-file": "a font is a file that must be read",
+    "duplicate-key": (
+        "two items of a list form must not name themselves alike, which a schema checking "
+        "one item at a time cannot compare; a key written twice in a mapping never reaches it"
+    ),
     "unbalanced-emphasis": (
         "regular, so a pattern could say it, but one spelling Markdown's flanking rules for "
         "an underscore would be no use to anyone it refused"
@@ -357,5 +363,25 @@ def test_a_panel_passes_its_schema_exactly_when_it_passes_check(mutant: Mutant):
 @settings(max_examples=200)
 def test_a_scene_passes_its_schema_exactly_when_it_passes_check(mutant: Mutant):
     """A scene checks every panel it holds, so this draws half as many."""
+    _count(mutant)
+    _assert_agree(mutant.text, SCENE)
+
+
+def _listed[T: (Drawn, DrawnScene)](drawn: T) -> T:
+    """The document with its panels and every cast written as lists (#356)."""
+    return dataclasses.replace(drawn, document=as_lists(drawn.document))
+
+
+@given(mutant=mutants(panels(images=False).map(_listed)))
+@settings(max_examples=200)
+def test_a_list_form_panel_passes_its_schema_exactly_when_it_passes_check(mutant: Mutant):
+    """The list form is the same language, and the schema says so of it too (#356)."""
+    _count(mutant)
+    _assert_agree(mutant.text)
+
+
+@given(mutant=mutants(scenes().map(_listed)))
+@settings(max_examples=100)
+def test_a_list_form_scene_passes_its_schema_exactly_when_it_passes_check(mutant: Mutant):
     _count(mutant)
     _assert_agree(mutant.text, SCENE)

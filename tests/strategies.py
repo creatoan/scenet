@@ -58,7 +58,7 @@ from scenet import (
 from scenet.assets.contract import PuppetLibrary, default_library
 from scenet.ir import RESERVED_WORDS
 from scenet.places import Place
-from scenet.safe_yaml import NULL_TAG, ProfileResolver
+from scenet.safe_yaml import NULL_TAG, ProfileResolver, WrittenFloat, WrittenInt
 from scenet.solve.text import DEFAULT_FONT_PATH, ITALIC_FONT_PATH
 from tests.images import contract, jpeg, png
 
@@ -125,8 +125,16 @@ def _number(dumper: SafeRepresenter, data: float) -> ScalarNode:
     )
 
 
+def _as_written(dumper: SafeRepresenter, data: WrittenInt | WrittenFloat) -> ScalarNode:
+    """A number read from a document, written back as it was written: `1.50`, not `1.5`."""
+    tag = "tag:yaml.org,2002:int" if isinstance(data, int) else "tag:yaml.org,2002:float"
+    return dumper.represent_scalar(tag, data.source)
+
+
 _AsAuthored.add_representer(str, _text)
 _AsAuthored.add_representer(float, _number)
+_AsAuthored.add_representer(WrittenInt, _as_written)
+_AsAuthored.add_representer(WrittenFloat, _as_written)
 
 
 def dump(document: object) -> str:

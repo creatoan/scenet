@@ -90,6 +90,32 @@ def _descend(node: yaml.Node, step: str | int) -> yaml.Node | None:
             return node.value[step]
         return None
 
+    if isinstance(node, yaml.SequenceNode):
+        # A panel or an actor of a list form, `[{name: one, ...}]`, named as the mapping
+        # form names it once the list is lowered (`scenet.frontends.forms`).
+        named = _named_item(node, step)
+        return named[0] if named is not None else None
+
+    return None
+
+
+#: The keys an item of a list form is named by: `scenet.frontends.forms.NAMING_KEYS`.
+_NAMING_KEYS = ("name", "id")
+
+
+def _named_item(node: yaml.SequenceNode, step: str | int) -> tuple[yaml.Node, yaml.Node] | None:
+    """The item of a list form that names itself `step`, and the node of its name."""
+    for item in node.value:
+        if not isinstance(item, yaml.MappingNode):
+            continue
+        for key, value in item.value:
+            if (
+                isinstance(key, yaml.ScalarNode)
+                and key.value in _NAMING_KEYS
+                and isinstance(value, yaml.ScalarNode)
+                and value.value == str(step)
+            ):
+                return item, value
     return None
 
 
@@ -128,6 +154,7 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
 
     deepest = node
     key: yaml.Node | None = None
+    above: yaml.Node | None = None
     for step in path:
         if step == KEY and key is not None:
             # The key itself rather than its value: an actor id or a panel name refused.
@@ -136,23 +163,32 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
         if child is None:
             break
         key = _key_of(deepest, step)
+        # The name of an item is inside it, where the item already starts.
+        above = key if isinstance(deepest, yaml.MappingNode) else None
         deepest = child
 
     region = _mark_to_region(deepest)
     # A block written beneath its key starts on the line after it, at whichever field
     # happens to come first -- which names nothing about the fault. The key does.
     is_block = isinstance(deepest, yaml.CollectionNode) and not deepest.flow_style
-    if key is not None and is_block:
-        return Region(start=_mark_to_region(key).start, end=region.end)
+    if above is not None and is_block:
+        return Region(start=_mark_to_region(above).start, end=region.end)
     return region
 
 
 def _key_of(node: yaml.Node, step: str | int) -> yaml.Node | None:
-    """The key node `step` names in a mapping, or `None` for a sequence index."""
+    """The key node `step` names in a mapping, or `None` for a sequence index.
+
+    In a list form the name is no key, but it is what a key of the mapping form is: the
+    node of the name an item gives itself.
+    """
     if isinstance(node, yaml.MappingNode):
         for key, _ in node.value:
             if isinstance(key, yaml.ScalarNode) and key.value == str(step):
                 return key
+    if isinstance(node, yaml.SequenceNode) and isinstance(step, str):
+        named = _named_item(node, step)
+        return named[1] if named is not None else None
     return None
 
 

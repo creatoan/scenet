@@ -1346,21 +1346,36 @@ cast: {alice: {reference: alice}}
 ## `cast`
 
 <!-- facts: cast -->
-Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zoé`, `old_man`. Their order means nothing.
+Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zoé`, `old_man`.
 
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
 `ALICE`, `Zoé` -- each an [identifier](#identifiers), and every other block names the cast by them: the staging, the script, a sound's source.
-Ids are case-sensitive, and their order means nothing: [`staging`](#staging) and
-[`at`](#castidat) decide who stands where.
+Ids are case-sensitive. [`staging`](#staging) and [`at`](#castidat) decide who stands
+where, but **the order the cast is written in is part of the language**: the first member is the
+one the camera frames, and the cast is described and drawn in that order.
+
+A tool that sorts the keys of a mapping changes that order without a word, so the cast may also be
+written as a list, each member saying its [`id`](#castid). The two forms are one language: the list
+is read as the mapping it stands for, before a scene's defaults and `over:` are merged, so a list
+in one panel merges per actor with a mapping in the panel it is drawn over. Each key is one form or
+the other, never a mix: a list's item written as a mapping's entry, `- bob: {reference: bob}`, is
+`missing-field`, with the item as it should be. A list has no item for nobody, so a member is left
+out with the mapping's `bob: null`.
+
+```yaml
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third, facing: left}
+```
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
 
@@ -1384,6 +1399,34 @@ cast:
 ```
 
 **See also:** [`staging`](#staging), [`say.by`](#sayby).
+
+### `cast[].id`
+
+<!-- facts: cast[].id -->
+The actor id of the cast member, in the list form of `cast`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | text |
+| Default | none: required |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key) |
+<!-- /facts -->
+
+In the list form of `cast`, the actor id each member gives itself, which the mapping form writes as
+its key. It is an [identifier](#identifiers), as a key is, and text: `id: 1984` is
+`invalid-identifier`, quoted `id: '1984'`. Two members of one id are `duplicate-key`, at the
+second, which names the item of the first.
+
+```yaml
+cast:
+  - id: alice
+    reference: alice
+    pose: pointing
+```
+
+**See also:** [`cast`](#cast), [`panels[].name`](#panelsname).
 
 ### `cast.<id>.reference`
 
@@ -1758,7 +1801,7 @@ The actor id the relation is about.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -1785,7 +1828,7 @@ How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `beh
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | a name |
 | Values | `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at`, `ground_shared_with` |
 | Default | none: required |
@@ -1814,7 +1857,7 @@ The other actor id. For `looking_at`, it may be somebody heard from off panel.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging[]:` in a panel, or `staging[]:` in the front matter |
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@staging:` in a panel, or `staging:` in the front matter |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -3131,21 +3174,22 @@ panels:
 ### `panels`
 
 <!-- facts: panels -->
-Panels in reading order, each under its name, an identifier. Each may inherit from another with `over`.
+The panels, in the order they are read: a mapping of each panel under its name, an identifier, or a list of panels each with its `name`, which no tool that sorts keys can reorder. Each may inherit from another with `over`.
 
 | | |
 |---|---|
 | Where | A `.scene.yaml`. In a comic script: the script's `PANEL` headings |
-| Type | a mapping |
+| Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
 <!-- /facts -->
 
-The panels, in reading order: the order they are written in is the order a strip draws them and a
-screen reader reads them, unless pages lay them out. A name is text, as an actor id is, and is
-written once: two panels of one name are `duplicate-key`. Everything a `.panel.yaml` takes may be
-written under each, and `over` besides.
+The panels, in reading order. **The order they are written in is normative**: it is the order a
+strip draws them and a screen reader reads them, unless pages lay them out, and it is part of the
+document as much as any key. A name is text, as an actor id is, and is written once: two panels of
+one name are `duplicate-key`. Everything a `.panel.yaml` takes may be written under each, and
+`over` besides.
 
 ```yaml
 panel: {size: [700, 500]}
@@ -3154,6 +3198,56 @@ panels:
   first: {camera: {shot: full_shot}}
   second: {camera: {shot: close_up}}
 ```
+
+A tool that sorts keys -- PyYAML's `dump` does unless told not to, and `json.dumps` with
+`sort_keys` -- reorders a mapping, and with it the comic, without a word. So the panels may also be
+written as a list, each saying its [`name`](#panelsname), in an order no tool reorders:
+
+```yaml
+panel: {size: [700, 500]}
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: first
+    camera: {shot: full_shot}
+  - name: second
+    over: first
+    camera: {shot: close_up}
+```
+
+The two forms are one language. A list is read as the mapping it stands for before anything else
+happens to it -- before `over:` is resolved and a scene's defaults are merged -- so the two build
+the same panels, and a scene may write its panels as a list and a cast as a mapping. Each key is one
+form or the other: an item written as a mapping's entry, `- second: {...}`, is `missing-field`,
+with the item as it should be.
+
+### `panels[].name`
+
+<!-- facts: panels[].name -->
+The panel's name, in the list form of `panels`: an identifier.
+
+| | |
+|---|---|
+| Where | A `.scene.yaml`. Not in a comic script |
+| Type | text |
+| Default | none |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
+<!-- /facts -->
+
+In the list form of `panels`, the name each panel gives itself, which the mapping form writes as
+its key: what a page, an `over:` and every file the panel is written to name it by. It is an
+[identifier](#identifiers), and text: `name: 1` is `invalid-identifier`, quoted `name: '1'`. Two
+panels of one name are `duplicate-key`, at the second, which names the item of the first.
+
+```yaml
+cast: [{id: alice, reference: alice}]
+panels:
+  - name: one
+  - name: two
+pages: [{tiers: [{panels: [one, two]}]}]
+```
+
+**See also:** [`cast[].id`](#castid), [`pages`](#pages).
 
 **See also:** [`pages`](#pages), [Compile a sequence](https://creatoan.github.io/scenet/howto/compile_a_sequence.html).
 
@@ -5813,7 +5907,7 @@ script:
 |---|---|
 | Level | error |
 | Says | An `over:` chain cannot be resolved |
-| Keys | [`over`](https://creatoan.github.io/scenet/reference/language/scene.html#over), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels) |
+| Keys | [`over`](https://creatoan.github.io/scenet/reference/language/scene.html#over), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname) |
 | Since | 0.3 |
 
 **Why it happens.** A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
@@ -5962,12 +6056,12 @@ panels: {one: {}, two: {}}
 |---|---|
 | Level | error |
 | Says | A key is written twice in one mapping |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname) |
 | Since | 0.10 |
 
-**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues.
+**Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues. In the list form of `panels` or `cast`, two items that give themselves one `name` or one `id` are the same key written twice.
 
-**How to fix it.** Delete or rename one of the two; the message says which lines they are on.
+**How to fix it.** Delete or rename one of the two; the message says which lines, or which items, they are.
 
 Checked as `duplicate-key.panel.yaml`:
 
@@ -6243,7 +6337,7 @@ cast: {alice: {reference: alice}}
 |---|---|
 | Level | error |
 | Says | An actor id or a panel name does not follow the identifier grammar |
-| Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
+| Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
 | Since | 0.14 |
 
 **Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. No id starts with `x-`, which marks an extension key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An id written as a value, `by:`, is text: a number there is quoted.
@@ -6359,7 +6453,7 @@ staging:
 |---|---|
 | Level | error |
 | Says | A required field is missing |
-| Keys | A required key: [`caption.text`](https://creatoan.github.io/scenet/reference/language/script.html#captiontext), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby), [`say.text`](https://creatoan.github.io/scenet/reference/language/script.html#saytext), [`setting.masses[].kind`](https://creatoan.github.io/scenet/reference/language/setting.html#settingmasseskind), [`sfx.text`](https://creatoan.github.io/scenet/reference/language/script.html#sfxtext), [`staging[].object`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingobject), [`staging[].predicate`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingpredicate), [`staging[].subject`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingsubject) |
+| Keys | A required key: [`caption.text`](https://creatoan.github.io/scenet/reference/language/script.html#captiontext), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby), [`say.text`](https://creatoan.github.io/scenet/reference/language/script.html#saytext), [`setting.masses[].kind`](https://creatoan.github.io/scenet/reference/language/setting.html#settingmasseskind), [`sfx.text`](https://creatoan.github.io/scenet/reference/language/script.html#sfxtext), [`staging[].object`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingobject), [`staging[].predicate`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingpredicate), [`staging[].subject`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingsubject) |
 | Since | 0.3 |
 
 **Why it happens.** The value is required and was not supplied.
@@ -6953,7 +7047,7 @@ setting: {image: art/figures.png}
 |---|---|
 | Level | error |
 | Says | Unknown key |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), [`script`](https://creatoan.github.io/scenet/reference/language/script.html#script) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), [`script`](https://creatoan.github.io/scenet/reference/language/script.html#script) |
 | Since | 0.3 |
 
 **Why it happens.** Validation is strict everywhere: unknown keys are rejected rather than ignored. A misspelled key that was silently dropped would produce a panel that is subtly wrong with no indication of why, which for a language meant to be precise is the worst possible failure. The one exception is a key that starts with `x-`, in lower case: an extension, which a tool writes to annotate a document and Scenet ignores, in any mapping. A key written where the language has it but not there is unknown too, and said to be: a description or a script beside `panels:`, which no panel inherits, and a document's own keys -- `scenet`, `meta`, `kind` -- on one of its panels.
@@ -7984,6 +8078,215 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       ],
       "title": "CaptionTone",
       "type": "string"
+    },
+    "CastEntry": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "reference": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "reference"
+            ]
+          },
+          "required": [
+            "reference"
+          ]
+        },
+        {
+          "not": {
+            "properties": {
+              "figure": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "figure"
+            ]
+          },
+          "required": [
+            "figure"
+          ]
+        }
+      ],
+      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.",
+      "if": {
+        "properties": {
+          "figure": {
+            "not": {
+              "type": "null"
+            }
+          }
+        },
+        "required": [
+          "figure"
+        ]
+      },
+      "not": {
+        "properties": {
+          "figure": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "reference": {
+            "not": {
+              "type": "null"
+            }
+          }
+        },
+        "required": [
+          "reference",
+          "figure"
+        ]
+      },
+      "patternProperties": {
+        "^x-": {
+          "description": "An extension: a key a tool writes, which Scenet ignores."
+        }
+      },
+      "properties": {
+        "at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnchorX"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "center",
+          "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "neutral",
+          "description": "An expression the puppet declares, by name.",
+          "title": "Expression"
+        },
+        "facing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Facing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "right",
+          "description": "Which way the figure is turned, `left` or `right`, gaze and all."
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.",
+          "title": "Figure"
+        },
+        "id": {
+          "$ref": "#/$defs/Identifier",
+          "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Mark"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.",
+          "title": "Marks"
+        },
+        "pose": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "standing_neutral",
+          "description": "A pose the puppet declares, by name.",
+          "title": "Pose"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.",
+          "title": "Reference"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "then": {
+        "properties": {
+          "at": {
+            "type": "null"
+          },
+          "expression": {
+            "type": "null"
+          },
+          "facing": {
+            "type": "null"
+          },
+          "marks": {
+            "type": "null"
+          },
+          "pose": {
+            "type": "null"
+          }
+        }
+      },
+      "type": "object"
     },
     "CastMember": {
       "additionalProperties": false,
@@ -9086,6 +9389,9 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               }
             ]
           },
+          "items": {
+            "$ref": "#/$defs/CastEntry"
+          },
           "patternProperties": {
             "^x-": {
               "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -9101,13 +9407,16 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               }
             ]
           },
-          "type": "object"
+          "type": [
+            "object",
+            "array"
+          ]
         },
         {
           "type": "null"
         }
       ],
-      "description": "Who is in the panel: each actor id, chosen by the author, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`, starting with a letter or a digit: `alice`, `Zo\u00e9`, `old_man`. Their order means nothing.",
+      "description": "Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zo\u00e9`, `old_man`.",
       "title": "Cast"
     },
     "defaults": {

@@ -29,6 +29,7 @@ from scenet.frontends.common import (
     normalise_layout,
     summarise,
 )
+from scenet.frontends.forms import PANELS_SHAPE, lowered
 from scenet.frontends.positions import KEY
 from scenet.ir import IDENTIFIERS, Direction, PageLayout, PanelIR, check_placements
 from scenet.namespace import (
@@ -89,6 +90,11 @@ def _read_document(text: str, source: Path | None) -> tuple[dict[str, Any], Kind
             language, a key of the wrong shape, one kept for later, or a kind it is not.
     """
     head, data = split_head(_load_document(text, source), DOCUMENT_KEYS)
+    # The list forms first: past here, `panels` and `cast` are mappings, as written in order.
+    data, faults = lowered(data)
+    if faults:
+        fault = faults[0]
+        raise PanelSyntaxError(fault.message, source=source, rule=fault.rule, loc=fault.loc)
     shape = Kind.SCENE if "panels" in data else Kind.PANEL
     # The language first and alone: a later one's document is not this one's to read.
     fault = language_fault(head)
@@ -355,7 +361,7 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
     """The panels of a scene, with `over:` resolved and the defaults applied."""
     panels = data["panels"]
     if not isinstance(panels, dict):
-        raise PanelSyntaxError("'panels' must be a mapping of name to panel", source=source)
+        raise PanelSyntaxError(PANELS_SHAPE, source=source)
     for name, document in panels.items():
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)

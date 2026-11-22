@@ -72,6 +72,7 @@ from scenet.frontends.common import (
     rule_for_pydantic,
     summarise,
 )
+from scenet.frontends.forms import lowered_cast
 from scenet.frontends.positions import DOCUMENT_START, KEY, Region, locate
 from scenet.identifiers import LABEL_WORDS
 from scenet.ir import (
@@ -1666,6 +1667,8 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
+    if key == "cast":
+        draft.settings[key] = _directive_cast(draft.settings[key], number, source)
     unusable = _unusable_name(draft.settings[key]) if key == "cast" else None
     if unusable is not None:
         raise ScriptSyntaxError(
@@ -1675,6 +1678,23 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             rule="invalid-identifier",
         )
     return True
+
+
+def _directive_cast(cast: object, number: int, source: Path | None) -> object:
+    """An `@cast:` directive's value, its list form as the mapping form it stands for (#356).
+
+    Raises:
+        ScriptSyntaxError: An item of the list at fault, at the directive's line.
+    """
+    settings, faults = lowered_cast({"cast": cast})
+    if faults:
+        raise ScriptSyntaxError(
+            f"line {number}: in directive '@cast', {faults[0].message}",
+            source=source,
+            line=number,
+            rule=faults[0].rule,
+        )
+    return settings["cast"]
 
 
 def _camera_word(key: str, value: str, number: int, source: Path | None, panel: str) -> str:
@@ -1993,6 +2013,12 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
             NOT_A_DEFAULT, text, offset, (DESCRIPTION_KEY,), rule="unknown-key", source=source
         )
     _check_direction(front_matter.get(DIRECTION_KEY), text, offset, source)
+    # The list form of the cast, as the mapping form it stands for (#356).
+    front_matter, faults = lowered_cast(front_matter)
+    if faults:
+        raise _front_matter_fault(
+            faults[0].message, text, offset, faults[0].loc, rule=faults[0].rule, source=source
+        )
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     unusable = _unusable_name(cast)

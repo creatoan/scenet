@@ -92,6 +92,7 @@ from scenet.frontends.common import (
     normalise_layout,
     rule_for_pydantic,
 )
+from scenet.frontends.forms import PANELS_SHAPE, lowered, lowered_cast
 from scenet.frontends.positions import (
     DOCUMENT_START,
     KEY,
@@ -210,9 +211,14 @@ RULES: dict[str, Rule] = {
             "a word, and the rest would compile. Keys are compared as written, so `1` and "
             "`1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same "
             "goes for a directive written twice in one panel, and for an `@script:` "
-            "directive, which would replace the panel's cues."
+            "directive, which would replace the panel's cues. In the list form of `panels` "
+            "or `cast`, two items that give themselves one `name` or one `id` are the same "
+            "key written twice."
         ),
-        help="Delete or rename one of the two; the message says which lines they are on.",
+        help=(
+            "Delete or rename one of the two; the message says which lines, or which items, "
+            "they are."
+        ),
     ),
     "yaml-tag": Rule(
         summary="A YAML tag is written",
@@ -1636,7 +1642,7 @@ def _diagnose_scene(
         return [
             Diagnostic(
                 rule="invalid-field",
-                message="'panels' must be a mapping of name to panel",
+                message=PANELS_SHAPE,
                 path=("panels",),
                 source=source,
                 region=locate(text, ("panels",)) or DOCUMENT_START,
@@ -1903,6 +1909,19 @@ def _diagnose_source(
     later = language_fault(head)
     if later is not None:
         return [_broken(later, text, source)]
+    # The list forms, lowered to the mapping form the rest reads; each item at fault is one
+    # finding, and is left out of what is checked.
+    data, faults = lowered(data)
+    forms = [
+        Diagnostic(
+            rule=fault.rule,
+            message=fault.message,
+            path=fault.loc,
+            source=source,
+            region=locate(text, fault.loc) or DOCUMENT_START,
+        )
+        for fault in faults
+    ]
     base = _folder(source, base)
     # Once per document, not once per panel: every panel resolves its cast against it.
     library = library or default_library()
@@ -1913,10 +1932,11 @@ def _diagnose_source(
     # distinction; the checker has to make it too.
     if "panels" in data:
         return _in_source_order(
-            _diagnose_head(head, text, source, shape=Kind.SCENE)
+            forms
+            + _diagnose_head(head, text, source, shape=Kind.SCENE)
             + _diagnose_scene(data, text, source, library=library, deep=deep, base=base)
         )
-    found = _diagnose_head(head, text, source, shape=Kind.PANEL)
+    found = forms + _diagnose_head(head, text, source, shape=Kind.PANEL)
 
     # Without `panels:` there is nothing for a page to lay out. Said as a page-layout
     # finding, as the frontend says it, rather than as an unknown key on a single panel.
@@ -2124,9 +2144,10 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     if not match:
         return "", {}
     padded = "\n" * normalised.count("\n", 0, match.start(1)) + match.group(1) + "\n"
-    # parse_script has already loaded this successfully, so it cannot fail here.
+    # parse_script has already loaded this successfully, so it cannot fail here; nor can
+    # lowering its cast, which it lowered too.
     loaded = load(padded)
-    return padded, stripped(loaded) if isinstance(loaded, dict) else {}
+    return padded, lowered_cast(stripped(loaded))[0] if isinstance(loaded, dict) else {}
 
 
 def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:
