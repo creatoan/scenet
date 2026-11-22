@@ -55,12 +55,8 @@ class TestTheTables:
     def test_every_shot_has_a_name(self):
         assert set(SHOTS) == set(ShotType)
 
-    def test_wide_is_a_long_shot(self):
-        assert SHOTS[ShotType.WIDE] == SHOTS[ShotType.LONG_SHOT] == "Long shot"
-
     def test_the_shots(self):
         assert [SHOTS[shot] for shot in ShotType] == [
-            "Long shot",
             "Long shot",
             "Full shot",
             "Medium full shot",

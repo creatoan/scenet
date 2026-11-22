@@ -46,10 +46,10 @@ class TestShotTable:
         """A shot type with no entry would raise a KeyError deep in the solver."""
         assert set(SHOT_TABLE) == set(ShotType)
 
-    def test_wide_is_a_synonym_for_long_shot(self):
-        """The literature uses them interchangeably: "a long shot (also called a wide
-        shot)". The language keeps both because writers reach for both."""
-        assert SHOT_TABLE[ShotType.WIDE] == SHOT_TABLE[ShotType.LONG_SHOT]
+    def test_no_two_rungs_are_the_same_shot(self):
+        """`wide` was a second name for `long_shot`, so two rungs drew one shot (#361)."""
+        specs = list(SHOT_TABLE.values())
+        assert len(specs) == len(set(specs))
 
     def test_medium_full_and_cowboy_are_different_shots(self):
         """These were the same entry, which silently collapsed a rung of the ladder.
@@ -58,15 +58,15 @@ class TestShotTable:
         American shot cuts at mid-thigh, from 1930s Western framing that had to include
         the holster. Naming two shots and drawing one is worse than not offering both.
         """
-        assert SHOT_TABLE[ShotType.MEDIUM_FULL].crop is Landmark.KNEES
-        assert SHOT_TABLE[ShotType.COWBOY].crop is Landmark.MID_THIGH
-        assert SHOT_TABLE[ShotType.MEDIUM_FULL] != SHOT_TABLE[ShotType.COWBOY]
+        assert SHOT_TABLE[ShotType.MEDIUM_FULL_SHOT].crop is Landmark.KNEES
+        assert SHOT_TABLE[ShotType.COWBOY_SHOT].crop is Landmark.MID_THIGH
+        assert SHOT_TABLE[ShotType.MEDIUM_FULL_SHOT] != SHOT_TABLE[ShotType.COWBOY_SHOT]
 
     def test_tighter_shots_crop_higher_up_the_body(self, alice: PuppetSpec):
         """The ordering that gives shot types their meaning."""
         progression = [
             ShotType.FULL_SHOT,
-            ShotType.MEDIUM_FULL,
+            ShotType.MEDIUM_FULL_SHOT,
             ShotType.MEDIUM_SHOT,
             ShotType.MEDIUM_CLOSE_UP,
             ShotType.CLOSE_UP,
@@ -261,7 +261,7 @@ class TestTheLadderIsALadder:
     ORDER = [
         ShotType.LONG_SHOT,
         ShotType.FULL_SHOT,
-        ShotType.MEDIUM_FULL,
+        ShotType.MEDIUM_FULL_SHOT,
         ShotType.MEDIUM_SHOT,
         ShotType.MEDIUM_CLOSE_UP,
         ShotType.CLOSE_UP,
@@ -304,24 +304,17 @@ class TestTheLadderIsALadder:
         scales = dict(zip(self.ORDER, self._scales(), strict=False))
         assert scales[ShotType.LONG_SHOT] <= scales[ShotType.FULL_SHOT] * 0.8
 
-    def test_wide_and_long_shot_are_exact_synonyms(self):
-        reference = default_library().get("alice")
-        first = solve_camera(
-            reference, shot=ShotType.LONG_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
-        )
-        second = solve_camera(
-            reference, shot=ShotType.WIDE, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
-        )
-        assert first.scale == second.scale
-
     def test_cowboy_is_tighter_than_medium_full(self):
         """Mid-thigh is above the knees, so the cowboy shot draws the figure larger."""
         reference = default_library().get("alice")
         looser = solve_camera(
-            reference, shot=ShotType.MEDIUM_FULL, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+            reference,
+            shot=ShotType.MEDIUM_FULL_SHOT,
+            angle=CameraAngle.EYE_LEVEL,
+            panel_height=1000.0,
         )
         tighter = solve_camera(
-            reference, shot=ShotType.COWBOY, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
+            reference, shot=ShotType.COWBOY_SHOT, angle=CameraAngle.EYE_LEVEL, panel_height=1000.0
         )
         assert tighter.scale > looser.scale
 
@@ -372,7 +365,7 @@ class TestShotsThatShowFeetActuallyShowThem:
     obvious on the page.
     """
 
-    FEET_SHOTS = [ShotType.LONG_SHOT, ShotType.WIDE, ShotType.FULL_SHOT]
+    FEET_SHOTS = [ShotType.LONG_SHOT, ShotType.FULL_SHOT]
 
     @pytest.mark.parametrize("shot", FEET_SHOTS)
     def test_the_whole_figure_fits_inside_the_panel(self, shot: ShotType):

@@ -516,7 +516,7 @@ def _scene_panel(draw: st.DrawFn, cast: list[str], earlier: list[str]) -> dict[s
         # Only ever an earlier panel, so `over:` chains cannot form a cycle.
         panel["over"] = draw(st.sampled_from(earlier))
     if draw(st.booleans()):
-        shot = draw(st.sampled_from([ShotType.WIDE, ShotType.FULL_SHOT, ShotType.MEDIUM_SHOT]))
+        shot = draw(st.sampled_from([ShotType.LONG_SHOT, ShotType.FULL_SHOT, ShotType.MEDIUM_SHOT]))
         panel["camera"] = {"shot": shot.value}
     script = draw(st.lists(_event(cast), max_size=2))
     if script:

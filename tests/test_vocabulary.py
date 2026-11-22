@@ -18,7 +18,7 @@ from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.script_front import FRENCH_SHOTS, parse_script
 from scenet.frontends.yaml_front import parse_scene_document
-from scenet.ir import RETIRED_KEYS, RETIRED_VALUES, Inset, ShotType
+from scenet.ir import RETIRED_KEYS, RETIRED_VALUES, Corner, Inset, ShotType
 from scenet.pipeline import compile_source
 
 ROOT = Path(__file__).parent.parent
@@ -101,7 +101,7 @@ class TestTheShots:
 
 class TestTheInsetScale:
     def test_an_inset_is_scaled(self):
-        inset = Inset(use="a", at="top_left", scale=0.3)
+        inset = Inset(use="a", at=Corner.TOP_LEFT, scale=0.3)
         assert inset.scale == 0.3
         assert "size" not in Inset.model_fields
 

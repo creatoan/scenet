@@ -174,8 +174,8 @@ says what to write instead.
 | `radius` | `face.radius`, `figures.<name>.face.radius`, `parts[].radius` | A circle's radius: a face's, a part's | The same meaning in all three |
 | `size` | `panel.size`, `page.size`, `size`, `lettering.size`, `say.size`, `sfx.size`, `face.features.<feature>.size` | A width and height: a panel's, a page's, a picture's; how large type is: the dialogue size, a line's (`small`), a sound's (`small` to `large`); how big a face feature is drawn | Two meanings, an extent and a type size, each always written the same way: an extent as `[width, height]`, a type size as a number or a word. A third, an inset's fraction, became `scale` |
 | `text` | `say.text`, `caption.text`, `sfx.text` | What is lettered | The same meaning in all three |
-| `use` | `tiers[].panels[].use`, `insets[].use` | The panel placed here, by name | The same meaning in both |
-| `width` | `tiers[].panels[].width`, `columns[].width`, `parts[].width` | A share of the width, relative to the neighbours; how thick a puppet's part is drawn | A share on a page and a thickness in a puppet file, which never meet; each is a width in its own units |
+| `use` | `panels[].use`, `insets[].use` | The panel placed here, by name | The same meaning in both |
+| `width` | `panels[].width`, `columns[].width`, `parts[].width` | A share of the width, relative to the neighbours; how thick a puppet's part is drawn | A share on a page and a thickness in a puppet file, which never meet; each is a width in its own units |
 
 ## Where, in words
 
