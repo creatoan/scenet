@@ -1,0 +1,3 @@
+# A name that starts with `x-` is an extension key's, so nobody can be called it.
+cast: {alice: {reference: alice}}
+script: [{say: {by: x-ray, text: Hi., off_panel: true}}]

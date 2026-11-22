@@ -5,11 +5,11 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the panel's cues, captions and sound effects, in the order written |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the panel's cues, captions and sound effects, in the order written |
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`balloon-placement`](../diagnostics.md#balloon-placement), [`word-limit`](../diagnostics.md#word-limit) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`balloon-placement`](../diagnostics.md#balloon-placement), [`word-limit`](../diagnostics.md#word-limit), [`unknown-key`](../diagnostics.md#unknown-key) |
 | In the gallery | [Reading order](../../gallery.md#reading-order) |
 <!-- /facts -->
 
@@ -60,7 +60,7 @@ A line of dialogue, in a balloon whose tail points at the speaker.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a cue in capitals, `ALICE`, with the line under it or after a colon |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a cue in capitals, `ALICE`, with the line under it or after a colon |
 | Type | a mapping |
 | Default | none |
 | Since | 0.1 |
@@ -85,7 +85,7 @@ Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_p
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the cue's name, `ALICE` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the cue's name, `ALICE` |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -114,7 +114,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: the lines under the cue, or after `ALICE:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: the lines under the cue, or after `ALICE:` |
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
@@ -179,7 +179,7 @@ Where the balloon would like to sit, one of nine zones of the panel. The weakest
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -211,7 +211,7 @@ The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `BOB (whisper)`, `(shout)`, `(thought)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a parenthetical: `BOB (whisper)`, `(shout)`, `(thought)` |
 | Type | a name |
 | Values | `speech`, `thought`, `whisper`, `shout` |
 | Default | `speech` |
@@ -250,7 +250,7 @@ script:
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `BOB (small)` or `BOB (weak)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `BOB (small)` or `BOB (weak)` |
 | Type | a name |
 | Values | `normal`, `small` |
 | Default | `normal` |
@@ -278,7 +278,7 @@ The speaker is outside the panel: `true`, or the side of the frame they are on. 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `ALICE (OP)`, or `ALICE (OP, left)` with a side |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `ALICE (OP)`, or `ALICE (OP, left)` with a side |
 | Type | `true` or `false`, or a name |
 | Values | `left`, `right`, `top`, `bottom` |
 | Default | `false` |
@@ -329,7 +329,7 @@ A caption: a box in which the panel speaks in its own voice, with no tail.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAPTION:` or `CAP:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `CAPTION:` or `CAP:` |
 | Type | a mapping |
 | Default | none |
 | Since | 0.4 |
@@ -366,7 +366,7 @@ What the box says, as one string; line breaks are computed. A word between under
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `CAPTION:`, or the lines under `CAP:` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: after `CAPTION:`, or the lines under `CAP:` |
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
@@ -391,7 +391,7 @@ What the box is doing: `locale` for a place and time, `monologue` for an inner v
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: a parenthetical: `CAPTION (monologue):` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: a parenthetical: `CAPTION (monologue):` |
 | Type | a name |
 | Values | `locale`, `monologue`, `spoken`, `editorial` |
 | Default | `locale` |
@@ -428,7 +428,7 @@ What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper,
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `paper`, `pale`, `ink`, `warm` (since 0.13) |
 | Default | `paper` |
@@ -491,7 +491,7 @@ Where the box would like to sit, one of nine zones of the panel. Left out, where
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -518,7 +518,7 @@ Who is speaking, for a `spoken` caption only: any name, in the cast or not.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `CAP/ALICE`, or `ALICE (V.O.)` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `CAP/ALICE`, or `ALICE (V.O.)` |
 | Type | text |
 | Default | none |
 | Since | 0.4 |
@@ -551,7 +551,7 @@ A sound effect: letters lettered into the picture, with no balloon.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX: BLAM` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX: BLAM` |
 | Type | a mapping |
 | Default | none |
 | Since | 0.11 |
@@ -596,7 +596,7 @@ The sound, lettered exactly as written, in the display face. Never empty, nor on
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: after `SFX:`, or the line under it |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: after `SFX:`, or the line under it |
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
@@ -622,7 +622,7 @@ Written `from`: the actor id the sound comes from, which it is placed near.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (BOB): KRAK` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX (BOB): KRAK` |
 | Type | text |
 | Default | none |
 | Since | 0.11 |
@@ -648,7 +648,7 @@ Where the effect would like to sit, one of nine zones of the panel: on its own, 
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a name |
 | Values | `top_left`, `top_center`, `top_right`, `middle_left`, `middle_center`, `middle_right`, `bottom_left`, `bottom_center`, `bottom_right` |
 | Default | none |
@@ -677,7 +677,7 @@ How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dial
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `SFX (large): KRAK` |
+| Where | A `.panel.yaml`; a panel under `panels:`. In a comic script: `SFX (large): KRAK` |
 | Type | a name |
 | Values | `small`, `medium`, `large` |
 | Default | `medium` |
@@ -705,7 +705,7 @@ How far the effect is turned clockwise, in degrees, from -45 to 45.
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a number |
 | Values | -45 to 45 |
 | Default | `0` |
@@ -731,7 +731,7 @@ How far the line of letters bends, in degrees, from -120 to 120: positive bows i
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | a number |
 | Values | -120 to 120 |
 | Default | `0` |
@@ -757,7 +757,7 @@ script:
 
 | | |
 |---|---|
-| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. Not in a comic script |
+| Where | A `.panel.yaml`; a panel under `panels:`. Not in a comic script |
 | Type | `true` or `false` |
 | Default | `false` |
 | Since | 0.11 |

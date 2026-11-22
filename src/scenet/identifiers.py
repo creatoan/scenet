@@ -10,7 +10,10 @@ mean -- `chapter/panel`, `file#panel` -- and a panel's name is part of a file na
 `/` and `.` already mean something. So are some **words**: the predicates of a staging
 sentence, read as the sentence's verb, and the labels a comic script reads as a caption or
 a sound effect, `CAP`, `CAPTION`, `SFX` and their French twins. They are compared without
-case, as :meth:`str.casefold` compares them: `Left_Of` and `sfx` are reserved too.
+case, as :meth:`str.casefold` compares them: `Left_Of` and `sfx` are reserved too. And no
+identifier starts with `x-`, which marks an **extension** key in any mapping of a document
+(:mod:`scenet.namespace`): a key under `cast:` or `panels:` is an id or an extension, never
+both. `X-ray`, in a capital, is an id, as it is no extension.
 
 **One definition, three readers.** The JSON Schema states :attr:`Grammar.pattern`; the
 validator matches the same pattern, and says which part of the grammar a name breaks; the
@@ -38,13 +41,24 @@ from dataclasses import dataclass
 
 from scenet.identifier_tables import CASES, CONTINUES, STARTS
 
-__all__ = ["GRAMMAR", "LABEL_WORDS", "MAX_LENGTH", "RESERVED_CHARACTERS", "Grammar"]
+__all__ = [
+    "EXTENSION_PREFIX",
+    "GRAMMAR",
+    "LABEL_WORDS",
+    "MAX_LENGTH",
+    "RESERVED_CHARACTERS",
+    "Grammar",
+]
 
 #: The longest an identifier is, in characters (code points).
 MAX_LENGTH = 64
 
 #: The characters no identifier holds, kept for references between documents.
 RESERVED_CHARACTERS = "./:#@"
+
+#: What an extension key starts with, in any mapping of any document: a key a tool writes
+#: and Scenet ignores. In lower case, as OpenAPI spells it.
+EXTENSION_PREFIX = "x-"
 
 #: The labels a comic script reads as a caption or a sound effect rather than a speaker's
 #: cue: an actor called `CAP` could never speak. The French ones are the script frontend's
@@ -65,7 +79,8 @@ LABEL_WORDS = (
 GRAMMAR = (
     f"An id is 1 to {MAX_LENGTH} letters, digits, '_' and '-', and the marks that accent a "
     "letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and "
-    "so, in any case, are the words of a staging sentence and of a comic script's labels"
+    "so, in any case, are the words of a staging sentence and of a comic script's labels; "
+    f"and no id starts with '{EXTENSION_PREFIX}', which marks an extension key"
 )
 
 #: The end of the text, in both dialects. Python's `$` also matches before a final line
@@ -86,7 +101,10 @@ def _compiled(words: tuple[str, ...]) -> tuple[str, re.Pattern[str], re.Pattern[
     would mutate where no test can reach the mutant.
     """
     reserved = "|".join("".join(f"[{CASES[letter]}]" for letter in word) for word in words)
-    pattern = f"^(?!(?:{reserved}){END})[{STARTS}][{CONTINUES}]{{0,{MAX_LENGTH - 1}}}{END}"
+    pattern = (
+        f"^(?!(?:{reserved}){END})(?!{EXTENSION_PREFIX})"
+        f"[{STARTS}][{CONTINUES}]{{0,{MAX_LENGTH - 1}}}{END}"
+    )
     return pattern, re.compile(pattern), re.compile(f"^(?:{reserved}){END}")
 
 
@@ -166,11 +184,16 @@ def _why(name: str, reserved: re.Pattern[str]) -> str:
 def _why_as_a_whole(name: str, reserved: re.Pattern[str]) -> str:
     """Which part of the grammar `name`, every character of which an identifier may hold, breaks.
 
-    Starting well, it is a reserved word or too long: no reserved word is, so nothing else
-    is left once the first two are not the reason.
+    Starting well, it is an extension's, a reserved word or too long: no reserved word is
+    either of the others, so nothing else is left once the first three are not the reason.
     """
     if _STARTS.fullmatch(name[0]) is None:
         return f"it starts with {_code_point(name[0])}, which is not a letter or a digit"
+    if name.startswith(EXTENSION_PREFIX):
+        return (
+            f"it starts with '{EXTENSION_PREFIX}', which marks an extension key, one Scenet "
+            "ignores wherever it is written"
+        )
     if reserved.search(name) is not None:
         return "it is a reserved word"
     return f"it is {len(name)} characters long, more than {MAX_LENGTH}"

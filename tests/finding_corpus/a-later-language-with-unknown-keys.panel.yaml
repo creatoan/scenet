@@ -1,0 +1,4 @@
+# Written for language 3, with keys this language does not have: one fault, the version.
+scenet: 3
+cast: {alice: {reference: alice, hat: tall}}
+future: {key: 1}

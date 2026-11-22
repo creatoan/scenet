@@ -269,6 +269,7 @@ UNPICTURED = {
     "artwork": "a file beside a picture: its example letters the gallery's, compiled",
     "yaml_profile": "how every document is read, not a block: its examples compile in place",
     "identifiers": "what an id may be, not a block: its examples compile in place",
+    "document": "what a document says of itself, which draws nothing: its examples compile",
 }
 
 

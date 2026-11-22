@@ -64,6 +64,21 @@ NOT_A_DEFAULT = (
     "write it on the panel it describes"
 )
 
+#: The key a panel's lines are written under.
+SCRIPT_KEY = "script"
+
+#: Why a script written where every panel would inherit it -- beside `panels:` -- is
+#: refused: every panel would say the same lines, and a panel that should say none would
+#: have to take them away one by one.
+SCRIPT_NOT_A_DEFAULT = (
+    "'script' is what one panel says, so it is not a default every panel inherits: write it "
+    "on the panel that says it, or on one the others are drawn `over`"
+)
+
+#: Each key a scene may not offer every panel as a default, and why, which is the message
+#: refusing it. The rule is `unknown-key`, whose help says to check the spelling.
+NOT_DEFAULTS = {DESCRIPTION_KEY: NOT_A_DEFAULT, SCRIPT_KEY: SCRIPT_NOT_A_DEFAULT}
+
 
 #: The key a whole document's reading direction is written under. Every panel takes
 #: it from the document -- beside `panels:`, or in a comic script's front matter -- and

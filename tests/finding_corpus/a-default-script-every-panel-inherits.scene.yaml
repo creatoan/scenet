@@ -1,4 +1,4 @@
-# The script beside `panels:` is a default, and its speaker is in no cast: one fault.
+# A script beside `panels:` would give every panel the same lines: one fault, where it is.
 cast: {alice: {reference: alice}}
 script: [{say: {by: nobody, text: Hello.}}]
 panels: {one: {}, two: {}}

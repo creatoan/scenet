@@ -1,0 +1,8 @@
+---
+# `include` is kept for a later language.
+include: [cast.yaml]
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.

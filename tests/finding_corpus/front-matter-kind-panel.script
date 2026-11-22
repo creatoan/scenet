@@ -1,0 +1,8 @@
+---
+# A comic script is a scene of PANEL headings, never one panel.
+kind: panel
+cast: {ALICE: {reference: alice}}
+---
+PANEL 1
+ALICE
+Hello.

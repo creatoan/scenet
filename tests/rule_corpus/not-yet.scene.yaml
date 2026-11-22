@@ -1,0 +1,4 @@
+# `include` is kept for a later language, which reads one document into another.
+include: [chapter-1.scene.yaml]
+cast: {alice: {reference: alice}}
+panels: {one: {}}

@@ -13,9 +13,8 @@ import yaml
 from pydantic import ValidationError
 
 from scenet.compose import (
-    DESCRIPTION_KEY,
     DIRECTION_KEY,
-    NOT_A_DEFAULT,
+    NOT_DEFAULTS,
     merge,
     own_direction,
     resolve_beneath,
@@ -32,12 +31,24 @@ from scenet.frontends.common import (
 )
 from scenet.frontends.positions import KEY
 from scenet.ir import IDENTIFIERS, Direction, PageLayout, PanelIR, check_placements
+from scenet.namespace import (
+    DOCUMENT_KEYS,
+    DocumentHead,
+    Kind,
+    kind_fault,
+    language_fault,
+    own_document_key,
+    split_head,
+    stripped,
+)
 from scenet.paths import read_document
 from scenet.safe_yaml import ProfileError, describe, load
 
 
 def _load_document(text: str, source: Path | None) -> dict[str, Any]:
     """Read YAML text and check it is a mapping, or raise a language diagnostic.
+
+    Every extension key is taken out of it, at every depth: nothing past here reads one.
 
     Args:
         text: The document source.
@@ -67,7 +78,32 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
         raise PanelSyntaxError(
             f"expected a mapping at the top level, found {type(data).__name__}", source=source
         )
-    return data
+    return stripped(data)
+
+
+def _read_document(text: str, source: Path | None) -> tuple[dict[str, Any], Kind]:
+    """A document without its own keys, checked, and the kind its shape makes it.
+
+    Raises:
+        PanelSyntaxError: The text is not a document, or its own keys are wrong: a later
+            language, a key of the wrong shape, one kept for later, or a kind it is not.
+    """
+    head, data = split_head(_load_document(text, source), DOCUMENT_KEYS)
+    shape = Kind.SCENE if "panels" in data else Kind.PANEL
+    # The language first and alone: a later one's document is not this one's to read.
+    fault = language_fault(head)
+    if fault is None:
+        try:
+            DocumentHead.model_validate(head)
+        except ValidationError as exc:
+            rule, loc = first_fault(exc)
+            raise PanelSyntaxError(
+                summarise(exc, what="document"), source=source, rule=rule, loc=loc
+            ) from exc
+        fault = kind_fault(head, shape)
+    if fault is not None:
+        raise PanelSyntaxError(str(fault), source=source, rule=fault.rule, loc=fault.loc)
+    return data, shape
 
 
 def _validate_panel(
@@ -128,7 +164,7 @@ def parse_panel(text: str, *, source: Path | None = None) -> PanelIR:
         :func:`compile_ir <scenet.pipeline.compile_ir>`, to compile what it returns.
         :func:`load_panel <scenet.frontends.yaml_front.load_panel>`, to read a file.
     """
-    return _validate_panel(_load_document(text, source), source)
+    return _validate_panel(_read_document(text, source)[0], source)
 
 
 def load_panel(path: Path) -> PanelIR:
@@ -281,9 +317,9 @@ def parse_scene_document(text: str, *, source: Path | None = None) -> SceneDocum
     See Also:
         :func:`compile_book <scenet.pipeline.compile_book>`, to compile it.
     """
-    data = _load_document(text, source)
+    data, shape = _read_document(text, source)
 
-    if "panels" not in data:
+    if shape is Kind.PANEL:
         if any(key in data for key in LAYOUT_KEYS):
             raise PanelSyntaxError(
                 "`page:` and `pages:` lay out the panels of a scene, so a document with them "
@@ -339,14 +375,22 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
                 rule="panel-direction",
                 loc=("panels", name, DIRECTION_KEY),
             )
+        # The document's own keys, its language and the rest, are no panel's either.
+        for key in DOCUMENT_KEYS:
+            if key in document:
+                raise PanelSyntaxError(
+                    own_document_key(key, "at the top of the document"),
+                    source=source,
+                    rule="unknown-key",
+                    loc=("panels", name, key),
+                )
 
     # Anything alongside `panels` is a default every panel inherits, which saves
     # restating the panel size and camera on each one -- except a description, which
-    # says what one picture shows.
-    if DESCRIPTION_KEY in data:
-        raise PanelSyntaxError(
-            NOT_A_DEFAULT, source=source, rule="unknown-key", loc=(DESCRIPTION_KEY,)
-        )
+    # says what one picture shows, and a script, which is what one panel says.
+    for key, why in NOT_DEFAULTS.items():
+        if key in data:
+            raise PanelSyntaxError(why, source=source, rule="unknown-key", loc=(key,))
     defaults = {key: value for key, value in data.items() if key != "panels"}
 
     try:

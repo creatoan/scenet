@@ -53,12 +53,14 @@ SILENT = "cast: {alice: {reference: alice}}\n"
 
 TWO_PAGES = """
 cast: {a: {reference: alice}}
-script: [{say: {by: a, text: Over here.}}]
 page: {size: [1000, 1500]}
 pages:
   - tiers: [{panels: [one, two]}]
   - tiers: [{panels: [three]}]
-panels: {one: {}, two: {}, three: {}}
+panels:
+  one: {script: [{say: {by: a, text: Over here.}}]}
+  two: {over: one}
+  three: {over: one}
 """
 
 

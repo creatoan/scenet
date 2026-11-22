@@ -67,6 +67,21 @@ ROOT_OWNER = {"panel": "Panel", "scene": "Scene", "artwork": "Artwork", "puppet"
 #: A scene's own keys: everything else at its top is a panel's, as a default for every panel.
 SCENE_KEYS = ("panels", "page", "pages")
 
+#: Keys every document writes at its top, whatever kind it is -- a panel, a scene, an artwork
+#: contract, a puppet file: one card each, for every family, on the page of a document's own
+#: keys (#357).
+HEAD_KEYS = ("scenet", "$schema", "meta")
+
+#: The family of a card every family's documents write, and the owner of its key.
+ANY_FAMILY, ANY_OWNER = "any", "Document"
+
+#: Keys a panel and a scene write at their top that are the document's, and no panel's
+#: default: what a scene's top writes beside `panels:` is otherwise for every panel.
+DOCUMENT_TOP = ("kind", "include", "defaults")
+
+#: Keys that hold a mapping of anything, whose keys no rule says are unknown.
+FREE_MAPPINGS = ("meta",)
+
 #: Keys of two models that mean one thing, by the model and key, and the card that has both.
 MERGED = {
     ("StackedPanel", "use"): ("PanelPlacement", "use"),
@@ -97,8 +112,11 @@ PLACEHOLDER = {
 }
 
 #: The page a card of each family, or each first word of a document's key, is on.
-PAGE_OF_FAMILY = {"artwork": "artwork", "puppet": "puppet"}
+PAGE_OF_FAMILY = {"artwork": "artwork", "puppet": "puppet", ANY_FAMILY: "document"}
 PAGE_OF_WORD = {
+    "kind": "document",
+    "include": "document",
+    "defaults": "document",
     "say": "script",
     "caption": "script",
     "sfx": "script",
@@ -245,7 +263,10 @@ def cards() -> dict[str, Card]:
             owner, key = MERGED.get(
                 (occurrence.owner, occurrence.key), (occurrence.owner, occurrence.key)
             )
-            identity = (FAMILY[kind], owner, key)
+            family = FAMILY[kind]
+            if occurrence.path in HEAD_KEYS:
+                family, owner = ANY_FAMILY, ANY_OWNER
+            identity = (family, owner, key)
             for card in found.values():
                 if (card.family, card.owner, card.key) == identity:
                     card.occurrences.append(occurrence)
@@ -254,7 +275,7 @@ def cards() -> dict[str, Card]:
                 name = _name(occurrence)
                 if name in found:
                     raise ValueError(f"two keys would share the card {name}")
-                found[name] = Card(name, FAMILY[kind], owner, key, [occurrence])
+                found[name] = Card(name, family, owner, key, [occurrence])
     # A card is named for its shortest path, wherever that was met first.
     renamed: dict[str, Card] = {}
     for card in found.values():
@@ -308,6 +329,8 @@ def _range(node: dict[str, Any]) -> str:
     low = node.get("minimum")
     high = node.get("maximum")
     above = node.get("exclusiveMinimum")
+    if low is not None and high is not None and low == high:
+        return _number(low)
     if low is not None and high is not None:
         return f"{_number(low)} to {_number(high)}"
     if above is not None and node.get("maximum") is not None:
@@ -364,6 +387,9 @@ TEXT_TYPES = ["string", "number", "boolean"]
 
 def type_of(node: dict[str, Any]) -> str:
     """What a key holds, in words: `text`, `a number`, `a name`, `a list of mappings`."""
+    if node.get("type") == "null":
+        # A key kept for a later language, which holds nothing yet.
+        return "nothing yet: only `null`, which is not writing it"
     words = _kinds(node)
     return ", or ".join(words) if words else "anything"
 
@@ -423,6 +449,12 @@ SCRIPT_FORMS: dict[str, str] = {
     "tiers[].panels": "`@tiers:`, which counts each tier's panels from the top",
     "panels": "the script's `PANEL` headings",
     "over": "`@over:` in a panel",
+    "scenet": "the front matter only",
+    "$schema": "the front matter only",
+    "meta": "the front matter only",
+    "kind": "the front matter only, where it is `scene`",
+    "include": "the front matter only",
+    "defaults": "the front matter only",
 }
 
 #: Keys a comic script cannot write, by the first word of their name or the name itself.
@@ -468,7 +500,7 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "staging[].subject": ("unknown-actor", "reflexive-relation"),
     "staging[].object": ("unknown-actor", "reflexive-relation"),
     "staging[].predicate": ("ordering-cycle",),
-    "script": ("balloon-placement", "word-limit"),
+    "script": ("balloon-placement", "word-limit", "unknown-key"),
     "say.by": ("invalid-identifier", "unknown-actor", "off-panel-speaker"),
     "say.text": ("unbalanced-emphasis", "word-limit", "balloon-placement", "bold-italic-stand-in"),
     "say.prefer": ("curved-tail",),
@@ -505,6 +537,10 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "insets[].at": ("inset-covers-face",),
     "panels": ("invalid-identifier", "duplicate-key", "composition"),
     "over": ("composition",),
+    "scenet": ("language-version",),
+    "kind": ("document-kind", "not-yet"),
+    "include": ("not-yet",),
+    "defaults": ("not-yet",),
 }
 
 #: Where every diagnostic has its entry, from a page of the language reference. A report
@@ -528,7 +564,7 @@ DOCUMENT_RULES = frozenset(
 
 
 def _script_form(card: Card) -> str | None:
-    if card.family != "document" or card.name in NOT_IN_A_SCRIPT:
+    if card.family not in ("document", ANY_FAMILY) or card.name in NOT_IN_A_SCRIPT:
         return None
     if card.name in SCRIPT_FORMS:
         return SCRIPT_FORMS[card.name]
@@ -544,7 +580,12 @@ def _where(card: Card) -> str:
     places = []
     kinds = {occurrence.kind for occurrence in card.occurrences}
     scene_paths = {o.path for o in card.occurrences if o.kind == "scene"}
-    if card.family == "artwork":
+    if card.family == ANY_FAMILY:
+        places.append(
+            "the top of any document: a `.panel.yaml`, a `.scene.yaml`, an artwork contract, "
+            "a puppet file"
+        )
+    elif card.family == "artwork":
         places.append("an artwork contract, the `.art.yaml` beside its picture")
     elif card.family == "puppet":
         places.append("a puppet file, a `.puppet.yaml`")
@@ -553,7 +594,13 @@ def _where(card: Card) -> str:
             places.append("a `.panel.yaml`")
         if any(path.startswith("panels.*.") for path in scene_paths):
             places.append("a panel under `panels:`")
-        defaults = {path for path in scene_paths if not path.startswith(("panels", "page"))}
+        if scene_paths & set(DOCUMENT_TOP):
+            places.append("the top of a `.scene.yaml`")
+        defaults = {
+            path
+            for path in scene_paths
+            if not path.startswith(("panels", "page")) and path not in DOCUMENT_TOP
+        }
         if defaults:
             places.append("beside `panels:`, for every panel")
         if not places:
@@ -609,11 +656,16 @@ def diagnostics_of(card: Card) -> list[str]:
     """Every diagnostic a key can give, by id, each once: the automatic ones, then its own."""
     if card.family in FILE_RULES:
         return [FILE_RULES[card.family]]
+    if card.node.get("type") == "null":
+        # Kept for a later language: whatever it holds is too soon.
+        return list(DIAGNOSTICS.get(card.name, ()))
     rules = ["invalid-field"]
     if _required(card):
         rules.append("missing-field")
     if holds_a_mapping(card):
-        rules.extend(("unknown-key", "duplicate-key"))
+        rules.extend(
+            ("duplicate-key",) if card.name in FREE_MAPPINGS else ("unknown-key", "duplicate-key")
+        )
     rules.extend(DIAGNOSTICS.get(card.name, ()))
     return list(dict.fromkeys(rules))
 
@@ -706,7 +758,12 @@ def rewritten(text: str) -> str:
 
 def index_table() -> str:
     """The A-Z index: every card, its document, its meaning in a line, and since."""
-    document = {"document": "panel, scene", "artwork": "artwork contract", "puppet": "puppet"}
+    document = {
+        "document": "panel, scene",
+        "artwork": "artwork contract",
+        "puppet": "puppet",
+        ANY_FAMILY: "any document",
+    }
     rows = []
     for card in sorted(cards().values(), key=lambda c: (c.name.lower().lstrip("<"), c.name)):
         kinds = {o.kind for o in card.occurrences}

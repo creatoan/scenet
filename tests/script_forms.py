@@ -162,6 +162,7 @@ NOT_READ = {
     "FRONT_MATTER": "the front matter is YAML, read against the schemas by tests/written.py",
     "NUMBER_LIKE": "it tells a heading's label from a word, and is no form of its own",
     "RESERVED_NAMES": "the ids no cast member may take: writing one is an error",
+    "EXTENSION_DIRECTIVE": "an extension, `@x-note:`, which writes nothing of the panel",
 }
 
 
