@@ -3,7 +3,7 @@
 `panels:` is a mapping whose key order is the reading order, and `cast:` one whose first
 member is the one the camera frames. A tool that sorts keys -- PyYAML's `dump` does by
 default, `json.dumps(sort_keys=True)` on request -- reorders the comic without a word. So
-both may also be written as a list: `panels: [{name: a, ...}]`, `cast: [{id: alice, ...}]`.
+both may also be written as a list: `panels: [{id: a, ...}]`, `cast: [{id: alice, ...}]`.
 
 The list form is lowered to the mapping form as the document is read, before `over:` and a
 scene's defaults are merged, so the two are one language and build one Core.
@@ -19,9 +19,10 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from jsonschema import Draft202012Validator
 
+from scenet.compose import ID_KEY, REMOVE_KEY, as_lists, lowered
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
-from scenet.frontends.forms import NAMING_KEYS, as_lists, lowered
+from scenet.frontends.positions import KEY
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_scene_document
 from scenet.pipeline import compile_book
@@ -111,7 +112,7 @@ class TestKeyOrder:
         assert list(parse_scene_document(resorted).panels) == ["apple", "zebra"]
 
     def test_a_sorted_list_form_keeps_it(self):
-        text = "cast: [{id: a, reference: alice}]\npanels: [{name: zebra}, {name: apple}]\n"
+        text = "cast: [{id: a, reference: alice}]\npanels: [{id: zebra}, {id: apple}]\n"
         resorted = json.dumps(load(text), sort_keys=True)
         assert list(parse_scene_document(resorted).panels) == ["zebra", "apple"]
 
@@ -129,15 +130,14 @@ class TestOneLanguage:
 
     def test_the_order_written_is_the_order_read(self):
         document = parse_scene_document(
-            "cast: [{id: a, reference: alice}]\npanels: [{name: two}, {name: one}]"
+            "cast: [{id: a, reference: alice}]\npanels: [{id: two}, {id: one}]"
         )
         assert list(document.panels) == ["two", "one"]
 
     def test_both_forms_mix_across_keys(self):
         """A scene's defaults in one form, a panel's cast in the other: each key is whole."""
         document = parse_scene_document(
-            "cast: {a: {reference: alice}}\n"
-            "panels: [{name: one, cast: [{id: b, reference: bob}]}]\n"
+            "cast: {a: {reference: alice}}\npanels: [{id: one, cast: [{id: b, reference: bob}]}]\n"
         )
         assert list(document.panels["one"].cast) == ["a", "b"]
 
@@ -147,9 +147,9 @@ class TestOneLanguage:
         def scene(cast: str) -> str:
             return (
                 "panels:\n"
-                "  - name: one\n"
+                "  - id: one\n"
                 "    cast: [{id: a, reference: alice, at: left_third}, {id: b, reference: bob}]\n"
-                "  - name: two\n"
+                "  - id: two\n"
                 "    over: one\n"
                 f"    cast: {cast}\n"
             )
@@ -166,7 +166,7 @@ class TestOneLanguage:
 
     def test_a_scene_default_cast_in_list_form_is_inherited(self):
         document = parse_scene_document(
-            "cast: [{id: a, reference: alice}]\npanels: [{name: one}, {name: two, over: one}]"
+            "cast: [{id: a, reference: alice}]\npanels: [{id: one}, {id: two, over: one}]"
         )
         assert [list(panel.cast) for panel in document.panels.values()] == [["a"], ["a"]]
 
@@ -183,7 +183,7 @@ class TestOneLanguage:
         assert listed_ == mapping
 
     def test_an_empty_list_is_an_empty_cast(self):
-        assert lowered({"cast": []}) == ({"cast": {}}, ())
+        assert lowered({"cast": []}).document == {"cast": {}}
 
 
 class TestMistakes:
@@ -191,8 +191,8 @@ class TestMistakes:
         ("source", "path", "line", "said"),
         [
             (
-                "panels:\n  - {name: one, cast: [{id: a, reference: alice}]}\n  - {name: one}\n",
-                ("panels", 1, "name"),
+                "panels:\n  - {id: one, cast: [{id: a, reference: alice}]}\n  - {id: one}\n",
+                ("panels", 1, "id"),
                 3,
                 "'one'",
             ),
@@ -232,15 +232,15 @@ class TestMistakes:
             "cast: [{id: a, reference: alice}]\npanels: [{camera: {shot: close_up}}]"
         )
         assert (found.rule, found.path) == ("missing-field", ("panels", 0))
-        assert "`name`" in found.message
+        assert "`id`" in found.message
 
     def test_an_item_that_is_not_a_mapping_is_refused(self):
         (found,) = diagnose_source("cast: [alice]")
         assert (found.rule, found.path) == ("invalid-field", ("cast", 0))
 
     def test_a_name_that_is_a_number_is_quoted(self):
-        (found,) = diagnose_source("cast: [{id: a, reference: alice}]\npanels: [{name: 1}]")
-        assert (found.rule, found.path) == ("invalid-identifier", ("panels", 0, "name"))
+        (found,) = diagnose_source("cast: [{id: a, reference: alice}]\npanels: [{id: 1}]")
+        assert (found.rule, found.path) == ("invalid-identifier", ("panels", 0, "id"))
         assert "quote" in found.message
 
     def test_a_bad_name_is_found_at_its_item(self):
@@ -252,7 +252,7 @@ class TestMistakes:
     def test_a_fault_inside_an_item_is_found_there(self):
         source = "cast:\n  - id: a\n    reference: alice\n    at: nowhere\n"
         (found,) = diagnose_source(source)
-        assert found.path == ("cast", "a", "at")
+        assert found.path == ("cast", 0, "at")
         assert found.region is not None
         assert found.region.start.line == 4
 
@@ -280,29 +280,30 @@ class TestTheConverter:
         )
         assert document == {
             "cast": [{"id": "a", "reference": "alice"}],
-            "panels": [{"name": "one", "cast": [{"id": "b", "reference": "bob"}]}],
+            "panels": [{"id": "one", "cast": [{"id": "b", "reference": "bob"}]}],
         }
-        assert list(document["panels"][0]) == ["name", "cast"]
+        assert list(document["panels"][0]) == ["id", "cast"]
 
-    def test_a_cast_that_leaves_somebody_out_stays_a_mapping(self):
-        """`bob: null` takes Bob out; the list form has no way to say so."""
+    def test_a_member_left_out_is_removed(self):
+        """`bob: null` takes Bob out; the list form says `{id: bob, remove: true}`."""
         document = {
             "panels": {
                 "one": {"cast": {"a": {"reference": "alice"}}},
                 "two": {"over": "one", "cast": {"a": None}},
             }
         }
-        assert as_lists(document)["panels"][1]["cast"] == {"a": None}
+        assert as_lists(document)["panels"][1]["cast"] == [{"id": "a", "remove": True}]
 
     def test_lowering_undoes_it(self):
         document = {
             "cast": {"a": {"reference": "alice"}},
             "panels": {"one": {}, "two": {"over": "one"}},
         }
-        assert lowered(as_lists(document)) == (document, ())
+        found = lowered(as_lists(document))
+        assert (found.document, found.faults) == (document, ())
 
-    def test_the_naming_keys(self):
-        assert NAMING_KEYS == {"panels": "name", "cast": "id"}
+    def test_both_lists_name_their_items_by_id(self):
+        assert (ID_KEY, REMOVE_KEY) == ("id", "remove")
 
 
 def _valid(schema: dict[str, Any], document: Any) -> bool:
@@ -317,8 +318,8 @@ class TestTheSchema:
         document = {
             "cast": [{"id": "a", "reference": "alice"}],
             "panels": [
-                {"name": "one"},
-                {"name": "two", "over": "one", "cast": [{"id": "a", "pose": "pointing"}]},
+                {"id": "one"},
+                {"id": "two", "over": "one", "cast": [{"id": "a", "pose": "pointing"}]},
             ],
         }
         assert _valid(scene_schema(), document)
@@ -339,11 +340,143 @@ class TestTheSchema:
     def test_a_scene_item_still_needs_its_name(self):
         assert not _valid(scene_schema(), {"panels": [{"camera": {"shot": "close_up"}}]})
         assert not _valid(
-            scene_schema(), {"panels": [{"name": "one", "cast": [{"pose": "pointing"}]}]}
+            scene_schema(), {"panels": [{"id": "one", "cast": [{"pose": "pointing"}]}]}
         )
 
     def test_it_describes_both_forms(self):
         text = json.dumps(scene_schema())
         assert "list" in scene_schema()["properties"]["panels"]["description"]
         assert '"id"' in text
-        assert '"name"' in text
+
+
+class TestTheAlbumDecision:
+    """#432, decision 1: keyed collections are lowered before anything is merged, and
+    nothing else is. Its acceptance test, and the regressions that keep shorthands whole."""
+
+    MAPPING = (
+        "panel: {size: [700, 500]}\n"
+        "cast:\n"
+        "  alice: {reference: alice, at: left_third}\n"
+        "  bob: {reference: bob, at: right_third, facing: left}\n"
+        "panels:\n"
+        "  both:\n"
+        "    staging: [alice left_of bob]\n"
+        "  closer:\n"
+        "    over: both\n"
+        "    camera: {shot: medium_close_up}\n"
+        "    cast: {alice: {pose: pointing}}\n"
+        "  alone:\n"
+        "    over: closer\n"
+        "    cast: {bob: null}\n"
+    )
+    LISTED = (
+        "panel: {size: [700, 500]}\n"
+        "cast:\n"
+        "  - {id: alice, reference: alice, at: left_third}\n"
+        "  - {id: bob, reference: bob, at: right_third, facing: left}\n"
+        "panels:\n"
+        "  - id: both\n"
+        "    staging: [alice left_of bob]\n"
+        "  - id: closer\n"
+        "    over: both\n"
+        "    camera: {shot: medium_close_up}\n"
+        "    cast: [{id: alice, pose: pointing}]\n"
+        "  - id: alone\n"
+        "    over: closer\n"
+        "    cast: [{id: bob, remove: true}]\n"
+    )
+
+    def test_both_forms_build_one_core_through_an_over_chain(self):
+        """Defaults, a member changed by `over:`, and one removed, in each form."""
+        source = Path("acceptance.scene.yaml")
+        assert cores(self.LISTED, source) == cores(self.MAPPING, source)
+        alone = parse_scene_document(self.LISTED).panels["alone"]
+        assert (list(alone.cast), alone.cast["alice"].pose, alone.staging) == (
+            ["alice"],
+            "pointing",
+            (),
+        )
+
+    def test_a_font_file_over_an_inherited_family_replaces_it(self):
+        """A shorthand stands for its whole value, and is expanded after the merge."""
+        document = parse_scene_document(
+            "cast: [{id: a, reference: alice}]\n"
+            "lettering: {font: {regular: a.ttf, italic: b.ttf}}\n"
+            "panels: [{id: one}, {id: two, lettering: {font: c.ttf}}]\n"
+        )
+        font = document.panels["two"].lettering.font
+        assert font is not None
+        assert (font.regular, font.italic) == ("c.ttf", None)
+
+    def test_a_place_of_null_removes_the_place(self):
+        document = parse_scene_document(
+            "cast: [{id: a, reference: alice}]\n"
+            "setting: {place: docks}\n"
+            "panels: [{id: one}, {id: two, setting: {place: null}}]\n"
+        )
+        assert document.panels["one"].setting.masses
+        assert not document.panels["two"].setting.masses
+
+
+class TestRemoval:
+    def test_it_leaves_a_member_out_as_null_does(self):
+        scene = (
+            "cast: {{a: {{reference: alice}}, b: {{reference: bob}}}}\n"
+            "panels: [{{id: one, cast: {cast}}}]\n"
+        )
+        listed_ = parse_scene_document(scene.format(cast="[{id: b, remove: true}]"))
+        mapping = parse_scene_document(scene.format(cast="{b: null}"))
+        assert listed_.panels == mapping.panels
+        assert list(listed_.panels["one"].cast) == ["a"]
+
+    def test_remove_false_is_a_member(self):
+        document = parse_scene_document("cast: [{id: a, reference: alice, remove: false}]")
+        assert list(document.panels["panel"].cast) == ["a"]
+
+    @pytest.mark.parametrize(
+        ("item", "said"),
+        [("{id: a, remove: true, pose: pointing}", "`pose`"), ("{id: a, remove: yes}", "true")],
+        ids=["with-more", "not-a-flag"],
+    )
+    def test_a_removal_says_nothing_else(self, item: str, said: str):
+        (found,) = diagnose_source(f"cast: [{{id: b, reference: bob}}, {item}]\n")
+        assert (found.rule, found.path) == ("invalid-field", ("cast", 1, "remove"))
+        assert said in found.message
+
+    def test_the_schema_says_so_too(self):
+        assert _valid(panel_schema(), {"cast": [{"id": "a", "remove": True}]})
+        assert not _valid(panel_schema(), {"cast": [{"id": "a", "remove": True, "pose": "x"}]})
+        assert _valid(
+            panel_schema(), {"cast": [{"id": "a", "reference": "alice", "remove": False}]}
+        )
+
+
+class TestWrittenPaths:
+    """#432: lowering returns the written locations, so a finding says `cast[2].at`."""
+
+    def test_a_finding_in_a_list_form_cast_names_the_item(self):
+        source = (
+            "cast:\n  - {id: a, reference: alice}\n  - {id: b, reference: bob}\n"
+            "  - {id: c, reference: bob, at: x}\n"
+        )
+        (found,) = diagnose_source(source)
+        assert found.path == ("cast", 2, "at")
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene_document(source)
+        assert caught.value.loc == ("cast", 2, "at")
+
+    def test_a_finding_in_a_listed_panel_names_both_items(self):
+        source = (
+            "cast: {a: {reference: alice}}\n"
+            "panels:\n  - id: one\n  - id: two\n"
+            "    cast: [{id: a, pose: pointing}, {id: b, at: x}]\n"
+        )
+        found = [item.path for item in diagnose_source(source)]
+        assert ("panels", 1, "cast", 1, "at") in found
+
+    def test_a_bad_id_is_reported_at_the_id(self):
+        (found,) = diagnose_source("cast: [{id: a.b, reference: alice}]")
+        assert found.path == ("cast", 0, "id")
+
+    def test_the_key_step_is_the_compose_one(self):
+        assert lowered({"cast": [{"id": "a"}]}).where(("cast", "a", KEY)) == ("cast", 0, "id")

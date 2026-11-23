@@ -92,15 +92,15 @@ def _descend(node: yaml.Node, step: str | int) -> yaml.Node | None:
 
     if isinstance(node, yaml.SequenceNode):
         # A panel or an actor of a list form, `[{name: one, ...}]`, named as the mapping
-        # form names it once the list is lowered (`scenet.frontends.forms`).
+        # form names it once the list is lowered (`scenet.compose.lowered`).
         named = _named_item(node, step)
         return named[0] if named is not None else None
 
     return None
 
 
-#: The keys an item of a list form is named by: `scenet.frontends.forms.NAMING_KEYS`.
-_NAMING_KEYS = ("name", "id")
+#: The key an item of a list form is named by: `scenet.compose.ID_KEY`.
+_NAMING_KEYS = ("id",)
 
 
 def _named_item(node: yaml.SequenceNode, step: str | int) -> tuple[yaml.Node, yaml.Node] | None:

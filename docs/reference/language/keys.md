@@ -29,6 +29,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`cast.<id>.pose`](cast.md#castidpose) | panel, scene | A pose the puppet declares, by name. | 0.1 |
 | [`cast.<id>.reference`](cast.md#castidreference) | panel, scene | The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`. | 0.1 |
 | [`cast[].id`](cast.md#castid) | panel, scene | The actor id of the cast member, in the list form of `cast`: an identifier. | 0.14 |
+| [`cast[].remove`](cast.md#castremove) | panel, scene | In the list form of `cast`, `true` leaves the member out of a panel that would inherit them, as `null` does in the mapping form; the item then says nothing but its `id`. | 0.14 |
 | [`columns[].panels`](page.md#columnspanels) | scene | The panels in the column, read top to bottom. | 0.10 |
 | [`columns[].panels[].height`](page.md#columnspanelsheight) | scene | The panel's share of its column's height, relative to the others in it. | 0.10 |
 | [`columns[].width`](page.md#columnswidth) | scene | The column's share of its tier's width, relative to the other columns. | 0.10 |
@@ -91,8 +92,8 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`panel.size`](panel.md#panelsize) | panel, scene | The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre. | 0.1 |
 | [`panels`](scene.md#panels) | scene | The panels, in the order they are read: a mapping of each panel under its name, an identifier, or a list of panels each with its `name`, which no tool that sorts keys can reorder. Each may inherit from another with `over`. | 0.1 |
 | [`panels[].bleed`](page.md#panelsbleed) | scene | Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of those sides. | 0.13 |
+| [`panels[].id`](scene.md#panelsid) | scene | The panel's name, in the list form of `panels`: an identifier, which a page and an `over` name it by. | 0.14 |
 | [`panels[].insets`](page.md#panelsinsets) | scene | Panels set into its corners, and drawn over it. | 0.10 |
-| [`panels[].name`](scene.md#panelsname) | scene | The panel's name, in the list form of `panels`: an identifier. | 0.14 |
 | [`panels[].use`](page.md#panelsuse) | scene | The name of a panel under `panels:`. Writing the name alone means `{use: name}`. | 0.10 |
 | [`panels[].width`](page.md#panelswidth) | scene | The panel's share of its tier's width, relative to its neighbours. | 0.10 |
 | [`parts`](puppet.md#parts) | puppet | The shapes the body is drawn from, back to front. | 0.13 |
@@ -158,6 +159,10 @@ gone. `medium_full` and `cowboy` are `medium_full_shot` and `cowboy_shot`, as th
 [shot ladder](../shot_types.md#table) explains. Each old spelling is refused with a finding that
 says what to write instead.
 
+The list forms of `cast` and `panels` name each item by `id`, both alike, and leave a cast
+member out with `remove: true`, a verb as `use`, `read` and `prefer` are, where the mapping form
+writes `bob: null`.
+
 | Name | Where | What it means there | Why it stays |
 |---|---|---|---|
 | `at` | `cast.<id>.at`, `insets[].at`, `parts[].at` | Where along the panel's width a figure would like to stand; the corner of its parent an inset sits in; the joint a puppet's part is centred on | Each is *where this sits*, said in the words of the thing it sits on: a panel's width, a frame's corners, a skeleton's joints. No value is valid in two of them, so a value written in the wrong one is refused |
@@ -166,11 +171,11 @@ says what to write instead.
 | `face` | `face`, `figures.<name>.face` | The face a puppet draws on its head; where the face of a figure in a supplied picture is | The same thing, a face no lettering covers: a puppet draws its own, a picture's is located |
 | `from` | `parts[].from`, `sfx.from` | The joint a puppet's bone starts at; the actor a sound comes from | Both are *where it starts*; one is in a puppet file and one in a panel, so they never meet |
 | `height` | `columns[].panels[].height`, `tiers[].height` | A share of the height, relative to the neighbours: a panel's in its column, a tier's on the page | The same meaning in both |
+| `id` | `cast[].id`, `panels[].id` | The id a cast member, or a panel, gives itself in the list form of `cast` or `panels` | One word for both lists, which name their items alike, as the mapping form names them by its keys: an actor id and a panel's name are both identifiers |
 | `joint` | `anchors.<anchor>.joint`, `face.joint`, `face.features.<feature>.joint` | The joint a thing rides along with | The same meaning in all three |
 | `kind` | `kind`, `caption.kind`, `say.kind`, `setting.masses[].kind` | Which of a closed set this is: a document, a caption box, a balloon, a mass | Always the same question, *which kind of this*, with the answers each place offers |
 | `margin` | `page.margin`, `panel.margin` | The blank border inside an edge: the page's, the panel's | The same meaning in both |
 | `mouth` | `expressions.<expression>.mouth`, `figures.<name>.mouth` | The mouth's state in an expression; where a figure's mouth is in a picture | The same mouth: drawn by a puppet in a state, or located in a picture as the end of a tail |
-| `name` | `name`, `panels[].name` | The name a cast member's `reference` gives a puppet; the name a panel gives itself in the list form of `panels` | Both are what the thing is named by elsewhere: a puppet by a `reference`, a panel by a page and an `over:` |
 | `offset` | `anchors.<anchor>.offset`, `face.offset`, `face.features.<feature>.offset`, `joints.<joint>.offset`, `parts[].offset` | Where a thing is from its joint, in the puppet's own units | The same meaning in all five |
 | `panels` | `panels`, `tiers[].panels`, `columns[].panels` | The scene's panels, each with its name; the panels a tier or a column holds, by name | The same panels, held by the scene and placed by the page, each in reading order |
 | `prefer` | `say.prefer`, `caption.prefer`, `sfx.prefer` | Where the lettering would like to sit, one of nine zones | The same meaning in all three |

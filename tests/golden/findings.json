@@ -1987,6 +1987,46 @@
       "source": "tests/finding_corpus/a-loose-cue-after-a-page-heading.script"
     }
   ],
+  "tests/finding_corpus/a-member-removed-and-posed.panel.yaml": [
+    {
+      "fingerprint": "5fe59821477f32fb003825bf6230379e",
+      "level": "error",
+      "message": "a member with `remove: true` is left out, so it says nothing else: delete `pose`, or `remove`",
+      "path": [
+        "cast",
+        1,
+        "remove"
+      ],
+      "region": [
+        4,
+        23,
+        4,
+        27
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-member-removed-and-posed.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-member-removed-and-posed.panel.yaml --deep": [
+    {
+      "fingerprint": "5fe59821477f32fb003825bf6230379e",
+      "level": "error",
+      "message": "a member with `remove: true` is left out, so it says nothing else: delete `pose`, or `remove`",
+      "path": [
+        "cast",
+        1,
+        "remove"
+      ],
+      "region": [
+        4,
+        23,
+        4,
+        27
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-member-removed-and-posed.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-missing-puppet-file-then-an-unknown-puppet.panel.yaml": [
     {
       "fingerprint": "5ae10b61c13d6b52ca6dd058788a8709",
@@ -2502,19 +2542,19 @@
   ],
   "tests/finding_corpus/a-panel-listed-twice.scene.yaml": [
     {
-      "fingerprint": "faf45846da6f8653efb59ae16e94255f",
+      "fingerprint": "f62e2d77ca609d1285e201b58749461b",
       "level": "error",
-      "message": "panel 'street' is item 2 and item 0 of `panels`; each panel is listed once, with everything it says",
+      "message": "panel 'street' is item 0 and item 2 of `panels`; each panel is listed once, with everything it says",
       "path": [
         "panels",
         2,
-        "name"
+        "id"
       ],
       "region": [
         8,
-        11,
+        9,
         8,
-        17
+        15
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-panel-listed-twice.scene.yaml"
@@ -2522,19 +2562,19 @@
   ],
   "tests/finding_corpus/a-panel-listed-twice.scene.yaml --deep": [
     {
-      "fingerprint": "faf45846da6f8653efb59ae16e94255f",
+      "fingerprint": "f62e2d77ca609d1285e201b58749461b",
       "level": "error",
-      "message": "panel 'street' is item 2 and item 0 of `panels`; each panel is listed once, with everything it says",
+      "message": "panel 'street' is item 0 and item 2 of `panels`; each panel is listed once, with everything it says",
       "path": [
         "panels",
         2,
-        "name"
+        "id"
       ],
       "region": [
         8,
-        11,
+        9,
         8,
-        17
+        15
       ],
       "rule": "duplicate-key",
       "source": "tests/finding_corpus/a-panel-listed-twice.scene.yaml"
@@ -3453,9 +3493,9 @@
   "tests/finding_corpus/a-scene-with-its-own-files.scene.yaml --deep": [],
   "tests/finding_corpus/a-script-cast-listed-twice.script": [
     {
-      "fingerprint": "1e1330d6a8e7ffbcf65332ad2908a3f8",
+      "fingerprint": "3209778cf195928c86be22e766e91bad",
       "level": "error",
-      "message": "line 4: cast member 'ALICE' is item 1 and item 0 of `cast`; each cast member is listed once, with everything it says",
+      "message": "line 4: cast member 'ALICE' is item 0 and item 1 of `cast`; each cast member is listed once, with everything it says",
       "path": [],
       "region": [
         4,
@@ -3469,9 +3509,9 @@
   ],
   "tests/finding_corpus/a-script-cast-listed-twice.script --deep": [
     {
-      "fingerprint": "1e1330d6a8e7ffbcf65332ad2908a3f8",
+      "fingerprint": "3209778cf195928c86be22e766e91bad",
       "level": "error",
-      "message": "line 4: cast member 'ALICE' is item 1 and item 0 of `cast`; each cast member is listed once, with everything it says",
+      "message": "line 4: cast member 'ALICE' is item 0 and item 1 of `cast`; each cast member is listed once, with everything it says",
       "path": [],
       "region": [
         4,
@@ -5646,9 +5686,9 @@
   ],
   "tests/finding_corpus/panels-not-a-mapping.scene.yaml": [
     {
-      "fingerprint": "b9ecdce81556acbe5d1b965dc7ccd6d6",
+      "fingerprint": "e97517dd403a895f62f23ce37a581f03",
       "level": "error",
-      "message": "each panel in the list form is a mapping that says its `name`, not str",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
         "panels",
         0
@@ -5663,9 +5703,9 @@
       "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"
     },
     {
-      "fingerprint": "8c5bf4f61d12de11a25ec97c01c78cd4",
+      "fingerprint": "dfc853d284789665c02fe75f1f01fa68",
       "level": "error",
-      "message": "each panel in the list form is a mapping that says its `name`, not str",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
         "panels",
         1
@@ -5682,9 +5722,9 @@
   ],
   "tests/finding_corpus/panels-not-a-mapping.scene.yaml --deep": [
     {
-      "fingerprint": "b9ecdce81556acbe5d1b965dc7ccd6d6",
+      "fingerprint": "e97517dd403a895f62f23ce37a581f03",
       "level": "error",
-      "message": "each panel in the list form is a mapping that says its `name`, not str",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
         "panels",
         0
@@ -5699,9 +5739,9 @@
       "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"
     },
     {
-      "fingerprint": "8c5bf4f61d12de11a25ec97c01c78cd4",
+      "fingerprint": "dfc853d284789665c02fe75f1f01fa68",
       "level": "error",
-      "message": "each panel in the list form is a mapping that says its `name`, not str",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
         "panels",
         1

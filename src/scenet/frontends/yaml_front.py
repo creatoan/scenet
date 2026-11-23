@@ -15,6 +15,9 @@ from pydantic import ValidationError
 from scenet.compose import (
     DIRECTION_KEY,
     NOT_DEFAULTS,
+    PANELS_SHAPE,
+    Lowered,
+    lowered,
     merge,
     own_direction,
     resolve_beneath,
@@ -29,7 +32,6 @@ from scenet.frontends.common import (
     normalise_layout,
     summarise,
 )
-from scenet.frontends.forms import PANELS_SHAPE, lowered
 from scenet.frontends.positions import KEY
 from scenet.ir import IDENTIFIERS, Direction, PageLayout, PanelIR, check_placements
 from scenet.namespace import (
@@ -82,19 +84,18 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
     return stripped(data)
 
 
-def _read_document(text: str, source: Path | None) -> tuple[dict[str, Any], Kind]:
+def _read_document(text: str, source: Path | None) -> tuple[dict[str, Any], Kind, Lowered]:
     """A document without its own keys, checked, and the kind its shape makes it.
+
+    Its keyed collections are lowered to the mapping form before anything is merged, and
+    what comes back says where each member of a list form was written.
 
     Raises:
         PanelSyntaxError: The text is not a document, or its own keys are wrong: a later
-            language, a key of the wrong shape, one kept for later, or a kind it is not.
+            language, a key of the wrong shape, one kept for later, or a kind it is not; or
+            an item of a list form is.
     """
     head, data = split_head(_load_document(text, source), DOCUMENT_KEYS)
-    # The list forms first: past here, `panels` and `cast` are mappings, as written in order.
-    data, faults = lowered(data)
-    if faults:
-        fault = faults[0]
-        raise PanelSyntaxError(fault.message, source=source, rule=fault.rule, loc=fault.loc)
     shape = Kind.SCENE if "panels" in data else Kind.PANEL
     # The language first and alone: a later one's document is not this one's to read.
     fault = language_fault(head)
@@ -109,7 +110,16 @@ def _read_document(text: str, source: Path | None) -> tuple[dict[str, Any], Kind
         fault = kind_fault(head, shape)
     if fault is not None:
         raise PanelSyntaxError(str(fault), source=source, rule=fault.rule, loc=fault.loc)
-    return data, shape
+    found = lowered(data)
+    if found.faults:
+        first = found.faults[0]
+        raise PanelSyntaxError(first.message, source=source, rule=first.rule, loc=first.loc)
+    return found.document, shape, found
+
+
+def _as_written(found: Lowered, exc: PanelSyntaxError | CompositionError) -> None:
+    """Point a fault at the value as the document writes it: `cast[2].at`, in a list form."""
+    exc.loc = found.where(exc.loc)
 
 
 def _validate_panel(
@@ -170,7 +180,12 @@ def parse_panel(text: str, *, source: Path | None = None) -> PanelIR:
         :func:`compile_ir <scenet.pipeline.compile_ir>`, to compile what it returns.
         :func:`load_panel <scenet.frontends.yaml_front.load_panel>`, to read a file.
     """
-    return _validate_panel(_read_document(text, source)[0], source)
+    data, _, found = _read_document(text, source)
+    try:
+        return _validate_panel(data, source)
+    except PanelSyntaxError as exc:
+        _as_written(found, exc)
+        raise
 
 
 def load_panel(path: Path) -> PanelIR:
@@ -323,8 +338,16 @@ def parse_scene_document(text: str, *, source: Path | None = None) -> SceneDocum
     See Also:
         :func:`compile_book <scenet.pipeline.compile_book>`, to compile it.
     """
-    data, shape = _read_document(text, source)
+    data, shape, found = _read_document(text, source)
+    try:
+        return _scene_document(data, shape, source)
+    except (PanelSyntaxError, CompositionError) as exc:
+        _as_written(found, exc)
+        raise
 
+
+def _scene_document(data: dict[str, Any], shape: Kind, source: Path | None) -> SceneDocument:
+    """`parse_scene_document`, once the document is read and its collections lowered."""
     if shape is Kind.PANEL:
         if any(key in data for key in LAYOUT_KEYS):
             raise PanelSyntaxError(

@@ -24,7 +24,7 @@ remove". `cast: {bob: null}` leaves Bob out of a panel that would otherwise inhe
 """
 
 from collections.abc import Collection
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from types import UnionType
 from typing import Annotated, Any, Union, get_args, get_origin
@@ -32,12 +32,20 @@ from typing import Annotated, Any, Union, get_args, get_origin
 from pydantic import BaseModel
 
 from scenet.errors import CompositionError
-from scenet.ir import PanelIR, Predicate, SettingSpec
+from scenet.ir import CastMember, PanelIR, Predicate, SettingSpec
 
 __all__ = [
+    "ID_KEY",
+    "KEYED",
     "OVER_KEY",
+    "PANELS_SHAPE",
+    "REMOVE_KEY",
     "Dropped",
+    "FormFault",
+    "Lowered",
+    "as_lists",
     "looks_toward",
+    "lowered",
     "merge",
     "names",
     "on_their_side",
@@ -385,3 +393,289 @@ def _without_nulls(mapping: dict[str, Any], reader: Reader = PanelIR) -> dict[st
         )
         kept[key] = _without_nulls(value, inner) if isinstance(value, dict) else value
     return kept
+
+
+# ---------------------------------------------------------------- keyed collections
+
+#: The collections an author names the members of: written as a mapping, each member under
+#: its key, or as a list whose items each say their `id`. Their order is part of the
+#: document -- the panels are read in it, and the first of the cast is the one the camera
+#: frames -- and a tool that sorts keys reorders a mapping without a word; a list it cannot.
+KEYED: tuple[str, ...] = ("panels", "cast")
+
+#: The key an item of a list form names itself by, which the mapping form writes as its key.
+ID_KEY = "id"
+
+#: The key that leaves a cast member out in the list form, as `bob: null` does in the
+#: mapping form: `{id: bob, remove: true}`. A verb, as `use`, `read` and `prefer` are.
+REMOVE_KEY = "remove"
+
+#: What `panels:` must be, as the finding refusing anything else says.
+PANELS_SHAPE = "'panels' must be a mapping of name to panel, or a list of panels each with its `id`"
+
+#: The keys an item of each collection may say, which name no entry of the mapping form.
+_FIELDS: dict[str, frozenset[str]] = {
+    "panels": frozenset({*PanelIR.model_fields, OVER_KEY}),
+    "cast": frozenset({*CastMember.model_fields, REMOVE_KEY}),
+}
+
+#: What each collection holds, for a message.
+_WHAT = {"panels": "panel", "cast": "cast member"}
+
+#: A path in a document, in pydantic's `loc` form.
+Loc = tuple[str | int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class FormFault:
+    """A list form written wrong, where it is written.
+
+    Attributes:
+        message: What is wrong, and what to write.
+        rule: The catalogue rule it breaks.
+        loc: Where, as the document is written: an item's index, then its key.
+    """
+
+    message: str
+    rule: str
+    loc: Loc
+
+
+@dataclass(frozen=True, slots=True)
+class Lowered:
+    """A document with every keyed collection as the mapping form, and where each was written.
+
+    Attributes:
+        document: The document, each list form as the mapping it stands for.
+        faults: Each item of a list form written wrong, in the order written. An item at
+            fault is left out of `document`, so the rest can still be checked.
+        written: Where each member of a list form was written, by its path once lowered:
+            `("cast", "alice")` was `("cast", 2)`.
+    """
+
+    document: dict[str, Any]
+    faults: tuple[FormFault, ...] = ()
+    written: dict[Loc, Loc] = field(default_factory=dict[Loc, Loc])
+
+    def where(self, path: Loc) -> Loc:
+        """A path into the lowered document, as the document is written.
+
+        A member's key, `[key]`, is the `id` its item writes.
+
+        Example:
+            >>> from scenet.compose import lowered
+            >>> found = lowered({"cast": [{"id": "a"}, {"id": "b", "at": "x"}]})
+            >>> found.where(("cast", "b", "at")), found.where(("cast", "b", "[key]"))
+            (('cast', 1, 'at'), ('cast', 1, 'id'))
+        """
+        for length in range(len(path), 0, -1):
+            prefix = path[:length]
+            if prefix in self.written:
+                rest = path[length:]
+                if rest[:1] == (_KEY,):
+                    rest = (ID_KEY, *rest[1:])
+                return (*self.written[prefix], *rest)
+        return path
+
+
+#: The step pydantic names a key by, `scenet.frontends.positions.KEY`, which imports this.
+_KEY = "[key]"
+
+
+def lowered(document: dict[str, Any]) -> Lowered:
+    """A document with every keyed collection written as the mapping form, before any merge.
+
+    The document's `cast`, its `panels`, and each panel's `cast`, one value at a time: a
+    scene may write its panels as a list and its cast as a mapping. Called before `over:` is
+    resolved and before a scene's defaults or a comic script's front matter are merged, so
+    a cast written as a list merges actor by actor, as the mapping does. Only keyed
+    collections: a shorthand that stands for a value -- one font file for a family, a place
+    for its masses, a staging sentence -- replaces the whole value it stands for, and is
+    expanded once the panel is whole (`scenet.frontends.common.normalise`).
+
+    Example:
+        >>> from scenet.compose import lowered
+        >>> lowered(
+        ...     {"panels": [{"id": "one", "cast": [{"id": "a", "reference": "alice"}]}]}
+        ... ).document
+        {'panels': {'one': {'cast': {'a': {'reference': 'alice'}}}}}
+        >>> lowered({"cast": [{"id": "bob", "remove": True}]}).document
+        {'cast': {'bob': None}}
+    """
+    faults: list[FormFault] = []
+    written: dict[Loc, Loc] = {}
+    result = _with_cast(document, (), (), faults, written)
+    panels = result.get("panels")
+    if isinstance(panels, list):
+        named = _named(panels, "panels", ("panels",), faults)
+        lowered_panels: dict[str, Any] = {}
+        for name, (index, panel) in named.items():
+            written[("panels", name)] = ("panels", index)
+            lowered_panels[name] = _with_cast(
+                panel, ("panels", name), ("panels", index), faults, written
+            )
+        result["panels"] = lowered_panels
+    elif isinstance(panels, dict):
+        result["panels"] = {
+            name: _with_cast(panel, ("panels", name), ("panels", name), faults, written)
+            if isinstance(panel, dict)
+            else panel
+            for name, panel in panels.items()
+        }
+    return Lowered(result, tuple(faults), written)
+
+
+def _with_cast(
+    document: dict[str, Any],
+    at: Loc,
+    written_at: Loc,
+    faults: list[FormFault],
+    written: dict[Loc, Loc],
+) -> dict[str, Any]:
+    """The mapping with its `cast`, if a list, as the mapping form."""
+    cast = document.get("cast")
+    if not isinstance(cast, list):
+        return dict(document)
+    members: dict[str, Any] = {}
+    for actor, (index, member) in _named(cast, "cast", (*written_at, "cast"), faults).items():
+        written[(*at, "cast", actor)] = (*written_at, "cast", index)
+        before = len(faults)
+        lowered_member = _member(member, (*written_at, "cast", index), faults)
+        if len(faults) == before:
+            # An item at fault is left out, as `_named` leaves one out.
+            members[actor] = lowered_member
+    return {**document, "cast": members}
+
+
+def _member(member: dict[str, Any], at: Loc, faults: list[FormFault]) -> dict[str, Any] | None:
+    """A cast member of the list form, `None` for one its item removes."""
+    remove = member.get(REMOVE_KEY)
+    rest = {key: value for key, value in member.items() if key != REMOVE_KEY}
+    if remove is None:
+        # Not written, or written as `null`, which is a key not written.
+        return rest
+    if not isinstance(remove, bool):
+        faults.append(
+            FormFault(
+                f"`{REMOVE_KEY}` is true, to leave the member out of the panel, or false",
+                "invalid-field",
+                (*at, REMOVE_KEY),
+            )
+        )
+        return rest
+    if remove and rest:
+        faults.append(
+            FormFault(
+                f"a member with `{REMOVE_KEY}: true` is left out, so it says nothing else: "
+                f"delete {', '.join(f'`{key}`' for key in rest)}, or `{REMOVE_KEY}`",
+                "invalid-field",
+                (*at, REMOVE_KEY),
+            )
+        )
+    return None if remove else rest
+
+
+def _named(
+    items: list[Any], key: str, at: Loc, faults: list[FormFault]
+) -> dict[str, tuple[int, dict[str, Any]]]:
+    """Each item of a list form under the `id` it gives itself, with its index.
+
+    An item that is not a mapping, has no `id`, has one that is not text, or has one an
+    earlier item has, is a fault, and is left out.
+    """
+    what = _WHAT[key]
+    named: dict[str, tuple[int, dict[str, Any]]] = {}
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            faults.append(
+                FormFault(
+                    f"each {what} in the list form is a mapping that says its `{ID_KEY}`, "
+                    f"not {type(item).__name__}",
+                    "invalid-field",
+                    (*at, index),
+                )
+            )
+            continue
+        name = item.get(ID_KEY)
+        if name is None:
+            # `id: null` is a key not written, as a null always is.
+            faults.append(FormFault(_unnamed(item, key), "missing-field", (*at, index)))
+            continue
+        if not isinstance(name, str):
+            faults.append(
+                FormFault(
+                    f"a {what}'s `{ID_KEY}` is text: quote it, `{ID_KEY}: '{name}'`",
+                    "invalid-identifier",
+                    (*at, index, ID_KEY),
+                )
+            )
+            continue
+        if name in named:
+            faults.append(
+                FormFault(
+                    f"{what} '{name}' is item {named[name][0]} and item {index} of `{key}`; "
+                    f"each {what} is listed once, with everything it says",
+                    "duplicate-key",
+                    (*at, index, ID_KEY),
+                )
+            )
+            continue
+        named[name] = (index, {field: value for field, value in item.items() if field != ID_KEY})
+    return named
+
+
+def _unnamed(item: dict[str, Any], key: str) -> str:
+    """Why an item of a list form with no `id` is refused, and what to write.
+
+    `- bob: {reference: bob}` is the mapping form's entry written as an item: both forms in
+    one value. Said as such, with the item as it should be.
+    """
+    what = _WHAT[key]
+    if len(item) == 1:
+        ((name, value),) = item.items()
+        if isinstance(value, dict) and isinstance(name, str) and name not in _FIELDS[key]:
+            fields = ", ".join(f"{field}: ..." for field in value)
+            written = f"{{{ID_KEY}: {name}{', ' + fields if fields else ''}}}"
+            return (
+                f"this item is written as the mapping form writes a {what}, `{name}:` and "
+                f"what it says: in the list form, write `{written}`, or write the whole "
+                f"`{key}` as a mapping"
+            )
+    return f"each {what} in the list form says its `{ID_KEY}`"
+
+
+def as_lists(document: dict[str, Any]) -> dict[str, Any]:
+    """A document with its panels and every cast written as lists, in the order written.
+
+    The `id` comes first in each item, and a member a panel leaves out is
+    `{id: bob, remove: true}`. What `lowered` undoes.
+
+    Example:
+        >>> from scenet.compose import as_lists
+        >>> as_lists({"cast": {"a": {"reference": "alice"}, "b": None}})
+        {'cast': [{'id': 'a', 'reference': 'alice'}, {'id': 'b', 'remove': True}]}
+    """
+    result = _cast_as_list(document)
+    panels = result.get("panels")
+    if isinstance(panels, dict):
+        result["panels"] = [
+            {ID_KEY: name, **(_cast_as_list(panel) if isinstance(panel, dict) else {})}
+            for name, panel in panels.items()
+        ]
+    return result
+
+
+def _cast_as_list(document: dict[str, Any]) -> dict[str, Any]:
+    """The mapping with its `cast`, if a mapping, as a list."""
+    cast = document.get("cast")
+    if not isinstance(cast, dict) or not all(
+        member is None or isinstance(member, dict) for member in cast.values()
+    ):
+        return dict(document)
+    return {
+        **document,
+        "cast": [
+            {ID_KEY: actor, REMOVE_KEY: True} if member is None else {ID_KEY: actor, **member}
+            for actor, member in cast.items()
+        ],
+    }

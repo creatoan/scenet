@@ -139,7 +139,7 @@ LEGS: tuple[Leg, ...] = (
     Leg("frontends/script", _in("frontends/", "script_front.py"), 97, 97.5, 2312, 58, 44802722199),
     Leg(
         "frontends/common",
-        _in("frontends/", "__init__.py", "common.py", "forms.py"),
+        _in("frontends/", "__init__.py", "common.py"),
         99,
         99.3,
         556,

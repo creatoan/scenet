@@ -92,15 +92,15 @@ panels:
 
 A tool that sorts keys -- PyYAML's `dump` does unless told not to, and `json.dumps` with
 `sort_keys` -- reorders a mapping, and with it the comic, without a word. So the panels may also be
-written as a list, each saying its [`name`](#panelsname), in an order no tool reorders:
+written as a list, each saying its [`id`](#panelsid), its name, in an order no tool reorders:
 
 ```{scenet-example}
 panel: {size: [700, 500]}
 cast: [{id: alice, reference: alice}]
 panels:
-  - name: first
+  - id: first
     camera: {shot: full_shot}
-  - name: second
+  - id: second
     over: first
     camera: {shot: close_up}
 ```
@@ -111,10 +111,10 @@ the same panels, and a scene may write its panels as a list and a cast as a mapp
 form or the other: an item written as a mapping's entry, `- second: {...}`, is `missing-field`,
 with the item as it should be.
 
-## `panels[].name`
+## `panels[].id`
 
-<!-- facts: panels[].name -->
-The panel's name, in the list form of `panels`: an identifier.
+<!-- facts: panels[].id -->
+The panel's name, in the list form of `panels`: an identifier, which a page and an `over` name it by.
 
 | | |
 |---|---|
@@ -126,15 +126,16 @@ The panel's name, in the list form of `panels`: an identifier.
 <!-- /facts -->
 
 In the list form of `panels`, the name each panel gives itself, which the mapping form writes as
-its key: what a page, an `over:` and every file the panel is written to name it by. It is an
-[identifier](identifiers.md), and text: `name: 1` is `invalid-identifier`, quoted `name: '1'`. Two
-panels of one name are `duplicate-key`, at the second, which names the item of the first.
+its key: what a page, an `over:` and every file the panel is written to name it by. It is written
+`id`, as a cast member's is, so both lists name their items alike. It is an
+[identifier](identifiers.md), and text: `id: 1` is `invalid-identifier`, quoted `id: '1'`. Two
+panels of one id are `duplicate-key`, at the second, which names the item of the first.
 
 ```{scenet-example}
 cast: [{id: alice, reference: alice}]
 panels:
-  - name: one
-  - name: two
+  - id: one
+  - id: two
 pages: [{tiers: [{panels: [one, two]}]}]
 ```
 

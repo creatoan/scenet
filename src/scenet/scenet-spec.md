@@ -1368,8 +1368,8 @@ written as a list, each member saying its [`id`](#castid). The two forms are one
 is read as the mapping it stands for, before a scene's defaults and `over:` are merged, so a list
 in one panel merges per actor with a mapping in the panel it is drawn over. Each key is one form or
 the other, never a mix: a list's item written as a mapping's entry, `- bob: {reference: bob}`, is
-`missing-field`, with the item as it should be. A list has no item for nobody, so a member is left
-out with the mapping's `bob: null`.
+`missing-field`, with the item as it should be. A member a panel would inherit is left out with
+[`remove: true`](#castremove), as `bob: null` does in the mapping.
 
 ```yaml
 cast:
@@ -1426,7 +1426,41 @@ cast:
     pose: pointing
 ```
 
-**See also:** [`cast`](#cast), [`panels[].name`](#panelsname).
+**See also:** [`cast`](#cast), [`cast[].remove`](#castremove), [`panels[].id`](#panelsid).
+
+### `cast[].remove`
+
+<!-- facts: cast[].remove -->
+In the list form of `cast`, `true` leaves the member out of a panel that would inherit them, as `null` does in the mapping form; the item then says nothing but its `id`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | `0` |
+| Values | `False` |
+| Default | none: required |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field) |
+<!-- /facts -->
+
+In the list form of `cast`, `remove: true` leaves a member out of a panel that would inherit them,
+from a scene's defaults or the panel it is drawn `over`, exactly as `bob: null` does in the
+mapping form: every staging relation that names them goes too. The item says nothing else, since
+nobody is drawn; anything beside it is `invalid-field`. `remove: false`, or none, is a member like
+any other.
+
+```yaml
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third}
+panels:
+  - id: both
+  - id: alone
+    over: both
+    cast: [{id: bob, remove: true}]
+```
+
+**See also:** [`null` leaves something out](#null-leaves-something-out).
 
 ### `cast.<id>.reference`
 
@@ -3201,15 +3235,15 @@ panels:
 
 A tool that sorts keys -- PyYAML's `dump` does unless told not to, and `json.dumps` with
 `sort_keys` -- reorders a mapping, and with it the comic, without a word. So the panels may also be
-written as a list, each saying its [`name`](#panelsname), in an order no tool reorders:
+written as a list, each saying its [`id`](#panelsid), its name, in an order no tool reorders:
 
 ```yaml
 panel: {size: [700, 500]}
 cast: [{id: alice, reference: alice}]
 panels:
-  - name: first
+  - id: first
     camera: {shot: full_shot}
-  - name: second
+  - id: second
     over: first
     camera: {shot: close_up}
 ```
@@ -3220,10 +3254,10 @@ the same panels, and a scene may write its panels as a list and a cast as a mapp
 form or the other: an item written as a mapping's entry, `- second: {...}`, is `missing-field`,
 with the item as it should be.
 
-### `panels[].name`
+### `panels[].id`
 
-<!-- facts: panels[].name -->
-The panel's name, in the list form of `panels`: an identifier.
+<!-- facts: panels[].id -->
+The panel's name, in the list form of `panels`: an identifier, which a page and an `over` name it by.
 
 | | |
 |---|---|
@@ -3235,15 +3269,16 @@ The panel's name, in the list form of `panels`: an identifier.
 <!-- /facts -->
 
 In the list form of `panels`, the name each panel gives itself, which the mapping form writes as
-its key: what a page, an `over:` and every file the panel is written to name it by. It is an
-[identifier](#identifiers), and text: `name: 1` is `invalid-identifier`, quoted `name: '1'`. Two
-panels of one name are `duplicate-key`, at the second, which names the item of the first.
+its key: what a page, an `over:` and every file the panel is written to name it by. It is written
+`id`, as a cast member's is, so both lists name their items alike. It is an
+[identifier](#identifiers), and text: `id: 1` is `invalid-identifier`, quoted `id: '1'`. Two
+panels of one id are `duplicate-key`, at the second, which names the item of the first.
 
 ```yaml
 cast: [{id: alice, reference: alice}]
 panels:
-  - name: one
-  - name: two
+  - id: one
+  - id: two
 pages: [{tiers: [{panels: [one, two]}]}]
 ```
 
@@ -5907,7 +5942,7 @@ script:
 |---|---|
 | Level | error |
 | Says | An `over:` chain cannot be resolved |
-| Keys | [`over`](https://creatoan.github.io/scenet/reference/language/scene.html#over), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname) |
+| Keys | [`over`](https://creatoan.github.io/scenet/reference/language/scene.html#over), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].id`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsid) |
 | Since | 0.3 |
 
 **Why it happens.** A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
@@ -6056,7 +6091,7 @@ panels: {one: {}, two: {}}
 |---|---|
 | Level | error |
 | Says | A key is written twice in one mapping |
-| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname) |
+| Keys | Any key that holds a mapping: [`camera`](https://creatoan.github.io/scenet/reference/language/camera.html#camera), [`caption`](https://creatoan.github.io/scenet/reference/language/script.html#caption), [`lettering`](https://creatoan.github.io/scenet/reference/language/lettering.html#lettering), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`meta`](https://creatoan.github.io/scenet/reference/language/document.html#meta), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`panel`](https://creatoan.github.io/scenet/reference/language/panel.html#panel), [`say`](https://creatoan.github.io/scenet/reference/language/script.html#say), [`setting`](https://creatoan.github.io/scenet/reference/language/setting.html#setting), [`sfx`](https://creatoan.github.io/scenet/reference/language/script.html#sfx); and [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].id`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsid) |
 | Since | 0.10 |
 
 **Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues. In the list form of `panels` or `cast`, two items that give themselves one `name` or one `id` are the same key written twice.
@@ -6337,7 +6372,7 @@ cast: {alice: {reference: alice}}
 |---|---|
 | Level | error |
 | Says | An actor id or a panel name does not follow the identifier grammar |
-| Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].name`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsname), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
+| Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`panels[].id`](https://creatoan.github.io/scenet/reference/language/scene.html#panelsid), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby) |
 | Since | 0.14 |
 
 **Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. No id starts with `x-`, which marks an extension key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An id written as a value, `by:`, is text: a number there is quoted.
@@ -6453,7 +6488,7 @@ staging:
 |---|---|
 | Level | error |
 | Says | A required field is missing |
-| Keys | A required key: [`caption.text`](https://creatoan.github.io/scenet/reference/language/script.html#captiontext), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby), [`say.text`](https://creatoan.github.io/scenet/reference/language/script.html#saytext), [`setting.masses[].kind`](https://creatoan.github.io/scenet/reference/language/setting.html#settingmasseskind), [`sfx.text`](https://creatoan.github.io/scenet/reference/language/script.html#sfxtext), [`staging[].object`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingobject), [`staging[].predicate`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingpredicate), [`staging[].subject`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingsubject) |
+| Keys | A required key: [`caption.text`](https://creatoan.github.io/scenet/reference/language/script.html#captiontext), [`cast[].id`](https://creatoan.github.io/scenet/reference/language/cast.html#castid), [`cast[].remove`](https://creatoan.github.io/scenet/reference/language/cast.html#castremove), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular), [`say.by`](https://creatoan.github.io/scenet/reference/language/script.html#sayby), [`say.text`](https://creatoan.github.io/scenet/reference/language/script.html#saytext), [`setting.masses[].kind`](https://creatoan.github.io/scenet/reference/language/setting.html#settingmasseskind), [`sfx.text`](https://creatoan.github.io/scenet/reference/language/script.html#sfxtext), [`staging[].object`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingobject), [`staging[].predicate`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingpredicate), [`staging[].subject`](https://creatoan.github.io/scenet/reference/language/staging.html#stagingsubject) |
 | Since | 0.3 |
 
 **Why it happens.** The value is required and was not supplied.
@@ -8080,213 +8115,251 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       "type": "string"
     },
     "CastEntry": {
-      "additionalProperties": false,
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "reference": {
-                "type": "null"
-              }
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "reference": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "reference"
+                ]
+              },
+              "required": [
+                "reference"
+              ]
             },
-            "required": [
-              "reference"
-            ]
-          },
-          "required": [
-            "reference"
-          ]
-        },
-        {
-          "not": {
+            {
+              "not": {
+                "properties": {
+                  "figure": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "figure"
+                ]
+              },
+              "required": [
+                "figure"
+              ]
+            }
+          ],
+          "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.\n\nThe split between actor id and `reference` is what lets one puppet appear twice in a panel as two different people:\n\n.. code-block:: yaml\n\ncast: guard_left: {reference: bob, pose: arms_crossed} guard_right: {reference: bob, pose: standing_neutral, facing: left}",
+          "if": {
             "properties": {
               "figure": {
-                "type": "null"
+                "not": {
+                  "type": "null"
+                }
               }
             },
             "required": [
               "figure"
             ]
           },
-          "required": [
-            "figure"
-          ]
-        }
-      ],
-      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.",
-      "if": {
-        "properties": {
-          "figure": {
-            "not": {
-              "type": "null"
-            }
-          }
-        },
-        "required": [
-          "figure"
-        ]
-      },
-      "not": {
-        "properties": {
-          "figure": {
-            "not": {
-              "type": "null"
-            }
-          },
-          "reference": {
-            "not": {
-              "type": "null"
-            }
-          }
-        },
-        "required": [
-          "reference",
-          "figure"
-        ]
-      },
-      "patternProperties": {
-        "^x-": {
-          "description": "An extension: a key a tool writes, which Scenet ignores."
-        }
-      },
-      "properties": {
-        "at": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AnchorX"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "center",
-          "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
-        },
-        "expression": {
-          "anyOf": [
-            {
-              "type": [
-                "string",
-                "number",
-                "boolean"
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "neutral",
-          "description": "An expression the puppet declares, by name.",
-          "title": "Expression"
-        },
-        "facing": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Facing"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "right",
-          "description": "Which way the figure is turned, `left` or `right`, gaze and all."
-        },
-        "figure": {
-          "anyOf": [
-            {
-              "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
-              "type": [
-                "string",
-                "number",
-                "boolean"
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.",
-          "title": "Figure"
-        },
-        "id": {
-          "$ref": "#/$defs/Identifier",
-          "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
-        },
-        "marks": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/Mark"
+          "not": {
+            "properties": {
+              "figure": {
+                "not": {
+                  "type": "null"
+                }
               },
-              "type": "array"
+              "reference": {
+                "not": {
+                  "type": "null"
+                }
+              }
             },
-            {
-              "type": "null"
+            "required": [
+              "reference",
+              "figure"
+            ]
+          },
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
             }
+          },
+          "properties": {
+            "at": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/AnchorX"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "center",
+              "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
+            },
+            "expression": {
+              "anyOf": [
+                {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "neutral",
+              "description": "An expression the puppet declares, by name.",
+              "title": "Expression"
+            },
+            "facing": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Facing"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "right",
+              "description": "Which way the figure is turned, `left` or `right`, gaze and all."
+            },
+            "figure": {
+              "anyOf": [
+                {
+                  "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet.",
+              "title": "Figure"
+            },
+            "id": {
+              "$ref": "#/$defs/Identifier",
+              "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
+            },
+            "marks": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/Mark"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [],
+              "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.",
+              "title": "Marks"
+            },
+            "pose": {
+              "anyOf": [
+                {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "standing_neutral",
+              "description": "A pose the puppet declares, by name.",
+              "title": "Pose"
+            },
+            "reference": {
+              "anyOf": [
+                {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.",
+              "title": "Reference"
+            },
+            "remove": {
+              "anyOf": [
+                {
+                  "const": false
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "In the list form of `cast`, `true` leaves the member out of a panel that would inherit them, as `null` does in the mapping form; the item then says nothing but its `id`."
+            }
+          },
+          "required": [
+            "id"
           ],
-          "default": [],
-          "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression.",
-          "title": "Marks"
+          "then": {
+            "properties": {
+              "at": {
+                "type": "null"
+              },
+              "expression": {
+                "type": "null"
+              },
+              "facing": {
+                "type": "null"
+              },
+              "marks": {
+                "type": "null"
+              },
+              "pose": {
+                "type": "null"
+              }
+            }
+          },
+          "type": "object"
         },
-        "pose": {
-          "anyOf": [
-            {
-              "type": [
-                "string",
-                "number",
-                "boolean"
-              ]
-            },
-            {
-              "type": "null"
+        {
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {
+              "description": "An extension: a key a tool writes, which Scenet ignores."
             }
-          ],
-          "default": "standing_neutral",
-          "description": "A pose the puppet declares, by name.",
-          "title": "Pose"
-        },
-        "reference": {
-          "anyOf": [
-            {
-              "type": [
-                "string",
-                "number",
-                "boolean"
-              ]
+          },
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Identifier",
+              "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
             },
-            {
-              "type": "null"
+            "remove": {
+              "const": true,
+              "description": "In the list form of `cast`, `true` leaves the member out of a panel that would inherit them, as `null` does in the mapping form; the item then says nothing but its `id`."
             }
+          },
+          "required": [
+            "id",
+            "remove"
           ],
-          "default": null,
-          "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`.",
-          "title": "Reference"
+          "type": "object"
         }
-      },
-      "required": [
-        "id"
-      ],
-      "then": {
-        "properties": {
-          "at": {
-            "type": "null"
-          },
-          "expression": {
-            "type": "null"
-          },
-          "facing": {
-            "type": "null"
-          },
-          "marks": {
-            "type": "null"
-          },
-          "pose": {
-            "type": "null"
-          }
-        }
-      },
-      "type": "object"
+      ]
     },
     "CastMember": {
       "additionalProperties": false,

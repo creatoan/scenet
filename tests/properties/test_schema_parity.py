@@ -35,8 +35,8 @@ from jsonschema import Draft202012Validator
 from jsonschema.protocols import Validator
 from pydantic import TypeAdapter, ValidationError
 
+from scenet.compose import as_lists
 from scenet.diagnostics import RULES, diagnose_source
-from scenet.frontends.forms import as_lists
 from scenet.ir import (
     DESCRIPTION_PATTERN,
     HOLDABLE_PATTERN,

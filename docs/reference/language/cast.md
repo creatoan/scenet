@@ -23,8 +23,8 @@ written as a list, each member saying its [`id`](#castid). The two forms are one
 is read as the mapping it stands for, before a scene's defaults and `over:` are merged, so a list
 in one panel merges per actor with a mapping in the panel it is drawn over. Each key is one form or
 the other, never a mix: a list's item written as a mapping's entry, `- bob: {reference: bob}`, is
-`missing-field`, with the item as it should be. A list has no item for nobody, so a member is left
-out with the mapping's `bob: null`.
+`missing-field`, with the item as it should be. A member a panel would inherit is left out with
+[`remove: true`](#castremove), as `bob: null` does in the mapping.
 
 ```{scenet-example}
 cast:
@@ -81,7 +81,41 @@ cast:
     pose: pointing
 ```
 
-**See also:** [`cast`](#cast), [`panels[].name`](scene.md#panelsname).
+**See also:** [`cast`](#cast), [`cast[].remove`](#castremove), [`panels[].id`](scene.md#panelsid).
+
+## `cast[].remove`
+
+<!-- facts: cast[].remove -->
+In the list form of `cast`, `true` leaves the member out of a panel that would inherit them, as `null` does in the mapping form; the item then says nothing but its `id`.
+
+| | |
+|---|---|
+| Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
+| Type | `0` |
+| Values | `False` |
+| Default | none: required |
+| Since | 0.14 |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field) |
+<!-- /facts -->
+
+In the list form of `cast`, `remove: true` leaves a member out of a panel that would inherit them,
+from a scene's defaults or the panel it is drawn `over`, exactly as `bob: null` does in the
+mapping form: every staging relation that names them goes too. The item says nothing else, since
+nobody is drawn; anything beside it is `invalid-field`. `remove: false`, or none, is a member like
+any other.
+
+```{scenet-example}
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third}
+panels:
+  - id: both
+  - id: alone
+    over: both
+    cast: [{id: bob, remove: true}]
+```
+
+**See also:** [`null` leaves something out](scene.md#null-leaves-something-out).
 
 ## `cast.<id>.reference`
 

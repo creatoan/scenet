@@ -37,8 +37,7 @@ from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
 from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
-from scenet.compose import DIRECTION_KEY, NOT_DEFAULTS
-from scenet.frontends.forms import NAMING_KEYS
+from scenet.compose import DIRECTION_KEY, ID_KEY, NOT_DEFAULTS, REMOVE_KEY
 from scenet.identifiers import EXTENSION_PREFIX, GRAMMAR
 from scenet.ir import (
     IDENTIFIER_PATTERN,
@@ -284,7 +283,7 @@ def scene_schema() -> dict[str, Any]:
                 # written to, and what a page or an `over:` names it by.
                 "propertyNames": {"$ref": f"#/$defs/{IDENTIFIER}"},
                 "additionalProperties": member,
-                "items": _entries(PANEL_ENTRY, _entry(member, NAMING_KEYS["panels"]), definitions),
+                "items": _entries(PANEL_ENTRY, _entry(member, ID_KEY), definitions),
             },
         },
         "additionalProperties": False,
@@ -307,7 +306,10 @@ PANEL_ENTRY = "PanelEntry"
 #: What each item's naming key says, as its card's first line.
 _NAMING = {
     CAST_ENTRY: "The actor id of the cast member, in the list form of `cast`: an identifier.",
-    PANEL_ENTRY: "The panel's name, in the list form of `panels`: an identifier.",
+    PANEL_ENTRY: (
+        "The panel's name, in the list form of `panels`: an identifier, which a page and an "
+        "`over` name it by."
+    ),
 }
 
 
@@ -322,16 +324,16 @@ def _entry(value: dict[str, Any], naming: str) -> dict[str, Any]:
 
 
 def _entries(name: str, entry: dict[str, Any], definitions: dict[str, Any]) -> dict[str, Any]:
-    """Mirror `scenet.frontends.forms.lowered`: an item of a list form, naming itself.
+    """Mirror `scenet.compose.lowered`: an item of a list form, naming itself by its `id`.
 
     Returns:
         A reference to it, the `items` of a node that takes either form.
     """
-    naming = next(iter(entry["properties"]))
-    entry["properties"][naming] = {
-        **entry["properties"][naming],
-        "description": _NAMING[name],
-    }
+    for branch in entry.get("anyOf", [entry]):
+        branch["properties"][ID_KEY] = {
+            **branch["properties"][ID_KEY],
+            "description": _NAMING[name],
+        }
     definitions[name] = entry
     return {"$ref": f"#/$defs/{name}"}
 
@@ -340,15 +342,35 @@ def _accept_cast_list(schema: dict[str, Any], definitions: dict[str, Any]) -> No
     """Mirror `lowered`: `cast: [{id: alice, ...}]` is `cast: {alice: {...}}`.
 
     After `_accept_nulls`: lowered, an item is a mapping's value, which takes a null on any
-    key it does not require, as `settle` reads it. A list has no item for nobody, so the
-    list form leaves nobody out.
+    key it does not require, as `settle` reads it. An item is a member, or one that says
+    nothing but its `id` and `remove: true`, which leaves them out as `bob: null` does.
     """
     cast: dict[str, Any] = schema["properties"]["cast"]
-    member = definitions["CastMember"]
+    member = _entry(definitions["CastMember"], ID_KEY)
+    member["properties"][REMOVE_KEY] = {
+        "description": REMOVE_MEANS,
+        "anyOf": [{"const": False}, {"type": "null"}],
+    }
+    removal = {
+        "type": "object",
+        "properties": {
+            ID_KEY: {"$ref": f"#/$defs/{IDENTIFIER}"},
+            REMOVE_KEY: {"description": REMOVE_MEANS, "const": True},
+        },
+        "required": [ID_KEY, REMOVE_KEY],
+        "additionalProperties": False,
+    }
     # The mapping's own node takes the list too, as `panels` does in a scene.
     mapping = next(branch for branch in cast["anyOf"] if branch.get("type") == "object")
     mapping["type"] = ["object", "array"]
-    mapping["items"] = _entries(CAST_ENTRY, _entry(member, NAMING_KEYS["cast"]), definitions)
+    mapping["items"] = _entries(CAST_ENTRY, {"anyOf": [member, removal]}, definitions)
+
+
+#: What `remove` says, as its card's first line.
+REMOVE_MEANS = (
+    "In the list form of `cast`, `true` leaves the member out of a panel that would inherit "
+    "them, as `null` does in the mapping form; the item then says nothing but its `id`."
+)
 
 
 def _with_head(schema: dict[str, Any], model: type[AssetHead], definitions: dict[str, Any]) -> None:
@@ -846,8 +868,7 @@ def _inheritable(node: dict[str, Any], definitions: dict[str, Any]) -> dict[str,
         # An item of a list form is a mapping's value once lowered, so it may be stated in
         # part as one may -- but for the name it gives itself.
         partial = _partial_definition(entry, definitions)
-        naming = next(iter(definitions[entry]["properties"]))
-        definitions[partial]["required"] = [naming]
+        definitions[partial]["required"] = [ID_KEY]
         loosened["items"] = {"$ref": f"#/$defs/{partial}"}
     if "properties" in node:
         loosened["properties"] = {

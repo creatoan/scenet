@@ -1,0 +1,4 @@
+# `remove: true` leaves a member out, so the item says nothing else.
+cast:
+  - {id: alice, reference: alice}
+  - {id: bob, remove: true, pose: pointing}

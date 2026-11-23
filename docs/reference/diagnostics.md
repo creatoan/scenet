@@ -210,7 +210,7 @@ script:
 |---|---|
 | Level | error |
 | Says | An `over:` chain cannot be resolved |
-| Keys | [`over`](language/scene.md#over), [`panels`](language/scene.md#panels), [`panels[].name`](language/scene.md#panelsname) |
+| Keys | [`over`](language/scene.md#over), [`panels`](language/scene.md#panels), [`panels[].id`](language/scene.md#panelsid) |
 | Since | 0.3 |
 
 **Why it happens.** A panel inherits from one that does not exist, or the chain is cyclic and so has no fixed point to resolve to.
@@ -379,7 +379,7 @@ panels: {one: {}, two: {}}
 |---|---|
 | Level | error |
 | Says | A key is written twice in one mapping |
-| Keys | Any key that holds a mapping: [`camera`](language/camera.md#camera), [`caption`](language/script.md#caption), [`lettering`](language/lettering.md#lettering), [`lettering.font`](language/lettering.md#letteringfont), [`meta`](language/document.md#meta), [`page`](language/page.md#page), [`panel`](language/panel.md#panel), [`say`](language/script.md#say), [`setting`](language/setting.md#setting), [`sfx`](language/script.md#sfx); and [`cast[].id`](language/cast.md#castid), [`panels`](language/scene.md#panels), [`panels[].name`](language/scene.md#panelsname) |
+| Keys | Any key that holds a mapping: [`camera`](language/camera.md#camera), [`caption`](language/script.md#caption), [`lettering`](language/lettering.md#lettering), [`lettering.font`](language/lettering.md#letteringfont), [`meta`](language/document.md#meta), [`page`](language/page.md#page), [`panel`](language/panel.md#panel), [`say`](language/script.md#say), [`setting`](language/setting.md#setting), [`sfx`](language/script.md#sfx); and [`cast[].id`](language/cast.md#castid), [`panels`](language/scene.md#panels), [`panels[].id`](language/scene.md#panelsid) |
 | Since | 0.10 |
 
 **Why it happens.** YAML requires every key in a mapping to be unique, but the parser Scenet reads it with builds the document anyway and keeps only the last value -- so a panel, a cast member or a pose written twice would lose the first without a word, and the rest would compile. Keys are compared as written, so `1` and `1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same goes for a directive written twice in one panel, and for an `@script:` directive, which would replace the panel's cues. In the list form of `panels` or `cast`, two items that give themselves one `name` or one `id` are the same key written twice.
@@ -699,7 +699,7 @@ cast: {alice: {reference: alice}}
 |---|---|
 | Level | error |
 | Says | An actor id or a panel name does not follow the identifier grammar |
-| Keys | [`cast`](language/cast.md#cast), [`cast[].id`](language/cast.md#castid), [`panels`](language/scene.md#panels), [`panels[].name`](language/scene.md#panelsname), [`say.by`](language/script.md#sayby) |
+| Keys | [`cast`](language/cast.md#cast), [`cast[].id`](language/cast.md#castid), [`panels`](language/scene.md#panels), [`panels[].id`](language/scene.md#panelsid), [`say.by`](language/script.md#sayby) |
 | Since | 0.14 |
 
 **Why it happens.** An actor id and a panel name are one to 64 letters, digits, `_` and `-`, with the marks that accent a letter, and start with a letter or a digit: `alice`, `Zoé`, `健`, `2-1`. A space would split a staging sentence, and a panel's name becomes part of a file name. `.`, `/`, `:`, `#` and `@` are reserved for references between documents, `chapter/panel` and `file#panel`. So are the words a staging sentence reads as its verb (`left_of`, `looking_at`, ...) and a comic script reads as a caption or a sound effect (`CAP`, `CAPTION`, `SFX`, and their French twins), in any case. No id starts with `x-`, which marks an extension key: under `cast:` or `panels:`, one is ignored, never an actor or a panel. An id written as a value, `by:`, is text: a number there is quoted.
@@ -830,7 +830,7 @@ staging:
 |---|---|
 | Level | error |
 | Says | A required field is missing |
-| Keys | A required key: [`caption.text`](language/script.md#captiontext), [`cast[].id`](language/cast.md#castid), [`lettering.font.regular`](language/lettering.md#letteringfontregular), [`say.by`](language/script.md#sayby), [`say.text`](language/script.md#saytext), [`setting.masses[].kind`](language/setting.md#settingmasseskind), [`sfx.text`](language/script.md#sfxtext), [`staging[].object`](language/staging.md#stagingobject), [`staging[].predicate`](language/staging.md#stagingpredicate), [`staging[].subject`](language/staging.md#stagingsubject) |
+| Keys | A required key: [`caption.text`](language/script.md#captiontext), [`cast[].id`](language/cast.md#castid), [`cast[].remove`](language/cast.md#castremove), [`lettering.font.regular`](language/lettering.md#letteringfontregular), [`say.by`](language/script.md#sayby), [`say.text`](language/script.md#saytext), [`setting.masses[].kind`](language/setting.md#settingmasseskind), [`sfx.text`](language/script.md#sfxtext), [`staging[].object`](language/staging.md#stagingobject), [`staging[].predicate`](language/staging.md#stagingpredicate), [`staging[].subject`](language/staging.md#stagingsubject) |
 | Since | 0.3 |
 
 **Why it happens.** The value is required and was not supplied.

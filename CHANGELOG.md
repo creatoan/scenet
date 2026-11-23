@@ -41,15 +41,18 @@ it is written, and says what to write instead.
   returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
 - **`panels` and `cast` may be written as lists** (#356), so that no tool that sorts keys can
-  reorder a comic: `panels: [{name: street, ...}, {name: close, over: street}]` and
+  reorder a comic: `panels: [{id: street, ...}, {id: close, over: street}]` and
   `cast: [{id: alice, reference: alice}]`, in a scene, a panel, a comic script's front matter
-  and its `@cast:`. A list is read as the mapping it stands for before `over:` and a scene's
-  defaults are merged, so the two forms build the same Core, and a list in one panel merges per
-  actor with a mapping in the panel beneath it. Two items of one `name` or `id` are
-  `duplicate-key`, at the second; a mapping's entry written as an item, `- bob: {...}`, is
-  `missing-field` with the item as it should be. The JSON Schemas take both forms. The language
-  reference now says what was always true: the order of `panels` is the reading order, and the
-  first of the cast is the one the camera frames.
+  and its `@cast:`. Both lists name their items by `id`, and `{id: bob, remove: true}` leaves a
+  member out as `bob: null` does. A list is lowered to the mapping it stands for before `over:`
+  and a scene's defaults are merged, one value at a time, so the two forms build the same Core
+  and a list in one panel merges per actor with a mapping in the panel beneath it; one font file,
+  a place and a staging sentence still stand for their whole value, as before (#432). A finding
+  in a list names the item as written, `cast[2].at`. Two items of one `id` are `duplicate-key`,
+  at the second; a mapping's entry written as an item, `- bob: {...}`, is `missing-field` with
+  the item as it should be. The JSON Schemas take both forms. The language reference now says
+  what was always true: the order of `panels` is the reading order, and the first of the cast is
+  the one the camera frames.
 - **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
   each end in a job that calls `.github/workflows/scheduled-report.yml`: a failure opens an issue
   titled `Scheduled run failed: <workflow>`, a further one comments on it, and the next success

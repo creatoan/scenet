@@ -82,7 +82,7 @@ DOCUMENT_TOP = ("kind", "include", "defaults")
 #: An item of a list form (#356), by its definition: the model the mapping form's value is,
 #: whose keys it holds and shares a card with, and the key it names itself by, which has a
 #: card of its own.
-ENTRIES = {"CastEntry": ("CastMember", "id"), "PanelEntry": ("Panel", "name")}
+ENTRIES = {"CastEntry": ("CastMember", "id"), "PanelEntry": ("Panel", "id")}
 
 #: Keys that hold a mapping of anything, whose keys no rule says are unknown.
 FREE_MAPPINGS = ("meta",)
@@ -224,7 +224,7 @@ class Card:
         """The page of `docs/reference/language/` the card is on."""
         if self.family in PAGE_OF_FAMILY:
             return PAGE_OF_FAMILY[self.family]
-        if self.name in ("panels", "over", "panels[].name"):
+        if self.name in ("panels", "over", "panels[].id"):
             return "scene"
         word = re.split(r"[.\[]", self.name, maxsplit=1)[0]
         return PAGE_OF_WORD.get(word, "page" if word == "panels" else word)
@@ -549,8 +549,9 @@ DIAGNOSTICS: dict[str, tuple[str, ...]] = {
     "insets[].scale": ("page-layout", "inset-covers-face"),
     "insets[].at": ("inset-covers-face",),
     "panels": ("invalid-identifier", "duplicate-key", "composition"),
-    "panels[].name": ("invalid-identifier", "duplicate-key", "composition"),
+    "panels[].id": ("invalid-identifier", "duplicate-key", "composition"),
     "cast[].id": ("invalid-identifier", "duplicate-key"),
+    "cast[].remove": ("invalid-field",),
     "over": ("composition",),
     "scenet": ("language-version",),
     "kind": ("document-kind", "not-yet"),
