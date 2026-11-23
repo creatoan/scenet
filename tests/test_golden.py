@@ -241,7 +241,12 @@ class TestThePathChangesNothing:
                 ]
             )
         assert status == 0
-        return {path.name: path.read_bytes() for path in sorted(out.iterdir())}
+        # The pictures the SVGs link are copied beside them, in their folder (#460).
+        return {
+            path.relative_to(out).as_posix(): path.read_bytes()
+            for path in sorted(out.rglob("*"))
+            if path.is_file()
+        }
 
     @pytest.mark.parametrize("name", SOURCES)
     def test_relative_absolute_and_elsewhere_write_the_same_bytes(self, tmp_path: Path, name: str):
