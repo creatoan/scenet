@@ -504,11 +504,29 @@ class TestCommand:
 
     def test_stdio_is_the_default(self, runs: list[tuple[str, dict[str, Any]]]):
         assert main(["mcp"]) == 0
-        assert runs == [("stdio", {})]
+        assert runs == [("stdio", {"timeout": 60.0})]
 
     def test_streamable_http_takes_a_host_and_port(self, runs: list[tuple[str, dict[str, Any]]]):
         assert main(["mcp", "--transport", "streamable-http", "--port", "9123"]) == 0
-        assert runs == [("streamable-http", {"host": "127.0.0.1", "port": 9123})]
+        assert runs == [
+            ("streamable-http", {"host": "127.0.0.1", "port": 9123, "timeout": 60.0, "origins": ()})
+        ]
+
+    def test_a_timeout_and_origins_are_passed_on(self, runs: list[tuple[str, dict[str, Any]]]):
+        argv = ["mcp", "--transport", "streamable-http", "--timeout", "2.5"]
+        argv += ["--allow-origin", "http://localhost:6274", "--allow-origin", "http://a.test"]
+        assert main(argv) == 0
+        assert runs[0][1]["timeout"] == 2.5
+        assert runs[0][1]["origins"] == ("http://localhost:6274", "http://a.test")
+
+    @pytest.mark.parametrize("seconds", ["0", "-1", "inf", "nan", "soon"])
+    def test_a_timeout_is_seconds_above_nought(
+        self, seconds: str, capsys: pytest.CaptureFixture[str]
+    ):
+        with pytest.raises(SystemExit) as caught:
+            main(["mcp", "--timeout", seconds])
+        assert caught.value.code == 2
+        assert "is not a number of seconds above 0" in capsys.readouterr().err
 
     def test_sse_is_not_offered(self, capsys: pytest.CaptureFixture[str]):
         """SSE is deprecated in the protocol; Streamable HTTP replaced it."""
@@ -553,9 +571,22 @@ class TestServeCallsTheSdk:
             def run(self, transport: str, **options: Any) -> None:
                 started.append((transport, options))
 
-        monkeypatch.setattr(scenet_mcp, "build_server", Recorder)
+        recorder = Recorder()
+
+        def build(**_options: object) -> Recorder:
+            return recorder
+
+        monkeypatch.setattr(scenet_mcp, "build_server", build)
+        scenet_mcp.serve("stdio")
         scenet_mcp.serve("streamable-http", host="127.0.0.1", port=8000)
-        assert started == [("streamable-http", {"host": "127.0.0.1", "port": 8000})]
+        assert started[0] == ("stdio", {})
+        transport, options = started[1]
+        assert transport == "streamable-http"
+        assert (options["host"], options["port"], options["stateless_http"]) == (
+            "127.0.0.1",
+            8000,
+            True,
+        )
 
 
 class TestRegistryManifest:

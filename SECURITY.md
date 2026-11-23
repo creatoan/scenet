@@ -43,11 +43,22 @@ reaches the network. What it reads and what it serves:
   message quotes what a file the document names holds.
 - **`scenet build --watch`** reads the same files again whenever they change, and nothing else.
 - **`scenet mcp`**, the MCP server, an optional extra. On stdio it talks only to the client
-  that launched it. `scenet mcp --transport streamable-http` listens on the network: on
-  `127.0.0.1` by default, or on whatever `--host` names, **with no authentication**. Put it
-  behind something that provides authentication before exposing it beyond the machine. Its
-  tools take a document as text, and the files it names as base64 in `files`; they read
-  those in memory and never read or write a folder of the server's.
+  that launched it. Its tools take a document as text, and the files it names as base64 in
+  `files`; they read those in memory and never read or write a folder of the server's, which
+  a test holds. On either transport each tool call runs in a worker process, stopped when it
+  runs past `--timeout` (60 seconds by default) or its client cancels it, so no call occupies
+  the server for longer. Over HTTP, `scenet mcp --transport streamable-http` guarantees:
+  - it listens on a loopback address, `127.0.0.1` by default; any other `--host` is refused
+    without `--allow-remote`;
+  - it answers only a `Host` that names it and an `Origin` of its own, at its own port, and
+    refuses any other with 421 or 403, so no web page reaches it by DNS rebinding;
+    `--allow-origin` adds an origin for a client in a browser;
+  - it refuses a request body over 16 MiB with 413, before reading it;
+  - it keeps no session.
+
+  What it does not do, and an operator who exposes it beyond the machine must add in front of
+  it: **authentication**, **encryption** (TLS), and a limit on how many requests one client
+  may send.
 - **The playground** runs the compiler in the reader's browser, under Pyodide. It has no
   server.
 
@@ -63,7 +74,8 @@ The realistic risks are therefore:
 - **Denial of service.** A crafted document could in principle drive the constraint solver,
   balloon placement or a comic script's line patterns into pathological running time; 0.11.1
   fixed patterns that backtracked. Inputs causing runaway CPU or memory use are in scope,
-  over MCP above all, where one request costs the server rather than its sender.
+  over MCP above all, where one request costs the server rather than its sender: a call that
+  outlives `--timeout`, or keeps its worker busy once stopped, is a bug.
 - **Output injection.** Dialogue text is escaped before it is emitted into SVG. An input that
   escapes its context and injects markup or script into a generated SVG, or into a PDF, is a
   real vulnerability, since SVG files are frequently opened in browsers.

@@ -16,6 +16,14 @@ it is written, and says what to write instead.
 
 ### Added
 
+- **`scenet mcp` bounds every tool call** (#380): each runs in a worker process, stopped once it
+  has run for `--timeout` seconds (60 by default) or its client cancels it, so a 400-word
+  balloon no longer occupies the server for minutes after its client gave up. A failed compile
+  is explained within the same time, by the cheap check first. Over HTTP, a request body over
+  16 MiB is refused with 413, an `Origin` other than the server's own at its own port with 403
+  (`--allow-origin` adds one), and no session is kept. `--allow-remote` is needed to listen
+  beyond this machine; `SECURITY.md` says what an operator must add in front of it.
+
 - **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
   each end in a job that calls `.github/workflows/scheduled-report.yml`: a failure opens an issue
   titled `Scheduled run failed: <workflow>`, a further one comments on it, and the next success
@@ -46,6 +54,12 @@ it is written, and says what to write instead.
   and keeps serving. The exit codes are listed in the command-line reference.
 
 ### Changed (breaking)
+
+- **`scenet mcp --host` beyond this machine needs `--allow-remote`** (#380). A `--host` that is
+  not a loopback address, `0.0.0.0` say, is a usage error without it, since the server has no
+  authentication. The origins it answers are its own, at its own port: a page served from
+  another local port is refused unless `--allow-origin` names it. `scenet.mcp.serve` takes
+  `host`, `port`, `timeout` and `origins` by keyword.
 
 - **Every file a document names must be inside its root** (#379, #432). The root is the folder
   `--root` or `root=` names; else the nearest folder at or above the document's that holds a

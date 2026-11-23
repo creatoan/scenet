@@ -660,7 +660,7 @@ The output is sorted and indented, so it is stable under version control.
 *Since 0.8.*
 
 ```
-scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT]
+scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT] [--allow-remote] [--allow-origin ORIGIN] [--timeout SECONDS]
 ```
 
 Runs an [MCP](https://modelcontextprotocol.io/) server whose tools read the specification,
@@ -686,15 +686,39 @@ without the extra.
 `--transport streamable-http`
 : Listens for remote clients over
   [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports).
-  There is no authentication, so put it behind something that provides it before
+  It keeps no session: a request needs no session id. It answers only a `Host` that names it
+  and an `Origin` of its own — `http://localhost`, `http://127.0.0.1` or `http://[::1]` at its
+  own port — refusing any other with 421 and 403, so no web page reaches it by DNS rebinding.
+  A request body over 16 MiB is refused with 413 before it is read. There is no
+  authentication and no encryption, so put it behind something that provides both before
   exposing it beyond your own machine. SSE is not offered: the protocol deprecated it in
   favour of Streamable HTTP.
   *Since 0.8.*
 
 `--host HOST`, `--port PORT`
 : Where Streamable HTTP listens. Defaults to `127.0.0.1` and `8000`, so it is reachable
-  only from the same machine unless you say otherwise.
+  only from the same machine. A `HOST` that is not a loopback address is a usage error, exit
+  2, without `--allow-remote`.
   *Since 0.8.*
+
+`--allow-remote`
+: Let Streamable HTTP listen beyond this machine, on a `--host` such as `0.0.0.0`. The server
+  has no authentication and no encryption: put something that provides both in front of it
+  first. A reverse proxy on the same machine needs no such flag; it reaches the server on
+  `127.0.0.1`.
+  *Since 0.14.*
+
+`--allow-origin ORIGIN`
+: An `Origin` a client running in a browser may call Streamable HTTP from, such as
+  `http://localhost:6274`, beyond the server's own. May be given more than once.
+  *Since 0.14.*
+
+`--timeout SECONDS`
+: The most seconds one tool call may take, on either transport; 60 by default. Each call runs
+  in a worker process, which is stopped — killed, so its work stops too — when the time is
+  up or the client cancels the call. The call is answered with an error, and the server goes
+  on serving. A worker's start is not counted.
+  *Since 0.14.*
 
 ### Exit status
 
@@ -710,6 +734,8 @@ without the extra.
 scenet mcp
 scenet mcp --transport streamable-http --port 8765
 scenet mcp --transport streamable-http --host 127.0.0.1 --port 8765
+scenet mcp --transport streamable-http --allow-origin http://localhost:6274 --timeout 30
+scenet mcp --transport streamable-http --host 0.0.0.0 --allow-remote
 ```
 
 ## `scenet --version`

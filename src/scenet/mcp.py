@@ -19,10 +19,11 @@ Install it with the extra, and start it with the `scenet mcp` command:
 Built on the official `mcp <https://github.com/modelcontextprotocol/python-sdk>`__
 package, which already speaks protocol revision 2026-07-28 -- the stateless core, the
 extensions framework, cacheable list results -- and adds nothing FastMCP would have to
-supply. It is an extra rather than a dependency because it brings an HTTP stack the
-compiler has no use for: the browser playground installs the base wheel into Pyodide,
-and someone who only wants `scenet build` should not have to put Starlette through
-their own licence review.
+supply. Over HTTP the server keeps no session either: a request needs no session id, as
+the revision that removed protocol-level sessions says. It is an extra rather than a
+dependency because it brings an HTTP stack the compiler has no use for: the browser
+playground installs the base wheel into Pyodide, and someone who only wants `scenet build`
+should not have to put Starlette through their own licence review.
 
 Transports are stdio and Streamable HTTP. Not SSE: the protocol has deprecated it, and
 Streamable HTTP replaced it.
@@ -51,6 +52,24 @@ its own -- is sent with it: `files` maps the path the document writes to the fil
 bytes, in base64. They stand in for the document's folder and are read in memory; the
 server never reads a folder of its own, and never writes one.
 
+.. rubric:: Bounded, and local unless told otherwise
+
+Over HTTP the server listens on this machine alone unless `scenet mcp --allow-remote` says
+otherwise. A `Host` it does not serve is refused with 421, and an `Origin` other than its own
+-- `http://localhost` at its own port -- with 403, so no web page can reach it by DNS
+rebinding; `--allow-origin` adds one, for a client that runs in a browser. A request body
+over :data:`MAX_REQUEST_BYTES <scenet.mcp.MAX_REQUEST_BYTES>` is refused with 413 before it
+is read. It authenticates nobody and encrypts nothing: that is for whatever is put in front
+of it.
+
+On either transport, `scenet mcp` runs each tool call in a worker process of its own, and
+stops it -- the process is killed, so its work stops too -- once it has run for
+:data:`DEFAULT_TIMEOUT <scenet.mcp.DEFAULT_TIMEOUT>` seconds or `--timeout`, or once the
+client cancels it; the call is answered with an error, and the server goes on serving. A
+thread could not be stopped: the work of a call its client had given up on would go on
+taking the server's processor. :func:`build_server <scenet.mcp.build_server>` runs calls in
+process unless given a `timeout`.
+
 .. rubric:: Keeping stdout clean
 
 On stdio, stdout *is* the protocol stream, and one stray line corrupts it. That is why
@@ -63,16 +82,22 @@ against the installed command to make sure neither ever matters.
 
 import base64
 import binascii
+import functools
 import inspect
 import json
 import logging
+import multiprocessing
 import re
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Sequence
+from multiprocessing.connection import Connection
 from typing import Annotated, Any, Literal
 
+import anyio
+from anyio import to_thread
 from mcp.server import MCPServer
 from mcp.server.mcpserver import Context
 from mcp.server.mcpserver.exceptions import ToolError, UnexpectedToolError
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import (
     CallToolResult,
     EmbeddedResource,
@@ -104,6 +129,8 @@ from scenet.pipeline import Book, compile_book, compile_script
 from scenet.spec_pack import part
 
 __all__ = [
+    "DEFAULT_TIMEOUT",
+    "MAX_REQUEST_BYTES",
     "CompileReport",
     "CompiledPage",
     "CompiledPanel",
@@ -122,6 +149,17 @@ __all__ = [
 
 #: The documentation site, which the server names as its website.
 WEBSITE = "https://creatoan.github.io/scenet/"
+
+#: The most seconds one tool call may take, unless `scenet mcp --timeout` says otherwise:
+#: well past what any document a person writes takes, and short of a client giving up.
+DEFAULT_TIMEOUT = 60.0
+
+#: How many tool calls run at once; a further one waits for a free worker.
+WORKERS = 4
+
+#: The largest HTTP request body accepted: a document and the files it names, in base64,
+#: which makes a 12 MiB picture about 16 MiB. A bigger one is refused with 413, unread.
+MAX_REQUEST_BYTES = 16 * 2**20
 
 #: What a client is told when it connects. Many hosts hand this straight to the model,
 #: so it says what to do first rather than what the server is.
@@ -576,11 +614,16 @@ class _Server(MCPServer[Any]):
             raise ToolError(describe_failure(crash)) from crash
 
 
-def build_server() -> MCPServer[Any]:
+def build_server(*, timeout: float | None = None) -> MCPServer[Any]:
     """Build the server with every tool registered, without starting it.
 
     Separate from :func:`serve <scenet.mcp.serve>` so that a test, or a host embedding
     Scenet in a server of its own, can connect to it in process.
+
+    Args:
+        timeout: The most seconds one tool call may take. Given, each call runs in a
+            worker process that is stopped once it runs past it, or once the client
+            cancels it. `None`, the default, runs every call in process, unbounded.
 
     Returns:
         The server, ready to run on any transport.
@@ -592,22 +635,173 @@ def build_server() -> MCPServer[Any]:
         instructions=INSTRUCTIONS,
         website_url=WEBSITE,
     )
+    workers = None if timeout is None else _Workers(timeout)
     for name, title, function in TOOLS:
+        run = function if workers is None else _bounded(name, function, workers)
         server.tool(name=name, title=title, description=_describe(function), annotations=READ_ONLY)(
-            function
+            run
         )
     return server
 
 
-def serve(transport: Literal["stdio", "streamable-http"], **options: Any) -> None:  # noqa: ANN401
+def serve(
+    transport: Literal["stdio", "streamable-http"],
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    timeout: float = DEFAULT_TIMEOUT,
+    origins: Sequence[str] = (),
+) -> None:
     """Run the server until the client disconnects.
+
+    Over Streamable HTTP it keeps no session, refuses a body over
+    :data:`MAX_REQUEST_BYTES`, and serves only a `Host` naming it and an `Origin` of its own
+    -- or one of `origins`. Whether it may listen beyond this machine is the caller's to
+    decide: `scenet mcp` refuses to without `--allow-remote`.
 
     Args:
         transport: `stdio` for a local client that launches the server itself, or
             `streamable-http` to listen for remote ones.
-        **options: Passed to the transport: `host` and `port` for Streamable HTTP.
+        host: Where Streamable HTTP listens.
+        port: Its port.
+        timeout: The most seconds one tool call may take.
+        origins: Origins a browser client may call from, beyond the server's own.
     """
-    build_server().run(transport, **options)
+    server = build_server(timeout=timeout)
+    if transport == "stdio":
+        server.run("stdio")
+        return
+    server.run(
+        "streamable-http",
+        host=host,
+        port=port,
+        stateless_http=True,
+        max_request_body_size=MAX_REQUEST_BYTES,
+        transport_security=_security(host, port, origins),
+    )
+
+
+def _security(host: str, port: int, origins: Sequence[str]) -> TransportSecuritySettings:
+    """Which `Host` and `Origin` headers the server answers: its own, at its own port.
+
+    The SDK's own default for a local server accepts an `Origin` of `http://localhost` at
+    any port, which is any local web page; here it is the server's port alone, and whatever
+    `origins` adds.
+    """
+    local = ["127.0.0.1", "localhost", "[::1]"]
+    named = f"[{host}]" if ":" in host else host
+    hosts = [*local, *([] if named in local else [named])]
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=[f"{name}:{port}" for name in hosts],
+        allowed_origins=[*(f"http://{name}:{port}" for name in local), *origins],
+    )
+
+
+def _bounded(
+    name: str, function: Callable[..., Any], workers: "_Workers"
+) -> Callable[..., Awaitable[Any]]:
+    """A tool that runs `function` in a worker, with its signature, so its schema is its own."""
+
+    @functools.wraps(function)
+    async def call(**arguments: Any) -> Any:  # noqa: ANN401 -- whatever the tool returns
+        return await workers.call(name, arguments)
+
+    return call
+
+
+class _Worker:
+    """One process that runs tool calls, one at a time, until it is stopped."""
+
+    def __init__(self) -> None:
+        context = multiprocessing.get_context("spawn")
+        self._connection, theirs = context.Pipe()
+        self._process = context.Process(target=_serve_calls, args=(theirs,), daemon=True)
+        self._process.start()
+        theirs.close()
+        self._ready = False
+
+    async def ready(self) -> None:
+        """Wait until it has started, imported the compiler and read the shipped files.
+
+        Not part of any call's time: a call is timed from when a worker can take it.
+        """
+        if not self._ready:
+            await to_thread.run_sync(self._connection.recv, abandon_on_cancel=True)
+            self._ready = True
+
+    async def run(self, name: str, arguments: dict[str, Any]) -> tuple[str, Any]:
+        """Send one call, and wait, without holding the event loop, for what came of it."""
+        self._connection.send((name, arguments))
+        return await to_thread.run_sync(self._connection.recv, abandon_on_cancel=True)
+
+    def stop(self) -> None:
+        """Kill the process, whatever it is doing."""
+        self._process.kill()
+        self._process.join()
+        self._connection.close()
+
+
+class _Workers:
+    """Tool calls in worker processes: at most `WORKERS` at once, each bounded in time."""
+
+    def __init__(self, timeout: float) -> None:
+        self.timeout = timeout
+        self._idle: list[_Worker] = []
+        self._slots = anyio.CapacityLimiter(WORKERS)
+
+    async def call(self, name: str, arguments: dict[str, Any]) -> Any:  # noqa: ANN401
+        async with self._slots:
+            worker = self._idle.pop() if self._idle else _Worker()
+            try:
+                await worker.ready()
+                with anyio.fail_after(self.timeout):
+                    outcome, value = await worker.run(name, arguments)
+            except TimeoutError:
+                worker.stop()
+                # The next call should not wait for a worker to start: one starts now.
+                self._idle.append(_Worker())
+                raise ToolError(
+                    f"the call took longer than {self.timeout:g} seconds, the most this server "
+                    "gives one, and was stopped; a balloon of hundreds of words is the usual "
+                    "cause: shorten it, or split it into several"
+                ) from None
+            except BaseException:
+                # Cancelled by the client, or the server is stopping: the work stops too.
+                worker.stop()
+                raise
+            self._idle.append(worker)
+        if outcome != "done":
+            raise ToolError(value)
+        return value
+
+
+#: A panel whose compile reads every shipped file a first call would.
+_WARM = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
+
+
+def _serve_calls(connection: Connection) -> None:
+    """A worker's loop: run each call it is sent, and send back what came of it.
+
+    A tool's own error comes back as its message; any other failure as the line the
+    command line prints for one, since an exception need not survive the trip back.
+    """
+    functions = {name: function for name, _, function in TOOLS}
+    # The first compile in a process reads the shipped fonts and puppets: done here, before
+    # the worker says it is ready, so that no call's time is spent on it.
+    compile_book(_WARM)
+    connection.send(("ready", None))
+    while True:
+        try:
+            name, arguments = connection.recv()
+        except EOFError:
+            return
+        try:
+            connection.send(("done", functions[name](**arguments)))
+        except ToolError as exc:
+            connection.send(("error", str(exc)))
+        except Exception as exc:
+            connection.send(("crash", describe_failure(exc)))
 
 
 def _describe(function: Callable[..., Any]) -> str:
@@ -676,9 +870,13 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
         return compile_script(source, library=library, base=files)
     except ScenetError as exc:
         # Only errors explain a failure: a note is a house limit the document can exceed.
+        # The cheap check first, which costs no compile: only a document it finds clean
+        # pays for the deep one. Either runs in the same worker, under the same clock, as
+        # the compile that failed.
         found = [
             item
-            for item in _diagnose(source, syntax, deep=True, files=files)
+            for deep in (False, True)
+            for item in _diagnose(source, syntax, deep=deep, files=files)
             if item.level == "error"
         ]
         if not found:

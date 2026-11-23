@@ -130,6 +130,37 @@ either: `list_puppets` given the same `files` describes it. Figures have no tool
 which keeps the server at five: their names are the contract's, and `get_spec`'s characters part
 says where they come from.
 
+## Bounds and transport security
+
+Each tool call runs in a worker process of its own and is stopped — the process is killed, so
+the work stops too — once it has run for `scenet mcp --timeout` seconds, 60 by default, or once
+its client cancels it. The call is answered with an error that says so, and the server goes on
+serving; the next call has a fresh worker, and a worker's start is not counted in any call's
+time. A call that fails to compile is explained by the same worker, under the same clock: the
+cheap check first, and the deep one only when the cheap one finds nothing. At most four calls
+run at once; a further one waits for a free worker. `build_server()` runs calls in process
+unless given `timeout=`.
+
+Over Streamable HTTP the server:
+
+- keeps no session, as revision 2026-07-28 removed protocol-level sessions: a request needs no
+  `Mcp-Session-Id`;
+- listens on a loopback address unless `--allow-remote` says otherwise;
+- answers only a `Host` that names it, and refuses any other with 421;
+- answers only an `Origin` of its own — `http://localhost`, `http://127.0.0.1` or
+  `http://[::1]` at its own port — or one `--allow-origin` names, and refuses any other with
+  403, as the specification requires of every server, so that no web page reaches it by DNS
+  rebinding. A request with no `Origin`, which no browser sends, is answered;
+- refuses a request body over 16 MiB with 413, before reading it.
+
+It authenticates nobody and encrypts nothing. Expose it beyond the machine only behind something
+that does both: a reverse proxy on the same machine reaches it on `127.0.0.1` and needs no
+`--allow-remote`.
+
+A document sent to the server, and the files it names, are read in memory: no tool reads or
+writes the server's file system, and a path in either that climbs out of the files sent is
+refused like any other path that leaves its root.
+
 ## Keeping stdout clean
 
 On the stdio transport, stdout *is* the protocol stream, and one stray line corrupts it. Nothing

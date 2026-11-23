@@ -2,6 +2,7 @@
 
 import argparse
 import importlib
+import ipaddress
 import json
 import os
 import posixpath
@@ -287,7 +288,44 @@ def build_parser() -> argparse.ArgumentParser:
         "--host", default="127.0.0.1", help="address to listen on, for streamable-http"
     )
     mcp.add_argument("--port", type=int, default=8000, help="port, for streamable-http")
+    mcp.add_argument(
+        "--allow-remote",
+        action="store_true",
+        help=(
+            "let streamable-http listen beyond this machine, on a --host that is not a "
+            "loopback address; the server has no authentication and no encryption, so put "
+            "something that provides both in front of it first"
+        ),
+    )
+    mcp.add_argument(
+        "--allow-origin",
+        action="append",
+        default=[],
+        metavar="ORIGIN",
+        help=(
+            "an Origin a browser client may call streamable-http from, such as "
+            "http://localhost:6274, beyond the server's own; may be repeated"
+        ),
+    )
+    mcp.add_argument(
+        "--timeout",
+        type=_seconds,
+        default=None,
+        metavar="SECONDS",
+        help="the most seconds one tool call may take before it is stopped (default: 60)",
+    )
     return parser
+
+
+def _seconds(written: str) -> float:
+    """A number of seconds greater than nought, for `--timeout`."""
+    try:
+        seconds = float(written)
+    except ValueError:
+        seconds = 0.0
+    if not seconds > 0 or seconds == float("inf"):
+        raise argparse.ArgumentTypeError(f"{written!r} is not a number of seconds above 0")
+    return seconds
 
 
 def _refuse_unsupported(paths: Sequence[Path]) -> bool:
@@ -916,11 +954,35 @@ def run_mcp(args: argparse.Namespace) -> int:
         )
         return 2
 
+    timeout = server.DEFAULT_TIMEOUT if args.timeout is None else args.timeout
     if args.transport == "stdio":
-        server.serve("stdio")
-    else:
-        server.serve("streamable-http", host=args.host, port=args.port)
+        server.serve("stdio", timeout=timeout)
+        return 0
+    if not args.allow_remote and not _loopback(args.host):
+        print(
+            f"scenet: --host {args.host} listens beyond this machine, and the server has no "
+            "authentication; put one in front of it, then pass --allow-remote",
+            file=sys.stderr,
+        )
+        return 2
+    server.serve(
+        "streamable-http",
+        host=args.host,
+        port=args.port,
+        timeout=timeout,
+        origins=tuple(args.allow_origin),
+    )
     return 0
+
+
+def _loopback(host: str) -> bool:
+    """Whether an address is this machine's alone: `localhost`, `127.0.0.0/8` or `::1`."""
+    if host.lower() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def main(argv: Sequence[str] | None = None) -> int:

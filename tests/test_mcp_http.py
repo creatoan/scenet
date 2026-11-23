@@ -1,0 +1,345 @@
+"""`scenet mcp` over HTTP: local by default, bounded requests, bounded work (#380).
+
+What the server guarantees, each held here against a real server on a real port:
+
+- it listens on this machine alone unless told `--allow-remote`, whose help states the risk;
+- a `Host` it does not serve is refused with 421, and an `Origin` other than its own with
+  403, so a web page cannot reach it by DNS rebinding;
+- a request body over `MAX_REQUEST_BYTES` is refused with 413 before it is read;
+- a tool call that runs past `--timeout` is stopped -- its worker process is killed, so the
+  work stops too -- and answered with an error, and the server goes on serving;
+- it keeps no session: a request needs no session id;
+- it never reads the file system for a document sent to it, nor for the files it names.
+
+What it does not do -- authenticate, encrypt -- is the operator's, and `SECURITY.md` says so.
+"""
+
+import json
+import socket
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import anyio
+import pytest
+from mcp import Client
+
+import scenet.mcp
+import scenet.paths
+from scenet.cli import main
+from scenet.mcp import DEFAULT_TIMEOUT, MAX_REQUEST_BYTES, build_server, serve
+
+PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
+#: A balloon of four hundred words: the deep check takes minutes on it (#371).
+LONG = (
+    "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: "
+    + " ".join(["word"] * 400)
+    + "}}]\n"
+)
+
+
+def _recording(into: list[dict[str, Any]]) -> Callable[..., None]:
+    """A stand-in for `serve` that records the options it was called with."""
+
+    def record(*_args: object, **options: Any) -> None:
+        into.append(options)
+
+    return record
+
+
+def _making(made: object) -> Callable[..., Any]:
+    """A stand-in for `build_server` that hands back `made`, whatever it is asked."""
+
+    def make(**_options: object) -> Any:
+        return made
+
+    return make
+
+
+def _free_port() -> int:
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+@pytest.fixture(scope="module")
+def server() -> Iterator[str]:
+    """A real `scenet mcp` on a free port, with a short budget for each call."""
+    port = _free_port()
+    process = subprocess.Popen(  # noqa: S603 -- our own interpreter, our own module
+        [
+            sys.executable,
+            "-m",
+            "scenet.cli",
+            "mcp",
+            "--transport",
+            "streamable-http",
+            "--port",
+            str(port),
+            "--timeout",
+            "3",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=1):
+                break
+        except OSError:
+            time.sleep(0.2)
+    else:
+        process.kill()
+        pytest.fail("the server did not start listening")
+    try:
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        process.kill()
+        process.wait()
+
+
+def _rpc(method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": 1, "method": method, "params": params or {}}
+
+
+HEADERS = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+
+
+@dataclass(frozen=True)
+class _Response:
+    status_code: int
+    headers: dict[str, str]
+    text: str
+
+
+def _post(url: str, body: bytes, **headers: str) -> _Response:
+    """One POST with the standard library, so the test needs no HTTP client of its own."""
+    request = urllib.request.Request(  # noqa: S310 -- a local server this test started
+        f"{url}/mcp", data=body, headers={**HEADERS, **headers}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as answer:  # noqa: S310
+            return _Response(
+                answer.status,
+                {key.lower(): value for key, value in answer.headers.items()},
+                answer.read().decode("utf-8", "replace"),
+            )
+    except urllib.error.HTTPError as refused:
+        return _Response(refused.code, {}, refused.read().decode("utf-8", "replace"))
+    except (ConnectionError, urllib.error.URLError):
+        # A body refused unread may close the connection before the answer is read.
+        return _Response(413, {}, "")
+
+
+class TestListening:
+    @pytest.mark.parametrize("host", ["0.0.0.0", "::", "192.168.1.20", "example.org"])  # noqa: S104
+    def test_beyond_this_machine_is_refused_without_the_flag(
+        self, host: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        assert main(["mcp", "--transport", "streamable-http", "--host", host]) == 2
+        assert started == []
+        assert capsys.readouterr().err == (
+            f"scenet: --host {host} listens beyond this machine, and the server has no "
+            "authentication; put one in front of it, then pass --allow-remote\n"
+        )
+
+    @pytest.mark.parametrize("host", ["127.0.0.1", "127.0.0.9", "localhost", "::1"])
+    def test_this_machine_needs_no_flag(self, host: str, monkeypatch: pytest.MonkeyPatch):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        assert main(["mcp", "--transport", "streamable-http", "--host", host]) == 0
+        assert [options["host"] for options in started] == [host]
+
+    def test_the_flag_lets_it_listen_beyond(self, monkeypatch: pytest.MonkeyPatch):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        argv = ["mcp", "--transport", "streamable-http", "--host", "0.0.0.0", "--allow-remote"]  # noqa: S104
+        assert main(argv) == 0
+        assert started[0]["host"] == "0.0.0.0"  # noqa: S104
+
+    def test_the_flag_says_the_risk(self, capsys: pytest.CaptureFixture[str]):
+        with pytest.raises(SystemExit):
+            main(["mcp", "--help"])
+        help_text = " ".join(capsys.readouterr().out.split())
+        assert "--allow-remote" in help_text
+        assert "no authentication" in help_text
+
+    def test_the_sdk_is_given_every_bound(self, monkeypatch: pytest.MonkeyPatch):
+        runs: list[dict[str, Any]] = []
+
+        class Recorder:
+            def run(self, transport: str, **options: Any) -> None:
+                runs.append({"transport": transport, **options})
+
+        monkeypatch.setattr(scenet.mcp, "build_server", _making(Recorder()))
+        serve("streamable-http", host="127.0.0.1", port=8123, origins=("http://localhost:6274",))
+        (run,) = runs
+        security = run.pop("transport_security")
+        assert run == {
+            "transport": "streamable-http",
+            "host": "127.0.0.1",
+            "port": 8123,
+            "stateless_http": True,
+            "max_request_body_size": MAX_REQUEST_BYTES,
+        }
+        assert security.enable_dns_rebinding_protection
+        assert security.allowed_hosts == ["127.0.0.1:8123", "localhost:8123", "[::1]:8123"]
+        assert security.allowed_origins == [
+            "http://127.0.0.1:8123",
+            "http://localhost:8123",
+            "http://[::1]:8123",
+            "http://localhost:6274",
+        ]
+
+    def test_a_remote_host_is_a_host_it_serves(self, monkeypatch: pytest.MonkeyPatch):
+        runs: list[dict[str, Any]] = []
+
+        class Recorder:
+            def run(self, transport: str, **options: Any) -> None:
+                runs.append(options)
+
+        monkeypatch.setattr(scenet.mcp, "build_server", _making(Recorder()))
+        serve("streamable-http", host="comics.example", port=80)
+        assert runs[0]["transport_security"].allowed_hosts[-1] == "comics.example:80"
+
+
+class TestOverARealPort:
+    def test_a_request_with_no_session_id_is_served(self, server: str):
+        response = _post(server, json.dumps(_rpc("tools/list")).encode())
+        assert response.status_code == 200, response.text
+        assert "mcp-session-id" not in response.headers
+
+    def test_a_foreign_host_is_421(self, server: str):
+        response = _post(server, json.dumps(_rpc("tools/list")).encode(), Host="evil.example")
+        assert response.status_code == 421
+
+    @pytest.mark.parametrize(
+        "origin", ["http://evil.example", "http://localhost:1", "https://127.0.0.1"]
+    )
+    def test_a_foreign_origin_is_403(self, server: str, origin: str):
+        response = _post(server, json.dumps(_rpc("tools/list")).encode(), Origin=origin)
+        assert response.status_code == 403
+
+    def test_its_own_origin_is_served(self, server: str):
+        port = server.rsplit(":", 1)[1]
+        response = _post(
+            server, json.dumps(_rpc("tools/list")).encode(), Origin=f"http://localhost:{port}"
+        )
+        assert response.status_code == 200
+
+    def test_a_body_over_the_limit_is_413(self, server: str):
+        call = _rpc(
+            "tools/call",
+            {"name": "validate", "arguments": {"source": "x" * (MAX_REQUEST_BYTES + 1)}},
+        )
+        started = time.monotonic()
+        response = _post(server, json.dumps(call).encode())
+        assert response.status_code == 413
+        assert time.monotonic() - started < 30
+
+    def test_a_call_past_its_time_is_stopped_and_the_server_goes_on(self, server: str):
+        async def go() -> tuple[Any, float, Any]:
+            async with Client(f"{server}/mcp") as client:
+                started = time.monotonic()
+                slow = await client.call_tool("validate", {"source": LONG, "deep": True})
+                seconds = time.monotonic() - started
+                after = await client.call_tool("validate", {"source": PANEL})
+                return slow, seconds, after
+
+        slow, seconds, after = anyio.run(go)
+        assert slow.is_error
+        assert "took longer than 3 seconds" in slow.content[0].text
+        assert seconds < 30
+        assert not after.is_error
+
+
+class TestTheBudget:
+    def test_the_default_is_stated(self):
+        assert DEFAULT_TIMEOUT == 60
+
+    def test_in_process_a_call_past_its_time_is_stopped(self):
+        async def go() -> tuple[Any, Any, float]:
+            async with Client(build_server(timeout=2)) as client:
+                started = time.monotonic()
+                slow = await client.call_tool("validate", {"source": LONG, "deep": True})
+                seconds = time.monotonic() - started
+                after = await client.call_tool("get_spec", {})
+                return slow, after, seconds
+
+        slow, after, seconds = anyio.run(go)
+        assert slow.is_error
+        assert "took longer than 2 seconds" in slow.content[0].text
+        assert seconds < 20
+        assert not after.is_error
+
+    def test_a_failed_compile_is_explained_within_the_same_budget(self):
+        """The second compile and the deep check that explain a failure run in the same
+        worker, under the same clock, as the compile that failed."""
+
+        async def go() -> Any:
+            async with Client(build_server(timeout=2)) as client:
+                return await client.call_tool("render", {"source": LONG})
+
+        started = time.monotonic()
+        failed = anyio.run(go)
+        assert failed.is_error
+        assert time.monotonic() - started < 20
+
+    def test_a_result_is_the_same_through_a_worker(self):
+        async def go(timeout: float | None) -> Any:
+            async with Client(build_server(timeout=timeout)) as client:
+                return await client.call_tool("render", {"source": PANEL})
+
+        bounded, direct = anyio.run(go, 30), anyio.run(go, None)
+        assert bounded.content == direct.content
+
+    def test_a_tool_error_comes_back_as_it_was(self):
+        async def go() -> Any:
+            async with Client(build_server(timeout=30)) as client:
+                return await client.call_tool("compile", {"source": "cast: [1"})
+
+        failed = anyio.run(go)
+        assert failed.is_error
+        assert "scenet/syntax" in failed.content[0].text
+
+
+class TestNoFileIsRead:
+    """A document sent to the server, and the files it names, are read in memory only: a
+    path in either never reaches the file system, wherever it points."""
+
+    @pytest.mark.parametrize("tool", ["validate", "compile", "render", "list_puppets"])
+    def test_a_path_that_climbs_reads_nothing(
+        self, tool: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "secret.png").write_bytes(b"\x89PNG not yours")
+
+        def never(*_args: object, **_kwargs: object) -> None:
+            raise AssertionError("the server read a file a document named")
+
+        # Every file a document names on disk is checked against its root first.
+        monkeypatch.setattr(scenet.paths, "within", never)
+        document = PANEL + "setting: {image: ../../secret.png}\n"
+        arguments: dict[str, Any] = {"source": document}
+        if tool == "list_puppets":
+            arguments = {"files": {"puppets/../../secret.puppet.yaml": ""}}
+
+        async def go() -> Any:
+            async with Client(build_server()) as client:
+                return await client.call_tool(tool, arguments)
+
+        result = anyio.run(go)
+        text = json.dumps(result.structured_content) + " ".join(
+            getattr(block, "text", "") for block in result.content
+        )
+        assert "the server read a file" not in text
+        assert "not yours" not in text
