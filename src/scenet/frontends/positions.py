@@ -18,6 +18,9 @@ from dataclasses import dataclass
 
 import yaml
 
+from scenet.safe_json import compose as compose_json
+from scenet.safe_yaml import is_json
+
 __all__ = ["KEY", "Position", "Region", "locate"]
 
 #: The last step of a path to a mapping's key rather than to its value, as pydantic writes
@@ -147,7 +150,8 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
         (8, 13)
     """
     try:
-        node = yaml.compose(text)
+        # A JSON document is composed into the same node tree, marked the same way (#354).
+        node = compose_json(text) if is_json(text) else yaml.compose(text)
     except yaml.YAMLError:
         return None
     if node is None:

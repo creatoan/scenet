@@ -11,6 +11,7 @@
 [commands]
 "build" = "0.1"
 "check" = "0.3"
+"convert" = "0.14"
 "mcp" = "0.8"
 "schema" = "0.1"
 
@@ -33,6 +34,9 @@
 "check --output" = "0.3"
 "check --quiet" = "0.3"
 "check --root" = "0.14"
+"convert --lists" = "0.14"
+"convert --output" = "0.14"
+"convert --to" = "0.14"
 "mcp --allow-origin" = "0.14"
 "mcp --allow-remote" = "0.14"
 "mcp --host" = "0.8"

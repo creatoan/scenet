@@ -204,15 +204,20 @@ Section = Literal[
 ]
 
 #: The two frontends. YAML covers both a single panel and a `panels:` sequence, which
-#: the document itself distinguishes, so a caller never has to.
-Syntax = Literal["yaml", "script"]
+#: the document itself distinguishes, so a caller never has to; and JSON, the same
+#: documents' second carrier, which a document that opens a JSON object is read as.
+Syntax = Literal["yaml", "json", "script"]
 
 # Parameter descriptions live in the annotations rather than in an `Args:` section,
 # because the annotation is what reaches the tool's input schema -- which is the only
 # documentation a model calling the tool ever sees.
 SourceArg = Annotated[
     str,
-    Field(description="The whole document as text: a YAML panel or scene, or a comic script"),
+    Field(
+        description=(
+            "The whole document as text: a panel or scene in YAML or JSON, or a comic script"
+        )
+    ),
 ]
 FilesArg = Annotated[
     dict[str, str] | None,
@@ -231,8 +236,8 @@ SyntaxArg = Annotated[
     Syntax,
     Field(
         description=(
-            "`yaml` for a *.panel.yaml or *.scene.yaml document, "
-            "`script` for a *.script comic script"
+            "`yaml` for a *.panel.yaml or *.scene.yaml document, `json` for the same in "
+            "JSON, `script` for a *.script comic script"
         )
     ),
 ]
@@ -903,7 +908,7 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
     """
     try:
         library = default_library()
-        if syntax == "yaml":
+        if syntax != "script":
             return compile_book(source, library=library, base=files)
         return compile_script(source, library=library, base=files)
     except ScenetError as exc:

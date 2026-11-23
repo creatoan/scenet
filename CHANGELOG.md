@@ -40,6 +40,17 @@ it is written, and says what to write instead.
   `scenet.mcp.build_server(timeout=...)` bounds the calls of a server a host runs itself, and
   returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
+- **JSON is a second carrier for every document** (#354). A panel, a scene, a puppet file or an
+  artwork contract may be written in JSON, Scenet JSON, the same data model as Scenet YAML: a
+  file that ends in `.json` (`*.panel.json`, `*.scene.json`, `*.puppet.json`, `*.art.json`), or
+  text that opens a JSON object with a quoted key. Tab-indented JSON, an emoji escaped as
+  surrogates and a key of any length are read, every finding is located by line and column, a
+  key written twice is `duplicate-key`, and `"text": 1.50` letters `1.50`. `scenet build`,
+  `check` and the MCP tools take it (`syntax: json`). A cast member's `reference` may name a
+  `.puppet.json`, and a picture's contract may be a `.art.json` when there is no `.art.yaml`.
+- **`scenet convert FILE --to json|yaml`** (#354) writes a document in the other carrier, keys
+  in the order written, numbers as written and extension keys kept; `--lists` writes `panels`
+  and every `cast` as lists.
 - **`panels` and `cast` may be written as lists** (#356), so that no tool that sorts keys can
   reorder a comic: `panels: [{id: street, ...}, {id: close, over: street}]` and
   `cast: [{id: alice, reference: alice}]`, in a scene, a panel, a comic script's front matter

@@ -46,12 +46,13 @@ from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.frontends.positions import locate
 from scenet.images import SuppliedImage
 from scenet.ir import HOLDABLE_PATTERN, PanelIR, SayEvent, SfxEvent, SvgKey, Text
-from scenet.paths import Folder, NamedFileError, read_model
+from scenet.paths import Folder, NamedFileError, NotBesideError, read_model
 
 __all__ = [
     "CONTRACT_RULE",
     "CONTRACT_SUFFIX",
     "FIGURE_RULE",
+    "JSON_CONTRACT_SUFFIX",
     "ArtworkContract",
     "ArtworkFace",
     "ArtworkFigure",
@@ -71,6 +72,9 @@ FIGURE_RULE = "unknown-figure"
 
 #: What a contract's name ends in, in place of its picture's extension.
 CONTRACT_SUFFIX = ".art.yaml"
+
+#: The same contract written in JSON, read when there is none in YAML beside the picture.
+JSON_CONTRACT_SUFFIX = ".art.json"
 
 #: A point in the picture's pixels: `x` rightward, `y` downward, from its top left.
 Pixel = tuple[StrictFloat, StrictFloat]
@@ -250,20 +254,7 @@ def load_contract(
             it too: not text, not YAML, a key written twice or unknown, a value out of
             place, or a size that is not the picture's.
     """
-    path = contract_path(image.href)
-    contract, text, data = read_model(
-        path,
-        base,
-        ArtworkContract,
-        what="artwork contract",
-        error=ContractError,
-        holds="size, figures and keep_out",
-        unknown_key=(
-            "not a key an artwork contract has: size, figures and keep_out at the top, "
-            "and face, mouth and body for a figure"
-        ),
-        loc=loc,
-    )
+    path, (contract, text, data) = _either_contract(contract_path(image.href), base, loc)
     if contract.size != (image.width, image.height):
         width, height = contract.size
         # Read from disk, the contract may be any file the document reached: what it says
@@ -283,6 +274,41 @@ def load_contract(
             loc=loc,
         )
     return LoadedContract(path=path, contract=contract, sha256=hashlib.sha256(data).hexdigest())
+
+
+def _either_contract(
+    path: str, base: Folder | None, loc: tuple[str | int, ...]
+) -> tuple[str, tuple[ArtworkContract, str, bytes]]:
+    """The contract beside a picture in YAML, or else in JSON, and the path it was read at.
+
+    Not there in either, the fault is the YAML one's, the name the reference gives.
+    """
+    try:
+        return path, _read_contract(path, base, loc)
+    except NotBesideError as missing:
+        in_json = path.removesuffix(CONTRACT_SUFFIX) + JSON_CONTRACT_SUFFIX
+        try:
+            return in_json, _read_contract(in_json, base, loc)
+        except NotBesideError:
+            raise missing from None
+
+
+def _read_contract(
+    path: str, base: Folder | None, loc: tuple[str | int, ...]
+) -> tuple[ArtworkContract, str, bytes]:
+    return read_model(
+        path,
+        base,
+        ArtworkContract,
+        what="artwork contract",
+        error=ContractError,
+        holds="size, figures and keep_out",
+        unknown_key=(
+            "not a key an artwork contract has: size, figures and keep_out at the top, "
+            "and face, mouth and body for a figure"
+        ),
+        loc=loc,
+    )
 
 
 def pictureless(panel: PanelIR) -> PanelSyntaxError:

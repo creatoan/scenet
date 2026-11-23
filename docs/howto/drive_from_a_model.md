@@ -182,8 +182,12 @@ all:
 scenet schema -o panel.schema.json
 ```
 
-The schema describes the syntax people write, not an intermediate form, and JSON is valid YAML:
-save the output as `name.panel.yaml` and it compiles as it is.
+The schema describes the syntax people write, not an intermediate form, and the language reads
+JSON as well as YAML, [Scenet JSON](../reference/language/json.md): save the output as
+`name.panel.json` and it compiles as it is, `json.dumps` with tabs and escaped emoji included.
+Have the model write `cast` and `panels` as [lists](../reference/language/scene.md#panels), each
+item with its `id`, and no tool between it and Scenet that sorts keys can reorder the comic.
+`scenet convert name.panel.json --to yaml` gives a person the same document to edit.
 
 Two caveats. **Schema conformance is not validity**: no schema can say that every actor id in
 `staging` exists in `cast`, or that `left_of` does not loop, and those are exactly what a

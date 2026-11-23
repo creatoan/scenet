@@ -35,21 +35,25 @@ positions (`frontends/positions.py`).
 import math
 import re
 from collections.abc import Hashable
-from typing import Any, ClassVar, cast
+from typing import IO, Any, ClassVar, cast
 
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import SafeConstructor
+from yaml.emitter import Emitter
 from yaml.error import Mark
 from yaml.nodes import MappingNode, Node, ScalarNode
 from yaml.parser import Parser
 from yaml.reader import Reader
+from yaml.representer import SafeRepresenter
 from yaml.resolver import BaseResolver
 from yaml.scanner import Scanner
+from yaml.serializer import Serializer
 from yaml.tokens import AliasToken, AnchorToken, TagToken
 
 __all__ = [
     "ALIAS_HINT",
+    "JSON_SUFFIX",
     "DuplicateKeyError",
     "NestingError",
     "ProfileError",
@@ -57,7 +61,11 @@ __all__ = [
     "WrittenFloat",
     "WrittenInt",
     "as_written",
+    "carrier",
     "describe",
+    "dump",
+    "is_json",
+    "is_json_file",
     "load",
     "mistyped",
 ]
@@ -67,6 +75,7 @@ BOOL_TAG = "tag:yaml.org,2002:bool"
 NULL_TAG = "tag:yaml.org,2002:null"
 INT_TAG = "tag:yaml.org,2002:int"
 FLOAT_TAG = "tag:yaml.org,2002:float"
+STR_TAG = "tag:yaml.org,2002:str"
 
 #: An integer as JSON writes it: no sign but a minus, no leading zero, no underscore.
 INTEGER = re.compile(r"-?(?:0|[1-9][0-9]*)")
@@ -125,20 +134,21 @@ class DuplicateKeyError(ProfileError):
             second's, which is where the fault is.
     """
 
-    def __init__(self, key: str, first: Node, second: Node) -> None:
+    def __init__(self, key: str, first: Node, second: Node, *, reader: str = "YAML") -> None:
         """Build the error from the two key nodes.
 
         Args:
             key: The repeated key, as written.
             first: The node of its first occurrence.
             second: The node of the one that repeats it.
+            reader: What would have kept only the last, for the message.
         """
         self.key = key
         self.first_line = first.start_mark.line + 1
         line = second.start_mark.line + 1
         summary = (
             f"key {key!r} appears twice in one mapping, first on line {self.first_line} and "
-            f"again on line {line}; YAML would keep only the last"
+            f"again on line {line}; {reader} would keep only the last"
         )
         super().__init__("duplicate-key", summary, second.start_mark, second.end_mark)
 
@@ -518,11 +528,61 @@ class _ProfileLoader(
         BaseResolver.__init__(self)
 
 
-def load(text: str) -> object:
-    r"""Parse a Scenet YAML document.
+#: How a document that is JSON opens: an object with a quoted key, past white space and a
+#: byte order mark. A YAML flow mapping, `{cast: ...}`, quotes no key, so is still YAML.
+OPENS_AS_JSON = re.compile('\ufeff?[ \t\n\r]*\\{[ \t\n\r]*["}]')
+
+
+def is_json(text: str) -> bool:
+    r"""Whether a document's text is JSON: an object opened with a quoted key, or empty.
+
+    Example:
+        >>> from scenet.safe_yaml import is_json
+        >>> is_json('{"cast": {}}'), is_json('\t{\n\t"cast": {}}'), is_json("{}")
+        (True, True, True)
+        >>> is_json("{cast: {}}"), is_json("cast: {}")
+        (False, False)
+    """
+    return OPENS_AS_JSON.match(text) is not None
+
+
+#: The extension of a document, or a file one names, that is JSON whatever it opens with.
+JSON_SUFFIX = ".json"
+
+
+def is_json_file(path: object) -> bool:
+    """Whether a document's file, or a path it writes, ends in `.json`.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet.safe_yaml import is_json_file
+        >>> is_json_file(Path("a.panel.json")), is_json_file("pip.puppet.JSON"), is_json_file(None)
+        (True, True, False)
+    """
+    return path is not None and str(path).lower().endswith(JSON_SUFFIX)
+
+
+def carrier(text: str, *, as_json: bool = False) -> str:
+    """Which syntax a document is read in, `JSON` or `YAML`, for a message.
+
+    Example:
+        >>> from scenet.safe_yaml import carrier
+        >>> carrier('{"cast": {}}'), carrier("cast: {}"), carrier("cast: {}", as_json=True)
+        ('JSON', 'YAML', 'JSON')
+    """
+    return "JSON" if as_json or is_json(text) else "YAML"
+
+
+def load(text: str, *, as_json: bool = False) -> object:
+    r"""Parse a Scenet YAML document, or a Scenet JSON one.
+
+    A document whose text opens a JSON object, or that `as_json` says is JSON -- a file
+    that ends in `.json` -- is read by :func:`scenet.safe_json.load`, into the same data
+    model (#354).
 
     Args:
         text: The YAML source.
+        as_json: Read it as JSON whatever it opens with.
 
     Returns:
         The parsed document, or `None` for an empty one. Typed as `object`, which is what
@@ -545,6 +605,10 @@ def load(text: str) -> object:
         ...     print(exc.key, exc.first_line, exc.line)
         alice 2 3
     """
+    if as_json or is_json(text):
+        from scenet.safe_json import load as load_json  # noqa: PLC0415 -- it imports this
+
+        return load_json(text)
     loader = _ProfileLoader(text)
     try:
         return loader.get_single_data()
@@ -552,6 +616,55 @@ def load(text: str) -> object:
         raise NestingError from exc
     finally:
         loader.dispose()
+
+
+class _AsWritten(Emitter, Serializer, SafeRepresenter, ProfileResolver):
+    """PyYAML's safe dumper, deciding what to quote by the profile's own resolver."""
+
+    def __init__(self, stream: IO[str], **options: Any) -> None:  # noqa: ANN401 -- PyYAML's
+        """Set up every stage on one stream, as PyYAML's own dumpers do."""
+        Emitter.__init__(self, stream, allow_unicode=True, width=options.get("width"))
+        Serializer.__init__(self)
+        SafeRepresenter.__init__(self, default_flow_style=False, sort_keys=False)
+        ProfileResolver.__init__(self)
+
+
+def _text(dumper: SafeRepresenter, data: str) -> ScalarNode:
+    """Text, unquoted wherever Scenet YAML reads it back as the same text: `No`, `1984`."""
+    tag = ProfileResolver().resolve(ScalarNode, data, (True, False))
+    return dumper.represent_scalar(STR_TAG if tag == NULL_TAG else tag, data)
+
+
+def _source(dumper: SafeRepresenter, data: "WrittenInt | WrittenFloat") -> ScalarNode:
+    """A number read from a document, written back as it was written: `1.50`, not `1.5`."""
+    return dumper.represent_scalar(INT_TAG if isinstance(data, int) else FLOAT_TAG, data.source)
+
+
+_AsWritten.add_representer(str, _text)
+_AsWritten.add_representer(WrittenInt, _source)
+_AsWritten.add_representer(WrittenFloat, _source)
+
+
+def dump(document: object) -> str:
+    r"""A document as Scenet YAML, in block style, in the order it was written.
+
+    What `scenet convert --to yaml` writes. Text is quoted only where it would otherwise be
+    read as something else, and a number is written as it was read.
+
+    Example:
+        >>> from scenet.safe_yaml import WrittenFloat, dump, load
+        >>> print(
+        ...     dump({"cast": {"no": {"reference": "alice"}}, "text": WrittenFloat(1.5, "1.50")}),
+        ...     end="",
+        ... )
+        cast:
+          no:
+            reference: alice
+        text: 1.50
+        >>> load(dump({"by": "null", "text": "No"}))
+        {'by': 'null', 'text': 'No'}
+    """
+    return yaml.dump(document, Dumper=_AsWritten, width=100)
 
 
 def describe(error: yaml.YAMLError) -> str:

@@ -64,7 +64,7 @@ from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError, S
 from scenet.frontends.common import errors_of
 from scenet.frontends.positions import Position, Region, locate
 from scenet.namespace import ASSET_KEYS, AssetHead, language_fault, split_head, stripped
-from scenet.safe_yaml import ProfileError, describe, load
+from scenet.safe_yaml import ProfileError, carrier, describe, is_json_file, load
 
 __all__ = [
     "MARKER",
@@ -645,10 +645,18 @@ def _too_large(
     )
 
 
+class NotBesideError(PanelSyntaxError):
+    """A file a document names that is not beside it: neither in its folder nor sent with it.
+
+    Apart from a file that is there and cannot be read, so a reader that takes either of
+    two names -- an artwork contract in YAML or in JSON -- can try the second.
+    """
+
+
 def _not_found(
     declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]
 ) -> PanelSyntaxError:
-    return PanelSyntaxError(
+    return NotBesideError(
         f"{what} file {declared!r} was not found beside the document", rule=rule, loc=loc
     )
 
@@ -804,7 +812,7 @@ def read_model[M: BaseModel](
     except UnicodeDecodeError as exc:
         raise error("it is not UTF-8 text", file=declared, loc=loc) from exc
     try:
-        raw = load(text)
+        raw = load(text, as_json=is_json_file(declared))
     except ProfileError as exc:
         region = Region(
             start=Position(line=exc.line, column=exc.column),
@@ -816,8 +824,9 @@ def read_model[M: BaseModel](
         mark = getattr(exc, "problem_mark", None)
         region = _whole_line(mark.line + 1) if mark is not None else None
         problem = getattr(exc, "problem", None) or describe(exc)
+        written = carrier(text, as_json=is_json_file(declared))
         raise error(
-            f"it is not valid YAML: {problem}" if quoted else "it is not valid YAML",
+            f"it is not valid {written}: {problem}" if quoted else f"it is not valid {written}",
             file=declared,
             region=region,
             loc=loc,

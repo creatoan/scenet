@@ -12,6 +12,9 @@ in one mapping, such as two cast members called `alice`. YAML requires keys to b
 usual Python parser keeps the last and drops the first without a word, which would quietly lose a
 character or a panel.
 
+A document may be written in JSON instead, [Scenet JSON](json.md), the same data model in the
+syntax programs and models write: a file that ends in `.json`, or text that opens a JSON object.
+
 The YAML itself is [Scenet YAML](yaml_profile.md), a strict profile with JSON's data model, so
 ordinary dialogue is never mistyped: `text: No`, `text: 1984` and `text: 12:30` letter what they
 say, and `cast: {on: …, no: …}` names two actors. Tags, anchors, aliases and merge keys are
@@ -157,6 +160,7 @@ making resvg's the practical conformance reference.
 :hidden:
 
 yaml_profile
+json
 identifiers
 document
 panel

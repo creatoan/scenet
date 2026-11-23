@@ -14,9 +14,12 @@ from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 
+import yaml
+
 from scenet import __version__
-from scenet.assets.artwork import CONTRACT_SUFFIX
-from scenet.assets.contract import PUPPET_SUFFIX
+from scenet.assets.artwork import CONTRACT_SUFFIX, JSON_CONTRACT_SUFFIX
+from scenet.assets.contract import JSON_PUPPET_SUFFIX, PUPPET_SUFFIX
+from scenet.compose import as_lists
 from scenet.core import PanelCore
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
 from scenet.emit.debug_svg import render_debug
@@ -26,8 +29,11 @@ from scenet.emit.pdf import print_notes, printed_panels, render_pdf
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
-from scenet.paths import within
+from scenet.paths import read_document, within
 from scenet.pipeline import FRONTENDS, Book, compile_book_file
+from scenet.safe_json import dump as dump_json
+from scenet.safe_yaml import carrier, describe, is_json_file, load
+from scenet.safe_yaml import dump as dump_yaml
 from scenet.schema import artwork_schema, panel_schema, puppet_schema, scene_schema
 from scenet.watch import watch_loop
 
@@ -84,7 +90,10 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument(
         "source",
         type=Path,
-        help="a *.panel.yaml or *.scene.yaml document, or a *.script comic script",
+        help=(
+            "a *.panel.yaml or *.scene.yaml document, or *.panel.json or *.scene.json, or a "
+            "*.script comic script"
+        ),
     )
     build.add_argument(
         "-o",
@@ -265,6 +274,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="emit the schema for a puppet file, the *.puppet.yaml a cast member names",
     )
 
+    convert = subcommands.add_parser(
+        "convert",
+        help="write a document in JSON, or in YAML",
+        description=(
+            "Write a panel, a scene, a puppet file or an artwork contract in the other carrier "
+            "of the language: JSON, which programs and models write, or Scenet YAML. The two "
+            "hold one data model, so the document converted builds what it built. Its keys "
+            "stay in the order written, a number is written as it was, an extension key is "
+            "kept; a comment is not. --lists writes `panels` and every `cast` as lists, "
+            "which no tool that sorts keys can reorder."
+        ),
+    )
+    convert.add_argument("file", type=Path, help="the document to convert")
+    convert.add_argument(
+        "--to", choices=("json", "yaml"), required=True, help="the carrier to write it in"
+    )
+    convert.add_argument(
+        "--lists",
+        action="store_true",
+        help="write `panels` and every `cast` as lists, each item with its `id`",
+    )
+    convert.add_argument("-o", "--output", type=Path, help="write to a file instead of stdout")
+
     mcp = subcommands.add_parser(
         "mcp",
         help="serve the compiler to a model over the Model Context Protocol",
@@ -362,7 +394,11 @@ def _refuse_unsupported(paths: Sequence[Path]) -> bool:
         )
     # A contract is YAML, and read as a panel it would be a page of unknown keys. It is
     # checked through a panel that casts its figures, which is what knows its picture.
-    contracts = [path for path in paths if path.name.lower().endswith(CONTRACT_SUFFIX)]
+    contracts = [
+        path
+        for path in paths
+        if path.name.lower().endswith((CONTRACT_SUFFIX, JSON_CONTRACT_SUFFIX))
+    ]
     for path in contracts:
         print(
             f"scenet: {path}: an artwork contract is not a document; it is checked through "
@@ -370,7 +406,9 @@ def _refuse_unsupported(paths: Sequence[Path]) -> bool:
             file=sys.stderr,
         )
     # A puppet is YAML too, and is checked the same way: through a document that casts it.
-    puppets = [path for path in paths if path.name.lower().endswith(PUPPET_SUFFIX)]
+    puppets = [
+        path for path in paths if path.name.lower().endswith((PUPPET_SUFFIX, JSON_PUPPET_SUFFIX))
+    ]
     for path in puppets:
         print(
             f"scenet: {path}: a puppet is not a document; it is checked through a document "
@@ -449,6 +487,7 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     stem = (
         source.name.removesuffix(".yaml")
         .removesuffix(".yml")
+        .removesuffix(".json")
         .removesuffix(".script")
         .removesuffix(".panel")
         .removesuffix(".scene")
@@ -925,6 +964,50 @@ def _write_document(output: Path, document: str) -> None:
     output.write_bytes(document.encode())
 
 
+def run_convert(args: argparse.Namespace) -> int:
+    """Write a document in JSON or in Scenet YAML: the canonical form, in the order written.
+
+    Only read, never validated: converting is a change of syntax, and a document that
+    does not compile converts to one that does not compile, at the same place.
+    """
+    if _refuse_directory(args.output):
+        return 2
+    source: Path = args.file
+    if source.suffix.lower() == ".script":
+        print(
+            f"scenet: {source}: a comic script has no JSON form; it is lowered to panels "
+            "when it is built",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        text = read_document(source)
+    except ScenetError as exc:
+        print(f"scenet: {exc}", file=sys.stderr)
+        return 2
+    try:
+        written = load(text, as_json=is_json_file(source))
+    except yaml.YAMLError as exc:
+        print(
+            f"scenet: {source}: invalid {carrier(text, as_json=is_json_file(source))}: "
+            f"{describe(exc)}",
+            file=sys.stderr,
+        )
+        return 1
+    if not isinstance(written, dict):
+        print(f"scenet: {source}: expected a mapping at the top level", file=sys.stderr)
+        return 1
+    if args.lists:
+        written = as_lists(written)
+    document = dump_json(written) if args.to == "json" else dump_yaml(written)
+    if args.output is None:
+        _print_document(document)
+    else:
+        _write_document(args.output, document)
+        print(f"wrote {args.output}")
+    return 0
+
+
 def _print_document(document: str) -> None:
     """Write a document to stdout as UTF-8 with LF line endings, whatever the platform.
 
@@ -1120,6 +1203,8 @@ def _dispatch(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         return run_check(args)
     if args.command == "schema":
         return run_schema(args)
+    if args.command == "convert":
+        return run_convert(args)
     if args.command == "mcp":
         return run_mcp(args)
     # No subcommand. Help goes to stderr and the status is 2, matching the convention

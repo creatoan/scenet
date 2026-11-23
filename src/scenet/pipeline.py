@@ -1539,6 +1539,8 @@ FRONTENDS = {
     ".script": load_script,
     ".yaml": load_scene,
     ".yml": load_scene,
+    # The same documents in JSON, the language's second carrier (#354).
+    ".json": load_scene,
 }
 
 
@@ -1630,6 +1632,7 @@ DOCUMENT_LOADERS = {
     ".script": _load_script_document,
     ".yaml": load_scene_document,
     ".yml": load_scene_document,
+    ".json": load_scene_document,
 }
 
 

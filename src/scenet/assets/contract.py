@@ -39,11 +39,12 @@ from scenet.frontends.common import summarise
 from scenet.ir import Text
 from scenet.namespace import ASSET_KEYS, AssetHead, language_fault, split_head, stripped
 from scenet.paths import Folder, NamedFileError, read_model, record_dependency
-from scenet.safe_yaml import load
+from scenet.safe_yaml import is_json_file, load
 
 __all__ = [
     "DEFAULT_LIBRARY_PATH",
     "DEFAULT_POSE",
+    "JSON_PUPPET_SUFFIX",
     "PUPPET_RULE",
     "PUPPET_SUFFIX",
     "AnchorSpec",
@@ -73,6 +74,9 @@ __all__ = [
 #: What a puppet file's name ends in. A cast member's `reference` that ends in it names a
 #: file, relative to the document, rather than a shipped puppet.
 PUPPET_SUFFIX = ".puppet.yaml"
+
+#: The same file written in JSON, which a cast member's `reference` may name instead.
+JSON_PUPPET_SUFFIX = ".puppet.json"
 
 #: The pose a cast member gets when it does not ask for one, which every puppet declares.
 DEFAULT_POSE = "standing_neutral"
@@ -858,7 +862,7 @@ def load_puppet(path: Path) -> PuppetSpec:
         raise FileReadError.of(exc) from exc
     try:
         # A second `pointing:` used to replace the first without a word.
-        data = load(text)
+        data = load(text, as_json=is_json_file(path))
     except yaml.YAMLError as exc:
         raise MalformedAssetError(str(exc), source=path) from exc
     if not isinstance(data, dict):
@@ -897,7 +901,7 @@ def is_puppet_file(reference: str) -> bool:
         >>> is_puppet_file("puppets/pip.puppet.yaml"), is_puppet_file("alice")
         (True, False)
     """
-    return reference.lower().endswith(PUPPET_SUFFIX)
+    return reference.lower().endswith((PUPPET_SUFFIX, JSON_PUPPET_SUFFIX))
 
 
 def load_puppet_file(

@@ -45,7 +45,7 @@ from scenet.namespace import (
     stripped,
 )
 from scenet.paths import read_document
-from scenet.safe_yaml import ProfileError, describe, load
+from scenet.safe_yaml import ProfileError, carrier, describe, is_json_file, load
 
 
 def _load_document(text: str, source: Path | None) -> dict[str, Any]:
@@ -67,13 +67,14 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
         # A SafeLoader, never the full loader: panel sources are untrusted input and full
         # YAML can construct arbitrary Python objects. And one that refuses a key written
         # twice, which plain PyYAML would drop without a word.
-        data = load(text)
+        data = load(text, as_json=is_json_file(source))
     except ProfileError as exc:
         raise PanelSyntaxError(
             f"line {exc.line}: {exc.summary}", source=source, rule=exc.rule
         ) from exc
     except yaml.YAMLError as exc:
-        raise PanelSyntaxError(f"invalid YAML: {describe(exc)}", source=source) from exc
+        written = carrier(text, as_json=is_json_file(source))
+        raise PanelSyntaxError(f"invalid {written}: {describe(exc)}", source=source) from exc
 
     if data is None:
         raise PanelSyntaxError("panel source is empty", source=source)

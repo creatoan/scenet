@@ -131,7 +131,7 @@ from scenet.namespace import (
 )
 from scenet.paths import Folder, MarkerError, NamedFileError, read_bounded, reading_within
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
-from scenet.safe_yaml import ProfileError, describe, load
+from scenet.safe_yaml import ProfileError, carrier, describe, is_json_file, load
 from scenet.solve.page import resolve_frames
 
 __all__ = [
@@ -1083,7 +1083,7 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
         The mapping and an empty list, or `None` and the single finding explaining why.
     """
     try:
-        data = load(text)
+        data = load(text, as_json=is_json_file(source))
     except ProfileError as exc:
         # Located at exactly the text at fault: for a repeated key, the second, which is
         # the one to delete or rename; the message names the line of the first.
@@ -1091,10 +1091,11 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
             Diagnostic(rule=exc.rule, message=exc.summary, source=source, region=_span(exc))
         ]
     except yaml.YAMLError as exc:
+        written = carrier(text, as_json=is_json_file(source))
         return None, [
             Diagnostic(
                 rule="syntax",
-                message=f"invalid YAML: {describe(exc)}",
+                message=f"invalid {written}: {describe(exc)}",
                 source=source,
                 region=syntax_error_region(exc),
             )
