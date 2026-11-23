@@ -608,7 +608,7 @@ cast: {alice: {reference: alice}}
 `scenet check invalid-field.panel.yaml` says:
 
 ```text
-invalid-field.panel.yaml:2:16: invalid-field: Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'
+invalid-field.panel.yaml:2:16: invalid-field: Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'
 ```
 
 Fixed:
@@ -925,7 +925,7 @@ staging:
 |---|---|
 | Level | error |
 | Says | A page cannot lay out what it says |
-| Keys | [`insets[].size`](https://creatoan.github.io/scenet/reference/language/page.html#insetssize), [`insets[].use`](https://creatoan.github.io/scenet/reference/language/page.html#insetsuse), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`page.gutter`](https://creatoan.github.io/scenet/reference/language/page.html#pagegutter), [`page.margin`](https://creatoan.github.io/scenet/reference/language/page.html#pagemargin), [`page.size`](https://creatoan.github.io/scenet/reference/language/page.html#pagesize), [`page.tier_gutter`](https://creatoan.github.io/scenet/reference/language/page.html#pagetier_gutter), [`pages`](https://creatoan.github.io/scenet/reference/language/page.html#pages), [`pages[].tiers`](https://creatoan.github.io/scenet/reference/language/page.html#pagestiers), [`panels[].bleed`](https://creatoan.github.io/scenet/reference/language/page.html#panelsbleed), [`panels[].insets`](https://creatoan.github.io/scenet/reference/language/page.html#panelsinsets), [`panels[].use`](https://creatoan.github.io/scenet/reference/language/page.html#panelsuse), [`tiers[].columns`](https://creatoan.github.io/scenet/reference/language/page.html#tierscolumns), [`tiers[].panels`](https://creatoan.github.io/scenet/reference/language/page.html#tierspanels), [`tiers[].slant`](https://creatoan.github.io/scenet/reference/language/page.html#tiersslant) |
+| Keys | [`insets[].scale`](https://creatoan.github.io/scenet/reference/language/page.html#insetsscale), [`insets[].use`](https://creatoan.github.io/scenet/reference/language/page.html#insetsuse), [`page`](https://creatoan.github.io/scenet/reference/language/page.html#page), [`page.gutter`](https://creatoan.github.io/scenet/reference/language/page.html#pagegutter), [`page.margin`](https://creatoan.github.io/scenet/reference/language/page.html#pagemargin), [`page.size`](https://creatoan.github.io/scenet/reference/language/page.html#pagesize), [`page.tier_gutter`](https://creatoan.github.io/scenet/reference/language/page.html#pagetier_gutter), [`pages`](https://creatoan.github.io/scenet/reference/language/page.html#pages), [`pages[].tiers`](https://creatoan.github.io/scenet/reference/language/page.html#pagestiers), [`panels[].bleed`](https://creatoan.github.io/scenet/reference/language/page.html#panelsbleed), [`panels[].insets`](https://creatoan.github.io/scenet/reference/language/page.html#panelsinsets), [`panels[].use`](https://creatoan.github.io/scenet/reference/language/page.html#panelsuse), [`tiers[].columns`](https://creatoan.github.io/scenet/reference/language/page.html#tierscolumns), [`tiers[].panels`](https://creatoan.github.io/scenet/reference/language/page.html#tierspanels), [`tiers[].slant`](https://creatoan.github.io/scenet/reference/language/page.html#tiersslant) |
 | Since | 0.10 |
 
 **Why it happens.** `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A panel bleeds only on a side of its frame that reaches the page's margin. A document with pages needs panels to lay out.
@@ -2017,7 +2017,7 @@ script:
 |---|---|
 | Level | note |
 | Says | An inset is drawn over a face |
-| Keys | [`insets[].at`](https://creatoan.github.io/scenet/reference/language/page.html#insetsat), [`insets[].size`](https://creatoan.github.io/scenet/reference/language/page.html#insetssize), [`panels[].insets`](https://creatoan.github.io/scenet/reference/language/page.html#panelsinsets) |
+| Keys | [`insets[].at`](https://creatoan.github.io/scenet/reference/language/page.html#insetsat), [`insets[].scale`](https://creatoan.github.io/scenet/reference/language/page.html#insetsscale), [`panels[].insets`](https://creatoan.github.io/scenet/reference/language/page.html#panelsinsets) |
 | Since | 0.10 |
 | In the gallery | [An inset over a face](https://creatoan.github.io/scenet/gallery.html#an-inset-over-a-face) |
 
