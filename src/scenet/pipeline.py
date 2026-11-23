@@ -593,8 +593,8 @@ def compile_ir(
     outline: Sequence[tuple[float, float]] | None = None,
     staged_in: BBox | None = None,
     lettering_box: BBox | None = None,
-    root: Path | None = None,
     open_sides: tuple[Side, ...] = (),
+    root: Path | None = None,
 ) -> CompileResult:
     """Compile validated IR into Panel Core.
 

@@ -446,7 +446,14 @@ def read_bounded(path: Path, limit: int | None, *, what: str = "a file") -> byte
           ...
         scenet.paths.NotRegularFileError: [Errno 22] not a regular file: '.'
     """
-    status = path.stat()
+    try:
+        status = path.stat()
+    except OSError as exc:
+        # In the words every system's C library has for it, not in the language a Windows
+        # machine happens to be set to: a message is output, and the same everywhere.
+        if exc.errno is None:
+            raise
+        raise type(exc)(exc.errno, os.strerror(exc.errno), str(path)) from exc
     if not stat.S_ISREG(status.st_mode):
         raise NotRegularFileError(path)
     if limit is not None and status.st_size > limit:
@@ -790,7 +797,7 @@ def read_model[M: BaseModel](
             start=Position(line=exc.line, column=exc.column),
             end=Position(line=exc.end_line, column=exc.end_column),
         )
-        summary = exc.summary if quoted else "it is not Scenet YAML"
+        summary = exc.summary if quoted else _PROFILE_FAULTS.get(exc.rule, "it is not Scenet YAML")
         raise error(summary, file=declared, region=region, loc=loc) from exc
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
@@ -829,7 +836,7 @@ def read_model[M: BaseModel](
             message = unknown_key if first["type"] == "extra_forbidden" else first["msg"]
         where = ".".join(str(part) for part in inner)
         if not quoted:
-            where, message = "", _unquoted(first["type"], original, unknown_key)
+            where, message = "", _unquoted(first["type"], original, unknown_key, inner)
         raise error(
             f"{where}: {message}" if where else message,
             file=declared,
@@ -839,14 +846,29 @@ def read_model[M: BaseModel](
         ) from exc
 
 
-def _unquoted(kind: str, original: object, unknown_key: str) -> str:
-    """What is wrong at a place in a file, in words that quote nothing it holds."""
+#: What each fault Scenet YAML refuses is, in words that quote nothing a file holds.
+_PROFILE_FAULTS = {
+    "yaml-tag": "it holds a YAML tag, which Scenet YAML refuses",
+    "yaml-anchor": "it holds a YAML anchor or alias, which Scenet YAML refuses",
+    "yaml-merge-key": "it holds a YAML merge key, which Scenet YAML refuses",
+    "duplicate-key": "it writes a key twice in one mapping",
+}
+
+
+def _unquoted(kind: str, original: object, unknown_key: str, inner: tuple[str | int, ...]) -> str:
+    """What is wrong at a place in a file, in words that quote nothing it holds.
+
+    A key that is missing is named: the format names it, not the file.
+    """
     if isinstance(original, RuleViolationError):
         return "a value it does not allow here"
     if kind == "extra_forbidden":
         return unknown_key
     if kind == "missing":
-        return "a key it needs is missing here"
+        missing = inner[-1] if inner else None
+        return (
+            f"`{missing}` is missing here" if isinstance(missing, str) else "a key is missing here"
+        )
     return "a value it does not allow here"
 
 

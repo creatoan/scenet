@@ -32,6 +32,7 @@ BUILD_OPTIONS: dict[str, str] = {
     "--pdf": "#tab-print",
     "--quiet": "The notes are always shown, under the tabs.",
     "--watch": "In the browser, changes recompile on every edit.",
+    "--root": "The playground reads no folder: its files are sent with the document.",
 }
 
 

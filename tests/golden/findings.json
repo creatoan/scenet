@@ -337,9 +337,9 @@
   ],
   "tests/finding_corpus/a-broken-puppet-file-then-an-unknown-puppet.script": [
     {
-      "fingerprint": "317527b6b960fd23c34e3a57a8dadf28",
+      "fingerprint": "432736ae5bd199315492a569b07893d8",
       "level": "error",
-      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: units_per_head: Field required",
+      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: `units_per_head` is missing here",
       "path": [
         "units_per_head"
       ],
@@ -373,9 +373,9 @@
   ],
   "tests/finding_corpus/a-broken-puppet-file-then-an-unknown-puppet.script --deep": [
     {
-      "fingerprint": "317527b6b960fd23c34e3a57a8dadf28",
+      "fingerprint": "432736ae5bd199315492a569b07893d8",
       "level": "error",
-      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: units_per_head: Field required",
+      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: `units_per_head` is missing here",
       "path": [
         "units_per_head"
       ],
@@ -409,9 +409,9 @@
   ],
   "tests/finding_corpus/a-broken-puppet-file.panel.yaml": [
     {
-      "fingerprint": "317527b6b960fd23c34e3a57a8dadf28",
+      "fingerprint": "432736ae5bd199315492a569b07893d8",
       "level": "error",
-      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: units_per_head: Field required",
+      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: `units_per_head` is missing here",
       "path": [
         "units_per_head"
       ],
@@ -427,9 +427,9 @@
   ],
   "tests/finding_corpus/a-broken-puppet-file.panel.yaml --deep": [
     {
-      "fingerprint": "317527b6b960fd23c34e3a57a8dadf28",
+      "fingerprint": "432736ae5bd199315492a569b07893d8",
       "level": "error",
-      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: units_per_head: Field required",
+      "message": "puppet file 'puppets/broken.puppet.yaml', line 2: `units_per_head` is missing here",
       "path": [
         "units_per_head"
       ],
