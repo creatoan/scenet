@@ -99,6 +99,14 @@ frames the figure at roughly two thirds the size a full shot does. The environme
 a [supplied picture](https://creatoan.github.io/scenet/reference/language/setting.html#settingimage): the camera reads neither, so a shot
 frames the cast the same in front of either.
 
+## A panel with nobody in it
+
+A shot is a crop landmark on a head, so a panel with no cast -- an establishing shot of a place,
+an insert on an object -- has nothing for a shot to crop. Its setting is drawn whole, the same at
+every shot, and Panel Core records no camera. The shot still says what the panel is: a shot the
+document writes opens the panel's description, `Long shot. A street at night, in the rain.`, and
+one left to its default is not said.
+
 ## Angle
 
 `angle` scales the shot's **headroom**, the air above the head. That is the cue a reader takes

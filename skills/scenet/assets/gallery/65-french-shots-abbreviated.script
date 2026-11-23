@@ -22,6 +22,7 @@ PLANCHE 1 (neuf cases)
 La montée au phare, du plus loin au plus près : de case en case, on descend l'échelle des plans.
 
 CASE 1 : La côte et le phare, vus de très haut. Une silhouette sur le chemin de la falaise.
+@cast: {LÉA: {}}
 @shot: PE
 @angle: plongée
 
@@ -41,6 +42,7 @@ TOM (off) : Léa ? C'est toi ?
 LÉA (cri) : J'arrive !
 
 CASE 4 : Léa, coupée à la taille. Elle reprend son souffle.
+@cast: {LÉA: {}}
 @shot: PRT
 
 TOM (off, crié) : La lampe ne s'allume plus !
@@ -63,7 +65,9 @@ TOM (off, voix basse) : Tu as pensé à l'huile ?
 LÉA : « Je pense toujours à l'huile. »
 
 CASE 8 : Le visage de Léa. Elle sourit, sans un mot.
+@cast: {LÉA: {}}
 @shot: GP
 
 CASE 9 : Son œil, décidé.
+@cast: {LÉA: {}}
 @shot: TGP

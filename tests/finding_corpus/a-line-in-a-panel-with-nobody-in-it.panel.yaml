@@ -1,0 +1,5 @@
+# In a panel with no cast, a line is spoken from off panel: one by an id the panel does not
+# cast is an unknown actor.
+setting: {place: street, time: night}
+script:
+  - say: {by: voice, text: 'Is anybody there?'}

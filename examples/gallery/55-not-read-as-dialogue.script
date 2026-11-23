@@ -25,6 +25,7 @@ cast:
 ---
 
 PANEL 1
+@cast: {THEO: {}}
 @shot: full_shot
 Maya waits at the door; Theo comes down the stairs at last.
 

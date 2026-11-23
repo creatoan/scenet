@@ -1440,6 +1440,12 @@ cast:
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
 
+A panel may have **no cast at all**, `cast` left out or empty: an establishing shot of a place, an
+insert on an object. Its setting is drawn, its captions and sounds placed, and its description
+says what is shown, the shot first when the document names one. A line in it is spoken from off
+panel, `off_panel: true`; one by an id the panel does not cast is `unknown-actor`. See
+[a panel with nobody in it](https://creatoan.github.io/scenet/reference/shot_types.html#a-panel-with-nobody-in-it).
+
 A cast member is one of two things, never both, and a cast is all of one:
 
 - **a puppet**, which Scenet poses and draws: `reference:` names it, and `pose`,
@@ -5193,6 +5199,14 @@ frames the figure at roughly two thirds the size a full shot does. The environme
 a [supplied picture](https://creatoan.github.io/scenet/reference/language/setting.html#settingimage): the camera reads neither, so a shot
 frames the cast the same in front of either.
 
+## A panel with nobody in it
+
+A shot is a crop landmark on a head, so a panel with no cast -- an establishing shot of a place,
+an insert on an object -- has nothing for a shot to crop. Its setting is drawn whole, the same at
+every shot, and Panel Core records no camera. The shot still says what the panel is: a shot the
+document writes opens the panel's description, `Long shot. A street at night, in the rain.`, and
+one left to its default is not said.
+
 ## Angle
 
 `angle` scales the shot's **headroom**, the air above the head. That is the cue a reader takes
@@ -5601,6 +5615,26 @@ and `examples/gallery/66-french-shots-in-full.script` vignette by vignette, ever
 ([open it in the playground](https://creatoan.github.io/scenet/playground/#example=66-french-shots-in-full.script)).
 The nearest shots letter nothing: the head fills the panel, and no balloon may cover a face.
 
+## Who a panel draws
+
+The front matter's cast is everybody the scene may draw, not everybody in every panel. A panel
+draws:
+
+- whoever speaks in it, and whoever a sound in it comes from, `SFX (THEO): FWOOMP`;
+- whomever its own `@cast:` or `@staging:` names, `@cast: {BOB: {}}` for somebody who says
+  nothing;
+- whomever the panel it is drawn `@over:` draws.
+
+Nobody else. A panel of description, captions or sounds only has no cast at all: an
+establishing shot of a street, an insert on a clock. Its setting is drawn, and its lettering
+placed, as in any panel. A staging relation of the front matter that names somebody the panel
+does not draw does not apply in it. The prose is never read for names, so `Maya and Theo by the
+door.` draws whoever the panel's lines and directives name; to draw Theo, who is silent there,
+write `@cast: {THEO: {}}`.
+
+A figure that a supplied picture draws is drawn by the picture, whoever speaks: each panel casts
+the figures its picture draws.
+
 ## Off-panel speech
 
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
@@ -5760,9 +5794,9 @@ extension so you do not have to care.
 
 ## The front matter is not optional in practice
 
-A script with no cast will not parse at all. Validation is total, so a speaker cue naming
-somebody who is not in the cast is an error at parse time rather than a blank balloon
-discovered later:
+A script whose cues name nobody in its cast will not parse at all. Validation is total, so a
+speaker cue naming somebody who is not in the cast is an error at parse time rather than a blank
+balloon discovered later:
 
 ```python
 from scenet import ScriptSyntaxError, parse_script
@@ -11262,6 +11296,7 @@ Somebody!
 2. THEO (whisper): I was going to fetch it.
 
 Panel 3. Inside, the lamp blazes again. Both of them squint into the light.
+@cast: {MAYA: {}}
 @shot: medium_close_up
 
 SFX (THEO, large): FWOOMP
@@ -11336,6 +11371,7 @@ PLANCHE 1 (trois cases)
 @tiers: 2 1
 
 CASE 1 : La falaise, le soir. Léa arrive en haut des marches ; Tom l'attend près de la porte.
+@cast: {TOM: {}}
 @shot: plan d'ensemble
 @setting: {place: shore, time: dusk}
 
@@ -11348,6 +11384,7 @@ GARDIEN (hors champ) :
 Qui est là-haut ?
 
 CASE 2 : Plus près. Tom hausse les épaules.
+@cast: {LÉA: {}}
 @shot: plan américain
 @angle: contre-plongée
 
@@ -11355,6 +11392,7 @@ TOM :
 « Quelqu'un a oublié l'huile. »
 
 CASE 3
+@cast: {LÉA: {}}
 @shot: plan rapproché poitrine
 
 TOM (pensée)
@@ -12562,6 +12600,7 @@ THEO
 It was never on time.
 
 PANEL 2
+@cast: {MAYA: {}}
 @shot: medium_shot
 Theo shrugs.
 
@@ -12605,6 +12644,7 @@ cast:
 ---
 
 PANEL 1
+@cast: {THEO: {}}
 @shot: full_shot
 Maya waits at the door; Theo comes down the stairs at last.
 
@@ -12994,6 +13034,7 @@ setting: {place: street, time: dusk, weather: rain}
 
 ### PANEL 1
 @panel: {size: [900, 1200]}
+@cast: {alice: {}, bob: {}}
 @shot: long_shot
 @description: The cover: a street at dusk in the rain, Alice and Bob small on its corner.
 
@@ -13059,6 +13100,7 @@ setting: {place: field, time: dusk}
 PAGE ONE (splash)
 
 PANEL 1
+@cast: {REN: {}}
 @shot: long_shot
 @palette: tinted
 The field behind the school at dusk. Hana waits by the fence; Ren is running toward her.
@@ -13071,6 +13113,7 @@ SFX: ZAAAA
 PAGE TWO
 
 PANEL 1
+@cast: {HANA: {}}
 @shot: full_shot
 Ren skids to a stop in front of her, out of breath.
 
@@ -13143,6 +13186,7 @@ PLANCHE 1 (neuf cases)
 La montée au phare, du plus loin au plus près : de case en case, on descend l'échelle des plans.
 
 CASE 1 : La côte et le phare, vus de très haut. Une silhouette sur le chemin de la falaise.
+@cast: {LÉA: {}}
 @shot: PE
 @angle: plongée
 
@@ -13162,6 +13206,7 @@ TOM (off) : Léa ? C'est toi ?
 LÉA (cri) : J'arrive !
 
 CASE 4 : Léa, coupée à la taille. Elle reprend son souffle.
+@cast: {LÉA: {}}
 @shot: PRT
 
 TOM (off, crié) : La lampe ne s'allume plus !
@@ -13184,9 +13229,11 @@ TOM (off, voix basse) : Tu as pensé à l'huile ?
 LÉA : « Je pense toujours à l'huile. »
 
 CASE 8 : Le visage de Léa. Elle sourit, sans un mot.
+@cast: {LÉA: {}}
 @shot: GP
 
 CASE 9 : Son œil, décidé.
+@cast: {LÉA: {}}
 @shot: TGP
 ```
 
@@ -13220,6 +13267,7 @@ setting: {place: room, time: night}
 PLANCHE UNE (huit vignettes)
 
 VIGNETTE 1 : La salle de la lanterne, la nuit. Tom, en pied, devant la lampe éteinte.
+@cast: {TOM: {}}
 @shot: plan moyen
 
 CARTOUCHE (monologue) : Trente ans que cette lampe brille chaque nuit.
@@ -13230,6 +13278,7 @@ VIGNETTE 2 : Tom, coupé à la taille. Il frappe la lampe du plat de la main.
 TOM : Allez, ma vieille. Pas ce soir.
 
 VIGNETTE 3 : Le même cadre. Rien ne se passe.
+@cast: {TOM: {}}
 @shot: plan rapproché taille
 
 CARTOUCHE (monologue) : Et ce soir, plus rien.
@@ -13245,12 +13294,15 @@ VIGNETTE 5 : Tom, coupé aux épaules. Il comprend.
 TOM : Ah. Moi.
 
 VIGNETTE 6 : Le même cadre. Il soupire.
+@cast: {TOM: {}}
 @shot: plan épaule
 
 VIGNETTE 7 : Le visage de Tom, les yeux fermés.
+@cast: {TOM: {}}
 @shot: gros plan
 
 VIGNETTE 8 : Ses yeux qui se rouvrent : on monte l'escalier.
+@cast: {TOM: {}}
 @shot: très gros plan
 ```
 
@@ -13292,6 +13344,7 @@ setting: {place: room, time: night}
 ---
 
 PANEL 1
+@cast: {THEO: {}}
 INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark.
 @shot: full_shot
 
@@ -13361,6 +13414,7 @@ setting: {place: docks, time: night, weather: fog}
 PAGE ONE
 
 PANEL 1
+@cast: {THEO: {}}
 The harbour wall at night, in fog. Theo walks alone under the lamps.
 @shot: long_shot
 
@@ -13380,6 +13434,7 @@ KREEEK
 She's been up there all night, lad.
 
 PANEL 3
+@cast: {THEO: {}}
 Theo at the foot of the lighthouse stairs.
 @shot: medium_shot
 
@@ -13809,4 +13864,45 @@ panels:
     staging: [alice left_of bob]
     script:
       - caption: {text: "This one keeps its border.", kind: editorial}
+```
+
+## A panel with nobody in it
+
+An establishing shot and an insert with no cast at all: the setting is drawn, the caption, the sound and a voice from off panel are lettered, and the cast arrives in the last panel.
+
+`74-a-panel-with-nobody-in-it.scene.yaml`
+
+```yaml
+# A comic opens on a place. The first panel has no cast at all: its setting is drawn, its
+# caption and its sound are placed, and its description says what is shown -- "Long shot. A
+# street at night, in the rain." A shot crops a body, so with nobody in the panel it
+# frames nothing: it says what the panel is, and the street is drawn whole.
+#
+# The middle panel is an insert on the street lamp, with a voice from off panel and still
+# nobody drawn. The cast arrives in the last panel, and lettering is placed around them as
+# in any other.
+
+panel: {size: [600, 420]}
+setting: {place: street, time: night, weather: rain}
+
+panels:
+  - id: establishing
+    camera: {shot: long_shot}
+    script:
+      - caption: {kind: locale, text: 'Rue des Martyrs, two in the morning.'}
+      - sfx: {text: shhhhh, size: small, prefer: bottom_right}
+  - id: lamp
+    camera: {shot: close_up}
+    script:
+      - say: {by: voice, text: 'Is anybody out there?', off_panel: right}
+  - id: answer
+    cast:
+      - {id: alice, reference: alice, at: left_third, pose: pointing}
+    script:
+      - say: {by: alice, text: 'Only me, and the rain.'}
+
+pages:
+  - tiers:
+      - panels: [establishing]
+      - panels: [lamp, answer]
 ```

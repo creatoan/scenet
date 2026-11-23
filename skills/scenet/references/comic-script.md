@@ -388,6 +388,26 @@ and `examples/gallery/66-french-shots-in-full.script` vignette by vignette, ever
 ([open it in the playground](https://creatoan.github.io/scenet/playground/#example=66-french-shots-in-full.script)).
 The nearest shots letter nothing: the head fills the panel, and no balloon may cover a face.
 
+## Who a panel draws
+
+The front matter's cast is everybody the scene may draw, not everybody in every panel. A panel
+draws:
+
+- whoever speaks in it, and whoever a sound in it comes from, `SFX (THEO): FWOOMP`;
+- whomever its own `@cast:` or `@staging:` names, `@cast: {BOB: {}}` for somebody who says
+  nothing;
+- whomever the panel it is drawn `@over:` draws.
+
+Nobody else. A panel of description, captions or sounds only has no cast at all: an
+establishing shot of a street, an insert on a clock. Its setting is drawn, and its lettering
+placed, as in any panel. A staging relation of the front matter that names somebody the panel
+does not draw does not apply in it. The prose is never read for names, so `Maya and Theo by the
+door.` draws whoever the panel's lines and directives name; to draw Theo, who is silent there,
+write `@cast: {THEO: {}}`.
+
+A figure that a supplied picture draws is drawn by the picture, whoever speaks: each panel casts
+the figures its picture draws.
+
 ## Off-panel speech
 
 Dark Horse writes `CHARACTER (OP):` for a character "speaking from off-panel"; Blambot writes
@@ -547,9 +567,9 @@ extension so you do not have to care.
 
 ## The front matter is not optional in practice
 
-A script with no cast will not parse at all. Validation is total, so a speaker cue naming
-somebody who is not in the cast is an error at parse time rather than a blank balloon
-discovered later:
+A script whose cues name nobody in its cast will not parse at all. Validation is total, so a
+speaker cue naming somebody who is not in the cast is an error at parse time rather than a blank
+balloon discovered later:
 
 ```python
 from scenet import ScriptSyntaxError, parse_script

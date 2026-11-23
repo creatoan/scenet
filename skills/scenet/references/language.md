@@ -1354,6 +1354,12 @@ cast:
 
 ![Four characters side by side in the four shipped poses: standing, arms crossed, pointing and hands on hips](https://creatoan.github.io/scenet/images/gallery/11-poses.svg)
 
+A panel may have **no cast at all**, `cast` left out or empty: an establishing shot of a place, an
+insert on an object. Its setting is drawn, its captions and sounds placed, and its description
+says what is shown, the shot first when the document names one. A line in it is spoken from off
+panel, `off_panel: true`; one by an id the panel does not cast is `unknown-actor`. See
+[a panel with nobody in it](https://creatoan.github.io/scenet/reference/shot_types.html#a-panel-with-nobody-in-it).
+
 A cast member is one of two things, never both, and a cast is all of one:
 
 - **a puppet**, which Scenet poses and draws: `reference:` names it, and `pose`,

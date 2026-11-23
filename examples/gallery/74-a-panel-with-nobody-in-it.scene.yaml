@@ -1,0 +1,32 @@
+# A comic opens on a place. The first panel has no cast at all: its setting is drawn, its
+# caption and its sound are placed, and its description says what is shown -- "Long shot. A
+# street at night, in the rain." A shot crops a body, so with nobody in the panel it
+# frames nothing: it says what the panel is, and the street is drawn whole.
+#
+# The middle panel is an insert on the street lamp, with a voice from off panel and still
+# nobody drawn. The cast arrives in the last panel, and lettering is placed around them as
+# in any other.
+
+panel: {size: [600, 420]}
+setting: {place: street, time: night, weather: rain}
+
+panels:
+  - id: establishing
+    camera: {shot: long_shot}
+    script:
+      - caption: {kind: locale, text: 'Rue des Martyrs, two in the morning.'}
+      - sfx: {text: shhhhh, size: small, prefer: bottom_right}
+  - id: lamp
+    camera: {shot: close_up}
+    script:
+      - say: {by: voice, text: 'Is anybody out there?', off_panel: right}
+  - id: answer
+    cast:
+      - {id: alice, reference: alice, at: left_third, pose: pointing}
+    script:
+      - say: {by: alice, text: 'Only me, and the rain.'}
+
+pages:
+  - tiers:
+      - panels: [establishing]
+      - panels: [lamp, answer]

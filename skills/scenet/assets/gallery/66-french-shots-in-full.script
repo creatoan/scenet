@@ -21,6 +21,7 @@ setting: {place: room, time: night}
 PLANCHE UNE (huit vignettes)
 
 VIGNETTE 1 : La salle de la lanterne, la nuit. Tom, en pied, devant la lampe éteinte.
+@cast: {TOM: {}}
 @shot: plan moyen
 
 CARTOUCHE (monologue) : Trente ans que cette lampe brille chaque nuit.
@@ -31,6 +32,7 @@ VIGNETTE 2 : Tom, coupé à la taille. Il frappe la lampe du plat de la main.
 TOM : Allez, ma vieille. Pas ce soir.
 
 VIGNETTE 3 : Le même cadre. Rien ne se passe.
+@cast: {TOM: {}}
 @shot: plan rapproché taille
 
 CARTOUCHE (monologue) : Et ce soir, plus rien.
@@ -46,10 +48,13 @@ VIGNETTE 5 : Tom, coupé aux épaules. Il comprend.
 TOM : Ah. Moi.
 
 VIGNETTE 6 : Le même cadre. Il soupire.
+@cast: {TOM: {}}
 @shot: plan épaule
 
 VIGNETTE 7 : Le visage de Tom, les yeux fermés.
+@cast: {TOM: {}}
 @shot: gros plan
 
 VIGNETTE 8 : Ses yeux qui se rouvrent : on monte l'escalier.
+@cast: {TOM: {}}
 @shot: très gros plan

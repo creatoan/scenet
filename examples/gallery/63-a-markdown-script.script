@@ -29,6 +29,7 @@ setting: {place: street, time: dusk, weather: rain}
 
 ### PANEL 1
 @panel: {size: [900, 1200]}
+@cast: {alice: {}, bob: {}}
 @shot: long_shot
 @description: The cover: a street at dusk in the rain, Alice and Bob small on its corner.
 

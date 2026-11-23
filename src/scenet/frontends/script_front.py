@@ -2180,6 +2180,86 @@ def _off_panel(
     return document
 
 
+def _drawn(panels: dict[str, _PanelDraft]) -> dict[str, frozenset[str]]:
+    """Who of the front matter's cast each panel draws (#364).
+
+    Who speaks in it, from off panel too -- `_off_panel` then takes them out of the picture,
+    on the side they were written to stand -- who a sound comes from, whom its own `@cast:`
+    or `@staging:` names, and whomever the panel it is drawn `@over:` draws. Nobody else: a panel of
+    description, captions or sounds only is cast-less, an establishing shot or an insert,
+    and a silent panel draws whom its `@cast:` names.
+    """
+    found: dict[str, frozenset[str]] = {}
+
+    def of(name: str, seen: frozenset[str]) -> frozenset[str]:
+        if name in found:
+            return found[name]
+        draft = panels[name]
+        named = {
+            str(value)
+            for event in draft.events
+            for verb, key in (("say", "by"), ("sfx", "from"))
+            if isinstance(inner := event.get(verb), dict) and (value := inner.get(key)) is not None
+        }
+        own = draft.settings.get("cast")
+        if isinstance(own, dict):
+            named |= set(own)
+        staged = draft.settings.get("staging")
+        for relation in staged if isinstance(staged, list) else ():
+            words = relation.split() if isinstance(relation, str) else []
+            if isinstance(relation, dict):
+                words = [str(relation.get("subject")), str(relation.get("object"))]
+            named |= set(words[:1] + words[-1:])
+        target = draft.settings.get(OVER_KEY)
+        if isinstance(target, str) and target not in seen:
+            parent = _over_target_or_none(target, name, draft, panels)
+            if parent is not None:
+                named |= of(parent, seen | {name})
+        found[name] = frozenset(named)
+        return found[name]
+
+    for name in panels:
+        of(name, frozenset())
+    return found
+
+
+def _over_target_or_none(
+    target: str, name: str, draft: _PanelDraft, panels: Collection[str]
+) -> str | None:
+    """The panel an `@over:` names, or `None` when it names none, which `_composed` reports."""
+    try:
+        found = _over_target(target, name, draft, panels)
+    except CompositionError:
+        return None
+    return found if found in panels else None
+
+
+def _keeping(front_matter: dict[str, Any], drawn: frozenset[str]) -> dict[str, Any]:
+    """The front matter as one panel inherits it: its cast, only whom the panel draws.
+
+    A staging relation that names a member the panel does not draw goes with them, without
+    a note: nobody left them out, they were never in it. A figure stays: the panel's picture
+    draws whom it draws, whoever speaks, and a figure it does not draw is left out there.
+    """
+    cast = front_matter.get("cast")
+    if not isinstance(cast, dict):
+        return front_matter
+    absent = [
+        actor
+        for actor, member in cast.items()
+        if actor not in drawn and not (isinstance(member, dict) and member.get("figure"))
+    ]
+    if not absent:
+        return front_matter
+    kept = {**front_matter, "cast": {actor: cast[actor] for actor in cast if actor in drawn}}
+    staging = front_matter.get("staging")
+    if isinstance(staging, list):
+        kept["staging"] = [
+            relation for relation in staging if not any(names(relation, a) for a in absent)
+        ]
+    return kept
+
+
 def _over_target(target: str, name: str, draft: _PanelDraft, names: Collection[str]) -> str:
     """The panel an `@over:` names, by the name the script gave it.
 
@@ -2243,10 +2323,13 @@ def _validate(
     scene's defaults are merged under each of its panels.
     """
     composed, standing = _composed(panels, source)
+    drawn = _drawn(panels)
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
+        # The front matter's cast is who may be drawn; a panel draws only some of them.
+        beneath = _keeping(front_matter, drawn[name])
         settled, dropped = settle(
-            merge(front_matter, composed[name]), beneath=merge(front_matter, standing[name])
+            merge(beneath, composed[name]), beneath=merge(beneath, standing[name])
         )
         line = draft.directive_lines.get(("cast",)) or draft.directive_lines.get((OVER_KEY,))
         line = line or draft.line

@@ -185,18 +185,18 @@
   ],
   "examples/gallery/55-not-read-as-dialogue.script": [
     {
-      "fingerprint": "cefe756f308ca84ea9af13f7ef005c55",
+      "fingerprint": "e8b58998bf9b82436cc6a95ebe4b904d",
       "level": "note",
-      "message": "line 33: 'THOE:' is set like a line of dialogue, but THOE is not in this panel's cast, so the line is read as prose. If THOE speaks, add them to the cast",
+      "message": "line 34: 'THOE:' is set like a line of dialogue, but THOE is not in this panel's cast, so the line is read as prose. If THOE speaks, add them to the cast",
       "path": [
         "1",
         "line",
-        6
+        7
       ],
       "region": [
-        33,
+        34,
         1,
-        33,
+        34,
         22
       ],
       "rule": "looks-like-dialogue",
@@ -205,18 +205,18 @@
   ],
   "examples/gallery/55-not-read-as-dialogue.script --deep": [
     {
-      "fingerprint": "cefe756f308ca84ea9af13f7ef005c55",
+      "fingerprint": "e8b58998bf9b82436cc6a95ebe4b904d",
       "level": "note",
-      "message": "line 33: 'THOE:' is set like a line of dialogue, but THOE is not in this panel's cast, so the line is read as prose. If THOE speaks, add them to the cast",
+      "message": "line 34: 'THOE:' is set like a line of dialogue, but THOE is not in this panel's cast, so the line is read as prose. If THOE speaks, add them to the cast",
       "path": [
         "1",
         "line",
-        6
+        7
       ],
       "region": [
-        33,
+        34,
         1,
-        33,
+        34,
         22
       ],
       "rule": "looks-like-dialogue",
@@ -299,6 +299,8 @@
   "examples/gallery/72-three-horizons.scene.yaml --deep": [],
   "examples/gallery/73-panels-that-bleed.scene.yaml": [],
   "examples/gallery/73-panels-that-bleed.scene.yaml --deep": [],
+  "examples/gallery/74-a-panel-with-nobody-in-it.scene.yaml": [],
+  "examples/gallery/74-a-panel-with-nobody-in-it.scene.yaml --deep": [],
   "tests/finding_corpus/a-book.scene.yaml": [
     {
       "fingerprint": "51a1e57720d72eb11d9ba8f98416e76a",
@@ -1835,6 +1837,48 @@
       "source": "tests/finding_corpus/a-line-by-an-extension-name.panel.yaml"
     }
   ],
+  "tests/finding_corpus/a-line-in-a-panel-with-nobody-in-it.panel.yaml": [
+    {
+      "fingerprint": "42e5b84013272ed3ce4ba7efa7aff556",
+      "level": "error",
+      "message": "script entry 0 is spoken by unknown actor 'voice'; cast is []. If they speak from outside the panel, say so with off_panel",
+      "path": [
+        "script",
+        0,
+        "say",
+        "by"
+      ],
+      "region": [
+        5,
+        15,
+        5,
+        20
+      ],
+      "rule": "unknown-actor",
+      "source": "tests/finding_corpus/a-line-in-a-panel-with-nobody-in-it.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-line-in-a-panel-with-nobody-in-it.panel.yaml --deep": [
+    {
+      "fingerprint": "42e5b84013272ed3ce4ba7efa7aff556",
+      "level": "error",
+      "message": "script entry 0 is spoken by unknown actor 'voice'; cast is []. If they speak from outside the panel, say so with off_panel",
+      "path": [
+        "script",
+        0,
+        "say",
+        "by"
+      ],
+      "region": [
+        5,
+        15,
+        5,
+        20
+      ],
+      "rule": "unknown-actor",
+      "source": "tests/finding_corpus/a-line-in-a-panel-with-nobody-in-it.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-line-that-reads-like-a-cue.script": [],
   "tests/finding_corpus/a-line-that-reads-like-a-cue.script --deep": [],
   "tests/finding_corpus/a-long-caption-after-a-sound.panel.yaml": [
@@ -2617,22 +2661,7 @@
     }
   ],
   "tests/finding_corpus/a-panel-of-one-unit.panel.yaml": [],
-  "tests/finding_corpus/a-panel-of-one-unit.panel.yaml --deep": [
-    {
-      "fingerprint": "bf92091efe14926a40cd409d3d3c3a32",
-      "level": "error",
-      "message": "panel has no cast; there is nothing to place",
-      "path": [],
-      "region": [
-        2,
-        1,
-        3,
-        1
-      ],
-      "rule": "layout",
-      "source": "tests/finding_corpus/a-panel-of-one-unit.panel.yaml"
-    }
-  ],
+  "tests/finding_corpus/a-panel-of-one-unit.panel.yaml --deep": [],
   "tests/finding_corpus/a-panel-placed-twice.scene.yaml": [
     {
       "fingerprint": "f61cc7b3c8f709e87f08550ddc3e378f",
@@ -7381,46 +7410,8 @@
       "source": "tests/rule_corpus/document-kind.scene.yaml"
     }
   ],
-  "tests/rule_corpus/dropped-relation.script": [
-    {
-      "fingerprint": "b591dc9427c8511196704ac3c305e4ed",
-      "level": "note",
-      "message": "line 9: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn",
-      "path": [
-        "1",
-        "staging",
-        0
-      ],
-      "region": [
-        9,
-        1,
-        9,
-        11
-      ],
-      "rule": "dropped-relation",
-      "source": "tests/rule_corpus/dropped-relation.script"
-    }
-  ],
-  "tests/rule_corpus/dropped-relation.script --deep": [
-    {
-      "fingerprint": "b591dc9427c8511196704ac3c305e4ed",
-      "level": "note",
-      "message": "line 9: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn",
-      "path": [
-        "1",
-        "staging",
-        0
-      ],
-      "region": [
-        9,
-        1,
-        9,
-        11
-      ],
-      "rule": "dropped-relation",
-      "source": "tests/rule_corpus/dropped-relation.script"
-    }
-  ],
+  "tests/rule_corpus/dropped-relation.script": [],
+  "tests/rule_corpus/dropped-relation.script --deep": [],
   "tests/rule_corpus/duplicate-key.panel.yaml": [
     {
       "fingerprint": "0c294597affcfffd9787df68d7ba7fa8",

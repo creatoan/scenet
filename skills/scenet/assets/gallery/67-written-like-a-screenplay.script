@@ -29,6 +29,7 @@ setting: {place: room, time: night}
 ---
 
 PANEL 1
+@cast: {THEO: {}}
 INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark.
 @shot: full_shot
 

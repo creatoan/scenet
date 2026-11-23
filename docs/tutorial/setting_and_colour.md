@@ -61,6 +61,12 @@ Free prose is deliberately not offered. "A rainy street corner at midnight" need
 understanding, and guessing produces panels that are confidently wrong. A named place reads
 like a description and resolves the same way every time.
 
+A panel needs nobody in it. Leave the cast out and it is an establishing shot: the place is drawn
+whole, a caption and a sound are lettered over it, and its description says
+`Long shot. A street at night, in the rain.` -- see
+[A panel with nobody in it](https://creatoan.github.io/scenet/playground/#example=74-a-panel-with-nobody-in-it.scene.yaml)
+in the playground.
+
 ## The horizon
 
 [`horizon`](../reference/language/setting.md#settinghorizon) is where the ground meets what

@@ -16,6 +16,7 @@ PLANCHE 1 (trois cases)
 @tiers: 2 1
 
 CASE 1 : La falaise, le soir. Léa arrive en haut des marches ; Tom l'attend près de la porte.
+@cast: {TOM: {}}
 @shot: plan d'ensemble
 @setting: {place: shore, time: dusk}
 
@@ -28,6 +29,7 @@ GARDIEN (hors champ) :
 Qui est là-haut ?
 
 CASE 2 : Plus près. Tom hausse les épaules.
+@cast: {LÉA: {}}
 @shot: plan américain
 @angle: contre-plongée
 
@@ -35,6 +37,7 @@ TOM :
 « Quelqu'un a oublié l'huile. »
 
 CASE 3
+@cast: {LÉA: {}}
 @shot: plan rapproché poitrine
 
 TOM (pensée)

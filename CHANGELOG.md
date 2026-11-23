@@ -40,6 +40,11 @@ it is written, and says what to write instead.
   `scenet.mcp.build_server(timeout=...)` bounds the calls of a server a host runs itself, and
   returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
+- **A panel may have no cast** (#364): an establishing shot, an insert. `cast` left out or
+  empty compiled to "panel has no cast; there is nothing to place", with no file or line; now
+  the setting is drawn, captions, sounds and lines from off panel are lettered, Panel Core
+  records no camera, and the description says what is shown, `Long shot. A street at night, in
+  the rain.` The gallery's new "A panel with nobody in it" shows one.
 - **JSON is a second carrier for every document** (#354). A panel, a scene, a puppet file or an
   artwork contract may be written in JSON, Scenet JSON, the same data model as Scenet YAML: a
   file that ends in `.json` (`*.panel.json`, `*.scene.json`, `*.puppet.json`, `*.art.json`), or
@@ -119,6 +124,14 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **A comic script panel draws who is in it, not the whole cast** (#364). The front matter's
+  cast is everybody the scene may draw; a panel draws whoever speaks in it or makes a sound in
+  it, whomever its own `@cast:` or `@staging:` names, and whomever the panel it is drawn
+  `@over:` draws. A silent "Maya runs" panel drew Theo, and an exterior establishing shot drew
+  everybody; now a panel of description, captions or sounds only has no cast. To draw somebody
+  silent, write `@cast: {THEO: {}}` in that panel. A staging relation of the front matter that
+  names somebody a panel does not draw does not apply there. A figure a supplied picture draws
+  is still drawn by it.
 - **The vocabulary is reviewed for 1.0** (#361). Every key written in more than one place was
   read against the others, and the review is a table in "All keys, A to Z". Three spellings
   moved, and each old one is one finding, where it is written, that says what to write instead:

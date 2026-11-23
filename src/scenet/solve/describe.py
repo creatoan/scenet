@@ -341,6 +341,12 @@ def describe(panel: PanelIR, faces: Mapping[str, float], width: float) -> str:
     cast = sorted(
         (actor for actor in panel.cast if actor in faces), key=lambda a: (sign * faces[a], a)
     )
+    if not panel.cast:
+        # Nobody in it, an establishing shot or an insert: a shot the author chose says what
+        # is shown. One left to its default says nothing, and is not said.
+        shown = setting or ("A panel with no figures." if panel.setting.image else "")
+        shot = _shot(panel) if "shot" in panel.camera.model_fields_set else ""
+        return " ".join(part for part in (shot, shown) if part) or "An empty panel."
     if not cast:
         # A picture is not nothing, though nothing can be said of what it shows.
         empty = "A panel with no figures." if panel.setting.image else "An empty panel."

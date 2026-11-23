@@ -627,7 +627,10 @@ class TestOffPanelCues:
         return parse_script(self.STAGED + body)
 
     def test_the_speaker_is_left_out_of_that_panel_only(self):
-        result = self.read("PANEL 1\nALICE (OP)\nHey!\n\nPANEL 2\nALICE\nHi.\n")
+        # Bob is drawn where his @cast: names him, or where he speaks (#364).
+        result = self.read(
+            "PANEL 1\n@cast: {BOB: {}}\nALICE (OP)\nHey!\n\nPANEL 2\nALICE\nHi.\nBOB\nHo.\n"
+        )
         assert set(result["1"].cast) == {"BOB"}
         # Bob may still look toward where she is heard from; nothing else can hold.
         assert [
@@ -642,11 +645,11 @@ class TestOffPanelCues:
         assert (line.by, line.off_panel) == ("ALICE", Side.LEFT)
 
     def test_each_relation_left_out_is_a_note(self):
-        script = self.STAGED + "PANEL 1\nALICE (OP)\nHey!\n"
+        script = self.STAGED + "PANEL 1\n@cast: {BOB: {}}\nALICE (OP)\nHey!\n"
         found_here = diagnose_script(script, source=Path("x.script"))
         assert [(item.rule, item.level) for item in found_here] == [("dropped-relation", "note")]
         assert "ALICE left_of BOB" in found_here[0].message
-        assert all(item.region is not None and item.region.start.line == 8 for item in found_here)
+        assert all(item.region is not None and item.region.start.line == 9 for item in found_here)
 
     @pytest.mark.parametrize(
         "marker", ["(OFF)", "(O.S.)", "(O.C.)", "(off-panel)", "(OP, whisper)"]
@@ -684,7 +687,7 @@ class TestOffPanelCues:
         assert (raised.value.rule, raised.value.line) == ("off-panel-speaker", 11)
 
     def test_a_panel_over_it_does_not_inherit_the_absence(self):
-        result = self.read("PANEL 1\nALICE (OP)\nHey!\n\nPANEL 2\n@over: 1\n")
+        result = self.read("PANEL 1\n@cast: {BOB: {}}\nALICE (OP)\nHey!\n\nPANEL 2\n@over: 1\n")
         assert set(result["2"].cast) == {"ALICE", "BOB"}
 
     def test_a_fault_in_a_member_off_panel_everywhere_is_still_found(self):

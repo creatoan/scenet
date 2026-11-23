@@ -29,6 +29,7 @@ setting: {place: field, time: dusk}
 PAGE ONE (splash)
 
 PANEL 1
+@cast: {REN: {}}
 @shot: long_shot
 @palette: tinted
 The field behind the school at dusk. Hana waits by the fence; Ren is running toward her.
@@ -41,6 +42,7 @@ SFX: ZAAAA
 PAGE TWO
 
 PANEL 1
+@cast: {HANA: {}}
 @shot: full_shot
 Ren skids to a stop in front of her, out of breath.
 

@@ -20,6 +20,7 @@ setting: {place: docks, time: night, weather: fog}
 PAGE ONE
 
 PANEL 1
+@cast: {THEO: {}}
 The harbour wall at night, in fog. Theo walks alone under the lamps.
 @shot: long_shot
 
@@ -39,6 +40,7 @@ KREEEK
 She's been up there all night, lad.
 
 PANEL 3
+@cast: {THEO: {}}
 Theo at the foot of the lighthouse stairs.
 @shot: medium_shot
 

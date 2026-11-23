@@ -705,7 +705,9 @@ def _compile_ir(
     # A cast the picture draws was framed and staged by the artist: the camera and staging
     # do not run, and nobody is posed.
     camera: CameraSolution | None
-    if panel.drawn_by_its_picture:
+    if panel.drawn_by_its_picture or not panel.cast:
+        # Nobody to frame: a cast the picture draws, or none at all -- an establishing
+        # shot, an insert. The setting is drawn whole, whatever the shot.
         placements, camera = (), None
     elif staged_in is not None:
         # Staged and framed in what the reader sees, then moved into the bled frame.
