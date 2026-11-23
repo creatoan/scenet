@@ -105,6 +105,12 @@ docs = [
 mutation = [
     "mutmut>=3.8",
 ]
+# The weekly coverage-guided fuzzing run (#378), `fuzz/atheris_fuzz.py`. Atheris ships wheels
+# for Linux on x86-64 alone, so the group is empty anywhere else; Apache-2.0, and never a
+# runtime dependency.
+fuzz = [
+    "atheris==3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.14.0"]
@@ -190,6 +196,15 @@ known-first-party = ["scenet", "tests"]
     "RUF012", # parametrise tables on test classes are never mutated
     "SLF001", # tests may reach into private helpers; that is part of testing them
 ]
+"fuzz/**" = [
+    "ANN",
+    "PLR2004",
+    "S101",   # asserting is what tests do
+    "S314",   # the XML being parsed is SVG this suite just generated
+    "D",
+    "RUF012", # parametrise tables on test classes are never mutated
+    "SLF001", # tests may reach into private helpers; that is part of testing them
+]
 # `__all__` there is grouped by role -- compiling, parsing, rendering, errors -- with a
 # comment per group. That is far more use to a reader than alphabetical order, and the
 # test suite checks the contents rather than the arrangement.
@@ -266,14 +281,18 @@ mutate_only_covered_lines = true
 
 # ---------------------------------------------------------------- ty
 [tool.ty.src]
-include = ["src", "tests"]
+include = ["src", "tests", "fuzz"]
+# Atheris is Linux-only and ships no types: its harness is kept to a few lines that only
+# hand bytes to the oracle, which is checked with everything else.
+exclude = ["fuzz/atheris_fuzz.py"]
 
 [tool.ty.rules]
 possibly-unresolved-reference = "error"
 
 # ---------------------------------------------------------------- basedpyright (blocking, in CI's strict type check)
 [tool.basedpyright]
-include = ["src", "tests"]
+include = ["src", "tests", "fuzz"]
+exclude = ["fuzz/atheris_fuzz.py", "**/node_modules", "**/__pycache__", "**/.*"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 reportMissingTypeStubs = false
@@ -300,6 +319,13 @@ reportUnnecessaryIsInstance = false
 # same thing through SLF001 in per-file-ignores.
 [[tool.basedpyright.executionEnvironments]]
 root = "tests"
+reportPrivateUsage = false
+# The property tests import the shared strategies and invariants as `tests.…`, which
+# resolves from the repository root, as it does for pytest.
+extraPaths = ["."]
+
+[[tool.basedpyright.executionEnvironments]]
+root = "fuzz"
 reportPrivateUsage = false
 # The property tests import the shared strategies and invariants as `tests.…`, which
 # resolves from the repository root, as it does for pytest.

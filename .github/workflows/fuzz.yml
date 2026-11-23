@@ -1,0 +1,43 @@
+name: Fuzz
+
+# Hostile or random input crashed Scenet over and over, each time found by accident (#378):
+# infinity and NaN, control characters, deep nesting, a pattern that backtracked. Fuzzing
+# looks on purpose. One oracle, `tests/fuzzing.py`: for any bytes, every entry point answers
+# with findings or a ScenetError, within a time and a memory budget, and never prints a
+# traceback. Two engines feed it:
+#
+# - on every pull request, a short Hypothesis run, `fuzz/test_fuzz.py`: real inputs bent
+#   byte by byte, documents drawn by `tests/strategies.py` and bent, and any bytes at all;
+# - every week, Atheris, coverage-guided, `fuzz/atheris_fuzz.py`, with its corpus kept
+#   between runs as a cache. A crash is uploaded, minimised, and the run fails, which opens
+#   an issue through the scheduled-run report.
+#
+# Whatever either finds is kept in `tests/fuzz_regressions/`, which the ordinary suite
+# replays. `docs/maintainer/testing.md` says how to reproduce a crash.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  short:
+    name: Fuzz (short)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+
+      - name: Fuzz every entry point, briefly
+        run: uv run pytest fuzz/test_fuzz.py --no-cov -p no:cacheprovider

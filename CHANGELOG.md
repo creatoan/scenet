@@ -16,6 +16,13 @@ it is written, and says what to write instead.
 
 ### Added
 
+- **Fuzzing** (#378): one oracle, `tests/fuzzing.py`, says that for any bytes every entry
+  point -- a panel or scene, a comic script, a puppet file, an artwork contract, a Panel Core,
+  a PNG or JPEG picture and a font -- answers with findings or a `ScenetError`, within a time
+  and a memory budget, with no traceback. A short Hypothesis run checks it on every pull
+  request, Atheris every week with its corpus kept between runs, and every input either found
+  is replayed by the ordinary suite. `docs/maintainer/testing.md` says how to reproduce one.
+
 - **`scenet mcp` bounds every tool call** (#380): each runs in a worker process, stopped once it
   has run for `--timeout` seconds (60 by default) or its client cancels it, so a 400-word
   balloon no longer occupies the server for minutes after its client gave up. A failed compile
@@ -153,6 +160,11 @@ it is written, and says what to write instead.
   profile is; it was the key's first character.
 
 ### Fixed
+
+- **A damaged font is a `font-file` finding** (#378), found by fuzzing: a file that opened but
+  failed inside fontTools when its kerning or a glyph was first read was an internal error half
+  way through a compile. An author's face is now read through when it is loaded, and anything
+  read later that fails is refused as a damaged font.
 
 - **A path to something that is not a regular file is refused** (#379): a folder, a device or a
   pipe named as a font, a picture or a puppet hung the compile or read without end; it is now a

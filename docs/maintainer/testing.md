@@ -286,6 +286,76 @@ that trips on it landed:
 | A syntax error at the end of a file pointed past its last line; a block value at its first field | [#108](https://github.com/creatoan/scenet/issues/108) |
 | An unknown speaker was located one step short of its `by:` | [#109](https://github.com/creatoan/scenet/issues/109) |
 
+## Fuzzing
+
+The properties check what a good document compiles to. Fuzzing checks what any input at all
+does: for any bytes, every entry point answers with findings or a `ScenetError`, within a
+time and a memory budget, and never prints a traceback. That one rule is the oracle,
+`check(entry, data)` in `tests/fuzzing.py`, and it has seven entry points, each an input read
+the way Scenet reads it: `panel` (a panel or a scene), `script`, `puppet`, `contract` (an
+artwork contract), `core` (a Panel Core read back), `picture` (a PNG or JPEG, drawn into the
+SVG and the PDF) and `font` (a face, drawn in outlines and as live text in print). The files a
+document names are sent in a mapping, as the MCP server is sent them, so nothing reads past
+the input.
+
+Two engines feed it:
+
+| Engine | Where | When | What it does |
+|---|---|---|---|
+| Hypothesis | `fuzz/test_fuzz.py` | Every pull request, the `Fuzz (short)` job, in under five minutes | Real inputs bent byte by byte, documents `tests/strategies.py` draws and then bends, any text, any bytes |
+| Atheris | `fuzz/atheris_fuzz.py` | Wednesdays, `fuzz-weekly.yml`, 45 minutes | Coverage-guided: mutates towards branches nothing has reached yet, from a corpus kept between runs as a cache |
+
+`fuzz/` is outside `tests/` on purpose: the ordinary suite and every mutation leg would
+otherwise pay for it. What either engine ever found is kept in `tests/fuzz_regressions/`,
+one folder per entry point, and `tests/test_fuzz_regressions.py` replays every file there in
+the ordinary suite, with every seed.
+
+Atheris ships wheels for Linux on x86-64 only, so the `fuzz` dependency group is empty
+anywhere else. OpenSSF Scorecard's Fuzzing check recognises it, and recognises neither
+Hypothesis nor HypoFuzz.
+
+### Reproducing a crash
+
+A failed pull-request run prints the input as a `@reproduce_failure` blob, and the failing
+example; run the one test again with it to see the traceback:
+
+```bash
+uv run pytest fuzz/test_fuzz.py --no-cov -k test_any_bytes
+```
+
+A failed weekly run uploads `fuzz-crashes`: each `crash-<sha1>`, and beside it the same input
+minimised, `crash-<sha1>.min`. The first byte picks the entry point, in the sorted order of
+`ENTRY_POINTS`; the rest is the input. On Linux, after `uv sync --group fuzz`, run it alone:
+
+```bash
+uv run python fuzz/atheris_fuzz.py crash-0123abcd.min
+```
+
+On any system, feed the oracle the input without its first byte, and read the traceback the
+`OracleError` carries:
+
+```python
+from pathlib import Path
+
+from tests.fuzzing import ENTRY_POINTS
+
+entries = sorted(ENTRY_POINTS)
+found = Path("tests/fuzz_regressions/font/kerned-or-drawn-after-opening-font-1.ttf").read_bytes()
+data = bytes([entries.index("font")]) + found  # as a crash file holds it
+entry, body = entries[data[0] % len(entries)], data[1:]
+assert entry == "font" and body == found
+```
+
+Then keep it: write the input, without its first byte, to
+`tests/fuzz_regressions/<entry point>/<what it did>`, which fails the ordinary suite until the
+fix lands, and open an issue for it. Fix it in the pull request that keeps the file.
+
+### What fuzzing found
+
+| Found | Fixed in |
+|---|---|
+| A font that opened, then failed inside fontTools when its kerning or a glyph was first read: an internal error half way through a compile, or a render | [#378](https://github.com/creatoan/scenet/issues/378): an author's face is probed when it is read, and what the probe does not reach is refused as `MalformedAssetError` |
+
 ## Mutation testing
 
 Coverage shows which lines ran, not whether any assertion would notice them changing.

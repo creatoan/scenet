@@ -93,6 +93,9 @@ def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...])
         return known
     try:
         metrics = FontMetrics(Path(declared), data=data)
+        # What fontTools would read later, read now: a table that fails is this finding,
+        # at the face, rather than a failure half way through a compile (#378).
+        metrics.probe()
     # A file that is not a font can fail inside fontTools in more ways than it documents,
     # and the bytes came from whoever wrote the document. Whatever the failure, the
     # answer to the author is the same.

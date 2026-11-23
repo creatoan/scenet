@@ -82,6 +82,7 @@ switcher's data is, and its canonical address at the root.
 | `Analyze (javascript-typescript)` | No | CodeQL, on the TypeScript |
 | `Analyze (actions)` | No | CodeQL, on the workflows |
 | `Dependency review` | Yes | A new dependency with a known high or critical vulnerability |
+| `Fuzz (short)` | Yes | Hypothesis against the fuzzing oracle, every entry point, in under five minutes |
 
 The first fifteen rows are `ci.yml`, the next three `codeql.yml`, and the last
 `dependency-review.yml`. A test holds this table to the workflows, so a new job fails it
