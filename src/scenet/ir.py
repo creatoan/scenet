@@ -344,7 +344,7 @@ class ShotType(StrEnum):
 
 #: Values the language took before 1.0 and no longer does, under the key they were written
 #: for, each with the value to write instead. Kept so that the finding refusing one can say
-#: what to write: no document takes them, and none will (#361).
+#: what to write: no document takes them, and none will.
 RETIRED_VALUES: dict[str, dict[str, str]] = {
     "shot": {
         # An exact synonym: two names for one rung made a reader wonder what differed.

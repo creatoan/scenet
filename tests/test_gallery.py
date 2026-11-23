@@ -727,7 +727,7 @@ class TestWhatADocumentWrites:
             encoding="utf-8",
         )
         written = read_file(script)
-        assert {"ShotType.wide", "Place.docks"} <= written.values
+        assert {"ShotType.long_shot", "Place.docks"} <= written.values
         assert {"PlacementZone.top_left", "PlacementZone.middle_center"}.isdisjoint(written.values)
         assert "document.panels" not in written.properties
 

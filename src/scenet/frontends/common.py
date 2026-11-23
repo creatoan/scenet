@@ -388,7 +388,7 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
 
 
 def _name_what_replaced(errors: list[ErrorDetails]) -> list[ErrorDetails]:
-    """Say what to write for a value or a key the language took before 1.0 (#361).
+    """Say what to write for a value or a key the language took before 1.0.
 
     `shot: wide` fails as any unknown shot does, and `insets: [{size: 0.2}]` as an unknown
     key beside a missing `scale`: both are one spelling that moved, so each becomes one
