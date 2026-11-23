@@ -54,6 +54,14 @@ Files a document names, found beside the document -- never by an absolute path.
 .. automodule:: scenet.paths
 ```
 
+## `scenet.limits`
+
+How much of a file is read: the bounds on what a document can make Scenet read.
+
+```{eval-rst}
+.. automodule:: scenet.limits
+```
+
 ## `scenet.images`
 
 A picture to letter over: how big it is, read from its PNG or JPEG header, and nothing else.

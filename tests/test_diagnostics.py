@@ -1199,7 +1199,10 @@ class TestScriptCastFindings:
     )
     def test_a_panel_override_is_reported_at_its_directive(self, name, rule, path, line):
         corpus = Path(__file__).parent / "finding_corpus"
-        (found,) = diagnose_file(corpus / f"{name}-a-script-panel-overrides.script")
+        # Rooted at the repository: the corpus names the gallery's files, above it (#432).
+        (found,) = diagnose_file(
+            corpus / f"{name}-a-script-panel-overrides.script", root=corpus.parents[1]
+        )
         assert (found.rule, found.path) == (rule, path)
         assert found.region is not None
         assert found.region.start.line == line

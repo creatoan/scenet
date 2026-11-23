@@ -164,7 +164,7 @@ class TestWhereTheFileIs:
             ("art\\x.png", "backslash"),
             ("", "empty"),
             ("art/missing.png", "not found"),
-            ("art", "cannot be read"),
+            ("art", "is not a regular file"),
         ],
     )
     def test_every_fault_is_image_file(self, declared: str, why: str, folder: Path):

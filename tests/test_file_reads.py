@@ -34,6 +34,7 @@ from scenet.cli import main
 from scenet.diagnostics import Diagnostic, diagnose_file, diagnose_source
 from scenet.errors import PanelSyntaxError
 from scenet.lettering import load_font
+from scenet.paths import MARKER, OutsideRootError
 from scenet.pipeline import compile_book_file, compile_file
 from tests.images import PNG_SIGNATURE, chunk, tiny_png
 from tests.puppets import KID, kid
@@ -119,7 +120,8 @@ class TestOnlyRegularFiles:
         (tmp_path / "fonts").mkdir()
         finding = _only(diagnose_file(document))
         assert finding.rule == "font-file"
-        assert "is not a regular file" in finding.message
+        # The device is no file in the folder at all: its name leads out of it.
+        assert "is outside the root folder" in finding.message
 
     def test_a_document_that_is_not_a_regular_file(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -304,54 +306,123 @@ def climbing(tmp_path: Path) -> Path:
 
 OUTSIDE = (
     "image file '../shared/sky.png' is outside the root folder, the only one this compile "
-    "may read from"
+    "reads from; an empty scenet.toml in a folder that holds both, or a wider --root, lets it in"
 )
 
 
-class TestARoot:
-    def test_without_a_root_a_document_may_climb(self, climbing: Path):
-        assert diagnose_file(climbing) == []
+class TestTheDefaultRoot:
+    """With no root named, a document reads within the nearest folder at or above its own
+    that holds a `scenet.toml`, or else within its own folder (#432)."""
 
-    def test_with_a_root_it_may_not(self, climbing: Path):
-        finding = _only(diagnose_file(climbing, root=climbing.parent))
+    def test_a_document_may_not_climb_out_of_its_folder(self, climbing: Path):
+        finding = _only(diagnose_file(climbing))
         assert finding.rule == "image-file"
         assert finding.message == OUTSIDE
 
-    def test_a_root_above_both_lets_it(self, climbing: Path):
-        assert diagnose_file(climbing, root=climbing.parent.parent) == []
-
-    def test_compile_file_and_compile_book_file_take_it(self, climbing: Path):
+    def test_compile_file_and_compile_book_file_refuse_it(self, climbing: Path):
         for compile_ in (compile_file, compile_book_file):
             with pytest.raises(PanelSyntaxError, match="outside the root folder"):
-                compile_(climbing, root=climbing.parent)
+                compile_(climbing)
 
-    def test_the_finding_names_no_absolute_path(self, climbing: Path):
-        message = _only(diagnose_file(climbing, root=climbing.parent)).message
-        assert str(climbing.parent) not in message
-        assert climbing.parent.as_posix() not in message
+    def test_an_empty_marker_above_lets_it_in(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        assert diagnose_file(climbing) == []
+        compile_file(climbing)
 
-    def test_a_symbolic_link_out_of_the_root(self, tmp_path: Path):
+    def test_a_marker_of_comments_only_is_empty(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text(
+            "# the top of the comic\n\n# fonts and puppets are shared below\n", encoding="utf-8"
+        )
+        assert diagnose_file(climbing) == []
+
+    def test_the_nearest_marker_decides(self, climbing: Path):
+        """One in the document's own folder is nearer than one above, and holds less."""
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        (climbing.parent / MARKER).write_text("", encoding="utf-8")
+        assert _only(diagnose_file(climbing)).message == OUTSIDE
+
+    def test_a_marker_that_holds_a_key_is_not_yet(self, climbing: Path):
+        marker = climbing.parent.parent / MARKER
+        marker.write_text("# the root\n\nfonts = 'shared'\n", encoding="utf-8")
+        finding = _only(diagnose_file(climbing))
+        assert finding.rule == "not-yet"
+        assert finding.source == marker
+        assert finding.region is not None
+        assert finding.region.start.line == 3
+        assert finding.message == (
+            "scenet.toml holds 'fonts', and a scenet.toml holds nothing yet: it marks the root "
+            "of a project, and what it may say is kept for a later version of Scenet"
+        )
+        with pytest.raises(PanelSyntaxError, match="holds nothing yet"):
+            compile_file(climbing)
+
+    def test_a_marker_that_is_not_toml(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("[unclosed\n", encoding="utf-8")
+        finding = _only(diagnose_file(climbing))
+        assert finding.rule == "syntax"
+        assert finding.message.startswith("scenet.toml is not TOML")
+
+    def test_the_marker_is_a_dependency_and_a_refused_file_is_not(self, climbing: Path):
+        read: set[Path] = set()
+        with pytest.raises(PanelSyntaxError):
+            compile_book_file(climbing, dependencies=read)
+        assert (climbing.parent.parent / "shared" / "sky.png").resolve() not in read
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        read.clear()
+        compile_book_file(climbing, dependencies=read)
+        assert (climbing.parent.parent / MARKER).resolve() in read
+        assert (climbing.parent.parent / "shared" / "sky.png").resolve() in read
+
+    def test_nothing_outside_is_looked_at_by_a_path_that_says_it_leaves(
+        self, climbing: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """The lexical test comes first: a path that says it leaves is never resolved."""
+        resolve = Path.resolve
+
+        def watched(path: Path, strict: bool = False) -> Path:
+            assert "sky.png" not in path.name, "a path outside the root was resolved"
+            return resolve(path, strict=strict)
+
+        monkeypatch.setattr(Path, "resolve", watched)
+        assert _only(diagnose_file(climbing)).message == OUTSIDE
+
+    def test_text_with_a_source_finds_the_marker_too(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        text = climbing.read_text(encoding="utf-8")
+        assert diagnose_source(text, source=climbing) == []
+
+    def test_a_base_folder_is_its_own_root_and_no_marker_is_looked_for(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        text = climbing.read_text(encoding="utf-8")
+        assert _only(diagnose_source(text, base=climbing.parent)).message == OUTSIDE
+        assert diagnose_source(text, base=climbing.parent, root=climbing.parent.parent) == []
+
+    def test_a_mapping_is_its_own_root(self):
+        found = diagnose_source(
+            f"{CAST}setting: {{image: ../shared/sky.png}}\n",
+            base={"../shared/sky.png": tiny_png()},
+        )
+        assert _only(found).message == OUTSIDE
+
+    def test_a_symbolic_link_out_of_the_folder(self, tmp_path: Path):
         if not _can_symlink(tmp_path):
             pytest.skip("symbolic links need a privilege here")
         (tmp_path / "secret.png").write_bytes(tiny_png())
         (tmp_path / "comic" / "art").mkdir(parents=True)
         (tmp_path / "comic" / "art" / "a.png").symlink_to(tmp_path / "secret.png")
         document = _document(tmp_path / "comic", "setting: {image: art/a.png}")
-        assert diagnose_file(document) == []
-        finding = _only(diagnose_file(document, root=document.parent))
-        assert finding.message == (
-            "image file 'art/a.png' is outside the root folder, the only one this compile "
-            "may read from"
+        assert _only(diagnose_file(document)).message.startswith(
+            "image file 'art/a.png' is outside the root folder"
         )
+        assert diagnose_file(document, root=tmp_path) == []
 
-    def test_a_symbolic_link_within_the_root(self, tmp_path: Path):
+    def test_a_symbolic_link_within_the_folder(self, tmp_path: Path):
         if not _can_symlink(tmp_path):
             pytest.skip("symbolic links need a privilege here")
         (tmp_path / "comic" / "art").mkdir(parents=True)
         (tmp_path / "comic" / "art" / "real.png").write_bytes(tiny_png())
         (tmp_path / "comic" / "art" / "a.png").symlink_to(tmp_path / "comic" / "art" / "real.png")
-        document = _document(tmp_path / "comic", "setting: {image: art/a.png}")
-        assert diagnose_file(document, root=document.parent) == []
+        assert diagnose_file(_document(tmp_path / "comic", "setting: {image: art/a.png}")) == []
 
     @pytest.mark.parametrize(
         ("line", "file", "rule"),
@@ -365,8 +436,8 @@ class TestARoot:
         (tmp_path / file).write_bytes(FONT.read_bytes() if rule == "font-file" else tiny_png())
         (tmp_path / "comic").mkdir()
         document = _document(tmp_path / "comic", line)
-        assert diagnose_file(document) == []
-        assert _only(diagnose_file(document, root=document.parent)).rule == rule
+        assert _only(diagnose_file(document)).rule == rule
+        assert diagnose_file(document, root=tmp_path) == []
 
     def test_a_puppet_file(self, tmp_path: Path):
         (tmp_path / "puppets").mkdir()
@@ -378,30 +449,46 @@ class TestARoot:
             "script: [{say: {by: kid, text: Hi.}}]\n",
             encoding="utf-8",
         )
-        assert diagnose_file(document) == []
-        assert _only(diagnose_file(document, root=document.parent)).rule == "puppet-file"
+        assert _only(diagnose_file(document)).rule == "puppet-file"
+        assert diagnose_file(document, root=tmp_path) == []
 
-    def test_an_artwork_contract_beside_a_picture_out_of_the_root(self, tmp_path: Path):
-        """The picture is refused first, and its contract is never read."""
-        (tmp_path / "shared").mkdir()
-        (tmp_path / "shared" / "sky.png").write_bytes(tiny_png())
-        (tmp_path / "comic").mkdir()
-        document = _document(tmp_path / "comic", "setting: {image: ../shared/sky.png}")
-        assert [item.rule for item in diagnose_file(document, root=document.parent)] == [
-            "image-file"
-        ]
+    def test_the_finding_names_no_absolute_path(self, climbing: Path):
+        message = _only(diagnose_file(climbing)).message
+        assert str(climbing.parent) not in message
+        assert climbing.parent.as_posix() not in message
+
+
+class TestANamedRoot:
+    def test_a_wider_root_lets_it_in(self, climbing: Path):
+        assert diagnose_file(climbing, root=climbing.parent.parent) == []
+
+    def test_the_top_of_the_file_system_reads_what_0_13_read(self, climbing: Path):
+        assert diagnose_file(climbing, root=Path(climbing.anchor)) == []
+
+    def test_a_named_root_wins_over_a_marker(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        assert _only(diagnose_file(climbing, root=climbing.parent)).message == OUTSIDE
+
+    def test_a_root_that_does_not_hold_the_document_is_refused(self, climbing: Path):
+        elsewhere = climbing.parent.parent / "shared"
+        for call in (compile_file, compile_book_file, diagnose_file):
+            with pytest.raises(OutsideRootError, match="outside its root folder"):
+                call(climbing, root=elsewhere)
 
 
 class TestTheCommandLineRoot:
     @pytest.mark.parametrize("command", ["build", "check"])
-    def test_root_refuses_a_climb(
+    def test_a_climb_is_refused_by_default(
         self, command: str, climbing: Path, capsys: pytest.CaptureFixture[str]
     ):
-        assert main([command, str(climbing), "--root", str(climbing.parent)]) == 1
+        assert main([command, str(climbing)]) == 1
         assert OUTSIDE in capsys.readouterr().err
 
     @pytest.mark.parametrize("command", ["build", "check"])
-    def test_without_it_nothing_changes(self, command: str, climbing: Path):
+    def test_a_wider_root_or_a_marker_lets_it_in(self, command: str, climbing: Path):
+        assert main([command, str(climbing), "--root", str(climbing.parent.parent), "--quiet"]) == 0
+        assert main([command, str(climbing), "--root", climbing.anchor, "--quiet"]) == 0
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
         assert main([command, str(climbing), "--quiet"]) == 0
 
     def test_a_watch_keeps_its_root(
@@ -412,8 +499,18 @@ class TestTheCommandLineRoot:
 
         monkeypatch.setattr("scenet.cli.watch_loop", once)
         assert main(["build", str(climbing), "--watch", "--root", str(climbing.parent)]) == 1
-        err = capsys.readouterr().err
-        assert err.count(OUTSIDE) == 2  # the first build, and the rebuild
+        assert capsys.readouterr().err.count(OUTSIDE) == 2  # the first build, and the rebuild
+
+    def test_a_watch_watches_the_marker(self, climbing: Path, monkeypatch: pytest.MonkeyPatch):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        watched: list[set[Path]] = []
+
+        def watch(dependencies: set[Path], _rebuild: Callable[[], None]) -> None:
+            watched.append(dependencies)
+
+        monkeypatch.setattr("scenet.cli.watch_loop", watch)
+        assert main(["build", str(climbing), "--watch", "--quiet"]) == 0
+        assert (climbing.parent.parent / MARKER).resolve() in watched[0]
 
     @pytest.mark.parametrize("command", ["build", "check"])
     def test_a_root_that_is_not_a_folder_is_a_usage_error(
@@ -422,6 +519,16 @@ class TestTheCommandLineRoot:
         missing = climbing.parent / "nowhere"
         assert main([command, str(climbing), "--root", str(missing)]) == 2
         assert capsys.readouterr().err == f"scenet: --root {missing} is not a folder\n"
+
+    @pytest.mark.parametrize("command", ["build", "check"])
+    def test_a_root_that_does_not_hold_the_document_is_a_usage_error(
+        self, command: str, climbing: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        elsewhere = climbing.parent.parent / "shared"
+        assert main([command, str(climbing), "--root", str(elsewhere)]) == 2
+        assert capsys.readouterr().err == (
+            f"scenet: {climbing} is outside --root {elsewhere}, which must hold it\n"
+        )
 
 
 SECRET = "hunter2-the-secret"  # noqa: S105 -- what must never be quoted back, not a password

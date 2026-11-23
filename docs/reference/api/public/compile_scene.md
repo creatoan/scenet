@@ -13,4 +13,7 @@
 
    .. versionadded:: 0.11
       The ``base`` parameter.
+
+   .. versionadded:: 0.14
+      The ``root`` parameter.
 ```

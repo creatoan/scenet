@@ -59,7 +59,7 @@ every thread in the process:
 | Cache | What it holds | Bounded | Safe to share |
 |---|---|---|---|
 | `load_metrics`, an `lru_cache` in `scenet.solve.text` | The shipped fonts, parsed | 8 entries | Yes. Each entry is read only, apart from the cache inside it (below) |
-| `_BY_CONTENT` in `scenet.lettering` | Each font a document declared, by the digest of its bytes | **No.** It grows with every distinct font, for the life of the process | Yes. Two threads that miss together each parse the font, and one entry wins. Both are the same font |
+| `_BY_CONTENT` in `scenet.lettering` | The fonts documents declared lately, by the digest of their bytes | 32 entries, the one used longest ago let go first (`scenet.lettering.FONT_CACHE_ENTRIES`) | Yes. Two threads that miss together each parse the font, and one entry wins. Both are the same font |
 | Inside each `FontMetrics` | Kerning pairs and glyph outlines, read on first use | No; at most every pair and glyph of the font | Yes, under CPython's GIL: entries are only ever added, and two threads compute the same value |
 | The PDF writer's and the turbulence `lru_cache`s, in `scenet.emit` | Fonts subset for print, and noise fields | 32 to 64 entries | Yes |
 
@@ -73,38 +73,29 @@ Some things are not cached, or not shared:
   up their dependencies.
 
 **So compiles may run in parallel threads.** Under CPython's GIL they take turns. For real
-parallelism, use processes. A server compiling documents from many users holds one copy of
-each distinct font they declare, until it restarts.
+parallelism, use processes. A server compiling documents from many users holds at most 32
+of the fonts they declare at once.
 
 ## Which files a compile reads
 
-A document can name files beside it:
+A document can name files beside it: a lettering font, a picture to letter over and its artwork contract, a puppet file. Where they are read from depends on `base=`, and on the function, and every one must stay inside the **root**:
 
-- a lettering font;
-- a picture to letter over, and its artwork contract;
-- a puppet file.
+| You pass | A file the document names is read from | It must stay inside |
+|---|---|---|
+| A path: `compile_file`, `compile_book_file`, or `source=` on a function that takes text | The document's folder | `root=`; else the nearest folder at or above the document's that holds a `scenet.toml`; else the document's folder |
+| `base=Path(...)` | That folder | `root=`, or else that folder |
+| `base={"fonts/a.ttf": b"..."}`, a mapping | That mapping, and never the disk | The mapping |
+| Text, with neither | Nowhere: a document that names a file is refused | — |
 
-Where they are read from depends on `base=`, and on the function:
+A path that a document writes is relative: not absolute, without a backslash or a control character, and **it may not leave the root**. `../fonts/a.ttf` is read only when the root holds the folder above the document, and a symbolic link is followed only to a file inside it. A path that leaves is refused under the rule of the file it names (`font-file`, say), before anything outside the root is opened, so the refusal says nothing of what is there. Only a regular file is read: a folder, a device or a pipe is refused. A `root=` that does not hold the document is refused too.
 
-| You pass | A file the document names is read from |
-|---|---|
-| A path: `compile_file`, `compile_book_file`, or `source=` on a function that takes text | The document's folder |
-| `base=Path(...)` | That folder |
-| `base={"fonts/a.ttf": b"..."}`, a mapping | That mapping, and never the disk |
-| Text, with neither | Nowhere. A document that names a file is refused |
+`scenet build`, `scenet check` and `scenet build --watch` take `--root DIR`. To share a folder of fonts or puppets between documents, put an empty `scenet.toml` at the top of the project, or pass `--root` that folder; `--root /` reads anything your account can, as 0.13 did. A `scenet.toml` holds nothing yet: a key in it is refused, kept for a later version.
 
-A path that a document writes must be relative. It may not be absolute, hold a backslash or a
-control character. **It may climb out of the folder with `..`**, on purpose: a shared
-`../fonts/` or `../puppets/` folder serves several documents. Read against a folder,
-`../../secret.png` therefore reaches outside it, and so does a symbolic link.
+Each file is read up to a bound, and one larger is refused by its size before it is read: 8 MiB for a document, a puppet file or an artwork contract, 128 MiB for a picture, 64 MiB for a font. The bounds are {py:mod}`scenet.limits`. A PNG decoded for print is inflated no further than the size its header gives, and one whose data says otherwise is refused.
 
-**To compile documents you do not trust, pass their files as a mapping.** Never pass a
-folder. A mapping is how `scenet mcp` and the playground are sent files: they never read a
-folder of their own. A picture's bytes reach the SVG under `embed=`, and the PDF. A file a
-document named can also be quoted in an error message.
+**To compile documents you do not trust, pass their files as a mapping**, or pass `root=` a folder that holds nothing but theirs; do not rely on the default root, which a `scenet.toml` above their folder widens. A mapping is how `scenet mcp` and the playground are sent files: they never read a folder of their own. A picture's bytes reach the SVG under `embed=`, and the PDF; no message quotes the contents of a file the document names.
 
-Every read file is recorded, and `compile_book_file(..., dependencies=set())` hands you the
-set. `scenet build --watch` rebuilds when one of them changes.
+Every read file is recorded, and `compile_book_file(..., dependencies=set())` hands you the set; `scenet build --watch` rebuilds when one changes, or when a `scenet.toml` does.
 
 ## Performance
 

@@ -43,7 +43,7 @@ scenet: run it again with --traceback, or with SCENET_DEBUG=1, to see where it h
 *Since 0.1.*
 
 ```
-scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--pdf] [--quiet] [--watch]
+scenet build SOURCE [-o OUTPUT] [--core] [--debug] [--conditioning] [--live-text] [--mono] [--no-aria] [--embed-images] [--strip] [--pdf] [--quiet] [--watch] [--root DIR]
 ```
 
 Compiles `SOURCE` to SVG. The frontend is chosen by extension:
@@ -169,7 +169,19 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   observed dependencies stay watched so a deleted source or a partial failed build can recover.
   Watch mode does not start a server or reload a browser. It polls with the standard library
   by default; install `scenet[watch]` to use `watchfiles` when available. Ctrl-C exits with 0.
+  A `scenet.toml` that chose the root is watched too.
   *Since 0.13.*
+
+`--root DIR`
+: The folder every file a document names must be inside: its fonts, pictures, artwork
+  contracts and puppet files, once `..` and symbolic links are followed. One outside it is
+  refused under the rule of the file it names, before anything outside the folder is opened.
+  Without it, the root is the nearest folder at or above the document's that holds a
+  `scenet.toml`, else the document's own folder. A `scenet.toml` holds nothing yet: a key in
+  it is `not-yet`. A `DIR` that is not a folder, or does not hold the document, is a usage
+  error, exit 2. `--root /` reads anything your account can, as 0.13 did; for a document from
+  someone else, pass its own folder.
+  *Since 0.14.*
 
 ### Output naming
 
@@ -234,7 +246,7 @@ a file name and is refused the same way.
 |---|---|
 | 0 | Compiled |
 | 1 | The document could not be compiled — reported as a plain message, not a traceback — or a file could not be read or written |
-| 2 | Usage error, or the source file does not exist or has an extension no frontend reads |
+| 2 | Usage error, or the source file does not exist or has an extension no frontend reads, or `--root` does not hold it |
 | 70 | An internal error |
 | 130 | Stopped by Ctrl-C; a `--watch` ends with 0 instead, since that is how it is meant to end |
 
@@ -308,12 +320,18 @@ Rebuilt on every save, until Ctrl-C:
 scenet build examples/gallery/01-two-characters.panel.yaml --watch
 ```
 
+Reading the files a document names from inside a folder that holds both, here the gallery's:
+
+```bash
+scenet build examples/gallery/42-your-own-font.scene.yaml --root examples/gallery
+```
+
 ## `scenet check`
 
 *Since 0.3.*
 
 ```
-scenet check SOURCE... [--format {text,sarif}] [-o OUTPUT] [--quiet] [--deep]
+scenet check SOURCE... [--format {text,sarif}] [-o OUTPUT] [--quiet] [--deep] [--root DIR]
 ```
 
 Reports everything wrong with one or more documents and exits non-zero if anything is an
@@ -378,13 +396,24 @@ published schema — are what make a generate/validate/repair loop work.
   pose reports that once rather than a second, worse-located finding for the same fault.
   *Since 0.6.*
 
+`--root DIR`
+: The folder every file a document names must be inside: its fonts, pictures, artwork
+  contracts and puppet files, once `..` and symbolic links are followed. One outside it is
+  refused under the rule of the file it names, before anything outside the folder is opened.
+  Without it, the root is the nearest folder at or above the document's that holds a
+  `scenet.toml`, else the document's own folder. A `scenet.toml` holds nothing yet: a key in
+  it is `not-yet`. A `DIR` that is not a folder, or does not hold every document, is a usage
+  error, exit 2. `--root /` reads anything your account can, as 0.13 did; for a document from
+  someone else, pass its own folder.
+  *Since 0.14.*
+
 ### Exit status
 
 | Code | Meaning |
 |---|---|
 | 0 | No document has an error; notes may have been printed |
 | 1 | At least one error, or a file could not be read or written |
-| 2 | Usage error, or a source file does not exist or has an extension no frontend reads |
+| 2 | Usage error, or a source file does not exist or has an extension no frontend reads, or `--root` does not hold it |
 | 70 | An internal error |
 | 130 | Stopped by Ctrl-C |
 
@@ -504,6 +533,12 @@ scenet check --format sarif examples/gallery/01-two-characters.panel.yaml > resu
 
 ```bash
 scenet check --deep examples/gallery/*.panel.yaml examples/gallery/*.scene.yaml
+```
+
+A document from someone else, reading nothing outside its own folder:
+
+```bash
+scenet check --root examples/gallery examples/gallery/01-two-characters.panel.yaml
 ```
 
 The findings in a file, one per line, and only the exit status on the terminal:

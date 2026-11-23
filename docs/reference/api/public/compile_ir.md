@@ -31,4 +31,7 @@
 
    .. versionadded:: 0.13
       The ``staged_in`` parameter.
+
+   .. versionadded:: 0.14
+      The ``root`` parameter.
 ```

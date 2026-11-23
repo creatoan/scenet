@@ -36,24 +36,26 @@ describe("checkInvocation", () => {
   const folder = join("work", "comic");
   const file = join(folder, "pages", "duel.panel.yaml");
 
-  test("asks for SARIF, for the one file, from the workspace folder", () => {
+  test("asks for SARIF, for the one file, from the workspace folder, rooted there", () => {
     assert.deepEqual(checkInvocation({ executable: "uv run scenet", deep: false, file, workspaceFolder: folder }), {
       command: "uv",
-      args: ["run", "scenet", "check", "--format", "sarif", file],
+      args: ["run", "scenet", "check", "--format", "sarif", "--root", folder, file],
       cwd: folder,
     });
   });
 
   test("--deep when asked for", () => {
     const { args } = checkInvocation({ executable: "scenet", deep: true, file, workspaceFolder: folder });
-    assert.deepEqual(args, ["check", "--format", "sarif", "--deep", file]);
+    assert.deepEqual(args, ["check", "--format", "sarif", "--deep", "--root", folder, file]);
   });
 
-  test("a file outside any workspace folder runs from its own directory", () => {
+  test("a file outside any workspace folder runs from its own directory, with its own root", () => {
     // `uv run` finds its project from the working directory, so it has to be one near
-    // the document rather than wherever the editor happened to start.
-    const { cwd } = checkInvocation({ executable: "scenet", deep: false, file, workspaceFolder: undefined });
+    // the document rather than wherever the editor happened to start. With no workspace,
+    // the CLI chooses the root itself: a scenet.toml above the file, or its folder.
+    const { args, cwd } = checkInvocation({ executable: "scenet", deep: false, file, workspaceFolder: undefined });
     assert.equal(cwd, join(folder, "pages"));
+    assert.ok(!args.includes("--root"));
   });
 });
 
@@ -67,20 +69,27 @@ describe("buildInvocation", () => {
     // `uv run scenet` finds no project and fails with "program not found".
     assert.deepEqual(buildInvocation({ executable: "uv run scenet", file, output, workspaceFolder: folder }), {
       command: "uv",
-      args: ["run", "scenet", "build", file, "-o", output, "--embed-images"],
+      args: ["run", "scenet", "build", file, "-o", output, "--embed-images", "--root", folder],
       cwd: folder,
     });
+  });
+
+  test("a file the workspace shares is read, as the check reads it", () => {
+    // A document may name `../fonts/` in the workspace: the workspace is its root.
+    const { args } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: folder });
+    assert.deepEqual(args.slice(-2), ["--root", folder]);
   });
 
   test("a picture the document names is embedded, since the preview is not beside it", () => {
     // The SVG is written to a scratch folder and inlined into a webview, where a picture
     // linked by the path the document wrote would resolve against neither.
     const { args } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: folder });
-    assert.equal(args.at(-1), "--embed-images");
+    assert.ok(args.includes("--embed-images"));
   });
 
   test("a file outside any workspace folder builds from its own directory", () => {
-    const { cwd } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: undefined });
+    const { args, cwd } = buildInvocation({ executable: "scenet", file, output, workspaceFolder: undefined });
     assert.equal(cwd, join(folder, "pages"));
+    assert.ok(!args.includes("--root"));
   });
 });

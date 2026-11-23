@@ -32,7 +32,7 @@ from scenet.cli import main
 from scenet.diagnostics import RULES, Diagnostic, diagnose_file, diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError
 from scenet.ir import CastMember
-from scenet.paths import NamedFileError, track_dependencies
+from scenet.paths import MARKER, NamedFileError, track_dependencies
 from scenet.pipeline import compile_script
 from scenet.safe_yaml import load
 from tests.puppets import KID, KID_PATH, kid
@@ -100,12 +100,19 @@ class TestNamedByItsPath:
         )
 
     def test_from_a_folder_beside_the_documents_own(self, tmp_path: Path):
-        """A shared library of characters, as `../fonts/` is a shared folder of faces."""
+        """A shared library of characters, as `../fonts/` is a shared folder of faces: refused
+        by default, and read within a root that holds it (#432)."""
         (tmp_path / "puppets").mkdir()
         (tmp_path / KID_PATH).write_text(KID, encoding="utf-8")
         (tmp_path / "chapter").mkdir()
         document = tmp_path / "chapter" / "p.panel.yaml"
         document.write_text(PANEL.replace("puppets/", "../puppets/"), encoding="utf-8")
+        with pytest.raises(PanelSyntaxError, match="outside the root folder") as raised:
+            compile_file(document)
+        assert raised.value.rule == "puppet-file"
+        reference = compile_file(document, root=tmp_path).core.actor("kid").reference
+        assert reference == "../puppets/kid.puppet.yaml"
+        (tmp_path / MARKER).write_text("", encoding="utf-8")
         assert compile_file(document).core.actor("kid").reference == "../puppets/kid.puppet.yaml"
 
     def test_the_camera_records_the_reference_as_the_actor_does(self):

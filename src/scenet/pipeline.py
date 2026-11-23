@@ -73,8 +73,8 @@ from scenet.ir import Face, Fit, Mark, PanelIR, PanelSpec, SayEvent, SettingSpec
 from scenet.lettering import Lettering, typeface_for
 from scenet.paths import (
     Folder,
-    contained,
     read_document,
+    reading_within,
     record_dependency,
     track_dependencies,
 )
@@ -593,6 +593,7 @@ def compile_ir(
     outline: Sequence[tuple[float, float]] | None = None,
     staged_in: BBox | None = None,
     lettering_box: BBox | None = None,
+    root: Path | None = None,
     open_sides: tuple[Side, ...] = (),
 ) -> CompileResult:
     """Compile validated IR into Panel Core.
@@ -621,6 +622,8 @@ def compile_ir(
         lettering_box: For a panel that bleeds, the box its lettering keeps inside, a
             margin in, in panel units: its frame as it was before bleeding.
         open_sides: For a panel that bleeds, the sides with no border.
+        root: The folder every file the panel names must be inside. Defaults to the root
+            of the compile it is part of; alone, to `base`.
 
     Returns:
         The compiled panel, with the fonts it was lettered in.
@@ -655,6 +658,35 @@ def compile_ir(
         :class:`PanelIR <scenet.ir.PanelIR>`, the scene graph it compiles.
         :func:`parse_panel <scenet.frontends.yaml_front.parse_panel>`, to make one from text.
     """
+    with reading_within(root=root, base=base, source=None):
+        return _compile_ir(
+            panel,
+            library=library,
+            metrics=metrics,
+            base=base,
+            lettering_height=lettering_height,
+            exclusions=exclusions,
+            outline=outline,
+            staged_in=staged_in,
+            lettering_box=lettering_box,
+            open_sides=open_sides,
+        )
+
+
+def _compile_ir(
+    panel: PanelIR,
+    *,
+    library: PuppetLibrary | None = None,
+    metrics: FontMetrics | None = None,
+    base: Folder | None = None,
+    lettering_height: float | None = None,
+    exclusions: Sequence[BBox] = (),
+    outline: Sequence[tuple[float, float]] | None = None,
+    staged_in: BBox | None = None,
+    lettering_box: BBox | None = None,
+    open_sides: tuple[Side, ...] = (),
+) -> CompileResult:
+    """The body of :func:`compile_ir`, inside its root."""
     # Read first: a font that cannot be read is the author's to fix, and is better said
     # before the solver spends anything on a panel it could not letter.
     lettering = typeface_for(panel.lettering, base)
@@ -973,6 +1005,7 @@ def compile_source(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> CompileResult:
     """Compile one panel from a source string.
 
@@ -988,6 +1021,9 @@ def compile_source(
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against. Defaults to the font that ships as
             a dependency of this package.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         The compiled panel, with the intermediate results kept for inspection.
@@ -1029,12 +1065,13 @@ def compile_source(
         :func:`compile_document <scenet.pipeline.compile_document>`, to dispatch on
         extension and accept any supported syntax.
     """
-    return compile_ir(
-        parse_panel(text, source=source),
-        library=library,
-        metrics=metrics,
-        base=_folder(source, base),
-    )
+    with reading_within(root=root, base=base, source=source):
+        return compile_ir(
+            parse_panel(text, source=source),
+            library=library,
+            metrics=metrics,
+            base=_folder(source, base),
+        )
 
 
 def compile_file(
@@ -1050,9 +1087,9 @@ def compile_file(
         path: A `*.panel.yaml` document.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
-        root: A folder every file the document names must be inside, once `..` and
-            symbolic links are followed; one outside it is refused. For a document from
-            someone else. `None`, the default, reads wherever the document points.
+        root: The folder every file the document names must be inside, and the document
+            too. Defaults to the nearest folder at or above the document's that holds a
+            `scenet.toml`, else the document's own.
 
     Returns:
         The compiled panel.
@@ -1092,7 +1129,7 @@ def compile_file(
         :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for any document and
         its pages.
     """
-    with contained(root):
+    with reading_within(root=root, base=None, source=path):
         return compile_ir(load_panel(path), library=library, metrics=metrics, base=path.parent)
 
 
@@ -1153,6 +1190,7 @@ def compile_book(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> Book:
     r"""Compile a scene and lay its panels out on pages.
 
@@ -1170,6 +1208,9 @@ def compile_book(
             `source` is in.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         The compiled panels and pages.
@@ -1213,9 +1254,10 @@ def compile_book(
         :func:`compile_book_file <scenet.pipeline.compile_book_file>`, to read a file of any kind.
         :func:`compile_script <scenet.pipeline.compile_script>`, for a comic script.
     """
-    return _compile_document(
-        parse_scene_document(text, source=source), library, metrics, _folder(source, base)
-    )
+    with reading_within(root=root, base=base, source=source):
+        return _compile_document(
+            parse_scene_document(text, source=source), library, metrics, _folder(source, base)
+        )
 
 
 def _compile_document(
@@ -1361,6 +1403,7 @@ def compile_scene(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> dict[str, CompileResult]:
     r"""Compile every panel in a multi-panel document.
 
@@ -1378,6 +1421,9 @@ def compile_scene(
             `source` is in -- or when there is no `source` at all.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against. Defaults to the shipped one.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         Panel name to its compiled result, in the order the document wrote them.
@@ -1420,7 +1466,9 @@ def compile_scene(
         :func:`compile_book <scenet.pipeline.compile_book>`, for the panels and their pages.
         :func:`parse_scene <scenet.frontends.yaml_front.parse_scene>`, to stop at the IR.
     """
-    return compile_book(text, source=source, base=base, library=library, metrics=metrics).panels
+    return compile_book(
+        text, source=source, base=base, library=library, metrics=metrics, root=root
+    ).panels
 
 
 def compile_scene_file(
@@ -1428,6 +1476,7 @@ def compile_scene_file(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> dict[str, CompileResult]:
     r"""Compile every panel in a multi-panel file.
 
@@ -1436,6 +1485,9 @@ def compile_scene_file(
             back as one entry named `panel`.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
+        root: The folder every file the document names must be inside, and the document
+            too. Defaults to the nearest folder at or above the document's that holds a
+            `scenet.toml`, else the document's own.
 
     Returns:
         Panel name to compiled panel, in declaration order -- which is reading order.
@@ -1477,7 +1529,8 @@ def compile_scene_file(
         :func:`compile_scene <scenet.pipeline.compile_scene>`, for text.
         :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for its pages too.
     """
-    return _compile_document(load_scene_document(path), library, metrics, path.parent).panels
+    with reading_within(root=root, base=None, source=path):
+        return _compile_document(load_scene_document(path), library, metrics, path.parent).panels
 
 
 # Which frontend handles which extension. Adding a syntax means adding a line here and
@@ -1511,6 +1564,7 @@ def compile_script(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> Book:
     r"""Compile a comic script, every panel and page of it.
 
@@ -1526,6 +1580,9 @@ def compile_script(
             `source` is in.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         Every panel, and the pages they are laid out on -- none yet, for a script.
@@ -1562,9 +1619,10 @@ def compile_script(
         :func:`parse_script <scenet.frontends.script_front.parse_script>`, to stop at the IR.
         :func:`compile_book <scenet.pipeline.compile_book>`, for a YAML scene.
     """
-    return _compile_document(
-        _script_document(text, source=source), library, metrics, _folder(source, base)
-    )
+    with reading_within(root=root, base=base, source=source):
+        return _compile_document(
+            _script_document(text, source=source), library, metrics, _folder(source, base)
+        )
 
 
 #: The same extensions, read as whole documents -- panels and the pages they go on.
@@ -1591,9 +1649,9 @@ def compile_book_file(
         metrics: Font to measure lettering against.
         dependencies: Optional set to populate with paths read during compilation, each
             resolved.
-        root: A folder every file the document names must be inside, once `..` and
-            symbolic links are followed; one outside it is refused. For a document from
-            someone else. `None`, the default, reads wherever the document points.
+        root: The folder every file the document names must be inside, and the document
+            too. Defaults to the nearest folder at or above the document's that holds a
+            `scenet.toml`, else the document's own.
 
     Returns:
         Every panel, and the pages they are laid out on -- none for a single panel or a
@@ -1651,7 +1709,7 @@ def compile_book_file(
         raise SourceError(
             f"unsupported extension '{path.suffix}'; expected one of {supported}", source=path
         )
-    with track_dependencies(dependencies), contained(root):
+    with track_dependencies(dependencies), reading_within(root=root, base=None, source=path):
         record_dependency(path)
         return _compile_document(loader(path), library, metrics, path.parent)
 
@@ -1661,6 +1719,7 @@ def compile_document(
     *,
     library: PuppetLibrary | None = None,
     metrics: FontMetrics | None = None,
+    root: Path | None = None,
 ) -> dict[str, CompileResult]:
     """Compile any supported file's panels, choosing the frontend by extension.
 
@@ -1672,6 +1731,9 @@ def compile_document(
         path: A `*.panel.yaml`, `*.scene.yaml` or `*.script` file.
         library: Characters to draw from. Defaults to the two shipped puppets.
         metrics: Font to measure lettering against. Defaults to the shipped one.
+        root: The folder every file the document names must be inside, and the document
+            too. Defaults to the nearest folder at or above the document's that holds a
+            `scenet.toml`, else the document's own.
 
     Returns:
         Panel name to its compiled result. A single panel is named `panel`.
@@ -1711,4 +1773,4 @@ def compile_document(
     See Also:
         :func:`compile_book_file <scenet.pipeline.compile_book_file>`, for the pages too.
     """
-    return compile_book_file(path, library=library, metrics=metrics).panels
+    return compile_book_file(path, library=library, metrics=metrics, root=root).panels

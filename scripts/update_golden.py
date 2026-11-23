@@ -283,7 +283,10 @@ def findings_of(path: Path) -> dict[str, list[dict[str, Any]]]:
     name = path.relative_to(ROOT).as_posix()
     return {
         name + (" --deep" if deep else ""): [
-            _finding(item) for item in diagnose_file(path, deep=deep)
+            # Rooted at the repository: some corpus files name the gallery's pictures, fonts
+            # and puppets, above their own folder (#432).
+            _finding(item)
+            for item in diagnose_file(path, deep=deep, root=ROOT)
         ]
         for deep in (False, True)
     }

@@ -13,4 +13,7 @@
 
    .. versionadded:: 0.13
       The ``dependencies`` parameter.
+
+   .. versionadded:: 0.14
+      The ``root`` parameter.
 ```

@@ -258,6 +258,8 @@ class TestALinkedPicture:
         """Copied at the path it is linked by, it would land outside the output folder."""
         (tmp_path / "shared").mkdir()
         (tmp_path / "shared" / "sky.png").write_bytes(PICTURE)
+        # A root that holds both, so the document may reach above its folder (#432).
+        (tmp_path / "scenet.toml").write_text("", encoding="utf-8")
         document = comic / "p2.panel.yaml"
         document.write_text(f"{PANEL}setting: {{image: ../shared/sky.png}}\n", encoding="utf-8")
         assert main(["build", str(document), "-o", "out/sub/"]) == 0

@@ -29,13 +29,18 @@ reaches the network. What it reads and what it serves:
   every anchor and alias, so none can expand without bound; it refuses a repeated key and a
   document nested too deeply as well.
   Everything is then validated through pydantic models before it reaches the solver.
-- **Files a document names**: a lettering font, read by fontTools; a PNG or JPEG picture to
-  letter over, whose header Scenet reads itself, without an imaging library; the picture's
-  artwork contract; a puppet file. Each path is read relative to the document's folder, and an
-  absolute one is refused. A path may still climb out of that folder with `..`, so compiling
-  a document you do not trust lets it name any font, picture or YAML file your account can
-  read. A picture's bytes reach the output: an SVG built with `--embed-images` carries them,
-  and so does a PDF.
+- **Files a document names**: a lettering font (read by fontTools), a PNG or JPEG picture to
+  letter over (whose header Scenet reads itself, without an imaging library), its artwork
+  contract, and a puppet file. Each path is read relative to the folder of the file that names
+  it, and must stay inside the root: the folder `--root` or `root=` names, else the nearest
+  folder above the document that holds a `scenet.toml`, else the document's own folder. An
+  absolute path, a `..` that leaves the root and a symbolic link out of it are refused before
+  anything outside the root is opened, and only regular files are read. To compile documents
+  you did not write, pass `--root` their folder, or send their files as a mapping; a
+  `scenet.toml` above their folder widens the default root. A picture's bytes reach the
+  output: an SVG built with `--embed-images` carries them, and so does a PDF. Each file is read
+  up to a bound (`scenet.limits`), a PNG is inflated no further than its header says, and no
+  message quotes what a file the document names holds.
 - **`scenet build --watch`** reads the same files again whenever they change, and nothing else.
 - **`scenet mcp`**, the MCP server, an optional extra. On stdio it talks only to the client
   that launched it. `scenet mcp --transport streamable-http` listens on the network: on
@@ -51,8 +56,10 @@ The realistic risks are therefore:
 - **Untrusted input.** A document, or a file it names, that makes Scenet do anything but
   compile it or refuse it with a finding — a crash in fontTools on a crafted font, a header
   that defeats the PNG or JPEG reader — is in scope.
-- **Reading outside what was sent.** A `files` argument, or a path in a document sent to
-  `scenet mcp`, that makes the server read a file of its own is in scope.
+- **Reading outside the root, or outside what was sent.** A path in a document that makes
+  Scenet open a file outside its root (by `..`, a symbolic link, a junction or a device name)
+  is in scope, as is a `files` argument or a path in a document sent to `scenet mcp` that makes
+  the server read a file of its own.
 - **Denial of service.** A crafted document could in principle drive the constraint solver,
   balloon placement or a comic script's line patterns into pathological running time; 0.11.1
   fixed patterns that backtracked. Inputs causing runaway CPU or memory use are in scope,

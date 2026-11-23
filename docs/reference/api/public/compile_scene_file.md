@@ -10,4 +10,7 @@
 
 ```{eval-rst}
 .. autofunction:: scenet.pipeline.compile_scene_file
+
+   .. versionadded:: 0.14
+      The ``root`` parameter.
 ```

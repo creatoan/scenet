@@ -24,12 +24,19 @@ located in the file as well as where the document names it.
 
 .. rubric:: What is read, and what is not
 
+Every file a document names must be inside its **root**: the folder `--root` or `root=`
+names; else the nearest folder at or above the document's that holds a `scenet.toml`; else
+the document's own folder. With `base=Path(d)` it is `root=`, or else `d`, with no
+`scenet.toml` looked for. With the files themselves, in a mapping, it is the mapping. A
+path that leaves it, by `..` or through a symbolic link, is refused under the rule of the
+file it names, before anything outside the root is opened or looked at: first by what it
+says, then once its links are followed. A `scenet.toml` holds nothing yet: a key in it is
+kept for a later version, and refused.
+
 Only a regular file is read: a folder, a device or a pipe is refused by what it is, before
 it is opened, since opening a pipe waits for a writer and a device may never end. A file is
 read up to its bound in :mod:`scenet.limits <scenet.limits>`, and one larger is refused by
-its size. Inside :func:`contained <scenet.paths.contained>` -- `--root` on the command line
--- every file a document names must resolve inside the root folder, symbolic links
-followed, and one that does not is refused without being opened.
+its size.
 
 A file a document names, read from disk, may be one its author never had. A fault in it is
 reported by its line and what kind of fault it is, and never by what it holds: no value and
@@ -42,6 +49,7 @@ import os
 import posixpath
 import re
 import stat
+import tomllib
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -52,60 +60,259 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from scenet import limits
-from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError
+from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError, SourceError
 from scenet.frontends.common import errors_of
 from scenet.frontends.positions import Position, Region, locate
 from scenet.namespace import ASSET_KEYS, AssetHead, language_fault, split_head, stripped
 from scenet.safe_yaml import ProfileError, describe, load
 
 __all__ = [
+    "MARKER",
+    "FileTooLargeError",
     "Folder",
+    "MarkerError",
     "NamedFileError",
+    "NotRegularFileError",
+    "OutsideRootError",
     "check_relative",
     "contained",
+    "find_marker",
     "read_bounded",
     "read_document",
     "read_file",
     "read_model",
     "read_relative",
+    "reading_within",
     "record_dependency",
     "resolve_relative",
     "track_dependencies",
+    "within",
 ]
 
 _DEPENDENCIES: ContextVar[set[Path] | None] = ContextVar("scenet_dependencies", default=None)
 _ROOT: ContextVar[Path | None] = ContextVar("scenet_root", default=None)
 
 
+#: The file that marks the top of a project: the folder it is in is the root of every
+#: document below it that names no root of its own. It holds nothing yet.
+MARKER = "scenet.toml"
+
+
 @contextmanager
-def contained(root: Path | None) -> Generator[None, None, None]:
+def contained(root: Path) -> Generator[None, None, None]:
     """Read every file a document names from inside one folder, and refuse any other.
 
-    For a document from someone else: `..` and symbolic links may otherwise reach any file
-    the process can read. A path is resolved, links followed, before it is opened, and one
-    that resolves outside the root is a finding of the read's rule, located where the
-    document names it. Files sent in a mapping are not on disk, and are not affected.
-
-    Each thread and each `asyncio` task has its own root, as it has its own dependencies.
+    What :func:`reading_within <scenet.paths.reading_within>` sets for a compile, once it
+    has chosen the root. Each thread and each `asyncio` task has its own root, as it has its
+    own dependencies.
 
     Args:
-        root: The folder, or `None` for no containment.
+        root: The folder.
 
     Example:
         >>> from pathlib import Path
         >>> from scenet.paths import contained, read_relative
         >>> with contained(Path("comic")):
-        ...     read_relative("../secret.png", Path("comic"), what="image", rule="image-file")
+        ...     read_relative("../../a.png", Path("comic/pages"), what="image", rule="image-file")
         Traceback (most recent call last):
           ...
-        scenet.errors.PanelSyntaxError: image file '../secret.png' is outside the root folder, \
-the only one this compile may read from
+        scenet.errors.PanelSyntaxError: image file '../../a.png' is outside the root folder, ...
     """
-    token = _ROOT.set(None if root is None else root.resolve())
+    token = _ROOT.set(_lexical(root))
     try:
         yield
     finally:
         _ROOT.reset(token)
+
+
+class MarkerError(PanelSyntaxError):
+    """A `scenet.toml` that holds something: it holds nothing yet.
+
+    Attributes:
+        marker: The file.
+        line: The line of what it holds, from 1.
+        reason: What is wrong, without the file's name.
+    """
+
+    def __init__(self, message: str, *, marker: Path, line: int, rule: str) -> None:
+        """Build the error.
+
+        Args:
+            message: What is wrong.
+            marker: The file.
+            line: Where in it, from 1.
+            rule: `not-yet` for a key, `syntax` for a file that is not TOML.
+        """
+        self.marker = marker
+        self.line = line
+        self.reason = message
+        super().__init__(message, source=marker, rule=rule)
+
+
+class OutsideRootError(SourceError):
+    """A document outside the root it was told to read within."""
+
+
+def find_marker(folder: Path) -> Path | None:
+    """The nearest `scenet.toml` in a folder or any folder above it.
+
+    Args:
+        folder: Where to start: the folder a document is in.
+
+    Returns:
+        The file, or `None` when no folder up to the top of the file system holds one.
+    """
+    start = _lexical(folder)
+    for candidate in (start, *start.parents):
+        marker = candidate / MARKER
+        if marker.is_file():
+            return marker
+    return None
+
+
+def marker_fault(marker: Path) -> MarkerError | None:
+    """What is wrong with a `scenet.toml`, if anything: it holds comments, or nothing.
+
+    Args:
+        marker: The file.
+
+    Returns:
+        The fault, or `None` for a file that holds nothing.
+    """
+    try:
+        text = read_bounded(marker, limits.DOCUMENT_BYTES, what="a scenet.toml").decode("utf-8")
+        held = tomllib.loads(text)
+    except UnicodeDecodeError:
+        return MarkerError(
+            "scenet.toml is not UTF-8 text; it holds nothing yet, so it can be empty",
+            marker=marker,
+            line=1,
+            rule="syntax",
+        )
+    except tomllib.TOMLDecodeError as exc:
+        return MarkerError(
+            f"scenet.toml is not TOML: {exc}; it holds nothing yet, so it can be empty",
+            marker=marker,
+            line=getattr(exc, "lineno", 1) or 1,
+            rule="syntax",
+        )
+    except OSError as exc:
+        return MarkerError(
+            f"scenet.toml cannot be read: {exc.strerror or type(exc).__name__}",
+            marker=marker,
+            line=1,
+            rule="syntax",
+        )
+    if not held:
+        return None
+    key = next(iter(held))
+    line = next(
+        (
+            number
+            for number, written in enumerate(text.splitlines(), start=1)
+            if written.strip() and not written.lstrip().startswith("#")
+        ),
+        1,
+    )
+    return MarkerError(
+        f"scenet.toml holds {key!r}, and a scenet.toml holds nothing yet: it marks the root "
+        "of a project, and what it may say is kept for a later version of Scenet",
+        marker=marker,
+        line=line,
+        rule="not-yet",
+    )
+
+
+def _chosen_root(
+    root: Path | None, base: "Folder | None", source: Path | None
+) -> tuple[Path | None, Path | None]:
+    """The root a compile reads within, and the `scenet.toml` that chose it, if one did."""
+    if root is not None:
+        return root, None
+    if isinstance(base, Path):
+        return base, None
+    if base is None and source is not None:
+        marker = find_marker(source.parent)
+        return (source.parent, None) if marker is None else (marker.parent, marker)
+    return None, None
+
+
+@contextmanager
+def reading_within(
+    *, root: Path | None, base: "Folder | None", source: Path | None
+) -> Generator[None, None, None]:
+    """Choose the root a compile reads within, and read within it.
+
+    The root is `root` when given; else, for a document on disk with no `base`, the nearest
+    folder at or above its own that holds a `scenet.toml`, or else its own folder; else the
+    `base` folder. Files sent as a mapping are their own root. Inside a compile that has
+    chosen one already, a call that names no root keeps it: a page compiles each of its
+    panels, and they read within the page's root.
+
+    Args:
+        root: The root a caller named, or `None`.
+        base: Where the files the document names are, as the compile was given it.
+        source: The document's path, when it has one.
+
+    Raises:
+        MarkerError: The `scenet.toml` that would choose the root holds something.
+        OutsideRootError: `root` does not hold the document.
+    """
+    if root is None and _ROOT.get() is not None:
+        yield
+        return
+    chosen, marker = _chosen_root(root, base, source)
+    if marker is not None:
+        record_dependency(marker)
+        fault = marker_fault(marker)
+        if fault is not None:
+            raise fault
+    if root is not None and source is not None and not within(source, root):
+        raise OutsideRootError(
+            "the document is outside its root folder, which must hold it", source=source
+        )
+    if chosen is None:
+        yield
+        return
+    with contained(chosen):
+        yield
+
+
+def _lexical(path: Path) -> Path:
+    """A path made absolute, and `..` and `.` taken out by what it says: nothing is opened."""
+    # Not `resolve()`, which follows links, and so looks at the disk outside the root.
+    return Path(os.path.abspath(path))  # noqa: PTH100 -- lexical on purpose, see above
+
+
+def within(path: Path, root: Path) -> bool:
+    """Whether a path is inside a folder: by what it says, then once links are followed.
+
+    The first test opens nothing, so nothing outside the folder is so much as looked at
+    unless the path says it is inside; the second refuses a link that leads out.
+
+    Args:
+        path: The path.
+        root: The folder.
+
+    Returns:
+        Whether it is inside, and its links lead nowhere out.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from scenet.paths import within
+        >>> (
+        ...     within(Path("comic/art/../a.png"), Path("comic")),
+        ...     within(Path("comic/../a.png"), Path("comic")),
+        ... )
+        (True, False)
+    """
+    if not _lexical(path).is_relative_to(_lexical(root)):
+        return False
+    # A loop of links is `RuntimeError` on 3.12 and `OSError` later; either is no way in.
+    try:
+        return path.resolve().is_relative_to(root.resolve())
+    except (OSError, RuntimeError):
+        return False
 
 
 @contextmanager
@@ -321,6 +528,7 @@ def read_relative(
     rule: str,
     loc: tuple[str | int, ...] = (),
     limit: int | None = None,
+    root: Path | None = None,
 ) -> bytes:
     """Read a file a document names, from its folder or from the files sent with it.
 
@@ -333,16 +541,19 @@ def read_relative(
         loc: Where in the document the path was written.
         limit: The most bytes to read. Defaults to :data:`DOCUMENT_BYTES
             <scenet.limits.DOCUMENT_BYTES>`, the bound on a text file.
+        root: The folder the file must be inside. Defaults to the root of the compile in
+            progress, and with none, to `base`. Kept apart from `base`, which is where the
+            path is read from, and which a file another one includes will have of its own.
 
     Returns:
         The file's bytes.
 
     Raises:
-        PanelSyntaxError: Anything :func:`resolve_relative` refuses, or the file is not
-            there, or cannot be read, or is not a regular file, or is larger than the
-            bound, or is outside the root of :func:`contained`. The message names the path
-            as written, never as resolved: a finding is output too, and a folder in it
-            would differ between two checkouts.
+        PanelSyntaxError: Anything :func:`resolve_relative` refuses, or the file is outside
+            the root -- a mapping's paths may not climb out of it either -- or is not there,
+            or cannot be read, or is not a regular file, or is larger than the bound. The
+            message names the path as written, never as resolved: a finding is output too,
+            and a folder in it would differ between two checkouts.
 
     Example:
         >>> from scenet.paths import read_relative
@@ -352,17 +563,13 @@ def read_relative(
     bound = limits.DOCUMENT_BYTES if limit is None else limit
     if base is None or isinstance(base, Path):
         path = resolve_relative(declared, base, what=what, rule=rule, loc=loc)
+        inside = root or _ROOT.get() or base
+        if inside is not None and not within(path, inside):
+            # Not recorded: a file outside the root is no input of this compile.
+            raise _outside(declared, what=what, rule=rule, loc=loc)
         record_dependency(path)
         try:
-            _refuse_outside(path)
             return read_bounded(path, bound)
-        except _OutsideError as exc:
-            raise PanelSyntaxError(
-                f"{what} file {declared!r} is outside the root folder, the only one this "
-                "compile may read from",
-                rule=rule,
-                loc=loc,
-            ) from exc
         except NotRegularFileError as exc:
             raise PanelSyntaxError(
                 f"{what} file {declared!r} is not a regular file; a folder, a device or a "
@@ -384,8 +591,11 @@ def read_relative(
                 loc=loc,
             ) from exc
     check_relative(declared, what=what, rule=rule, loc=loc)
+    wanted = posixpath.normpath(declared)
+    if wanted == ".." or wanted.startswith("../"):
+        raise _outside(declared, what=what, rule=rule, loc=loc)
     sent = {posixpath.normpath(name): data for name, data in base.items()}
-    found = sent.get(posixpath.normpath(declared))
+    found = sent.get(wanted)
     if found is None:
         raise _not_found(declared, what=what, rule=rule, loc=loc)
     if len(found) > bound:
@@ -393,22 +603,15 @@ def read_relative(
     return found
 
 
-class _OutsideError(Exception):
-    """A path that resolves outside the root folder."""
-
-
-def _refuse_outside(path: Path) -> None:
-    """Refuse a path outside the root of :func:`contained`, once links are followed."""
-    root = _ROOT.get()
-    if root is None:
-        return
-    # A loop of links is `RuntimeError` on 3.12 and `OSError` later; either is no way in.
-    try:
-        resolved = path.resolve()
-    except (OSError, RuntimeError) as exc:
-        raise _OutsideError from exc
-    if not resolved.is_relative_to(root):
-        raise _OutsideError
+def _outside(
+    declared: str, *, what: str, rule: str, loc: tuple[str | int, ...]
+) -> PanelSyntaxError:
+    return PanelSyntaxError(
+        f"{what} file {declared!r} is outside the root folder, the only one this compile reads "
+        "from; an empty scenet.toml in a folder that holds both, or a wider --root, lets it in",
+        rule=rule,
+        loc=loc,
+    )
 
 
 def _too_large(
@@ -540,6 +743,7 @@ def read_model[M: BaseModel](
     unknown_key: str,
     loc: tuple[str | int, ...] = (),
     tags: frozenset[str] = frozenset(),
+    root: Path | None = None,
 ) -> tuple[M, str, bytes]:
     """Read a YAML file a document names, and validate it, each fault located in it.
 
@@ -556,6 +760,7 @@ def read_model[M: BaseModel](
         tags: The tags of a tagged union the model validates a list's items with. pydantic
             puts one in a fault's location after the item's index, where the file has no
             key, so it is left out to locate the fault where it is written.
+        root: The folder the file must be inside, as for :func:`read_relative`.
 
     Returns:
         What the file declares, its text, and its bytes.
@@ -570,7 +775,7 @@ def read_model[M: BaseModel](
             that is wrong. Read from disk, the message quotes nothing the file holds; sent
             in a mapping, it names the key and the value.
     """
-    data = read_relative(declared, base, what=what, rule=error.RULE, loc=loc)
+    data = read_relative(declared, base, what=what, rule=error.RULE, loc=loc, root=root)
     # Sent with the document, the file is its sender's, and quoting it tells them nothing
     # they did not have. Read from disk, it may be any file the document reached.
     quoted = isinstance(base, Mapping)

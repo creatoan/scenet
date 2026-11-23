@@ -103,8 +103,9 @@ cast:
   sits beside the document.
 - **The path is read as a font's is**: relative to the document's folder, wherever `scenet` was
   run from, with `/` between folders. An absolute path is refused, so a document and its
-  puppets travel together. `puppets/` is only a convention; `../puppets/pip.puppet.yaml` reads
-  a folder of characters several documents share.
+  puppets travel together. `puppets/` is only a convention. `../puppets/pip.puppet.yaml` reads
+  a folder of characters several documents share, once an empty `scenet.toml` in a folder above
+  them all marks it as their root, or `--root` names that folder.
 - **Only what the cast names is read.** A file beside the document that nobody casts changes
   nothing, and a file several members name is read once.
 - **The pose and expression are the puppet's own**: `pip` waves and throws its arms up, and

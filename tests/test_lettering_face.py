@@ -35,7 +35,7 @@ from scenet.errors import PanelSyntaxError
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel
 from scenet.ir import Face
-from scenet.paths import resolve_relative
+from scenet.paths import MARKER, resolve_relative
 from scenet.pipeline import (
     compile_book,
     compile_book_file,
@@ -245,12 +245,19 @@ class TestWhereTheFileIs:
         assert found[0].region is not None
         assert found[0].region.start.line == 2
 
-    def test_a_path_may_climb_out_of_the_document_folder(self, folder: Path):
+    def test_a_path_out_of_the_document_folder_is_refused_by_default(self, folder: Path):
+        """A shared `../fonts/` is read only within a root that holds it (#432): an empty
+        `scenet.toml` above both, or `root=` that folder."""
         (folder / "chapter").mkdir()
         path = _write(
             folder / "chapter",
             f"lettering: {{font: ../fonts/Lettering-Regular.ttf}}\n{CAST}{SAY}",
         )
+        with pytest.raises(PanelSyntaxError, match="outside the root folder") as raised:
+            compile_file(path)
+        assert raised.value.rule == "font-file"
+        assert compile_file(path, root=folder).core.fonts[Face.REGULAR].sha256 == _digest(SEMIBOLD)
+        (folder / MARKER).write_text("", encoding="utf-8")
         assert compile_file(path).core.fonts[Face.REGULAR].sha256 == _digest(SEMIBOLD)
 
     def test_no_path_reaches_the_output(self, folder: Path):
@@ -341,7 +348,7 @@ class TestMistakes:
 
     def test_a_folder_named_as_a_font_cannot_be_read(self, folder: Path):
         path = _write(folder, f"lettering: {{font: fonts}}\n{CAST}{SAY}")
-        with pytest.raises(PanelSyntaxError, match="cannot be read") as raised:
+        with pytest.raises(PanelSyntaxError, match="is not a regular file") as raised:
             compile_file(path)
         assert raised.value.rule == "font-file"
 

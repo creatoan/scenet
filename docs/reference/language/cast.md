@@ -64,9 +64,10 @@ member names it by its path. Every key of such a file is on the [puppet files](p
 - **A `reference` that ends in `.puppet.yaml` is a file**; any other names a shipped puppet. A
   path is never a name, so no file shadows `alice` or `bob`.
 - **The path is read as a font's is**: relative to the folder the document is in, wherever
-  `scenet` was run from, with `/` between folders, never absolute -- so a document and its
-  puppets travel together, and `../puppets/` reads a folder of characters several documents
-  share. Text compiled with no file behind it names a puppet only when its caller says which
+  `scenet` was run from, with `/` between folders, never absolute, and never out of the
+  document's root -- so a document and its puppets travel together. `../puppets/` reads a folder
+  of characters several documents share once an empty `scenet.toml` sits in a folder above them
+  all, or `--root` names it. Text compiled with no file behind it names a puppet only when its caller says which
   folder it belongs to, or hands the file over with it.
 - **Only what the cast names is read**, once however many members it draws.
 - **A puppet of another height shares the ground only when staging says so**, with

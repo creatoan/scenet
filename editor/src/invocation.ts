@@ -50,15 +50,32 @@ export interface CheckRequest {
  * It runs from the document's workspace folder, or its own directory when it has none.
  * `uv run` finds its project from the working directory, so `uv run scenet` only works
  * from somewhere inside the project, and that is also the directory the SARIF report's
- * relative uris are written against.
+ * relative uris are written against. The workspace folder is the document's root too: a
+ * file it names may be anywhere in the workspace, and nowhere outside it.
  */
 export function checkInvocation(request: CheckRequest): Invocation {
   const { command, leadingArgs } = parseExecutable(request.executable);
   return {
     command,
-    args: [...leadingArgs, "check", "--format", "sarif", ...(request.deep ? ["--deep"] : []), request.file],
+    args: [
+      ...leadingArgs,
+      "check",
+      "--format",
+      "sarif",
+      ...(request.deep ? ["--deep"] : []),
+      ...rooted(request.workspaceFolder),
+      request.file,
+    ],
     cwd: request.workspaceFolder ?? dirname(request.file),
   };
+}
+
+/**
+ * `--root` the workspace folder, or nothing: with none, the CLI chooses the root itself,
+ * the nearest folder holding a `scenet.toml` above the document, or the document's own.
+ */
+function rooted(workspaceFolder: string | undefined): readonly string[] {
+  return workspaceFolder === undefined ? [] : ["--root", workspaceFolder];
 }
 
 export interface BuildRequest {
@@ -83,7 +100,15 @@ export function buildInvocation(request: BuildRequest): Invocation {
     command,
     // The preview is written to a scratch folder and inlined into a webview, where a
     // picture linked by the path the document wrote would resolve against neither.
-    args: [...leadingArgs, "build", request.file, "-o", request.output, "--embed-images"],
+    args: [
+      ...leadingArgs,
+      "build",
+      request.file,
+      "-o",
+      request.output,
+      "--embed-images",
+      ...rooted(request.workspaceFolder),
+    ],
     cwd: request.workspaceFolder ?? dirname(request.file),
   };
 }

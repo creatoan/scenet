@@ -344,8 +344,9 @@ wrote.
   Call {func}`default_library <scenet.assets.contract.default_library>` once and pass the
   library on: it reads the shipped puppets on every call.
 - **Files.** A compile reads only the files the document names, from `base` or the folder
-  of `source`. Compiling documents you do not trust, hand their files over as a mapping:
-  a path a document writes may climb out of a folder with `../`.
+  of `source`, and only inside its root: `root=`, else the nearest folder above the document's
+  that holds a `scenet.toml`, else its own folder. Compiling documents you do not trust, hand
+  their files over as a mapping, or pass `root=` a folder that holds nothing but theirs.
 - **Dependencies.** `compile_book_file(path, dependencies=set())` fills the set with every
   file the compile read, which is how `scenet build --watch` knows what to watch.
 

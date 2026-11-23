@@ -47,6 +47,18 @@ it is written, and says what to write instead.
 
 ### Changed (breaking)
 
+- **Every file a document names must be inside its root** (#379, #432). The root is the folder
+  `--root` or `root=` names; else the nearest folder at or above the document's that holds a
+  `scenet.toml`; else the document's own folder. A path that leaves it, by `..` or through a
+  symbolic link, is refused under the rule of the file it names (`font-file`, `image-file`,
+  `puppet-file`, `artwork-contract`), before anything outside it is opened; with files sent as
+  a mapping, a path that climbs out of the mapping is refused the same way. `scenet build`,
+  `scenet check` and `--watch` take `--root DIR`, and every compile and check function that
+  takes `base=` or a path takes `root=`. A `scenet.toml` holds nothing yet: a key in it is
+  `not-yet`. **Upgrading:** a project that keeps fonts or puppets above its documents, as
+  `../fonts/a.ttf`, adds an empty `scenet.toml` at its top, or passes `--root` that folder;
+  `--root /` reads what 0.13 read.
+
 - **`scenet build -o out` writes into a folder `out`** (#460), as `-o out/` did: a name with no
   extension is a folder, made if it is not there. It used to be the SVG itself, written with no
   `.svg`, beside `out.pdf`, and a scene's panels as `out.one` and `out.page-1`. A name ending
@@ -125,6 +137,21 @@ it is written, and says what to write instead.
   profile is; it was the key's first character.
 
 ### Fixed
+
+- **A path to something that is not a regular file is refused** (#379): a folder, a device or a
+  pipe named as a font, a picture or a puppet hung the compile or read without end; it is now a
+  finding of that file's rule. Each file is read up to a bound, 8 MiB for a document, a puppet
+  file or an artwork contract, 128 MiB for a picture and 64 MiB for a font, in the new
+  `scenet.limits`, and one larger is refused by its size before it is read.
+- **A PNG is inflated for print no further than its header says** (#379): a few kilobytes that
+  inflated to gigabytes were decompressed whole. Data that inflates past or short of the header's
+  pixels is refused, and so is a colour type or bit depth PNG does not define, which was an
+  internal error.
+- **No message quotes what a file the document names holds** (#379), when it was read from disk:
+  a fault in a puppet file or an artwork contract is given by its line and its kind. Files sent
+  with the document, over MCP or in the playground, are their sender's, and are quoted as before.
+- **The cache of fonts a document declared is bounded** (#379), to the 32 used last, so a server
+  compiling documents from many users no longer keeps every face it was sent.
 
 - **A linked picture is copied beside the SVG** (#460) when `scenet build` writes anywhere but
   beside the document, at the path the SVG links it by, so the SVG shows it there; a note says

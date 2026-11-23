@@ -97,9 +97,12 @@ every face, `font: fonts/Comic-Regular.ttf`, or a mapping with a file for each.
 ![Two panels of Alice and Bob lettered in Comic Neue: dialogue, a caption and the sound CLUNK](../../images/gallery/42-your-own-font.strip.svg)
 
 - **Paths are relative to the document**, the way a link in a web page is: `fonts/x.ttf` is the
-  `fonts` folder beside the file, wherever `scenet` was run from, and `../fonts/x.ttf` climbs out
-  of it. An absolute path is refused, so a document and its fonts move together, and a server
-  compiling documents it is sent cannot be pointed at its own files. Folders are separated by `/`,
+  `fonts` folder beside the file, wherever `scenet` was run from. A path may not leave the
+  document's root: its own folder, or the nearest folder above it that holds a `scenet.toml`, or
+  the folder `--root` names. So `../fonts/x.ttf` is read only with an empty `scenet.toml` in a
+  folder that holds both, or `--root` that folder. An absolute path is refused, so a document and
+  its fonts move together, and a server compiling documents it is sent reads only the files sent
+  with them, never its own. Folders are separated by `/`,
   never `\`, which only Windows reads as a separator: a backslash is refused, so a document finds
   its files on every system or on none. Text compiled with no file behind it -- by the MCP
   server, say -- has no folder, so it can name a font only when its caller says which folder it
