@@ -247,11 +247,16 @@ class TestTheSchemaDescribesWhatIsWritten:
         )
         assert problems(scene_schema(), source) == []
 
-    def test_a_null_in_a_list_is_still_refused(self):
-        """`settle` leaves lists alone: a script entry or a mass is whole or wrong."""
-        assert problems(scene_schema(), "panels:\n  one: {script: [{say: null}]}\n") != []
+    def test_a_null_in_a_list_is_a_key_not_written(self):
+        """In a mapping inside a list a null can only be a key not written (#375): what a
+        document that writes every key writes for one it leaves out."""
         source = "panels:\n  one: {setting: {masses: [{kind: sky, plane: null}]}}\n"
-        assert problems(scene_schema(), source) != []
+        assert problems(scene_schema(), source) == []
+
+    def test_a_list_entry_that_is_null_is_still_refused(self):
+        """A null item is no entry: the list holds what it holds."""
+        assert problems(scene_schema(), "panels:\n  one: {script: [null]}\n") != []
+        assert problems(scene_schema(), "panels:\n  one: {script: [{say: null}]}\n") != []
 
     def test_a_scene_panel_still_cannot_write_two_backdrops(self):
         source = "panels:\n  one: {setting: {image: art/a.png, place: docks}}\n"

@@ -69,6 +69,7 @@ from scenet.compose import (
     resolve_beneath,
     resolve_overrides,
     settle,
+    without_nulls,
 )
 from scenet.emphasis import plain
 from scenet.errors import (
@@ -1846,7 +1847,9 @@ def _diagnose_layout(
         The findings, and the validated layout -- `None` when there is none to speak of,
         or when it did not validate.
     """
-    raw = normalise_layout(data)
+    layout = {key: data[key] for key in LAYOUT_KEYS if key in data}
+    rest = {key: value for key, value in data.items() if key not in LAYOUT_KEYS}
+    raw = normalise_layout({**rest, **without_nulls(layout, PageLayout)})
     if not raw:
         return [], None
     try:

@@ -684,7 +684,28 @@ def build_server(*, timeout: float | None = None, limits: Limits = LIMITS) -> "S
         server.tool(name=name, title=title, description=_describe(function), annotations=READ_ONLY)(
             run
         )
+        _refuse_unknown_arguments(server, name)
     return server
+
+
+def _refuse_unknown_arguments(server: MCPServer[Any], name: str) -> None:
+    """Refuse an argument a tool does not take, and say so in its input schema (#349).
+
+    A misspelt `sytnax: script` was dropped without a word, and the document read as YAML.
+    The SDK builds each tool's arguments as a model that ignores what it does not know; this
+    closes it, as every model of the language is closed.
+    """
+    # The SDK registers a tool through a decorator and keeps it in its manager.
+    tool = server._tool_manager.get_tool(name)  # pyright: ignore[reportPrivateUsage] -- no public handle to it
+    if tool is None:  # pragma: no cover -- registered just above
+        return
+    arguments = tool.fn_metadata.arg_model
+    tool.fn_metadata.arg_model = type(
+        arguments.__name__,
+        (arguments,),
+        {"model_config": {**arguments.model_config, "extra": "forbid"}},
+    )
+    tool.parameters["additionalProperties"] = False
 
 
 def serve(

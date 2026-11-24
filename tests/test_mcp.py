@@ -964,3 +964,22 @@ class TestRenderForImageModels:
         result = call("render", {"source": SCENE, "conditioning": True})
         assert isinstance(result.content[0], TextContent)
         assert "image models" in result.content[0].text
+
+
+class TestUnknownArguments:
+    """A misspelt argument is refused, not dropped (#349, #375)."""
+
+    def test_a_misspelt_argument_is_refused(self):
+        result = call("validate", {"source": VALID, "sytnax": "script"})
+        assert result.is_error
+        assert "sytnax" in text_of(result)
+
+    def test_every_tool_says_so_in_its_schema(self):
+        async def go() -> list[Any]:
+            async with Client(build_server()) as client:
+                return (await client.list_tools()).tools
+
+        tools = anyio.run(go)
+        assert {tool.name: tool.input_schema.get("additionalProperties") for tool in tools} == {
+            tool.name: False for tool in tools
+        }

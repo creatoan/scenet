@@ -219,7 +219,7 @@ _ROWS: dict[str, tuple[str, bool]] = {
     "camera: null": ("camera: null\n", True),
     "an empty camera": ("camera:\n", True),
     "a null at depth": ("camera: {shot: null}\npanel: {margin: null}\n", True),
-    "a null in a list": ("script: [{sfx: {text: BANG, hollow: null}}]\n", False),
+    "a null in a list": ("script: [{sfx: {text: BANG, hollow: null}}]\n", True),
     "blank text": ("script: [{caption: {text: ' '}}]\n", False),
     "empty text": ("script: [{caption: {text: ''}}]\n", False),
     "text of white space": ('script: [{caption: {text: "\\t\\n\\u3000"}}]\n', False),
