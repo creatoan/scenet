@@ -213,6 +213,11 @@ class TestANullIsAKeyNotWritten:
         found = [(item.rule, item.path) for item in diagnose_source(source)]
         assert found == ([("unknown-key", ("colour",))] if first.startswith("colour") else [])
 
+    def test_a_fault_after_an_unknown_null_key_is_found_too(self):
+        source = "colour: null\ncamera: {shot: nope}\ncast: {a: {reference: alice}}\n"
+        found = [(item.rule, item.path) for item in diagnose_source(source)]
+        assert found == [("unknown-key", ("colour",)), ("invalid-field", ("camera", "shot"))]
+
     def test_a_member_keeps_a_key_it_does_not_have(self):
         (found,) = diagnose_source("cast: {a: {reference: alice, colour: null}}\n")
         assert (found.rule, found.path) == ("unknown-key", ("cast", "a", "colour"))
