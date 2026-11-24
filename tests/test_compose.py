@@ -216,6 +216,18 @@ camera: ''
     def test_check_finds_it_once_where_it_is_written(self):
         found = diagnose_source(self.OVERRIDDEN, source=Path("x.scene.yaml"))
         assert [(item.rule, item.path) for item in found] == [("invalid-field", ("camera",))]
+        (item,) = found
+        assert item.message == "Input should be a valid dictionary or instance of CameraSpec"
+        assert item.source == Path("x.scene.yaml")
+        assert item.region is not None
+        assert (item.region.start.line, item.region.start.column) == (6, 9)
+
+    def test_build_says_where_and_in_which_file(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene(self.OVERRIDDEN, source=Path("x.scene.yaml"))
+        assert caught.value.source == Path("x.scene.yaml")
+        assert "invalid scene defaults:" in str(caught.value)
+        assert "at camera: Input should be a valid dictionary" in str(caught.value)
 
     def test_a_default_inherited_by_a_panel_is_still_found_once(self):
         text = self.OVERRIDDEN.replace("  two: {over: one}\n", "  two: {}\n")
