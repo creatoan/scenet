@@ -93,7 +93,7 @@ A path that a document writes is relative: not absolute, without a backslash or 
 
 Each file is read up to a bound, and one larger is refused by its size before it is read: 8 MiB for a document, a puppet file or an artwork contract, 128 MiB for a picture, 64 MiB for a font. The bounds are {py:mod}`scenet.limits`. A PNG decoded for print is inflated no further than the size its header gives, and one whose data says otherwise is refused.
 
-**To compile documents you do not trust, pass their files as a mapping**, or pass `root=` a folder that holds nothing but theirs; do not rely on the default root, which a `scenet.toml` above their folder widens. A mapping is how `scenet mcp` and the playground are sent files: they never read a folder of their own. A picture's bytes reach the SVG under `embed=`, and the PDF; no message quotes the contents of a file the document names.
+**To compile documents you do not trust, pass their files as a mapping**, or pass `root=` a folder that holds nothing but theirs; do not rely on the default root, which a `scenet.toml` above their folder widens. A mapping is how `scenet mcp` and the playground are sent files. The playground never reads a folder; `scenet mcp` reads a folder only when it was started with `--root`, and that folder is then the root. A picture's bytes reach the SVG under `embed=`, and the PDF; no message quotes the contents of a file the document names.
 
 Every read file is recorded, and `compile_book_file(..., dependencies=set())` hands you the set; `scenet build --watch` rebuilds when one changes, or when a `scenet.toml` does.
 
