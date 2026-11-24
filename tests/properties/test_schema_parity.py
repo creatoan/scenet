@@ -255,6 +255,13 @@ def test_the_evidence_agrees(text: str, valid: bool):
     assert (not _check_errors(document)) is valid
 
 
+def test_a_mark_written_twice_agrees():
+    """A mark is drawn once, so a list that names one twice is refused by both."""
+    document = "cast: {alice: {reference: alice, marks: [plewds, plewds]}}" + chr(10)
+    _assert_agree(document, note=_ignore)
+    assert _check_errors(document)
+
+
 @pytest.mark.parametrize(
     ("entry", "path"),
     [

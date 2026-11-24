@@ -279,6 +279,9 @@ it is written, and says what to write instead.
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
 
+- **The schemas say a mark is listed once**, as `scenet check` always has:
+  `marks: [plewds, plewds]` passed the schema and was refused by the check. Found by the schema
+  parity property.
 - **A scene default that every panel overrides is still checked**: `camera: ''` beside
   `panels:`, with every panel writing its own camera, passed `scenet check` and built, while the
   scene schema refused it. A default is now read as written, for what it holds on its own -- its

@@ -8637,7 +8637,8 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
                   "items": {
                     "$ref": "#/$defs/Mark"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "uniqueItems": true
                 },
                 {
                   "type": "null"
@@ -9048,7 +9049,8 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               "items": {
                 "$ref": "#/$defs/Mark"
               },
-              "type": "array"
+              "type": "array",
+              "uniqueItems": true
             },
             {
               "type": "null"

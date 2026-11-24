@@ -1529,7 +1529,8 @@ class CastMember(Strict):
     """A pose the puppet declares, by name."""
     expression: Text = "neutral"
     """An expression the puppet declares, by name."""
-    marks: tuple[Mark, ...] = ()
+    # Each once, as `check_marks` holds them, so the schema says so too.
+    marks: tuple[Mark, ...] = Field(default=(), json_schema_extra={"uniqueItems": True})
     """Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in
     any order, each once. They compose with the expression.
     """
