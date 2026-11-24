@@ -7,6 +7,7 @@ column, and a key written twice refused.
 """
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -16,10 +17,27 @@ from scenet.compose import as_lists
 from scenet.diagnostics import diagnose_file, diagnose_source
 from scenet.errors import PanelSyntaxError
 from scenet.frontends.positions import locate
-from scenet.frontends.yaml_front import parse_panel, parse_scene_document
+from scenet.frontends.yaml_front import load_panel, parse_panel, parse_scene_document
 from scenet.pipeline import compile_book, compile_source
-from scenet.safe_json import compose, dump, is_json, load
-from scenet.safe_yaml import WrittenFloat, WrittenInt
+from scenet.safe_json import (
+    MAP_TAG,
+    SEQ_TAG,
+    STR_TAG,
+    JsonSyntaxError,
+    compose,
+    dump,
+    is_json,
+    load,
+)
+from scenet.safe_yaml import (
+    BOOL_TAG,
+    FLOAT_TAG,
+    INT_TAG,
+    NULL_TAG,
+    DuplicateKeyError,
+    WrittenFloat,
+    WrittenInt,
+)
 from scenet.safe_yaml import load as load_yaml
 
 ROOT = Path(__file__).parent.parent
@@ -85,7 +103,9 @@ class TestWhatIsJson:
         path.write_text("cast: {a: {reference: alice}}\n", encoding="utf-8")
         (found,) = diagnose_file(path)
         assert found.rule == "syntax"
-        assert "JSON" in found.message or "expected" in found.message
+        assert found.message.startswith("invalid JSON: expected a value")
+        with pytest.raises(PanelSyntaxError, match="invalid JSON: expected a value"):
+            load_panel(path)
 
 
 class TestTheDataModel:
@@ -175,6 +195,159 @@ class TestPositions:
         ((key, value),) = node.value
         assert key.start_mark.column == 1
         assert [item.start_mark.column for item in value.value] == [7, 10]
+
+
+class TestTheReader:
+    """The node tree, the marks and the messages, as PyYAML's own would be."""
+
+    def test_every_node_is_tagged_and_styled_as_written(self):
+        node = compose('{"a": [1, 1.5, 1E5, "x", true, null], "b": {}, "c": []}')
+        assert (node.tag, node.flow_style) == (MAP_TAG, True)
+        (key, listed), (_, empty_map), (_, empty_list) = node.value
+        assert (key.tag, key.style) == (STR_TAG, '"')
+        assert (listed.tag, listed.flow_style) == (SEQ_TAG, True)
+        assert [item.tag for item in listed.value] == [
+            INT_TAG,
+            FLOAT_TAG,
+            FLOAT_TAG,
+            STR_TAG,
+            BOOL_TAG,
+            NULL_TAG,
+        ]
+        assert listed.value[3].style == '"'
+        assert (empty_map.tag, empty_map.flow_style) == (MAP_TAG, True)
+        assert (empty_list.tag, empty_list.flow_style) == (SEQ_TAG, True)
+
+    def test_every_node_spans_what_it_writes_with_no_space_between(self):
+        text = '{"a":[1,22],"b":{},"c":[],"d":{"e":3}}'
+        node = compose(text)
+        spans = [(node.start_mark.index, node.end_mark.index)]
+        for key, value in node.value:
+            spans.append((key.start_mark.index, key.end_mark.index))
+            spans.append((value.start_mark.index, value.end_mark.index))
+        listed = node.value[0][1]
+        spans.extend((item.start_mark.index, item.end_mark.index) for item in listed.value)
+        assert spans == [
+            (0, 38),
+            (1, 4),
+            (5, 11),
+            (12, 15),
+            (16, 18),
+            (19, 22),
+            (23, 25),
+            (26, 29),
+            (30, 37),
+            (6, 7),
+            (8, 10),
+        ]
+
+    def test_a_mark_counts_lines_from_a_leading_break(self):
+        text = 'NLNL{"a":NL 1}'.replace("NL", chr(10))
+        node = compose(text)
+        ((key, value),) = node.value
+        assert (key.start_mark.line, key.start_mark.column) == (2, 1)
+        assert (value.start_mark.line, value.start_mark.column) == (3, 1)
+        mark = value.start_mark
+        assert (mark.name, mark.buffer, mark.pointer) == ("<json>", text, mark.index)
+
+    def test_reading_takes_as_long_as_the_text_not_its_square(self):
+        """Each mark counted the lines from the start: 300 KB took half a minute."""
+        text = "[" + ("," + chr(10)).join(["0"] * 100_000) + "]"
+        start = time.perf_counter()
+        node = compose(text)
+        assert time.perf_counter() - start < 3
+        assert node.value[-1].start_mark.line == 99_999
+
+    def test_a_byte_order_mark_is_not_read(self):
+        assert load(chr(0xFEFF) + '{"a": 1}') == {"a": 1}
+
+    @pytest.mark.parametrize(
+        ("text", "problem"),
+        [
+            ("", "expected a value, but the document ends"),
+            ('{"a": 1', "expected ',' or '}', but the document ends"),
+            ("{a: 1}", "expected a key, in double quotes: JSON quotes every key, found 'a'"),
+            ('{"a" 1}', "expected ':' after the key, found '1'"),
+            ('{"a": 1 "b"}', "expected ',' or '}', found '\"'"),
+            ("[1 2]", "expected ',' or ']', found '2'"),
+            (
+                '{"a": x}',
+                "expected a value: an object, a list, a string, a number, true, false or null,"
+                " found 'x'",
+            ),
+            (
+                '{"a":' + chr(0xA0) + "1}",
+                "expected a value: an object, a list, a string, a number, true, false or null,"
+                " found U+00A0",
+            ),
+            ('{"a": 1} x', "expected the end of the document, after its one value, found 'x'"),
+            (
+                '{"a": "' + chr(1) + '"}',
+                "a string holds U+0001, which JSON writes as an escape: BSn for a line break,"
+                " BSt for a tab",
+            ),
+            ('{"a": "x yBSq"}', "'BSBSq' is no escape JSON has: write BSBS for a backslash"),
+            ('{"a": "x', "a string is opened and never closed"),
+        ],
+        ids=[
+            "nothing",
+            "ends",
+            "unquoted-key",
+            "no-colon",
+            "no-comma",
+            "no-comma-in-list",
+            "no-value",
+            "unprintable",
+            "two-values",
+            "control",
+            "escape",
+            "unclosed",
+        ],
+    )
+    def test_each_fault_says_what_was_expected_and_what_was_found(self, text: str, problem: str):
+        with pytest.raises(JsonSyntaxError) as caught:
+            compose(text.replace("BS", chr(92)))
+        assert caught.value.problem == problem.replace("BS", chr(92))
+
+    def test_a_control_character_is_found_where_it_is(self):
+        with pytest.raises(JsonSyntaxError) as caught:
+            compose('{"a": "' + chr(1) + '"}')
+        assert caught.value.problem_mark is not None
+        assert caught.value.problem_mark.column == 7
+
+    def test_a_key_written_twice_names_the_json_reader(self):
+        with pytest.raises(DuplicateKeyError) as caught:
+            load('{"a": 1, "a": 2}')
+        assert caught.value.key == "a"
+        assert "key 'a' appears twice" in str(caught.value)
+        assert "a JSON reader would keep only the last" in str(caught.value)
+
+    def test_an_exponent_in_capitals_is_a_float(self):
+        (value,) = load('{"a": 1E5}').values()  # type: ignore[union-attr]  -- a mapping
+        assert isinstance(value, WrittenFloat)
+        assert (value, value.source) == (100000.0, "1E5")
+
+    def test_dump_indents_each_level_by_two(self):
+        document = {"a": {"b": [1, {"c": []}], "d": {}}}
+        lines = [
+            "{",
+            '  "a": {',
+            '    "b": [',
+            "      1,",
+            "      {",
+            '        "c": []',
+            "      }",
+            "    ],",
+            '    "d": {}',
+            "  }",
+            "}",
+            "",
+        ]
+        assert dump(document) == chr(10).join(lines)
+
+    def test_dump_escapes_a_lone_surrogate_and_nothing_else(self):
+        text = dump({"x": "a" + chr(0xD83D) + chr(0xE9)})
+        assert '"a' + chr(92) + "ud83d" + chr(0xE9) + '"' in text
 
 
 def _cores(text: str, source: Path) -> list[tuple[str, str]]:

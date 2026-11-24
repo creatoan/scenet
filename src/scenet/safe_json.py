@@ -75,15 +75,25 @@ class _Reader:
     def __init__(self, text: str) -> None:
         self.text = text
         self.index = 0
-        self.line = 0
-        self.line_start = 0
+        # Where the last mark was, on which line, and where that line starts. Reading moves
+        # forward, so a mark counts the line breaks since the last one: counting them from
+        # the start each time made reading a document take the square of its length.
+        self._at = 0
+        self._line = 0
+        self._line_start = 0
 
     def mark(self, index: int | None = None) -> Mark:
         """PyYAML's mark at `index`, or where reading is: zero-based, as PyYAML's are."""
         at = self.index if index is None else index
-        line = self.text.count("\n", 0, at)
-        start = self.text.rfind("\n", 0, at) + 1
-        return Mark("<json>", at, line, at - start, self.text, at)
+        if at < self._at:
+            # Back to a string's opening quote, to say it is never closed: once, at a fault.
+            self._at = self._line = self._line_start = 0
+        breaks = self.text.count("\n", self._at, at)
+        if breaks:
+            self._line += breaks
+            self._line_start = self.text.rfind("\n", self._at, at) + 1
+        self._at = at
+        return Mark("<json>", at, self._line, at - self._line_start, self.text, at)
 
     def skip(self) -> None:
         match = _SPACE.match(self.text, self.index)
@@ -94,7 +104,8 @@ class _Reader:
         if self.index >= len(self.text):
             return JsonSyntaxError(f"expected {expected}, but the document ends", self.mark())
         found = self.text[self.index]
-        shown = repr(found) if found.isprintable() and found != " " else f"U+{ord(found):04X}"
+        # Never a space, which `skip` has passed: an unprintable one is shown by its number.
+        shown = repr(found) if found.isprintable() else f"U+{ord(found):04X}"
         return JsonSyntaxError(f"expected {expected}, found {shown}", self.mark())
 
     def value(self) -> Node:
@@ -135,9 +146,9 @@ class _Reader:
         """Where a string goes wrong: an escape JSON has not, a control character, no end."""
         index = self.index + 1
         while index < len(self.text):
+            # A closing quote is never reached: had nothing been wrong before it, the string
+            # would have been read.
             character = self.text[index]
-            if character == '"':
-                break
             if character == "\\":
                 escape = self.text[index : index + 6]
                 if not re.match(r'\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4})', escape):
