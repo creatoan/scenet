@@ -19,7 +19,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from jsonschema import Draft202012Validator
 
-from scenet.compose import ID_KEY, REMOVE_KEY, as_lists, lowered
+from scenet.compose import ID_KEY, REMOVE_KEY, Lowered, as_lists, lowered
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.positions import KEY, locate
@@ -454,6 +454,12 @@ class TestRemoval:
         )
 
 
+def _lowered(text: str) -> Lowered:
+    document = load(text)
+    assert isinstance(document, dict)
+    return lowered(document)
+
+
 class TestLowering:
     """Each item lowered, or left out as a fault, however the items before it went."""
 
@@ -468,7 +474,7 @@ class TestLowering:
         ids=["not-a-mapping", "no-id", "id-not-text", "id-again"],
     )
     def test_an_item_after_a_bad_one_is_lowered(self, bad: str, rule: str):
-        found = lowered(load(f"cast: [{{id: c, reference: alice}}, {bad}, {{id: d}}]"))
+        found = _lowered(f"cast: [{{id: c, reference: alice}}, {bad}, {{id: d}}]")
         assert list(found.document["cast"]) == ["c", "d"]
         assert [fault.rule for fault in found.faults] == [rule]
 
@@ -481,11 +487,11 @@ class TestLowering:
         ids=["fields", "none"],
     )
     def test_a_mapping_entry_says_the_item_to_write(self, item: str, written: str):
-        (fault,) = lowered(load(f"cast: [{item}]")).faults
+        (fault,) = _lowered(f"cast: [{item}]").faults
         assert f"write `{written}`" in fault.message
 
     def test_a_removed_member_says_what_to_delete(self):
-        (fault,) = lowered(load("cast: [{id: a, remove: true, pose: x, at: center}]")).faults
+        (fault,) = _lowered("cast: [{id: a, remove: true, pose: x, at: center}]").faults
         assert "delete `pose`, `at`, or `remove`" in fault.message
 
     def test_a_panel_that_is_no_mapping_is_listed_by_its_name(self):
