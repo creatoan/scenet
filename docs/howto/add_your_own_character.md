@@ -76,12 +76,15 @@ becomes one distance comparison. Its `features` are what is drawn inside it: bro
 nose, a mouth, each riding a joint at an offset, with a size. Declare the ones your character
 has, in pairs where they come in pairs. See [faces](../reference/asset_contract.md#faces).
 
-**`poses`** are named sets of joint angles. Joints you leave out keep their rest angle. A
-cast member that names no pose gets `standing_neutral`, so every puppet must declare one.
+**`poses`** are named sets of joint angles. Joints you leave out keep their rest angle. Every
+puppet declares the [core vocabulary](../reference/language/puppet.md#the-core-vocabulary):
+`standing_neutral`, `arms_crossed`, `hands_on_hips` and `pointing`, so a document that keeps to
+those works with your puppet as with any other. Declare more of your own as you like.
 
 **`expressions`** are named states of the face's features — a brow raised, eyes wide, a mouth
-open. A cast member that names none gets `neutral`, so a puppet that declares expressions
-must declare that one. The states each feature can take are in the
+open. Every puppet declares the core ones too: `neutral`, `happy`, `sad`, `angry`, `surprise`,
+`scared`, `bored`, `coy`, `laughing` and `shouting`, so a puppet has a face to move. A cast
+member that names none gets `neutral`. The states each feature can take are in the
 [asset contract](../reference/asset_contract.md#the-expression-vocabulary-is-a-drawing-convention).
 
 ## Cast it in a document
@@ -195,10 +198,10 @@ wrong produces a figure that is subtly wrong with nothing to point at:
 | A joint cycle | "sits in a cycle" |
 | A part, anchor, feature or pose naming a joint that does not exist | "references unknown joint" |
 | `gaze.origin` not among the anchors | "is not a declared anchor" |
-| No `standing_neutral` pose | "declares no pose 'standing_neutral'" |
+| A core pose or expression missing | "declares no 'pointing' of the poses every puppet declares" |
 | One of a pair of features without the other | "is declared without its pair" |
 | Expressions with no features to move | "declares expressions but no face features" |
-| Expressions without `neutral` | "declares expressions but not 'neutral'" |
+
 | A part written with the keys of both a bone and a blob, or of neither | "a part is a bone, ... or a blob" |
 | A key misspelt, or written twice | "not a key a puppet has here", "appears twice" |
 | Two files in one directory declaring the same `name:` | "duplicate puppet name" |

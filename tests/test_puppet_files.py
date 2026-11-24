@@ -289,11 +289,11 @@ class TestEachFaultIsOneFinding:
         assert found.path == ("cast", "twin", "reference")
 
     def test_a_pose_or_an_expression_is_held_to_the_files_puppet(self):
-        source = PANEL.replace("facing: left}", "facing: left, pose: pointing}")
+        source = PANEL.replace("facing: left}", "facing: left, pose: shrugging}")
         found = _one(diagnose_source(source, base=_files()), "unknown-pose")
         assert "'cartwheel'" in found.message
         assert found.path == ("cast", "kid", "pose")
-        source = PANEL.replace("facing: left}", "facing: left, expression: angry}")
+        source = PANEL.replace("facing: left}", "facing: left, expression: furious}")
         found = _one(diagnose_source(source, base=_files()), "unknown-expression")
         assert "'dizzy'" in found.message
 

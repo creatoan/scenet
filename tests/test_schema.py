@@ -18,6 +18,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from scenet.assets.contract import (
+    CORE_POSES,
     DEFAULT_LIBRARY_PATH,
     DEFAULT_POSE,
     BrowState,
@@ -430,7 +431,8 @@ class TestPuppetSchema:
         """Mirrors `check_default_pose`: a member that names no pose gets this one."""
         schema = puppet_schema()
         assert "poses" in schema["required"]
-        assert schema["properties"]["poses"]["required"] == [DEFAULT_POSE]
+        assert schema["properties"]["poses"]["required"] == list(CORE_POSES)
+        assert DEFAULT_POSE in CORE_POSES
 
     PIP = (REPO / "examples" / "gallery" / "puppets" / "pip.puppet.yaml").read_text(
         encoding="utf-8"

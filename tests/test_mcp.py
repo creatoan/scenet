@@ -30,6 +30,7 @@ from mcp.types import (
 
 from scenet import compile_source, render, render_conditioning
 from scenet import mcp as scenet_mcp
+from scenet.assets.contract import CORE_EXPRESSIONS, CORE_POSES
 from scenet.cli import main
 from scenet.diagnostics import RULES
 from scenet.limits import Limits, past
@@ -896,8 +897,8 @@ class TestAPuppetOfYourOwn:
         assert puppets[-1] == {
             "name": KID_PATH,
             "heads_tall": 5.0,
-            "poses": ["cartwheel", "standing_neutral"],
-            "expressions": ["dizzy", "neutral"],
+            "poses": sorted(["cartwheel", *CORE_POSES]),
+            "expressions": sorted(["dizzy", *CORE_EXPRESSIONS]),
         }
 
     def test_list_puppets_lists_no_other_file(self):

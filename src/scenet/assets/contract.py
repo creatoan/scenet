@@ -42,6 +42,8 @@ from scenet.paths import Folder, NamedFileError, read_model, record_dependency
 from scenet.safe_yaml import is_json_file, load
 
 __all__ = [
+    "CORE_EXPRESSIONS",
+    "CORE_POSES",
     "DEFAULT_LIBRARY_PATH",
     "DEFAULT_POSE",
     "JSON_PUPPET_SUFFIX",
@@ -80,6 +82,25 @@ JSON_PUPPET_SUFFIX = ".puppet.json"
 
 #: The pose a cast member gets when it does not ask for one, which every puppet declares.
 DEFAULT_POSE = "standing_neutral"
+
+#: The poses every puppet declares, shipped or supplied: a document that names only these
+#: is valid with any puppet, so a model that keeps to them cannot invent one. A puppet may
+#: declare more, which are its own. Normative: `docs/reference/language/puppet.md`.
+CORE_POSES: tuple[str, ...] = (DEFAULT_POSE, "arms_crossed", "hands_on_hips", "pointing")
+
+#: The expressions every puppet declares, the first the one a member gets unasked.
+CORE_EXPRESSIONS: tuple[str, ...] = (
+    "neutral",
+    "happy",
+    "sad",
+    "angry",
+    "surprise",
+    "scared",
+    "bored",
+    "coy",
+    "laughing",
+    "shouting",
+)
 
 #: The rule every fault in a puppet file a document names is reported under.
 PUPPET_RULE = "puppet-file"
@@ -579,29 +600,6 @@ class PuppetSpec(Strict):
         return self
 
     @model_validator(mode="after")
-    def check_default_pose(self) -> Self:
-        """Require the pose a cast member gets when it does not ask for one.
-
-        Returns:
-            The validated puppet.
-
-        Raises:
-            ValueError: The puppet declares no `standing_neutral`.
-
-        The counterpart of the `neutral` expression, and for the same reason: without
-        it, every member that names no pose -- most of them -- fails on its own line, and
-        nothing says the puppet is what is wrong. A pose is looked up whether or not the
-        puppet declares any, so this is required of every puppet.
-        """
-        if DEFAULT_POSE not in self.poses:
-            raise _fault(
-                f"puppet '{self.name}' declares no pose '{DEFAULT_POSE}', which is what a "
-                "cast member gets when it does not ask for one",
-                "poses",
-            )
-        return self
-
-    @model_validator(mode="after")
     def check_face_is_drawable(self) -> Self:
         """Require paired features to come in pairs, and expressions to be usable.
 
@@ -635,12 +633,37 @@ class PuppetSpec(Strict):
                 "them to move; add `face.features` or drop the expressions",
                 "expressions",
             )
-        if self.expressions and "neutral" not in self.expressions:
-            raise _fault(
-                f"puppet '{self.name}' declares expressions but not 'neutral', which is "
-                "what a cast member gets when it does not ask for one",
-                "expressions",
-            )
+        return self
+
+    @model_validator(mode="after")
+    def check_default_pose(self) -> Self:
+        """Require the core vocabulary: every core pose and every core expression.
+
+        Returns:
+            The validated puppet.
+
+        Raises:
+            ValueError: The puppet leaves out a core pose or a core expression.
+
+        A document that names only core poses and expressions is then valid with any
+        puppet, so a model that keeps to them cannot name one the puppet lacks -- the
+        fault the compiler alone used to notice. `standing_neutral` and `neutral` are what
+        a member gets unasked, so without them every member that names none would fail
+        on its own line, and nothing would say the puppet is what is wrong.
+        """
+        for declared, core, what in (
+            (self.poses, CORE_POSES, "poses"),
+            (self.expressions, CORE_EXPRESSIONS, "expressions"),
+        ):
+            missing = [name for name in core if name not in declared]
+            if missing:
+                listed = ", ".join(f"'{name}'" for name in missing)
+                raise _fault(
+                    f"puppet '{self.name}' declares no {listed} of the {what} every puppet "
+                    f"declares: {', '.join(core)}. Add {'it' if len(missing) == 1 else 'them'}; "
+                    f"a puppet may declare more {what} of its own",
+                    what,
+                )
         return self
 
     @property

@@ -186,7 +186,8 @@ A pose the puppet declares, by name.
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | text |
+| Type | a name, or text |
+| Values | `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing` |
 | Default | `standing_neutral` |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-pose`](../diagnostics.md#unknown-pose), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |
@@ -215,7 +216,8 @@ An expression the puppet declares, by name.
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | text |
+| Type | a name, or text |
+| Values | `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting` |
 | Default | `neutral` |
 | Since | 0.5 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-expression`](../diagnostics.md#unknown-expression), [`conflicting-cast`](../diagnostics.md#conflicting-cast) |

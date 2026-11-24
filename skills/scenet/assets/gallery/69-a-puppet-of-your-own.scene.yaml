@@ -61,6 +61,47 @@ panels:
     script:
       - say: {by: pip, text: "And so loud.", kind: whisper}
 
+  # Pip declares the core vocabulary every puppet does, so these work with any puppet.
+  cross:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: arms_crossed, expression: angry, at: center}
+    script:
+      - say: {by: pip, text: "Why won't it stop?"}
+
+  call:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: pointing, expression: shouting, at: center}
+    script:
+      - say: {by: pip, text: "Wait for us!", kind: shout}
+
+  wait:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: hands_on_hips, expression: bored, at: center}
+    script:
+      - say: {by: pip, text: "Still waiting."}
+
+  ask:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {expression: coy, at: center}
+    script:
+      - say: {by: pip, text: "Can we go on the next one?"}
+
+  joke:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {expression: laughing, at: center}
+    script:
+      - say: {by: pip, text: "It's honking at us!"}
+
   gone:
     camera: {shot: full_shot}
     cast:

@@ -471,12 +471,24 @@
       "additionalProperties": {
         "$ref": "#/$defs/ExpressionSpec"
       },
-      "description": "Named expressions, each a state of brow, eyes and mouth.",
+      "description": "Named expressions, each a state of brow, eyes and mouth. Every puppet declares the core expressions: `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting`; it may declare more of its own.",
       "patternProperties": {
         "^x-": {
           "description": "An extension: a key a tool writes, which Scenet ignores."
         }
       },
+      "required": [
+        "neutral",
+        "happy",
+        "sad",
+        "angry",
+        "surprise",
+        "scared",
+        "bored",
+        "coy",
+        "laughing",
+        "shouting"
+      ],
       "title": "Expressions",
       "type": "object"
     },
@@ -600,14 +612,17 @@
         },
         "type": "object"
       },
-      "description": "Named poses, each a set of joint angles.",
+      "description": "Named poses, each a set of joint angles. Every puppet declares the core poses: `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing`; it may declare more of its own.",
       "patternProperties": {
         "^x-": {
           "description": "An extension: a key a tool writes, which Scenet ignores."
         }
       },
       "required": [
-        "standing_neutral"
+        "standing_neutral",
+        "arms_crossed",
+        "hands_on_hips",
+        "pointing"
       ],
       "title": "Poses",
       "type": "object"
@@ -655,7 +670,8 @@
     "landmarks",
     "joints",
     "face",
-    "poses"
+    "poses",
+    "expressions"
   ],
   "title": "Scenet puppet",
   "type": "object"
