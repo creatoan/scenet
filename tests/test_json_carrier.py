@@ -326,7 +326,9 @@ class TestTheReader:
         assert "a JSON reader would keep only the last" in str(caught.value)
 
     def test_an_exponent_in_capitals_is_a_float(self):
-        (value,) = load('{"a": 1E5}').values()  # type: ignore[union-attr]  -- a mapping
+        document = load('{"a": 1E5}')
+        assert isinstance(document, dict)
+        (value,) = document.values()
         assert isinstance(value, WrittenFloat)
         assert (value, value.source) == (100000.0, "1E5")
 
