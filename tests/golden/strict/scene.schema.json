@@ -1,0 +1,1568 @@
+{
+  "$defs": {
+    "AnchorX": {
+      "description": "Where along the panel width an actor would like to stand.",
+      "enum": [
+        "left_edge",
+        "left_third",
+        "center",
+        "right_third",
+        "right_edge"
+      ],
+      "type": "string"
+    },
+    "BalloonKind": {
+      "description": "What kind of balloon carries a line, which is how it gets drawn.",
+      "enum": [
+        "speech",
+        "thought",
+        "whisper",
+        "shout"
+      ],
+      "type": "string"
+    },
+    "CameraAngle": {
+      "description": "The camera's height relative to the subject.",
+      "enum": [
+        "low",
+        "eye_level",
+        "high"
+      ],
+      "type": "string"
+    },
+    "CameraSpec": {
+      "additionalProperties": false,
+      "description": "How the panel is framed.",
+      "properties": {
+        "angle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CameraAngle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The camera's height: `low` looks up, leaving little air above the head; `high` looks down, leaving more."
+        },
+        "shot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ShotType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How tightly the camera frames the cast, named by where the frame cuts the body, from `long_shot` to `extreme_close_up`. The tightest it may go: the camera steps back when the cast does not fit."
+        }
+      },
+      "required": [
+        "shot",
+        "angle"
+      ],
+      "type": "object"
+    },
+    "CaptionEvent": {
+      "additionalProperties": false,
+      "description": "One caption box: the panel speaking in its own voice.",
+      "properties": {
+        "by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Who is speaking, for a `spoken` caption only: any name, in the cast or not."
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptionKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the box is doing: `locale` for a place and time, `monologue` for an inner voice, `spoken` for speech from off panel, `editorial` for the writer's voice."
+        },
+        "prefer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlacementZone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the box would like to sit, one of nine zones of the panel. Left out, where reading starts: `top_left`, or `top_right` read right to left."
+        },
+        "text": {
+          "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.",
+          "type": "string"
+        },
+        "tone": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptionTone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`."
+        }
+      },
+      "required": [
+        "text",
+        "kind",
+        "tone",
+        "prefer",
+        "by"
+      ],
+      "type": "object"
+    },
+    "CaptionKind": {
+      "description": "What a caption box is doing, which is how it gets set.",
+      "enum": [
+        "locale",
+        "monologue",
+        "spoken",
+        "editorial"
+      ],
+      "type": "string"
+    },
+    "CaptionTone": {
+      "description": "The value a caption box is filled with.",
+      "enum": [
+        "paper",
+        "pale",
+        "ink",
+        "warm"
+      ],
+      "type": "string"
+    },
+    "CastEntry": {
+      "additionalProperties": false,
+      "description": "One character present in the panel: a puppet Scenet poses, or a figure a picture draws.\n\nThe split between actor id and `reference` is what lets one puppet appear twice in a panel as two different people:\n\n.. code-block:: yaml\n\ncast: guard_left: {reference: bob, pose: arms_crossed} guard_right: {reference: bob, pose: standing_neutral, facing: left}",
+      "properties": {
+        "at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnchorX"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where along the panel's width the figure would like to stand. A preference: non-overlap and `left_of` override it."
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "An expression the puppet declares, by name."
+        },
+        "facing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Facing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Which way the figure is turned, `left` or `right`, gaze and all."
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A figure the panel's picture draws, by the name its artwork contract gives it. Written instead of `reference`, and with none of the keys that pose or place a puppet."
+        },
+        "id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            }
+          ],
+          "description": "The actor id of the cast member, in the list form of `cast`: an identifier."
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Mark"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Emanata drawn around the character -- `plewds`, `squeans`, `grawlixes`, `briffits` -- in any order, each once. They compose with the expression."
+        },
+        "pose": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A pose the puppet declares, by name."
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The puppet to draw: a shipped puppet's name, or the path of a `.puppet.yaml` file, relative to the document. Written instead of `figure`."
+        }
+      },
+      "required": [
+        "id",
+        "reference",
+        "pose",
+        "expression",
+        "marks",
+        "at",
+        "facing",
+        "figure"
+      ],
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "description": "Panels stacked top to bottom, beside the other columns of a tier.",
+      "properties": {
+        "panels": {
+          "description": "The panels in the column, read top to bottom.",
+          "items": {
+            "$ref": "#/$defs/StackedPanel"
+          },
+          "type": "array"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The column's share of its tier's width, relative to the other columns."
+        }
+      },
+      "required": [
+        "width",
+        "panels"
+      ],
+      "type": "object"
+    },
+    "Corner": {
+      "description": "Which corner of its parent an inset sits in.",
+      "enum": [
+        "top_left",
+        "top_right",
+        "bottom_left",
+        "bottom_right"
+      ],
+      "type": "string"
+    },
+    "Direction": {
+      "description": "Which way a comic is read: its progression, not the direction of its text.",
+      "enum": [
+        "ltr",
+        "rtl"
+      ],
+      "type": "string"
+    },
+    "Facing": {
+      "description": "Which way an actor is turned.",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "type": "string"
+    },
+    "Fit": {
+      "description": "How a supplied picture fills the panel, keeping its own proportions.",
+      "enum": [
+        "cover",
+        "contain"
+      ],
+      "type": "string"
+    },
+    "FontSpec": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bold_italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic`, or `regular` when there is no italic, and a note says so."
+            },
+            "display": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The font file sound effects are lettered in. Left out, the shipped display face, Bangers, whatever the other faces are."
+            },
+            "italic": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The font file every caption but a `spoken` one is lettered in. Left out, they are set in `regular`."
+            },
+            "regular": {
+              "description": "The font file dialogue and `spoken` captions are lettered in, relative to the document. Written alone, as `font: fonts/Comic.ttf`, it letters every face.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "regular",
+            "italic",
+            "bold_italic",
+            "display"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The font files a panel is lettered in, each a path relative to the document."
+    },
+    "Horizon": {
+      "description": "Where the ground meets whatever is behind it.",
+      "enum": [
+        "high",
+        "mid",
+        "low"
+      ],
+      "type": "string"
+    },
+    "Identifier": {
+      "description": "An actor id or a panel name. An id is 1 to 64 letters, digits, '_' and '-', and the marks that accent a letter, starting with a letter or a digit; '.', '/', ':', '#' and '@' are reserved, and so, in any case, are the words of a staging sentence and of a comic script's labels; and no id starts with 'x-', which marks an extension key. The letters, digits and marks are Unicode's, spelled out by code point, so every reader of this schema agrees.",
+      "type": "string"
+    },
+    "Inset": {
+      "additionalProperties": false,
+      "description": "A small panel set into a corner of another, and drawn over it.",
+      "properties": {
+        "at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Corner"
+            }
+          ],
+          "description": "The corner of its parent the inset sits in, a gutter in from both edges."
+        },
+        "read": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InsetOrder"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "When the inset is read: `after` its parent, or `before` it."
+        },
+        "scale": {
+          "description": "The inset's width and height, as a fraction of its parent's: above 0, at most 0.5.",
+          "type": "number"
+        },
+        "use": {
+          "description": "The name of a panel under `panels:`, set into this one.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "use",
+        "at",
+        "scale",
+        "read"
+      ],
+      "type": "object"
+    },
+    "InsetOrder": {
+      "description": "Whether an inset is read before the panel it sits in, or after it.",
+      "enum": [
+        "before",
+        "after"
+      ],
+      "type": "string"
+    },
+    "Kind": {
+      "description": "Which kind of document it is: one panel, a scene of panels, or a book of scenes.",
+      "enum": [
+        "panel",
+        "scene",
+        "book"
+      ],
+      "type": "string"
+    },
+    "LetteringSpec": {
+      "additionalProperties": false,
+      "description": "How a panel is lettered.",
+      "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The font files to letter in, relative to the document: one file for every face, or one for each. Left out, Source Sans Pro."
+        },
+        "size": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The dialogue type size, in panel units; captions keep 30 parts in 35 of it. Left out, 3.5% of the height the panel letters against: its own, or one tier of a three-tier page."
+        }
+      },
+      "required": [
+        "size",
+        "font"
+      ],
+      "type": "object"
+    },
+    "Mark": {
+      "description": "Something drawn around a character, rather than on them, to say how they are.",
+      "enum": [
+        "plewds",
+        "squeans",
+        "grawlixes",
+        "briffits"
+      ],
+      "type": "string"
+    },
+    "Mass": {
+      "additionalProperties": false,
+      "description": "One tonal mass in the backdrop: what it is, how far back, how wide.",
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MassKind"
+            }
+          ],
+          "description": "What the mass is made of, which decides its silhouette: seven outdoor kinds of stuff and five indoor."
+        },
+        "plane": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Plane"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How far back the mass sits, which decides its value and its draw order. A `foreground` mass is drawn over the cast."
+        },
+        "spans": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Spans"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How much of the panel's width the mass covers: all of it, or its `left`, `center` or `right` part."
+        }
+      },
+      "required": [
+        "kind",
+        "plane",
+        "spans"
+      ],
+      "type": "object"
+    },
+    "MassKind": {
+      "description": "What a tonal mass in the backdrop is made of.",
+      "enum": [
+        "building",
+        "ceiling",
+        "floor",
+        "furniture",
+        "ground",
+        "plant",
+        "sky",
+        "solid",
+        "structural",
+        "wall",
+        "water",
+        "window"
+      ],
+      "type": "string"
+    },
+    "PageFormat": {
+      "additionalProperties": false,
+      "description": "The page every panel on it is laid out on.",
+      "properties": {
+        "bleed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How far the printed sheet runs past the trim on every side, so art that reaches the edge can be cut cleanly: 30 is 3 mm. Paper around the page; nothing on it moves."
+        },
+        "gutter": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The gap between two panels, or two columns, side by side in a tier."
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The blank border inside the page's edge, on all four sides."
+        },
+        "size": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The page's width and height: the trim, the size the printed page is cut to, in the units a panel uses. Printed, a unit is a tenth of a millimetre."
+        },
+        "tier_gutter": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The gap between two tiers, and between two panels stacked in a column. Wider than `gutter`, as in print, so a tier reads as one row."
+        }
+      },
+      "required": [
+        "size",
+        "margin",
+        "gutter",
+        "tier_gutter",
+        "bleed"
+      ],
+      "type": "object"
+    },
+    "PageSpec": {
+      "additionalProperties": false,
+      "description": "One page: tiers, top to bottom.",
+      "properties": {
+        "tiers": {
+          "description": "The page's tiers, top to bottom.",
+          "items": {
+            "$ref": "#/$defs/Tier"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "tiers"
+      ],
+      "type": "object"
+    },
+    "Palette": {
+      "description": "What a panel is drawn in: the value ladder in grey, or its twin in colour.",
+      "enum": [
+        "mono",
+        "tinted"
+      ],
+      "type": "string"
+    },
+    "PanelEntry": {
+      "additionalProperties": false,
+      "description": "One panel, written whole, under its `id`.",
+      "properties": {
+        "camera": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CameraSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How the cast is framed: the shot, and the camera's height."
+        },
+        "cast": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CastEntry"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Who is in the panel, the first being the one the camera frames: each actor under their id, or a list of cast members each with their `id`, and the puppet that plays them or the figure a picture draws. An id is letters, digits, `_` and `-`: `alice`, `Zo\u00e9`, `old_man`."
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the panel shows, in words, for a reader who cannot see it. Carried into the SVG as its accessible name and never interpreted. Not inherited: a panel drawn `over:` another is a different picture. Left out, one is generated from the shot, the setting and the cast."
+        },
+        "id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "lettering": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LetteringSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How the lettering is set: the dialogue type size, and the font files."
+        },
+        "palette": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Palette"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the panel is drawn in: `mono`, the value ladder in grey, or `tinted`, each value in a colour with the same lightness. Colour never changes a value, so a tinted panel is, in monochrome, the mono one. Inherited like any default; a panel may have its own."
+        },
+        "panel": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PanelSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The panel's frame: its size and margin, in panel units."
+        },
+        "script": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "say": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/SayEvent"
+                          }
+                        ],
+                        "description": "A line of dialogue, in a balloon whose tail points at the speaker."
+                      }
+                    },
+                    "required": [
+                      "say"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "caption": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/CaptionEvent"
+                          }
+                        ],
+                        "description": "A caption: a box in which the panel speaks in its own voice, with no tail."
+                      }
+                    },
+                    "required": [
+                      "caption"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "sfx": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/SfxEvent"
+                          }
+                        ],
+                        "description": "A sound effect: letters lettered into the picture, with no balloon."
+                      }
+                    },
+                    "required": [
+                      "sfx"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What is said and heard, in the order it is read: `say` for a balloon, `caption` for a box, `sfx` for a sound effect."
+        },
+        "setting": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SettingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where and when the panel happens: a named place, tonal masses or a picture behind the cast, with the time of day and the weather."
+        },
+        "staging": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Relation"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How the cast stand to each other, as sentences: `alice left_of bob`. One relation each."
+        }
+      },
+      "required": [
+        "id",
+        "panel",
+        "camera",
+        "setting",
+        "lettering",
+        "cast",
+        "staging",
+        "script",
+        "description",
+        "palette"
+      ],
+      "type": "object"
+    },
+    "PanelPlacement": {
+      "anyOf": [
+        {
+          "description": "A panel's name, which stands for `{use: name}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bleed": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Side"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of those sides."
+            },
+            "insets": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/Inset"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Panels set into its corners, and drawn over it."
+            },
+            "use": {
+              "description": "The name of a panel under `panels:`. Writing the name alone means `{use: name}`.",
+              "type": "string"
+            },
+            "width": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The panel's share of its tier's width, relative to its neighbours."
+            }
+          },
+          "required": [
+            "use",
+            "width",
+            "insets",
+            "bleed"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "One panel in a tier."
+    },
+    "PanelSpec": {
+      "additionalProperties": false,
+      "description": "The panel's own dimensions.",
+      "properties": {
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "An inset on all four sides, in panel units. Balloons, captions and sound effects keep inside it; figures may run past it, as comics let them."
+        },
+        "size": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The panel's width and height, `[width, height]`, in panel units: everything else is measured against them. Printed, a unit is a tenth of a millimetre."
+        }
+      },
+      "required": [
+        "size",
+        "margin"
+      ],
+      "type": "object"
+    },
+    "Place": {
+      "description": "A named setting, expanded into masses by the frontend.",
+      "enum": [
+        "alley",
+        "desert",
+        "docks",
+        "field",
+        "forest",
+        "mountain",
+        "office",
+        "room",
+        "shore",
+        "street"
+      ],
+      "type": "string"
+    },
+    "PlacementZone": {
+      "description": "Where in the panel a balloon would prefer to sit.",
+      "enum": [
+        "top_left",
+        "top_center",
+        "top_right",
+        "middle_left",
+        "middle_center",
+        "middle_right",
+        "bottom_left",
+        "bottom_center",
+        "bottom_right"
+      ],
+      "type": "string"
+    },
+    "Plane": {
+      "description": "How far back a mass sits, which decides both its draw order and its value.",
+      "enum": [
+        "foreground",
+        "near",
+        "mid",
+        "far"
+      ],
+      "type": "string"
+    },
+    "Predicate": {
+      "description": "How one actor stands in relation to another.",
+      "enum": [
+        "left_of",
+        "right_of",
+        "in_front_of",
+        "behind",
+        "looking_at",
+        "ground_shared_with"
+      ],
+      "type": "string"
+    },
+    "Relation": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "object": {
+              "description": "The other actor id. For `looking_at`, it may be somebody heard from off panel.",
+              "type": "string"
+            },
+            "predicate": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Predicate"
+                }
+              ],
+              "description": "How the subject stands to the object: `left_of`, `right_of`, `in_front_of`, `behind`, `looking_at` or `ground_shared_with`."
+            },
+            "subject": {
+              "description": "The actor id the relation is about.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "subject",
+            "predicate",
+            "object"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "One staging fact, written as a sentence."
+    },
+    "SayEvent": {
+      "additionalProperties": false,
+      "description": "One line of dialogue.",
+      "properties": {
+        "by": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            }
+          ],
+          "description": "Who speaks: an actor id in the cast, whose mouth the tail points at. With `off_panel`, the id of somebody nobody draws, which follows the same grammar. Quoted if it looks like a number: `by: '1984'`."
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BalloonKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`."
+        },
+        "off_panel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Side"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The speaker is outside the panel: `true`, or the side of the frame they are on. The tail ends on the frame there."
+        },
+        "prefer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlacementZone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it."
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TypeSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room."
+        },
+        "text": {
+          "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by",
+        "text",
+        "prefer",
+        "kind",
+        "off_panel",
+        "size"
+      ],
+      "type": "object"
+    },
+    "SettingSpec": {
+      "additionalProperties": false,
+      "description": "Where and when the panel happens: tonal masses, or a picture drawn elsewhere.",
+      "properties": {
+        "fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How the picture fills the panel: `cover` fills it and crops what overhangs, equally on both sides; `contain` shows the whole picture. Left out, `cover`."
+        },
+        "horizon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Horizon"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the ground meets what is behind it, which every mass is composed against: `high` shows more ground, `low` less."
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the document. Only its size is read. Written instead of `place` and `masses`."
+        },
+        "masses": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Mass"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The backdrop as tonal masses, back to front: what a `place` expands into, written out. Write this, `place` or `image`, never two of them."
+        },
+        "place": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Place"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A named place, which stands for the list of masses it expands into. Write this, `masses` or `image`, never two of them."
+        },
+        "time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeOfDay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "When the panel happens, which sets the two ends of the value ladder: the foreground's value and the atmosphere's."
+        },
+        "weather": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Weather"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the air is doing: `fog` veils the backdrop; `rain` and `snow` veil it as cloud, and fall over everything, the cast included."
+        }
+      },
+      "required": [
+        "horizon",
+        "masses",
+        "time",
+        "weather",
+        "image",
+        "fit",
+        "place"
+      ],
+      "type": "object"
+    },
+    "SfxEvent": {
+      "additionalProperties": false,
+      "description": "A sound effect: letters that are part of the picture.",
+      "properties": {
+        "arc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle up, negative down."
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Written `from`: the actor id the sound comes from, which it is placed near."
+        },
+        "hollow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`true` letters the effect as an outline with no fill, so the art shows through: an open effect."
+        },
+        "prefer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlacementZone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the effect would like to sit, one of nine zones of the panel: on its own, or as a pull on an effect that has a `from`."
+        },
+        "rotate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How far the effect is turned clockwise, in degrees, from -45 to 45."
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SfxSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size."
+        },
+        "text": {
+          "description": "The sound, lettered exactly as written, in the display face. Never empty, nor only white space.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "from",
+        "prefer",
+        "size",
+        "rotate",
+        "arc",
+        "hollow"
+      ],
+      "type": "object"
+    },
+    "SfxSize": {
+      "description": "How big a sound effect is lettered, as a multiple of the dialogue type size.",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "type": "string"
+    },
+    "ShotType": {
+      "description": "How tightly the camera frames the cast.",
+      "enum": [
+        "long_shot",
+        "full_shot",
+        "medium_full_shot",
+        "cowboy_shot",
+        "medium_shot",
+        "medium_close_up",
+        "close_up",
+        "big_close_up",
+        "extreme_close_up"
+      ],
+      "type": "string"
+    },
+    "Side": {
+      "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.",
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ],
+      "type": "string"
+    },
+    "Spans": {
+      "description": "How much of the panel's width a mass covers.",
+      "enum": [
+        "full",
+        "left",
+        "center",
+        "right"
+      ],
+      "type": "string"
+    },
+    "StackedPanel": {
+      "anyOf": [
+        {
+          "description": "A panel's name, which stands for `{use: name}`.",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bleed": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "$ref": "#/$defs/Side"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Run the frame past the trim to the bleed line, with no border there: `true` on every side that reaches the page's margin, or a list of those sides."
+            },
+            "height": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The panel's share of its column's height, relative to the others in it."
+            },
+            "insets": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/Inset"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Panels set into its corners, and drawn over it."
+            },
+            "use": {
+              "description": "The name of a panel under `panels:`. Writing the name alone means `{use: name}`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "use",
+            "height",
+            "insets",
+            "bleed"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "One panel in a column."
+    },
+    "Tier": {
+      "additionalProperties": false,
+      "description": "A row of panels read in turn, or of columns each read top to bottom.",
+      "properties": {
+        "columns": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Column"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "In place of `panels`: columns side by side, each a stack of panels read top to bottom before the next."
+        },
+        "height": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The tier's share of the page's height, relative to the other tiers."
+        },
+        "panels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PanelPlacement"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The panels in the tier, in reading order: left to right, or right to left for a comic read that way."
+        },
+        "slant": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How far the gutters between the tier's panels lean, in degrees, from -30 to 30. Positive leans the top of each gutter to the right."
+        }
+      },
+      "required": [
+        "height",
+        "panels",
+        "columns",
+        "slant"
+      ],
+      "type": "object"
+    },
+    "TimeOfDay": {
+      "description": "When the panel happens, which shifts the whole value ladder.",
+      "enum": [
+        "dawn",
+        "day",
+        "dusk",
+        "night"
+      ],
+      "type": "string"
+    },
+    "TypeSize": {
+      "description": "How large a line of dialogue is lettered, against the panel's dialogue size.",
+      "enum": [
+        "normal",
+        "small"
+      ],
+      "type": "string"
+    },
+    "Weather": {
+      "description": "What the air is doing between the reader and the panel.",
+      "enum": [
+        "clear",
+        "rain",
+        "fog",
+        "snow"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The JSON Schema an editor checks the document with: a path or a URL. Scenet reads its own schema, whatever this says."
+    },
+    "defaults": {
+      "description": "Kept for a later version of the language. Refused until then: in a scene, a key written beside `panels:` is a default every panel inherits.",
+      "type": "null"
+    },
+    "direction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Direction"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored."
+    },
+    "include": {
+      "description": "Kept for a later version of the language, which will read one document into another. Refused until then.",
+      "type": "null"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Kind"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Which kind of document it is: `panel`, or `scene` for one with `panels:`. A document is read by its shape whether it says or not, so one that says it is a scene and has no `panels:` is refused, as is the other way round. `book` is kept for a later version of the language."
+    },
+    "page": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PageFormat"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The format every page shares: its size, margin, gutters and bleed."
+    },
+    "pages": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/PageSpec"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The pages, in order, each a list of tiers top to bottom."
+    },
+    "panels": {
+      "description": "The panels, in the order they are read, each written whole.",
+      "items": {
+        "$ref": "#/$defs/PanelEntry"
+      },
+      "type": "array"
+    },
+    "scenet": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The language the document is written in: the major version of the Scenet language, an integer, which is not the version of the package. Left out, it is 1. A document written for a later language is refused, with nothing else said of it."
+    }
+  },
+  "required": [
+    "scenet",
+    "$schema",
+    "kind",
+    "include",
+    "defaults",
+    "direction",
+    "panels",
+    "page",
+    "pages"
+  ],
+  "type": "object"
+}

@@ -61,6 +61,7 @@ from scenet.frontends.yaml_front import (
     load_scene_document,
     parse_scene_document,
 )
+from scenet.schema import strict_schema
 
 ROOT = Path(__file__).resolve().parent.parent
 GALLERY = ROOT / "examples" / "gallery"
@@ -69,6 +70,9 @@ CORES = GOLDEN / "core"
 DIGESTS = GOLDEN / "digests.json"
 FINDINGS = GOLDEN / "findings.json"
 PARSED = GOLDEN / "parsed.json"
+#: The strict schemas, as `scenet schema --strict` writes them: nothing else holds what the
+#: transform to the subset makes of the language, which no editor ships.
+STRICT = {kind: GOLDEN / "strict" / f"{kind}.schema.json" for kind in ("panel", "scene")}
 #: The folders whose documents' findings are kept: the gallery; one document per diagnostic,
 #: and its fixed twin; and a document for each way of reaching a finding the others miss.
 FINDING_CORPORA = (
@@ -368,6 +372,16 @@ def parsed() -> bytes:
     return (json.dumps(table, indent=2, sort_keys=True) + "\n").encode("utf-8")
 
 
+def strict() -> dict[Path, bytes]:
+    """The strict schemas, written as `scenet schema --strict` writes them."""
+    return {
+        path: (
+            json.dumps(strict_schema(scene=kind == "scene"), indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+        for kind, path in STRICT.items()
+    }
+
+
 def committed() -> tuple[dict[str, bytes], dict[str, str]]:
     """The goldens as committed."""
     cores = {path.name: path.read_bytes() for path in sorted(CORES.glob("*.core.json"))}
@@ -382,6 +396,11 @@ def differences(written: dict[str, bytes]) -> list[str]:
         names.append(FINDINGS.relative_to(ROOT).as_posix())
     if not PARSED.is_file() or PARSED.read_bytes() != parsed():
         names.append(PARSED.relative_to(ROOT).as_posix())
+    names += [
+        path.relative_to(ROOT).as_posix()
+        for path, data in strict().items()
+        if not path.is_file() or path.read_bytes() != data
+    ]
     return names
 
 
@@ -429,6 +448,9 @@ def write(written: dict[str, bytes]) -> None:
         picture.write_bytes(written[source])
     FINDINGS.write_bytes(findings())
     PARSED.write_bytes(parsed())
+    for path, data in strict().items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
 
 
 def run(argv: list[str] | None = None) -> int:

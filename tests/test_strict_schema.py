@@ -7,7 +7,6 @@ meant -- relations, fonts and placements in their mapping forms, and no conditio
 or bound. The frontend reads that shape as it is: the list form, and explicit nulls.
 """
 
-import json
 import tomllib
 from collections.abc import Iterator
 from pathlib import Path
@@ -32,7 +31,13 @@ DOCUMENTS = sorted([*GALLERY.glob("*.panel.yaml"), *GALLERY.glob("*.scene.yaml")
 PROVIDERS: dict[str, dict[str, Any]] = tomllib.loads(
     (ROOT / "tests" / "data" / "structured_outputs.toml").read_text(encoding="utf-8")
 )
-SCHEMAS = {"panel": strict_schema(), "scene": strict_schema(scene=True)}
+#: The two strict schemas, each built where a test asks for it: built as the module is
+#: imported, they were built before mutmut chose a mutant, and no test saw one.
+KINDS = ("panel", "scene")
+
+
+def _schema(kind: str) -> dict[str, Any]:
+    return strict_schema(scene=kind == "scene")
 
 
 def _nodes(node: object, path: str = "") -> Iterator[tuple[str, dict[str, Any]]]:
@@ -72,15 +77,15 @@ def _depth(schema: dict[str, Any], node: dict[str, Any], seen: frozenset[str] = 
 
 
 class TestTheSubset:
-    @pytest.mark.parametrize("kind", SCHEMAS)
+    @pytest.mark.parametrize("kind", KINDS)
     def test_it_uses_only_the_strict_keywords(self, kind: str):
-        assert _keywords(SCHEMAS[kind]) <= STRICT_KEYWORDS
+        assert _keywords(_schema(kind)) <= STRICT_KEYWORDS
 
     @pytest.mark.parametrize("provider", sorted(PROVIDERS))
-    @pytest.mark.parametrize("kind", SCHEMAS)
+    @pytest.mark.parametrize("kind", KINDS)
     def test_each_recorded_provider_takes_it(self, provider: str, kind: str):
         rules = PROVIDERS[provider]
-        schema = SCHEMAS[kind]
+        schema = _schema(kind)
         assert _keywords(schema) <= set(rules["keywords"])
         objects = [(path, node) for path, node in _nodes(schema) if node.get("type") == "object"]
         if rules["closed_objects"]:
@@ -125,7 +130,7 @@ class TestTheGallery:
         text = path.read_text(encoding="utf-8")
         document = load(text)
         assert isinstance(document, dict)
-        schema = SCHEMAS["scene" if "panels" in document else "panel"]
+        schema = _schema("scene" if "panels" in document else "panel")
         written = strict_document(document, schema)
         assert [error.message for error in Draft202012Validator(schema).iter_errors(written)] == []
         # Every key of every object is written: the shape is the strict one, not a looser one.
@@ -145,7 +150,10 @@ class TestTheCommand:
     def test_it_writes_the_strict_schema(self, tmp_path: Path, flags: list[str], kind: str):
         target = tmp_path / "strict.json"
         assert main(["schema", "--strict", *flags, "-o", str(target)]) == 0
-        assert json.loads(target.read_text(encoding="utf-8")) == SCHEMAS[kind]
+        golden = ROOT / "tests" / "golden" / "strict" / f"{kind}.schema.json"
+        assert target.read_bytes() == golden.read_bytes(), (
+            f"{golden.relative_to(ROOT)} is stale: run `uv run python scripts/update_golden.py`"
+        )
 
     def test_it_takes_no_artwork_or_puppet(self, capsys: pytest.CaptureFixture[str]):
         assert main(["schema", "--strict", "--puppet"]) == 2
@@ -154,14 +162,14 @@ class TestTheCommand:
 
 class TestTheShape:
     def test_a_strict_panel_is_read_as_it_is(self):
-        schema = SCHEMAS["panel"]
+        schema = _schema("panel")
         document = strict_document({"cast": {"a": {"reference": "alice"}}}, schema)
         assert document["cast"][0]["pose"] is None
         assert document["camera"] is None
         assert compile_book(dump(document)).panels["panel"].core.actors
 
     def test_a_strict_scene_writes_each_panel_whole(self):
-        schema = SCHEMAS["scene"]
+        schema = _schema("scene")
         assert "over" not in schema["$defs"]["PanelEntry"]["properties"]
         assert "camera" not in schema["properties"]
         assert "direction" in schema["properties"]
