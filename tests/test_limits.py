@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scenet import diagnostics, ir
+from scenet import diagnostics, images, ir, lettering
 from scenet.diagnostics import RULES, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends import script_front, yaml_front
@@ -250,6 +250,50 @@ class TestAtTheEdge:
             item.loc for item in exceeded(panels, Limits(actors_per_panel=1, events_per_panel=1))
         ]
         assert found == [("panels", "one", "cast"), ("panels", "one", "script")]
+
+
+class TestTheFilesAtTheEdge:
+    """A picture or a font of a limit's size is read, and one past it is refused."""
+
+    LOC = ("setting", "image")
+
+    def test_a_picture_of_the_limit_in_bytes_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        data = png(10, 20)
+        monkeypatch.setattr(images, "LIMITS", Limits(image_bytes=len(data)))
+        assert load_image("art/a.png", {"art/a.png": data}, loc=self.LOC).width == 10
+        monkeypatch.setattr(images, "LIMITS", Limits(image_bytes=len(data) - 1))
+        with pytest.raises(PanelSyntaxError) as caught:
+            load_image("art/a.png", {"art/a.png": data}, loc=self.LOC)
+        assert (caught.value.rule, caught.value.loc) == (LIMIT_RULE, self.LOC)
+        said = f"image file 'art/a.png': {past('image_bytes', len(data), len(data) - 1)}"
+        assert said in str(caught.value)
+
+    def test_a_picture_of_the_limit_in_pixels_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        data = png(10, 20)
+        monkeypatch.setattr(images, "LIMITS", Limits(image_pixels=200))
+        assert load_image("art/a.png", {"art/a.png": data}, loc=self.LOC).height == 20
+        monkeypatch.setattr(images, "LIMITS", Limits(image_pixels=199))
+        with pytest.raises(PanelSyntaxError) as caught:
+            load_image("art/a.png", {"art/a.png": data}, loc=self.LOC)
+        assert (caught.value.rule, caught.value.loc) == (LIMIT_RULE, self.LOC)
+        said = f"image file 'art/a.png' is 10 by 20: {past('image_pixels', 200, 199)}"
+        assert said in str(caught.value)
+
+    def test_a_file_that_is_no_picture_is_found_where_it_is_named(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            load_image("art/a.png", {"art/a.png": b"no picture"}, loc=self.LOC)
+        assert caught.value.loc == self.LOC
+
+    def test_a_font_of_the_limit_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        """Read, and refused for what it is, which is no font: not for its size."""
+        monkeypatch.setattr(lettering, "LIMITS", Limits(font_bytes=8))
+        with pytest.raises(PanelSyntaxError) as caught:
+            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(8)}, loc=())
+        assert caught.value.rule != LIMIT_RULE
+        with pytest.raises(PanelSyntaxError) as caught:
+            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(9)}, loc=())
+        assert caught.value.rule == LIMIT_RULE
+        assert f"font file 'fonts/a.ttf': {past('font_bytes', 9, 8)}" in str(caught.value)
 
 
 class TestTheMessage:
