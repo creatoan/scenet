@@ -1,4 +1,4 @@
-r"""Scenet JSON: the language's second carrier, beside Scenet YAML (#354).
+r"""Scenet JSON: the language's second carrier, beside Scenet YAML.
 
 Models and programs write JSON, and JSON is not quite YAML: a tab between tokens, an
 emoji escaped as two surrogates, a key longer than 1024 characters are all ordinary JSON

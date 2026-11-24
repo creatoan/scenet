@@ -578,7 +578,7 @@ def load(text: str, *, as_json: bool = False) -> object:
 
     A document whose text opens a JSON object, or that `as_json` says is JSON -- a file
     that ends in `.json` -- is read by :func:`scenet.safe_json.load`, into the same data
-    model (#354).
+    model.
 
     Args:
         text: The YAML source.
