@@ -1883,7 +1883,7 @@ def _front_matter_region(text: str, offset: int, path: tuple[str | int, ...]) ->
 def _check_front_matter_cast(cast: object, text: str, offset: int, source: Path | None) -> None:
     """Each member of the front matter's cast, checked once, where it is written.
 
-    A panel draws only some of them (#364), so a member no panel draws is checked by no
+    A panel draws only some of them, so a member no panel draws is checked by no
     panel: `at: nowhere` on one would otherwise build without a word.
 
     Raises:
@@ -2214,7 +2214,7 @@ def _off_panel(
 
 
 def _drawn(panels: dict[str, _PanelDraft]) -> dict[str, frozenset[str]]:
-    """Who of the front matter's cast each panel draws (#364).
+    """Who of the front matter's cast each panel draws.
 
     Who speaks in it, from off panel too -- `_off_panel` then takes them out of the picture,
     on the side they were written to stand -- who a sound comes from, whom its own `@cast:`
