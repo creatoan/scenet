@@ -25,7 +25,14 @@ from scenet.images import load_image
 from scenet.lettering import FONT_RULE, load_font
 from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded, past
 from scenet.pipeline import compile_book, compile_source
-from scenet.safe_yaml import _load_fast, _ProfileLoader
+from scenet.safe_yaml import (
+    ProfileResolver,
+    _deeper_than,
+    _fast_loader,
+    _load_fast,
+    _ProfileConstructor,
+    _ProfileLoader,
+)
 from scenet.schema import panel_schema, scene_schema
 from tests.images import png
 
@@ -438,3 +445,40 @@ class TestTheFastReader:
     )
     def test_what_the_profile_refuses_goes_back_to_it(self, text: str):
         assert _load_fast(text) == (False, None)
+
+    def test_a_document_the_profile_allows_is_read_fast(self):
+        assert _load_fast("a: 1\nb: [x, {c: y}]\n") == (True, {"a": 1, "b": ["x", {"c": "y"}]})
+
+    def test_every_gallery_document_is_read_fast(self):
+        """None writes a tab, a tag or an anchor, so libyaml reads every one."""
+        slow = [
+            path.name
+            for path in sorted((ROOT / "examples" / "gallery").glob("*.yaml"))
+            if not _load_fast(path.read_text(encoding="utf-8"))[0]
+        ]
+        assert slow == []
+
+    def test_the_fast_loader_is_libyaml_s_parser_with_the_profile_s_reading(self):
+        """Built once as the module is imported, so it is asked here, where it is built."""
+        loader = _fast_loader()
+        assert loader is not None
+        assert loader.__name__ == "_FastLoader"
+        assert {_ProfileConstructor, ProfileResolver} <= set(loader.__mro__)
+        assert any(base.__module__ == "yaml._yaml" for base in loader.__mro__)
+        read = loader("a: 1.50\nb: yes\n")
+        try:
+            data = read.get_single_data()
+        finally:
+            read.dispose()
+        assert data == {"a": 1.5, "b": "yes"}
+        assert data["a"].source == "1.50"
+
+    @pytest.mark.parametrize(
+        ("text", "levels"), [("[[1]]", 2), ("{a: {b: 1}}", 2), ("[1, [2, [3]]]", 3), ("1", 0)]
+    )
+    def test_how_deep_a_document_is(self, text: str, levels: int):
+        node = yaml.compose(text)
+        assert node is not None
+        assert not _deeper_than(node, levels)
+        if levels:
+            assert _deeper_than(node, levels - 1)
