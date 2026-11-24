@@ -18,7 +18,15 @@ from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.script_front import FRENCH_SHOTS, parse_script
 from scenet.frontends.yaml_front import parse_scene_document
-from scenet.ir import RETIRED_KEYS, RETIRED_VALUES, Corner, Inset, ShotType
+from scenet.ir import (
+    RETIRED_KEYS,
+    RETIRED_VALUES,
+    Corner,
+    Inset,
+    ShotType,
+    retired_key,
+    retired_value,
+)
 from scenet.pipeline import compile_source
 
 ROOT = Path(__file__).parent.parent
@@ -98,6 +106,12 @@ class TestTheShots:
     def test_the_table_lists_what_each_retired_shot_became(self):
         assert RETIRED_VALUES["shot"] == dict(RETIRED_SHOTS)
 
+    def test_a_document_is_told_the_key_as_it_writes_it(self):
+        """Only a comic script puts a prefix before the key: `@shot:`."""
+        assert retired_value("shot", "cowboy") == (
+            "'cowboy' is now 'cowboy_shot': write 'shot: cowboy_shot'"
+        )
+
 
 class TestTheInsetScale:
     def test_an_inset_is_scaled(self):
@@ -131,6 +145,10 @@ class TestTheInsetScale:
 
     def test_the_table_lists_the_renamed_key(self):
         assert RETIRED_KEYS["insets"] == {"size": "scale"}
+
+    def test_a_key_that_is_no_text_was_never_renamed(self):
+        """A key is any value pydantic was handed, a list among them, which no table holds."""
+        assert retired_key("insets", ["size"]) is None
 
 
 def _keys_by_name() -> dict[str, set[str]]:
