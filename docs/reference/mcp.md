@@ -157,9 +157,11 @@ It authenticates nobody and encrypts nothing. Expose it beyond the machine only 
 that does both: a reverse proxy on the same machine reaches it on `127.0.0.1` and needs no
 `--allow-remote`.
 
-A document sent to the server, and the files it names, are read in memory: no tool reads or
-writes the server's file system, and a path in either that climbs out of the files sent is
-refused like any other path that leaves its root.
+A document sent to the server, and the files it names, are read in memory: a call opens no
+file but the package's own, and writes none, and a path in either that climbs out of the
+files sent is refused like any other path that leaves its root. `scenet mcp --root DIR` and
+`--output DIR`, a folder a server on stdio may read from and one its `build` tool writes new
+files in, are refused over Streamable HTTP, and are not in this version yet.
 
 ## Keeping stdout clean
 

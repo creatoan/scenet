@@ -660,7 +660,7 @@ The output is sorted and indented, so it is stable under version control.
 *Since 0.8.*
 
 ```
-scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT] [--allow-remote] [--allow-origin ORIGIN] [--timeout SECONDS]
+scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT] [--allow-remote] [--allow-origin ORIGIN] [--timeout SECONDS] [--root DIR] [--output DIR]
 ```
 
 Runs an [MCP](https://modelcontextprotocol.io/) server whose tools read the specification,
@@ -720,6 +720,14 @@ without the extra.
   on serving. A worker's start is not counted.
   *Since 0.14.*
 
+`--root DIR`, `--output DIR`
+: A folder a server on stdio may read the files a document names from, contained as
+  `scenet build --root` is, and one its `build` tool writes new files in, never replacing one.
+  Each is refused over Streamable HTTP, exit 2: any client of an HTTP server could reach the
+  server's folders through it. Neither is in this version yet, and each is refused on stdio
+  too; without them the server reads and writes no folder of its own.
+  *Since 0.14.*
+
 ### Exit status
 
 | Code | Meaning |
@@ -736,6 +744,7 @@ scenet mcp --transport streamable-http --port 8765
 scenet mcp --transport streamable-http --host 127.0.0.1 --port 8765
 scenet mcp --transport streamable-http --allow-origin http://localhost:6274 --timeout 30
 scenet mcp --transport streamable-http --host 0.0.0.0 --allow-remote
+scenet mcp --root comics --output out
 ```
 
 ## `scenet --version`

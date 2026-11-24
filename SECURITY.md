@@ -44,8 +44,10 @@ reaches the network. What it reads and what it serves:
 - **`scenet build --watch`** reads the same files again whenever they change, and nothing else.
 - **`scenet mcp`**, the MCP server, an optional extra. On stdio it talks only to the client
   that launched it. Its tools take a document as text, and the files it names as base64 in
-  `files`; they read those in memory and never read or write a folder of the server's, which
-  a test holds. On either transport each tool call runs in a worker process, stopped when it
+  `files`, read in memory. It opens no file but the package's own and writes none, which a
+  test holds with an audit hook over every call. `--root DIR` and `--output DIR`, folders a
+  stdio server will be able to read from and write new files in, are refused over HTTP, and
+  are not in this version yet. On either transport each tool call runs in a worker process, stopped when it
   runs past `--timeout` (60 seconds by default) or its client cancels it, so no call occupies
   the server for longer. Over HTTP, `scenet mcp --transport streamable-http` guarantees:
   - it listens on a loopback address, `127.0.0.1` by default; any other `--host` is refused
@@ -67,10 +69,11 @@ The realistic risks are therefore:
 - **Untrusted input.** A document, or a file it names, that makes Scenet do anything but
   compile it or refuse it with a finding — a crash in fontTools on a crafted font, a header
   that defeats the PNG or JPEG reader — is in scope.
-- **Reading outside the root, or outside what was sent.** A path in a document that makes
-  Scenet open a file outside its root (by `..`, a symbolic link, a junction or a device name)
-  is in scope, as is a `files` argument or a path in a document sent to `scenet mcp` that makes
-  the server read a file of its own.
+- **Reading outside the root.** A path in a document that makes Scenet open a file outside
+  its root (by `..`, a symbolic link, a junction or a device name) is in scope.
+- **Reading or writing outside what the server was given.** A `files` argument or a path in a
+  document that makes `scenet mcp` read a file of its own, or one outside `--root`; a call that
+  writes outside `--output`, or replaces a file there.
 - **Denial of service.** A crafted document could in principle drive the constraint solver,
   balloon placement or a comic script's line patterns into pathological running time; 0.11.1
   fixed patterns that backtracked. Inputs causing runaway CPU or memory use are in scope,

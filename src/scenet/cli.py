@@ -314,6 +314,24 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="SECONDS",
         help="the most seconds one tool call may take before it is stopped (default: 60)",
     )
+    mcp.add_argument(
+        "--root",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "a folder a stdio server's documents may name files in; refused over "
+            "streamable-http, and not in this version yet"
+        ),
+    )
+    mcp.add_argument(
+        "--output",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "a folder a stdio server's build tool writes new files in; refused over "
+            "streamable-http, and not in this version yet"
+        ),
+    )
     return parser
 
 
@@ -954,6 +972,22 @@ def run_mcp(args: argparse.Namespace) -> int:
         )
         return 2
 
+    folders = [option for option in ("--root", "--output") if getattr(args, option[2:])]
+    if folders:
+        named = " and ".join(folders)
+        if args.transport == "streamable-http":
+            print(
+                f"scenet: {named} would let any client of an HTTP server read or write a folder "
+                "of the server's; they are for a server on stdio, which only its client talks to",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"scenet: {named} for scenet mcp is not in this version yet; without it, the "
+                "server reads and writes no folder of its own",
+                file=sys.stderr,
+            )
+        return 2
     timeout = server.DEFAULT_TIMEOUT if args.timeout is None else args.timeout
     if args.transport == "stdio":
         server.serve("stdio", timeout=timeout)

@@ -15,6 +15,8 @@ What it does not do -- authenticate, encrypt -- is the operator's, and `SECURITY
 """
 
 import json
+import os
+import site
 import socket
 import subprocess
 import sys
@@ -24,7 +26,7 @@ import urllib.request
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import anyio
 import pytest
@@ -310,6 +312,110 @@ class TestTheBudget:
         failed = anyio.run(go)
         assert failed.is_error
         assert "scenet/syntax" in failed.content[0].text
+
+
+def _allowed() -> tuple[Path, ...]:
+    """Where a call may open a file: the package, and the interpreter's own libraries."""
+    import fonts  # noqa: PLC0415 -- the shipped faces' package, located only here
+
+    places = {Path(scenet.__file__).parent, Path(fonts.__file__).parent}
+    places |= {Path(place) for place in (sys.prefix, sys.base_prefix, sys.exec_prefix)}
+    places |= {Path(place) for place in site.getsitepackages()}
+    return tuple(place.resolve() for place in places)
+
+
+class _Opened:
+    """Every file the interpreter opens while `recording` is set."""
+
+    recording = False
+    seen: ClassVar[list[tuple[str, str, int]]] = []
+
+
+def _audit(event: str, arguments: tuple[object, ...]) -> None:
+    if not _Opened.recording or event != "open":
+        return
+    path, mode, flags = arguments
+    if isinstance(path, str | bytes | os.PathLike):
+        written = os.fsdecode(path)  # pyright: ignore[reportUnknownArgumentType]
+        _Opened.seen.append((written, str(mode or ""), flags if isinstance(flags, int) else 0))
+
+
+#: An audit hook cannot be removed, so it is added once, and records only when asked.
+sys.addaudithook(_audit)
+
+_WRITING = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC
+
+
+class TestNoFileIsOpened:
+    """Started with neither `--root` nor `--output`, a call opens no file but the package's
+    own, and writes none: an audit hook records every `open` the interpreter makes."""
+
+    @pytest.mark.parametrize(
+        ("tool", "arguments"),
+        [
+            ("get_spec", {"section": "characters"}),
+            ("list_puppets", {}),
+            ("validate", {"source": PANEL + "setting: {image: ../../secret.png}\n", "deep": True}),
+            ("compile", {"source": PANEL}),
+            ("render", {"source": PANEL, "live_text": True}),
+        ],
+    )
+    def test_a_call(
+        self,
+        tool: str,
+        arguments: dict[str, Any],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "secret.png").write_bytes(b"not yours")
+
+        async def go() -> Any:
+            async with Client(build_server()) as client:
+                return await client.call_tool(tool, arguments)
+
+        _Opened.seen.clear()
+        _Opened.recording = True
+        try:
+            anyio.run(go)
+        finally:
+            _Opened.recording = False
+        allowed = _allowed()
+        for path, mode, flags in _Opened.seen:
+            where = Path(path).resolve()
+            assert any(where.is_relative_to(place) for place in allowed), path
+            assert not set(mode) & set("wax+"), (path, mode)
+            assert not flags & _WRITING, (path, flags)
+
+
+class TestTheFoldersAreRefused:
+    @pytest.mark.parametrize("option", ["--root", "--output"])
+    def test_over_http(
+        self,
+        option: str,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        assert main(["mcp", "--transport", "streamable-http", option, str(tmp_path)]) == 2
+        assert started == []
+        assert "they are for a server on stdio" in capsys.readouterr().err
+
+    @pytest.mark.parametrize("option", ["--root", "--output"])
+    def test_on_stdio_until_they_come(
+        self,
+        option: str,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        assert main(["mcp", option, str(tmp_path)]) == 2
+        assert started == []
+        assert "not in this version yet" in capsys.readouterr().err
 
 
 class TestNoFileIsRead:
