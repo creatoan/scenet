@@ -495,7 +495,8 @@
                   "items": {
                     "$ref": "#/$defs/Mark"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "uniqueItems": true
                 },
                 {
                   "type": "null"
@@ -906,7 +907,8 @@
               "items": {
                 "$ref": "#/$defs/Mark"
               },
-              "type": "array"
+              "type": "array",
+              "uniqueItems": true
             },
             {
               "type": "null"
@@ -2178,7 +2180,8 @@
                   "items": {
                     "$ref": "#/$defs/Mark"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "uniqueItems": true
                 },
                 {
                   "type": "null"
@@ -2594,7 +2597,8 @@
               "items": {
                 "$ref": "#/$defs/Mark"
               },
-              "type": "array"
+              "type": "array",
+              "uniqueItems": true
             },
             {
               "type": "null"
