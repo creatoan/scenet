@@ -77,6 +77,7 @@ class TestAPanelWithNobody:
 
     def test_its_description_says_what_is_shown(self):
         core = compile_source(ESTABLISHING).core
+        assert core.description is not None
         assert core.description.startswith("Long shot. ")
         assert "night" in core.description
         assert "rain" in core.description
