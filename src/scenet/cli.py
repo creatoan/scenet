@@ -34,7 +34,13 @@ from scenet.pipeline import FRONTENDS, Book, compile_book_file
 from scenet.safe_json import dump as dump_json
 from scenet.safe_yaml import carrier, describe, is_json_file, load
 from scenet.safe_yaml import dump as dump_yaml
-from scenet.schema import artwork_schema, panel_schema, puppet_schema, scene_schema
+from scenet.schema import (
+    artwork_schema,
+    panel_schema,
+    puppet_schema,
+    scene_schema,
+    strict_schema,
+)
 from scenet.watch import watch_loop
 
 DESCRIPTION = "Compile a semantic comic-panel description into SVG."
@@ -272,6 +278,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--puppet",
         action="store_true",
         help="emit the schema for a puppet file, the *.puppet.yaml a cast member names",
+    )
+    schema.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "emit the schema a structured-output mode can decode against: cast and panels as "
+            "lists, every key present, null where nothing is meant, a scene's panels each whole"
+        ),
     )
 
     convert = subcommands.add_parser(
@@ -943,12 +957,20 @@ def run_schema(args: argparse.Namespace) -> int:
     if _refuse_directory(args.output):
         return 2
     which = next((kind for kind in ("scene", "artwork", "puppet") if getattr(args, kind)), "panel")
-    schema = {
-        "panel": panel_schema,
-        "scene": scene_schema,
-        "artwork": artwork_schema,
-        "puppet": puppet_schema,
-    }[which]()
+    if args.strict and which in ("artwork", "puppet"):
+        # A model writes documents; a puppet file or a contract is written by an artist.
+        print(f"scenet: --strict is for a panel or a scene, not --{which}", file=sys.stderr)
+        return 2
+    schema = (
+        strict_schema(scene=which == "scene")
+        if args.strict
+        else {
+            "panel": panel_schema,
+            "scene": scene_schema,
+            "artwork": artwork_schema,
+            "puppet": puppet_schema,
+        }[which]()
+    )
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if args.output is None:
         _print_document(document)

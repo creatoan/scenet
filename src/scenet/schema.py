@@ -32,6 +32,7 @@ Example:
 """
 
 import inspect
+import json
 import re
 from typing import Any
 
@@ -258,6 +259,8 @@ def scene_schema() -> dict[str, Any]:
     definitions.update(layout.pop("$defs"))
     _accept_panel_names(definitions)
     _one_kind_of_tier(definitions)
+    # Mirror `without_nulls`: what a page holds takes a null as a panel's keys do.
+    _accept_nulls({"properties": layout["properties"]}, definitions)
 
     scene = {
         "$schema": DIALECT,
@@ -602,22 +605,15 @@ def _accept_nulls(schema: dict[str, Any], definitions: dict[str, Any]) -> None:
 
     `settle` takes every such key away before anything reads the document -- in a single
     panel as in a scene, where it is how a panel leaves out what it inherits -- at any
-    depth reached through mappings, and never inside a list, whose entries Merge Patch
-    treats as values. So the schema takes a `null` wherever that is, except for a key the
-    mapping requires, which taken away leaves the mapping without it.
-
-    Raises:
-        ValueError: A definition is reached both through mappings and from inside a list,
-            where it would need to be two definitions. None is; this says so if one ever is.
+    depth, in a mapping inside a list too, where it can only be a key not written. So the
+    schema takes a `null` wherever that is, except for a key the mapping requires, which
+    taken away leaves the mapping without it.
     """
-    in_lists = _reached_from_lists(schema, definitions)
     seen: set[str] = set()
 
     def loosen(node: dict[str, Any]) -> None:
         if "$ref" in node:
             name = node["$ref"].rsplit("/", 1)[1]
-            if name in in_lists:
-                raise ValueError(f"{name} is reached through a mapping and from a list")
             if name not in seen:
                 seen.add(name)
                 loosen(definitions[name])
@@ -632,36 +628,16 @@ def _accept_nulls(schema: dict[str, Any], definitions: dict[str, Any]) -> None:
         if isinstance(values, dict):
             loosen(values)
             node["additionalProperties"] = _removable(values)
+        items = node.get("items")
+        if isinstance(items, dict):
+            loosen(items)
+        for item in node.get("prefixItems", ()):
+            loosen(item)
         for combinator in ("anyOf", "oneOf", "allOf"):
             for branch in node.get(combinator, ()):
                 loosen(branch)
 
     loosen(schema)
-
-
-def _reached_from_lists(schema: dict[str, Any], definitions: dict[str, Any]) -> set[str]:
-    """The definitions a document reaches from inside a list, where `settle` never goes."""
-    seen: set[tuple[str, bool]] = set()
-
-    def visit(node: object, *, in_list: bool) -> None:
-        if isinstance(node, list):
-            for item in node:
-                visit(item, in_list=in_list)
-            return
-        if not isinstance(node, dict):
-            return
-        reference = node.get("$ref")
-        if isinstance(reference, str):
-            name = reference.rsplit("/", 1)[1]
-            if (name, in_list) not in seen:
-                seen.add((name, in_list))
-                visit(definitions[name], in_list=in_list)
-        for key, value in node.items():
-            if key != "$defs":
-                visit(value, in_list=in_list or key in ("items", "prefixItems"))
-
-    visit(schema, in_list=False)
-    return {name for name, in_list in seen if in_list}
 
 
 def _accept_cast_removal(schema: dict[str, Any]) -> None:
@@ -918,3 +894,264 @@ def _partial_definition(name: str, definitions: dict[str, Any]) -> str:
     ) + "In a scene any of these may be inherited, so none is required here."
     definitions[partial] = loosened
     return partial
+
+
+# ---------------------------------------------------------------- the strict schema
+
+#: The JSON Schema keywords a strict schema is written with: what the structured-output
+#: modes of the providers recorded in `docs/explanation/prior_art.md` all take. Every other
+#: keyword says something those modes refuse or ignore, and the frontend checks it.
+STRICT_KEYWORDS = frozenset(
+    {
+        "$defs",
+        "$ref",
+        "additionalProperties",
+        "anyOf",
+        "description",
+        "enum",
+        "items",
+        "properties",
+        "required",
+        "type",
+    }
+)
+
+#: Keys of a document that a strict schema leaves out: `meta` holds whatever a tool keeps,
+#: which no closed object can say.
+_NOT_STRICT = ("meta",)
+
+
+def strict_schema(*, scene: bool = False) -> dict[str, Any]:
+    """The schema a structured-output mode can decode against: the common subset.
+
+    The same language as :func:`panel_schema` and :func:`scene_schema`, in the shape
+    constrained decoding accepts: `cast` and `panels` as lists, each item with its `id`; a
+    staging relation, a font, a panel on a page in their mapping forms only; every key of
+    every object present, `null` where nothing is meant, and no other key; text as a string.
+    No condition, pattern, bound or default: those the frontend checks, as it always does.
+
+    Args:
+        scene: The scene's schema, rather than a single panel's.
+
+    Returns:
+        A JSON Schema using only :data:`STRICT_KEYWORDS`.
+
+    Example:
+        >>> from scenet.schema import STRICT_KEYWORDS, strict_schema
+        >>> schema = strict_schema()
+        >>> schema["additionalProperties"], "cast" in schema["required"]
+        (False, True)
+    """
+    loose = _whole_panels(scene=scene)
+    return _Strict(loose.get("$defs", {})).schema(loose)
+
+
+class _Strict:
+    """The transformation from the published schema to the strict one, definition by definition."""
+
+    def __init__(self, definitions: dict[str, Any]) -> None:
+        self.definitions = definitions
+        self.made: dict[str, Any] = {}
+
+    def schema(self, loose: dict[str, Any]) -> dict[str, Any]:
+        """The whole strict schema, with only the definitions it still names."""
+        root = self.node({key: value for key, value in loose.items() if key != "$defs"})
+        # A definition no strict node names any more -- a sentence's, say -- goes.
+        named = json.dumps(root) + json.dumps(self.made)
+        used = {name: value for name, value in self.made.items() if f'/{name}"' in named}
+        return {"$defs": dict(sorted(used.items())), **root} if used else root
+
+    def resolved(self, node: dict[str, Any]) -> dict[str, Any]:
+        while "$ref" in node:
+            node = self.definitions[node["$ref"].rsplit("/", 1)[1]]
+        return node
+
+    def kinds(self, node: dict[str, Any]) -> set[str]:
+        """The JSON types a node takes, `enum` for a closed set of values."""
+        node = self.resolved(node)
+        if "anyOf" in node:
+            return {kind for branch in node["anyOf"] for kind in self.kinds(branch)}
+        written = node.get("type")
+        if isinstance(written, list):
+            return set(written)
+        if isinstance(written, str):
+            return {written}
+        if "enum" in node:
+            return {"enum"}
+        return {"object"} if "properties" in node else set()
+
+    def node(self, node: dict[str, Any]) -> dict[str, Any]:
+        """One node, strict."""
+        if "$ref" in node:
+            return self.reference(node)
+        described = {"description": node["description"]} if "description" in node else {}
+        if "properties" in node:
+            # An object's `anyOf` -- a cast member's `reference` or `figure` -- is a condition
+            # on its keys, not another shape: the frontend checks it.
+            return {**described, **self.typed(node, "object")}
+        if "anyOf" in node or "oneOf" in node:
+            return self.union(node, described)
+        written = node.get("type")
+        if isinstance(written, list):
+            return self.types(node, written, described)
+        return {**described, **self.typed(node, written)}
+
+    def reference(self, node: dict[str, Any]) -> dict[str, Any]:
+        name = node["$ref"].rsplit("/", 1)[1]
+        if name not in self.made:
+            self.made[name] = {}
+            self.made[name] = self.node(self.definitions[name])
+        target = {"$ref": f"#/$defs/{name}"}
+        return (
+            {"description": node["description"], "anyOf": [target]}
+            if "description" in node
+            else target
+        )
+
+    def union(self, node: dict[str, Any], described: dict[str, Any]) -> dict[str, Any]:
+        branches = [*node.get("anyOf", ()), *node.get("oneOf", ())]
+        # A shorthand that stands for a mapping -- a sentence, a font's one file, a panel's
+        # name -- is left out: the mapping says the same.
+        if any("object" in self.kinds(branch) for branch in branches):
+            keep = {"object", "null", "array", "boolean", "enum"}
+            branches = [b for b in branches if self.kinds(b) & keep or not self.kinds(b)]
+        flat: list[dict[str, Any]] = []
+        for branch in branches:
+            made = self.node(branch)
+            if not made:
+                continue  # A condition, `{required: [...]}`, which says no shape.
+            inner = made.get("anyOf") if set(made) <= {"anyOf", "description"} else None
+            for item in inner if inner is not None else [made]:
+                if item not in flat:
+                    flat.append(item)
+        if len(flat) == 1 and not described and set(flat[0]) <= {"$ref"}:
+            return flat[0]
+        return {**described, "anyOf": flat}
+
+    def types(
+        self, node: dict[str, Any], written: list[str], described: dict[str, Any]
+    ) -> dict[str, Any]:
+        """A node of several types, as one type or a union of them."""
+        types = [kind for kind in written if kind != "null"]
+        if {"object", "array"} <= set(types):
+            types = ["array"]  # `cast` and `panels`: the list form only.
+        elif "string" in types:
+            types = ["string"]  # Text: a string, never a number or a flag.
+        inner = {key: value for key, value in node.items() if key not in ("type", "description")}
+        made = [self.typed(inner, kind) for kind in types]
+        if "null" in written:
+            made.append({"type": "null"})
+        return {**described, **made[0]} if len(made) == 1 else {**described, "anyOf": made}
+
+    def typed(self, node: dict[str, Any], written: object) -> dict[str, Any]:
+        """A node of one type, with only the keywords the strict subset has."""
+        result: dict[str, Any] = {}
+        if "const" in node:
+            result["enum"] = [node["const"]]
+        if "enum" in node:
+            result["enum"] = list(node["enum"])
+        if written is not None:
+            result["type"] = written
+        if written == "array" or "items" in node or "prefixItems" in node:
+            result["type"] = "array"
+            result["items"] = self.items(node)
+        if written == "object" or "properties" in node:
+            result.update(self.closed(node))
+        return result
+
+    def items(self, node: dict[str, Any]) -> dict[str, Any]:
+        prefix = node.get("prefixItems")
+        if isinstance(prefix, list):
+            made = [self.node(item) for item in prefix]
+            unique = [item for index, item in enumerate(made) if item not in made[:index]]
+            return unique[0] if len(unique) == 1 else {"anyOf": unique}
+        items = node.get("items")
+        return self.node(items) if isinstance(items, dict) else {}
+
+    def closed(self, node: dict[str, Any]) -> dict[str, Any]:
+        """An object: every key required, a key not required taking `null`, no other key."""
+        properties = {
+            key: value
+            for key, value in node.get("properties", {}).items()
+            if key not in _NOT_STRICT
+        }
+        required = set(node.get("required", ()))
+        return {
+            "type": "object",
+            "properties": {
+                key: self.node(value) if key in required else _nullable(self.node(value))
+                for key, value in properties.items()
+            },
+            "required": list(properties),
+            "additionalProperties": False,
+        }
+
+
+def _whole_panels(*, scene: bool) -> dict[str, Any]:
+    """The loose schema a strict one is made from: one in which nothing is inherited.
+
+    In a scene, `null` on a panel's key takes away what the panel inherits; a strict
+    document writes every key, so it could not inherit and say nothing too. So a strict
+    scene writes each panel whole -- no defaults beside `panels:`, no `over` -- and its
+    `direction` once, at its top; a `null` is then always a key not written. Nor is a cast
+    member removed from anything: `remove` is not written.
+    """
+    panel = panel_schema()
+    definitions: dict[str, Any] = panel.pop("$defs")
+    member = definitions[CAST_ENTRY]["anyOf"][0]
+    definitions[CAST_ENTRY] = {
+        **member,
+        "properties": {
+            key: value for key, value in member["properties"].items() if key != REMOVE_KEY
+        },
+    }
+    if not scene:
+        return {**panel, "$defs": definitions}
+    loose = scene_schema()
+    for name, definition in loose["$defs"].items():
+        definitions.setdefault(name, definition)
+    body = {
+        key: value
+        for key, value in panel["properties"].items()
+        if key not in DOCUMENT_KEYS and key != DIRECTION_KEY
+    }
+    definitions[PANEL_ENTRY] = {
+        "type": "object",
+        "description": "One panel, written whole, under its `id`.",
+        "properties": {ID_KEY: {"$ref": f"#/$defs/{IDENTIFIER}"}, **body},
+        "required": [ID_KEY],
+        "additionalProperties": False,
+    }
+    top = loose["properties"]
+    return {
+        "type": "object",
+        "title": loose["title"],
+        "properties": {
+            **{key: value for key, value in top.items() if key in DOCUMENT_KEYS},
+            DIRECTION_KEY: panel["properties"][DIRECTION_KEY],
+            "panels": {
+                "type": "array",
+                "description": "The panels, in the order they are read, each written whole.",
+                "items": {"$ref": f"#/$defs/{PANEL_ENTRY}"},
+            },
+            "page": top["page"],
+            "pages": top["pages"],
+        },
+        "required": ["panels"],
+        "additionalProperties": False,
+        "$defs": definitions,
+    }
+
+
+def _nullable(node: dict[str, Any]) -> dict[str, Any]:
+    """A strict node that also takes `null`, which the frontend reads as a key not written."""
+    branches = node.get("anyOf")
+    if isinstance(branches, list) and {"type": "null"} in branches:
+        return node
+    if node.get("type") == "null":
+        return node
+    described = {key: value for key, value in node.items() if key == "description"}
+    inner = {key: value for key, value in node.items() if key != "description"}
+    if set(inner) == {"anyOf"}:
+        return {**described, "anyOf": [*inner["anyOf"], {"type": "null"}]}
+    return {**described, "anyOf": [inner, {"type": "null"}]}

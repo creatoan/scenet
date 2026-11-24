@@ -32,7 +32,15 @@ from typing import Annotated, Any, Union, get_args, get_origin
 from pydantic import BaseModel
 
 from scenet.errors import CompositionError
-from scenet.ir import CastMember, PanelIR, Predicate, SettingSpec
+from scenet.ir import (
+    CaptionEvent,
+    CastMember,
+    PanelIR,
+    Predicate,
+    SayEvent,
+    SettingSpec,
+    SfxEvent,
+)
 
 __all__ = [
     "ID_KEY",
@@ -53,6 +61,7 @@ __all__ = [
     "resolve_beneath",
     "resolve_overrides",
     "settle",
+    "without_nulls",
 ]
 
 # The key naming a panel's parent. Spelled as USD spells it, since the semantics are
@@ -338,9 +347,25 @@ class _Each:
     model: "Reader"
 
 
-#: What reads a mapping in a document: the model whose fields its keys are, `_Each`, or
-#: `None` for a mapping the language does not know, under a key it does not know.
-Reader = type[BaseModel] | _Each | None
+@dataclass(frozen=True, slots=True)
+class _Items:
+    """A list whose items are mappings, each read as `model`: a script, staging, masses."""
+
+    model: "Reader"
+
+
+@dataclass(frozen=True, slots=True)
+class _Verbs:
+    """A script entry as written: its verb, `say`, `caption` or `sfx`, over the event."""
+
+
+#: What reads a mapping in a document: the model whose fields its keys are, `_Each`,
+#: `_Items` for a list of mappings, `_Verbs` for a script entry, or `None` for a mapping
+#: the language does not know, under a key it does not know.
+Reader = type[BaseModel] | _Each | _Items | _Verbs | None
+
+#: What each verb of a script entry holds.
+_VERBS: dict[str, type[BaseModel]] = {"say": SayEvent, "caption": CaptionEvent, "sfx": SfxEvent}
 
 #: Keys a mapping is written with that its model has no field for, because the frontend
 #: rewrites them before the model reads it: a setting's `place`, which `expand_place`
@@ -359,6 +384,9 @@ def _reader(annotation: object) -> Reader:
         )
     if origin is dict:
         return _Each(_reader(get_args(annotation)[1]))
+    if origin is tuple or origin is list:
+        inner = _reader(get_args(annotation)[0])
+        return _Items(inner) if inner is not None else None
     if isinstance(annotation, type) and issubclass(annotation, BaseModel):
         return annotation
     return None
@@ -367,20 +395,47 @@ def _reader(annotation: object) -> Reader:
 @cache
 def _keys(model: type[BaseModel]) -> dict[str, Reader]:
     """Every key a mapping read as `model` may be written with, and what reads its value."""
-    keys = dict.fromkeys(_SURFACE_KEYS.get(model, ()))
+    keys: dict[str, Reader] = dict.fromkeys(_SURFACE_KEYS.get(model, ()))
     for name, info in model.model_fields.items():
         keys[info.alias or name] = _reader(info.annotation)
+    if model is PanelIR:
+        # Written by its verb, `{say: {...}}`, which the frontend turns into the event.
+        keys[SCRIPT_KEY] = _Items(_Verbs())
     return keys
+
+
+def _keys_of(reader: Reader) -> dict[str, Reader] | None:
+    """The keys a mapping read by `reader` may be written with, `None` for any key."""
+    if isinstance(reader, _Verbs):
+        return dict(_VERBS)
+    return _keys(reader) if isinstance(reader, type) else None
+
+
+def without_nulls(mapping: dict[str, Any], model: type[BaseModel]) -> dict[str, Any]:
+    """A mapping read as `model` with every key whose value is `null` taken away.
+
+    What `settle` does for a panel, for what a scene's pages are read as.
+
+    Example:
+        >>> from scenet.compose import without_nulls
+        >>> from scenet.ir import PageLayout
+        >>> without_nulls({"pages": [{"tiers": [{"height": None, "panels": ["a"]}]}]}, PageLayout)
+        {'pages': [{'tiers': [{'panels': ['a']}]}]}
+    """
+    return _without_nulls(mapping, model)
 
 
 def _without_nulls(mapping: dict[str, Any], reader: Reader = PanelIR) -> dict[str, Any]:
     """The mapping with every key whose value is `null` taken away, at any depth.
 
-    Except a key the language does not have there: `colour: null` is a typo like
-    `colour: red`, so it is kept, for validation to report as the unknown key it is --
-    which is what the schema says of it.
+    In a mapping inside a list too -- a script entry, a staging relation, a mass, a tier --
+    where nothing is inherited for a `null` to take away, so it can only be a key not
+    written: what a document that writes every key, as a strict schema has a model do,
+    writes for the keys it leaves out. Except a key the language does not have there:
+    `colour: null` is a typo like `colour: red`, so it is kept, for validation to report as
+    the unknown key it is -- which is what the schema says of it.
     """
-    keys = _keys(reader) if isinstance(reader, type) else None
+    keys = _keys_of(reader)
     kept: dict[str, Any] = {}
     for key, value in mapping.items():
         if keys is not None and key not in keys:
@@ -391,7 +446,15 @@ def _without_nulls(mapping: dict[str, Any], reader: Reader = PanelIR) -> dict[st
         inner = (
             keys[key] if keys is not None else reader.model if isinstance(reader, _Each) else None
         )
-        kept[key] = _without_nulls(value, inner) if isinstance(value, dict) else value
+        if isinstance(value, dict):
+            kept[key] = _without_nulls(value, inner)
+        elif isinstance(value, list) and isinstance(inner, _Items):
+            kept[key] = [
+                _without_nulls(item, inner.model) if isinstance(item, dict) else item
+                for item in value
+            ]
+        else:
+            kept[key] = value
     return kept
 
 

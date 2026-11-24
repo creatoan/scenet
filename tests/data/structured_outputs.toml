@@ -1,0 +1,54 @@
+# What each provider's structured-output mode documents it takes of JSON Schema, read from
+# its own page on 2026-11-24 (#375). `docs/explanation/prior_art.md` records the same, with
+# what each page said. `keywords` is what the page lists as supported; the rest are the
+# rules it states about a schema as a whole. A keyword a page does not list is taken as not
+# supported: the strict schema has to work where a page is silent.
+
+[openai]
+page = "https://developers.openai.com/api/docs/guides/structured-outputs"
+keywords = [
+    "$defs", "$ref", "additionalProperties", "anyOf", "description", "enum", "exclusiveMaximum",
+    "exclusiveMinimum", "format", "items", "maxItems", "maximum", "minItems", "minimum",
+    "multipleOf", "pattern", "properties", "required", "type",
+]
+# "additionalProperties: false must always be set in objects."
+closed_objects = true
+# "all fields or function parameters must be specified as required"
+every_key_required = true
+# "Root objects must not be anyOf and must be an object."
+root_is_an_object = true
+recursion = true
+# "up to 10 levels of nesting": of objects, as the page's examples nest them.
+max_depth = 10
+max_properties = 5000
+max_enum_values = 1000
+
+[anthropic]
+page = "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
+keywords = [
+    "$defs", "$ref", "additionalProperties", "allOf", "anyOf", "const", "default", "definitions",
+    "description", "enum", "format", "items", "minItems", "pattern", "properties", "required",
+    "title", "type",
+]
+# "required and additionalProperties (must be set to false for objects)"
+closed_objects = true
+every_key_required = false
+root_is_an_object = true
+# "Recursive schemas: not supported."
+recursion = false
+# anyOf is not supported "in the same schema object as keywords such as type or properties".
+union_alone = true
+
+[gemini]
+page = "https://aistudio.google.com/docs/structured-output"
+# anyOf is not in the page's list of keywords, but its "Content Moderation" example uses it
+# "for conditional schemas", so it is taken as supported.
+keywords = [
+    "$defs", "$ref", "additionalProperties", "anyOf", "description", "enum", "format", "items",
+    "maxItems", "maximum", "minItems", "minimum", "prefixItems", "properties", "required",
+    "title", "type",
+]
+closed_objects = false
+every_key_required = false
+root_is_an_object = true
+recursion = true

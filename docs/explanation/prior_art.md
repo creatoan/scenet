@@ -671,6 +671,31 @@ StrictYAML.
 | What implicit typing costs | StrictYAML's example: `NO`, Norway's country code, read as false in a list of countries. | The same failure, in Scenet's own documents: `text: No`, `text: 1984`, `01750` as 1000. Where the language expects text, a scalar is the text it was written as. |
 | StrictYAML itself | Types every value by a schema the program declares, and refuses flow style. | Not used: the schema here is the pydantic models, which already say what each value is, and flow style (`{by: alice, text: Hi}`) is how dialogue is written. A second YAML implementation would also be one more package through the licence gate; the profile is a few PyYAML parts replaced. |
 
+### Structured outputs — what OpenAI, Anthropic and Gemini take of JSON Schema
+
+[OpenAI, *Structured outputs*](https://developers.openai.com/api/docs/guides/structured-outputs) ·
+[Anthropic, *Structured outputs*](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) ·
+[Google, *Structured output*](https://aistudio.google.com/docs/structured-output) · read 2026-11-24
+
+What `scenet schema --strict` is written for. Each provider's structured-output mode decodes
+against a subset of JSON Schema, and the three subsets differ; the strict schema keeps to what all
+three pages say they take, and leaves the rest to `scenet check`. The pages, as read, are encoded in
+`tests/data/structured_outputs.toml`, and a test holds both strict schemas to each.
+
+| Question | What the pages say | What the strict schema does |
+|---|---|---|
+| Closed objects | OpenAI and Anthropic: `additionalProperties: false` on every object. Gemini takes either. | Every object is closed. No `x-` key, and no `meta`, whose keys are a tool's. |
+| Optional keys | OpenAI: every property listed in `required`, an optional one written as a union with `null`. Anthropic and Gemini allow optional properties. | Every property is required, and every one not required by the language also takes `null`, which the frontend reads as a key not written. |
+| Unions | OpenAI: `anyOf`, not at the root. Anthropic: `anyOf`, never beside `type` or `properties`; no `oneOf`. Gemini lists no union but its example uses `anyOf`. | `anyOf` alone, beside a `description` at most; no `oneOf`. A shorthand that stands for a mapping -- a staging sentence, a font's one file, a panel's name on a page -- is left out for the mapping. |
+| Conditions | OpenAI: no `allOf`, `not`, `if`/`then`/`else`, `dependentRequired`. Anthropic: no `not`. Gemini lists none. | None. A cast member that names a puppet or a figure, never both, a tier of panels or of columns: the frontend checks them. |
+| Bounds and patterns | Anthropic: no `minimum`, `maximum`, `minLength`, `maxLength`, `minItems` above 1; a regex subset. Gemini: no `pattern`; `minLength` and `maxLength` not enforced. | None: no bound, `pattern`, `format`, `const` (an `enum` of one instead), `prefixItems` (`items` instead) or `default`. The language's limits and identifier grammar are the frontend's. |
+| Recursion and size | Anthropic: no recursive schema. OpenAI: up to 10 levels of nesting, 5000 properties, 1000 enum values. | No recursion; a scene nests six objects deep. |
+| Inheritance | (Not a provider's question.) A strict document writes every key, and a `null` on a key a scene's panel inherits takes the key away. | A strict scene writes each panel whole: no defaults beside `panels`, no `over`, and its `direction` once at its top. |
+
+Anthropic's page also caps a request's strict schemas at 24 optional parameters and 16 with a union,
+which a whole panel exceeds; the keyword subset holds, but whether a given model accepts a schema of
+this size can only be measured against it.
+
 ### OpenPose, ControlNet, GLIGEN, DiffSensei: the formats staging leaves in
 
 **Load-bearing** for `--conditioning`, as formats and consumers rather than as code.

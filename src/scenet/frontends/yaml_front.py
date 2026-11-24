@@ -23,6 +23,7 @@ from scenet.compose import (
     resolve_beneath,
     resolve_overrides,
     settle,
+    without_nulls,
 )
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
@@ -378,10 +379,17 @@ def _scene_document(data: dict[str, Any], shape: Kind, source: Path | None) -> S
     return SceneDocument(panels=panels, layout=layout)
 
 
+def _layout_without_nulls(data: dict[str, Any]) -> dict[str, Any]:
+    """A scene's `page:` and `pages:` with every key whose value is `null` taken away."""
+    layout = {key: data[key] for key in LAYOUT_KEYS if key in data}
+    rest = {key: value for key, value in data.items() if key not in LAYOUT_KEYS}
+    return {**rest, **without_nulls(layout, PageLayout)}
+
+
 def _validate_layout(data: dict[str, Any], source: Path | None) -> PageLayout:
     """Validate `page:` and `pages:`, keeping a broken rule's name when there is one."""
     try:
-        return PageLayout.model_validate(normalise_layout(data))
+        return PageLayout.model_validate(normalise_layout(_layout_without_nulls(data)))
     except ValidationError as exc:
         rule, loc = first_fault(exc)
         raise PanelSyntaxError(summarise(exc), source=source, rule=rule, loc=loc) from exc
