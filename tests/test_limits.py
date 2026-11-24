@@ -14,9 +14,13 @@ from pathlib import Path
 import pytest
 import yaml
 
+from scenet import diagnostics, ir
 from scenet.diagnostics import RULES, diagnose_source
-from scenet.errors import PanelSyntaxError
-from scenet.frontends.yaml_front import parse_scene_document
+from scenet.errors import PanelSyntaxError, ScriptSyntaxError
+from scenet.frontends import script_front, yaml_front
+from scenet.frontends.positions import DOCUMENT_START
+from scenet.frontends.script_front import parse_script
+from scenet.frontends.yaml_front import parse_panel, parse_scene_document
 from scenet.images import load_image
 from scenet.lettering import load_font
 from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded, past
@@ -140,6 +144,140 @@ class TestEachLimit:
 
     def test_a_value_at_the_limit_is_taken(self):
         assert compile_source(f"panel: {{size: [{LIMITS.panel_side:g}, 500]}}\n" + CAST).core
+
+
+class TestAtTheEdge:
+    """A value at a limit is taken, and one past it is refused, where it is read.
+
+    Each with the limit tightened where it is read, so a document at it is a short one.
+    """
+
+    TEXT = "cast: {a: {reference: alice}}\n"
+    SCRIPT = "PANEL 1\nA street.\n"
+
+    @pytest.fixture
+    def tight(self, monkeypatch: pytest.MonkeyPatch) -> int:
+        size = len(self.TEXT.encode())
+        for module in (yaml_front, diagnostics):
+            monkeypatch.setattr(module, "LIMITS", Limits(document_bytes=size))
+        return size
+
+    def test_a_document_of_the_limit_is_read(self, tight: int):
+        assert parse_panel(self.TEXT).cast
+        assert diagnose_source(self.TEXT) == []
+
+    def test_a_byte_more_is_refused(self, tight: int):
+        source = Path("x.panel.yaml")
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_panel(self.TEXT + " ", source=source)
+        assert (caught.value.rule, caught.value.source) == (LIMIT_RULE, source)
+        assert past("document_bytes", tight + 1, tight) in str(caught.value)
+        (found,) = diagnose_source(self.TEXT + " ", source=source)
+        assert (found.rule, found.source, found.region) == (LIMIT_RULE, source, DOCUMENT_START)
+        assert found.message == past("document_bytes", tight + 1, tight)
+
+    def test_a_script_of_the_limit_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        size = len(self.SCRIPT.encode())
+        monkeypatch.setattr(script_front, "LIMITS", Limits(document_bytes=size))
+        assert parse_script(self.SCRIPT)
+        with pytest.raises(ScriptSyntaxError) as caught:
+            parse_script(self.SCRIPT + " ")
+        assert caught.value.rule == LIMIT_RULE
+
+    @pytest.mark.parametrize("count", [2, 3])
+    def test_panels_up_to_the_limit_are_read(self, monkeypatch: pytest.MonkeyPatch, count: int):
+        for module in (yaml_front, diagnostics):
+            monkeypatch.setattr(module, "LIMITS", Limits(panels_per_document=2))
+        names = ", ".join(f"p{index}: {{}}" for index in range(count))
+        text, source = self.TEXT + f"panels: {{{names}}}\n", Path("x.scene.yaml")
+        found = diagnose_source(text, source=source)
+        if count == 2:
+            assert found == []
+            assert len(parse_scene_document(text).panels) == 2
+            return
+        assert [(item.rule, item.path, item.message) for item in found] == [
+            (LIMIT_RULE, ("panels",), past("panels_per_document", 3, 2))
+        ]
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene_document(text, source=source)
+        error = caught.value
+        assert (error.rule, error.loc, error.source) == (LIMIT_RULE, ("panels",), source)
+        assert past("panels_per_document", 3, 2) in str(error)
+
+    @pytest.mark.parametrize("count", [2, 3])
+    def test_panels_on_a_page_up_to_the_limit(self, monkeypatch: pytest.MonkeyPatch, count: int):
+        monkeypatch.setattr(ir, "LIMITS", Limits(panels_per_page=2))
+        names = [f"p{index}" for index in range(count)]
+        text = self.TEXT + "panels: {" + ", ".join(f"{name}: {{}}" for name in names) + "}\n"
+        text += "pages: [{tiers: [{panels: [" + ", ".join(names) + "]}]}]\n"
+        found = [(item.rule, item.path, item.message) for item in diagnose_source(text)]
+        expected = [(LIMIT_RULE, ("pages", 0), past("panels_per_page", 3, 2))]
+        assert found == ([] if count == 2 else expected)
+
+    def test_a_host_limit_of_one_is_a_limit(self):
+        assert Limits(panels_per_page=1).panels_per_page == 1
+
+    def test_a_host_limit_takes_what_is_at_it(self):
+        text = (
+            self.TEXT + "panels: {a: {panel: {size: [500, 400]}, script: [{caption: {text: x}}]}}\n"
+        )
+        panels = parse_scene_document(text).panels
+        at_it = Limits(
+            panels_per_document=1, panel_side=500, actors_per_panel=1, events_per_panel=1
+        )
+        assert list(exceeded(panels, at_it)) == []
+        below = Limits(
+            panels_per_document=1, panel_side=499, actors_per_panel=1, events_per_panel=1
+        )
+        assert [found.loc for found in exceeded(panels, below)] == [
+            ("panels", "a", "panel", "size")
+        ]
+
+    def test_a_host_limit_on_panels_counts_them(self):
+        panels = parse_scene_document(self.TEXT + "panels: {a: {}, b: {}}\n").panels
+        (found,) = exceeded(panels, Limits(panels_per_document=1))
+        assert found.loc == ("panels",)
+
+    def test_a_host_limit_on_events_and_people(self):
+        two = "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+        text = two + "script: [{caption: {text: x}}, {caption: {text: y}}]\n"
+        panels = {"one": parse_panel(text)}
+        found = [
+            item.loc for item in exceeded(panels, Limits(actors_per_panel=2, events_per_panel=2))
+        ]
+        assert found == []
+        found = [
+            item.loc for item in exceeded(panels, Limits(actors_per_panel=1, events_per_panel=1))
+        ]
+        assert found == [("panels", "one", "cast"), ("panels", "one", "script")]
+
+
+class TestTheMessage:
+    @pytest.mark.parametrize(
+        ("value", "written"),
+        [
+            (200, "200"),
+            (1_000_000_000, "1000000000"),
+            (2.5, "2.5"),
+            (1e9, "1e+09"),
+            (999_999_999.0, "999999999"),
+            (1e12, "1e+12"),
+        ],
+    )
+    def test_a_number_is_written_as_it_reads(self, value: float, written: str):
+        assert past("panel_side", value, 10000.0).endswith(f"and this is {written}")
+        assert past("panel_side", value, 10000.0).startswith("a panel is at most 10000 units")
+
+    def test_a_side_says_whose_it_is(self):
+        page = CAST + "panels: {a: {}}\npage: {size: [20000, 3000]}\n"
+        (found,) = diagnose_source(page + "pages: [{tiers: [{panels: [a]}]}]\n")
+        assert found.message.startswith("a page is at most")
+        (found,) = diagnose_source(CAST + "panel: {size: [20000, 3000]}\n")
+        assert found.message.startswith("a panel is at most")
+
+    def test_a_bound_that_is_no_limit_is_an_ordinary_fault(self):
+        (found,) = diagnose_source(CAST + "script: [{sfx: {text: BAM, rotate: 50}}]\n")
+        assert (found.rule, found.path) == ("invalid-field", ("script", 0, "sfx", "rotate"))
 
 
 class TestTheSchemaStatesThem:

@@ -400,7 +400,8 @@ def _limit_of(error: ErrorDetails) -> str | None:
         return None
     loc = tuple(error["loc"])
     if error["type"] == "less_than_equal":
-        name = "page_side" if "page" in loc and "panel" not in loc else "panel_side"
+        # A side: a scene's page, which is validated on its own, or else a panel's.
+        name = "page_side" if loc[:1] == ("page",) else "panel_side"
     else:
         last = next((step for step in reversed(loc) if isinstance(step, str)), "")
         name = {
