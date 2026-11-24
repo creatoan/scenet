@@ -22,7 +22,7 @@ from scenet.frontends.positions import DOCUMENT_START
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel, parse_scene_document
 from scenet.images import load_image
-from scenet.lettering import load_font
+from scenet.lettering import FONT_RULE, load_font
 from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded, past
 from scenet.pipeline import compile_book, compile_source
 from scenet.safe_yaml import _load_fast, _ProfileLoader
@@ -287,12 +287,13 @@ class TestTheFilesAtTheEdge:
     def test_a_font_of_the_limit_is_read(self, monkeypatch: pytest.MonkeyPatch):
         """Read, and refused for what it is, which is no font: not for its size."""
         monkeypatch.setattr(lettering, "LIMITS", Limits(font_bytes=8))
+        where = ("lettering", "font")
         with pytest.raises(PanelSyntaxError) as caught:
-            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(8)}, loc=())
-        assert caught.value.rule != LIMIT_RULE
+            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(8)}, loc=where)
+        assert (caught.value.rule, caught.value.loc) == (FONT_RULE, where)
         with pytest.raises(PanelSyntaxError) as caught:
-            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(9)}, loc=())
-        assert caught.value.rule == LIMIT_RULE
+            load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(9)}, loc=where)
+        assert (caught.value.rule, caught.value.loc) == (LIMIT_RULE, where)
         assert f"font file 'fonts/a.ttf': {past('font_bytes', 9, 8)}" in str(caught.value)
 
 
