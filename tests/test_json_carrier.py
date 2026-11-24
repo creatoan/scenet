@@ -483,8 +483,9 @@ class TestFilesADocumentNames:
                 "colour: not a key an artwork contract has: size, figures and keep_out at the "
                 "top, and face, mouth and body for a figure",
             ),
+            ("size: [1, 1]" + chr(10), "line 1: it is not valid JSON: expected a value"),
         ],
-        ids=["no-mapping", "unknown-key"],
+        ids=["no-mapping", "unknown-key", "yaml-in-a-json-file"],
     )
     def test_a_contract_in_json_at_fault_says_so_at_the_picture(
         self, tmp_path: Path, written: str, said: str
