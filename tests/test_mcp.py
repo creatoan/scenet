@@ -32,6 +32,7 @@ from scenet import compile_source, render, render_conditioning
 from scenet import mcp as scenet_mcp
 from scenet.cli import main
 from scenet.diagnostics import RULES
+from scenet.limits import Limits, past
 from scenet.mcp import (
     Section,
     build_server,
@@ -698,6 +699,96 @@ class TestFilesBesideTheDocument:
         result = call("validate", {"source": self.PAINTED, "files": files})
         assert result.is_error
         assert "files" in text_of(result)
+
+
+class TestAServerOfTighterLimits:
+    """`build_server(limits=...)` holds every tool to the limits it was built with."""
+
+    TWO = "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+    SCRIPT = (
+        "---\ncast: {ALICE: {reference: alice}, BOB: {reference: bob}}\n---\n"
+        "PANEL 1\nALICE\nHi.\nBOB\nHey.\n"
+    )
+
+    @staticmethod
+    def call(limits: Limits, tool: str, arguments: dict[str, Any]) -> CallToolResult:
+        async def go() -> CallToolResult:
+            async with Client(build_server(limits=limits)) as client:
+                return await client.call_tool(tool, arguments)
+
+        try:
+            return anyio.run(go)
+        finally:
+            build_server()  # The language's limits again, for every other test.
+
+    def test_a_document_at_its_limits_is_valid(self):
+        result = self.call(Limits(actors_per_panel=2), "validate", {"source": self.TWO})
+        assert result.structured_content == {"valid": True, "findings": []}
+
+    def test_a_document_past_them_is_a_finding_at_the_value(self):
+        result = self.call(Limits(actors_per_panel=1), "validate", {"source": self.TWO})
+        assert result.structured_content is not None
+        (finding,) = result.structured_content["findings"]
+        assert (finding["rule"], finding["where"]) == ("scenet/limit", "cast")
+        assert finding["message"] == past("actors_per_panel", 2, 1)
+
+    def test_a_script_past_them_is_one_too(self):
+        result = self.call(
+            Limits(actors_per_panel=1), "validate", {"source": self.SCRIPT, "syntax": "script"}
+        )
+        assert result.structured_content is not None
+        (finding,) = result.structured_content["findings"]
+        assert finding["where"] == "panels.1.cast"
+
+    def test_a_document_past_them_is_not_compiled(self):
+        result = self.call(Limits(actors_per_panel=1), "compile", {"source": self.TWO})
+        assert result.is_error
+        assert "scenet/limit" in text_of(result)
+        assert not self.call(Limits(actors_per_panel=2), "compile", {"source": self.TWO}).is_error
+
+    def test_a_fault_is_reported_as_it_is_with_no_limit_beside_it(self):
+        broken = self.TWO + "script: [{say: {by: nobody, text: Hi}}]\n"
+        result = self.call(Limits(actors_per_panel=1), "validate", {"source": broken})
+        assert result.structured_content is not None
+        rules = [finding["rule"] for finding in result.structured_content["findings"]]
+        assert rules == ["scenet/unknown-actor"]
+
+
+class TestAScriptWithItsFiles:
+    """A script's check and compile read the files it names, and the deep check, as YAML's do."""
+
+    PAINTED = "PANEL 1\n@setting: {image: art/street.png}\nALICE\nHi.\n"
+    FRONT = "---\ncast: {ALICE: {reference: alice}}\n---\n"
+
+    def files(self) -> dict[str, str]:
+        return {"art/street.png": base64.b64encode(tiny_png()).decode("ascii")}
+
+    def test_check_reads_them(self):
+        source = self.FRONT + self.PAINTED
+        bare = call("validate", {"source": source, "syntax": "script"}).structured_content
+        assert bare is not None
+        assert [finding["rule"] for finding in bare["findings"]] == ["scenet/image-file"]
+        given = {"source": source, "syntax": "script", "files": self.files()}
+        assert call("validate", given).structured_content == {"valid": True, "findings": []}
+
+    def test_compile_reads_them(self):
+        given = {"source": self.FRONT + self.PAINTED, "syntax": "script", "files": self.files()}
+        result = call("compile", given)
+        assert not result.is_error
+        core = json.loads(text_of(result))["panels"][0]["core"]
+        assert core["backdrop"]["image"]["href"] == "art/street.png"
+
+    def test_the_deep_check_reaches_a_script(self):
+        long = "There is no room anywhere in this panel for a line this long, none at all."
+        directives = "@shot: extreme_close_up\n@panel: {size: [300, 300]}\n"
+        source = self.FRONT + "PANEL 1\n" + directives + "ALICE\n" + long + "\n"
+        shallow = call("validate", {"source": source, "syntax": "script"}).structured_content
+        deep = call(
+            "validate", {"source": source, "syntax": "script", "deep": True}
+        ).structured_content
+        assert shallow == {"valid": True, "findings": []}
+        assert deep is not None
+        assert deep["valid"] is False
 
 
 class TestFiguresAPictureDraws:
