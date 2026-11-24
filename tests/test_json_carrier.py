@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 from yaml.nodes import MappingNode
 
+from scenet.assets.artwork import ContractError
 from scenet.cli import main
 from scenet.compose import as_lists
 from scenet.diagnostics import diagnose_file, diagnose_source
@@ -470,6 +471,32 @@ class TestFilesADocumentNames:
         source = GALLERY / "35-figures.scene.yaml"
         text = source.read_text(encoding="utf-8")
         assert _cores(text, tmp_path / source.name) == _cores(text, source)
+
+    @pytest.mark.parametrize(
+        ("written", "said"),
+        [
+            ('["a"]', "it must be a mapping of size, figures and keep_out"),
+            (
+                '{"size": [1, 1], "colour": 1}',
+                "colour: not a key an artwork contract has: size, figures and keep_out at the "
+                "top, and face, mouth and body for a figure",
+            ),
+        ],
+        ids=["no-mapping", "unknown-key"],
+    )
+    def test_a_contract_in_json_at_fault_says_so_at_the_picture(
+        self, tmp_path: Path, written: str, said: str
+    ):
+        (tmp_path / "art").mkdir()
+        (tmp_path / "art" / "figures.png").write_bytes(
+            (GALLERY / "art" / "figures.png").read_bytes()
+        )
+        (tmp_path / "art" / "figures.art.json").write_text(written, encoding="utf-8")
+        source = GALLERY / "35-figures.scene.yaml"
+        with pytest.raises(ContractError) as caught:
+            compile_book(source.read_text(encoding="utf-8"), source=tmp_path / source.name)
+        assert caught.value.loc == ("setting", "image")
+        assert said in str(caught.value)
 
     def test_a_contract_in_neither_is_named_as_yaml(self, tmp_path: Path):
         (tmp_path / "art").mkdir()
