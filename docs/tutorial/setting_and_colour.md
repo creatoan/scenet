@@ -476,6 +476,8 @@ cast: {alice: {reference: alice}}
   change the doorway's `spans: left` to `spans: right`.
 - [Three horizons](https://creatoan.github.io/scenet/playground/#example=72-three-horizons.scene.yaml):
   change the place to `desert`.
+- [A panel with nobody in it](https://creatoan.github.io/scenet/playground/#example=74-a-panel-with-nobody-in-it.scene.yaml):
+  give the establishing shot a cast of its own.
 
 ## Check it
 

@@ -103,7 +103,8 @@ class TestAScript:
     SCRIPT = (
         "---\ncast:\n  ALICE: {reference: alice}\n  BOB: {reference: bob}\n"
         "staging: [ALICE left_of BOB]\n---\n"
-        "PANEL 1\nALICE\nHi.\n\nPANEL 2\n@cast: {BOB: null}\nALICE\nAlone.\n"
+        # A panel draws who speaks in it and whom its @cast: names (#364): Bob is named.
+        "PANEL 1\n@cast: {BOB: {}}\nALICE\nHi.\n\nPANEL 2\n@cast: {BOB: null}\nALICE\nAlone.\n"
     )
 
     def test_cast_null_leaves_him_out_of_that_panel(self):
@@ -115,7 +116,7 @@ class TestAScript:
         (found,) = diagnose_script(self.SCRIPT)
         assert (found.rule, found.level) == ("dropped-relation", "note")
         assert found.region is not None
-        assert found.region.start.line == 12
+        assert found.region.start.line == 13
 
 
 class TestTheSchema:
@@ -255,7 +256,7 @@ class TestHeardFromOffPanel:
             "  CAROL: {reference: alice, at: left_third}\n"
             "staging: [BOB looking_at CAROL]\n---\n"
             "PANEL 1\nCAROL\nHello.\n\n"
-            "PANEL 2\n@cast: {CAROL: null}\nCAROL (OP)\nOver here!\n"
+            "PANEL 2\n@cast: {BOB: {}, CAROL: null}\nCAROL (OP)\nOver here!\n"
         )
         assert diagnose_script(script) == []
         panel = compile_script(script).panels["2"]

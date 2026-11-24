@@ -1841,7 +1841,7 @@ panels:
 
 ### A panel with nobody in it
 
-An establishing shot and an insert with no cast at all: the setting is drawn, the caption, the sound and a voice from off panel are lettered, and the cast arrives in the last panel.
+An establishing shot and an insert with nobody in them, their setting drawn and their lettering placed, before the cast arrives.
 
 ![A page of 3 panels. Long shot. A street at night, in the rain. Caption: Rue des Martyrs, two in the morning. Sound effect: shhhhh. Close-up. A street at night, in the rain. Voice, off panel: Is anybody out there? Medium shot. A street at night, in the rain. Alice, left, pointing. Alice: Only me, and the rain.](images/gallery/74-a-panel-with-nobody-in-it.page-1.svg)
 

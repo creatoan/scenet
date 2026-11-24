@@ -51,10 +51,16 @@ COMMANDS = ("build", "check", "schema", "convert", "mcp")
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
 BROKEN = "cast: {alice: {reference: alice}}\nscript: [{say: {by: bpb, text: Hello.}}]\n"
-# Valid, but no layout exists: each actor in front of the other.
+#: The diagnostics no document gives on purpose: `internal`, a bug, and `layout`, which the
+#: checks before the solver leave nothing to reach.
+UNREACHED = {"internal", "layout"}
+
+# Valid, but no balloon has room: at an extreme close-up the face fills the frame.
 UNCOMPILABLE = (
-    "cast: {a: {reference: alice}, b: {reference: bob}}\n"
-    "staging: [a in_front_of b, b in_front_of a]\n"
+    "camera: {shot: extreme_close_up}\npanel: {size: [300, 300]}\n"
+    "cast: {a: {reference: alice}}\n"
+    'script: [{say: {by: a, text: "There is no room anywhere in this panel for a line this '
+    'long."}}]\n'
 )
 
 
@@ -383,7 +389,7 @@ class TestRules:
 
     def test_every_rule_but_internal_has_a_corpus_document(self):
         covered = {path.name.split(".")[0] for path in DOCUMENTS}
-        assert covered == set(RULES) - {"internal"}
+        assert covered == set(RULES) - UNREACHED
 
     @pytest.mark.parametrize("path", DOCUMENTS, ids=lambda path: path.name)
     def test_a_corpus_document_gets_exactly_its_rule(self, path: Path):
@@ -395,9 +401,9 @@ class TestRules:
         found = [finding for path in DOCUMENTS for finding in _diagnose(path, deep=True)]
         driver = to_sarif(found)["runs"][0]["tool"]["driver"]
         described = {entry["id"]: entry for entry in driver["rules"]}
-        assert set(described) == {f"scenet/{rule}" for rule in RULES} - {"scenet/internal"}
+        assert set(described) == {f"scenet/{rule}" for rule in set(RULES) - UNREACHED}
         for rule, entry in RULES.items():
-            if rule == "internal":
+            if rule in UNREACHED:
                 continue
             emitted = described[f"scenet/{rule}"]
             assert emitted["shortDescription"]["text"] == entry.summary

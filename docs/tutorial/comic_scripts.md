@@ -153,6 +153,7 @@ Somebody!
 2. THEO (whisper): I was going to fetch it.
 
 Panel 3. Inside, the lamp blazes again. Both of them squint into the light.
+@cast: {MAYA: {}}
 @shot: medium_close_up
 
 SFX (THEO, large): FWOOMP

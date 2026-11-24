@@ -13847,7 +13847,7 @@ panels:
 
 ## A panel with nobody in it
 
-An establishing shot and an insert with no cast at all: the setting is drawn, the caption, the sound and a voice from off panel are lettered, and the cast arrives in the last panel.
+An establishing shot and an insert with nobody in them, their setting drawn and their lettering placed, before the cast arrives.
 
 `74-a-panel-with-nobody-in-it.scene.yaml`
 

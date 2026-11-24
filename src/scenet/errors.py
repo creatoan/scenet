@@ -567,21 +567,17 @@ class LayoutError(SolverError):
     r"""A panel whose required constraints cannot all be satisfied.
 
     Actor placement runs a Cassowary solver in which non-overlap and declared
-    left-to-right ordering are *required* constraints. If those genuinely conflict --
-    two actors each required to be left of the other -- there is no solution and this
-    is raised. Panel bounds are deliberately not required, so a merely crowded panel
-    lets figures bleed off the edge instead of failing.
+    left-to-right ordering are *required* constraints. If those genuinely conflicted,
+    there would be no solution and this would be raised. No valid document is known to
+    raise it: every order a staging gives, left to right and front to back, is checked
+    before the solver runs, as `ordering-cycle`, and a crowded panel makes the camera step
+    back. Panel bounds are deliberately not required, so a crowded panel lets figures
+    bleed off the edge instead of failing.
 
     Example:
-        >>> from scenet import LayoutError, compile_source
-        >>> try:
-        ...     compile_source(
-        ...         "cast: {a: {reference: alice}, b: {reference: bob}}\n"
-        ...         "staging: [a in_front_of b, b in_front_of a]"
-        ...     )
-        ... except LayoutError as exc:
-        ...     print(exc)
-        depth ordering is cyclic around 'a'
+        >>> from scenet import LayoutError, SolverError
+        >>> issubclass(LayoutError, SolverError)
+        True
 
     See Also:
         :class:`Relation <scenet.ir.Relation>`, the staging a layout must satisfy.
