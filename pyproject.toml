@@ -232,6 +232,9 @@ only_mutate = [
     "src/scenet/identifiers.py",
     "src/scenet/namespace.py",
     "src/scenet/diagnostics.py",
+    "src/scenet/compose.py",
+    "src/scenet/limits.py",
+    "src/scenet/safe_json.py",
 ]
 # Inside a mutant: no coverage floor, no doctests, no Sybil -- only the tests that reach
 # the mutated function, which mutmut selects for itself. The real stdio session hands its
