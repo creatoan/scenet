@@ -172,6 +172,13 @@ class TestAScript:
         )
         assert self._cast(body)["3"] == ["ALICE", "BOB"]
 
+    def test_a_panel_over_a_later_one_draws_whom_that_one_draws(self):
+        body = (
+            "PANEL 1\n@over: 2\nA beat.\n\nPANEL 2\n@over: 3\nA beat.\n\n"
+            "PANEL 3\n@cast: {BOB: {}}\nALICE\nHi.\n"
+        )
+        assert self._cast(body)["1"] == ["ALICE", "BOB"]
+
     @pytest.mark.parametrize(
         ("body", "said"),
         [

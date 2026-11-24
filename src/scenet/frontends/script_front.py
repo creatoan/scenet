@@ -2224,7 +2224,7 @@ def _drawn(panels: dict[str, _PanelDraft]) -> dict[str, frozenset[str]]:
     """
     found: dict[str, frozenset[str]] = {}
 
-    def of(name: str, seen: frozenset[str]) -> frozenset[str]:
+    def of(name: str) -> frozenset[str]:
         if name in found:
             return found[name]
         draft = panels[name]
@@ -2244,27 +2244,15 @@ def _drawn(panels: dict[str, _PanelDraft]) -> dict[str, frozenset[str]]:
                 words = [str(relation.get("subject")), str(relation.get("object"))]
             named |= set(words[:1] + words[-1:])
         target = draft.settings.get(OVER_KEY)
-        if isinstance(target, str) and target not in seen:
-            parent = _over_target_or_none(target, name, draft, panels)
-            if parent is not None:
-                named |= of(parent, seen | {name})
+        if isinstance(target, str):
+            # `_composed` has refused an `@over:` that names no panel, its own, or a loop.
+            named |= of(_over_target(target, name, draft, panels))
         found[name] = frozenset(named)
         return found[name]
 
     for name in panels:
-        of(name, frozenset())
+        of(name)
     return found
-
-
-def _over_target_or_none(
-    target: str, name: str, draft: _PanelDraft, panels: Collection[str]
-) -> str | None:
-    """The panel an `@over:` names, or `None` when it names none, which `_composed` reports."""
-    try:
-        found = _over_target(target, name, draft, panels)
-    except CompositionError:
-        return None
-    return found if found in panels else None
 
 
 def _keeping(front_matter: dict[str, Any], drawn: frozenset[str]) -> dict[str, Any]:
