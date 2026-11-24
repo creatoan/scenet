@@ -40,6 +40,15 @@ it is written, and says what to write instead.
   `scenet.mcp.build_server(timeout=...)` bounds the calls of a server a host runs itself, and
   returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
+- **`scenet schema --strict`** (#375), with `--scene` for a scene: the language in the subset of
+  JSON Schema that OpenAI's, Anthropic's and Gemini's structured-output modes all take, as their
+  pages said on 2026-11-24 (recorded in "Prior art", and held by a test). `cast` and `panels` are
+  lists, every key is written, `null` where nothing is meant, relations, fonts and placements
+  are mappings, and a scene's panels are each written whole. Every gallery document, written in
+  that shape, builds the same Core. `scenet.schema.strict_schema` gives the same.
+- **The MCP tools refuse an argument they do not take** (#375): a misspelt `sytnax:` was
+  dropped, and the document read as YAML. Every tool's input schema says
+  `additionalProperties: false`.
 - **A panel may have no cast** (#364): an establishing shot, an insert. `cast` left out or
   empty compiled to "panel has no cast; there is nothing to place", with no file or line; now
   the setting is drawn, captions, sounds and lines from off panel are lettered, Panel Core
@@ -124,6 +133,11 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **A `null` in a mapping inside a list is a key not written** (#375), as it is in any other
+  mapping: `script: [{sfx: {text: BANG, hollow: null}}]` and `tiers: [{height: null, ...}]` were
+  refused, and are read as if the key were left out. A list is never merged into, so there is
+  nothing for such a `null` to take away. An item that is `null` is still refused, and so is a
+  `null` on a key the language does not have there.
 - **Every size, count and length has a limit** (#363), generous for real comics: a panel or a
   page at most 10 000 units (a metre) on a side, 200 panels on a page, 1 000 pages and 10 000
   panels in a document, 50 people in a panel, 100 lines, captions and sounds in its script, 2 000

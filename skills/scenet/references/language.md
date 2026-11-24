@@ -3168,8 +3168,11 @@ reached through mappings: `camera: null`, `cast: {bob: null}`, `setting: {place:
 A cast member who goes takes every staging relation that names them along, since none can hold in a
 panel they are not in, and `scenet check` notes each one as `dropped-relation`. All but one, while
 the member left out is heard from off panel: `bob looking_at carol` still holds when Carol speaks
-`off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
-merged into.
+`off_panel` in that panel. A list is replaced whole, never merged into, so a `null` in a mapping
+inside a list -- a script entry's `prefer: null`, a tier's `height: null` -- has nothing beneath it
+to take away: it is a key not written, as it is in a single panel. That is what a document that
+writes every key, as [a strict schema](https://creatoan.github.io/scenet/reference/cli.html#scenet-schema) has a model do, writes for one it
+leaves out. A list's item that is `null` is no item, and is refused.
 
 The rule is the same in a single panel, which inherits nothing: there a `null` is a key not
 written, so `camera: null` is the default camera, as `camera:` with no value is. The JSON Schema
