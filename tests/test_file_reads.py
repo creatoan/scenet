@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 import zlib
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import fonts.ttf
@@ -262,9 +262,13 @@ class TestADecompressionBomb:
     def test_data_that_inflates_past_its_header(
         self, comic: Path, capsys: pytest.CaptureFixture[str]
     ):
-        """One RGBA pixel is five bytes; this inflates to 256 MiB of zeros."""
-        bomb = _png(1, 1, 6, bytes(256 * 2**20))
-        assert len(bomb) < 2**20
+        """One RGBA pixel is five bytes; this inflates to 32 MiB of zeros, six of them read.
+
+        Not larger: building the input is the test's own cost, and the bound holds whatever
+        the size, since no more than one byte past the header's is ever inflated.
+        """
+        bomb = _png(1, 1, 6, bytes(32 * 2**20))
+        assert len(bomb) < 2**17
         status, seconds = self._build(comic, bomb)
         assert status == 1
         assert seconds < SECONDS
@@ -632,6 +636,13 @@ class TestNoContentQuoted:
 
 
 class TestTheFontCache:
+    @pytest.fixture(autouse=True)
+    def emptied(self) -> Iterator[None]:
+        """Each test starts from an empty cache, and leaves one: the faces are its own."""
+        scenet.lettering._BY_CONTENT.clear()
+        yield
+        scenet.lettering._BY_CONTENT.clear()
+
     def test_it_holds_a_bounded_number_of_faces(self, tmp_path: Path):
         """A server compiling documents from many users no longer keeps every face it saw."""
         scenet.lettering._BY_CONTENT.clear()
