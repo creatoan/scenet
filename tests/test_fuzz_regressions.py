@@ -2,14 +2,16 @@
 
 `tests/fuzz_regressions/<entry point>/` holds one file per input, named for what it once did.
 Each passes the oracle of `tests/fuzzing.py` -- findings or a `ScenetError`, in time and
-memory -- and a file put there before its fix fails here until the fix lands.
+memory -- and a file put there before its fix fails here until the fix lands. The seeds, the
+gallery's own documents, are fed to the oracle by `fuzz/test_fuzz.py`: the goldens already
+compile each of them here.
 """
 
 from pathlib import Path
 
 import pytest
 
-from tests.fuzzing import ENTRY_POINTS, REGRESSIONS, check, regressions, seeds
+from tests.fuzzing import ENTRY_POINTS, REGRESSIONS, check, regressions
 
 KEPT = regressions()
 
@@ -29,10 +31,3 @@ def test_some_were_kept():
 )
 def test_it_passes_the_oracle(entry: str, path: Path):
     check(entry, path.read_bytes())
-
-
-@pytest.mark.parametrize("entry", sorted(ENTRY_POINTS))
-def test_every_seed_passes_the_oracle(entry: str):
-    """The real inputs a fuzzer starts from: the oracle refuses none of them."""
-    for data in seeds(entry):
-        check(entry, data)

@@ -18,6 +18,7 @@ A failure prints the input as a blob Hypothesis replays (`@reproduce_failure`), 
 
 import os
 
+import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
@@ -71,6 +72,13 @@ def _bent(draw: st.DrawFn, data: bytes) -> bytes:
 
 def _mutated(entry: str) -> st.SearchStrategy[bytes]:
     return st.sampled_from(seeds(entry)).flatmap(_bent)
+
+
+@pytest.mark.parametrize("entry", sorted(ENTRY_POINTS))
+def test_every_seed_passes_the_oracle(entry: str) -> None:
+    """The real inputs a mutation starts from: the oracle refuses none of them."""
+    for data in seeds(entry):
+        check(entry, data)
 
 
 @settings(FUZZ)
