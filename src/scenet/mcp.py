@@ -603,6 +603,14 @@ class _Server(MCPServer[Any]):
     to the server's log, on stderr, and never to the client.
     """
 
+    #: The worker processes its calls run in, when they are bounded in time.
+    workers: "_Workers | None" = None
+
+    def close(self) -> None:
+        """Stop every worker process the server started, idle or not."""
+        if self.workers is not None:
+            self.workers.close()
+
     async def call_tool(
         self, name: str, arguments: dict[str, Any], context: Context[Any, Any] | None = None
     ) -> CallToolResult | InputRequiredResult:
@@ -614,7 +622,7 @@ class _Server(MCPServer[Any]):
             raise ToolError(describe_failure(crash)) from crash
 
 
-def build_server(*, timeout: float | None = None) -> MCPServer[Any]:
+def build_server(*, timeout: float | None = None) -> "_Server":
     """Build the server with every tool registered, without starting it.
 
     Separate from :func:`serve <scenet.mcp.serve>` so that a test, or a host embedding
@@ -626,9 +634,10 @@ def build_server(*, timeout: float | None = None) -> MCPServer[Any]:
             cancels it. `None`, the default, runs every call in process, unbounded.
 
     Returns:
-        The server, ready to run on any transport.
+        The server, ready to run on any transport. Its `close()` stops the worker
+        processes it started; :func:`serve` calls it once the server has stopped.
     """
-    server: MCPServer[Any] = _Server(
+    server = _Server(
         name="scenet",
         title="Scenet",
         version=__version__,
@@ -636,6 +645,7 @@ def build_server(*, timeout: float | None = None) -> MCPServer[Any]:
         website_url=WEBSITE,
     )
     workers = None if timeout is None else _Workers(timeout)
+    server.workers = workers
     for name, title, function in TOOLS:
         run = function if workers is None else _bounded(name, function, workers)
         server.tool(name=name, title=title, description=_describe(function), annotations=READ_ONLY)(
@@ -668,17 +678,20 @@ def serve(
         origins: Origins a browser client may call from, beyond the server's own.
     """
     server = build_server(timeout=timeout)
-    if transport == "stdio":
-        server.run("stdio")
-        return
-    server.run(
-        "streamable-http",
-        host=host,
-        port=port,
-        stateless_http=True,
-        max_request_body_size=MAX_REQUEST_BYTES,
-        transport_security=_security(host, port, origins),
-    )
+    try:
+        if transport == "stdio":
+            server.run("stdio")
+            return
+        server.run(
+            "streamable-http",
+            host=host,
+            port=port,
+            stateless_http=True,
+            max_request_body_size=MAX_REQUEST_BYTES,
+            transport_security=_security(host, port, origins),
+        )
+    finally:
+        server.close()
 
 
 def _security(host: str, port: int, origins: Sequence[str]) -> TransportSecuritySettings:
@@ -749,6 +762,11 @@ class _Workers:
         self.timeout = timeout
         self._idle: list[_Worker] = []
         self._slots = anyio.CapacityLimiter(WORKERS)
+
+    def close(self) -> None:
+        """Stop every idle worker; a busy one is stopped by the call that holds it."""
+        while self._idle:
+            self._idle.pop().stop()
 
     async def call(self, name: str, arguments: dict[str, Any]) -> Any:  # noqa: ANN401
         async with self._slots:

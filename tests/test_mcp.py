@@ -571,6 +571,9 @@ class TestServeCallsTheSdk:
             def run(self, transport: str, **options: Any) -> None:
                 started.append((transport, options))
 
+            def close(self) -> None:
+                """Nothing to stop: it started no worker."""
+
         recorder = Recorder()
 
         def build(**_options: object) -> Recorder:

@@ -14,6 +14,7 @@ What the server guarantees, each held here against a real server on a real port:
 What it does not do -- authenticate, encrypt -- is the operator's, and `SECURITY.md` says so.
 """
 
+import contextlib
 import json
 import os
 import site
@@ -23,7 +24,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable, Iterator
+from collections.abc import AsyncGenerator, Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
@@ -182,6 +183,9 @@ class TestListening:
             def run(self, transport: str, **options: Any) -> None:
                 runs.append({"transport": transport, **options})
 
+            def close(self) -> None:
+                """Nothing to stop: it started no worker."""
+
         monkeypatch.setattr(scenet.mcp, "build_server", _making(Recorder()))
         serve("streamable-http", host="127.0.0.1", port=8123, origins=("http://localhost:6274",))
         (run,) = runs
@@ -208,6 +212,9 @@ class TestListening:
         class Recorder:
             def run(self, transport: str, **options: Any) -> None:
                 runs.append(options)
+
+            def close(self) -> None:
+                """Nothing to stop: it started no worker."""
 
         monkeypatch.setattr(scenet.mcp, "build_server", _making(Recorder()))
         serve("streamable-http", host="comics.example", port=80)
@@ -264,13 +271,28 @@ class TestOverARealPort:
         assert not after.is_error
 
 
+@contextlib.asynccontextmanager
+async def _bounded_client(timeout: float | None) -> AsyncGenerator[Client]:
+    """A client of a server whose calls run in workers, every worker stopped afterwards.
+
+    A worker left behind would outlive the test, and a runner that waits for any child
+    process of its own -- mutmut's -- trips on one it never started.
+    """
+    server = build_server(timeout=timeout)
+    try:
+        async with Client(server) as client:
+            yield client
+    finally:
+        server.close()
+
+
 class TestTheBudget:
     def test_the_default_is_stated(self):
         assert DEFAULT_TIMEOUT == 60
 
     def test_in_process_a_call_past_its_time_is_stopped(self):
         async def go() -> tuple[Any, Any, float]:
-            async with Client(build_server(timeout=2)) as client:
+            async with _bounded_client(2) as client:
                 started = time.monotonic()
                 slow = await client.call_tool("validate", {"source": LONG, "deep": True})
                 seconds = time.monotonic() - started
@@ -288,7 +310,7 @@ class TestTheBudget:
         worker, under the same clock, as the compile that failed."""
 
         async def go() -> Any:
-            async with Client(build_server(timeout=2)) as client:
+            async with _bounded_client(2) as client:
                 return await client.call_tool("render", {"source": LONG})
 
         started = time.monotonic()
@@ -298,7 +320,7 @@ class TestTheBudget:
 
     def test_a_result_is_the_same_through_a_worker(self):
         async def go(timeout: float | None) -> Any:
-            async with Client(build_server(timeout=timeout)) as client:
+            async with _bounded_client(timeout) as client:
                 return await client.call_tool("render", {"source": PANEL})
 
         bounded, direct = anyio.run(go, 30), anyio.run(go, None)
@@ -306,7 +328,7 @@ class TestTheBudget:
 
     def test_a_tool_error_comes_back_as_it_was(self):
         async def go() -> Any:
-            async with Client(build_server(timeout=30)) as client:
+            async with _bounded_client(30) as client:
                 return await client.call_tool("compile", {"source": "cast: [1"})
 
         failed = anyio.run(go)
@@ -449,3 +471,20 @@ class TestNoFileIsRead:
         )
         assert "the server read a file" not in text
         assert "not yours" not in text
+
+
+def test_closing_a_server_stops_its_workers():
+    """`serve` closes the server it ran, and no worker it started is left behind."""
+
+    async def go() -> list[Any]:
+        server = build_server(timeout=30)
+        async with Client(server) as client:
+            await client.call_tool("get_spec", {})
+        assert server.workers is not None
+        idle = list(server.workers._idle)
+        server.close()
+        return idle
+
+    stopped = anyio.run(go)
+    assert stopped
+    assert all(not worker._process.is_alive() for worker in stopped)
