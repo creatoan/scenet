@@ -564,6 +564,9 @@ class TestWrittenPaths:
             parse_script(script, source=Path("x.script.md"))
         assert (caught.value.rule, caught.value.line) == ("duplicate-key", 3)
         assert caught.value.source == Path("x.script.md")
+        assert "line 3: in directive '@cast', cast member 'ALICE' is item 0 and item 1" in str(
+            caught.value
+        )
 
     def test_a_front_matter_of_nothing_but_a_comment_holds_nothing(self):
         assert diagnose_script("---\n# Draft.\n---\nPANEL 1\nA street.\n") == []
