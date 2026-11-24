@@ -484,14 +484,11 @@ class FontMetrics:
         The `hhea` ascender and descender, both as positive distances: what a line of
         this face can occupy, which is what a sound effect's footprint is built from.
         """
-        try:
-            table: Any = self._font["hhea"]
-            return table.ascent / self._units_per_em, -table.descent / self._units_per_em
-        except Exception as exc:
-            raise self._unreadable("hhea") from exc
+        table: Any = self._font["hhea"]
+        return table.ascent / self._units_per_em, -table.descent / self._units_per_em
 
     def probe(self) -> None:
-        """Read now what is otherwise read on first use: kerning, extent and outlines.
+        """Read now what is otherwise read on first use: its kerning and its outlines.
 
         fontTools reads a table, and a glyph, when it is first asked for, so a file that
         opens can still fail half way through a compile -- or a render, long after its
@@ -503,9 +500,21 @@ class FontMetrics:
         Raises:
             MalformedAssetError: A table or a glyph cannot be read.
         """
-        self.extent  # noqa: B018 -- read for what it raises
-        self._pair("A", "V")
+        self._lookups()
         self.glyph_outlines(_PROBED)
+
+    def _lookups(self) -> list[tuple["_PairTable", ...]]:
+        """The kerning lookups, read on first use: GPOS, or else a legacy `kern` table.
+
+        Indexed once into tables of this module's own, which answer without reading the
+        font again; reading them is what can fail.
+        """
+        if self._kerning is None:
+            try:
+                self._kerning = _gpos_kerning(self._font) or _legacy_kerning(self._font)
+            except Exception as exc:
+                raise self._unreadable("kerning") from exc
+        return self._kerning
 
     def _unreadable(self, part: str) -> MalformedAssetError:
         return MalformedAssetError(
@@ -537,18 +546,10 @@ class FontMetrics:
         known = self._kerned.get((left, right))
         if known is not None:
             return known
-        if self._kerning is None:
-            try:
-                self._kerning = _gpos_kerning(self._font) or _legacy_kerning(self._font)
-            except Exception as exc:
-                raise self._unreadable("kerning") from exc
         total = 0
-        for lookup in self._kerning:
+        for lookup in self._lookups():
             for subtable in lookup:
-                try:
-                    value = subtable.adjust(left, right)
-                except Exception as exc:
-                    raise self._unreadable("kerning") from exc
+                value = subtable.adjust(left, right)
                 if value is not None:
                     total += value
                     break

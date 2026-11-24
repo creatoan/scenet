@@ -259,7 +259,7 @@ def _embedded(metrics: FontMetrics, characters: tuple[str, ...]) -> PdfFont:
         if code is not None and code not in text:
             text[code] = character
     codes = sorted(text)
-    source = TTFont(io.BytesIO(metrics.data), lazy=True)
+    source = TTFont(io.BytesIO(metrics.data))
     whole = embedding(_fs_type(source)) is Embedding.WHOLE
     postscript = _postscript_name(source)
     return PdfFont(
@@ -286,7 +286,7 @@ def _subset(data: bytes, codes: list[int]) -> bytes:
     for it to drop: it reads the layout tables first, and a damaged one would fail a face
     whose glyphs are sound.
     """
-    font = TTFont(io.BytesIO(data), recalcTimestamp=False, recalcBBoxes=False, lazy=True)
+    font = TTFont(io.BytesIO(data), recalcTimestamp=False, recalcBBoxes=False)
     for tag in UNREAD:
         if tag in font:
             del font[tag]
