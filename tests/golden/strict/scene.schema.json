@@ -163,6 +163,21 @@
         "expression": {
           "anyOf": [
             {
+              "description": "A expression every puppet declares.",
+              "enum": [
+                "neutral",
+                "happy",
+                "sad",
+                "angry",
+                "surprise",
+                "scared",
+                "bored",
+                "coy",
+                "laughing",
+                "shouting"
+              ]
+            },
+            {
               "type": "string"
             },
             {
@@ -217,6 +232,15 @@
         },
         "pose": {
           "anyOf": [
+            {
+              "description": "A pose every puppet declares.",
+              "enum": [
+                "standing_neutral",
+                "arms_crossed",
+                "hands_on_hips",
+                "pointing"
+              ]
+            },
             {
               "type": "string"
             },
