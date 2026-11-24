@@ -325,3 +325,25 @@ def test_no_plain_built_in_is_raised_where_a_caller_could_see_it():
 @reads_the_source
 def test_the_list_holds_nothing_that_is_gone():
     assert sorted(set(NEVER_REACHES_A_CALLER) - _builtin_raises()) == []
+
+
+class TestTheErrorsThemselves:
+    """What each error keeps, asked of the error directly."""
+
+    def test_a_malformed_file_keeps_its_path_apart_from_its_fault(self):
+        error = MalformedAssetError("not a puppet", source=Path("x.puppet.yaml"))
+        assert (error.source, error.detail) == (Path("x.puppet.yaml"), "not a puppet")
+        assert str(error) == f"{Path('x.puppet.yaml')}: not a puppet"
+
+    def test_malformed_bytes_are_their_fault_alone(self):
+        error = MalformedAssetError("not a font")
+        assert (error.source, str(error)) == (None, "not a font")
+
+    def test_a_file_refused_for_another_reason_is_no_missing_file(self):
+        error = FileReadError.of(PermissionError(13, "Permission denied", "x.panel.yaml"))
+        assert type(error) is FileReadError
+        assert (error.errno, error.strerror, error.filename) == (
+            13,
+            "Permission denied",
+            "x.panel.yaml",
+        )
