@@ -92,6 +92,7 @@ from scenet.frontends.common import (
     PYDANTIC_RULES,
     SITE,
     errors_of,
+    faults_of_defaults,
     normalise,
     normalise_layout,
     rule_for_pydantic,
@@ -1811,6 +1812,7 @@ def _diagnose_scene(
                 )
             if item not in found:
                 found.append(item)
+    found.extend(_unread_defaults(defaults, found, text, source))
 
     if deep and paged and not _errors(found):
         try:
@@ -1826,6 +1828,32 @@ def _diagnose_scene(
                 )
             )
     return found
+
+
+def _unread_defaults(
+    defaults: dict[str, Any], found: list[Diagnostic], text: str, source: Path | None
+) -> list[Diagnostic]:
+    """The faults in a scene's defaults that no panel's check found.
+
+    A default every panel overrides was read by none of them, and is written all the same.
+    One a panel inherits is in `found` already, where it is written.
+    """
+    seen = {(item.rule, item.path) for item in found}
+    unread: list[Diagnostic] = []
+    for error in faults_of_defaults(defaults):
+        rule, path = rule_for_pydantic(error)
+        if (rule, path) not in seen:
+            seen.add((rule, path))
+            unread.append(
+                Diagnostic(
+                    rule=rule,
+                    message=str(error["msg"]).removeprefix("Value error, "),
+                    path=path,
+                    source=source,
+                    region=locate(text, path) or DOCUMENT_START,
+                )
+            )
+    return unread
 
 
 def _diagnose_layout(

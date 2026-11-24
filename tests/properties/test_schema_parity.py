@@ -329,6 +329,21 @@ def test_a_scene_agrees(text: str, valid: bool):
     assert (not _check_errors(document, SCENE)) is valid
 
 
+@pytest.mark.parametrize(
+    ("default", "panel"),
+    [("camera: ''", "camera: {shot: long_shot}"), ("camera: {kind: x}", "camera: null")],
+    ids=["of the wrong shape", "with a key it does not have"],
+)
+def test_a_default_every_panel_overrides_agrees(default: str, panel: str):
+    """A default no panel inherits is written all the same, and the schema reads it."""
+    document = (
+        f"cast: {{alice: {{reference: alice}}}}\n{default}\n"
+        f"panels: {{a: {{{panel}}}, b: {{over: a}}}}\n"
+    )
+    _assert_agree(document, SCENE, _ignore)
+    assert _check_errors(document, SCENE)
+
+
 def test_a_scene_panel_names_no_puppet_it_inherits():
     """A member's `reference` may be the panel's beneath: the scene's schema asks for none."""
     text = (

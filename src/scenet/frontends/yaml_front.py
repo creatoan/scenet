@@ -28,6 +28,7 @@ from scenet.compose import (
 from scenet.errors import CompositionError, PanelSyntaxError, RuleViolationError
 from scenet.frontends.common import (
     LAYOUT_KEYS,
+    check_defaults,
     first_fault,
     normalise,
     normalise_layout,
@@ -475,6 +476,8 @@ def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, Pan
                 rule=exc.rule,
                 loc=("panels", name, *exc.loc),
             ) from exc
+    # A default every panel overrides was read by none of them, and is written all the same.
+    check_defaults(defaults, source)
     return result
 
 
