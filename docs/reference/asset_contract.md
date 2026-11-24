@@ -76,14 +76,28 @@ face:
 gaze:
   origin: eyes              # a declared anchor; the direction comes from staging
 
-poses:                      # joint angles, in degrees
+poses:                      # joint angles, in degrees; the core four, and any of its own
   standing_neutral: {elbow_l: -5}
+  arms_crossed: {elbow_l: -25, wrist_l: -75}
+  hands_on_hips: {elbow_l: 20, wrist_l: -110}
   pointing: {elbow_l: -80, wrist_l: -10}
 
-expressions:
+expressions:                # the core ten, as every puppet with a face declares
   neutral: {}
+  happy: {mouth: smile}
+  sad: {brow: angled_out, eyes: half, mouth: frown}
   angry: {brow: angled_in, eyes: narrowed, mouth: frown}
+  surprise: {brow: raised, eyes: wide, mouth: open}
+  scared: {brow: angled_out, eyes: wide, mouth: open}
+  bored: {brow: lowered, eyes: half, mouth: flat}
+  coy: {brow: raised, eyes: narrowed, mouth: small}
+  laughing: {brow: raised, eyes: closed, mouth: grin}
+  shouting: {brow: angled_in, eyes: wide, mouth: open}
 ```
+
+Every puppet declares the [core vocabulary](language/puppet.md#the-core-vocabulary) of poses, and
+every puppet with a face its core expressions, so a document that keeps to them works with any
+puppet; it may declare more of its own.
 
 A part's keys say which kind it is: `from` and `to` make a bone, `at` makes a blob. A part is
 checked only as the kind it is written as, and one that uses the keys of both kinds, or of

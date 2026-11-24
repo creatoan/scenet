@@ -637,7 +637,7 @@ class PuppetSpec(Strict):
 
     @model_validator(mode="after")
     def check_default_pose(self) -> Self:
-        """Require the core vocabulary: every core pose and every core expression.
+        """Require the core vocabulary: every core pose, and every core expression of a face.
 
         Returns:
             The validated puppet.
@@ -651,9 +651,12 @@ class PuppetSpec(Strict):
         a member gets unasked, so without them every member that names none would fail
         on its own line, and nothing would say the puppet is what is wrong.
         """
+        # A puppet with no face has nothing for an expression to move: it draws every one
+        # alike, and so takes every core expression without declaring any.
+        faced = bool(self.face.features)
         for declared, core, what in (
             (self.poses, CORE_POSES, "poses"),
-            (self.expressions, CORE_EXPRESSIONS, "expressions"),
+            (self.expressions, CORE_EXPRESSIONS if faced else (), "expressions"),
         ):
             missing = [name for name in core if name not in declared]
             if missing:

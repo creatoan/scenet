@@ -430,6 +430,27 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "face": {
+            "required": [
+              "features"
+            ]
+          }
+        },
+        "required": [
+          "face"
+        ]
+      },
+      "then": {
+        "required": [
+          "expressions"
+        ]
+      }
+    }
+  ],
   "description": "The complete geometric contract for one character.",
   "patternProperties": {
     "^x-": {
@@ -670,8 +691,7 @@
     "landmarks",
     "joints",
     "face",
-    "poses",
-    "expressions"
+    "poses"
   ],
   "title": "Scenet puppet",
   "type": "object"

@@ -4239,8 +4239,10 @@ staging: [alice ground_shared_with pip]
 
 ### The core vocabulary
 
-**Normative.** Every puppet, shipped or supplied, declares every pose and every expression of the
-core vocabulary, so a document that keeps to it is valid with any puppet: a model that writes only
+**Normative.** Every puppet, shipped or supplied, declares every pose of the core vocabulary, and
+every puppet with a face every expression of it; a puppet with no face features has nothing for an
+expression to move, and takes every one, drawn alike. So a document that keeps to the core is valid
+with any puppet: a model that writes only
 these cannot name a pose the puppet lacks. A puppet may declare more poses and expressions, which
 are its own, Pip's `waving` and `arms_up` say; a document that names one works with that puppet.
 
@@ -4794,7 +4796,7 @@ Named expressions, each a state of brow, eyes and mouth. Every puppet declares t
 |---|---|
 | Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
 | Type | a mapping |
-| Default | none: required |
+| Default | none |
 | Since | 0.13 |
 | Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->

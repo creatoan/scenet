@@ -579,8 +579,15 @@ def _default_pose(schema: dict[str, Any]) -> None:
     the validator makes them so, and every core pose and expression in them: a document
     that keeps to those is valid with any puppet.
     """
+    schema["required"].append("poses")
+    # A face with features to move declares the core expressions; one without, none.
+    schema.setdefault("allOf", []).append(
+        {
+            "if": {"required": ["face"], "properties": {"face": {"required": ["features"]}}},
+            "then": {"required": ["expressions"]},
+        }
+    )
     for key, core in (("poses", CORE_POSES), ("expressions", CORE_EXPRESSIONS)):
-        schema["required"].append(key)
         declared: dict[str, Any] = schema["properties"][key]
         declared["required"] = list(core)
         declared["description"] = (
