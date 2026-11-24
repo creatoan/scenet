@@ -426,7 +426,8 @@ them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in 
 `MemoryError` and counts as killed. A test process needs under 1 GB.
 
 `[tool.mutmut]` in `pyproject.toml` limits it to `solve/`, `emit/`, `frontends/`, `core.py`,
-`ir.py`, `identifiers.py`, `namespace.py` and `diagnostics.py`, mutates only lines the tests cover, and runs mutants without the
+`ir.py`, `identifiers.py`, `namespace.py`, `diagnostics.py`, `compose.py`, `limits.py` and
+`safe_json.py`, mutates only lines the tests cover, and runs mutants without the
 coverage floor, doctests or the documentation examples. To run one leg locally, narrow it
 first, as its job does, and restore the file after:
 
@@ -454,6 +455,7 @@ code, the docstring left out:
 
 | Function | Decorator | Lines |
 |---|---|---|
+| `compose.py::_keys` | `@functools.cache` | 6 |
 | `core.py::Box.right` | `@property` | 1 |
 | `core.py::Box.bottom` | `@property` | 1 |
 | `core.py::CoreActor.bounds` | `@property` | 3 |
@@ -469,6 +471,7 @@ code, the docstring left out:
 | `emit/turbulence.py::lattice` | `@functools.lru_cache` | 30 |
 | `emit/turbulence.py::_alpha` | `@functools.lru_cache` | 20 |
 | `frontends/script_front.py::ScriptDocument.direction` | `@property` | 1 |
+| `frontends/positions.py::_composed` | `@functools.lru_cache` | 4 |
 | `frontends/yaml_front.py::SceneDocument.direction` | `@property` | 1 |
 | `identifiers.py::_compiled` | `@functools.cache` | 3 |
 | `identifiers.py::Grammar.pattern` | `@property` | 1 |
@@ -531,6 +534,9 @@ gallery are what guard them.
 | `identifiers` | `identifiers.py` | 46 | 0 | 100.0% | 100% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
 | `namespace` | `namespace.py` | 96 | 0 | 100.0% | 100% | [`44802728686`](https://github.com/creatoan/scenet/actions/runs/44802728686) |
 | `diagnostics` | `diagnostics.py` | 1,824 | 84 | 95.4% | 95% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
+| `compose` | `compose.py` | 584 | 87 | 85.1% | 85% | [`45379908984`](https://github.com/creatoan/scenet/actions/runs/45379908984) |
+| `limits` | `limits.py` | 53 | 13 | 75.5% | 75% | [`45379918874`](https://github.com/creatoan/scenet/actions/runs/45379918874) |
+| `safe_json` | `safe_json.py` | 427 | 106 | 75.2% | 75% | [`45379933991`](https://github.com/creatoan/scenet/actions/runs/45379933991) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
 threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
