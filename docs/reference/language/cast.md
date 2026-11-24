@@ -10,6 +10,7 @@ Who is in the panel, the first being the one the camera frames: each actor under
 | Default | none |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`conflicting-cast`](../diagnostics.md#conflicting-cast), [`layout`](../diagnostics.md#layout), [`camera-retreated`](../diagnostics.md#camera-retreated) |
+| In the gallery | [A panel with nobody in it](../../gallery.md#a-panel-with-nobody-in-it) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,

@@ -1416,6 +1416,7 @@ Who is in the panel, the first being the one the camera frames: each actor under
 | Default | none |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
+| In the gallery | [A panel with nobody in it](https://creatoan.github.io/scenet/gallery.html#a-panel-with-nobody-in-it) |
 <!-- /facts -->
 
 A mapping of actor id to who plays them. The ids are the author's -- `alice`, `guard_left`,
