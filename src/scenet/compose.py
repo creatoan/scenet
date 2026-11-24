@@ -231,12 +231,7 @@ def resolve_beneath(panels: dict[str, dict[str, Any]]) -> dict[str, dict[str, An
     What each removal takes away: whoever a panel leaves out, as they stood in the panels
     it is over, so a line they speak from off panel can end on their side (`settle`).
     """
-    return resolve_overrides(
-        {
-            name: _without_nulls(document) if isinstance(document, dict) else document
-            for name, document in panels.items()
-        }
-    )
+    return resolve_overrides({name: _without_nulls(document) for name, document in panels.items()})
 
 
 def looks_toward(relation: object, actor: str, leaving: Collection[str]) -> bool:
