@@ -59,10 +59,15 @@ class TestMerge:
         assert settled["staging"] == ["alice left_of carol"]
         assert [(item.index, item.actor) for item in dropped] == [(1, "bob"), (2, "bob")]
 
-    def test_a_null_inside_a_list_is_left_alone(self):
-        """Merge Patch reaches into mappings only; a list is a value, replaced whole."""
+    def test_a_null_inside_a_list_is_a_key_not_written(self):
+        """A list is replaced whole, so a null in a mapping inside it has nothing to take
+        away: it is a key not written, as a strict document writes one (#375)."""
         settled, _ = settle({"script": [{"say": {"by": "a", "text": "Hi.", "prefer": None}}]})
-        assert settled["script"][0]["say"]["prefer"] is None
+        assert settled["script"][0]["say"] == {"by": "a", "text": "Hi."}
+
+    def test_a_null_item_is_kept_for_validation_to_refuse(self):
+        settled, _ = settle({"script": [None], "staging": [None]})
+        assert settled == {"script": [None], "staging": [None]}
 
 
 class TestAScene:

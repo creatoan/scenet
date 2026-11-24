@@ -345,10 +345,10 @@ class TestTextAsWritten:
         assert parse_panel(source).description == "12:30"
 
     def test_null_is_never_text(self):
-        """`null` means no value: to letter the word, quote it."""
+        """`null` means no value -- here a line with no text: to letter the word, quote it."""
         source = CAST + "script:\n  - say: {by: alice, text: null}\n"
         found = diagnose_source(source)
-        assert [finding.rule for finding in found] == ["invalid-field"]
+        assert [finding.rule for finding in found] == ["missing-field"]
         assert (
             parse_panel(CAST + "script:\n  - say: {by: alice, text: 'null'}\n").script[0].text
             == "null"
