@@ -49,3 +49,4 @@
 "schema --output" = "0.1"
 "schema --puppet" = "0.13"
 "schema --scene" = "0.1"
+"schema --strict" = "0.14"

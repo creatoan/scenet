@@ -605,7 +605,7 @@ close an import cycle.
 *Since 0.1.*
 
 ```
-scenet schema [-o OUTPUT] [--scene | --artwork | --puppet]
+scenet schema [-o OUTPUT] [--scene | --artwork | --puppet] [--strict]
 ```
 
 Emits the JSON Schema for a panel document, derived from the same pydantic models the
@@ -638,11 +638,20 @@ the editor suggests cannot drift from what compiles — see
   names declared — `scenet check` does, in the puppet file, on a document that casts it.
   *Since 0.13.*
 
+`--strict`
+: Emit the strict schema, for a structured-output mode to decode against: `cast` and `panels` as
+  lists, every key present and `null` where nothing is meant, mapping forms only, a scene's panels
+  each written whole, and only the JSON Schema keywords OpenAI, Anthropic and Gemini all take. For
+  a panel or, with `--scene`, a scene; not with `--artwork` or `--puppet`. See
+  [drive Scenet from a model](../howto/drive_from_a_model.md#an-api-with-structured-output).
+  *Since 0.14.*
+
 ```bash
 scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
 scenet schema --artwork -o artwork.schema.json
 scenet schema --puppet -o puppet.schema.json
+scenet schema --strict --scene -o scene.strict.json
 ```
 
 The output is sorted and indented, so it is stable under version control.

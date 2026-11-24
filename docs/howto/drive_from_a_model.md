@@ -189,9 +189,35 @@ Have the model write `cast` and `panels` as [lists](../reference/language/scene.
 item with its `id`, and no tool between it and Scenet that sorts keys can reorder the comic.
 `scenet convert name.panel.json --to yaml` gives a person the same document to edit.
 
+The published schema uses what an editor reads: conditions, patterns, bounds, a key a mapping may
+leave out. A structured-output mode takes a smaller subset, and each provider's is different, so
+for constrained decoding use the **strict schema** instead:
+
+```bash
+scenet schema --strict -o panel.strict.json
+scenet schema --strict --scene -o scene.strict.json
+```
+
+It is the same language in the shape those modes decode: `cast` and `panels` as lists, each item
+with its `id`; every key of every object written, `null` where nothing is meant, which Scenet reads
+as a key not written; a staging relation, a font and a panel on a page in their mapping forms; text
+as a string; and no condition, pattern or bound. A strict scene writes each panel whole, with no
+defaults beside `panels` and no `over`, since a `null` on a key a panel inherits would take it
+away. It uses only what OpenAI's, Anthropic's and Gemini's pages say they take, read on
+2026-11-24 and recorded in [prior art](../explanation/prior_art.md#structured-outputs--what-openai-anthropic-and-gemini-take-of-json-schema).
+
+The loop is then:
+
+1. Give the model the strict schema as its response format, and the brief.
+2. Save what it decodes as `page.scene.json`.
+3. Run `scenet check page.scene.json`. Each finding names its rule, its place and the fix; give the
+   findings back to the model, and have it write the document again.
+4. When `check` is clean, `scenet build page.scene.json`.
+
 Two caveats. **Schema conformance is not validity**: no schema can say that every actor id in
 `staging` exists in `cast`, or that `left_of` does not loop, and those are exactly what a
-generator gets wrong. Always run `scenet check`, or the `validate` tool, on the result. And
-whether this schema suits a given provider's constrained decoding is untested here — providers
-document that very large or deeply nested schemas may be rejected, and say little more. Measuring
-that is [an open issue](https://github.com/creatoan/scenet/issues/11).
+generator gets wrong; nor does the strict schema state the limits, the identifier grammar or
+which keys a cast member takes with a figure. Always run `scenet check`, or the `validate` tool, on
+the result. And whether a provider accepts a schema of this size is for that provider to say:
+Anthropic's page caps a request at 24 optional parameters and 16 with a union, which a whole panel
+exceeds. Measuring that is [an open issue](https://github.com/creatoan/scenet/issues/11).

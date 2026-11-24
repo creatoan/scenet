@@ -3254,8 +3254,11 @@ reached through mappings: `camera: null`, `cast: {bob: null}`, `setting: {place:
 A cast member who goes takes every staging relation that names them along, since none can hold in a
 panel they are not in, and `scenet check` notes each one as `dropped-relation`. All but one, while
 the member left out is heard from off panel: `bob looking_at carol` still holds when Carol speaks
-`off_panel` in that panel. A `null` inside a list is left as it is: a list is replaced whole, never
-merged into.
+`off_panel` in that panel. A list is replaced whole, never merged into, so a `null` in a mapping
+inside a list -- a script entry's `prefer: null`, a tier's `height: null` -- has nothing beneath it
+to take away: it is a key not written, as it is in a single panel. That is what a document that
+writes every key, as [a strict schema](https://creatoan.github.io/scenet/reference/cli.html#scenet-schema) has a model do, writes for one it
+leaves out. A list's item that is `null` is no item, and is refused.
 
 The rule is the same in a single panel, which inherits nothing: there a `null` is a key not
 written, so `camera: null` is the default camera, as `camera:` with no value is. The JSON Schema
@@ -8210,7 +8213,14 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "title": "By"
         },
         "kind": {
-          "$ref": "#/$defs/CaptionKind",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptionKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "locale",
           "description": "What the box is doing: `locale` for a place and time, `monologue` for an inner voice, `spoken` for speech from off panel, `editorial` for the writer's voice."
         },
@@ -8238,7 +8248,14 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           ]
         },
         "tone": {
-          "$ref": "#/$defs/CaptionTone",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptionTone"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "paper",
           "description": "What the box is filled with: `paper`, `pale`, `ink`, which is lettered in paper, or `warm`, yellow under `palette: tinted`."
         }
@@ -8922,12 +8939,26 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "description": "What the mass is made of, which decides its silhouette: seven outdoor kinds of stuff and five indoor."
         },
         "plane": {
-          "$ref": "#/$defs/Plane",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Plane"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "mid",
           "description": "How far back the mass sits, which decides its value and its draw order. A `foreground` mass is drawn over the cast."
         },
         "spans": {
-          "$ref": "#/$defs/Spans",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Spans"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "full",
           "description": "How much of the panel's width the mass covers: all of it, or its `left`, `center` or `right` part."
         }
@@ -9145,17 +9176,31 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "title": "By"
         },
         "kind": {
-          "$ref": "#/$defs/BalloonKind",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BalloonKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "speech",
           "description": "The balloon the line is carried in: `speech`, `thought`, `whisper` or `shout`."
         },
         "off_panel": {
           "anyOf": [
             {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/$defs/Side"
+                }
+              ]
             },
             {
-              "$ref": "#/$defs/Side"
+              "type": "null"
             }
           ],
           "default": false,
@@ -9175,7 +9220,14 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "description": "Where the balloon would like to sit, one of nine zones of the panel. The weakest placement term: face avoidance and reading order override it."
         },
         "size": {
-          "$ref": "#/$defs/TypeSize",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TypeSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "normal",
           "description": "`small` for a line muttered, said under the breath or weakly: smaller type, in a balloon that keeps its room."
         },
@@ -9415,12 +9467,19 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
       },
       "properties": {
         "arc": {
+          "anyOf": [
+            {
+              "maximum": 120.0,
+              "minimum": -120.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 0.0,
           "description": "How far the line of letters bends, in degrees, from -120 to 120: positive bows its middle up, negative down.",
-          "maximum": 120.0,
-          "minimum": -120.0,
-          "title": "Arc",
-          "type": "number"
+          "title": "Arc"
         },
         "from": {
           "anyOf": [
@@ -9440,10 +9499,17 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "title": "From"
         },
         "hollow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": false,
           "description": "`true` letters the effect as an outline with no fill, so the art shows through: an open effect.",
-          "title": "Hollow",
-          "type": "boolean"
+          "title": "Hollow"
         },
         "prefer": {
           "anyOf": [
@@ -9458,15 +9524,29 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "description": "Where the effect would like to sit, one of nine zones of the panel: on its own, or as a pull on an effect that has a `from`."
         },
         "rotate": {
+          "anyOf": [
+            {
+              "maximum": 45.0,
+              "minimum": -45.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 0.0,
           "description": "How far the effect is turned clockwise, in degrees, from -45 to 45.",
-          "maximum": 45.0,
-          "minimum": -45.0,
-          "title": "Rotate",
-          "type": "number"
+          "title": "Rotate"
         },
         "size": {
-          "$ref": "#/$defs/SfxSize",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SfxSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "medium",
           "description": "How loud: `small`, `medium` or `large`, lettered at 1.6, 2.6 or 4 times the dialogue type size."
         },

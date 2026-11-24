@@ -689,7 +689,7 @@ def build_server(*, timeout: float | None = None, limits: Limits = LIMITS) -> "S
 
 
 def _refuse_unknown_arguments(server: MCPServer[Any], name: str) -> None:
-    """Refuse an argument a tool does not take, and say so in its input schema (#349).
+    """Refuse an argument a tool does not take, and say so in its input schema.
 
     A misspelt `sytnax: script` was dropped without a word, and the document read as YAML.
     The SDK builds each tool's arguments as a model that ignores what it does not know; this
