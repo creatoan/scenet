@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 import pytest
+from yaml.nodes import MappingNode
 
 from scenet.cli import main
 from scenet.compose import as_lists
@@ -202,6 +203,7 @@ class TestTheReader:
 
     def test_every_node_is_tagged_and_styled_as_written(self):
         node = compose('{"a": [1, 1.5, 1E5, "x", true, null], "b": {}, "c": []}')
+        assert isinstance(node, MappingNode)
         assert (node.tag, node.flow_style) == (MAP_TAG, True)
         (key, listed), (_, empty_map), (_, empty_list) = node.value
         assert (key.tag, key.style) == (STR_TAG, '"')
