@@ -1143,6 +1143,19 @@ class TestDeepChecking:
         assert (found.rule, found.path) == ("ordering-cycle", ("staging", 1))
         assert "depth" in found.message
 
+    def test_a_depth_cycle_through_behind_is_one_too(self):
+        """`behind` is `in_front_of` read the other way, so the two together are a loop."""
+        source = (
+            "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+            "staging: [a in_front_of b, a behind b]\n"
+        )
+        (found,) = diagnose_source(source)
+        assert (found.rule, found.path) == ("ordering-cycle", ("staging", 1))
+        assert found.message == (
+            "depth ordering is cyclic around 'a'; in_front_of/behind relations must form a "
+            "consistent order"
+        )
+
     def test_deep_does_not_run_when_the_cheap_pass_already_found_something(self):
         """Compiling a document already known to be broken would just produce a
         second, worse-located finding for the same fault."""

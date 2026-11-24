@@ -9,6 +9,8 @@ panels it is drawn `@over` -- not the whole front matter's cast -- so a panel of
 description, captions or sounds only is cast-less.
 """
 
+import re
+from pathlib import Path
 from xml.etree import ElementTree
 
 import pytest
@@ -17,7 +19,7 @@ from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.emit.page import render_page
 from scenet.emit.pdf import render_pdf
 from scenet.emit.svg import render
-from scenet.errors import PanelSyntaxError
+from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.script_front import parse_script
 from scenet.pipeline import compile_book, compile_source
 
@@ -126,6 +128,8 @@ class TestBetweenOrdinaryPanels:
 
 class TestAScript:
     FRONT = "---\ncast:\n  ALICE: {reference: alice}\n  BOB: {reference: bob}\n---\n"
+    CAROL = "  CAROL: {reference: alice}\n"
+    WITH_CAROL = FRONT.removesuffix("---\n") + CAROL + "---\n"
 
     def _cast(self, body: str) -> dict[str, list[str]]:
         panels = parse_script(self.FRONT + body)
@@ -151,6 +155,67 @@ class TestAScript:
     def test_a_voice_from_off_panel_is_not_drawn(self):
         body = "PANEL 1\nBOB (OP)\nWho's there?\n"
         assert self._cast(body) == {"1": []}
+
+    def test_a_panel_draws_whom_its_staging_names_beside_who_speaks(self):
+        body = "PANEL 1\n@staging: [ALICE left_of BOB]\nCAROL\nHi.\n"
+        panels = parse_script(self.WITH_CAROL + body)
+        assert list(panels["1"].cast) == ["ALICE", "BOB", "CAROL"]
+
+    def test_a_staging_relation_written_as_a_mapping_names_both(self):
+        body = "PANEL 1\nA room.\n@staging: [{subject: ALICE, predicate: left_of, object: BOB}]\n"
+        assert self._cast(body) == {"1": ["ALICE", "BOB"]}
+
+    def test_a_panel_over_one_over_another_draws_whom_the_first_drew(self):
+        body = (
+            "PANEL 1\n@cast: {BOB: {}}\nALICE\nHi.\n\n"
+            "PANEL 2\n@over: 1\nA beat.\n\nPANEL 3\n@over: 2\nA beat.\n"
+        )
+        assert self._cast(body)["3"] == ["ALICE", "BOB"]
+
+    @pytest.mark.parametrize(
+        ("body", "said"),
+        [
+            (
+                "PANEL 1\n@over: 2\nALICE\nHi.\n\nPANEL 2\n@over: 1\nBOB\nHi.\n",
+                "'over' chain is cyclic: 1 -> 2 -> 1",
+            ),
+            ("PANEL 1\n@over: 9\nALICE\nHi.\n", "panel '1' is over '9', which does not exist"),
+        ],
+        ids=["a-cycle", "no-such-panel"],
+    )
+    def test_an_over_that_draws_nobody_is_a_composition_fault(self, body: str, said: str):
+        with pytest.raises(ScriptSyntaxError, match=re.escape(said)) as caught:
+            parse_script(self.FRONT + body)
+        assert caught.value.rule == "composition"
+
+    def test_a_member_no_panel_draws_is_checked_where_it_is_written(self):
+        """In the front matter, once: no panel draws them, so no panel checks them."""
+        script = (
+            self.WITH_CAROL.replace(
+                "CAROL: {reference: alice}", "CAROL: {reference: alice, marks: [plewds, plewds]}"
+            )
+            + "PANEL 1\nALICE\nHi.\n"
+        )
+        said = "line 5: in the front matter, at cast.CAROL.marks: mark listed more than once"
+        with pytest.raises(ScriptSyntaxError) as caught:
+            parse_script(script, source=Path("x.script.md"))
+        error = caught.value
+        assert (error.rule, error.line, error.source) == ("invalid-field", 5, Path("x.script.md"))
+        assert said in str(error)
+        (found,) = diagnose_script(script)
+        assert found.message.startswith(said)
+        assert found.region is not None
+        assert found.region.start.line == 5
+
+    def test_front_matter_staging_keeps_what_names_only_who_is_drawn(self):
+        staging = "staging: [ALICE left_of BOB, ALICE left_of CAROL]\n"
+        front = self.WITH_CAROL.removesuffix("---\n") + staging + "---\n"
+        panels = parse_script(front + "PANEL 1\nALICE\nHi.\nBOB\nHey.\n")
+        ((subject, predicate, object_),) = [
+            (relation.subject, relation.predicate.value, relation.object)
+            for relation in panels["1"].staging
+        ]
+        assert (subject, predicate, object_) == ("ALICE", "left_of", "BOB")
 
     def test_front_matter_staging_keeps_to_who_is_drawn(self):
         front = (
