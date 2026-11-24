@@ -10,7 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from scenet.compose import CompositionError, merge, resolve_overrides
+from scenet.compose import (
+    CompositionError,
+    looks_toward,
+    merge,
+    names,
+    on_their_side,
+    resolve_overrides,
+)
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.frontends.script_front import ScriptSyntaxError, load_script, parse_script
 from scenet.frontends.yaml_front import PanelSyntaxError, load_scene, parse_panel, parse_scene
@@ -85,6 +92,60 @@ class TestResolveOverrides:
     def test_an_unknown_parent_names_what_exists(self):
         with pytest.raises(CompositionError, match="does not exist"):
             resolve_overrides({"a": {"over": "nowhere"}})
+
+
+class TestTheHelpers:
+    """What `settle` and a comic script ask of a relation, a line and a chain, directly."""
+
+    def test_an_over_that_is_no_name_says_what_it_is(self):
+        with pytest.raises(CompositionError) as caught:
+            resolve_overrides({"a": {}, "b": {"over": ["a"]}})
+        assert str(caught.value) == "panel 'b': 'over' must name a single panel, found list"
+        assert caught.value.loc == ("panels", "b", "over")
+
+    def test_a_cycle_is_named_panel_by_panel(self):
+        with pytest.raises(CompositionError) as caught:
+            resolve_overrides({"a": {"over": "b"}, "b": {"over": "a"}})
+        assert str(caught.value) == "'over' chain is cyclic: a -> b -> a"
+
+    @pytest.mark.parametrize(("actor", "named"), [("a", True), ("b", True), ("c", False)])
+    def test_a_relation_written_as_a_mapping_names_its_two_ends(self, actor: str, named: bool):
+        relation = {"subject": "a", "predicate": "left_of", "object": "b"}
+        assert names(relation, actor) is named
+        assert names("a left_of b", actor) is named
+
+    @pytest.mark.parametrize(
+        ("relation", "leaving", "toward"),
+        [
+            ("b looking_at c", {"c"}, True),
+            ({"subject": "b", "predicate": "looking_at", "object": "c"}, {"c"}, True),
+            ({"subject": "b", "predicate": "looking_at", "object": "c"}, {"b", "c"}, False),
+            ("b left_of c", set(), False),
+            ("b looking_at d", {"c"}, False),
+            ("b looking_at", {"c"}, False),
+            (["b", "looking_at", "c"], {"c"}, False),
+        ],
+        ids=["text", "mapping", "both-leave", "not-a-look", "another", "short", "a-list"],
+    )
+    def test_a_look_toward_who_leaves(self, relation: object, leaving: set[str], toward: bool):
+        assert looks_toward(relation, "c", leaving) is toward
+
+    @pytest.mark.parametrize(
+        ("cast", "by", "side"),
+        [
+            ({"a": {"at": "left_third"}}, "a", "left"),
+            ({"a": {"at": "right_edge"}}, "a", "right"),
+            ({"a": {"at": "center"}}, "a", True),
+            ({"a": None}, "a", True),
+            ({}, ["a"], True),
+        ],
+        ids=["left", "right", "no-side", "no-member", "no-name"],
+    )
+    def test_an_off_panel_line_takes_the_side_its_speaker_stood(
+        self, cast: dict[str, object], by: object, side: object
+    ):
+        event = {"say": {"by": by, "text": "Hi.", "off_panel": True}}
+        assert on_their_side(event, cast) == {"say": {**event["say"], "off_panel": side}}
 
 
 class TestSceneDocuments:
