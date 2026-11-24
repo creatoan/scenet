@@ -279,6 +279,11 @@ it is written, and says what to write instead.
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
 
+- **A scene default that every panel overrides is still checked**: `camera: ''` beside
+  `panels:`, with every panel writing its own camera, passed `scenet check` and built, while the
+  scene schema refused it. A default is now read as written, for what it holds on its own -- its
+  type, its words, its bounds, a key it does not have -- whichever panels inherit it; what needs
+  the rest of a panel is still the panels' to find. Found by the schema parity property.
 - **A cycle in depth order is found by `scenet check`** (#364): `a in_front_of b, b in_front_of
   a` passed the check and failed only in the solver, as `layout`; it is now `ordering-cycle`, at
   the relation that closes the cycle, as one left to right always was. No document is known to
