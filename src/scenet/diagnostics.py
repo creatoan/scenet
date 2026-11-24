@@ -1848,8 +1848,7 @@ def _diagnose_layout(
         or when it did not validate.
     """
     layout = {key: data[key] for key in LAYOUT_KEYS if key in data}
-    rest = {key: value for key, value in data.items() if key not in LAYOUT_KEYS}
-    raw = normalise_layout({**rest, **without_nulls(layout, PageLayout)})
+    raw = normalise_layout(without_nulls(layout, PageLayout))
     if not raw:
         return [], None
     try:
