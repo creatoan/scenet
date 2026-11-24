@@ -188,8 +188,9 @@ class TestAtTheEdge:
         monkeypatch.setattr(script_front, "LIMITS", Limits(document_bytes=size))
         assert parse_script(self.SCRIPT)
         with pytest.raises(ScriptSyntaxError) as caught:
-            parse_script(self.SCRIPT + " ")
-        assert caught.value.rule == LIMIT_RULE
+            parse_script(self.SCRIPT + " ", source=Path("x.script.md"))
+        assert (caught.value.rule, caught.value.source) == (LIMIT_RULE, Path("x.script.md"))
+        assert past("document_bytes", size + 1, size) in str(caught.value)
 
     @pytest.mark.parametrize("count", [2, 3])
     def test_panels_up_to_the_limit_are_read(self, monkeypatch: pytest.MonkeyPatch, count: int):
