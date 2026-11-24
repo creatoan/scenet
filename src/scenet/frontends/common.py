@@ -13,13 +13,23 @@ does.
 
 import difflib
 import re
+from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
+from scenet.compose import settle
 from scenet.errors import PanelSyntaxError, RuleViolationError
-from scenet.ir import PUPPET_KEYS, RETIRED_KEYS, Predicate, Relation, retired_key, retired_value
+from scenet.ir import (
+    PUPPET_KEYS,
+    RETIRED_KEYS,
+    PanelIR,
+    Predicate,
+    Relation,
+    retired_key,
+    retired_value,
+)
 from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.places import PLACES, Place
 from scenet.safe_yaml import mistyped
@@ -599,6 +609,52 @@ def first_fault(exc: ValidationError) -> tuple[str | None, tuple[str | int, ...]
     return rule_for_pydantic(errors[0])
 
 
+#: What pydantic finds wrong with a value only once the rest of its panel is there: a key
+#: left out, and a validator's rule, which may be over several keys. Every other fault is
+#: the value's own -- its type, its words, its bounds, a key it does not have.
+_NEEDS_THE_PANEL = frozenset({"missing", "value_error", "assertion_error"})
+
+
+def faults_of_defaults(defaults: dict[str, Any]) -> list[ErrorDetails]:
+    """The faults a scene's defaults have as they are written, whichever panels inherit them.
+
+    A default is checked as part of every panel that inherits it. One that every panel
+    overrides is inherited by none, and is still written: the scene's schema refuses
+    `camera: ''` beside `panels:` whatever the panels say, so the frontend does too. A
+    default need not be whole, so what needs the rest of a panel is left to the panels.
+
+    Args:
+        defaults: Everything beside `panels:` that the panels inherit, lowered.
+
+    Returns:
+        pydantic's errors about the defaults' own values, in its order; none when a
+        default needs a panel to be read at all.
+    """
+    try:
+        PanelIR.model_validate(normalise(settle(defaults)[0]))
+    except PanelSyntaxError:
+        # A fault the frontend finds while rewriting -- an image beside a place -- is one
+        # it finds in a panel that inherits the default, as it always has.
+        return []
+    except ValidationError as exc:
+        return [error for error in errors_of(exc) if error["type"] not in _NEEDS_THE_PANEL]
+    return []
+
+
+def check_defaults(defaults: dict[str, Any], source: Path | None) -> None:
+    """Refuse a scene's defaults over a fault in their own values.
+
+    Raises:
+        PanelSyntaxError: Naming each fault, and carrying the first one's rule and place.
+    """
+    faults = faults_of_defaults(defaults)
+    if faults:
+        rule, loc = rule_for_pydantic(faults[0])
+        raise PanelSyntaxError(
+            _summary(faults, "scene defaults"), source=source, rule=rule, loc=loc
+        )
+
+
 def summarise(exc: ValidationError, *, what: str = "panel") -> str:
     """Flatten pydantic's error list into something a human can act on.
 
@@ -612,8 +668,13 @@ def summarise(exc: ValidationError, *, what: str = "panel") -> str:
     Returns:
         A multi-line diagnostic, one line per problem, each naming where it is.
     """
+    return _summary(errors_of(exc), what)
+
+
+def _summary(errors: list[ErrorDetails], what: str) -> str:
+    """`summarise`, of errors already taken from their exception."""
     lines: list[str] = []
-    for error in errors_of(exc):
+    for error in errors:
         # A model-level validator reports `loc=()` -- the whole document -- because
         # pydantic gives it no way to say which field it was unhappy about. The two
         # checks that matter most here knew the exact path all along, and a

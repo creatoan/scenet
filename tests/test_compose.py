@@ -127,6 +127,42 @@ panels:
   two: {cast: {a: {reference: alice}}, staging: ["a left_of ghost"]}
 """)
 
+    # A default every panel overrides is still written, and is read as the scene's schema
+    # reads it: a value of the wrong shape is refused where it is written, though no panel
+    # inherits it. What needs the rest of a panel -- a key left to it, a rule over several
+    # keys -- is the panel's to find.
+    OVERRIDDEN = """
+cast: {a: {reference: alice}}
+panels:
+  one: {camera: {shot: long_shot}}
+  two: {over: one}
+camera: ''
+"""
+
+    def test_a_default_every_panel_overrides_is_still_checked(self):
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene(self.OVERRIDDEN)
+        assert (caught.value.rule, caught.value.loc) == ("invalid-field", ("camera",))
+
+    def test_check_finds_it_once_where_it_is_written(self):
+        found = diagnose_source(self.OVERRIDDEN, source=Path("x.scene.yaml"))
+        assert [(item.rule, item.path) for item in found] == [("invalid-field", ("camera",))]
+
+    def test_a_default_inherited_by_a_panel_is_still_found_once(self):
+        text = self.OVERRIDDEN.replace("  two: {over: one}\n", "  two: {}\n")
+        found = diagnose_source(text, source=Path("x.scene.yaml"))
+        assert [(item.rule, item.path) for item in found] == [("invalid-field", ("camera",))]
+
+    def test_a_default_need_not_be_whole(self):
+        """A key a default leaves out, or a rule over several keys, is a panel's to keep."""
+        scene = parse_scene("""
+cast: {a: {reference: alice, pose: pointing}}
+staging: ["a left_of b"]
+panels:
+  one: {cast: {b: {reference: bob}}}
+""")
+        assert list(scene["one"].cast) == ["a", "b"]
+
     def test_shipped_sequence_example_parses(self):
         scene = load_scene(EXAMPLES / "gallery" / "12-sequence.scene.yaml")
         assert list(scene) == ["establishing", "reaction", "closer"]
