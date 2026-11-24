@@ -23,7 +23,6 @@ missing, a file that is not a font -- is rule `font-file`, located at the face i
 """
 
 from collections import OrderedDict
-from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -86,11 +85,11 @@ def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...])
     )
 
     digest = FontMetrics.digest(data)
-    known = _BY_CONTENT.get(digest)
+    # Taken out and put back at the end, the one used last: each step alone, so that another
+    # thread letting it go between them costs a parse, never an error.
+    known = _BY_CONTENT.pop(digest, None)
     if known is not None:
-        # Another thread may have just let it go; it is the same font either way.
-        with suppress(KeyError):
-            _BY_CONTENT.move_to_end(digest)
+        _BY_CONTENT[digest] = known
         return known
     try:
         metrics = FontMetrics(Path(declared), data=data)

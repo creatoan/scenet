@@ -248,13 +248,18 @@ def _inflated(png: _Png, name: str) -> bytes:
         raw = inflater.decompress(png.data, size + 1)
     except zlib.error as exc:
         raise RenderError(f"{name} is a PNG whose image data cannot be read: {exc}") from exc
-    if len(raw) != size:
-        said = "inflates past" if len(raw) > size else "falls short of"
-        raise RenderError(
-            f"{name} is a PNG whose image data {said} the {png.width} by {png.height} pixels "
-            "its header gives"
-        )
+    if len(raw) > size:
+        raise _mismatch(png, name, "inflates past")
+    if len(raw) < size:
+        raise _mismatch(png, name, "falls short of")
     return raw
+
+
+def _mismatch(png: _Png, name: str, said: str) -> RenderError:
+    return RenderError(
+        f"{name} is a PNG whose image data {said} the {png.width} by {png.height} pixels its "
+        "header gives"
+    )
 
 
 def _data_size(png: _Png) -> int:
@@ -268,8 +273,9 @@ def _data_size(png: _Png) -> int:
         return png.height * (1 + (png.width * channels * png.depth + 7) // 8)
     size = 0
     for x0, y0, dx, dy in ADAM7:
-        across = (png.width - x0 + dx - 1) // dx if png.width > x0 else 0
-        down = (png.height - y0 + dy - 1) // dy if png.height > y0 else 0
+        # Nought for a pass that starts past the picture's edge: `x0` is less than `dx`.
+        across = (png.width - x0 + dx - 1) // dx
+        down = (png.height - y0 + dy - 1) // dy
         if across and down:
             size += down * (1 + (across * channels * png.depth + 7) // 8)
     return size

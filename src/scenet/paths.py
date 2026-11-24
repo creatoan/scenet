@@ -180,7 +180,7 @@ def marker_fault(marker: Path) -> MarkerError | None:
         The fault, or `None` for a file that holds nothing.
     """
     try:
-        text = read_bounded(marker, limits.DOCUMENT_BYTES, what="a scenet.toml").decode("utf-8")
+        text = read_bounded(marker, limits.DOCUMENT_BYTES, what="a scenet.toml").decode()
         held = tomllib.loads(text)
     except UnicodeDecodeError:
         return MarkerError(
@@ -193,7 +193,7 @@ def marker_fault(marker: Path) -> MarkerError | None:
         return MarkerError(
             f"scenet.toml is not TOML: {exc}; it holds nothing yet, so it can be empty",
             marker=marker,
-            line=getattr(exc, "lineno", 1) or 1,
+            line=_toml_line(exc),
             rule="syntax",
         )
     except OSError as exc:
@@ -221,6 +221,12 @@ def marker_fault(marker: Path) -> MarkerError | None:
         line=line,
         rule="not-yet",
     )
+
+
+def _toml_line(exc: tomllib.TOMLDecodeError) -> int:
+    """The line a TOML fault is on, which every Python's message gives: `(at line 2, ...)`."""
+    found = re.search(r"at line (\d+)", str(exc))
+    return int(found.group(1)) if found else 1
 
 
 def _chosen_root(
@@ -382,6 +388,11 @@ def resolve_relative(
     return base / declared
 
 
+#: How a file is opened: for reading; as bytes, where the system tells text from bytes; and
+#: without waiting, where it can, so that a pipe put in a file's place is opened at once.
+_READ_FLAGS = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0)
+
+
 class NotRegularFileError(OSError):
     """A path to something that is not a regular file: a folder, a device, a pipe."""
 
@@ -460,12 +471,14 @@ def read_bounded(path: Path, limit: int | None, *, what: str = "a file") -> byte
         raise FileTooLargeError(path, limit, what)
     # Not blocking where the system has the flag, in case a pipe was put in its place
     # since: opened that way, it is opened at once, and refused below.
-    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0)
-    with os.fdopen(os.open(path, flags), "rb") as file:
+    with os.fdopen(os.open(path, _READ_FLAGS), "rb") as file:
         if not stat.S_ISREG(os.fstat(file.fileno()).st_mode):
             raise NotRegularFileError(path)
-        data = file.read() if limit is None else file.read(limit + 1)
-    if limit is not None and len(data) > limit:
+        if limit is None:
+            return file.read()
+        data = file.read(limit + 1)
+    # At most one byte past the bound was read: that byte is what makes it too large.
+    if len(data) == limit + 1:
         raise FileTooLargeError(path, limit, what)
     return data
 
@@ -515,7 +528,7 @@ def read_document(path: Path, *, error: type[PanelSyntaxError] = PanelSyntaxErro
     try:
         data = read_bounded(path, limits.DOCUMENT_BYTES, what="a document")
         # As `Path.read_text` reads it: a line may end in CR LF or CR.
-        return data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+        return data.decode().replace("\r\n", "\n").replace("\r", "\n")
     except UnicodeDecodeError as exc:
         raise error(
             f"not UTF-8 text: byte {exc.start} is {exc.object[exc.start]:#04x}; save the "
@@ -787,7 +800,7 @@ def read_model[M: BaseModel](
     # they did not have. Read from disk, it may be any file the document reached.
     quoted = isinstance(base, Mapping)
     try:
-        text = data.decode("utf-8")
+        text = data.decode()
     except UnicodeDecodeError as exc:
         raise error("it is not UTF-8 text", file=declared, loc=loc) from exc
     try:
