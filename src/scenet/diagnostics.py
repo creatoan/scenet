@@ -1838,16 +1838,17 @@ def _unread_defaults(
     A default every panel overrides was read by none of them, and is written all the same.
     One a panel inherits is in `found` already, where it is written.
     """
+    # pydantic reports a value once, so only what the panels found is found twice; and a
+    # fault of a default's own value is never a validator's, so no message says so.
     seen = {(item.rule, item.path) for item in found}
     unread: list[Diagnostic] = []
     for error in faults_of_defaults(defaults):
         rule, path = rule_for_pydantic(error)
         if (rule, path) not in seen:
-            seen.add((rule, path))
             unread.append(
                 Diagnostic(
                     rule=rule,
-                    message=str(error["msg"]).removeprefix("Value error, "),
+                    message=str(error["msg"]),
                     path=path,
                     source=source,
                     region=locate(text, path) or DOCUMENT_START,
