@@ -133,14 +133,18 @@ check("a fix, once saved, clears its finding", async () => {
 });
 
 check("--deep finds what only a compile can", async () => {
-  const uri = corpus("layout.panel.yaml");
+  // A balloon with no room: only the compile finds it (no document gives `layout` now).
+  const uri = corpus("balloon-placement.panel.yaml");
   await open(uri);
   await setting("checkDeep", true);
   try {
-    await until(() => findings(uri).length > 0, "layout.panel.yaml has a finding under --deep");
+    await until(
+      () => findings(uri).length > 0,
+      "balloon-placement.panel.yaml has a finding under --deep",
+    );
     const [finding] = findings(uri);
     assert.ok(finding && typeof finding.code === "object");
-    assert.equal(finding.code.value, "scenet/layout");
+    assert.equal(finding.code.value, "scenet/balloon-placement");
   } finally {
     await setting("checkDeep", undefined);
   }
