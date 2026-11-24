@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from scenet.cli import main
+from tests.under_mutmut import reads_the_source
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -127,6 +128,7 @@ class TestEveryWriterSaysLf:
     """The byte checks above only fail on Windows. This one fails everywhere: a new
     `write_text` that leaves the line ending to the platform is caught on Linux too."""
 
+    @reads_the_source
     @pytest.mark.parametrize("path", WRITERS, ids=lambda path: path.relative_to(REPO).as_posix())
     def test_write_text_passes_newline(self, path: Path):
         unpinned = [
