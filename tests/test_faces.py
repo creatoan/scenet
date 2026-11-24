@@ -17,6 +17,7 @@ import pytest
 from pydantic import ValidationError
 
 from scenet.assets.contract import (
+    CORE_POSES,
     ExpressionSpec,
     Feature,
     PuppetLibrary,
@@ -104,7 +105,7 @@ class TestTheContract:
 
     def test_a_puppet_declares_the_core_vocabulary(self):
         """`neutral` among the rest: what a member gets unasked (#360)."""
-        with pytest.raises(ValueError, match="of the poses every puppet declares"):
+        with pytest.raises(ValueError, match="declares no 'neutral'"):
             PuppetSpec.model_validate(
                 _minimal(
                     features={
@@ -441,7 +442,8 @@ def _minimal(
         "joints": {"root": {"parent": None}, "head": {"parent": "root", "offset": [0, -300]}},
         "anchors": {"eyes": {"joint": "head", "offset": [0, -10]}},
         "face": face,
-        "poses": {"standing_neutral": {}},
+        # The core poses every puppet declares, at rest: a pose need move no joint.
+        "poses": {name: {} for name in CORE_POSES},
     }
     if expressions is not None:
         document["expressions"] = expressions

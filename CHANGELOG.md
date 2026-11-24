@@ -136,8 +136,9 @@ it is written, and says what to write instead.
 - **Every puppet declares a core vocabulary of poses and expressions** (#360): the poses
   `standing_neutral`, `arms_crossed`, `hands_on_hips` and `pointing`, and the expressions
   `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing` and
-  `shouting`. A document that names only these is valid with any puppet; a puppet file that
-  leaves one out is a `puppet-file` finding, in that file. A puppet may declare more of its own.
+  `shouting`, which every puppet with face features declares (one with none takes any
+  expression, drawn alike). A document that names only these is valid with any puppet; a puppet
+  file that leaves one out is a `puppet-file` finding, in that file. A puppet may declare more of its own.
   The JSON Schemas offer the core names for every `pose` and `expression`, and for a member whose
   `reference` names a shipped puppet, that puppet's names only, so `pose: shrugging` on `alice`
   is refused as it is written; `scenet schema --puppet` requires the vocabulary. The puppet

@@ -15,7 +15,7 @@ import pytest
 import yaml
 from pydantic import BaseModel, ValidationError, model_validator
 
-from scenet.assets.contract import PuppetLibrary, PuppetSpec
+from scenet.assets.contract import CORE_POSES, PuppetLibrary, PuppetSpec
 from scenet.diagnostics import (
     _PYDANTIC_RULES,
     _RULE_FOR_ERROR_TYPE,
@@ -101,7 +101,8 @@ _FEATURELESS_PUPPET: dict[str, Any] = {
     "joints": {"root": {"parent": None}, "head": {"parent": "root", "offset": [0, -300]}},
     "anchors": {"eyes": {"joint": "head", "offset": [0, -10]}},
     "face": {"joint": "head", "radius": 60},
-    "poses": {"standing_neutral": {}},
+    # The core poses every puppet declares, at rest: a pose need move no joint.
+    "poses": {name: {} for name in CORE_POSES},
 }
 
 

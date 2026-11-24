@@ -50,7 +50,7 @@ print([(actor.id, actor.reference, actor.pose) for actor in result.core.actors])
 ```
 
 ```text
-pip ['standing_neutral', 'waving', 'arms_up'] ['neutral', 'happy', 'surprise', 'scared', 'sad']
+pip ['standing_neutral', 'waving', 'arms_up', 'arms_crossed', 'pointing', 'hands_on_hips'] ['neutral', 'happy', 'surprise', 'scared', 'sad', 'angry', 'bored', 'coy', 'laughing', 'shouting']
 ('alice', 'pip')
 [('alice', 'alice', 'standing_neutral'), ('pip', 'pip', 'waving')]
 ```

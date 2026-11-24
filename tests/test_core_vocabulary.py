@@ -136,7 +136,7 @@ class TestTheSchema:
 
     def test_the_puppet_schema_states_the_obligation(self):
         schema = puppet_schema()
-        assert {"poses", "expressions"} <= set(schema["required"])
+        assert "poses" in schema["required"]
         assert schema["properties"]["poses"]["required"] == list(CORE_POSES)
         assert schema["properties"]["expressions"]["required"] == list(CORE_EXPRESSIONS)
         assert "Every puppet declares" in schema["properties"]["poses"]["description"]
