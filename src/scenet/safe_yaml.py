@@ -577,7 +577,7 @@ def load(text: str, *, as_json: bool = False) -> object:
     r"""Parse a Scenet YAML document, or a Scenet JSON one.
 
     A document whose text opens a JSON object, or that `as_json` says is JSON -- a file
-    that ends in `.json` -- is read by :func:`scenet.safe_json.load`, into the same data
+    that ends in `.json` -- is read by `scenet.safe_json.load`, into the same data
     model.
 
     Args:
