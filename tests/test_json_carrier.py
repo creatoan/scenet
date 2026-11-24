@@ -315,6 +315,27 @@ class TestTheReader:
             compose(text.replace("BS", chr(92)))
         assert caught.value.problem == problem.replace("BS", chr(92))
 
+    @pytest.mark.parametrize(
+        ("text", "problem", "column"),
+        [
+            ('{"a":\n"x yBSq"}', "'BSBSq' is no escape JSON has: write BSBS for a backslash", 4),
+            ('{"a": "BSnBSu00E9' + chr(1) + '"}', "a string holds U+0001", 15),
+            ('{"a": "x', "a string is opened and never closed", 6),
+        ],
+        ids=["after-a-break", "after-good-escapes", "unclosed"],
+    )
+    def test_a_bad_string_is_found_where_it_goes_wrong(self, text: str, problem: str, column: int):
+        with pytest.raises(JsonSyntaxError) as caught:
+            compose(text.replace("BS", chr(92)))
+        assert caught.value.problem is not None
+        assert caught.value.problem.startswith(problem.replace("BS", chr(92)))
+        assert caught.value.problem_mark is not None
+        assert caught.value.problem_mark.column == column
+
+    def test_a_number_json_cannot_write_is_refused(self):
+        with pytest.raises(ValueError, match="not JSON compliant"):
+            dump({"a": float("nan")})
+
     def test_a_control_character_is_found_where_it_is(self):
         with pytest.raises(JsonSyntaxError) as caught:
             compose('{"a": "' + chr(1) + '"}')
