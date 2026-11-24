@@ -13,9 +13,12 @@ import re
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+from pydantic_core import ErrorDetails
 
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
+from scenet.frontends.common import _name_what_replaced, errors_of
 from scenet.frontends.script_front import FRENCH_SHOTS, parse_script
 from scenet.frontends.yaml_front import parse_scene_document
 from scenet.ir import (
@@ -23,6 +26,7 @@ from scenet.ir import (
     RETIRED_VALUES,
     Corner,
     Inset,
+    PanelPlacement,
     ShotType,
     retired_key,
     retired_value,
@@ -142,6 +146,35 @@ class TestTheInsetScale:
         (found,) = diagnose_source("panel: {size: [1, 1], scale: 2}\ncast: {a: {reference: alice}}")
         assert found.rule == "unknown-key"
         assert "'size'" not in found.message
+
+    def test_two_insets_sized_are_one_finding_each(self):
+        found = diagnose_source(
+            scene("[{use: a, at: top_left, size: 0.2}, {use: b, at: bottom_right, size: 0.2}]")
+        )
+        assert [item.rule for item in found] == ["unknown-key", "unknown-key"]
+
+    def test_a_key_missing_elsewhere_is_still_missing(self):
+        """Only the `scale` the inset's `size` stands for is spoken for, not another."""
+        found = diagnose_source(scene("[{at: top_left, size: 0.2}]"))
+        assert sorted(item.rule for item in found) == ["missing-field", "unknown-key"]
+
+    def test_an_inset_validated_on_its_own_is_told_too(self):
+        with pytest.raises(ValidationError) as caught:
+            PanelPlacement.model_validate(
+                {"use": "a", "insets": [{"use": "b", "at": "top_left", "size": 0.2}]}
+            )
+        (error,) = errors_of(caught.value)
+        assert error["msg"] == retired_key("insets", "size")
+
+    def test_a_fault_at_an_index_does_not_stop_the_rest_being_told(self):
+        errors: list[ErrorDetails] = [
+            {"type": "enum", "loc": ("marks", 0), "msg": "m", "input": "x"},
+            {"type": "enum", "loc": ("camera", "shot"), "msg": "m", "input": "wide"},
+        ]
+        assert [error["msg"] for error in _name_what_replaced(errors)] == [
+            "m",
+            retired_value("shot", "wide"),
+        ]
 
     def test_the_table_lists_the_renamed_key(self):
         assert RETIRED_KEYS["insets"] == {"size": "scale"}
