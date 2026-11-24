@@ -70,10 +70,22 @@ gaze:
 
 poses:
   standing_neutral: {elbow_l: -5, elbow_r: 5}
+  arms_crossed: {elbow_l: -25, elbow_r: 25}
+  hands_on_hips: {elbow_l: 20, elbow_r: -20}
+  pointing: {elbow_l: -8, elbow_r: -85}
   cartwheel: {elbow_l: 160, elbow_r: -160}
 
 expressions:
   neutral: {}
+  happy: {mouth: smile}
+  sad: {eyes: half, mouth: frown}
+  angry: {eyes: narrowed, mouth: frown}
+  surprise: {eyes: wide, mouth: open}
+  scared: {eyes: wide, mouth: small}
+  bored: {eyes: half, mouth: flat}
+  coy: {eyes: narrowed, mouth: small}
+  laughing: {eyes: closed, mouth: grin}
+  shouting: {eyes: wide, mouth: open}
   dizzy: {eyes: closed, mouth: open}
 """
 

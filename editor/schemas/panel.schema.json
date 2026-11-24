@@ -196,6 +196,152 @@
       "anyOf": [
         {
           "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "reference": {
+                    "const": "alice"
+                  }
+                },
+                "required": [
+                  "reference"
+                ]
+              },
+              "then": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "pose": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "arms_crossed",
+                                  "hands_on_hips",
+                                  "pointing",
+                                  "standing_neutral"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "pose"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "expression": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "angry",
+                                  "bored",
+                                  "coy",
+                                  "happy",
+                                  "laughing",
+                                  "neutral",
+                                  "sad",
+                                  "scared",
+                                  "shouting",
+                                  "surprise"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "expression"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "reference": {
+                    "const": "bob"
+                  }
+                },
+                "required": [
+                  "reference"
+                ]
+              },
+              "then": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "pose": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "arms_crossed",
+                                  "hands_on_hips",
+                                  "pointing",
+                                  "standing_neutral"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "pose"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "expression": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "angry",
+                                  "bored",
+                                  "coy",
+                                  "happy",
+                                  "laughing",
+                                  "neutral",
+                                  "sad",
+                                  "scared",
+                                  "shouting",
+                                  "surprise"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "expression"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ],
           "anyOf": [
             {
               "not": {
@@ -280,6 +426,21 @@
             "expression": {
               "anyOf": [
                 {
+                  "description": "A expression every puppet declares.",
+                  "enum": [
+                    "neutral",
+                    "happy",
+                    "sad",
+                    "angry",
+                    "surprise",
+                    "scared",
+                    "bored",
+                    "coy",
+                    "laughing",
+                    "shouting"
+                  ]
+                },
+                {
                   "type": [
                     "string",
                     "number",
@@ -346,6 +507,15 @@
             },
             "pose": {
               "anyOf": [
+                {
+                  "description": "A pose every puppet declares.",
+                  "enum": [
+                    "standing_neutral",
+                    "arms_crossed",
+                    "hands_on_hips",
+                    "pointing"
+                  ]
+                },
                 {
                   "type": [
                     "string",
@@ -441,6 +611,152 @@
     },
     "CastMember": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reference": {
+                "const": "alice"
+              }
+            },
+            "required": [
+              "reference"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "pose": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "arms_crossed",
+                              "hands_on_hips",
+                              "pointing",
+                              "standing_neutral"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "pose"
+                  ]
+                },
+                {
+                  "properties": {
+                    "expression": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "angry",
+                              "bored",
+                              "coy",
+                              "happy",
+                              "laughing",
+                              "neutral",
+                              "sad",
+                              "scared",
+                              "shouting",
+                              "surprise"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reference": {
+                "const": "bob"
+              }
+            },
+            "required": [
+              "reference"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "pose": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "arms_crossed",
+                              "hands_on_hips",
+                              "pointing",
+                              "standing_neutral"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "pose"
+                  ]
+                },
+                {
+                  "properties": {
+                    "expression": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "angry",
+                              "bored",
+                              "coy",
+                              "happy",
+                              "laughing",
+                              "neutral",
+                              "sad",
+                              "scared",
+                              "shouting",
+                              "surprise"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
       "anyOf": [
         {
           "not": {
@@ -525,6 +841,21 @@
         "expression": {
           "anyOf": [
             {
+              "description": "A expression every puppet declares.",
+              "enum": [
+                "neutral",
+                "happy",
+                "sad",
+                "angry",
+                "surprise",
+                "scared",
+                "bored",
+                "coy",
+                "laughing",
+                "shouting"
+              ]
+            },
+            {
               "type": [
                 "string",
                 "number",
@@ -587,6 +918,15 @@
         },
         "pose": {
           "anyOf": [
+            {
+              "description": "A pose every puppet declares.",
+              "enum": [
+                "standing_neutral",
+                "arms_crossed",
+                "hands_on_hips",
+                "pointing"
+              ]
+            },
             {
               "type": [
                 "string",

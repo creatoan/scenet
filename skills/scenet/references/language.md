@@ -1503,7 +1503,8 @@ A pose the puppet declares, by name.
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | text |
+| Type | a name, or text |
+| Values | `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing` |
 | Default | `standing_neutral` |
 | Since | 0.1 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-pose`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-pose), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
@@ -1532,7 +1533,8 @@ An expression the puppet declares, by name.
 | | |
 |---|---|
 | Where | A `.panel.yaml`; a panel under `panels:`; beside `panels:`, for every panel. In a comic script: `@cast:` in a panel, or `cast:` in the front matter |
-| Type | text |
+| Type | a name, or text |
+| Values | `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting` |
 | Default | `neutral` |
 | Since | 0.5 |
 | Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-expression`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-expression), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast) |
@@ -4195,12 +4197,36 @@ poses:
     elbow_r: -155
     wrist_r: 20
 
+  # The core poses every puppet declares, so a document that keeps to them works with pip:
+  # the same joints as the shipped puppets, so the same angles.
+  arms_crossed:
+    elbow_l: -25
+    wrist_l: -75
+    elbow_r: 25
+    wrist_r: 75
+
+  pointing:
+    elbow_r: -85
+    wrist_r: 0
+    elbow_l: -8
+
+  hands_on_hips:
+    elbow_l: 20
+    wrist_l: -110
+    elbow_r: -20
+    wrist_r: 110
+
 expressions:
   neutral:  {}
   happy:    {mouth: smile}
   surprise: {brow: raised,     eyes: wide, mouth: open}
   scared:   {brow: angled_out, eyes: wide, mouth: small}
   sad:      {brow: angled_out, eyes: half, mouth: frown}
+  angry:    {brow: angled_in,  eyes: narrowed, mouth: frown}
+  bored:    {brow: lowered,    eyes: half, mouth: flat}
+  coy:      {brow: raised,     eyes: narrowed, mouth: small}
+  laughing: {brow: raised,     eyes: closed, mouth: grin}
+  shouting: {brow: angled_in,  eyes: wide, mouth: open}
 ```
 
 ```yaml
@@ -4210,6 +4236,24 @@ cast:
   pip: {reference: puppets/pip.puppet.yaml, pose: arms_up, expression: happy, at: right_third, facing: left}
 staging: [alice ground_shared_with pip]
 ```
+
+### The core vocabulary
+
+**Normative.** Every puppet, shipped or supplied, declares every pose and every expression of the
+core vocabulary, so a document that keeps to it is valid with any puppet: a model that writes only
+these cannot name a pose the puppet lacks. A puppet may declare more poses and expressions, which
+are its own, Pip's `waving` and `arms_up` say; a document that names one works with that puppet.
+
+| | The core vocabulary |
+|---|---|
+| Poses | `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing` |
+| Expressions | `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting` |
+
+`standing_neutral` and `neutral` are what a cast member gets when it names no pose or expression. A
+puppet file that leaves out one of them is a `puppet-file` finding, in the puppet file, at its
+`poses` or `expressions`. The JSON Schema offers the core names for every cast member's `pose` and
+`expression`, and for one whose `reference` names a shipped puppet, that puppet's names only; a
+supplied puppet's own names are checked by `scenet check`, which reads the file.
 
 ### `name`
 
@@ -4725,7 +4769,7 @@ The anchor the line of sight starts at, which must be one of the puppet's [ancho
 ### `poses`
 
 <!-- facts: poses -->
-Named poses, each a set of joint angles.
+Named poses, each a set of joint angles. Every puppet declares the core poses: `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing`; it may declare more of its own.
 
 | | |
 |---|---|
@@ -4744,13 +4788,13 @@ pose names must be declared. See [the example](#a-puppet-file).
 ### `expressions`
 
 <!-- facts: expressions -->
-Named expressions, each a state of brow, eyes and mouth.
+Named expressions, each a state of brow, eyes and mouth. Every puppet declares the core expressions: `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting`; it may declare more of its own.
 
 | | |
 |---|---|
 | Where | A puppet file, a `.puppet.yaml`. Not in a comic script |
 | Type | a mapping |
-| Default | none |
+| Default | none: required |
 | Since | 0.13 |
 | Diagnostics | [`puppet-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#puppet-file) |
 <!-- /facts -->

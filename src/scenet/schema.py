@@ -37,7 +37,13 @@ import re
 from typing import Any
 
 from scenet.assets.artwork import ArtworkContract
-from scenet.assets.contract import DEFAULT_POSE, Landmark, PuppetSpec
+from scenet.assets.contract import (
+    CORE_EXPRESSIONS,
+    CORE_POSES,
+    Landmark,
+    PuppetSpec,
+    default_library,
+)
 from scenet.compose import DIRECTION_KEY, ID_KEY, NOT_DEFAULTS, REMOVE_KEY
 from scenet.identifiers import EXTENSION_PREFIX, GRAMMAR
 from scenet.ir import (
@@ -148,6 +154,7 @@ def panel_schema() -> dict[str, Any]:
     _accept_one_font_file(definitions)
     _accept_cast_removal(schema)
     _puppet_or_figure(definitions)
+    _core_vocabulary(definitions)
     _positive_size(definitions)
     _speaker_only_when_spoken(definitions)
     _accept_nulls(schema, definitions)
@@ -566,15 +573,68 @@ def _every_landmark(schema: dict[str, Any]) -> None:
 
 
 def _default_pose(schema: dict[str, Any]) -> None:
-    """Mirror `check_default_pose`: every puppet declares the pose a member gets unasked.
+    """Mirror `check_default_pose`: every puppet declares the core vocabulary.
 
-    The model gives `poses` a default, so it is not required there; the validator makes
-    it so, since a puppet without `standing_neutral` fails every member that names no
-    pose.
+    The model gives `poses` and `expressions` defaults, so they are not required there;
+    the validator makes them so, and every core pose and expression in them: a document
+    that keeps to those is valid with any puppet.
     """
-    schema["required"].append("poses")
-    poses: dict[str, Any] = schema["properties"]["poses"]
-    poses["required"] = [DEFAULT_POSE]
+    for key, core in (("poses", CORE_POSES), ("expressions", CORE_EXPRESSIONS)):
+        schema["required"].append(key)
+        declared: dict[str, Any] = schema["properties"][key]
+        declared["required"] = list(core)
+        declared["description"] = (
+            f"{declared['description']} Every puppet declares the core {key}: "
+            f"{', '.join(f'`{name}`' for name in core)}; it may declare more of its own."
+        )
+
+
+def _core_vocabulary(definitions: dict[str, Any]) -> None:
+    """Mirror `scenet check` on a cast member's pose and expression, as far as a schema can.
+
+    Each offers the core vocabulary, which every puppet declares, so an editor and a model
+    are shown it; any other name stays allowed, since a supplied puppet may declare more,
+    and the compiler checks it. A member whose `reference` names a shipped puppet takes
+    that puppet's own names only.
+    """
+    member: dict[str, Any] = definitions["CastMember"]
+    properties: dict[str, Any] = member["properties"]
+    for key, core in (("pose", CORE_POSES), ("expression", CORE_EXPRESSIONS)):
+        node = properties[key]
+        branches = node.get("anyOf", [{k: v for k, v in node.items() if k not in _OUTER}])
+        offered = {"enum": list(core), "description": f"A {key} every puppet declares."}
+        outer = {k: v for k, v in node.items() if k in _OUTER}
+        properties[key] = {**outer, "anyOf": [offered, *branches]}
+    library = default_library()
+    shipped = []
+    for name in sorted(library.names()):
+        puppet = library.get(name)
+        own = {"pose": sorted(puppet.poses), "expression": sorted(puppet.expressions)}
+        # Under `not`, as every condition on a key is: `then: {properties: ...}` would be
+        # read as the key's own description by whatever lists the keys.
+        shipped.append(
+            {
+                "if": {"required": ["reference"], "properties": {"reference": {"const": name}}},
+                "then": {
+                    "not": {
+                        "anyOf": [
+                            {
+                                "required": [key],
+                                "properties": {
+                                    key: {"not": {"anyOf": [{"enum": names}, {"type": "null"}]}}
+                                },
+                            }
+                            for key, names in own.items()
+                        ]
+                    }
+                },
+            }
+        )
+    member["allOf"] = [*member.get("allOf", ()), *shipped]
+
+
+#: A node's keys that say what it is rather than what it takes.
+_OUTER = ("title", "description", "default")
 
 
 def _positive_size(definitions: dict[str, Any]) -> None:

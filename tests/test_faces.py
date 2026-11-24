@@ -102,8 +102,9 @@ class TestTheContract:
         with pytest.raises(ValueError, match="no face features"):
             PuppetSpec.model_validate(_minimal(expressions={"neutral": {}}))
 
-    def test_expressions_must_include_neutral(self):
-        with pytest.raises(ValueError, match="not 'neutral'"):
+    def test_a_puppet_declares_the_core_vocabulary(self):
+        """`neutral` among the rest: what a member gets unasked (#360)."""
+        with pytest.raises(ValueError, match="of the poses every puppet declares"):
             PuppetSpec.model_validate(
                 _minimal(
                     features={

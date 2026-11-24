@@ -133,6 +133,15 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **Every puppet declares a core vocabulary of poses and expressions** (#360): the poses
+  `standing_neutral`, `arms_crossed`, `hands_on_hips` and `pointing`, and the expressions
+  `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing` and
+  `shouting`. A document that names only these is valid with any puppet; a puppet file that
+  leaves one out is a `puppet-file` finding, in that file. A puppet may declare more of its own.
+  The JSON Schemas offer the core names for every `pose` and `expression`, and for a member whose
+  `reference` names a shipped puppet, that puppet's names only, so `pose: shrugging` on `alice`
+  is refused as it is written; `scenet schema --puppet` requires the vocabulary. The puppet
+  reference lists it in one table. The gallery's Pip declares it, and example 69 draws it.
 - **A `null` in a mapping inside a list is a key not written** (#375), as it is in any other
   mapping: `script: [{sfx: {text: BANG, hollow: null}}]` and `tiers: [{height: null, ...}]` were
   refused, and are read as if the key were left out. A list is never merged into, so there is

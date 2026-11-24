@@ -36,7 +36,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`defaults`](document.md#defaults) | panel, scene | Kept for a later version of the language. Refused until then: in a scene, a key written beside `panels:` is a default every panel inherits. | 0.14 |
 | [`description`](description.md#description) | panel, scene | What the panel shows, in words, for a reader who cannot see it. Carried into the SVG as its accessible name and never interpreted. Not inherited: a panel drawn `over:` another is a different picture. Left out, one is generated from the shot, the setting and the cast. | 0.12 |
 | [`direction`](direction.md#direction) | panel, scene | Which way the comic is read: `ltr` from the top left, `rtl` from the top right, as manga are -- panels, pages and the balloons in a panel. Its progression, not its text: the words in a balloon still read left to right. Written once for the whole document; the scene is never mirrored. | 0.12 |
-| [`expressions`](puppet.md#expressions) | puppet | Named expressions, each a state of brow, eyes and mouth. | 0.13 |
+| [`expressions`](puppet.md#expressions) | puppet | Named expressions, each a state of brow, eyes and mouth. Every puppet declares the core expressions: `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting`; it may declare more of its own. | 0.13 |
 | [`expressions.<expression>.brow`](puppet.md#expressionsexpressionbrow) | puppet | The brows' state. | 0.13 |
 | [`expressions.<expression>.eyes`](puppet.md#expressionsexpressioneyes) | puppet | The eyes' state. | 0.13 |
 | [`expressions.<expression>.mouth`](puppet.md#expressionsexpressionmouth) | puppet | The mouth's state. | 0.13 |
@@ -103,7 +103,7 @@ in. A name in angle brackets is the author's: `cast.<id>.pose` is `pose` under a
 | [`parts[].radius`](puppet.md#partsradius) | puppet | Its radius, in the puppet's own units. | 0.13 |
 | [`parts[].to`](puppet.md#partsto) | puppet | The joint the bone ends at. | 0.13 |
 | [`parts[].width`](puppet.md#partswidth) | puppet | How thick it is drawn, in the puppet's own units. | 0.13 |
-| [`poses`](puppet.md#poses) | puppet | Named poses, each a set of joint angles. | 0.13 |
+| [`poses`](puppet.md#poses) | puppet | Named poses, each a set of joint angles. Every puppet declares the core poses: `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing`; it may declare more of its own. | 0.13 |
 | [`root`](puppet.md#root) | puppet | The joint every other one hangs from. | 0.13 |
 | [`root_landmark`](puppet.md#root_landmark) | puppet | The landmark the root joint sits at. | 0.13 |
 | [`say`](script.md#say) | panel, scene | A line of dialogue, in a balloon whose tail points at the speaker. | 0.1 |
