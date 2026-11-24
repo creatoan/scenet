@@ -236,14 +236,22 @@ class TestAtTheEdge:
         below = Limits(
             panels_per_document=1, panel_side=499, actors_per_panel=1, events_per_panel=1
         )
-        assert [found.loc for found in exceeded(panels, below)] == [
-            ("panels", "a", "panel", "size")
-        ]
+        (found,) = exceeded(panels, below)
+        assert found.loc == ("panels", "a", "panel", "size")
+        assert found.message == past("panel_side", 500, 499)
+
+    def test_a_host_limit_on_text_takes_a_text_at_it(self):
+        text = self.TEXT + "script: [{caption: {text: abc}}]\n"
+        panels = {"one": parse_panel(text)}
+        assert list(exceeded(panels, Limits(characters_per_text=3))) == []
+        (found,) = exceeded(panels, Limits(characters_per_text=2))
+        assert found.message == past("characters_per_text", 3, 2)
 
     def test_a_host_limit_on_panels_counts_them(self):
         panels = parse_scene_document(self.TEXT + "panels: {a: {}, b: {}}\n").panels
         (found,) = exceeded(panels, Limits(panels_per_document=1))
         assert found.loc == ("panels",)
+        assert found.message == past("panels_per_document", 2, 1)
 
     def test_a_host_limit_on_events_and_people(self):
         two = "cast: {a: {reference: alice}, b: {reference: bob}}\n"
@@ -257,6 +265,11 @@ class TestAtTheEdge:
             item.loc for item in exceeded(panels, Limits(actors_per_panel=1, events_per_panel=1))
         ]
         assert found == [("panels", "one", "cast"), ("panels", "one", "script")]
+        messages = [
+            item.message
+            for item in exceeded(panels, Limits(actors_per_panel=1, events_per_panel=1))
+        ]
+        assert messages == [past("actors_per_panel", 2, 1), past("events_per_panel", 2, 1)]
 
 
 class TestTheFilesAtTheEdge:
