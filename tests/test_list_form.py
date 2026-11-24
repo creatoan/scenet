@@ -94,16 +94,19 @@ SMALL = [
 ]
 
 
-class TestKeyOrder:
-    @settings(max_examples=12, deadline=None)
-    @given(st.sampled_from(SMALL), st.randoms(use_true_random=False))
-    def test_reordering_any_mapping_of_a_list_form_document_changes_nothing(
-        self, path: Path, rng: random.Random
-    ):
-        text = path.read_text(encoding="utf-8")
-        document = as_lists(mapping(text))
-        assert cores(dump(_shuffled(document, rng)), path) == cores(dump(document), path)
+# A function, not a method: mutmut runs the suite from executors of its own, and Hypothesis
+# refuses a method it is handed by more than one.
+@settings(max_examples=12, deadline=None)
+@given(st.sampled_from(SMALL), st.randoms(use_true_random=False))
+def test_reordering_any_mapping_of_a_list_form_document_changes_nothing(
+    path: Path, rng: random.Random
+):
+    text = path.read_text(encoding="utf-8")
+    document = as_lists(mapping(text))
+    assert cores(dump(_shuffled(document, rng)), path) == cores(dump(document), path)
 
+
+class TestKeyOrder:
     def test_a_sorted_mapping_reorders_the_comic(self):
         """Why the list form exists: in the mapping form, key order is reading order."""
         text = "cast: {a: {reference: alice}}\npanels: {zebra: {}, apple: {}}\n"
