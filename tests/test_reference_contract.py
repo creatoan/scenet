@@ -47,7 +47,7 @@ GALLERY = ROOT / "examples" / "gallery"
 DOCUMENTS = sorted(
     path for path in CORPUS.iterdir() if path.is_file() and path.name.split(".")[0] in RULES
 )
-COMMANDS = ("build", "check", "schema", "mcp")
+COMMANDS = ("build", "check", "schema", "convert", "mcp")
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
 BROKEN = "cast: {alice: {reference: alice}}\nscript: [{say: {by: bpb, text: Hello.}}]\n"
@@ -130,7 +130,12 @@ class TestFrontends:
             for cell, reader in rows
             for extension in re.findall(r"`([^`]+)`", cell)
         }
-        readers = {".yaml": "load_scene", ".yml": "load_scene", ".script": "load_script"}
+        readers = {
+            ".yaml": "load_scene",
+            ".yml": "load_scene",
+            ".json": "load_scene",
+            ".script": "load_script",
+        }
         assert {key: reader.__name__ for key, reader in FRONTENDS.items()} == readers
         assert set(documented) == set(FRONTENDS)
         assert {key for key, said in documented.items() if said == "Comic script"} == {".script"}
@@ -274,6 +279,21 @@ def _schema_scenarios(
     }
 
 
+def _convert_scenarios(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[int, Callable[[], int]]:
+    panel = tmp_path / "x.panel.yaml"
+    panel.write_text(PANEL, encoding="utf-8")
+    broken = tmp_path / "broken.panel.yaml"
+    broken.write_text("cast: [\n", encoding="utf-8")
+    return {
+        0: lambda: main(["convert", str(panel), "--to", "json", "-o", str(tmp_path / "x.json")]),
+        1: lambda: main(["convert", str(broken), "--to", "json"]),
+        2: lambda: main(["convert", str(tmp_path / "missing.panel.yaml"), "--to", "json"]),
+        **_faults(monkeypatch, "scenet.cli.load", lambda: ["convert", str(panel), "--to", "json"]),
+    }
+
+
 def _returns_at_once(*_args: object, **_kwargs: object) -> None:
     """A server whose client disconnects as soon as it starts."""
 
@@ -316,6 +336,7 @@ class TestExitStatus:
             "build": lambda: _build_scenarios(tmp_path, monkeypatch),
             "check": lambda: _check_scenarios(tmp_path, monkeypatch),
             "schema": lambda: _schema_scenarios(tmp_path, monkeypatch),
+            "convert": lambda: _convert_scenarios(tmp_path, monkeypatch),
             "mcp": lambda: _mcp_scenarios(monkeypatch),
         }[command]()
         assert set(scenarios) == _exit_codes(command)

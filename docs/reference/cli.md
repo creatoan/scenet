@@ -51,6 +51,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 | Extension | Read as |
 |---|---|
 | `.panel.yaml`, `.scene.yaml`, `.yaml`, `.yml` | YAML — single panel or a `panels:` sequence |
+| `.panel.json`, `.scene.json`, `.json` | JSON — the same documents, [Scenet JSON](language/json.md) |
 | `.script` | Comic script |
 
 ### Options
@@ -683,8 +684,8 @@ A comic script has no JSON form.
   *Since 0.14.*
 
 ```bash
-scenet convert story.scene.yaml --to json -o story.scene.json
-scenet convert story.scene.json --to yaml --lists
+scenet convert examples/gallery/12-sequence.scene.yaml --to json -o sequence.scene.json
+scenet convert sequence.scene.json --to yaml --lists
 ```
 
 ### Exit status
@@ -694,6 +695,8 @@ scenet convert story.scene.json --to yaml --lists
 | 0 | The document was written |
 | 1 | The file is not YAML or JSON, or not a mapping |
 | 2 | Usage error, a file that cannot be read, a comic script, or `-o` names a directory |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C |
 
 ## `scenet mcp`
 

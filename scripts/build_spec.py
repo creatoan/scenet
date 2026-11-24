@@ -80,7 +80,7 @@ LLMS_DOCUMENTS = {
     "reference/language/identifiers": "normative: what an actor id or a panel name may be",
     "howto/write_a_comic_script": "the comic-script format, which a chat model can write unaided",
     "reference/shot_types": "normative: what each camera shot frames",
-    "reference/cli": "`scenet build`, `scenet check`, `scenet schema` and `scenet mcp`",
+    "reference/cli": "`scenet build`, `scenet check`, `scenet schema`, `scenet convert` and `scenet mcp`",
     "reference/mcp": "the MCP server's tools",
     "howto/drive_from_a_model": "using Scenet from a chat app, an agent or an MCP client",
     "tutorial/first_panel": "one panel built from nothing",
