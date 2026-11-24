@@ -417,8 +417,8 @@ def without_nulls(mapping: dict[str, Any], model: type[BaseModel]) -> dict[str, 
     What `settle` does for a panel, for what a scene's pages are read as.
 
     Example:
+        >>> from scenet import PageLayout
         >>> from scenet.compose import without_nulls
-        >>> from scenet.ir import PageLayout
         >>> without_nulls({"pages": [{"tiers": [{"height": None, "panels": ["a"]}]}]}, PageLayout)
         {'pages': [{'tiers': [{'panels': ['a']}]}]}
     """
