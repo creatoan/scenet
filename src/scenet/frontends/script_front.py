@@ -1681,7 +1681,7 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
 
 
 def _directive_cast(cast: object, number: int, source: Path | None) -> object:
-    """An `@cast:` directive's value, its list form as the mapping form it stands for (#356).
+    """An `@cast:` directive's value, its list form as the mapping form it stands for.
 
     Raises:
         ScriptSyntaxError: An item of the list at fault, at the directive's line.

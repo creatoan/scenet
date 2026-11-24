@@ -298,7 +298,7 @@ def scene_schema() -> dict[str, Any]:
     return scene
 
 
-#: The definitions of an item of a list form (#356), which `_inheritable` loosens as a
+#: The definitions of an item of a list form, which `_inheritable` loosens as a
 #: mapping's value although it is inside a list: lowered, it is one.
 CAST_ENTRY = "CastEntry"
 PANEL_ENTRY = "PanelEntry"
