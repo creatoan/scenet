@@ -22,7 +22,7 @@ from jsonschema import Draft202012Validator
 from scenet.compose import ID_KEY, REMOVE_KEY, as_lists, lowered
 from scenet.diagnostics import diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
-from scenet.frontends.positions import KEY
+from scenet.frontends.positions import KEY, locate
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_scene_document
 from scenet.pipeline import compile_book
@@ -480,6 +480,30 @@ class TestWrittenPaths:
     def test_a_bad_id_is_reported_at_the_id(self):
         (found,) = diagnose_source("cast: [{id: a.b, reference: alice}]")
         assert found.path == ("cast", 0, "id")
+
+    def test_a_name_no_item_gives_itself_is_located_at_the_list(self):
+        """The list, written as a block, from its key."""
+        region = locate("cast:\n  - {id: a, reference: alice}\n", ("cast", "b", "at"))
+        assert region is not None
+        assert (region.start.line, region.start.column, region.end.line) == (1, 1, 3)
+
+    def test_an_item_written_as_a_block_starts_where_it_does(self):
+        """Not at its name, which is inside it: the item already starts there."""
+        region = locate("cast:\n  - id: a\n    reference: alice\n", ("cast", "a"))
+        assert region is not None
+        assert (region.start.line, region.start.column) == (2, 5)
+
+    def test_a_directive_cast_written_twice_is_found_at_its_line(self):
+        script = (
+            "PANEL 1\nA room.\n@cast: [{id: ALICE, reference: alice}, {id: ALICE}]\nALICE\nHi.\n"
+        )
+        with pytest.raises(ScriptSyntaxError) as caught:
+            parse_script(script, source=Path("x.script.md"))
+        assert (caught.value.rule, caught.value.line) == ("duplicate-key", 3)
+        assert caught.value.source == Path("x.script.md")
+
+    def test_a_front_matter_of_nothing_but_a_comment_holds_nothing(self):
+        assert diagnose_script("---\n# Draft.\n---\nPANEL 1\nA street.\n") == []
 
     def test_the_key_step_is_the_compose_one(self):
         assert lowered({"cast": [{"id": "a"}]}).where(("cast", "a", KEY)) == ("cast", 0, "id")
