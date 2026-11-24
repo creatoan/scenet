@@ -91,9 +91,15 @@ class Written:
         )
 
 
+#: An item of a list form, by its definition, and the owner of the keys it shares with the
+#: mapping form's value: a cast member's, a panel's (#356). Its `id` is its own.
+_ENTRIES = {"CastEntry": "CastMember", "PanelEntry": DOCUMENT}
+
+
 def _owner(reference: str) -> str:
     """A definition's name as the panel schema has it: a scene loosens a few copies."""
-    return reference.rsplit("/", 1)[1].removeprefix("Partial")
+    name = reference.rsplit("/", 1)[1].removeprefix("Partial")
+    return _ENTRIES.get(name, name)
 
 
 def _is_null(node: Schema) -> bool:

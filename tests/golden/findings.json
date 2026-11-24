@@ -225,20 +225,20 @@
   ],
   "examples/gallery/56-a-relation-left-out.scene.yaml": [
     {
-      "fingerprint": "fe7546e30ac4aed91139dc067b6eac93",
+      "fingerprint": "b8e31da97d70fd3427b7a4280fde8f82",
       "level": "note",
       "message": "'alice left_of bob' does not apply in this panel, which leaves bob out of it",
       "path": [
         "panels",
-        "alone",
+        1,
         "cast",
-        "bob"
+        0
       ],
       "region": [
-        33,
-        12,
-        33,
-        16
+        36,
+        9,
+        36,
+        32
       ],
       "rule": "dropped-relation",
       "source": "examples/gallery/56-a-relation-left-out.scene.yaml"
@@ -246,20 +246,20 @@
   ],
   "examples/gallery/56-a-relation-left-out.scene.yaml --deep": [
     {
-      "fingerprint": "fe7546e30ac4aed91139dc067b6eac93",
+      "fingerprint": "b8e31da97d70fd3427b7a4280fde8f82",
       "level": "note",
       "message": "'alice left_of bob' does not apply in this panel, which leaves bob out of it",
       "path": [
         "panels",
-        "alone",
+        1,
         "cast",
-        "bob"
+        0
       ],
       "region": [
-        33,
-        12,
-        33,
-        16
+        36,
+        9,
+        36,
+        32
       ],
       "rule": "dropped-relation",
       "source": "examples/gallery/56-a-relation-left-out.scene.yaml"

@@ -146,6 +146,42 @@ panels:
 `null` works on any key: `camera: null` drops an inherited camera, `place: null` an
 inherited place. [Chapter 10](your_own_art.md) uses both.
 
+## The same scene, as lists
+
+The order of `panels` is the order they are read, and the first of the cast is the one the camera
+frames; a tool that sorts the keys of a mapping reorders both without a word. So both may be
+written as lists instead, each item saying its [`id`](../reference/language/scene.md#panelsid),
+which nothing reorders. A member a panel leaves out is
+[`remove: true`](../reference/language/cast.md#castremove), the list's `bob: null`, and a cast
+member's id is [`cast[].id`](../reference/language/cast.md#castid):
+
+```{code-block} yaml
+:caption: alone-as-lists.scene.yaml
+
+panel: {size: [900, 600]}
+camera: {shot: medium_shot}
+setting: {place: office, time: day}
+
+cast:
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob, reference: bob, at: right_third, facing: left}
+
+panels:
+  - id: meeting
+    script:
+      - say: {by: bob, text: "I'll leave you to it."}
+      - say: {by: alice, text: "Thanks, Bob."}
+
+  - id: alone
+    over: meeting
+    cast: [{id: bob, remove: true}]
+    script:
+      - say: {by: alice, text: "Finally.", kind: whisper}
+```
+
+It is the scene above, and builds the same panels: a list is read as the mapping it stands for
+before anything is merged.
+
 ## What the compiler decided
 
 **Each panel has its own camera.** The three panels are framed separately, each at its own

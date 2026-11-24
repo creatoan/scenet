@@ -1,10 +1,13 @@
 # A relation left out with the actor it names: a note, not an error.
 #
 # Everything beside `panels:` is a default every panel takes -- here Alice, Bob, and
-# `alice left_of bob`. The second panel leaves Bob out with `cast: {bob: null}`, and a
+# `alice left_of bob`. The second panel leaves Bob out with `{id: bob, remove: true}`, and a
 # relation naming somebody who is not drawn cannot hold, so it goes with him. That changes
 # what the panel stages, so `scenet check` notes it where he is left out:
 # `dropped-relation`. Alice stands where her `at:` puts her, with nobody to be left of.
+#
+# The cast and the panels are written as lists, each item with its `id`, which no tool
+# that sorts keys can reorder; `remove: true` is the list's `bob: null`.
 #
 # A look is the one relation that stays: `alice looking_at bob` would still hold while
 # Bob is heard from off panel, since Alice can look toward his voice.
@@ -17,24 +20,24 @@ camera: {shot: medium_shot}
 setting: {place: office, time: day}
 
 cast:
-  alice: {reference: alice, at: left_third}
-  bob:   {reference: bob,   at: right_third, facing: left}
+  - {id: alice, reference: alice, at: left_third}
+  - {id: bob,   reference: bob,   at: right_third, facing: left}
 
 staging:
   - alice left_of bob
 
 panels:
-  meeting:
+  - id: meeting
     script:
       - say: {by: bob, text: "Back in a minute."}
 
-  alone:
+  - id: alone
     cast:
-      bob: null
+      - {id: bob, remove: true}
     script:
       - say: {by: alice, text: "Take your time.", kind: whisper}
 
-  back:
+  - id: back
     script:
       - say: {by: bob, text: "Did I miss anything?"}
 
