@@ -454,6 +454,44 @@ class TestRemoval:
         )
 
 
+class TestLowering:
+    """Each item lowered, or left out as a fault, however the items before it went."""
+
+    @pytest.mark.parametrize(
+        ("bad", "rule"),
+        [
+            ("alice", "invalid-field"),
+            ("{reference: alice}", "missing-field"),
+            ("{id: 1, reference: alice}", "invalid-identifier"),
+            ("{id: c, reference: bob}", "duplicate-key"),
+        ],
+        ids=["not-a-mapping", "no-id", "id-not-text", "id-again"],
+    )
+    def test_an_item_after_a_bad_one_is_lowered(self, bad: str, rule: str):
+        found = lowered(load(f"cast: [{{id: c, reference: alice}}, {bad}, {{id: d}}]"))
+        assert list(found.document["cast"]) == ["c", "d"]
+        assert [fault.rule for fault in found.faults] == [rule]
+
+    @pytest.mark.parametrize(
+        ("item", "written"),
+        [
+            ("{bob: {reference: bob, pose: x}}", "{id: bob, reference: ..., pose: ...}"),
+            ("{bob: {}}", "{id: bob}"),
+        ],
+        ids=["fields", "none"],
+    )
+    def test_a_mapping_entry_says_the_item_to_write(self, item: str, written: str):
+        (fault,) = lowered(load(f"cast: [{item}]")).faults
+        assert f"write `{written}`" in fault.message
+
+    def test_a_removed_member_says_what_to_delete(self):
+        (fault,) = lowered(load("cast: [{id: a, remove: true, pose: x, at: center}]")).faults
+        assert "delete `pose`, `at`, or `remove`" in fault.message
+
+    def test_a_panel_that_is_no_mapping_is_listed_by_its_name(self):
+        assert as_lists({"panels": {"a": None}}) == {"panels": [{ID_KEY: "a"}]}
+
+
 class TestWrittenPaths:
     """#432: lowering returns the written locations, so a finding says `cast[2].at`."""
 
@@ -476,6 +514,25 @@ class TestWrittenPaths:
         )
         found = [item.path for item in diagnose_source(source)]
         assert ("panels", 1, "cast", 1, "at") in found
+
+    def test_a_finding_in_a_listed_panel_outside_its_cast_names_the_panel(self):
+        source = "panels:\n  - id: one\n  - id: two\n    camera: {shot: nope}\n"
+        (found,) = diagnose_source(source)
+        assert found.path == ("panels", 1, "camera", "shot")
+        with pytest.raises(PanelSyntaxError) as caught:
+            parse_scene_document(source)
+        assert caught.value.loc == ("panels", 1, "camera", "shot")
+
+    def test_a_listed_cast_in_a_mapped_panel_names_the_member(self):
+        cast = "[{id: a, reference: alice}, {id: b, reference: bob, at: x}]"
+        source = f"panels:\n  one:\n    cast: {cast}\n"
+        (found,) = diagnose_source(source)
+        assert found.path == ("panels", "one", "cast", 1, "at")
+
+    def test_a_listed_cast_in_a_mapped_panel_is_held_to_the_form(self):
+        source = "panels:\n  one:\n    cast: [{id: a, reference: alice}, {id: a, reference: bob}]\n"
+        (found,) = diagnose_source(source)
+        assert (found.rule, found.path) == ("duplicate-key", ("panels", "one", "cast", 1, "id"))
 
     def test_a_bad_id_is_reported_at_the_id(self):
         (found,) = diagnose_source("cast: [{id: a.b, reference: alice}]")

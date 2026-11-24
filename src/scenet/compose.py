@@ -472,8 +472,8 @@ class Lowered:
             prefix = path[:length]
             if prefix in self.written:
                 rest = path[length:]
-                if rest[:1] == (_KEY,):
-                    rest = (ID_KEY, *rest[1:])
+                if rest == (_KEY,):
+                    rest = (ID_KEY,)
                 return (*self.written[prefix], *rest)
         return path
 
