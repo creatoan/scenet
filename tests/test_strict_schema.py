@@ -11,12 +11,15 @@ import json
 import tomllib
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Union
 
 import pytest
 from jsonschema import Draft202012Validator
 
 from scenet.cli import main
+from scenet.compose import _Each, _Items, _reader
+from scenet.diagnostics import diagnose_source
+from scenet.ir import CastMember
 from scenet.pipeline import compile_book
 from scenet.safe_json import dump
 from scenet.safe_yaml import load
@@ -162,3 +165,54 @@ class TestTheShape:
         assert "over" not in schema["$defs"]["PanelEntry"]["properties"]
         assert "camera" not in schema["properties"]
         assert "direction" in schema["properties"]
+
+
+class TestWhatReadsAValue:
+    """What `_without_nulls` reads each mapping as, asked directly.
+
+    Through a document it is asked once and cached (`_keys`), so a test that compiles
+    documents cannot see it change.
+    """
+
+    def test_a_model_is_read_as_itself(self):
+        assert _reader(CastMember) is CastMember
+        assert _reader(Annotated[CastMember, "a note"]) is CastMember
+
+    def test_a_union_is_read_as_its_first_model(self):
+        assert _reader(CastMember | None) is CastMember
+        assert _reader(Union[None, CastMember]) is CastMember  # noqa: UP007 -- the other spelling
+        assert _reader(str | None) is None
+
+    def test_a_mapping_of_models_is_read_value_by_value(self):
+        assert _reader(dict[str, CastMember]) == _Each(CastMember)
+
+    def test_a_list_of_models_is_read_item_by_item(self):
+        assert _reader(tuple[CastMember, ...]) == _Items(CastMember)
+        assert _reader(list[CastMember]) == _Items(CastMember)
+        assert _reader(tuple[str, ...]) is None
+
+    def test_anything_else_is_read_as_nothing(self):
+        assert _reader(str) is None
+        assert _reader(int) is None
+
+
+class TestANullIsAKeyNotWritten:
+    @pytest.mark.parametrize("first", ["colour: null", "camera: null"])
+    def test_the_keys_after_a_null_are_kept(self, first: str):
+        source = (
+            f"{first}\ncast: {{a: {{reference: alice}}}}\nscript: [{{say: {{by: a, text: Hi.}}}}]\n"
+        )
+        found = [(item.rule, item.path) for item in diagnose_source(source)]
+        assert found == ([("unknown-key", ("colour",))] if first.startswith("colour") else [])
+
+    def test_a_member_keeps_a_key_it_does_not_have(self):
+        (found,) = diagnose_source("cast: {a: {reference: alice, colour: null}}\n")
+        assert (found.rule, found.path) == ("unknown-key", ("cast", "a", "colour"))
+
+    def test_a_page_keeps_a_key_it_does_not_have(self):
+        source = (
+            "cast: {a: {reference: alice}}\npanels: {one: {}}\n"
+            "page: {size: [1000, 1400], colour: null}\npages: [{tiers: [{panels: [one]}]}]\n"
+        )
+        (found,) = diagnose_source(source)
+        assert (found.rule, found.path) == ("unknown-key", ("page", "colour"))
