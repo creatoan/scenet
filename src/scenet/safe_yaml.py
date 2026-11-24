@@ -630,9 +630,12 @@ class _AsWritten(Emitter, Serializer, SafeRepresenter, ProfileResolver):
 
 
 def _text(dumper: SafeRepresenter, data: str) -> ScalarNode:
-    """Text, unquoted wherever Scenet YAML reads it back as the same text: `No`, `1984`."""
-    tag = ProfileResolver().resolve(ScalarNode, data, (True, False))
-    return dumper.represent_scalar(STR_TAG if tag == NULL_TAG else tag, data)
+    """Text, unquoted wherever Scenet YAML reads it back as text: `No`, but `'1984'`.
+
+    The dumper resolves as the profile does, so what would read back as a number, a flag
+    or no value -- `1984`, `true`, `null` -- is quoted, and the rest is not.
+    """
+    return dumper.represent_scalar(STR_TAG, data)
 
 
 def _source(dumper: SafeRepresenter, data: "WrittenInt | WrittenFloat") -> ScalarNode:

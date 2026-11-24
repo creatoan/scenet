@@ -14,10 +14,11 @@ import pytest
 from yaml.nodes import MappingNode
 
 from scenet.assets.artwork import ContractError
+from scenet.assets.contract import load_puppet
 from scenet.cli import main
 from scenet.compose import as_lists
 from scenet.diagnostics import diagnose_file, diagnose_source
-from scenet.errors import PanelSyntaxError
+from scenet.errors import MalformedAssetError, PanelSyntaxError
 from scenet.frontends.positions import locate
 from scenet.frontends.yaml_front import load_panel, parse_panel, parse_scene_document
 from scenet.pipeline import compile_book, compile_source
@@ -39,7 +40,9 @@ from scenet.safe_yaml import (
     DuplicateKeyError,
     WrittenFloat,
     WrittenInt,
+    carrier,
 )
+from scenet.safe_yaml import dump as dump_yaml
 from scenet.safe_yaml import load as load_yaml
 
 ROOT = Path(__file__).parent.parent
@@ -376,6 +379,41 @@ class TestTheGallery:
         assert not target.exists()
         converted = dump(load_yaml(source.read_text(encoding="utf-8")))
         assert _cores(converted, target) == _cores(source.read_text(encoding="utf-8"), source)
+
+
+class TestTheYamlWriter:
+    """What `scenet convert --to yaml` writes: text that reads back as the same text."""
+
+    @pytest.mark.parametrize("text", ["1", "1.5", "true", "null", "yes", "No", "0x10", "~", ""])
+    def test_text_reads_back_as_text(self, text: str):
+        written = dump_yaml({"t": text})
+        back = load_yaml(written)
+        assert isinstance(back, dict)
+        assert (back["t"], type(back["t"])) == (text, str)
+
+    def test_text_that_reads_as_a_number_is_quoted(self):
+        """A JSON `"size": ["1000", "800"]` is text, and refused; written bare it was valid."""
+        assert dump_yaml({"size": ["1000", "800"]}) == "size:\n- '1000'\n- '800'\n"
+
+    def test_it_keeps_the_order_the_block_style_and_the_letters(self):
+        document = {"zeta": 1, "alpha": {"name": "Zo" + chr(0xE9), "list": [1, 2]}}
+        assert dump_yaml(document) == (
+            "zeta: 1\nalpha:\n  name: Zo" + chr(0xE9) + "\n  list:\n  - 1\n  - 2\n"
+        )
+
+    def test_a_line_past_a_hundred_columns_is_folded(self):
+        """At the first space past column 100, so a line of 100 is not, and one of 101 is."""
+        assert dump_yaml({"long": "a" * 94 + " b"}) == "long: " + "a" * 94 + " b\n"
+        assert dump_yaml({"long": "a" * 95 + " b"}) == "long: " + "a" * 95 + "\n  b\n"
+
+    def test_text_is_yaml_unless_it_says_otherwise(self):
+        assert carrier("cast: {}") == "YAML"
+
+    def test_a_puppet_file_named_json_is_read_as_json(self, tmp_path: Path):
+        path = tmp_path / "x.puppet.json"
+        path.write_text("name: x\n", encoding="utf-8")
+        with pytest.raises(MalformedAssetError, match="expected a value"):
+            load_puppet(path)
 
 
 class TestConvert:
