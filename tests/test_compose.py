@@ -148,6 +148,14 @@ class TestTheHelpers:
         assert on_their_side(event, cast) == {"say": {**event["say"], "off_panel": side}}
 
 
+class TestTheLayoutAsWritten:
+    def test_a_page_whose_tiers_are_no_list_is_found_at_them(self):
+        (found,) = diagnose_source(
+            "cast: {a: {reference: alice}}\npanels: {one: {}}\npages: [{tiers: 5}]\n"
+        )
+        assert found.path == ("pages", 0, "tiers")
+
+
 class TestSceneDocuments:
     def test_a_single_panel_document_needs_no_ceremony(self):
         scene = parse_scene("cast:\n  a: {reference: alice}\n")

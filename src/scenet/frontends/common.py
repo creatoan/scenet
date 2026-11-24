@@ -250,7 +250,8 @@ def _figures_stand_alone(document: dict[str, Any]) -> None:
     camera = document.get("camera")
     if camera is None or camera == {}:
         return
-    written = next(iter(camera), None) if isinstance(camera, dict) else None
+    # A camera that is a mapping is not empty here, so it has a first key to point at.
+    written = next(iter(camera)) if isinstance(camera, dict) else None
     raise PanelSyntaxError(
         "'camera' frames a cast that a picture draws, and the artist already framed it: "
         "the shot is whatever the picture shows. Remove it; on a panel that inherits one, "
