@@ -33,3 +33,9 @@ more than one.
 ```{eval-rst}
 .. automodule:: scenet.safe_yaml
 ```
+
+## `scenet.safe_json`
+
+```{eval-rst}
+.. automodule:: scenet.safe_json
+```
