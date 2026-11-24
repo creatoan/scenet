@@ -649,12 +649,17 @@ RULES: dict[str, Rule] = {
     "layout": Rule(
         summary="No layout satisfies the panel's constraints",
         description=(
-            "Nothing is misspelled and nothing is missing, but the panel as described "
-            "has no solution -- most often two actors each required to be left of the "
-            "other. Panel bounds are deliberately not required, so a merely crowded "
+            "Nothing is misspelled and nothing is missing, but the solver found no layout "
+            "for the panel. No valid document is known to reach it: every staging order, "
+            "left to right and front to back, is checked before the solver runs, a "
+            "crowded panel makes the camera step back, and a panel with nobody in it "
+            "compiles. Panel bounds are deliberately not required, so a merely crowded "
             "panel is not this."
         ),
-        help="Relax or remove a conflicting staging relation.",
+        help=(
+            "Relax or remove the staging relations the message names, and report the "
+            "document: a check before the solver should have found what is wrong with it."
+        ),
     ),
     "balloon-placement": Rule(
         summary="A balloon or caption has no legal position",

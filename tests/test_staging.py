@@ -453,10 +453,15 @@ class TestStagingErrorsSayWhatIsWrong:
             solve_staging(parse_panel("panel: {size: [600, 400]}\n"), library)
 
     def test_a_depth_cycle_names_an_actor_on_it(self):
-        panel = parse_panel(
-            "cast:\n  a: {reference: alice}\n  b: {reference: bob}\n"
-            "staging:\n  - a in_front_of b\n  - b in_front_of a\n"
+        # Validation refuses the cycle (`ordering-cycle`); the solver's guard is its backstop,
+        # reached here by a panel copied past validation.
+        valid = parse_panel(
+            "cast:\n  a: {reference: alice}\n  b: {reference: bob}\nstaging: [a in_front_of b]\n"
         )
+        backwards = parse_panel(
+            "cast:\n  a: {reference: alice}\n  b: {reference: bob}\nstaging: [b in_front_of a]\n"
+        )
+        panel = valid.model_copy(update={"staging": (*valid.staging, *backwards.staging)})
         with pytest.raises(LayoutError, match="cyclic around 'a'"):
             depth_order(panel)
 

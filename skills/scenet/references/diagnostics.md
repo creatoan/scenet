@@ -706,34 +706,11 @@ cast: {alice: {reference: alice}}
 | Keys | [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`staging`](https://creatoan.github.io/scenet/reference/language/staging.html#staging) |
 | Since | 0.3 |
 
-**Why it happens.** Nothing is misspelled and nothing is missing, but the panel as described has no solution -- most often two actors each required to be left of the other. Panel bounds are deliberately not required, so a merely crowded panel is not this.
+**Why it happens.** Nothing is misspelled and nothing is missing, but the solver found no layout for the panel. No valid document is known to reach it: every staging order, left to right and front to back, is checked before the solver runs, a crowded panel makes the camera step back, and a panel with nobody in it compiles. Panel bounds are deliberately not required, so a merely crowded panel is not this.
 
-**How to fix it.** Relax or remove a conflicting staging relation.
+**How to fix it.** Relax or remove the staging relations the message names, and report the document: a check before the solver should have found what is wrong with it.
 
-Checked as `layout.panel.yaml`:
-
-```yaml
-# Valid, but each actor is in front of the other: no depth order exists.
-cast: {alice: {reference: alice}, bob: {reference: bob}}
-staging:
-  - alice in_front_of bob
-  - bob in_front_of alice
-```
-
-`scenet check --deep layout.panel.yaml` says:
-
-```text
-layout.panel.yaml:2:1: layout: depth ordering is cyclic around 'alice'
-```
-
-Fixed:
-
-```yaml
-# One depth order: Alice in front of Bob.
-cast: {alice: {reference: alice}, bob: {reference: bob}}
-staging:
-  - alice in_front_of bob
-```
+No document gives it on purpose. The checks before the solver find every fault known to reach it, the last of them a cycle in depth order, which is `ordering-cycle`: a document that finds one has found a gap in those checks, or a bug.
 
 ### `missing-field`
 
@@ -1605,6 +1582,7 @@ cast:
 staging: [ALICE left_of BOB]
 ---
 PANEL 1
+@cast: {BOB: {}}
 ALICE (OP)
 Is anybody there?
 ```
@@ -1612,7 +1590,7 @@ Is anybody there?
 `scenet check dropped-relation.script` says:
 
 ```text
-dropped-relation.script:9:1: note: dropped-relation: line 9: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn
+dropped-relation.script:10:1: note: dropped-relation: line 10: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn
 ```
 
 Fixed:
@@ -1626,6 +1604,7 @@ cast:
 staging: [ALICE left_of BOB]
 ---
 PANEL 1
+@cast: {BOB: {}}
 ALICE
 Is anybody there?
 ```

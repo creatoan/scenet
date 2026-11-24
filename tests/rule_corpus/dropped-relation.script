@@ -6,5 +6,6 @@ cast:
 staging: [ALICE left_of BOB]
 ---
 PANEL 1
+@cast: {BOB: {}}
 ALICE (OP)
 Is anybody there?

@@ -245,6 +245,11 @@ it is written, and says what to write instead.
 - **`scenet check` on a file that is not UTF-8 is a `syntax` finding** (#377), the one line
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
+
+- **A cycle in depth order is found by `scenet check`** (#364): `a in_front_of b, b in_front_of
+  a` passed the check and failed only in the solver, as `layout`; it is now `ordering-cycle`, at
+  the relation that closes the cycle, as one left to right always was. No document is known to
+  give `layout` any more, and its entry says so.
 - **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
   (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
   `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.

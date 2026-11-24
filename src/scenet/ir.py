@@ -2235,7 +2235,19 @@ def _check_references_resolve(panel: PanelIR) -> None:
 
 
 def _check_ordering_is_consistent(panel: PanelIR) -> None:
-    """`PanelIR.check_ordering_is_consistent`, outside the class so that mutmut mutates it."""
+    """`PanelIR.check_ordering_is_consistent`, outside the class so that mutmut mutates it.
+
+    Left to right, and front to back: a depth cycle, `a in_front_of b, b in_front_of a`,
+    passed `scenet check` and failed only once the solver ran.
+    """
+    _check_no_cycle(panel, Predicate.LEFT_OF, Predicate.RIGHT_OF, "horizontal", "left_of/right_of")
+    _check_no_cycle(panel, Predicate.IN_FRONT_OF, Predicate.BEHIND, "depth", "in_front_of/behind")
+
+
+def _check_no_cycle(
+    panel: PanelIR, forward: "Predicate", backward: "Predicate", what: str, relations: str
+) -> None:
+    """Refuse a cycle in the order two opposite predicates give the cast."""
     edges: dict[str, set[str]] = {actor: set() for actor in panel.cast}
     # Which staging entry introduced each edge, so a cycle can be reported against a
     # line the author actually wrote rather than against the document as a whole.
@@ -2243,9 +2255,9 @@ def _check_ordering_is_consistent(panel: PanelIR) -> None:
     # the one to point at.
     wrote: dict[tuple[str, str], int] = {}
     for index, relation in enumerate(panel.staging):
-        if relation.predicate is Predicate.LEFT_OF:
+        if relation.predicate is forward:
             edge = (relation.subject, relation.object)
-        elif relation.predicate is Predicate.RIGHT_OF:
+        elif relation.predicate is backward:
             edge = (relation.object, relation.subject)
         else:
             continue
@@ -2269,8 +2281,8 @@ def _check_ordering_is_consistent(panel: PanelIR) -> None:
                 if colour[neighbour] == _ON_STACK:
                     culprit = wrote.get((node, neighbour))
                     raise RuleViolationError(
-                        f"horizontal ordering is cyclic around '{neighbour}'; "
-                        "left_of/right_of relations must form a consistent order",
+                        f"{what} ordering is cyclic around '{neighbour}'; "
+                        f"{relations} relations must form a consistent order",
                         rule="ordering-cycle",
                         loc=("staging",) if culprit is None else ("staging", culprit),
                     )

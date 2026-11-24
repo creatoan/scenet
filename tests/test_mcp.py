@@ -119,7 +119,12 @@ Hello.
 """
 
 #: Passes every cheap check, and fails only once the solver runs.
-CAST_LESS = "panel: {size: [420, 560]}\n"
+UNPLACEABLE = (
+    "camera: {shot: extreme_close_up}\npanel: {size: [300, 300]}\n"
+    "cast: {alice: {reference: alice}}\n"
+    'script: [{say: {by: alice, text: "There is no room anywhere in this panel for a line '
+    'this long."}}]\n'
+)
 
 #: The same two panels, laid out side by side on one page.
 PAGED = SCENE + "pages: [{tiers: [{panels: [first, second]}]}]\n"
@@ -268,16 +273,16 @@ class TestValidate:
         assert finding["line"] == 3
 
     def test_the_cheap_pass_misses_what_only_the_solver_finds(self):
-        assert call("validate", {"source": CAST_LESS}).structured_content == {
+        assert call("validate", {"source": UNPLACEABLE}).structured_content == {
             "valid": True,
             "findings": [],
         }
 
     def test_deep_reaches_the_solver(self):
-        result = call("validate", {"source": CAST_LESS, "deep": True})
+        result = call("validate", {"source": UNPLACEABLE, "deep": True})
         assert result.structured_content is not None
         (finding,) = result.structured_content["findings"]
-        assert finding["rule"] == "scenet/layout"
+        assert finding["rule"] == "scenet/balloon-placement"
 
     def test_an_unknown_syntax_is_refused_by_the_schema(self):
         assert call("validate", {"source": VALID, "syntax": "xml"}).is_error
@@ -352,9 +357,9 @@ class TestCompile:
         assert RULES["unknown-actor"].help in text_of(result)
 
     def test_a_solver_failure_is_located_too(self):
-        result = call("compile", {"source": CAST_LESS})
+        result = call("compile", {"source": UNPLACEABLE})
         assert result.is_error
-        assert "scenet/layout" in text_of(result)
+        assert "scenet/balloon-placement" in text_of(result)
 
     def test_a_broken_script_is_an_error(self):
         result = call("compile", {"source": BAD_SCRIPT, "syntax": "script"})
@@ -476,7 +481,7 @@ class TestStdoutStaysClean:
                     await client.call_tool("list_puppets", {}),
                     await client.call_tool("validate", {"source": UNKNOWN_ACTOR}),
                     await client.call_tool("compile", {"source": VALID}),
-                    await client.call_tool("compile", {"source": CAST_LESS}),
+                    await client.call_tool("compile", {"source": UNPLACEABLE}),
                     await client.call_tool("render", {"source": SCRIPT, "syntax": "script"}),
                 ]
 

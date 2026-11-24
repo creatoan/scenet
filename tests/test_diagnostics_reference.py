@@ -47,7 +47,7 @@ language = build.language()
 IDS: list[str] = build.ids()
 #: Every id an entry shows a document for: all but `internal`, which no document gives on
 #: purpose, since it is what a bug is reported as.
-SHOWN = [name for name in IDS if name != "internal"]
+SHOWN = [name for name in IDS if name not in build.UNREACHED]
 DOCUMENTS = sorted(path for path in build.CORPUS.iterdir() if path.is_file())
 TWINS = sorted(path for path in build.FIXED.iterdir() if path.is_file())
 
@@ -108,9 +108,10 @@ class TestEveryEntryShowsItsFault:
         for path in paths:
             assert build.fixed(path).is_file(), f"add {build.fixed(path).relative_to(ROOT)}"
 
-    def test_internal_has_none_and_says_why(self):
-        assert build.documents("internal") == []
-        assert "No document gives it on purpose" in _entry("internal")
+    @pytest.mark.parametrize("name", sorted(build.UNREACHED))
+    def test_one_no_document_gives_has_none_and_says_why(self, name: str):
+        assert build.documents(name) == []
+        assert "No document gives it on purpose" in _entry(name)
 
     def test_every_document_is_for_a_diagnostic(self):
         assert sorted({path.name.split(".")[0] for path in DOCUMENTS} - set(IDS)) == []

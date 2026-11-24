@@ -48,6 +48,20 @@ DOCS = ROOT / "docs"
 PAGE = DOCS / "reference" / "diagnostics.md"
 SINCE = DOCS / "reference" / "diagnostics.since.toml"
 CORPUS = ROOT / "tests" / "rule_corpus"
+
+#: Each diagnostic no document gives on purpose, and why, which its entry says instead.
+UNREACHED = {
+    "internal": (
+        "No document gives it on purpose. It is what a Scenet error with no more specific rule "
+        "is reported as: a document that finds one has found a gap in this catalogue, or a "
+        "bug.\n"
+    ),
+    "layout": (
+        "No document gives it on purpose. The checks before the solver find every fault known "
+        "to reach it, the last of them a cycle in depth order, which is `ordering-cycle`: a "
+        "document that finds one has found a gap in those checks, or a bug.\n"
+    ),
+}
 FIXED = CORPUS / "fixed"
 #: The folder every document of the page is read beside, as the playground reads one.
 BESIDE = "examples/gallery"
@@ -373,14 +387,7 @@ def entry(name: str) -> str:
         rows.append(("In the gallery", ", ".join(shown)))
     table = "| | |\n|---|---|\n" + "\n".join(f"| {key} | {value} |" for key, value in rows)
     paths = documents(name)
-    if paths:
-        pairs = "\n".join(_pair(name, path) for path in paths)
-    else:
-        pairs = (
-            "No document gives it on purpose. It is what a Scenet error with no more "
-            "specific rule is reported as: a document that finds one has found a gap in this "
-            "catalogue, or a bug.\n"
-        )
+    pairs = "\n".join(_pair(name, path) for path in paths) if paths else UNREACHED[name]
     return (
         f"### `{name}`\n\n{table}\n\n**Why it happens.** {rule.description}\n\n"
         f"**How to fix it.** {rule.help}\n\n{pairs}"

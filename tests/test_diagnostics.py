@@ -1112,16 +1112,36 @@ class TestDeepChecking:
     `balloon-placement`, which the IR and the puppet library cannot rule out on
     their own -- only the solver can."""
 
-    CAST_LESS = "panel: {size: [420, 560]}\n"
+    #: Valid, but at an extreme close-up the face fills the frame and no word fits. A panel
+    #: with no cast was the example until it compiled (#364).
+    UNPLACEABLE = (
+        "camera: {shot: extreme_close_up}\npanel: {size: [300, 300]}\n"
+        "cast: {alice: {reference: alice}}\n"
+        'script: [{say: {by: alice, text: "There is no room anywhere in this panel for a line '
+        'this long."}}]\n'
+    )
 
-    def test_the_cheap_pass_calls_a_cast_less_document_clean(self):
-        """Not a bug: `layout` only surfaces once the solver runs, and the cheap pass
-        does not run it. This is the gap `--deep` exists to close."""
-        assert diagnose_source(self.CAST_LESS) == []
+    def test_the_cheap_pass_calls_an_unplaceable_balloon_clean(self):
+        """Not a bug: `balloon-placement` only surfaces once the solver runs, and the cheap
+        pass does not run it. This is the gap `--deep` exists to close."""
+        assert diagnose_source(self.UNPLACEABLE) == []
 
-    def test_deep_reports_the_layout_failure_the_cheap_pass_misses(self):
-        (found,) = diagnose_source(self.CAST_LESS, deep=True)
-        assert found.rule == "layout"
+    def test_deep_reports_the_failure_the_cheap_pass_misses(self):
+        (found,) = diagnose_source(self.UNPLACEABLE, deep=True)
+        assert found.rule == "balloon-placement"
+
+    def test_a_panel_with_nobody_in_it_is_clean_deep_too(self):
+        assert diagnose_source("panel: {size: [420, 560]}\n", deep=True) == []
+
+    def test_a_depth_cycle_is_found_without_the_solver(self):
+        """It failed only in the solver, as `layout`; it is the cycle it is (#364)."""
+        source = (
+            "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+            "staging: [a in_front_of b, b in_front_of a]\n"
+        )
+        (found,) = diagnose_source(source)
+        assert (found.rule, found.path) == ("ordering-cycle", ("staging", 1))
+        assert "depth" in found.message
 
     def test_deep_does_not_run_when_the_cheap_pass_already_found_something(self):
         """Compiling a document already known to be broken would just produce a

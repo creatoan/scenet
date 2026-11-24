@@ -7410,8 +7410,46 @@
       "source": "tests/rule_corpus/document-kind.scene.yaml"
     }
   ],
-  "tests/rule_corpus/dropped-relation.script": [],
-  "tests/rule_corpus/dropped-relation.script --deep": [],
+  "tests/rule_corpus/dropped-relation.script": [
+    {
+      "fingerprint": "00556cf780681671900aa459f183cf18",
+      "level": "note",
+      "message": "line 10: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn",
+      "path": [
+        "1",
+        "staging",
+        0
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        11
+      ],
+      "rule": "dropped-relation",
+      "source": "tests/rule_corpus/dropped-relation.script"
+    }
+  ],
+  "tests/rule_corpus/dropped-relation.script --deep": [
+    {
+      "fingerprint": "00556cf780681671900aa459f183cf18",
+      "level": "note",
+      "message": "line 10: 'ALICE left_of BOB' does not apply in PANEL 1, where ALICE speaks from off panel and is not drawn",
+      "path": [
+        "1",
+        "staging",
+        0
+      ],
+      "region": [
+        10,
+        1,
+        10,
+        11
+      ],
+      "rule": "dropped-relation",
+      "source": "tests/rule_corpus/dropped-relation.script"
+    }
+  ],
   "tests/rule_corpus/duplicate-key.panel.yaml": [
     {
       "fingerprint": "0c294597affcfffd9787df68d7ba7fa8",
@@ -7886,8 +7924,6 @@
   ],
   "tests/rule_corpus/fixed/language-version.panel.yaml": [],
   "tests/rule_corpus/fixed/language-version.panel.yaml --deep": [],
-  "tests/rule_corpus/fixed/layout.panel.yaml": [],
-  "tests/rule_corpus/fixed/layout.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/looks-like-dialogue.script": [],
   "tests/rule_corpus/fixed/looks-like-dialogue.script --deep": [],
   "tests/rule_corpus/fixed/missing-field.panel.yaml": [],
@@ -8246,23 +8282,6 @@
       ],
       "rule": "language-version",
       "source": "tests/rule_corpus/language-version.panel.yaml"
-    }
-  ],
-  "tests/rule_corpus/layout.panel.yaml": [],
-  "tests/rule_corpus/layout.panel.yaml --deep": [
-    {
-      "fingerprint": "72f20dd1d58360e9ddabc842e8f3c219",
-      "level": "error",
-      "message": "depth ordering is cyclic around 'alice'",
-      "path": [],
-      "region": [
-        2,
-        1,
-        6,
-        1
-      ],
-      "rule": "layout",
-      "source": "tests/rule_corpus/layout.panel.yaml"
     }
   ],
   "tests/rule_corpus/looks-like-dialogue.script": [

@@ -80,6 +80,7 @@ from scenet.ir import (
     BalloonKind,
     CameraAngle,
     CaptionKind,
+    CastMember,
     Direction,
     PageLayout,
     PanelIR,
@@ -1879,6 +1880,36 @@ def _front_matter_region(text: str, offset: int, path: tuple[str | int, ...]) ->
     return locate(block, path) or DOCUMENT_START
 
 
+def _check_front_matter_cast(cast: object, text: str, offset: int, source: Path | None) -> None:
+    """Each member of the front matter's cast, checked once, where it is written.
+
+    A panel draws only some of them (#364), so a member no panel draws is checked by no
+    panel: `at: nowhere` on one would otherwise build without a word.
+
+    Raises:
+        ScriptSyntaxError: The member's first fault, at its line in the front matter.
+    """
+    if not isinstance(cast, dict):
+        return
+    for actor, member in cast.items():
+        if not isinstance(member, dict):
+            continue
+        try:
+            CastMember.model_validate(member)
+        except ValidationError as exc:
+            rule, loc = rule_for_pydantic(errors_of(exc)[0])
+            message = str(errors_of(exc)[0]["msg"]).removeprefix("Value error, ")
+            where = ".".join(str(step) for step in ("cast", actor, *loc))
+            raise _front_matter_fault(
+                f"in the front matter, at {where}: {message}",
+                text,
+                offset,
+                ("cast", actor, *loc),
+                rule=rule,
+                source=source,
+            ) from exc
+
+
 def _front_matter_fault(
     message: str,
     text: str,
@@ -2024,6 +2055,8 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     unusable = _unusable_name(cast)
+    if unusable is None:
+        _check_front_matter_cast(cast, text, offset, source)
     if unusable is not None:
         name, problem = unusable
         # At the key, quoted or not, flow style or block.
