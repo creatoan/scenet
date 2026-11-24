@@ -270,6 +270,7 @@ also_copy = [
     "docs/",
     "editor/",
     "examples/",
+    "fuzz/",
     "opencode.json",
     "playground/",
     "pyproject.toml",

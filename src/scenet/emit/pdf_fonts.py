@@ -284,7 +284,7 @@ def _subset(data: bytes, codes: list[int]) -> bytes:
 
     The tables print never reads are let go before the subsetter starts, rather than left
     for it to drop: it reads the layout tables first, and a damaged one would fail a face
-    whose glyphs are sound (#378).
+    whose glyphs are sound.
     """
     font = TTFont(io.BytesIO(data), recalcTimestamp=False, recalcBBoxes=False, lazy=True)
     for tag in UNREAD:

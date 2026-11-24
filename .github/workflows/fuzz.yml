@@ -37,7 +37,8 @@ jobs:
         with:
           enable-cache: true
 
-      - run: uv sync --frozen
+      # Every group, as the tests' own job installs them: the conftest imports the docs group.
+      - run: uv sync --frozen --all-groups
 
       - name: Fuzz every entry point, briefly
         run: uv run pytest fuzz/test_fuzz.py --no-cov -p no:cacheprovider
