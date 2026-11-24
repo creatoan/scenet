@@ -164,7 +164,9 @@ it is written, and says what to write instead.
 - **A damaged font is a `font-file` finding** (#378), found by fuzzing: a file that opened but
   failed inside fontTools when its kerning or a glyph was first read was an internal error half
   way through a compile. An author's face is now read through when it is loaded, and anything
-  read later that fails is refused as a damaged font.
+  read later that fails is refused as a damaged font. A face whose layout tables were damaged
+  failed in print with `--live-text`, though print reads no layout table: they are let go
+  before the face is subset.
 
 - **A path to something that is not a regular file is refused** (#379): a folder, a device or a
   pipe named as a font, a picture or a puppet hung the compile or read without end; it is now a

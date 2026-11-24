@@ -35,6 +35,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 
 from scenet.emit.svg import fmt
+from scenet.errors import RenderError
 from scenet.solve.text import FontMetrics
 
 #: `fsType`'s usage permissions, bits 0 to 3 (OpenType, `OS/2`): 0 is installable.
@@ -239,6 +240,18 @@ def pdf_font(metrics: FontMetrics, characters: Iterable[str]) -> PdfFont:
 
 @functools.lru_cache(maxsize=64)
 def _pdf_font(metrics: FontMetrics, characters: tuple[str, ...]) -> PdfFont:
+    try:
+        return _embedded(metrics, characters)
+    # A face the compile measured can still be damaged where only print reads it, and the
+    # bytes came from whoever wrote the document: whatever fontTools raises, it is that.
+    except Exception as exc:
+        raise RenderError(
+            f"{metrics.path.as_posix()} cannot be embedded in print: it is a damaged font; "
+            "build without --live-text to letter it in outlines"
+        ) from exc
+
+
+def _embedded(metrics: FontMetrics, characters: tuple[str, ...]) -> PdfFont:
     # In order of code point, so a glyph two characters share stands for the lower one.
     text: dict[int, str] = {}
     for character in characters:
@@ -267,8 +280,16 @@ def _fs_type(font: TTFont) -> int | None:
 
 
 def _subset(data: bytes, codes: list[int]) -> bytes:
-    """The face cut to the glyphs `codes` names, each kept at its id."""
-    font = TTFont(io.BytesIO(data), recalcTimestamp=False, recalcBBoxes=False)
+    """The face cut to the glyphs `codes` names, each kept at its id.
+
+    The tables print never reads are let go before the subsetter starts, rather than left
+    for it to drop: it reads the layout tables first, and a damaged one would fail a face
+    whose glyphs are sound (#378).
+    """
+    font = TTFont(io.BytesIO(data), recalcTimestamp=False, recalcBBoxes=False, lazy=True)
+    for tag in UNREAD:
+        if tag in font:
+            del font[tag]
     options = subset.Options()
     options.retain_gids = True
     options.hinting = False

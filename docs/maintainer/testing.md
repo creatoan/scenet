@@ -355,6 +355,7 @@ fix lands, and open an issue for it. Fix it in the pull request that keeps the f
 | Found | Fixed in |
 |---|---|
 | A font that opened, then failed inside fontTools when its kerning or a glyph was first read: an internal error half way through a compile, or a render | [#378](https://github.com/creatoan/scenet/issues/378): an author's face is probed when it is read, and what the probe does not reach is refused as `MalformedAssetError` |
+| A font whose glyphs were sound and whose layout tables were not failed inside fontTools' subsetter when print embedded it as live text, though print reads no layout table | [#378](https://github.com/creatoan/scenet/issues/378): the tables print never reads are let go before subsetting, and a face print cannot embed is a one-line refusal |
 
 ## Mutation testing
 
