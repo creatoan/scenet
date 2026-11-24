@@ -10,6 +10,7 @@ interesting part, and because a decision whose reasoning is lost gets reversed b
 | [What Scenet does today](status.md) | Every feature, with the release it arrived in |
 | [What's new](whats_new.md) | The CHANGELOG, release by release |
 | [Design decisions](design_decisions.md) | The load-bearing choices, by theme, and what each one costs |
+| [Security model](security_model.md) | What is safe with input from a stranger, what is not, and the test that holds each guarantee |
 | [Prior art](prior_art.md) | What already exists, what was taken from it, and what was deliberately not used |
 | [Design notes](design_notes/index.md) | Records of decisions being made, kept as they were |
 
@@ -60,6 +61,7 @@ why
 status
 whats_new
 design_decisions
+security_model
 prior_art
 design_notes/index
 ```

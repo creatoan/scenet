@@ -71,6 +71,8 @@ and change it.
 - **Build with Python**: [Learn Scenet from Python](https://creatoan.github.io/scenet/tutorial/python/index.html),
   then [the Python API](https://creatoan.github.io/scenet/reference/api/index.html).
 - **Drive from a model**: [the spec pack, the Agent Skill and `scenet mcp`](https://creatoan.github.io/scenet/howto/drive_from_a_model.html).
+- **Compile documents from someone else**: [the security model](https://creatoan.github.io/scenet/explanation/security_model.html)
+  says what is safe, what is not, and what to add.
 - **Contribute**: [the contributor's guide](https://github.com/creatoan/scenet/blob/main/CONTRIBUTING.md)
   and [the maintainer's documentation](https://creatoan.github.io/scenet/maintainer/index.html).
 

@@ -2,7 +2,8 @@
 
 What the Python API promises beyond each function's own entry: what stays stable, what is
 deterministic, what is safe to share between threads, which files a compile reads, and how
-long it takes.
+long it takes. What is safe with input from someone you do not trust is the
+[security model](../../explanation/security_model.md).
 
 ## Stability
 

@@ -1,9 +1,13 @@
 # Security Policy
 
+What Scenet guarantees with input from someone you do not trust, and what you must add, is
+the [security model](https://creatoan.github.io/scenet/explanation/security_model.html): each
+guarantee there names the test that holds it.
+
 ## Supported versions
 
-This project is alpha. Fixes go into a patch release of the latest minor version: 0.11.1
-was a security release of 0.11. `main` gets every fix first.
+This project is alpha, as its package says. A security fix goes into a patch release of the
+latest minor version: 0.11.1 was a security release of 0.11. `main` gets every fix first.
 
 | Version | Supported |
 |---|---|
@@ -14,7 +18,18 @@ was a security release of 0.11. `main` gets every fix first.
 
 Please report privately through GitHub's
 [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-on this repository, rather than opening a public issue.
+on this repository, rather than opening a public issue. A document, a file or a command that
+shows the fault is the most useful thing a report can hold.
+
+What happens next:
+
+- **Within 7 days**, the report is acknowledged, and you are told whether it is taken as a
+  vulnerability.
+- **Within 90 days** of the report, a fixed release is published, or you are told why it
+  takes longer and when it will come.
+- **Disclosure is coordinated.** The fault is kept private until the fixed release is
+  published; a GitHub security advisory then describes it, with a CVE where one applies, and
+  credits you unless you ask not to be named. Please keep it private until then too.
 
 ## Scope
 
