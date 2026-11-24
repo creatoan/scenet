@@ -82,8 +82,10 @@ class TestOnlyRegularFiles:
 
         In a process of its own, so that a hang fails the test instead of the suite.
         """
+        if sys.platform == "win32":
+            pytest.skip("no named pipes here")
         (tmp_path / "fonts").mkdir()
-        os.mkfifo(tmp_path / "fonts" / "pipe.ttf")  # ty: ignore[missing-attribute]  # POSIX only, skipped elsewhere
+        os.mkfifo(tmp_path / "fonts" / "pipe.ttf")
         document = _document(tmp_path, "lettering: {font: fonts/pipe.ttf}")
         run = subprocess.run(  # noqa: S603 -- our own interpreter, on a file written here
             [sys.executable, "-m", "scenet.cli", "check", str(document)],
@@ -108,11 +110,17 @@ class TestOnlyRegularFiles:
             "script: [{say: {by: pip, text: Hi.}}]\n",
             encoding="utf-8",
         )
-        started = time.monotonic()
-        finding = _only(diagnose_file(document))
-        assert time.monotonic() - started < SECONDS
-        assert finding.rule == "puppet-file"
-        assert "is not a regular file" in finding.message
+        # Within the default root, the link leads out of it; within the whole file system,
+        # which `--root /` reads, it is a device. Refused, at once, either way.
+        for root, said in (
+            (None, "is outside the root folder"),
+            (Path("/"), "is not a regular file"),
+        ):
+            started = time.monotonic()
+            finding = _only(diagnose_file(document, root=root))
+            assert time.monotonic() - started < SECONDS
+            assert finding.rule == "puppet-file"
+            assert said in finding.message
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows names a device in every folder")
     def test_a_device_named_as_a_font_on_windows(self, tmp_path: Path):
