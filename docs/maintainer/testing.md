@@ -526,17 +526,17 @@ gallery are what guard them.
 | `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `frontends/script` | `frontends/script_front.py` | 2,312 | 58 | 97.5% | 97% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
-| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 556 | 4 | 99.3% | 99% | [`43597307790`](https://github.com/creatoan/scenet/actions/runs/43597307790) |
-| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 447 | 4 | 99.1% | 99% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
+| `frontends/script` | `frontends/script_front.py` | 2,551 | 62 | 97.6% | 97% | [`45531607316`](https://github.com/creatoan/scenet/actions/runs/45531607316) |
+| `frontends/common` | `frontends/__init__.py`, `frontends/common.py` | 760 | 7 | 99.1% | 99% | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) |
+| `frontends/yaml` | `frontends/positions.py`, `frontends/yaml_front.py` | 539 | 5 | 99.1% | 99% | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) |
 | `core` | `core.py` | 351 | 5 | 98.6% | 98% | [`43478921809`](https://github.com/creatoan/scenet/actions/runs/43478921809) |
-| `ir` | `ir.py` | 718 | 16 | 97.8% | 97% | [`44133756281`](https://github.com/creatoan/scenet/actions/runs/44133756281) |
+| `ir` | `ir.py` | 812 | 16 | 98.0% | 98% | [`45425131503`](https://github.com/creatoan/scenet/actions/runs/45425131503) |
 | `identifiers` | `identifiers.py` | 46 | 0 | 100.0% | 100% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
 | `namespace` | `namespace.py` | 96 | 0 | 100.0% | 100% | [`44802728686`](https://github.com/creatoan/scenet/actions/runs/44802728686) |
-| `diagnostics` | `diagnostics.py` | 1,824 | 84 | 95.4% | 95% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
-| `compose` | `compose.py` | 584 | 87 | 85.1% | 85% | [`45379908984`](https://github.com/creatoan/scenet/actions/runs/45379908984) |
-| `limits` | `limits.py` | 53 | 13 | 75.5% | 75% | [`45379918874`](https://github.com/creatoan/scenet/actions/runs/45379918874) |
-| `safe_json` | `safe_json.py` | 427 | 106 | 75.2% | 75% | [`45379933991`](https://github.com/creatoan/scenet/actions/runs/45379933991) |
+| `diagnostics` | `diagnostics.py` | 2,009 | 77 | 96.2% | 96% | [`45531602112`](https://github.com/creatoan/scenet/actions/runs/45531602112) |
+| `compose` | `compose.py` | 582 | 6 | 99.0% | 98% | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) |
+| `limits` | `limits.py` | 127 | 0 | 100.0% | 100% | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) |
+| `safe_json` | `safe_json.py` | 475 | 9 | 98.1% | 98% | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
 threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
@@ -1178,7 +1178,8 @@ see.
 
 #### `ir.py`
 
-718 mutants and 16 survivors, 97.8% killed.
+812 mutants and 16 survivors, 98.0% killed, numbered from run `45425131503` (batch B): the same
+survivors as before it, the cycle check now `_check_no_cycle` for both orders.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1186,15 +1187,17 @@ see.
 | `tag_by` 1, 2, 3, 4, 5 | the closure `tag_by` builds | `tag_by` runs once, as `ir.py` is imported, before a mutant is chosen; what it builds only calls `_tag_of`, which is mutated. |
 | `_tag_of` 5, 9 | the attribute read from a member that is not a mapping | A value that is not a mapping is already a member of the union, which the plain union accepts as the tagged one does. |
 | `_check_references_resolve` 19 | `continue` to `break` after an off-panel voice is looked at | Only the object of a relation can be looked at, and it is the last of the two roles. |
-| `_check_ordering_is_consistent` 27 | a finished node marked `None` | Every test of a node's colour reads `None` as it reads `_DONE`: not unvisited, not on the stack. |
-| `_check_ordering_is_consistent` 44, 46, 47 | the cycle's path without a culprit | Every edge of the ordering is written by a relation, so a cycle always has one. |
+| `_check_no_cycle` 27 | a finished node marked `None` | Every test of a node's colour reads `None` as it reads `_DONE`: not unvisited, not on the stack. |
+| `_check_no_cycle` 44, 46, 47 | the cycle's path without a culprit | Every edge of the ordering is written by a relation, so a cycle always has one. |
 | `_check_figures` 71 | `next(..., None)` without its default | Every relation's subject is in the cast, which is all figures by then, so one is always found. |
 | `check_placements` 32 | where a placement was first seen, kept as `None` | Only whether a panel was placed is read, never where. |
 
 #### `diagnostics.py`
 
 1,824 mutants and 84 survivors, 95.4% killed, numbered from run `44802722199`: the 12
-not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://github.com/creatoan/scenet/issues/357)).
+not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://github.com/creatoan/scenet/issues/357)). Batch B measured it again, by
+run `45531602112`, which numbers the rows below: 2,009 mutants and 77 survivors, 96.2% killed; one
+of them is the batch's own, in its table.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
@@ -1209,12 +1212,13 @@ not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://gi
 | `_over_the_word_limits` 29 | the panel's note inserted second, not first | Findings are sorted into source order before they are returned. |
 | `_diagnose_panel` 1 | `deep` defaults to true | Both callers pass it. |
 | `_diagnose_panel` 4, 6 | `settle` without where a left-out voice stood | That only puts the voice's balloon on its side, which no check reads. |
-| `_diagnose_scene` 126, 127 | the path of a composition error with none | Every composition error is at the `over:` it is about. |
-| `_diagnose_scene` 180 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
-| `_diagnose_scene` 185, 186, 187, 202, 210 | where a left-out voice stood, lost or read without the defaults | That only puts the voice's balloon on its side, which no check reads. |
-| `_diagnose_scene` 215 | a path inside another file read as the document's | No path inside a puppet file or a contract is a path the document's defaults hold. |
-| `_diagnose_scene` 251, 252, 255, 256 | `compile_book` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
+| `_diagnose_scene` 152, 153 | the path of a composition error with none | Every composition error is at the `over:` it is about. |
+| `_diagnose_scene` 206 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `_diagnose_scene` 211, 212, 213, 228, 236 | where a left-out voice stood, lost or read without the defaults | That only puts the voice's balloon on its side, which no check reads. |
+| `_diagnose_scene` 241 | a path inside another file read as the document's | No path inside a puppet file or a contract is a path the document's defaults hold. |
+| `_diagnose_scene` 286, 287, 290, 291 | `compile_book` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
 | `_has_path` 10 | an index one past the end | A path inherited from a default is never longer than the default's list. |
+| `_has_path` 13 | `continue` to `break` at the key step | The key step is always a path's last. |
 | `_in_source_order` 7, 8, 9, 10, 11, 12, 13 | the place a finding with no region sorts at | Every finding has a region. |
 | `diagnose_script` 8, 10 | the parser not told the file | The file only prefixes the text of its errors, which a finding leaves out. |
 | `diagnose_script` 97 | the notes replacing the findings before them | Those are errors only, and with an error the notes are never reached. |
@@ -1222,24 +1226,28 @@ not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://gi
 | `diagnose_script` 142, 143, 146, 147 | `compile_script` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
 | `diagnose_script` 163, 166 | a compile error with no panel | A script has no pages yet, so every compile error is a panel's and names it. |
 | `_script_line` 3, 5 | a line past the end | No finding is on a line past the end. |
-| `_script_front_matter` 6, 13, 28 | an empty front matter written, counted from `None`, or not a mapping | Without front matter no finding is located in it; counting from `None` is counting from the start; front matter that is not a mapping is refused first. |
-| `_diagnose_script_setting` 27, 44, 46 | `continue` to `break`, or the heading's line as no line | `_diagnose_setting` gives at most one finding a panel; a picture a panel does not declare is named by its `@setting:`. |
-| `_diagnose_script_figures` 29, 32, 34 | `continue` to `break`, or a path's head or index read otherwise | A panel's figure faults are one fault of its picture or contract, or faults of its lines, never both; and none is at an index outside `script`. |
+| `_script_front_matter` 6, 13 | an empty front matter written, or counted from `None` | Without front matter no finding is located in it; counting from `None` is counting from the start. |
+| `_diagnose_script_setting` 31, 48, 50 | `continue` to `break`, or the heading's line as no line | `_diagnose_setting` gives at most one finding a panel; a picture a panel does not declare is named by its `@setting:`. |
+| `_diagnose_script_figures` 33, 36, 38 | `continue` to `break`, or a path's head or index read otherwise | A panel's figure faults are one fault of its picture or contract, or faults of its lines, never both; and none is at an index outside `script`. |
+| `_diagnose_script_figures` 49, 51, 56, 58 | a fault of the panel's own found at no line | A fault the panel wrote itself is under the `@setting:` or `@cast:` it wrote, so the heading is never the default read. |
+| `_written_through` 5 | one more step down the `@over:` chain | A loop of `@over:` is refused before this is asked. |
 | `diagnose_file` 3 | the file read in the default encoding | That is UTF-8 where mutmut runs; on Windows, where it is not, the findings golden of the gallery's French scripts fails in the Windows job. |
 | `diagnose_file` 5 | `"utf-8"` to `"UTF-8"` | Python's codec names are not case-sensitive. |
 
 #### `frontends/`
 
-`frontends/common`: 556 mutants and 4 survivors, 99.3% killed. `frontends/yaml`: 447 mutants and 4 survivors, 99.1% killed.
-`frontends/script`: 2,312 mutants and 58 survivors, 97.5% killed. Both from run `44802722199`, which numbers them;
-`_panel_casts` 56 is killed since ([#357](https://github.com/creatoan/scenet/issues/357)).
+`frontends/common`: 760 mutants and 7 survivors, 99.1% killed. `frontends/yaml`: 539 mutants and 5 survivors, 99.1% killed.
+Both measured by batch B's run `45503879757`, which numbers their rows; batch B's own are in its table.
+`frontends/script`: 2,312 mutants and 58 survivors, 97.5% killed. From run `44802722199`;
+`_panel_casts` 56 is killed since ([#357](https://github.com/creatoan/scenet/issues/357)). Batch B measured
+`frontends/script` again, by run `45531607316`, which numbers its rows below: 2,551 mutants and 62
+survivors, 97.6% killed; five of them are the batch's own, in its table.
 
 | Mutants | Change | Why it cannot change an output |
 |---|---|---|
-| `_figures_stand_alone` 55 | `next(iter(camera), None)` without its default | An empty camera returns before it, so the mapping always has a first key. |
 | `_merge_misspellings` 53, 56 | `n=1` left out, or 2 | Only the first match is read, and `get_close_matches` puts the best first. |
-| `normalise_layout` 16 | a page that is not a mapping kept as `None` | pydantic refuses `None` in the words it refuses any page that is not a mapping. |
-| `_validate_panels` 94, 101 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `_validate_panels` 92, 99 | `if defaults` always true | Merging no defaults into a panel gives the panel. |
+| `locate` 5 | the key before the first step `""`, not `None` | A path's first step is a field, never the key step, which only follows one. |
 | `syntax_error_region` 24 | `getattr(mark, "buffer")` without its default | Every PyYAML mark has a `buffer`, `None` when it holds no text. |
 | `syntax_error_region` 30 | `rstrip("\0")` to `rstrip("XX\0XX")` | An `X` goes too only off a buffer whose last line has no newline, and the mark of an error at its end is then on that line, so the count of lines is never read. |
 | `_PanelDraft.line_of` 5, 6, 7, 15 | a fault's event index read otherwise | No fault of a script panel is at `("script",)`, at `("script", i)` or past its last event. |
@@ -1263,14 +1271,77 @@ not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://gi
 | `_inherited_casts` 11, 14, 15 | `zip(..., strict=True)` relaxed | The names are made from the panels, one each. |
 | `_inherited_casts` 22, 28 | a panel before any PAGE heading looked up by page | Without pages, every panel is named by its label, which the lookup falls back to; with pages, a panel before the first is refused. |
 | `_read_script` 1 | `offset` defaults to 1 | Its one caller passes it. |
-| `_camera_word` 25 | French words of more than four letters, not three | No French shot or angle is four letters long. |
-| `parse_script_document` 156 | a panel's directives copied shallow, not deep | Nothing changes them once they are copied: validation has read them already, and every reader of the copy only reads it. |
+| `_camera_word` 44 | French words of more than four letters, not three | No French shot or angle is four letters long. |
+| `parse_script_document` 200 | a panel's directives copied shallow, not deep | Nothing changes them once they are copied: validation has read them already, and every reader of the copy only reads it. |
 | `_off_panel` 67, 69, 84, 86 | who leaves read otherwise, or a missing script defaulted | A voice nobody casts is in no relation but `looking_at`, which stays either way; a panel somebody leaves from off panel has a script. |
 | `_over_target` 15, 16 | the composition error's path written otherwise | Only the name in the path is read. |
 | `_composed` 17, 20, 21, 22, 25 | the composition error's path read otherwise | Every composition error is at `("panels", name, "over")`, and only the name in it is read. |
 | `_composed` 37, 38 | the branch with no line | Every `@over:` has a line. |
 | `_first_fault` 18, 20 | `min` without its key | The faults are tuples that start with their line, so the first line is the least either way. |
 | `_first_fault` 28, 29 | the branch with no path | Every fault of a panel's IR names a field. |
+
+### Batch B: the last breaking changes
+
+Batch B of [#343](https://github.com/creatoan/scenet/issues/343) -- [#361](https://github.com/creatoan/scenet/issues/361), [#356](https://github.com/creatoan/scenet/issues/356), [#354](https://github.com/creatoan/scenet/issues/354), [#364](https://github.com/creatoan/scenet/issues/364), [#363](https://github.com/creatoan/scenet/issues/363), [#375](https://github.com/creatoan/scenet/issues/375), [#360](https://github.com/creatoan/scenet/issues/360), one pull request each, stacked -- changed `ir.py`,
+`diagnostics.py` and `frontends/`, and wrote `compose.py`'s lowering, `limits.py` and
+`safe_json.py`, which had no leg and have one each since. The top of the stack was mutated
+once, every leg it changed and every other module it touched as a path run, and each survivor
+was traced to the pull request that wrote its line and killed there or accepted below. Each
+kill was applied by hand to see its test fail.
+
+| Run | What |
+|---|---|
+| [`45379813474`](https://github.com/creatoan/scenet/actions/runs/45379813474)–[`45379933991`](https://github.com/creatoan/scenet/actions/runs/45379933991) | the first: the five changed legs, `solve/page`, `solve/staging`, and `compose.py`, `limits.py`, `safe_json.py` as paths |
+| [`45394991587`](https://github.com/creatoan/scenet/actions/runs/45394991587)–[`45395131380`](https://github.com/creatoan/scenet/actions/runs/45395131380) | the touched modules with no leg, as paths ([#518](https://github.com/creatoan/scenet/issues/518)) |
+| [`45425131503`](https://github.com/creatoan/scenet/actions/runs/45425131503) | after triage: numbers `ir` |
+| [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) | numbers `frontends/common`, `frontends/yaml` and `compose` |
+| [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) | numbers `limits` and `safe_json` |
+| [`45531602112`](https://github.com/creatoan/scenet/actions/runs/45531602112), [`45531607316`](https://github.com/creatoan/scenet/actions/runs/45531607316) | number `diagnostics` and `frontends/script` |
+
+What the runs found beyond a missing assertion:
+
+- **Two gaps between the schemas and `scenet check`**, both on main before the batch, found by
+  the Hypothesis job of a mutation run: a scene default that every panel overrides was never
+  checked, and the schemas did not say a mark is listed once.
+- **A comic-script panel `@over:` a panel of its page was blamed on the front matter** in a
+  script with pages: the check looked `@over: 1` up as written, not as panel `2-1`. On main
+  before the batch too.
+- **Reading JSON took the square of its length**: each mark counted the line breaks from the
+  start. A mark counts from the last one now.
+- **The YAML writer wrote the text `"1"` or `"true"` bare**, and it read back as a number or a
+  flag, so converting a document could change what it says.
+- **Three more of the blind spots above**: what reads each value for its nulls answers from
+  `compose._keys`'s cache, and is tested directly; the strict schemas' tests built both as the
+  module was imported, and nothing held their output, which `tests/golden/strict/` holds now;
+  and `safe_yaml._FastLoader` is built at import, and is tested where it is built.
+- **A test that reads the source**, `test_line_endings`, failed the clean run of the first run
+  that mutated `cli.py`; it is skipped in the mutants tree now.
+- **Code no input reaches**, gone: a second lookup in `locate`, `_drawn`'s guard against a loop
+  `_composed` refuses first, two branches of the JSON reader, a prefix no default's fault
+  carries.
+
+`schema.py` has no leg: of its 193 survivors, the 128 in the batch's code were each applied by
+hand and leave both strict schemas byte for byte as they are -- branches for shapes the
+language does not have, a `oneOf` or an `enum` with no `type`, and defaults never read. The
+other modules with no leg are [#518](https://github.com/creatoan/scenet/issues/518)'s.
+
+Accepted, by what makes them equivalent, numbered from the run that numbers their leg:
+
+| Mutants | Change | Why it cannot change an output |
+|---|---|---|
+| `_limit_of` 7, 37, 39, 41 | a bound's key or a location's last name read with another default | A bound error always carries its key, and a location always holds a field's name. |
+| `_name_what_replaced` 42 | an unknown key's place always read as text | `RETIRED_KEYS` holds no number, so an index finds nothing either way. |
+| `_on_their_side` 26, 28, 31, 32 | a member's `at` read with another default | A default that names no side reads as one that names none. |
+| `_reader` 7 | `or` to `and` between the two unions | On Python 3.14, where the legs run, `typing.Union` and `types.UnionType` are one object. |
+| `Lowered.where` 7 | paths of one step not looked up | Every written path is at least two steps: a collection and a name. |
+| `_drawn` 46, 47, 48 | the middle word of a staging sentence drawn too | It is a predicate, and the words of a staging sentence are reserved: no member is named one. |
+| `_drawn` 55, `parse_script_document` 204 | `@over:` resolved without the panel's own name | The name only refuses a panel over itself, which `_composed` has refused first. |
+| `diagnose_source` 58 | a finding in another file translated as the document's | No path inside a puppet file or a contract starts with a collection the document lowers. |
+| `_Reader.mark` 5, 19 | counting again from the start at the last mark, or from it to the break | Both give the same line and the same line start. |
+| `_Reader._bad_string` 10, 27, 32, 33 | an escape read one character longer, or `\u` skipped two characters | An escape's message reads two characters; the four digits of `\u` are no fault. |
+| `_Reader._bad_string` 54 | the unclosed string's mark at `None` | `mark(None)` is the mark where reading is. |
+| `_dump_scalar` 5 | `allow_nan=None` | `None` is false, as `False` is. |
+| `_text` 9 | `ensure_ascii=None` | `None` is false, as `False` is. |
 
 ### Exploring with fresh seeds
 
