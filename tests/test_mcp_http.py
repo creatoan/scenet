@@ -137,7 +137,12 @@ def _post(url: str, body: bytes, **headers: str) -> _Response:
                 answer.read().decode("utf-8", "replace"),
             )
     except urllib.error.HTTPError as refused:
-        return _Response(refused.code, {}, refused.read().decode("utf-8", "replace"))
+        try:
+            said = refused.read().decode("utf-8", "replace")
+        except ConnectionError:
+            # The status came; the server closed before the client read the rest.
+            said = ""
+        return _Response(refused.code, {}, said)
     except (ConnectionError, urllib.error.URLError):
         # A body refused unread may close the connection before the answer is read.
         return _Response(413, {}, "")
