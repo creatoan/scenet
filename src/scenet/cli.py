@@ -311,7 +311,6 @@ def build_parser() -> argparse.ArgumentParser:
     mcp.add_argument(
         "--timeout",
         type=_seconds,
-        default=None,
         metavar="SECONDS",
         help="the most seconds one tool call may take before it is stopped (default: 60)",
     )
