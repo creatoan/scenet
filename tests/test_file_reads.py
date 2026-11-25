@@ -22,22 +22,38 @@ import struct
 import subprocess
 import sys
 import time
+import tracemalloc
 import zlib
 from collections.abc import Callable, Iterator
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import fonts.ttf
 import pytest
 
 import scenet.lettering
 import scenet.limits
+import scenet.pipeline
 from scenet.cli import build_parser, main
 from scenet.diagnostics import Diagnostic, diagnose_file, diagnose_script, diagnose_source
-from scenet.errors import PanelSyntaxError
+from scenet.emit.pdf_images import embed
+from scenet.errors import PanelSyntaxError, RenderError
 from scenet.frontends.positions import Position, Region
+from scenet.frontends.yaml_front import parse_panel
 from scenet.lettering import load_font
 from scenet.paths import MARKER, OutsideRootError
-from scenet.pipeline import compile_book_file, compile_file
+from scenet.pipeline import (
+    compile_book,
+    compile_book_file,
+    compile_document,
+    compile_file,
+    compile_ir,
+    compile_scene,
+    compile_scene_file,
+    compile_script,
+    compile_source,
+)
 from tests.images import PNG_SIGNATURE, chunk, tiny_png
 from tests.puppets import KID, kid
 
@@ -248,6 +264,18 @@ class TestADecompressionBomb:
     """A PNG with alpha is decoded for print; its data inflates to exactly what its header
     says, or the print is refused, and no more than that is ever inflated."""
 
+    def test_no_more_than_the_header_s_size_is_ever_held(self):
+        """Refused after inflating 32 MiB would still be refused; it would not be bounded."""
+        bomb = _png(1, 1, 6, bytes(32 * 2**20))
+        tracemalloc.start()
+        try:
+            with pytest.raises(RenderError, match="inflates past"):
+                embed(bomb, "image/png", "a.png")
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        assert peak < 2**22
+
     @pytest.fixture
     def comic(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         monkeypatch.chdir(tmp_path)
@@ -409,6 +437,8 @@ class TestTheDefaultRoot:
         (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
         text = climbing.read_text(encoding="utf-8")
         assert _only(diagnose_source(text, base=climbing.parent)).message == OUTSIDE
+        found = diagnose_source(text, source=climbing, base=climbing.parent)
+        assert _only(found).message == OUTSIDE
         assert diagnose_source(text, base=climbing.parent, root=climbing.parent.parent) == []
 
     def test_a_mapping_is_its_own_root(self):
@@ -714,3 +744,127 @@ def test_root_says_what_it_is_in_its_help(command: str):
     (action,) = [a for a in group.choices[command]._actions if "--root" in a.option_strings]
     assert (action.metavar, action.type, action.default) == ("DIR", Path, None)
     assert action.help == ROOT_HELP
+
+
+#: A script whose front matter names the picture beside the comic's folder.
+SCRIPT = chr(10).join(
+    [
+        "---",
+        "setting: {image: ../shared/sky.png}",
+        "cast: {A: {reference: alice}}",
+        "---",
+        "PANEL 1",
+        "A",
+        "Hi.",
+        "",
+    ]
+)
+TEXTS: dict[str, Callable[..., object]] = {
+    "source": compile_source,
+    "book": compile_book,
+    "scene": compile_scene,
+    "script": compile_script,
+}
+
+
+class TestEveryWayInReadsWithinItsRoot:
+    """Each function a caller may compile with chooses the root as `compile_file` does,
+    from what it is handed: `root`, else `base`, else the document's own folder (#432)."""
+
+    @staticmethod
+    def _text(name: str, climbing: Path) -> str:
+        return SCRIPT if name == "script" else climbing.read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize("name", sorted(TEXTS))
+    def test_from_the_source_alone_the_root_is_its_folder(self, name: str, climbing: Path):
+        with pytest.raises(PanelSyntaxError) as raised:
+            TEXTS[name](self._text(name, climbing), source=climbing)
+        assert raised.value.args[0] == OUTSIDE
+
+    @pytest.mark.parametrize("name", sorted(TEXTS))
+    def test_from_a_base_alone_the_root_is_the_base(self, name: str, climbing: Path):
+        with pytest.raises(PanelSyntaxError) as raised:
+            TEXTS[name](self._text(name, climbing), base=climbing.parent)
+        assert raised.value.args[0] == OUTSIDE
+
+    @pytest.mark.parametrize("name", sorted(TEXTS))
+    @pytest.mark.parametrize("given", ["source", "base"])
+    def test_a_root_named_wins(self, name: str, given: str, climbing: Path):
+        where: dict[str, Path] = (
+            {"source": climbing} if given == "source" else {"base": climbing.parent}
+        )
+        TEXTS[name](self._text(name, climbing), root=climbing.parent.parent, **where)
+
+    @pytest.mark.parametrize("name", sorted(TEXTS))
+    def test_from_the_source_a_marker_above_is_found(self, name: str, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        TEXTS[name](self._text(name, climbing), source=climbing)
+
+    @pytest.mark.parametrize("name", sorted(TEXTS))
+    def test_with_a_base_too_no_marker_is_looked_for(self, name: str, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        with pytest.raises(PanelSyntaxError) as raised:
+            TEXTS[name](self._text(name, climbing), source=climbing, base=climbing.parent)
+        assert raised.value.args[0] == OUTSIDE
+
+    def test_a_panel_already_parsed(self, climbing: Path):
+        panel = parse_panel(climbing.read_text(encoding="utf-8"))
+        with pytest.raises(PanelSyntaxError) as raised:
+            compile_ir(panel, base=climbing.parent)
+        assert raised.value.args[0] == OUTSIDE
+        compile_ir(panel, base=climbing.parent, root=climbing.parent.parent)
+
+    @pytest.mark.parametrize(
+        "call", [compile_file, compile_book_file, compile_scene_file, compile_document]
+    )
+    def test_a_file(self, call: Callable[..., object], climbing: Path):
+        with pytest.raises(PanelSyntaxError) as raised:
+            call(climbing)
+        assert raised.value.args[0] == OUTSIDE
+        call(climbing, root=climbing.parent.parent)
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        call(climbing)
+
+    def test_a_script_checked_from_a_base(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("", encoding="utf-8")
+        found = diagnose_script(SCRIPT, source=climbing, base=climbing.parent)
+        assert _only(found).message == OUTSIDE
+        assert diagnose_script(SCRIPT, source=climbing) == []
+        assert diagnose_script(SCRIPT, base=climbing.parent, root=climbing.parent.parent) == []
+
+
+class TestWhatIsHandedOn:
+    """`compile_scene` and `compile_document` are another call's panels: all they are given
+    is handed to it."""
+
+    @pytest.fixture
+    def handed(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> list[tuple[tuple[Any, ...], dict[str, Any]]]:
+        calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+
+        def record(*args: Any, **kwargs: Any) -> SimpleNamespace:
+            calls.append((args, kwargs))
+            return SimpleNamespace(panels={"one": "panel"})
+
+        monkeypatch.setattr(scenet.pipeline, "compile_book", record)
+        monkeypatch.setattr(scenet.pipeline, "compile_book_file", record)
+        return calls
+
+    def test_compile_scene(self, handed: list[tuple[tuple[Any, ...], dict[str, Any]]]):
+        library, metrics = object(), object()
+        given = {
+            "source": Path("a.scene.yaml"),
+            "base": Path("art"),
+            "library": library,
+            "metrics": metrics,
+            "root": Path("comic"),
+        }
+        assert compile_scene("text", **given) == {"one": "panel"}  # ty: ignore[invalid-argument-type]  # pyright: ignore[reportArgumentType]
+        assert handed == [(("text",), given)]
+
+    def test_compile_document(self, handed: list[tuple[tuple[Any, ...], dict[str, Any]]]):
+        library, metrics = object(), object()
+        given = {"library": library, "metrics": metrics, "root": Path("comic")}
+        assert compile_document(Path("a.script"), **given) == {"one": "panel"}  # ty: ignore[invalid-argument-type]  # pyright: ignore[reportArgumentType]
+        assert handed == [((Path("a.script"),), given)]
