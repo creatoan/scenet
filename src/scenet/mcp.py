@@ -137,6 +137,7 @@ __all__ = [
     "Finding",
     "Puppet",
     "PuppetCatalogue",
+    "Server",
     "ValidationReport",
     "build_server",
     "compile_panel",
@@ -593,8 +594,8 @@ TOOLS: tuple[tuple[str, str, Callable[..., Any]], ...] = (
 _LOG = logging.getLogger(__name__)
 
 
-class _Server(MCPServer[Any]):
-    """The SDK's server, with a crash in a tool reported as the bug it is.
+class Server(MCPServer[Any]):
+    """The SDK's server, with a crash in a tool reported as the bug it is, and closable.
 
     The SDK already turns any exception a tool raises into an error result, so a crash
     never ends the session; but the result says only "Error executing tool render",
@@ -603,17 +604,36 @@ class _Server(MCPServer[Any]):
     to the server's log, on stderr, and never to the client.
     """
 
-    #: The worker processes its calls run in, when they are bounded in time.
-    workers: "_Workers | None" = None
+    def __init__(self, *, workers: "_Workers | None" = None, **options: Any) -> None:  # noqa: ANN401 -- the SDK's own options
+        """Build the server.
+
+        Args:
+            workers: The worker processes its calls run in, when they are bounded in time.
+            **options: The SDK's: its name, title, version, instructions and website.
+        """
+        super().__init__(**options)
+        self._workers = workers
 
     def close(self) -> None:
         """Stop every worker process the server started, idle or not."""
-        if self.workers is not None:
-            self.workers.close()
+        if self._workers is not None:
+            self._workers.close()
 
     async def call_tool(
         self, name: str, arguments: dict[str, Any], context: Context[Any, Any] | None = None
     ) -> CallToolResult | InputRequiredResult:
+        """Call a tool, a crash in it reported as the command line reports one.
+
+        :meta private:
+
+        Args:
+            name: The tool.
+            arguments: Its arguments.
+            context: The SDK's request context.
+
+        Returns:
+            The tool's result.
+        """
         try:
             return await super().call_tool(name, arguments, context)
         except UnexpectedToolError as exc:
@@ -622,7 +642,7 @@ class _Server(MCPServer[Any]):
             raise ToolError(describe_failure(crash)) from crash
 
 
-def build_server(*, timeout: float | None = None) -> "_Server":
+def build_server(*, timeout: float | None = None) -> "Server":
     """Build the server with every tool registered, without starting it.
 
     Separate from :func:`serve <scenet.mcp.serve>` so that a test, or a host embedding
@@ -637,15 +657,15 @@ def build_server(*, timeout: float | None = None) -> "_Server":
         The server, ready to run on any transport. Its `close()` stops the worker
         processes it started; :func:`serve` calls it once the server has stopped.
     """
-    server = _Server(
+    workers = None if timeout is None else _Workers(timeout)
+    server = Server(
+        workers=workers,
         name="scenet",
         title="Scenet",
         version=__version__,
         instructions=INSTRUCTIONS,
         website_url=WEBSITE,
     )
-    workers = None if timeout is None else _Workers(timeout)
-    server.workers = workers
     for name, title, function in TOOLS:
         run = function if workers is None else _bounded(name, function, workers)
         server.tool(name=name, title=title, description=_describe(function), annotations=READ_ONLY)(

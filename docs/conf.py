@@ -154,6 +154,9 @@ nitpick_ignore = [
     # Shapely documents each kind of geometry, not the base class they share, which is
     # the type `scenet.solve.sfx.place_effects` takes.
     ("py:class", "shapely.geometry.base.BaseGeometry"),
+    # The MCP server's worker processes are its own business: `build_server(timeout=)` is
+    # how a host asks for them, and the class that runs them has no page.
+    ("py:class", "scenet.mcp._Workers"),
 ]
 nitpick_ignore_regex = [
     # A function defined inside another has no page. One shows in a type alias, as the

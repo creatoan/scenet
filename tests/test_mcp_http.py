@@ -482,8 +482,8 @@ def test_closing_a_server_stops_its_workers():
         server = build_server(timeout=30)
         async with Client(server) as client:
             await client.call_tool("get_spec", {})
-        assert server.workers is not None
-        idle = list(server.workers._idle)
+        assert server._workers is not None
+        idle = list(server._workers._idle)
         server.close()
         return idle
 
