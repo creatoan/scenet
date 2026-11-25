@@ -323,6 +323,24 @@ BEN: Wait.
         assert {f.actor for f in first.core.figures} == {"ANA", "BEN", None}
         assert {f.actor for f in second.core.figures} == {"ANA"}
 
+    @pytest.mark.parametrize(
+        ("instead", "path", "line"),
+        [
+            ("@cast: {ANA: {figure: ana}}", ("2", "cast", "ANA", "figure"), 15),
+            ("A room.", ("cast", "ANA", "figure"), 3),
+        ],
+        ids=["written-by-the-panel", "from-the-front-matter"],
+    )
+    def test_a_figure_with_no_picture_is_found_where_it_is_written(
+        self, instead: str, path: tuple[str, ...], line: int
+    ):
+        script = self.SCRIPT.replace("@setting: {image: art/q.png}", instead)
+        script = script.replace("\nBEN: Wait.\n", "")
+        found = _one(diagnose_script(script, base=self._files()), "unknown-figure")
+        assert found.path == path
+        assert found.region is not None
+        assert found.region.start.line == line
+
     def test_a_line_by_a_figure_its_panels_picture_does_not_draw_is_found_at_its_line(self):
         found = _one(diagnose_script(self.SCRIPT, base=self._files()), "unknown-figure")
         assert found.path == ("2", "script", 1, "say", "by")
