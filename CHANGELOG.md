@@ -23,6 +23,8 @@ it is written, and says what to write instead.
   16 MiB is refused with 413, an `Origin` other than the server's own at its own port with 403
   (`--allow-origin` adds one), and no session is kept. `--allow-remote` is needed to listen
   beyond this machine; `SECURITY.md` says what an operator must add in front of it.
+  `scenet.mcp.build_server(timeout=...)` bounds the calls of a server a host runs itself, and
+  returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
 - **A failed scheduled run opens an issue** (#346). The mutation run, CodeQL and the link check
   each end in a job that calls `.github/workflows/scheduled-report.yml`: a failure opens an issue
