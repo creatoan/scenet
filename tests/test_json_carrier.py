@@ -320,9 +320,11 @@ class TestTheReader:
         [
             ('{"a":\n"x yBSq"}', "'BSBSq' is no escape JSON has: write BSBS for a backslash", 4),
             ('{"a": "BSnBSu00E9' + chr(1) + '"}', "a string holds U+0001", 15),
+            ('{"a": "BSn' + chr(1) + '"}', "a string holds U+0001", 9),
+            ('{"a": "BSnu' + chr(1) + '"}', "a string holds U+0001", 10),
             ('{"a": "x', "a string is opened and never closed", 6),
         ],
-        ids=["after-a-break", "after-good-escapes", "unclosed"],
+        ids=["after-a-break", "after-good-escapes", "after-one-escape", "after-a-u", "unclosed"],
     )
     def test_a_bad_string_is_found_where_it_goes_wrong(self, text: str, problem: str, column: int):
         with pytest.raises(JsonSyntaxError) as caught:
