@@ -1830,12 +1830,15 @@ class PanelLines:
             in: `{"cast": {"ALICE": {"pose": "pointing"}}}` for `@cast: {ALICE: {pose:
             pointing}}`. A fault at a path written here is the panel's, even where the front
             matter declares the same key.
+        over: The name of the panel its `@over:` names, as the script names it -- `2-1` for
+            `@over: 1` on page two -- or `None`.
     """
 
     heading: int
     events: tuple[int, ...]
     directives: Mapping[tuple[str, ...], int] = field(default_factory=dict[tuple[str, ...], int])
     written: Mapping[str, Any] = field(default_factory=dict[str, Any])
+    over: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -2021,7 +2024,7 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
         ...     "---\ncast: {A: {reference: alice}}\n---\nPANEL 1\nA\nHi.\n"
         ... )
         >>> document.lines["1"]
-        PanelLines(heading=4, events=(5,), directives={}, written={})
+        PanelLines(heading=4, events=(5,), directives={}, written={}, over=None)
     """
     # Anything that reaches here as a string gets the treatment a file would have had,
     # and the same whatever editor saved it.
@@ -2087,6 +2090,10 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
                 events=tuple(draft.event_lines),
                 directives=dict(draft.directive_lines),
                 written=copy.deepcopy(draft.settings),
+                # Resolved as `_composed` resolves it, which has refused any it could not.
+                over=_over_target(target, name, draft, panels)
+                if isinstance(target := draft.settings.get(OVER_KEY), str)
+                else None,
             )
             for name, draft in panels.items()
         },

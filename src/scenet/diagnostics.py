@@ -60,7 +60,6 @@ from scenet.assets.contract import (
 from scenet.compose import (
     DIRECTION_KEY,
     NOT_DEFAULTS,
-    OVER_KEY,
     PANELS_SHAPE,
     lowered,
     merge,
@@ -2261,12 +2260,12 @@ def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:
     both: what it inherits is written in the script, not in the front matter.
     """
     chain: list[dict[str, Any]] = []
-    over: object = name
-    # Bounded, though `@over:` is refused in a loop before this is asked.
-    while isinstance(over, str) and over in document.lines and len(chain) < len(document.lines):
-        written = document.lines[over].written
-        chain.append(dict(written))
-        over = written.get(OVER_KEY)
+    over: str | None = name
+    # Each panel by the name the script gives it, `2-1` for `@over: 1` on page two; bounded,
+    # though a loop of `@over:` is refused before this is asked.
+    while over is not None and len(chain) < len(document.lines):
+        chain.append(dict(document.lines[over].written))
+        over = document.lines[over].over
     inherited: dict[str, Any] = {}
     for written in reversed(chain):
         inherited = merge(inherited, written)
