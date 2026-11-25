@@ -309,10 +309,22 @@ class TestEveryLinkedPicture:
         )
         return source
 
-    def test_one_reached_with_dots_does_not_stop_the_next(self, scene: Path, tmp_path: Path):
-        assert main(["build", str(scene), "-o", "out/", "--quiet"]) == 0
+    def test_one_reached_with_dots_does_not_stop_the_next(
+        self, scene: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """Two folders down, so that `../shared.png` beside the SVG is not the picture itself."""
+        assert main(["build", str(scene), "-o", "out/deeper/"]) == 0
         assert _written(tmp_path / "out") == sorted(
-            ["art/a.png", "art/b.png", "s.one.svg", "s.three.svg", "s.two.svg"]
+            [
+                "deeper/art/a.png",
+                "deeper/art/b.png",
+                "deeper/s.one.svg",
+                "deeper/s.three.svg",
+                "deeper/s.two.svg",
+            ]
+        )
+        assert "../shared.png is linked, and is outside the document's folder" in (
+            capsys.readouterr().out
         )
 
     def test_one_already_there_does_not_stop_the_next(self, scene: Path, tmp_path: Path):
