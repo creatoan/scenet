@@ -17,11 +17,13 @@ What it does not do -- authenticate, encrypt -- is the operator's, and `SECURITY
 import argparse
 import contextlib
 import json
+import multiprocessing
 import os
 import site
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -691,3 +693,28 @@ def test_a_script_that_fails_only_once_laid_out_is_explained_as_a_script():
         scenet.mcp._compile(script, "script")
     assert "scenet/layout" in str(raised.value)
     assert "not-a-mapping" not in str(raised.value)
+
+
+def test_waiting_for_a_worker_to_start_ends_when_the_wait_is_cancelled():
+    """A call cancelled while its worker starts is let go at once, not when the worker is up."""
+    worker = object.__new__(scenet.mcp._Worker)
+    ours, theirs = multiprocessing.Pipe()
+    worker._connection = ours
+    worker._starting = True
+    # Up after three seconds: what a wait that cannot be cancelled would sit through.
+    up = threading.Timer(3, theirs.send, ("ready",))
+    up.start()
+
+    async def go() -> float:
+        started = time.monotonic()
+        with anyio.move_on_after(0.2):
+            await worker.ready()
+        return time.monotonic() - started
+
+    try:
+        assert anyio.run(go) < 2
+        assert worker._starting
+    finally:
+        up.join()
+        ours.close()
+        theirs.close()
