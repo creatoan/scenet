@@ -2261,10 +2261,12 @@ def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:
     both: what it inherits is written in the script, not in the front matter.
     """
     chain: list[dict[str, Any]] = []
-    while name in document.lines and len(chain) < len(document.lines):
-        written = document.lines[name].written
+    over: object = name
+    # Bounded, though `@over:` is refused in a loop before this is asked.
+    while isinstance(over, str) and over in document.lines and len(chain) < len(document.lines):
+        written = document.lines[over].written
         chain.append(dict(written))
-        name = str(written.get(OVER_KEY, ""))
+        over = written.get(OVER_KEY)
     inherited: dict[str, Any] = {}
     for written in reversed(chain):
         inherited = merge(inherited, written)
