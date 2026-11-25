@@ -208,13 +208,11 @@ def marker_fault(marker: Path) -> MarkerError | None:
     if not held:
         return None
     key = next(iter(held))
+    # A file TOML read a key from has a line that is neither blank nor a comment.
     line = next(
-        (
-            number
-            for number, written in enumerate(text.splitlines(), start=1)
-            if written.strip() and not written.lstrip().startswith("#")
-        ),
-        1,
+        number
+        for number, written in enumerate(text.splitlines(), start=1)
+        if written.strip() and not written.lstrip().startswith("#")
     )
     return MarkerError(
         f"scenet.toml holds {key!r}, and a scenet.toml holds nothing yet: it marks the root "
@@ -851,7 +849,7 @@ def read_model[M: BaseModel](
             message = unknown_key if first["type"] == "extra_forbidden" else first["msg"]
         where = ".".join(str(part) for part in inner)
         if not quoted:
-            where, message = "", _unquoted(first["type"], original, unknown_key, inner)
+            where, message = "", _unquoted(first["type"], unknown_key, inner)
         raise error(
             f"{where}: {message}" if where else message,
             file=declared,
@@ -870,13 +868,12 @@ _PROFILE_FAULTS = {
 }
 
 
-def _unquoted(kind: str, original: object, unknown_key: str, inner: tuple[str | int, ...]) -> str:
+def _unquoted(kind: str, unknown_key: str, inner: tuple[str | int, ...]) -> str:
     """What is wrong at a place in a file, in words that quote nothing it holds.
 
-    A key that is missing is named: the format names it, not the file.
+    A key that is missing is named: the format names it, not the file. A rule a validator
+    broke is pydantic's `value_error`, and a value it does not allow.
     """
-    if isinstance(original, RuleViolationError):
-        return "a value it does not allow here"
     if kind == "extra_forbidden":
         return unknown_key
     if kind == "missing":

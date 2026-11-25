@@ -17,7 +17,7 @@ import pytest
 
 import scenet.limits
 from scenet.assets.contract import PuppetFileError, PuppetSpec, load_puppet_file
-from scenet.errors import FileReadError, PanelSyntaxError, RuleViolationError, ScriptSyntaxError
+from scenet.errors import FileReadError, PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends.positions import Position, Region
 from scenet.paths import (
     FileTooLargeError,
@@ -476,11 +476,13 @@ class TestUnquoted:
         ],
     )
     def test_what_each_kind_says(self, kind: str, inner: tuple[str | int, ...], said: str):
-        assert _unquoted(kind, None, "UNKNOWN", inner) == said
+        assert _unquoted(kind, "UNKNOWN", inner) == said
 
-    def test_a_rule_the_validators_broke(self):
-        broken = RuleViolationError("pose 'x' is one the puppet lacks", rule="r", loc=("x",))
-        assert _unquoted("missing", broken, "UNKNOWN", ("x",)) == "a value it does not allow here"
+    def test_a_rule_the_validators_broke(self, tmp_path: Path):
+        """A validator's rule is pydantic's `value_error`: a value it does not allow."""
+        text = KID.replace("parent: neck, offset: [0, -70]", "parent: nowhere, offset: [0, -70]")
+        fault = _puppet_fault("", _base("on disk", tmp_path, text))
+        assert fault.args[0].endswith(": a value it does not allow here")
 
 
 class TestUntagged:
@@ -504,3 +506,67 @@ def test_a_whole_line_is_a_region():
     assert _whole_line(3) == Region(
         start=Position(line=3, column=1), end=Position(line=4, column=1)
     )
+
+
+class TestTheRestOfEachReader:
+    def test_a_marker_fault_names_its_file(self, tmp_path: Path):
+        for data in (b"\xff", b"a = = 1\n"):
+            marker = _file(tmp_path, data, "scenet.toml")
+            fault = marker_fault(marker)
+            assert fault is not None
+            assert fault.marker == marker
+
+    def test_a_marker_the_system_will_not_read(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        marker = _file(tmp_path, b"", "scenet.toml")
+
+        def odd(*_args: object, **_kwargs: object) -> bytes:
+            raise OSError("odd")
+
+        monkeypatch.setattr("scenet.paths.read_bounded", odd)
+        fault = marker_fault(marker)
+        assert fault is not None
+        assert fault.marker == marker
+        assert fault.reason == "scenet.toml cannot be read: OSError"
+
+    def test_a_file_swapped_once_opened_is_named(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        path = _file(tmp_path, b"data")
+        real = os.fstat
+
+        def not_regular(descriptor: int) -> os.stat_result:
+            found = real(descriptor)
+            mode = (found.st_mode & ~stat.S_IFMT(found.st_mode)) | stat.S_IFIFO
+            return os.stat_result((mode, *found[1:]))
+
+        monkeypatch.setattr(os, "fstat", not_regular)
+        with pytest.raises(NotRegularFileError) as raised:
+            read_bounded(path, 10)
+        assert raised.value.filename == str(path)
+
+    def test_a_file_that_grew_is_named_and_said(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        path = _file(tmp_path, bytes(100))
+        real = Path.stat
+
+        def small(self: Path, **kwargs: object) -> os.stat_result:
+            found = real(self)
+            return os.stat_result((found.st_mode, *found[1:6], 5, *found[7:]))
+
+        monkeypatch.setattr(Path, "stat", small)
+        with pytest.raises(FileTooLargeError) as raised:
+            read_bounded(path, 10, what="a font")
+        assert raised.value.filename == str(path)
+        assert raised.value.strerror == "larger than 10 bytes, the most Scenet reads of a font"
+
+    def test_read_file_s_what_is_a_file_by_default(self, tmp_path: Path):
+        with pytest.raises(FileReadError) as raised:
+            read_file(_file(tmp_path, b"xy"), limit=1)
+        assert raised.value.strerror == "larger than 1 byte, the most Scenet reads of a file"
+
+    def test_a_file_sent_at_its_bound_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(scenet.limits, "DOCUMENT_BYTES", 3)
+        assert read_relative("a", {"a": b"xyz"}, what="image", rule="r") == b"xyz"

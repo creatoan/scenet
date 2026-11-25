@@ -104,10 +104,11 @@ def load_font(declared: str, base: Folder | None, *, loc: tuple[str | int, ...])
             loc=loc,
         ) from exc
     _BY_CONTENT[metrics.sha256] = metrics
+    # The one used longest ago is first; another thread may have let it go already.
     while len(_BY_CONTENT) > FONT_CACHE_ENTRIES:
         try:
-            _BY_CONTENT.popitem(last=False)
-        except KeyError:
+            del _BY_CONTENT[next(iter(_BY_CONTENT))]
+        except (KeyError, StopIteration, RuntimeError):
             break
     return metrics
 
