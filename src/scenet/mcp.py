@@ -752,16 +752,16 @@ class _Worker:
         self._process = context.Process(target=_serve_calls, args=(theirs,), daemon=True)
         self._process.start()
         theirs.close()
-        self._ready = False
+        self._starting = True
 
     async def ready(self) -> None:
         """Wait until it has started, imported the compiler and read the shipped files.
 
         Not part of any call's time: a call is timed from when a worker can take it.
         """
-        if not self._ready:
+        if self._starting:
             await to_thread.run_sync(self._connection.recv, abandon_on_cancel=True)
-            self._ready = True
+            self._starting = False
 
     async def run(self, name: str, arguments: dict[str, Any]) -> tuple[str, Any]:
         """Send one call, and wait, without holding the event loop, for what came of it."""

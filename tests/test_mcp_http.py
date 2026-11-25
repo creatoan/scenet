@@ -665,3 +665,24 @@ class TestAFailedCompileExplained:
             scenet.mcp._compile(source, "yaml", {"art/a.png": tiny_png()})
         assert "scenet/layout" in str(raised.value)
         assert "image-file" not in str(raised.value)
+
+
+def test_a_script_that_fails_only_once_laid_out_is_explained_as_a_script():
+    """The deep check that explains it reads the script as a script, too."""
+    nl = chr(10)
+    script = nl.join(
+        [
+            "---",
+            "cast: {A: {reference: alice}, B: {reference: bob}}",
+            "staging: [A in_front_of B, B in_front_of A]",
+            "---",
+            "PANEL 1",
+            "A",
+            "Hi.",
+            "",
+        ]
+    )
+    with pytest.raises(ToolError) as raised:
+        scenet.mcp._compile(script, "script")
+    assert "scenet/layout" in str(raised.value)
+    assert "not-a-mapping" not in str(raised.value)
