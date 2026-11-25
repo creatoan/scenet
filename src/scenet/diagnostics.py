@@ -2322,7 +2322,7 @@ def diagnose_file(
     """
     data = path.read_bytes()
     try:
-        text = data.decode("utf-8")
+        text = data.decode()
     except UnicodeDecodeError as exc:
         # What `build` says of the same file, so the two agree on it.
         message = (

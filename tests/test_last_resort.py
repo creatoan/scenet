@@ -8,6 +8,7 @@ exit 70 -- the traceback only when asked for, with `--traceback` or `SCENET_DEBU
 """
 
 import errno
+import logging
 import os
 import subprocess
 import sys
@@ -18,10 +19,20 @@ from typing import Any
 import anyio
 import pytest
 from mcp import Client
+from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError, UnexpectedToolError
 
 import scenet.cli
 import scenet.mcp
-from scenet.cli import EXIT_INTERNAL, EXIT_INTERRUPTED, ISSUES, main
+from scenet.cli import (
+    EXIT_INTERNAL,
+    EXIT_INTERRUPTED,
+    ISSUES,
+    _silence_stdout,
+    describe_failure,
+    main,
+)
+from scenet.errors import LayoutError, UnknownActorError
 from scenet.mcp import build_server
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
@@ -411,3 +422,91 @@ class TestTheMcpServer:
         assert ISSUES in block.text
         assert "Traceback" not in block.text
         assert not after.is_error
+
+
+class TestTheLinesItPrints:
+    """What each failure says, held word for word (from the mutation run)."""
+
+    @pytest.mark.parametrize(
+        ("error", "said"),
+        [
+            (OSError(errno.EACCES, "Permission denied", "a.svg"), "a.svg: Permission denied"),
+            (OSError("the disk said no"), "the disk said no"),
+            (OSError(), "OSError"),
+            (PermissionError(), "PermissionError"),
+        ],
+    )
+    def test_a_file_the_system_refuses(self, error: OSError, said: str):
+        assert describe_failure(error) == said
+
+    def test_a_watch_says_why_a_rebuild_failed(
+        self, panel: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        def once(_dependencies: object, rebuild: Callable[[], None]) -> None:
+            monkeypatch.setattr(scenet.cli, "compile_book_file", _raise(RuntimeError("boom")))
+            rebuild()
+
+        monkeypatch.setattr(scenet.cli, "watch_loop", once)
+        assert main(["build", str(panel), "--watch", "--quiet"]) == 0
+        err = capsys.readouterr().err
+        assert err == (
+            "scenet: watch rebuild failed: internal error (RuntimeError: boom) -- this is a bug; "
+            f"please report it at {ISSUES}\n"
+        )
+
+    def test_a_key_the_document_lacks_is_said_without_quotes(
+        self, panel: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        """A `KeyError`'s own text is a repr; the message under it is what is said."""
+        monkeypatch.setattr(
+            scenet.cli, "compile_book_file", _raise(UnknownActorError("no actor 'zed' here"))
+        )
+        assert main(["build", str(panel)]) == 1
+        assert capsys.readouterr().err == "scenet: no actor 'zed' here\n"
+
+    def test_a_scenet_error_that_is_no_key_error_is_said_whole(
+        self, panel: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        monkeypatch.setattr(scenet.cli, "compile_book_file", _raise(LayoutError()))
+        assert main(["build", str(panel)]) == 1
+        assert capsys.readouterr().err == f"scenet: {LayoutError()}\n"
+
+
+class TestAClosedPipe:
+    def test_stdout_is_pointed_at_the_null_device(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Once the reader has gone, nothing the interpreter flushes can fail again."""
+        with (tmp_path / "out.txt").open("w", encoding="utf-8") as stdout:
+            monkeypatch.setattr(sys, "stdout", stdout)
+            _silence_stdout()
+            stdout.write("lost")
+            stdout.flush()
+        assert (tmp_path / "out.txt").read_text(encoding="utf-8") == ""
+
+
+class TestTheServerLogsACrash:
+    def test_the_original_exception_with_the_tool_s_name(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ):
+        crash = RuntimeError("the frobnicator fell over")
+        monkeypatch.setattr(scenet.mcp, "part", _raise(crash))
+        with caplog.at_level(logging.ERROR, logger="scenet.mcp"):
+            _call_twice("get_spec", {})
+        record, *_ = [r for r in caplog.records if r.name == "scenet.mcp"]
+        assert record.getMessage() == "tool 'get_spec' crashed"
+        assert isinstance(record.exc_info, tuple)
+        assert record.exc_info[1] is crash
+
+    def test_a_crash_with_no_cause_is_said_as_itself(self, monkeypatch: pytest.MonkeyPatch):
+        async def crashed(*_args: object, **_kwargs: object) -> None:
+            raise UnexpectedToolError("Error executing tool x")
+
+        monkeypatch.setattr(MCPServer, "call_tool", crashed)
+
+        async def go() -> Any:
+            return await build_server().call_tool("get_spec", {})
+
+        with pytest.raises(ToolError) as raised:
+            anyio.run(go)
+        assert "internal error (UnexpectedToolError: Error executing tool x)" in str(raised.value)

@@ -758,7 +758,7 @@ def run_schema(args: argparse.Namespace) -> int:
 def _write_document(output: Path, document: str) -> None:
     """Write a document where `-o` said, creating its folder."""
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(document, encoding="utf-8", newline="\n")
+    output.write_bytes(document.encode())
 
 
 def _print_document(document: str) -> None:
@@ -852,7 +852,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     except Exception as exc:
         if _debugging(args):
-            traceback.print_exception(exc, file=sys.stderr)
+            traceback.print_exception(exc)
         print(f"scenet: {describe_failure(exc)}", file=sys.stderr)
         if not isinstance(exc, OSError):
             print(
