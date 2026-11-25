@@ -32,7 +32,7 @@ from scenet.cli import (
     describe_failure,
     main,
 )
-from scenet.errors import LayoutError, UnknownActorError
+from scenet.errors import LayoutError, ScenetError, UnknownActorError
 from scenet.mcp import build_server
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
@@ -510,3 +510,23 @@ class TestTheServerLogsACrash:
         with pytest.raises(ToolError) as raised:
             anyio.run(go)
         assert "internal error (UnexpectedToolError: Error executing tool x)" in str(raised.value)
+
+
+def test_the_flag_says_what_it_does_in_the_help(capsys: pytest.CaptureFixture[str]):
+    with pytest.raises(SystemExit):
+        main(["--help"])
+    said = " ".join(capsys.readouterr().out.split())
+    assert (
+        "--traceback print the traceback of an internal error, for its report; "
+        "SCENET_DEBUG=1 does the same"
+    ) in said
+
+
+class _SaysItselfError(ScenetError):
+    def __str__(self) -> str:
+        return "what it says"
+
+
+def test_a_fault_that_is_no_key_error_is_said_as_it_says_itself():
+    """Only a `KeyError` is read from its first argument, which it would otherwise quote."""
+    assert scenet.cli._compile_failure(_SaysItselfError("its first argument")) == "what it says"
