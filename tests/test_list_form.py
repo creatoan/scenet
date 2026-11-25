@@ -230,6 +230,13 @@ class TestMistakes:
         assert found.region is not None
         assert found.region.start.line == 3
 
+    def test_panels_of_neither_form_are_found_at_panels(self):
+        source = Path("x.scene.yaml")
+        (found,) = diagnose_source("cast: {a: {reference: alice}}\npanels: 5\n", source=source)
+        assert (found.rule, found.path, found.source) == ("invalid-field", ("panels",), source)
+        assert found.region is not None
+        assert found.region.start.line == 2
+
     def test_an_item_with_no_name_is_missing_it(self):
         (found,) = diagnose_source(
             "cast: [{id: a, reference: alice}]\npanels: [{camera: {shot: close_up}}]"
