@@ -10,6 +10,7 @@ SVG shows it wherever it was written. A file already there that is not the pictu
 replaced, and the build says so.
 """
 
+import argparse
 import os
 import re
 from pathlib import Path
@@ -17,7 +18,7 @@ from pathlib import Path
 import pytest
 
 import scenet.cli
-from scenet.cli import main
+from scenet.cli import build_parser, main
 from tests.images import tiny_png
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
@@ -323,3 +324,13 @@ class TestEveryLinkedPicture:
     def test_beside_the_document_none_is_copied_and_each_still_links(self, scene: Path):
         assert main(["build", str(scene), "--quiet"]) == 0
         assert sorted(p.name for p in (scene.parent / "art").iterdir()) == ["a.png", "b.png"]
+
+
+def test_o_says_the_rule_in_its_help():
+    (group,) = [a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction)]
+    (action,) = [a for a in group.choices["build"]._actions if "--output" in a.option_strings]
+    assert action.help == (
+        "the SVG to write, a name ending in .svg; or a folder to write into under the default "
+        "name: one that exists, or a name ending in / or with no extension (default: alongside "
+        "the source)"
+    )
