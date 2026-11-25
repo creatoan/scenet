@@ -1456,5 +1456,19 @@ class TestWhereAnInheritedFaultIsReported:
         assert [(item.rule, item.path[0]) for item in found] == [(rule, "1"), (rule, "2")]
         assert [item.region.start.line for item in found if item.region] == [5, 9]
 
+    def test_a_panel_over_another_on_a_later_page_reports_at_its_heading(self):
+        """`@over: 1` on page two is panel `2-1`, as the script reads it, not page one's."""
+        script = (
+            "---\ncast: {ALICE: {reference: alice}}\n---\nPAGE ONE\n\nPANEL 1\nALICE\nHi.\n\n"
+            "PAGE TWO\n\nPANEL 1\n@cast: {ALICE: {reference: nobody}}\nALICE\nHello.\n\n"
+            "PANEL 2\n@over: 1\nALICE\nAgain.\n"
+        )
+        found = diagnose_script(script)
+        assert [(item.rule, item.path[0]) for item in found] == [
+            ("unknown-puppet", "2-1"),
+            ("unknown-puppet", "2-2"),
+        ]
+        assert [item.region.start.line for item in found if item.region] == [13, 17]
+
 
 RULE_ID = "invalid-identifier"

@@ -279,6 +279,9 @@ it is written, and says what to write instead.
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
 
+- **A comic-script panel drawn `@over:` a panel of its page is no longer blamed on the front
+  matter** in a script with pages: `@over: 1` on page two was looked up as page one's panel, and
+  what panel `2-1` wrote was taken for the front matter's. Found by mutation testing.
 - **The schemas say a mark is listed once**, as `scenet check` always has:
   `marks: [plewds, plewds]` passed the schema and was refused by the check. Found by the schema
   parity property.
