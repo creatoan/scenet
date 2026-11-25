@@ -277,3 +277,49 @@ class TestALinkedPicture:
         assert main(["build", str(document), "-o", "out/"]) == 2
         assert "two outputs would both be written to" in capsys.readouterr().err
         assert not (tmp_path / "out").exists()
+
+
+class TestEveryLinkedPicture:
+    """Each picture is looked at on its own: one skipped does not stop the next."""
+
+    @pytest.fixture
+    def scene(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+        monkeypatch.chdir(tmp_path)
+        folder = tmp_path / "comic"
+        (folder / "art").mkdir(parents=True)
+        (folder / "art" / "a.png").write_bytes(PICTURE)
+        (folder / "art" / "b.png").write_bytes(OTHER)
+        (tmp_path / "shared.png").write_bytes(PICTURE)
+        (tmp_path / "scenet.toml").write_text("", encoding="utf-8")
+        source = folder / "s.scene.yaml"
+        say = "script: [{say: {by: alice, text: Hello.}}]"
+        panels = {
+            "one": "../shared.png",
+            "two": "art/a.png",
+            "three": "art/b.png",
+        }
+        source.write_text(
+            "cast: {alice: {reference: alice}}\npanels:\n"
+            + "".join(
+                f"  {name}: {{setting: {{image: {image}}}, {say}}}\n"
+                for name, image in panels.items()
+            ),
+            encoding="utf-8",
+        )
+        return source
+
+    def test_one_reached_with_dots_does_not_stop_the_next(self, scene: Path, tmp_path: Path):
+        assert main(["build", str(scene), "-o", "out/", "--quiet"]) == 0
+        assert _written(tmp_path / "out") == sorted(
+            ["art/a.png", "art/b.png", "s.one.svg", "s.three.svg", "s.two.svg"]
+        )
+
+    def test_one_already_there_does_not_stop_the_next(self, scene: Path, tmp_path: Path):
+        (tmp_path / "out" / "art").mkdir(parents=True)
+        (tmp_path / "out" / "art" / "a.png").write_bytes(PICTURE)
+        assert main(["build", str(scene), "-o", "out/", "--quiet"]) == 0
+        assert (tmp_path / "out" / "art" / "b.png").read_bytes() == OTHER
+
+    def test_beside_the_document_none_is_copied_and_each_still_links(self, scene: Path):
+        assert main(["build", str(scene), "--quiet"]) == 0
+        assert sorted(p.name for p in (scene.parent / "art").iterdir()) == ["a.png", "b.png"]
