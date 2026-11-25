@@ -14,6 +14,7 @@ What the server guarantees, each held here against a real server on a real port:
 What it does not do -- authenticate, encrypt -- is the operator's, and `SECURITY.md` says so.
 """
 
+import argparse
 import contextlib
 import json
 import os
@@ -32,10 +33,11 @@ from typing import Any, ClassVar
 import anyio
 import pytest
 from mcp import Client
+from mcp.server.mcpserver.exceptions import ToolError
 
 import scenet.mcp
 import scenet.paths
-from scenet.cli import main
+from scenet.cli import build_parser, main
 from scenet.mcp import DEFAULT_TIMEOUT, MAX_REQUEST_BYTES, build_server, serve
 
 PANEL = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
@@ -488,3 +490,178 @@ def test_closing_a_server_stops_its_workers():
     stopped = anyio.run(go)
     assert stopped
     assert all(not worker._process.is_alive() for worker in stopped)
+
+
+class TestWhatItIsGiven:
+    """What `scenet mcp` and `serve` hand on, each compared (from the mutation run)."""
+
+    @pytest.mark.parametrize("seconds", ["0.5", "1", "3600"])
+    def test_a_timeout_above_nought_is_taken(self, seconds: str, monkeypatch: pytest.MonkeyPatch):
+        started: list[dict[str, Any]] = []
+        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
+        assert main(["mcp", "--timeout", seconds]) == 0
+        assert started[0]["timeout"] == float(seconds)
+
+    def test_both_folders_are_named_in_one_refusal(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ):
+        monkeypatch.setattr(scenet.mcp, "serve", _recording([]))
+        argv = ["mcp", "--transport", "streamable-http", "--root", str(tmp_path)]
+        assert main([*argv, "--output", str(tmp_path)]) == 2
+        assert capsys.readouterr().err.startswith("scenet: --root and --output would let any")
+
+    @pytest.mark.parametrize(
+        ("option", "metavar", "help"),
+        [
+            (
+                "--allow-remote",
+                None,
+                "let streamable-http listen beyond this machine, on a --host that is not a "
+                "loopback address; the server has no authentication and no encryption, so put "
+                "something that provides both in front of it first",
+            ),
+            (
+                "--allow-origin",
+                "ORIGIN",
+                "an Origin a browser client may call streamable-http from, such as "
+                "http://localhost:6274, beyond the server's own; may be repeated",
+            ),
+            (
+                "--timeout",
+                "SECONDS",
+                "the most seconds one tool call may take before it is stopped (default: 60)",
+            ),
+            (
+                "--root",
+                "DIR",
+                "a folder a stdio server's documents may name files in; refused over "
+                "streamable-http, and not in this version yet",
+            ),
+            (
+                "--output",
+                "DIR",
+                "a folder a stdio server's build tool writes new files in; refused over "
+                "streamable-http, and not in this version yet",
+            ),
+        ],
+    )
+    def test_each_option_says_what_it_is(self, option: str, metavar: str | None, help: str):  # noqa: A002 -- argparse's name
+        (group,) = [a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction)]
+        (action,) = [a for a in group.choices["mcp"]._actions if option in a.option_strings]
+        assert (action.metavar, action.help) == (metavar, help)
+        if option == "--timeout":
+            assert action.default is None
+        if option == "--allow-origin":
+            assert action.default == []
+
+    def test_serve_listens_here_by_default_and_hands_on_its_timeout(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        built: list[float | None] = []
+        runs: list[dict[str, Any]] = []
+
+        class Recorder:
+            def run(self, transport: str, **options: Any) -> None:
+                runs.append(options)
+
+            def close(self) -> None:
+                """Nothing to stop: it started no worker."""
+
+        def build(*, timeout: float | None = None) -> Recorder:
+            built.append(timeout)
+            return Recorder()
+
+        monkeypatch.setattr(scenet.mcp, "build_server", build)
+        serve("streamable-http", timeout=7.5)
+        assert built == [7.5]
+        assert (runs[0]["host"], runs[0]["port"]) == ("127.0.0.1", 8000)
+
+    def test_an_ipv6_host_is_bracketed(self, monkeypatch: pytest.MonkeyPatch):
+        runs: list[dict[str, Any]] = []
+
+        class Recorder:
+            def run(self, transport: str, **options: Any) -> None:
+                runs.append(options)
+
+            def close(self) -> None:
+                """Nothing to stop: it started no worker."""
+
+        monkeypatch.setattr(scenet.mcp, "build_server", _making(Recorder()))
+        serve("streamable-http", host="fe80::1", port=80)
+        security = runs[0]["transport_security"]
+        assert security.allowed_hosts[-1] == "[fe80::1]:80"
+        assert security.enable_dns_rebinding_protection
+
+
+class TestAWorker:
+    def test_it_is_spawned_and_dies_with_the_server(self):
+        worker = scenet.mcp._Worker()
+        try:
+            assert worker._process.daemon is True
+            assert type(worker._process).__name__ == "SpawnProcess"
+        finally:
+            worker.stop()
+
+    def test_an_idle_worker_takes_the_next_call(self, monkeypatch: pytest.MonkeyPatch):
+        started: list[object] = []
+        real = scenet.mcp._Worker
+
+        def counted() -> Any:
+            started.append(None)
+            return real()
+
+        monkeypatch.setattr(scenet.mcp, "_Worker", counted)
+
+        async def go() -> None:
+            async with _bounded_client(30) as client:
+                await client.call_tool("get_spec", {})
+                await client.call_tool("get_spec", {})
+
+        anyio.run(go)
+        assert len(started) == 1
+
+
+class TestAFailedCompileExplained:
+    def test_the_cheap_check_first_and_the_deep_one_only_when_it_finds_nothing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        asked: list[bool] = []
+        real = scenet.mcp._diagnose
+
+        def recorded(*args: Any, **options: Any) -> Any:
+            asked.append(options["deep"])
+            return real(*args, **options)
+
+        monkeypatch.setattr(scenet.mcp, "_diagnose", recorded)
+        with pytest.raises(ToolError):
+            scenet.mcp._compile("cast: {a: {reference: nobody}}\n", "yaml")
+        assert asked == [False]
+        asked.clear()
+        with pytest.raises(ToolError):
+            scenet.mcp._compile(
+                "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+                "staging: [a in_front_of b, b in_front_of a]\n",
+                "yaml",
+            )
+        assert asked == [False, True]
+
+    def test_a_script_is_explained_as_a_script(self):
+        with pytest.raises(ToolError) as raised:
+            scenet.mcp._compile(
+                "PANEL 1" + chr(10) + "NOBODY" + chr(10) + "Hi." + chr(10), "script"
+            )
+        assert "scenet/unknown-actor" in str(raised.value)
+        assert "scenet/not-a-mapping" not in str(raised.value)
+
+    def test_the_files_sent_explain_it_too(self):
+        """A picture sent with the document is there when the failure is explained."""
+        from tests.images import tiny_png  # noqa: PLC0415 -- this test's own picture
+
+        source = (
+            "setting: {image: art/a.png}\ncast: {a: {reference: alice}, b: {reference: bob}}\n"
+            "staging: [a in_front_of b, b in_front_of a]\n"
+        )
+        with pytest.raises(ToolError) as raised:
+            scenet.mcp._compile(source, "yaml", {"art/a.png": tiny_png()})
+        assert "scenet/layout" in str(raised.value)
+        assert "image-file" not in str(raised.value)

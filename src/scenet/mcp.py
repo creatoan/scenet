@@ -704,8 +704,8 @@ def _security(host: str, port: int, origins: Sequence[str]) -> TransportSecurity
     local = ["127.0.0.1", "localhost", "[::1]"]
     named = f"[{host}]" if ":" in host else host
     hosts = [*local, *([] if named in local else [named])]
+    # DNS-rebinding protection is the settings' own default, and stays on.
     return TransportSecuritySettings(
-        enable_dns_rebinding_protection=True,
         allowed_hosts=[f"{name}:{port}" for name in hosts],
         allowed_origins=[*(f"http://{name}:{port}" for name in local), *origins],
     )
@@ -891,12 +891,9 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
         # The cheap check first, which costs no compile: only a document it finds clean
         # pays for the deep one. Either runs in the same worker, under the same clock, as
         # the compile that failed.
-        found = [
-            item
-            for deep in (False, True)
-            for item in _diagnose(source, syntax, deep=deep, files=files)
-            if item.level == "error"
-        ]
+        found = _errors(_diagnose(source, syntax, deep=False, files=files)) or _errors(
+            _diagnose(source, syntax, deep=True, files=files)
+        )
         if not found:
             # A clean deep check means a successful build -- the diagnostics tests hold
             # the two to that -- so this is a disagreement between them, and is reported
@@ -905,6 +902,11 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
                 f"the document did not compile, but no rule explains why: {exc}"
             ) from exc
         raise ToolError(_report(found)) from exc
+
+
+def _errors(found: list[Diagnostic]) -> list[Diagnostic]:
+    """The findings that are errors: a note is a house limit a document can exceed."""
+    return [item for item in found if item.level == "error"]
 
 
 def _report(found: list[Diagnostic]) -> str:

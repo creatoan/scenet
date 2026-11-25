@@ -4,6 +4,7 @@ import argparse
 import importlib
 import ipaddress
 import json
+import math
 import os
 import posixpath
 import sys
@@ -341,7 +342,7 @@ def _seconds(written: str) -> float:
         seconds = float(written)
     except ValueError:
         seconds = 0.0
-    if not seconds > 0 or seconds == float("inf"):
+    if not (math.isfinite(seconds) and seconds > 0):
         raise argparse.ArgumentTypeError(f"{written!r} is not a number of seconds above 0")
     return seconds
 
