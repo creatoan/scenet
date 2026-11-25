@@ -206,6 +206,9 @@ class TestAtTheEdge:
         assert [(item.rule, item.path, item.message) for item in found] == [
             (LIMIT_RULE, ("panels",), past("panels_per_document", 3, 2))
         ]
+        assert found[0].source == source
+        assert found[0].region is not None
+        assert found[0].region.start.line == 2
         with pytest.raises(PanelSyntaxError) as caught:
             parse_scene_document(text, source=source)
         error = caught.value
