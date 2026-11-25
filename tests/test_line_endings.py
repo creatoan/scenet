@@ -102,21 +102,22 @@ def _write_text_calls(path: Path) -> list[ast.Call]:
     `x_<name>__mutmut_<n>`, and one of them drops the `newline=` on purpose: the ordinary
     suite checks the code itself.
     """
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    variants = {
-        id(inner)
-        for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and "__mutmut_" in node.name
-        for inner in ast.walk(node)
-    }
-    return [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "write_text"
-        and id(node) not in variants
-    ]
+    found: list[ast.Call] = []
+
+    def visit(node: ast.AST) -> None:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and "__mutmut_" in node.name:
+            return
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "write_text"
+        ):
+            found.append(node)
+        for child in ast.iter_child_nodes(node):
+            visit(child)
+
+    visit(ast.parse(path.read_text(encoding="utf-8"), filename=str(path)))
+    return found
 
 
 WRITERS = sorted([*(REPO / "src" / "scenet").rglob("*.py"), *(REPO / "scripts").glob("*.py")])
