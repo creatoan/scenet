@@ -248,6 +248,19 @@ class TestAtTheEdge:
         (found,) = exceeded(panels, Limits(characters_per_text=2))
         assert found.message == past("characters_per_text", 3, 2)
 
+    @pytest.mark.parametrize(
+        ("event", "verb"),
+        [
+            ("{say: {by: a, text: abc}}", "say"),
+            ("{caption: {text: abc}}", "caption"),
+            ("{sfx: {text: abc}}", "sfx"),
+        ],
+    )
+    def test_a_text_past_a_host_limit_is_found_where_it_is(self, event: str, verb: str):
+        panels = {"one": parse_panel(self.TEXT + f"script: [{{caption: {{text: x}}}}, {event}]\n")}
+        (found,) = exceeded(panels, Limits(characters_per_text=2))
+        assert found.loc == ("panels", "one", "script", 1, verb, "text")
+
     def test_a_host_limit_on_panels_counts_them(self):
         panels = parse_scene_document(self.TEXT + "panels: {a: {}, b: {}}\n").panels
         (found,) = exceeded(panels, Limits(panels_per_document=1))
