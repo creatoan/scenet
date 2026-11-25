@@ -2387,7 +2387,7 @@ def _marker_finding(exc: MarkerError) -> Diagnostic:
     """A `scenet.toml` that holds something, located in it."""
     line = Position(line=exc.line, column=1)
     return Diagnostic(
-        rule=exc.rule or "syntax",
+        rule=exc.kind,
         message=exc.reason,
         source=exc.marker,
         region=Region(start=line, end=Position(line=exc.line + 1, column=1)),

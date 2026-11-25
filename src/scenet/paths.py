@@ -132,6 +132,7 @@ class MarkerError(PanelSyntaxError):
         marker: The file.
         line: The line of what it holds, from 1.
         reason: What is wrong, without the file's name.
+        kind: The rule it breaks, as `rule` holds it.
     """
 
     def __init__(self, message: str, *, marker: Path, line: int, rule: str) -> None:
@@ -146,6 +147,7 @@ class MarkerError(PanelSyntaxError):
         self.marker = marker
         self.line = line
         self.reason = message
+        self.kind = rule
         super().__init__(message, source=marker, rule=rule)
 
 

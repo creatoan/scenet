@@ -16,6 +16,7 @@ Each is a finding of the read's own rule, located where the document names the f
 each is reached within a fixed time.
 """
 
+import argparse
 import os
 import struct
 import subprocess
@@ -30,9 +31,10 @@ import pytest
 
 import scenet.lettering
 import scenet.limits
-from scenet.cli import main
-from scenet.diagnostics import Diagnostic, diagnose_file, diagnose_source
+from scenet.cli import build_parser, main
+from scenet.diagnostics import Diagnostic, diagnose_file, diagnose_script, diagnose_source
 from scenet.errors import PanelSyntaxError
+from scenet.frontends.positions import Position, Region
 from scenet.lettering import load_font
 from scenet.paths import MARKER, OutsideRootError
 from scenet.pipeline import compile_book_file, compile_file
@@ -661,3 +663,54 @@ class TestTheFontCache:
             assert load_font("a.ttf", {"a.ttf": data}, loc=()) is first
         load_font("a.ttf", {"a.ttf": data + bytes(4096)}, loc=())
         assert load_font("a.ttf", {"a.ttf": data}, loc=()) is first
+
+
+class TestTheFindingsOfARoot:
+    """Where each is, compared whole (from the mutation run)."""
+
+    def test_a_marker_s_key_is_its_whole_line(self, climbing: Path):
+        (climbing.parent.parent / MARKER).write_text("a = 1\n", encoding="utf-8")
+        finding = _only(diagnose_file(climbing))
+        assert finding.region == Region(
+            start=Position(line=1, column=1), end=Position(line=2, column=1)
+        )
+
+    def test_a_script_finds_the_marker_from_its_own_folder(self, tmp_path: Path):
+        (tmp_path / "fonts").mkdir()
+        (tmp_path / "fonts" / "a.ttf").write_bytes(FONT.read_bytes())
+        (tmp_path / "comic").mkdir()
+        script = (
+            "---\nlettering: {font: ../fonts/a.ttf}\ncast: {A: {reference: alice}}\n---\n"
+            "PANEL 1\nA\nHi.\n"
+        )
+        source = tmp_path / "comic" / "p.script"
+        assert _only(diagnose_script(script, source=source)).rule == "font-file"
+        (tmp_path / MARKER).write_text("", encoding="utf-8")
+        assert diagnose_script(script, source=source) == []
+        assert _only(diagnose_script(script, base=source.parent)).rule == "font-file"
+
+    def test_a_deep_check_keeps_its_root(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+        source = tmp_path / "p.panel.yaml"
+        source.write_text(
+            "cast: {a: {reference: alice}, b: {reference: bob}}\n"
+            "staging: [a in_front_of b, b in_front_of a]\n",
+            encoding="utf-8",
+        )
+        assert main(["check", str(source), "--root", str(tmp_path)]) == 0
+        assert main(["check", "--deep", str(source), "--root", str(tmp_path)]) == 1
+        assert ": layout: " in capsys.readouterr().err
+
+
+ROOT_HELP = (
+    "the folder every file a document names must be inside, through .. or a symbolic link; by "
+    "default, the nearest folder above the document holding a scenet.toml, else the "
+    "document's own"
+)
+
+
+@pytest.mark.parametrize("command", ["build", "check"])
+def test_root_says_what_it_is_in_its_help(command: str):
+    (group,) = [a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction)]
+    (action,) = [a for a in group.choices[command]._actions if "--root" in a.option_strings]
+    assert (action.metavar, action.type, action.default) == ("DIR", Path, None)
+    assert action.help == ROOT_HELP
