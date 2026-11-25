@@ -341,6 +341,15 @@ BEN: Wait.
         assert found.region is not None
         assert found.region.start.line == line
 
+    def test_a_picture_with_no_contract_is_found_at_its_setting(self):
+        files = self._files()
+        del files["art/q.art.yaml"]
+        script = self.SCRIPT.replace("\nBEN: Wait.\n", "")
+        found = _one(diagnose_script(script, base=files), "artwork-contract")
+        assert found.path == ("2", "setting", "image")
+        assert found.region is not None
+        assert _line(script, found) == "@setting: {image: art/q.png}"
+
     def test_a_line_by_a_figure_its_panels_picture_does_not_draw_is_found_at_its_line(self):
         found = _one(diagnose_script(self.SCRIPT, base=self._files()), "unknown-figure")
         assert found.path == ("2", "script", 1, "say", "by")
