@@ -14,14 +14,15 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scenet import diagnostics, images, ir, lettering
+import scenet.limits
+from scenet import diagnostics, images, ir
 from scenet.diagnostics import RULES, diagnose_source
 from scenet.errors import PanelSyntaxError, ScriptSyntaxError
 from scenet.frontends import script_front, yaml_front
 from scenet.frontends.positions import DOCUMENT_START
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_panel, parse_scene_document
-from scenet.images import load_image
+from scenet.images import IMAGE_RULE, load_image
 from scenet.lettering import FONT_RULE, load_font
 from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded, past
 from scenet.pipeline import compile_book, compile_source
@@ -295,15 +296,15 @@ class TestTheFilesAtTheEdge:
     LOC = ("setting", "image")
 
     def test_a_picture_of_the_limit_in_bytes_is_read(self, monkeypatch: pytest.MonkeyPatch):
+        """One byte more is refused before it is read, under the picture's own rule."""
         data = png(10, 20)
-        monkeypatch.setattr(images, "LIMITS", Limits(image_bytes=len(data)))
+        monkeypatch.setattr(scenet.limits, "IMAGE_BYTES", len(data))
         assert load_image("art/a.png", {"art/a.png": data}, loc=self.LOC).width == 10
-        monkeypatch.setattr(images, "LIMITS", Limits(image_bytes=len(data) - 1))
+        monkeypatch.setattr(scenet.limits, "IMAGE_BYTES", len(data) - 1)
         with pytest.raises(PanelSyntaxError) as caught:
             load_image("art/a.png", {"art/a.png": data}, loc=self.LOC)
-        assert (caught.value.rule, caught.value.loc) == (LIMIT_RULE, self.LOC)
-        said = f"image file 'art/a.png': {past('image_bytes', len(data), len(data) - 1)}"
-        assert said in str(caught.value)
+        assert (caught.value.rule, caught.value.loc) == (IMAGE_RULE, self.LOC)
+        assert f"larger than {scenet.limits.describe(len(data) - 1)}" in str(caught.value)
 
     def test_a_picture_of_the_limit_in_pixels_is_read(self, monkeypatch: pytest.MonkeyPatch):
         data = png(10, 20)
@@ -322,16 +323,17 @@ class TestTheFilesAtTheEdge:
         assert caught.value.loc == self.LOC
 
     def test_a_font_of_the_limit_is_read(self, monkeypatch: pytest.MonkeyPatch):
-        """Read, and refused for what it is, which is no font: not for its size."""
-        monkeypatch.setattr(lettering, "LIMITS", Limits(font_bytes=8))
+        """Read, and refused for what it is, which is no font; one byte more, for its size."""
+        monkeypatch.setattr(scenet.limits, "FONT_BYTES", 8)
         where = ("lettering", "font")
         with pytest.raises(PanelSyntaxError) as caught:
             load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(8)}, loc=where)
         assert (caught.value.rule, caught.value.loc) == (FONT_RULE, where)
+        assert "larger than" not in str(caught.value)
         with pytest.raises(PanelSyntaxError) as caught:
             load_font("fonts/a.ttf", {"fonts/a.ttf": bytes(9)}, loc=where)
-        assert (caught.value.rule, caught.value.loc) == (LIMIT_RULE, where)
-        assert f"font file 'fonts/a.ttf': {past('font_bytes', 9, 8)}" in str(caught.value)
+        assert (caught.value.rule, caught.value.loc) == (FONT_RULE, where)
+        assert "larger than 8 bytes" in str(caught.value)
 
 
 class TestTheMessage:

@@ -746,6 +746,25 @@ class TestAServerOfTighterLimits:
         assert "scenet/limit" in text_of(result)
         assert not self.call(Limits(actors_per_panel=2), "compile", {"source": self.TWO}).is_error
 
+    def test_a_server_bounded_in_time_holds_its_workers_to_them(self):
+        """Its calls run in spawned processes, which start with the language's limits."""
+
+        async def go() -> CallToolResult:
+            server = build_server(timeout=60, limits=Limits(actors_per_panel=1))
+            try:
+                async with Client(server) as client:
+                    return await client.call_tool("validate", {"source": self.TWO})
+            finally:
+                server.close()
+
+        try:
+            result = anyio.run(go)
+        finally:
+            build_server()
+        assert result.structured_content is not None
+        (finding,) = result.structured_content["findings"]
+        assert finding["rule"] == "scenet/limit"
+
     def test_a_fault_is_reported_as_it_is_with_no_limit_beside_it(self):
         broken = self.TWO + "script: [{say: {by: nobody, text: Hi}}]\n"
         result = self.call(Limits(actors_per_panel=1), "validate", {"source": broken})
