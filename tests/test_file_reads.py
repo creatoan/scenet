@@ -64,6 +64,16 @@ FONT = Path(fonts.ttf.SourceSansProSemibold)  # ty: ignore[missing-attribute]  #
 SECONDS = 10
 
 
+#: Passes every cheap check, and fails only once its balloon is placed. A depth cycle did,
+#: until `scenet check` found one as `ordering-cycle`.
+UNPLACEABLE = (
+    "camera: {shot: extreme_close_up}\npanel: {size: [300, 300]}\n"
+    "cast: {alice: {reference: alice}}\n"
+    'script: [{say: {by: alice, text: "There is no room anywhere in this panel '
+    'for a line this long."}}]\n'
+)
+
+
 def _document(folder: Path, line: str, name: str = "p.panel.yaml") -> Path:
     path = folder / name
     path.write_text(f"{CAST}{line}\n", encoding="utf-8")
@@ -721,14 +731,10 @@ class TestTheFindingsOfARoot:
 
     def test_a_deep_check_keeps_its_root(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
         source = tmp_path / "p.panel.yaml"
-        source.write_text(
-            "cast: {a: {reference: alice}, b: {reference: bob}}\n"
-            "staging: [a in_front_of b, b in_front_of a]\n",
-            encoding="utf-8",
-        )
+        source.write_text(UNPLACEABLE, encoding="utf-8")
         assert main(["check", str(source), "--root", str(tmp_path)]) == 0
         assert main(["check", "--deep", str(source), "--root", str(tmp_path)]) == 1
-        assert ": layout: " in capsys.readouterr().err
+        assert ": balloon-placement: " in capsys.readouterr().err
 
 
 ROOT_HELP = (

@@ -51,6 +51,16 @@ LONG = (
 )
 
 
+#: Passes every cheap check, and fails only once its balloon is placed. A depth cycle did,
+#: until `scenet check` found one as `ordering-cycle`.
+UNPLACEABLE = (
+    "camera: {shot: extreme_close_up}\npanel: {size: [300, 300]}\n"
+    "cast: {alice: {reference: alice}}\n"
+    'script: [{say: {by: alice, text: "There is no room anywhere in this panel '
+    'for a line this long."}}]\n'
+)
+
+
 def _recording(into: list[dict[str, Any]]) -> Callable[..., None]:
     """A stand-in for `serve` that records the options it was called with."""
 
@@ -645,11 +655,7 @@ class TestAFailedCompileExplained:
         assert asked == [False]
         asked.clear()
         with pytest.raises(ToolError):
-            scenet.mcp._compile(
-                "cast: {a: {reference: alice}, b: {reference: bob}}\n"
-                "staging: [a in_front_of b, b in_front_of a]\n",
-                "yaml",
-            )
+            scenet.mcp._compile(UNPLACEABLE, "yaml")
         assert asked == [False, True]
 
     def test_a_script_is_explained_as_a_script(self):
@@ -664,13 +670,10 @@ class TestAFailedCompileExplained:
         """A picture sent with the document is there when the failure is explained."""
         from tests.images import tiny_png  # noqa: PLC0415 -- this test's own picture
 
-        source = (
-            "setting: {image: art/a.png}\ncast: {a: {reference: alice}, b: {reference: bob}}\n"
-            "staging: [a in_front_of b, b in_front_of a]\n"
-        )
+        source = "setting: {image: art/a.png}\n" + UNPLACEABLE
         with pytest.raises(ToolError) as raised:
             scenet.mcp._compile(source, "yaml", {"art/a.png": tiny_png()})
-        assert "scenet/layout" in str(raised.value)
+        assert "scenet/balloon-placement" in str(raised.value)
         assert "image-file" not in str(raised.value)
 
 
@@ -680,18 +683,19 @@ def test_a_script_that_fails_only_once_laid_out_is_explained_as_a_script():
     script = nl.join(
         [
             "---",
-            "cast: {A: {reference: alice}, B: {reference: bob}}",
-            "staging: [A in_front_of B, B in_front_of A]",
+            "cast: {A: {reference: alice}}",
             "---",
             "PANEL 1",
+            "@shot: extreme_close_up",
+            "@panel: {size: [300, 300]}",
             "A",
-            "Hi.",
+            "There is no room anywhere in this panel for a line this long.",
             "",
         ]
     )
     with pytest.raises(ToolError) as raised:
         scenet.mcp._compile(script, "script")
-    assert "scenet/layout" in str(raised.value)
+    assert "scenet/balloon-placement" in str(raised.value)
     assert "not-a-mapping" not in str(raised.value)
 
 
