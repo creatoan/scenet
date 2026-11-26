@@ -32,6 +32,7 @@ is a few lines on top of PyYAML's machinery, and the same trade was declined for
 positions (`frontends/positions.py`).
 """
 
+import importlib
 import math
 import re
 from collections.abc import Hashable
@@ -473,7 +474,12 @@ class _ProfileConstructor(SafeConstructor):
         mapping: dict[Hashable, Any] = {}
         seen: dict[str, Node] = {}
         for key_node, value_node in node.value:
-            # The composer refused every key that is not a scalar.
+            # The profile's composer refused every key that is not a scalar, and a merge
+            # key; libyaml's did not, so the fast reader hands the document back for them.
+            if not isinstance(key_node, ScalarNode) or (
+                key_node.value == "<<" and not key_node.style
+            ):
+                raise _NotFast
             key = str(key_node.value)
             first = seen.setdefault(key, key_node)
             if first is not key_node:
@@ -573,6 +579,83 @@ def carrier(text: str, *, as_json: bool = False) -> str:
     return "JSON" if as_json or is_json(text) else "YAML"
 
 
+class _NotFast(yaml.YAMLError):
+    """Something libyaml read that the profile refuses: read it again, the profile's way."""
+
+
+def _fast_loader() -> Any:  # noqa: ANN401 -- a class built from libyaml's, untyped
+    """The parser and composer of libyaml, with the profile's resolver and constructor.
+
+    PyYAML's own scanner reads a character at a time, in Python: a line of a megabyte, or a
+    scene of ten thousand panels, took a second to read before anything checked it.
+    libyaml reads the same YAML; the profile's types are still the resolver's, and its
+    values the constructor's. `None` when PyYAML was built without libyaml.
+    """
+    try:
+        parser: Any = importlib.import_module("yaml._yaml").CParser
+    except (ImportError, AttributeError):  # pragma: no cover -- PyYAML built without libyaml
+        return None
+
+    def set_up(self: Any, stream: str) -> None:  # noqa: ANN401 -- the class built here
+        parser.__init__(self, stream)
+        SafeConstructor.__init__(self)
+        BaseResolver.__init__(self)
+
+    return type("_FastLoader", (parser, _ProfileConstructor, ProfileResolver), {"__init__": set_up})
+
+
+#: The fast loader's class, or `None` without libyaml.
+_FastLoader: Any = _fast_loader()
+
+
+#: How deep the fast reader reads; a document nested deeper, which no panel is, is read the
+#: profile's way, which refuses one nested past what it can follow.
+_FAST_DEPTH = 64
+
+
+def _deeper_than(node: Node, depth: int) -> bool:
+    """Whether a node tree is nested more than `depth` levels deep, walked without recursion."""
+    stack = [(node, 0)]
+    while stack:
+        current, level = stack.pop()
+        if level > depth:
+            return True
+        if isinstance(current, MappingNode):
+            stack.extend((value, level + 1) for _, value in current.value)
+        elif isinstance(current, yaml.SequenceNode):
+            stack.extend((item, level + 1) for item in current.value)
+    return False
+
+
+def _load_fast(text: str) -> tuple[bool, object]:
+    """The document, read by libyaml, and whether it could be: the profile refuses nothing.
+
+    A tab, a tag, an anchor, an alias, a merge key, a key that is not a scalar, a key
+    written twice, or anything libyaml cannot read: each goes back to the profile's own
+    reader, which refuses it in its own words, where it is written.
+    """
+    if _FastLoader is None or "\t" in text:
+        return False, None
+    try:
+        for event in yaml.parse(text, Loader=_FastLoader):
+            if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None) is not None:
+                return False, None
+            if getattr(event, "tag", None) is not None:
+                return False, None
+        loader = _FastLoader(text)
+        try:
+            node = loader.get_single_node()
+            # The profile's reader refuses a document nested past what it can follow, and
+            # libyaml's would read it: so a deep one is read the profile's way.
+            if node is None or _deeper_than(node, _FAST_DEPTH):
+                return False, None
+            return True, loader.construct_document(node)
+        finally:
+            loader.dispose()
+    except (yaml.YAMLError, RecursionError):
+        return False, None
+
+
 def load(text: str, *, as_json: bool = False) -> object:
     r"""Parse a Scenet YAML document, or a Scenet JSON one.
 
@@ -609,6 +692,9 @@ def load(text: str, *, as_json: bool = False) -> object:
         from scenet.safe_json import load as load_json  # noqa: PLC0415 -- it imports this
 
         return load_json(text)
+    fast, data = _load_fast(text)
+    if fast:
+        return data
     loader = _ProfileLoader(text)
     try:
         return loader.get_single_data()

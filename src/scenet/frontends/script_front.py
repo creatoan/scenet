@@ -90,6 +90,7 @@ from scenet.ir import (
     retired_value,
     unholdable,
 )
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.namespace import (
     DOCUMENT_KEYS,
     EXTENSION_PREFIX,
@@ -2024,6 +2025,11 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     """
     # Anything that reaches here as a string gets the treatment a file would have had,
     # and the same whatever editor saved it.
+    size = len(text.encode("utf-8", "surrogatepass"))
+    if size > LIMITS.document_bytes:
+        raise ScriptSyntaxError(
+            past("document_bytes", size, LIMITS.document_bytes), source=source, rule=LIMIT_RULE
+        )
     text = normalise_text(text)
     front_matter, body, offset = _split_front_matter(text, source)
     front_matter = _check_head(front_matter, text, offset, source)

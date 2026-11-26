@@ -448,6 +448,7 @@ note as information rather than a red squiggle.
 | [`scenet/invalid-field`](diagnostics.md#invalid-field) | error | A known key holding the wrong type or an out-of-range value |
 | [`scenet/invalid-identifier`](diagnostics.md#invalid-identifier) | error | An actor id or a panel name outside the [identifier grammar](language/identifiers.md): a space, a reserved character or word |
 | [`scenet/language-version`](diagnostics.md#language-version) | error | A document written for a later version of the language than this Scenet reads: its one finding |
+| [`scenet/limit`](diagnostics.md#limit) | error | A size, a count or a length past the language's limit, which the message names |
 | [`scenet/not-yet`](diagnostics.md#not-yet) | error | A key kept for a later version of the language: `include`, `defaults`, `kind: book` |
 | [`scenet/document-kind`](diagnostics.md#document-kind) | error | A `kind` the document's shape says it is not: `kind: scene` with no `panels:`, or `kind: panel` with them |
 | [`scenet/panel-geometry`](diagnostics.md#panel-geometry) | error | Non-positive size, or margins leaving no usable area |
@@ -473,7 +474,7 @@ note as information rather than a red squiggle.
 | [`scenet/conflicting-cast`](diagnostics.md#conflicting-cast) | error | A cast member with both `reference` and `figure`, a puppet's `pose`, `expression`, `marks`, `at` or `facing` on a figure, a cast mixing puppets and figures, or two members playing one figure |
 | [`scenet/figure-staging`](diagnostics.md#figure-staging) | error | A staging relation naming a figure a picture draws, or a `camera` on a panel whose cast is all figures |
 | [`scenet/font-file`](diagnostics.md#font-file) | error | A font in `lettering.font` that is absolute, missing, not a font, or named by text with no folder |
-| [`scenet/layout`](diagnostics.md#layout) | error | Valid, but no layout satisfies its required constraints (`--deep` only) |
+| [`scenet/layout`](diagnostics.md#layout) | error | Valid, but the solver found no layout (`--deep` only); no document is known to give it |
 | [`scenet/balloon-placement`](diagnostics.md#balloon-placement) | error | No legal position exists for a balloon (`--deep` only) |
 | [`scenet/sfx-placement`](diagnostics.md#sfx-placement) | error | No legal position exists for a sound effect (`--deep` only) |
 | [`scenet/word-limit`](diagnostics.md#word-limit) | note | A balloon or caption over about 25 words, or a panel over about 50: Dark Horse's limits |

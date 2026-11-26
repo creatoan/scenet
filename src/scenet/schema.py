@@ -47,6 +47,7 @@ from scenet.ir import (
     PanelIR,
     Predicate,
 )
+from scenet.limits import LIMITS
 from scenet.namespace import DOCUMENT_KEYS, KIND_KEY, AssetHead, DocumentHead, Kind
 from scenet.places import Place
 
@@ -279,6 +280,9 @@ def scene_schema() -> dict[str, Any]:
                 # inside a panel where it is: `additionalProperties` reads a mapping only,
                 # and `items` a list only.
                 "type": ["object", "array"],
+                # The language's limit, for either form (#363).
+                "maxProperties": LIMITS.panels_per_document,
+                "maxItems": LIMITS.panels_per_document,
                 # Mirror `_validate_panels`: a name is part of every file the panel is
                 # written to, and what a page or an `over:` names it by.
                 "propertyNames": {"$ref": f"#/$defs/{IDENTIFIER}"},
@@ -364,6 +368,8 @@ def _accept_cast_list(schema: dict[str, Any], definitions: dict[str, Any]) -> No
     mapping = next(branch for branch in cast["anyOf"] if branch.get("type") == "object")
     mapping["type"] = ["object", "array"]
     mapping["items"] = _entries(CAST_ENTRY, {"anyOf": [member, removal]}, definitions)
+    # The limit on a cast, `maxProperties` for the mapping, is a list's too (#363).
+    mapping["maxItems"] = LIMITS.actors_per_panel
 
 
 #: What `remove` says, as its card's first line.

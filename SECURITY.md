@@ -82,7 +82,11 @@ The realistic risks are therefore:
   balloon placement or a comic script's line patterns into pathological running time; 0.11.1
   fixed patterns that backtracked. Inputs causing runaway CPU or memory use are in scope,
   over MCP above all, where one request costs the server rather than its sender: a call that
-  outlives `--timeout`, or keeps its worker busy once stopped, is a bug.
+  outlives `--timeout`, or keeps its worker busy once stopped, is a bug. Every size,
+  count and length in the language has a limit, listed in
+  [the language's limits](https://creatoan.github.io/scenet/reference/language/limits.html), and
+  a document past one is refused before it is compiled; a server may hold documents to tighter
+  ones.
 - **Output injection.** Dialogue text is escaped before it is emitted into SVG. An input that
   escapes its context and injects markup or script into a generated SVG, or into a PDF, is a
   real vulnerability, since SVG files are frequently opened in browsers.

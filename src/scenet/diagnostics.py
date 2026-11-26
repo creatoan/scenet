@@ -119,6 +119,7 @@ from scenet.ir import (
     check_placements,
 )
 from scenet.lettering import FONT_RULE, typeface_for
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.namespace import (
     DOCUMENT_KEYS,
     DocumentHead,
@@ -330,6 +331,24 @@ RULES: dict[str, Rule] = {
         help=(
             "Compile it with a Scenet that reads its language, or write it in this one and "
             "set `scenet:` to the language this Scenet reads, which the message names."
+        ),
+    ),
+    "limit": Rule(
+        summary="A size, a count or a length is past the language's limit",
+        description=(
+            "Every size, count and length in the language has a limit, generous for real "
+            "comics: a panel or a page at most a metre on a side, fifty cast members in a "
+            "panel, a hundred lines in its script, two thousand characters in a text, ten "
+            "thousand panels and a thousand pages in a document, and the bytes and pixels "
+            "of the files a document names. Without them one line could make the compiler "
+            "work without end: rain over a panel a million units wide was a hundred million "
+            "streaks. The finding says which limit, and the value past it; the language "
+            "reference lists them all."
+        ),
+        help=(
+            "Bring the value under the limit: a smaller panel, its unit a tenth of a "
+            "millimetre printed; fewer people in one panel, or the scene split over several; "
+            "a shorter line; a smaller picture or font file."
         ),
     ),
     "not-yet": Rule(
@@ -1087,6 +1106,16 @@ def _read_mapping(text: str, source: Path | None) -> tuple[dict[str, Any] | None
     Returns:
         The mapping and an empty list, or `None` and the single finding explaining why.
     """
+    size = len(text.encode("utf-8", "surrogatepass"))
+    if size > LIMITS.document_bytes:
+        return None, [
+            Diagnostic(
+                rule=LIMIT_RULE,
+                message=past("document_bytes", size, LIMITS.document_bytes),
+                source=source,
+                region=DOCUMENT_START,
+            )
+        ]
     try:
         data = load(text, as_json=is_json_file(source))
     except ProfileError as exc:
@@ -1657,6 +1686,18 @@ def _diagnose_scene(
             )
         ]
 
+    if len(panels) > LIMITS.panels_per_document:
+        # One finding, before any panel is read: checking each of a million is the cost the
+        # limit is there to stop.
+        return [
+            Diagnostic(
+                rule=LIMIT_RULE,
+                message=past("panels_per_document", len(panels), LIMITS.panels_per_document),
+                path=("panels",),
+                source=source,
+                region=locate(text, ("panels",)) or DOCUMENT_START,
+            )
+        ]
     found: list[Diagnostic] = []
     for name, document in panels.items():
         if not isinstance(document, dict):

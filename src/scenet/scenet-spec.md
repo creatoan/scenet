@@ -773,7 +773,7 @@ The panel's width and height, `[width, height]`, in panel units: everything else
 | Type | `[number, number]` |
 | Default | `[1000, 1000]` |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-geometry`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-geometry), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`panel-geometry`](https://creatoan.github.io/scenet/reference/diagnostics.html#panel-geometry), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 Panel units are arbitrary and consistent: every length in the language -- a margin, a type size,
@@ -1320,7 +1320,7 @@ A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the 
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`image-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#image-file), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting), [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`image-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#image-file), [`conflicting-setting`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-setting), [`artwork-contract`](https://creatoan.github.io/scenet/reference/diagnostics.html#artwork-contract), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [A JPEG behind the cast](https://creatoan.github.io/scenet/gallery.html#a-jpeg-behind-the-cast) |
 <!-- /facts -->
 
@@ -1415,7 +1415,7 @@ Who is in the panel, the first being the one the camera frames: each actor under
 | Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`conflicting-cast`](https://creatoan.github.io/scenet/reference/diagnostics.html#conflicting-cast), [`layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#layout), [`camera-retreated`](https://creatoan.github.io/scenet/reference/diagnostics.html#camera-retreated), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [A panel with nobody in it](https://creatoan.github.io/scenet/gallery.html#a-panel-with-nobody-in-it) |
 <!-- /facts -->
 
@@ -1990,7 +1990,7 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [Reading order](https://creatoan.github.io/scenet/gallery.html#reading-order) |
 <!-- /facts -->
 
@@ -2099,7 +2099,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [How lines break](https://creatoan.github.io/scenet/gallery.html#how-lines-break), [Emphasis](https://creatoan.github.io/scenet/gallery.html#emphasis) |
 <!-- /facts -->
 
@@ -2351,7 +2351,7 @@ What the box says, as one string; line breaks are computed. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`unbalanced-emphasis`](https://creatoan.github.io/scenet/reference/diagnostics.html#unbalanced-emphasis), [`word-limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#word-limit), [`balloon-placement`](https://creatoan.github.io/scenet/reference/diagnostics.html#balloon-placement), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 As for dialogue, line breaking is computed, and a word between underscores is stressed; see
@@ -2581,7 +2581,7 @@ The sound, lettered exactly as written, in the display face. Never empty, nor on
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 Nothing is added to the text: no exclamation mark, since sound effects are not exclamations, and no
@@ -2768,7 +2768,7 @@ What the panel shows, in words, for a reader who cannot see it. Carried into the
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [A description](https://creatoan.github.io/scenet/gallery.html#a-description) |
 <!-- /facts -->
 
@@ -2894,7 +2894,7 @@ The font files to letter in, relative to the document: one file for every face, 
 | Type | text, or a mapping |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`unknown-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#unknown-key), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [Your own font](https://creatoan.github.io/scenet/gallery.html#your-own-font) |
 <!-- /facts -->
 
@@ -2954,7 +2954,7 @@ The font file dialogue and `spoken` captions are lettered in, relative to the do
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`missing-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#missing-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 The face italic and bold italic stand in from, when they are not named. It is the only face a
@@ -2981,7 +2981,7 @@ The font file every caption but a `spoken` one is lettered in. Left out, they ar
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#italic-stand-in), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 Italic is what `locale`, `monologue` and `editorial` captions are set in, and what emphasis falls
@@ -3009,7 +3009,7 @@ The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`bold-italic-stand-in`](https://creatoan.github.io/scenet/reference/diagnostics.html#bold-italic-stand-in), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 A word written between underscores is stressed, and lettered in bold italic, the letterers'
@@ -3039,7 +3039,7 @@ The font file sound effects are lettered in. Left out, the shipped display face,
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`font-file`](https://creatoan.github.io/scenet/reference/diagnostics.html#font-file), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 Sound effects are letters that are part of the picture, so they have a face of their own, and it
@@ -3284,7 +3284,7 @@ The panels, in the order they are read: a mapping of each panel under its name, 
 | Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`invalid-identifier`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-identifier), [`duplicate-key`](https://creatoan.github.io/scenet/reference/diagnostics.html#duplicate-key), [`composition`](https://creatoan.github.io/scenet/reference/diagnostics.html#composition), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 <!-- /facts -->
 
 The panels, in reading order. **The order they are written in is normative**: it is the order a
@@ -3458,7 +3458,7 @@ The page's width and height: the trim, the size the printed page is cut to, in t
 | Type | `[number, number]` |
 | Default | `[2000, 3000]` |
 | Since | 0.10 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [A page made for print](https://creatoan.github.io/scenet/gallery.html#a-page-made-for-print) |
 <!-- /facts -->
 
@@ -3612,7 +3612,7 @@ The pages, in order, each a list of tiers top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout) |
+| Diagnostics | [`invalid-field`](https://creatoan.github.io/scenet/reference/diagnostics.html#invalid-field), [`page-layout`](https://creatoan.github.io/scenet/reference/diagnostics.html#page-layout), [`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) |
 | In the gallery | [Two pages](https://creatoan.github.io/scenet/gallery.html#two-pages) |
 <!-- /facts -->
 
@@ -5100,6 +5100,51 @@ Regions lettering should stay off, each a polygon in pixels: a sign, a hand, wha
 what the panel is about -- and never forbidden: a crowded panel covers one before it fails. Each is
 a simple polygon on the picture. See [the example](#an-artwork-contract).
 
+## Limits (normative)
+
+Every size, count and length in the language has an upper bound. Without one, a single line
+could make the compiler work without end: rain over a panel a million units wide was a hundred
+million streaks. The limits are generous for real comics -- nothing in the gallery comes within
+half of one -- and a document past one is refused before anything is compiled, with the finding
+[`limit`](https://creatoan.github.io/scenet/reference/diagnostics.html#limit) at the value, which says the limit and the value past it.
+
+A panel unit is a tenth of a millimetre printed, so a panel of 10 000 units is a metre wide.
+
+| Limit | Value | What it bounds |
+|---|---|---|
+| `panel_side` | 10 000 | A panel's width or height, in panel units |
+| `page_side` | 10 000 | A page's width or height, in panel units |
+| `panels_per_page` | 200 | The panels one page lays out, insets included |
+| `pages_per_document` | 1 000 | The pages one document lays out |
+| `panels_per_document` | 10 000 | The panels one document holds |
+| `actors_per_panel` | 50 | The cast members of one panel |
+| `events_per_panel` | 100 | The lines, captions and sounds of one panel's script |
+| `characters_per_text` | 2 000 | The characters of one line, caption, sound or description |
+| `image_bytes` | 134 217 728 | The bytes of a supplied picture's file, 128 MiB |
+| `image_pixels` | 200 000 000 | The pixels of a supplied picture, its width times its height |
+| `font_bytes` | 67 108 864 | The bytes of a font file, 64 MiB |
+| `document_bytes` | 8 388 608 | The bytes of a document in UTF-8, and of a puppet file or an artwork contract, 8 MiB |
+
+An identifier, an actor id or a panel name, is at most 64 characters; see
+[identifiers](#identifiers).
+
+A file is refused by its size before a byte of it is read: a picture, a font, a puppet file or an
+artwork contract larger than its bound is a finding of the file's own rule (`image-file`,
+`font-file`, `puppet-file`, `artwork-contract`), at the key that names it, and a document file
+larger than `document_bytes` is not read at all. Those bounds are also
+`scenet.limits.DOCUMENT_BYTES`, `IMAGE_BYTES` and `FONT_BYTES`, read at each read, so a host can
+lower them before it compiles. A document given as text, not as a file, is a `limit` finding.
+
+The JSON Schemas state the limits they can -- a panel's size, the length of a text, the size of a
+cast, a script, the panels and the pages -- so an editor and a model see them too. The others, the
+panels on a page and the files a document names, `scenet check` finds.
+
+### Tighter limits
+
+`scenet.limits.Limits` holds them, and `scenet.limits.LIMITS` is the language's. A host that
+compiles documents it does not trust may hold them to less: a `Limits` with any value lowered, but
+none raised, which `scenet.mcp.build_server(limits=...)` takes for every request.
+
 <!-- scenet-spec:part=shot-types -->
 # Shot types (normative)
 
@@ -5878,6 +5923,7 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`invalid-identifier`](#invalid-identifier) | error | An actor id or a panel name does not follow the identifier grammar |
 | [`language-version`](#language-version) | error | The document is written for a later version of the language |
 | [`layout`](#layout) | error | No layout satisfies the panel's constraints |
+| [`limit`](#limit) | error | A size, a count or a length is past the language's limit |
 | [`missing-field`](#missing-field) | error | A required field is missing |
 | [`not-a-mapping`](#not-a-mapping) | error | The document is not a mapping |
 | [`not-yet`](#not-yet) | error | A key kept for a later version of the language is written |
@@ -6554,6 +6600,41 @@ cast: {alice: {reference: alice}}
 **How to fix it.** Relax or remove the staging relations the message names, and report the document: a check before the solver should have found what is wrong with it.
 
 No document gives it on purpose. The checks before the solver find every fault known to reach it, the last of them a cycle in depth order, which is `ordering-cycle`: a document that finds one has found a gap in those checks, or a bug.
+
+### `limit`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A size, a count or a length is past the language's limit |
+| Keys | [`caption.text`](https://creatoan.github.io/scenet/reference/language/script.html#captiontext), [`cast`](https://creatoan.github.io/scenet/reference/language/cast.html#cast), [`description`](https://creatoan.github.io/scenet/reference/language/description.html#description), [`lettering.font`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfont), [`lettering.font.bold_italic`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontbold_italic), [`lettering.font.display`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontdisplay), [`lettering.font.italic`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontitalic), [`lettering.font.regular`](https://creatoan.github.io/scenet/reference/language/lettering.html#letteringfontregular), [`page.size`](https://creatoan.github.io/scenet/reference/language/page.html#pagesize), [`pages`](https://creatoan.github.io/scenet/reference/language/page.html#pages), [`panel.size`](https://creatoan.github.io/scenet/reference/language/panel.html#panelsize), [`panels`](https://creatoan.github.io/scenet/reference/language/scene.html#panels), [`say.text`](https://creatoan.github.io/scenet/reference/language/script.html#saytext), [`script`](https://creatoan.github.io/scenet/reference/language/script.html#script), [`setting.image`](https://creatoan.github.io/scenet/reference/language/setting.html#settingimage), [`sfx.text`](https://creatoan.github.io/scenet/reference/language/script.html#sfxtext) |
+| Since | 0.14 |
+
+**Why it happens.** Every size, count and length in the language has a limit, generous for real comics: a panel or a page at most a metre on a side, fifty cast members in a panel, a hundred lines in its script, two thousand characters in a text, ten thousand panels and a thousand pages in a document, and the bytes and pixels of the files a document names. Without them one line could make the compiler work without end: rain over a panel a million units wide was a hundred million streaks. The finding says which limit, and the value past it; the language reference lists them all.
+
+**How to fix it.** Bring the value under the limit: a smaller panel, its unit a tenth of a millimetre printed; fewer people in one panel, or the scene split over several; a shorter line; a smaller picture or font file.
+
+Checked as `limit.panel.yaml`:
+
+```yaml
+# A panel past the language's limit on a side: one finding at the value, saying the limit.
+panel: {size: [20000, 800]}
+cast: {alice: {reference: alice}}
+```
+
+`scenet check limit.panel.yaml` says:
+
+```text
+limit.panel.yaml:2:16: limit: a panel is at most 10000 units on a side in Scenet, and this is 20000
+```
+
+Fixed:
+
+```yaml
+# The same panel, a metre wide: at the limit, not past it.
+panel: {size: [10000, 800]}
+cast: {alice: {reference: alice}}
+```
 
 ### `missing-field`
 
@@ -8147,6 +8228,7 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         },
         "text": {
           "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -8915,10 +8997,12 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               "prefixItems": [
                 {
                   "exclusiveMinimum": 0,
+                  "maximum": 10000.0,
                   "type": "number"
                 },
                 {
                   "exclusiveMinimum": 0,
+                  "maximum": 10000.0,
                   "type": "number"
                 }
               ],
@@ -9097,6 +9181,7 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         },
         "text": {
           "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -9387,6 +9472,7 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
         },
         "text": {
           "description": "The sound, lettered exactly as written, in the display face. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -9540,6 +9626,8 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
           "items": {
             "$ref": "#/$defs/CastEntry"
           },
+          "maxItems": 50,
+          "maxProperties": 50,
           "patternProperties": {
             "^x-": {
               "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -9576,6 +9664,7 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
     "description": {
       "anyOf": [
         {
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*$",
           "type": [
             "string",
@@ -9767,6 +9856,7 @@ The panel schema follows, its `Identifier` pattern shortened. Conforming to a sc
               }
             ]
           },
+          "maxItems": 100,
           "type": "array"
         },
         {

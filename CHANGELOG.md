@@ -124,6 +124,15 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **Every size, count and length has a limit** (#363), generous for real comics: a panel or a
+  page at most 10 000 units (a metre) on a side, 200 panels on a page, 1 000 pages and 10 000
+  panels in a document, 50 people in a panel, 100 lines, captions and sounds in its script, 2 000
+  characters in a text, and a picture's pixels. `size: [1e12, 1e12]` was clean; a document past a
+  limit is now the new rule `limit`, at the value, saying the limit and the value, before
+  anything is compiled. The JSON Schemas state the limits they can. The language reference's new
+  page "Limits" lists them, with the bytes of the files #379 bounds; `scenet.limits.Limits` holds
+  them all, `scenet.limits.DOCUMENT_BYTES`, `IMAGE_BYTES` and `FONT_BYTES` are its byte bounds as
+  each read takes them, and `scenet.mcp.build_server(limits=...)` takes tighter ones.
 - **A comic script panel draws who is in it, not the whole cast** (#364). The front matter's
   cast is everybody the scene may draw; a panel draws whoever speaks in it or makes a sound in
   it, whomever its own `@cast:` or `@staging:` names, and whomever the panel it is drawn

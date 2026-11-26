@@ -1,0 +1,3 @@
+# The same panel, a metre wide: at the limit, not past it.
+panel: {size: [10000, 800]}
+cast: {alice: {reference: alice}}

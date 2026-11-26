@@ -85,7 +85,7 @@ The font files to letter in, relative to the document: one file for every face, 
 | Type | text, or a mapping |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`font-file`](../diagnostics.md#font-file), [`italic-stand-in`](../diagnostics.md#italic-stand-in), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`duplicate-key`](../diagnostics.md#duplicate-key), [`font-file`](../diagnostics.md#font-file), [`italic-stand-in`](../diagnostics.md#italic-stand-in), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [Your own font](../../gallery.md#your-own-font) |
 <!-- /facts -->
 
@@ -148,7 +148,7 @@ The font file dialogue and `spoken` captions are lettered in, relative to the do
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`font-file`](../diagnostics.md#font-file) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`font-file`](../diagnostics.md#font-file), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 The face italic and bold italic stand in from, when they are not named. It is the only face a
@@ -178,7 +178,7 @@ The font file every caption but a `spoken` one is lettered in. Left out, they ar
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file), [`italic-stand-in`](../diagnostics.md#italic-stand-in) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file), [`italic-stand-in`](../diagnostics.md#italic-stand-in), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 Italic is what `locale`, `monologue` and `editorial` captions are set in, and what emphasis falls
@@ -209,7 +209,7 @@ The font file a stressed word, `_word_`, is lettered in. Left out, it is `italic
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 A word written between underscores is stressed, and lettered in bold italic, the letterers'
@@ -242,7 +242,7 @@ The font file sound effects are lettered in. Left out, the shipped display face,
 | Type | text |
 | Default | none |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`font-file`](../diagnostics.md#font-file), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 Sound effects are letters that are part of the picture, so they have a face of their own, and it

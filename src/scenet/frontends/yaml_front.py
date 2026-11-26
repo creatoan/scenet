@@ -34,6 +34,7 @@ from scenet.frontends.common import (
 )
 from scenet.frontends.positions import KEY
 from scenet.ir import IDENTIFIERS, Direction, PageLayout, PanelIR, check_placements
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.namespace import (
     DOCUMENT_KEYS,
     DocumentHead,
@@ -63,6 +64,11 @@ def _load_document(text: str, source: Path | None) -> dict[str, Any]:
     Raises:
         PanelSyntaxError: The text is not valid YAML, is empty, or is not a mapping.
     """
+    size = len(text.encode("utf-8", "surrogatepass"))
+    if size > LIMITS.document_bytes:
+        raise PanelSyntaxError(
+            past("document_bytes", size, LIMITS.document_bytes), source=source, rule=LIMIT_RULE
+        )
     try:
         # A SafeLoader, never the full loader: panel sources are untrusted input and full
         # YAML can construct arbitrary Python objects. And one that refuses a key written
@@ -381,11 +387,26 @@ def _validate_layout(data: dict[str, Any], source: Path | None) -> PageLayout:
         raise PanelSyntaxError(summarise(exc), source=source, rule=rule, loc=loc) from exc
 
 
+def _refuse_too_many(panels: dict[str, Any], source: Path | None) -> None:
+    """Refuse more panels than the language's limit, before any is read.
+
+    Reading each of a million first would be the cost the limit is there to stop.
+    """
+    if len(panels) > LIMITS.panels_per_document:
+        raise PanelSyntaxError(
+            past("panels_per_document", len(panels), LIMITS.panels_per_document),
+            source=source,
+            rule=LIMIT_RULE,
+            loc=("panels",),
+        )
+
+
 def _validate_panels(data: dict[str, Any], source: Path | None) -> dict[str, PanelIR]:
     """The panels of a scene, with `over:` resolved and the defaults applied."""
     panels = data["panels"]
     if not isinstance(panels, dict):
         raise PanelSyntaxError(PANELS_SHAPE, source=source)
+    _refuse_too_many(panels, source)
     for name, document in panels.items():
         if not isinstance(document, dict):
             raise PanelSyntaxError(f"panel '{name}' must be a mapping", source=source)

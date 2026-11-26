@@ -35,6 +35,7 @@ puppet the gallery has beside it, which the playground has beside every document
 | [`invalid-identifier`](#invalid-identifier) | error | An actor id or a panel name does not follow the identifier grammar |
 | [`language-version`](#language-version) | error | The document is written for a later version of the language |
 | [`layout`](#layout) | error | No layout satisfies the panel's constraints |
+| [`limit`](#limit) | error | A size, a count or a length is past the language's limit |
 | [`missing-field`](#missing-field) | error | A required field is missing |
 | [`not-a-mapping`](#not-a-mapping) | error | The document is not a mapping |
 | [`not-yet`](#not-yet) | error | A key kept for a later version of the language is written |
@@ -795,6 +796,46 @@ cast: {alice: {reference: alice}}
 **How to fix it.** Relax or remove the staging relations the message names, and report the document: a check before the solver should have found what is wrong with it.
 
 No document gives it on purpose. The checks before the solver find every fault known to reach it, the last of them a cycle in depth order, which is `ordering-cycle`: a document that finds one has found a gap in those checks, or a bug.
+
+### `limit`
+
+| | |
+|---|---|
+| Level | error |
+| Says | A size, a count or a length is past the language's limit |
+| Keys | [`caption.text`](language/script.md#captiontext), [`cast`](language/cast.md#cast), [`description`](language/description.md#description), [`lettering.font`](language/lettering.md#letteringfont), [`lettering.font.bold_italic`](language/lettering.md#letteringfontbold_italic), [`lettering.font.display`](language/lettering.md#letteringfontdisplay), [`lettering.font.italic`](language/lettering.md#letteringfontitalic), [`lettering.font.regular`](language/lettering.md#letteringfontregular), [`page.size`](language/page.md#pagesize), [`pages`](language/page.md#pages), [`panel.size`](language/panel.md#panelsize), [`panels`](language/scene.md#panels), [`say.text`](language/script.md#saytext), [`script`](language/script.md#script), [`setting.image`](language/setting.md#settingimage), [`sfx.text`](language/script.md#sfxtext) |
+| Since | 0.14 |
+
+**Why it happens.** Every size, count and length in the language has a limit, generous for real comics: a panel or a page at most a metre on a side, fifty cast members in a panel, a hundred lines in its script, two thousand characters in a text, ten thousand panels and a thousand pages in a document, and the bytes and pixels of the files a document names. Without them one line could make the compiler work without end: rain over a panel a million units wide was a hundred million streaks. The finding says which limit, and the value past it; the language reference lists them all.
+
+**How to fix it.** Bring the value under the limit: a smaller panel, its unit a tenth of a millimetre printed; fewer people in one panel, or the scene split over several; a shorter line; a smaller picture or font file.
+
+Checked as `limit.panel.yaml`:
+
+```{scenet-example}
+:gives: limit
+:beside: examples/gallery
+
+# A panel past the language's limit on a side: one finding at the value, saying the limit.
+panel: {size: [20000, 800]}
+cast: {alice: {reference: alice}}
+```
+
+`scenet check limit.panel.yaml` says:
+
+```text
+limit.panel.yaml:2:16: limit: a panel is at most 10000 units on a side in Scenet, and this is 20000
+```
+
+Fixed:
+
+```{scenet-example}
+:beside: examples/gallery
+
+# The same panel, a metre wide: at the limit, not past it.
+panel: {size: [10000, 800]}
+cast: {alice: {reference: alice}}
+```
 
 ### `missing-field`
 

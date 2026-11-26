@@ -7924,6 +7924,8 @@
   ],
   "tests/rule_corpus/fixed/language-version.panel.yaml": [],
   "tests/rule_corpus/fixed/language-version.panel.yaml --deep": [],
+  "tests/rule_corpus/fixed/limit.panel.yaml": [],
+  "tests/rule_corpus/fixed/limit.panel.yaml --deep": [],
   "tests/rule_corpus/fixed/looks-like-dialogue.script": [],
   "tests/rule_corpus/fixed/looks-like-dialogue.script --deep": [],
   "tests/rule_corpus/fixed/missing-field.panel.yaml": [],
@@ -8282,6 +8284,46 @@
       ],
       "rule": "language-version",
       "source": "tests/rule_corpus/language-version.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/limit.panel.yaml": [
+    {
+      "fingerprint": "1cfaf0d41ecbeeca6097f5168b97008b",
+      "level": "error",
+      "message": "a panel is at most 10000 units on a side in Scenet, and this is 20000",
+      "path": [
+        "panel",
+        "size",
+        0
+      ],
+      "region": [
+        2,
+        16,
+        2,
+        21
+      ],
+      "rule": "limit",
+      "source": "tests/rule_corpus/limit.panel.yaml"
+    }
+  ],
+  "tests/rule_corpus/limit.panel.yaml --deep": [
+    {
+      "fingerprint": "1cfaf0d41ecbeeca6097f5168b97008b",
+      "level": "error",
+      "message": "a panel is at most 10000 units on a side in Scenet, and this is 20000",
+      "path": [
+        "panel",
+        "size",
+        0
+      ],
+      "region": [
+        2,
+        16,
+        2,
+        21
+      ],
+      "rule": "limit",
+      "source": "tests/rule_corpus/limit.panel.yaml"
     }
   ],
   "tests/rule_corpus/looks-like-dialogue.script": [

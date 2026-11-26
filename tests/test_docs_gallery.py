@@ -271,6 +271,7 @@ UNPICTURED = {
     "identifiers": "what an id may be, not a block: its examples compile in place",
     "document": "what a document says of itself, which draws nothing: its examples compile",
     "json": "the second carrier, which draws nothing YAML does not: its example is the syntax",
+    "limits": "the bounds of every value, which draw nothing: a table of them",
 }
 
 

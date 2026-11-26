@@ -89,6 +89,7 @@ import logging
 import multiprocessing
 import re
 from collections.abc import Awaitable, Callable, Sequence
+from dataclasses import dataclass
 from multiprocessing.connection import Connection
 from typing import Annotated, Any, Literal
 
@@ -123,7 +124,10 @@ from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
-from scenet.frontends.positions import DOCUMENT_START
+from scenet.frontends.positions import DOCUMENT_START, locate
+from scenet.frontends.script_front import parse_script
+from scenet.frontends.yaml_front import parse_scene_document
+from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded
 from scenet.paths import check_relative
 from scenet.pipeline import Book, compile_book, compile_script
 from scenet.spec_pack import part
@@ -647,7 +651,7 @@ class Server(MCPServer[Any]):
             raise ToolError(describe_failure(crash)) from crash
 
 
-def build_server(*, timeout: float | None = None) -> "Server":
+def build_server(*, timeout: float | None = None, limits: Limits = LIMITS) -> "Server":
     """Build the server with every tool registered, without starting it.
 
     Separate from :func:`serve <scenet.mcp.serve>` so that a test, or a host embedding
@@ -657,11 +661,15 @@ def build_server(*, timeout: float | None = None) -> "Server":
         timeout: The most seconds one tool call may take. Given, each call runs in a
             worker process that is stopped once it runs past it, or once the client
             cancels it. `None`, the default, runs every call in process, unbounded.
+        limits: The limits every tool holds a document to: the language's, or tighter, for
+            a server that compiles documents it does not trust. A document past one
+            is a `limit` finding, and is not compiled.
 
     Returns:
         The server, ready to run on any transport. Its `close()` stops the worker
         processes it started; :func:`serve` calls it once the server has stopped.
     """
+    _SERVED.limits = limits
     workers = None if timeout is None else _Workers(timeout)
     server = Server(
         workers=workers,
@@ -754,7 +762,10 @@ class _Worker:
     def __init__(self) -> None:
         context = multiprocessing.get_context("spawn")
         self._connection, theirs = context.Pipe()
-        self._process = context.Process(target=_serve_calls, args=(theirs,), daemon=True)
+        # A spawned process starts with the language's limits: it is sent the server's.
+        self._process = context.Process(
+            target=_serve_calls, args=(theirs, _SERVED.limits), daemon=True
+        )
         self._process.start()
         theirs.close()
         self._starting = True
@@ -823,12 +834,13 @@ class _Workers:
 _WARM = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
 
 
-def _serve_calls(connection: Connection) -> None:
+def _serve_calls(connection: Connection, limits: Limits = LIMITS) -> None:
     """A worker's loop: run each call it is sent, and send back what came of it.
 
     A tool's own error comes back as its message; any other failure as the line the
     command line prints for one, since an exception need not survive the trip back.
     """
+    _SERVED.limits = limits
     functions = {name: function for name, _, function in TOOLS}
     # The first compile in a process reads the shipped fonts and puppets: done here, before
     # the worker says it is ready, so that no call's time is spent on it.
@@ -879,9 +891,46 @@ def _files(sent: dict[str, str] | None) -> dict[str, bytes] | None:
 def _diagnose(
     source: str, syntax: Syntax, *, deep: bool, files: dict[str, bytes] | None = None
 ) -> list[Diagnostic]:
-    if syntax == "script":
-        return diagnose_script(source, deep=deep, base=files)
-    return diagnose_source(source, deep=deep, base=files)
+    found = (
+        diagnose_script(source, deep=deep, base=files)
+        if syntax == "script"
+        else diagnose_source(source, deep=deep, base=files)
+    )
+    if _SERVED.limits == LIMITS or any(item.level == "error" for item in found):
+        return found
+    return found + _past_the_servers_limits(source, syntax)
+
+
+def _past_the_servers_limits(source: str, syntax: Syntax) -> list[Diagnostic]:
+    """What a valid document asks for past the limits the server was built with."""
+    try:
+        if syntax == "script":
+            panels, scene = dict(parse_script(source)), True
+        else:
+            document = parse_scene_document(source)
+            panels, scene = document.panels, "panel" not in document.panels
+    except ScenetError:  # pragma: no cover -- the check above found no error
+        return []
+    return [
+        Diagnostic(
+            rule=LIMIT_RULE,
+            message=item.message,
+            path=item.loc,
+            region=(locate(source, item.loc) if syntax != "script" else None) or DOCUMENT_START,
+        )
+        for item in exceeded(panels, _SERVED.limits, scene=scene)
+    ]
+
+
+@dataclass
+class _Served:
+    """What the server was built with: the limits every tool holds a document to."""
+
+    limits: Limits = LIMITS
+
+
+#: The server's own settings, which `build_server` sets. One server is served per process.
+_SERVED = _Served()
 
 
 def _finding(item: Diagnostic) -> Finding:
@@ -906,6 +955,12 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
     The success path compiles once. Only a failure pays for the deep check, which is
     what turns "the solver gave up" into a located finding with a rule and a fix.
     """
+    if _SERVED.limits != LIMITS:
+        past = _diagnose(source, syntax, deep=False, files=files)
+        if any(item.rule == LIMIT_RULE for item in past):
+            raise ToolError(
+                json.dumps([_finding(item).model_dump() for item in past if item.level == "error"])
+            )
     try:
         library = default_library()
         if syntax != "script":

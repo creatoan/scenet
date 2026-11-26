@@ -390,7 +390,7 @@ A picture drawn elsewhere, behind the cast: a PNG or JPEG file, relative to the 
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`image-file`](../diagnostics.md#image-file), [`conflicting-setting`](../diagnostics.md#conflicting-setting), [`artwork-contract`](../diagnostics.md#artwork-contract) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`image-file`](../diagnostics.md#image-file), [`conflicting-setting`](../diagnostics.md#conflicting-setting), [`artwork-contract`](../diagnostics.md#artwork-contract), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [A JPEG behind the cast](../../gallery.md#a-jpeg-behind-the-cast) |
 <!-- /facts -->
 

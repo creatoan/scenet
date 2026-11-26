@@ -73,7 +73,7 @@ The panels, in the order they are read: a mapping of each panel under its name, 
 | Type | anything |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`invalid-identifier`](../diagnostics.md#invalid-identifier), [`duplicate-key`](../diagnostics.md#duplicate-key), [`composition`](../diagnostics.md#composition), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 The panels, in reading order. **The order they are written in is normative**: it is the order a

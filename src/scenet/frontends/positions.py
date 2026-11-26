@@ -14,6 +14,7 @@ licence gate -- would buy nothing.
 Marks are 0-based; SARIF is 1-based. The conversion happens once, here, at the boundary.
 """
 
+import functools
 from dataclasses import dataclass
 
 import yaml
@@ -149,11 +150,7 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
         >>> key.start.column, key.end.column
         (8, 13)
     """
-    try:
-        # A JSON document is composed into the same node tree, marked the same way (#354).
-        node = compose_json(text) if is_json(text) else yaml.compose(text)
-    except yaml.YAMLError:
-        return None
+    node = _composed(text)
     if node is None:
         return None
 
@@ -179,6 +176,25 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
     if above is not None and is_block:
         return Region(start=_mark_to_region(above).start, end=region.end)
     return region
+
+
+#: libyaml's loader when PyYAML was built with it, which composes a long document many
+#: times faster than PyYAML's own: a line of a megabyte took most of a second.
+_FAST_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+@functools.lru_cache(maxsize=8)
+def _composed(text: str) -> yaml.Node | None:
+    """The document's node tree, composed once however many findings locate in it.
+
+    Never changed by a caller: a node is read, not written. `None` for text that does not
+    compose, or composes to nothing.
+    """
+    try:
+        # A JSON document is composed into the same node tree, marked the same way (#354).
+        return compose_json(text) if is_json(text) else yaml.compose(text, Loader=_FAST_LOADER)
+    except yaml.YAMLError:
+        return None
 
 
 def syntax_error_region(exc: yaml.YAMLError) -> Region:

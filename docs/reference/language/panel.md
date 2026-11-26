@@ -41,7 +41,7 @@ The panel's width and height, `[width, height]`, in panel units: everything else
 | Type | `[number, number]` |
 | Default | `[1000, 1000]` |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-geometry`](../diagnostics.md#panel-geometry), [`camera-retreated`](../diagnostics.md#camera-retreated) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`panel-geometry`](../diagnostics.md#panel-geometry), [`camera-retreated`](../diagnostics.md#camera-retreated), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 Panel units are arbitrary and consistent: every length in the language -- a margin, a type size,

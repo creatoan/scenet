@@ -20,6 +20,7 @@ from pydantic_core import ErrorDetails
 
 from scenet.errors import PanelSyntaxError, RuleViolationError
 from scenet.ir import PUPPET_KEYS, RETIRED_KEYS, Predicate, Relation, retired_key, retired_value
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.places import PLACES, Place
 from scenet.safe_yaml import mistyped
 
@@ -384,7 +385,48 @@ def errors_of(exc: ValidationError) -> list[ErrorDetails]:
             for other in errors
         )
     ]
-    return _merge_misspellings(_name_what_replaced(_say_what_to_write(errors)))
+    return _merge_misspellings(_name_the_limit(_name_what_replaced(_say_what_to_write(errors))))
+
+
+#: pydantic's errors for a bound, and the context key that holds the bound.
+_BOUNDS = {"less_than_equal": "le", "too_long": "max_length", "string_too_long": "max_length"}
+
+
+def _limit_of(error: ErrorDetails) -> str | None:
+    """Which of the language's limits a bound pydantic enforced is, if it is one."""
+    key = _BOUNDS.get(error["type"])
+    bound = (error.get("ctx") or {}).get(key) if key is not None else None
+    if bound is None:
+        return None
+    loc = tuple(error["loc"])
+    if error["type"] == "less_than_equal":
+        name = "page_side" if "page" in loc and "panel" not in loc else "panel_side"
+    else:
+        last = next((step for step in reversed(loc) if isinstance(step, str)), "")
+        name = {
+            "cast": "actors_per_panel",
+            "script": "events_per_panel",
+            "pages": "pages_per_document",
+        }.get(last, "characters_per_text")
+    return name if getattr(LIMITS, name) == bound else None
+
+
+def _name_the_limit(errors: list[ErrorDetails]) -> list[ErrorDetails]:
+    """Say which of the language's limits a value is past, and the limit.
+
+    pydantic says "List should have at most 50 items", which is true and names no limit: the
+    finding is rule `limit`, and says what is bounded, by how much, and how much it is.
+    """
+    named: list[ErrorDetails] = []
+    for error in errors:
+        name = _limit_of(error)
+        if name is None:
+            named.append(error)
+            continue
+        written = error.get("input")
+        value = written if isinstance(written, (int, float)) else len(written)  # type: ignore[arg-type]  # a bound list, mapping or string
+        named.append({**error, "type": LIMIT_RULE, "msg": past(name, value, getattr(LIMITS, name))})
+    return named
 
 
 def _name_what_replaced(errors: list[ErrorDetails]) -> list[ErrorDetails]:
@@ -506,6 +548,8 @@ def _merge_misspellings(errors: list[ErrorDetails]) -> list[ErrorDetails]:
 PYDANTIC_RULES = {
     "missing": "missing-field",
     "extra_forbidden": "unknown-key",
+    # Not pydantic's own: `_name_the_limit` names a bound that is one of the language's.
+    LIMIT_RULE: LIMIT_RULE,
 }
 
 

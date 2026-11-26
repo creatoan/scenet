@@ -177,5 +177,6 @@ scene
 page
 puppet
 artwork
+limits
 keys
 ```

@@ -43,6 +43,7 @@ ScenetError
     UnknownPuppetError
   FileReadError
     MissingFileError
+  LimitsError
   RenderError
   SolverError
     BalloonPlacementError

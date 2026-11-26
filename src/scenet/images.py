@@ -28,6 +28,7 @@ from typing import Final, Literal
 
 from scenet import limits
 from scenet.errors import PanelSyntaxError
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.paths import Folder, read_relative
 
 __all__ = ["IMAGE_RULE", "JPEG", "PNG", "MediaType", "SuppliedImage", "load_image", "measure"]
@@ -111,6 +112,13 @@ def load_image(declared: str, base: Folder | None, *, loc: tuple[str | int, ...]
         media_type, width, height = measure(data)
     except _UnmeasurableError as exc:
         raise PanelSyntaxError(f"image file {declared!r} {exc}", rule=IMAGE_RULE, loc=loc) from exc
+    if width * height > LIMITS.image_pixels:
+        raise PanelSyntaxError(
+            f"image file {declared!r} is {width} by {height}: "
+            f"{past('image_pixels', width * height, LIMITS.image_pixels)}",
+            rule=LIMIT_RULE,
+            loc=loc,
+        )
     return SuppliedImage(
         href=declared,
         media_type=media_type,

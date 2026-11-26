@@ -128,6 +128,20 @@ Every error a public function raises is one of these, and a {py:exc}`~scenet.err
 .. autoexception:: scenet.errors.PanelSyntaxError
 ```
 
+## `LimitsError`
+
+| | |
+|---|---|
+| Import | `from scenet import LimitsError` |
+| Defined in | {py:mod}`scenet.errors` ([source](https://github.com/creatoan/scenet/blob/main/src/scenet/errors.py)) |
+| Install | `pip install scenet` |
+| Since | 0.14 |
+| Stability | Public: follows [semantic versioning](../guarantees.md#stability). Below 1.0, a minor release may change it, and the CHANGELOG says how. |
+
+```{eval-rst}
+.. autoexception:: scenet.errors.LimitsError
+```
+
 ## `RenderError`
 
 | | |

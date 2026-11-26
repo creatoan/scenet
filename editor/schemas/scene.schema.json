@@ -135,6 +135,7 @@
         },
         "text": {
           "description": "What the box says, as one string; line breaks are computed. A word between underscores, `_word_`, is stressed. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -998,9 +999,11 @@
           "minItems": 2,
           "prefixItems": [
             {
+              "maximum": 10000.0,
               "type": "number"
             },
             {
+              "maximum": 10000.0,
               "type": "number"
             }
           ],
@@ -1093,6 +1096,8 @@
               "items": {
                 "$ref": "#/$defs/PartialCastEntry"
               },
+              "maxItems": 50,
+              "maxProperties": 50,
               "patternProperties": {
                 "^x-": {
                   "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -1123,6 +1128,7 @@
         "description": {
           "anyOf": [
             {
+              "maxLength": 2000,
               "pattern": "^[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*$",
               "type": [
                 "string",
@@ -1252,6 +1258,7 @@
                   }
                 ]
               },
+              "maxItems": 100,
               "type": "array"
             },
             {
@@ -1403,10 +1410,12 @@
               "prefixItems": [
                 {
                   "exclusiveMinimum": 0,
+                  "maximum": 10000.0,
                   "type": "number"
                 },
                 {
                   "exclusiveMinimum": 0,
+                  "maximum": 10000.0,
                   "type": "number"
                 }
               ],
@@ -2350,6 +2359,7 @@
         },
         "text": {
           "description": "The line, as one string; the compiler breaks it into lines. A word between underscores, `_word_`, is stressed, and lettered in bold italic. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -2640,6 +2650,7 @@
         },
         "text": {
           "description": "The sound, lettered exactly as written, in the display face. Never empty, nor only white space.",
+          "maxLength": 2000,
           "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\ud800-\\udfff\\ufffe\\uffff]*$",
           "title": "Text",
           "type": [
@@ -3023,6 +3034,8 @@
           "items": {
             "$ref": "#/$defs/PartialCastEntry"
           },
+          "maxItems": 50,
+          "maxProperties": 50,
           "patternProperties": {
             "^x-": {
               "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -3145,6 +3158,7 @@
       "items": {
         "$ref": "#/$defs/PageSpec"
       },
+      "maxItems": 1000,
       "title": "Pages",
       "type": "array"
     },
@@ -3220,6 +3234,8 @@
                 "items": {
                   "$ref": "#/$defs/PartialCastEntry"
                 },
+                "maxItems": 50,
+                "maxProperties": 50,
                 "patternProperties": {
                   "^x-": {
                     "description": "An extension: a key a tool writes, which Scenet ignores."
@@ -3250,6 +3266,7 @@
           "description": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "pattern": "^[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*[^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff\\t\\n\\x0b\\x0c\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\x00-\\x08\\x0e-\\x1b\\ud800-\\udfff\\ufffe\\uffff]*$",
                 "type": [
                   "string",
@@ -3375,6 +3392,7 @@
                     }
                   ]
                 },
+                "maxItems": 100,
                 "type": "array"
               },
               {
@@ -3427,6 +3445,8 @@
       "items": {
         "$ref": "#/$defs/PanelEntry"
       },
+      "maxItems": 10000,
+      "maxProperties": 10000,
       "patternProperties": {
         "^x-": {
           "description": "An extension: a key a tool writes, which Scenet ignores."

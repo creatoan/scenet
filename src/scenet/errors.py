@@ -50,6 +50,7 @@ __all__ = [
     "CoreSyntaxError",
     "FileReadError",
     "LayoutError",
+    "LimitsError",
     "MalformedAssetError",
     "MissingFileError",
     "PanelSyntaxError",
@@ -335,6 +336,26 @@ class MissingFileError(FileReadError, FileNotFoundError):
 
     See Also:
         :exc:`FileReadError <scenet.errors.FileReadError>`, for any other reason a file is unread.
+    """
+
+
+class LimitsError(ScenetError, ValueError):
+    """Limits a host asked for that are no limits: one not above zero, or past the language's.
+
+    A `Limits` may only tighten the language's limits, so a document valid under it is valid
+    everywhere; asking for more would make a document one host builds and the next refuses.
+
+    Example:
+        >>> from scenet import LimitsError
+        >>> from scenet.limits import Limits
+        >>> try:
+        ...     Limits(actors_per_panel=500)
+        ... except LimitsError as exc:
+        ...     print(exc)
+        actors_per_panel must be above 0 and at most the language's 50, not 500
+
+    See Also:
+        :class:`Limits <scenet.limits.Limits>`, what the limits are.
     """
 
 

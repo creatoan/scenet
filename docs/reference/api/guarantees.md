@@ -113,3 +113,8 @@ The first compile in a process is slower, because the shipped fonts and puppets 
 long a compile takes is driven by the balloon placement, which tries a fixed set of candidate
 positions for each balloon. A panel with many lines of dialogue takes longer. A panel whose
 balloons do not fit fails with `BalloonPlacementError`; it never searches without end.
+
+What a document can ask for is bounded too: every size, count and length in the language has a
+limit, listed in [the language's limits](../language/limits.md), and a document past one is the
+finding `limit` before anything is compiled. `scenet.limits.Limits` holds them; a host may pass a
+tighter one to `scenet.mcp.build_server(limits=...)`.

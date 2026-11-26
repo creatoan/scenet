@@ -39,6 +39,7 @@ from pydantic_core import CoreSchema, InitErrorDetails
 from scenet.emphasis import EmphasisError, parse
 from scenet.errors import RuleViolationError
 from scenet.identifiers import LABEL_WORDS, Grammar
+from scenet.limits import LIMIT_RULE, LIMITS, past
 from scenet.safe_yaml import as_written, mistyped
 
 __all__ = [
@@ -238,7 +239,12 @@ def _balanced(value: str) -> str:
 
 #: Text that is lettered: something in it to see, and every character one an SVG holds.
 #: A sound effect's letters, and what a line of lettering is before its emphasis is read.
-Words = Annotated[SvgText, AfterValidator(_visible), Pattern(LETTERED_PATTERN)]
+Words = Annotated[
+    SvgText,
+    Field(max_length=LIMITS.characters_per_text),
+    AfterValidator(_visible),
+    Pattern(LETTERED_PATTERN),
+]
 
 #: A line that is lettered -- dialogue or a caption -- and so may stress a word by writing
 #: it between underscores: `I _told_ you`. See :mod:`scenet.emphasis`.
@@ -300,7 +306,11 @@ DESCRIPTION_PATTERN = (
 #: What a panel shows, in words, for a reader who cannot see it -- one line of prose,
 #: carried and never interpreted.
 Description = Annotated[
-    SvgText, BeforeValidator(as_one_line), AfterValidator(_said), Pattern(DESCRIPTION_PATTERN)
+    SvgText,
+    Field(max_length=LIMITS.characters_per_text),
+    BeforeValidator(as_one_line),
+    AfterValidator(_said),
+    Pattern(DESCRIPTION_PATTERN),
 ]
 
 
@@ -1201,6 +1211,13 @@ class Fit(StrEnum):
     CONTAIN = "contain"
 
 
+#: A panel's width or height: a number, at most the language's limit (`scenet.limits`).
+PanelSide = Annotated[StrictFloat, Field(le=LIMITS.panel_side)]
+
+#: A page's width or height, likewise.
+PageSide = Annotated[StrictFloat, Field(le=LIMITS.page_side)]
+
+
 class PanelSpec(Strict):
     """The panel's own dimensions.
 
@@ -1213,7 +1230,7 @@ class PanelSpec(Strict):
         :class:`PanelIR <scenet.ir.PanelIR>`, whose `panel` it is.
     """
 
-    size: tuple[StrictFloat, StrictFloat] = (1000.0, 1000.0)
+    size: tuple[PanelSide, PanelSide] = (1000.0, 1000.0)
     """The panel's width and height, `[width, height]`, in panel units: everything else is
     measured against them. Printed, a unit is a tenth of a millimetre.
     """
@@ -1980,7 +1997,9 @@ class PanelIR(Strict):
     lettering: LetteringSpec = LetteringSpec()
     """How the lettering is set: the dialogue type size, and the font files."""
     cast: dict[Identifier, CastMember] = Field(
-        default_factory=dict, json_schema_extra=KEYS_ARE_IDENTIFIERS
+        default_factory=dict,
+        max_length=LIMITS.actors_per_panel,
+        json_schema_extra=KEYS_ARE_IDENTIFIERS,
     )
     """Who is in the panel, the first being the one the camera frames: each actor under their
     id, or a list of cast members each with their `id`, and the puppet that plays them or the
@@ -1988,7 +2007,7 @@ class PanelIR(Strict):
     """
     staging: tuple[Relation, ...] = ()
     """How the cast stand to each other, as sentences: `alice left_of bob`. One relation each."""
-    script: tuple[ScriptEvent, ...] = ()
+    script: tuple[ScriptEvent, ...] = Field(default=(), max_length=LIMITS.events_per_panel)
     """What is said and heard, in the order it is read: `say` for a balloon, `caption` for a
     box, `sfx` for a sound effect.
     """
@@ -2362,7 +2381,7 @@ class PageFormat(Strict):
         :class:`PageLayout <scenet.ir.PageLayout>`, which holds it.
     """
 
-    size: tuple[StrictFloat, StrictFloat] = (2000.0, 3000.0)
+    size: tuple[PageSide, PageSide] = (2000.0, 3000.0)
     """The page's width and height: the trim, the size the printed page is cut to, in the units
     a panel uses. Printed, a unit is a tenth of a millimetre.
     """
@@ -2698,14 +2717,31 @@ class PageLayout(Strict):
 
     page: PageFormat = PageFormat()
     """The format every page shares: its size, margin, gutters and bleed."""
-    pages: tuple[PageSpec, ...] = ()
+    pages: tuple[PageSpec, ...] = Field(default=(), max_length=LIMITS.pages_per_document)
     """The pages, in order, each a list of tiers top to bottom."""
 
     @model_validator(mode="after")
     def check_room(self) -> Self:
         """Every tier must have room for its panels and every page for its tiers."""
+        _check_counts(self)
         _check_room(self)
         return self
+
+
+def _check_counts(layout: PageLayout) -> None:
+    """A page places at most the language's limit of panels, insets included.
+
+    Checked before there is room to look for: two hundred panels on one page are refused
+    for what they are, not for the tiers they would not fit in.
+    """
+    for index, page in enumerate(layout.pages):
+        count = sum(len(tier.placed) for tier in page.tiers)
+        if count > LIMITS.panels_per_page:
+            raise RuleViolationError(
+                past("panels_per_page", count, LIMITS.panels_per_page),
+                rule=LIMIT_RULE,
+                loc=("pages", index),
+            )
 
 
 def _check_room(layout: PageLayout) -> None:

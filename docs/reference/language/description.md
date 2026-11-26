@@ -9,7 +9,7 @@ What the panel shows, in words, for a reader who cannot see it. Carried into the
 | Type | text |
 | Default | none |
 | Since | 0.12 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`unknown-key`](../diagnostics.md#unknown-key), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [A description](../../gallery.md#a-description) |
 <!-- /facts -->
 

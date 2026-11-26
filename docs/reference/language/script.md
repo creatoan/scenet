@@ -9,7 +9,7 @@ What is said and heard, in the order it is read: `say` for a balloon, `caption` 
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`balloon-placement`](../diagnostics.md#balloon-placement), [`word-limit`](../diagnostics.md#word-limit), [`unknown-key`](../diagnostics.md#unknown-key) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`balloon-placement`](../diagnostics.md#balloon-placement), [`word-limit`](../diagnostics.md#word-limit), [`unknown-key`](../diagnostics.md#unknown-key), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [Reading order](../../gallery.md#reading-order) |
 <!-- /facts -->
 
@@ -118,7 +118,7 @@ The line, as one string; the compiler breaks it into lines. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.1 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`bold-italic-stand-in`](../diagnostics.md#bold-italic-stand-in), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [How lines break](../../gallery.md#how-lines-break), [Emphasis](../../gallery.md#emphasis) |
 <!-- /facts -->
 
@@ -370,7 +370,7 @@ What the box says, as one string; line breaks are computed. A word between under
 | Type | text |
 | Default | none: required |
 | Since | 0.4 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`italic-stand-in`](../diagnostics.md#italic-stand-in) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`unbalanced-emphasis`](../diagnostics.md#unbalanced-emphasis), [`word-limit`](../diagnostics.md#word-limit), [`balloon-placement`](../diagnostics.md#balloon-placement), [`italic-stand-in`](../diagnostics.md#italic-stand-in), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 As for dialogue, line breaking is computed, and a word between underscores is stressed; see
@@ -600,7 +600,7 @@ The sound, lettered exactly as written, in the display face. Never empty, nor on
 | Type | text |
 | Default | none: required |
 | Since | 0.11 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`missing-field`](../diagnostics.md#missing-field), [`limit`](../diagnostics.md#limit) |
 <!-- /facts -->
 
 Nothing is added to the text: no exclamation mark, since sound effects are not exclamations, and no

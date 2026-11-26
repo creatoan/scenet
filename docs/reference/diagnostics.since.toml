@@ -34,6 +34,7 @@
 "looks-like-dialogue" = "0.11"
 "missing-field" = "0.3"
 "not-a-mapping" = "0.3"
+"limit" = "0.14"
 "not-yet" = "0.14"
 "off-panel-speaker" = "0.11"
 "ordering-cycle" = "0.3"

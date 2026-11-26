@@ -66,7 +66,7 @@ The page's width and height: the trim, the size the printed page is cut to, in t
 | Type | `[number, number]` |
 | Default | `[2000, 3000]` |
 | Since | 0.10 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [A page made for print](../../gallery.md#a-page-made-for-print) |
 <!-- /facts -->
 
@@ -220,7 +220,7 @@ The pages, in order, each a list of tiers top to bottom.
 | Type | a list of mappings |
 | Default | none |
 | Since | 0.10 |
-| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout) |
+| Diagnostics | [`invalid-field`](../diagnostics.md#invalid-field), [`page-layout`](../diagnostics.md#page-layout), [`limit`](../diagnostics.md#limit) |
 | In the gallery | [Two pages](../../gallery.md#two-pages) |
 <!-- /facts -->
 

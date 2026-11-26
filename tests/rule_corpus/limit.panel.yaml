@@ -1,0 +1,3 @@
+# A panel past the language's limit on a side: one finding at the value, saying the limit.
+panel: {size: [20000, 800]}
+cast: {alice: {reference: alice}}
