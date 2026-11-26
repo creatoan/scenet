@@ -159,9 +159,9 @@ LEGS: tuple[Leg, ...] = (
     Leg("ir", _in("", "ir.py"), 98, 98.0, 812, 16, 45425131503),
     Leg("identifiers", _in("", "identifiers.py"), 100, 100.0, 46, 0, 44802722199),
     Leg("namespace", _in("", "namespace.py"), 100, 100.0, 96, 0, 44802728686),
-    Leg("diagnostics", _in("", "diagnostics.py"), 96, 96.2, 2009, 77, 45531602112),
+    Leg("diagnostics", _in("", "diagnostics.py"), 96, 96.3, 2088, 77, 45907199603),
     Leg("compose", _in("", "compose.py"), 98, 99.0, 582, 6, 45503879757),
-    Leg("limits", _in("", "limits.py"), 100, 100.0, 127, 0, 45525866827),
+    Leg("limits", _in("", "limits.py"), 100, 100.0, 139, 0, 45907199603),
     Leg("safe_json", _in("", "safe_json.py"), 98, 98.1, 475, 9, 45525866827),
 )
 

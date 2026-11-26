@@ -533,9 +533,9 @@ gallery are what guard them.
 | `ir` | `ir.py` | 812 | 16 | 98.0% | 98% | [`45425131503`](https://github.com/creatoan/scenet/actions/runs/45425131503) |
 | `identifiers` | `identifiers.py` | 46 | 0 | 100.0% | 100% | [`44802722199`](https://github.com/creatoan/scenet/actions/runs/44802722199) |
 | `namespace` | `namespace.py` | 96 | 0 | 100.0% | 100% | [`44802728686`](https://github.com/creatoan/scenet/actions/runs/44802728686) |
-| `diagnostics` | `diagnostics.py` | 2,009 | 77 | 96.2% | 96% | [`45531602112`](https://github.com/creatoan/scenet/actions/runs/45531602112) |
+| `diagnostics` | `diagnostics.py` | 2,088 | 77 | 96.3% | 96% | [`45907199603`](https://github.com/creatoan/scenet/actions/runs/45907199603) |
 | `compose` | `compose.py` | 582 | 6 | 99.0% | 98% | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) |
-| `limits` | `limits.py` | 127 | 0 | 100.0% | 100% | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) |
+| `limits` | `limits.py` | 139 | 0 | 100.0% | 100% | [`45907199603`](https://github.com/creatoan/scenet/actions/runs/45907199603) |
 | `safe_json` | `safe_json.py` | 475 | 9 | 98.1% | 98% | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
@@ -1196,7 +1196,8 @@ survivors as before it, the cycle check now `_check_no_cycle` for both orders.
 
 1,824 mutants and 84 survivors, 95.4% killed, numbered from run `44802722199`: the 12
 not below are killed by `TestWhereAnInheritedFaultIsReported` ([#357](https://github.com/creatoan/scenet/issues/357)). Batch B measured it again, by
-run `45531602112`, which numbers the rows below: 2,009 mutants and 77 survivors, 96.2% killed; one
+run `45907199603`, after batch F, which numbers the rows below: 2,088 mutants and 77 survivors, 96.3%
+killed; one
 of them is the batch's own, in its table.
 
 | Mutants | Change | Why it cannot change an output |
@@ -1220,19 +1221,18 @@ of them is the batch's own, in its table.
 | `_has_path` 10 | an index one past the end | A path inherited from a default is never longer than the default's list. |
 | `_has_path` 13 | `continue` to `break` at the key step | The key step is always a path's last. |
 | `_in_source_order` 7, 8, 9, 10, 11, 12, 13 | the place a finding with no region sorts at | Every finding has a region. |
-| `diagnose_script` 8, 10 | the parser not told the file | The file only prefixes the text of its errors, which a finding leaves out. |
-| `diagnose_script` 97 | the notes replacing the findings before them | Those are errors only, and with an error the notes are never reached. |
-| `diagnose_script` 120 | `len(path) > 1` to `> 2` | A word count's path is `("script",)` or four steps long. |
-| `diagnose_script` 142, 143, 146, 147 | `compile_script` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
-| `diagnose_script` 163, 166 | a compile error with no panel | A script has no pages yet, so every compile error is a panel's and names it. |
+| `_diagnose_script` 8, 10 | the parser not told the file | The file only prefixes the text of its errors, which a finding leaves out. |
+| `_diagnose_script` 97 | the notes replacing the findings before them | Those are errors only, and with an error the notes are never reached. |
+| `_diagnose_script` 120 | `len(path) > 1` to `> 2` | A word count's path is `("script",)` or four steps long. |
+| `_diagnose_script` 142, 143, 146, 147 | `compile_script` without the file or the folder | Given a file and no folder, it reads from the file's folder, which is the folder given. |
+| `_diagnose_script` 163, 166 | a compile error with no panel | A script has no pages yet, so every compile error is a panel's and names it. |
 | `_script_line` 3, 5 | a line past the end | No finding is on a line past the end. |
 | `_script_front_matter` 6, 13 | an empty front matter written, or counted from `None` | Without front matter no finding is located in it; counting from `None` is counting from the start. |
 | `_diagnose_script_setting` 31, 48, 50 | `continue` to `break`, or the heading's line as no line | `_diagnose_setting` gives at most one finding a panel; a picture a panel does not declare is named by its `@setting:`. |
 | `_diagnose_script_figures` 33, 36, 38 | `continue` to `break`, or a path's head or index read otherwise | A panel's figure faults are one fault of its picture or contract, or faults of its lines, never both; and none is at an index outside `script`. |
 | `_diagnose_script_figures` 49, 51, 56, 58 | a fault of the panel's own found at no line | A fault the panel wrote itself is under the `@setting:` or `@cast:` it wrote, so the heading is never the default read. |
 | `_written_through` 5 | one more step down the `@over:` chain | A loop of `@over:` is refused before this is asked. |
-| `diagnose_file` 3 | the file read in the default encoding | That is UTF-8 where mutmut runs; on Windows, where it is not, the findings golden of the gallery's French scripts fails in the Windows job. |
-| `diagnose_file` 5 | `"utf-8"` to `"UTF-8"` | Python's codec names are not case-sensitive. |
+| `_diagnose_source` 1, `_diagnose_script` 1 | `deep` defaults to true | Their one caller each, the public function, passes it. |
 
 #### `frontends/`
 
@@ -1296,7 +1296,8 @@ kill was applied by hand to see its test fail.
 | [`45425131503`](https://github.com/creatoan/scenet/actions/runs/45425131503) | after triage: numbers `ir` |
 | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) | numbers `frontends/common`, `frontends/yaml` and `compose` |
 | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) | numbers `limits` and `safe_json` |
-| [`45531602112`](https://github.com/creatoan/scenet/actions/runs/45531602112), [`45531607316`](https://github.com/creatoan/scenet/actions/runs/45531607316) | number `diagnostics` and `frontends/script` |
+| [`45531607316`](https://github.com/creatoan/scenet/actions/runs/45531607316) | numbers `frontends/script` |
+| [`45907199603`](https://github.com/creatoan/scenet/actions/runs/45907199603) | numbers `diagnostics` and `limits`, on the stack rebased onto batch F |
 
 What the runs found beyond a missing assertion:
 
@@ -1336,7 +1337,7 @@ Accepted, by what makes them equivalent, numbered from the run that numbers thei
 | `Lowered.where` 7 | paths of one step not looked up | Every written path is at least two steps: a collection and a name. |
 | `_drawn` 46, 47, 48 | the middle word of a staging sentence drawn too | It is a predicate, and the words of a staging sentence are reserved: no member is named one. |
 | `_drawn` 55, `parse_script_document` 204 | `@over:` resolved without the panel's own name | The name only refuses a panel over itself, which `_composed` has refused first. |
-| `diagnose_source` 58 | a finding in another file translated as the document's | No path inside a puppet file or a contract starts with a collection the document lowers. |
+| `_diagnose_source` 58 | a finding in another file translated as the document's | No path inside a puppet file or a contract starts with a collection the document lowers. |
 | `_Reader.mark` 5, 19 | counting again from the start at the last mark, or from it to the break | Both give the same line and the same line start. |
 | `_Reader._bad_string` 10, 27, 32, 33 | an escape read one character longer, or `\u` skipped two characters | An escape's message reads two characters; the four digits of `\u` are no fault. |
 | `_Reader._bad_string` 54 | the unclosed string's mark at `None` | `mark(None)` is the mark where reading is. |
