@@ -204,10 +204,10 @@ class TestThePage:
 class TestTheSecurityPolicy:
     TEXT = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
 
-    def test_it_says_how_to_report_how_soon_and_when_it_is_disclosed(self):
+    def test_it_says_how_to_report_and_promises_nothing(self):
         assert "private vulnerability reporting" in self.TEXT
-        assert re.search(r"within \d+ days", self.TEXT, re.IGNORECASE)
-        assert "disclos" in self.TEXT.lower()
+        assert "makes no commitment about security" in self.TEXT
+        assert not re.search(r"within \d+ (?:business )?days", self.TEXT, re.IGNORECASE)
 
     def test_it_names_a_supported_version(self):
         assert re.search(r"^\| \d+\.\d+\.x \| Yes \|$", self.TEXT, re.MULTILINE)

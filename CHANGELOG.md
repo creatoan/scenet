@@ -19,8 +19,8 @@ it is written, and says what to write instead.
 - **A security model page** (#381), "Security model" under About: what is worth protecting,
   who the attacker is on the command line, through the API, over MCP and in a shared playground
   link, what Scenet guarantees, each guarantee beside the test that holds it, and what the host
-  must add. `SECURITY.md` links it, and says how soon a report is answered and how it is
-  disclosed.
+  must add. `SECURITY.md` links it, and says that Scenet makes no commitment about
+  security: no time to answer a report in, and no fix.
 
 - **Fuzzing** (#378): one oracle, `tests/fuzzing.py`, says that for any bytes every entry
   point -- a panel or scene, a comic script, a puppet file, an artwork contract, a Panel Core,

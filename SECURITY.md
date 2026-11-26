@@ -21,15 +21,9 @@ Please report privately through GitHub's
 on this repository, rather than opening a public issue. A document, a file or a command that
 shows the fault is the most useful thing a report can hold.
 
-What happens next:
-
-- **Within 7 days**, the report is acknowledged, and you are told whether it is taken as a
-  vulnerability.
-- **Within 90 days** of the report, a fixed release is published, or you are told why it
-  takes longer and when it will come.
-- **Disclosure is coordinated.** The fault is kept private until the fixed release is
-  published; a GitHub security advisory then describes it, with a CVE where one applies, and
-  credits you unless you ask not to be named. Please keep it private until then too.
+Scenet makes no commitment about security: not to answer a report, by any date or at all,
+and not to fix what one shows. A report is read when its maintainers can, and what comes of it
+is up to them.
 
 ## Scope
 
