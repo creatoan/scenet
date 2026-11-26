@@ -39,9 +39,3 @@ more than one.
 ```{eval-rst}
 .. automodule:: scenet.safe_json
 ```
-
-## `scenet.limits`
-
-```{eval-rst}
-.. automodule:: scenet.limits
-```

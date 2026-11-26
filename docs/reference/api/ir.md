@@ -56,7 +56,7 @@ Files a document names, found beside the document -- never by an absolute path.
 
 ## `scenet.limits`
 
-How much of a file is read: the bounds on what a document can make Scenet read.
+The language's limits: every size, count and length, and how much of a file is read.
 
 ```{eval-rst}
 .. automodule:: scenet.limits
