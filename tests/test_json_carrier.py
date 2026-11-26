@@ -541,10 +541,10 @@ class TestFilesADocumentNames:
             ('["a"]', "it must be a mapping of size, figures and keep_out"),
             (
                 '{"size": [1, 1], "colour": 1}',
-                "colour: not a key an artwork contract has: size, figures and keep_out at the "
+                "line 1: not a key an artwork contract has: size, figures and keep_out at the "
                 "top, and face, mouth and body for a figure",
             ),
-            ("size: [1, 1]" + chr(10), "line 1: it is not valid JSON: expected a value"),
+            ("size: [1, 1]" + chr(10), "line 1: it is not valid JSON"),
         ],
         ids=["no-mapping", "unknown-key", "yaml-in-a-json-file"],
     )
