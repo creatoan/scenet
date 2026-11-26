@@ -344,21 +344,13 @@ def test_the_status_is_the_classifiers(path: Path):
 # ---------------------------------------------------------------- security
 
 
-def _minor() -> str:
-    major, minor, _ = _pyproject()["project"]["version"].split(".")
-    return f"{major}.{minor}"
-
-
-def test_security_names_the_release_that_gets_fixes():
-    """`Only main receives fixes` was untrue from 0.11.1, a security release."""
-    supported = re.findall(r"^\| ([^|]+?) \| Yes\b", _read(SECURITY), re.MULTILINE)
-    assert supported == [f"{_minor()}.x"], (
-        f"SECURITY.md supports {supported}; at a release, set it to {_minor()}.x"
-    )
-
-
-def test_releasing_says_to_move_the_supported_release():
-    assert "SECURITY.md" in _read(RELEASING)
+def test_security_supports_no_version_and_promises_no_fix():
+    """The owner commits to nothing about security, so no release is named as supported."""
+    text = _read(SECURITY)
+    assert not re.search(r"^\|.*\| Yes\b", text, re.MULTILINE)
+    said = " ".join(text.split())
+    assert "No version is supported" in said
+    assert "no security fix is promised" in said
 
 
 @pytest.mark.parametrize(

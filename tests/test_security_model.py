@@ -209,5 +209,5 @@ class TestTheSecurityPolicy:
         assert "makes no commitment about security" in self.TEXT
         assert not re.search(r"within \d+ (?:business )?days", self.TEXT, re.IGNORECASE)
 
-    def test_it_names_a_supported_version(self):
-        assert re.search(r"^\| \d+\.\d+\.x \| Yes \|$", self.TEXT, re.MULTILINE)
+    def test_it_names_no_supported_version(self):
+        assert not re.search(r"^\|.*\| Yes \|$", self.TEXT, re.MULTILINE)

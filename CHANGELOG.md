@@ -20,7 +20,8 @@ it is written, and says what to write instead.
   who the attacker is on the command line, through the API, over MCP and in a shared playground
   link, what Scenet guarantees, each guarantee beside the test that holds it, and what the host
   must add. `SECURITY.md` links it, and says that Scenet makes no commitment about
-  security: no time to answer a report in, and no fix.
+  security: no time to answer a report in, no fix, and no supported version, so its table of
+  supported versions is gone, and so is the release step that kept it current.
 
 - **Fuzzing** (#378): one oracle, `tests/fuzzing.py`, says that for any bytes every entry
   point -- a panel or scene, a comic script, a puppet file, an artwork contract, a Panel Core,

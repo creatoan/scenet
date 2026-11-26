@@ -38,11 +38,6 @@ Set it too in [Build and check a comic in CI](../howto/build_in_ci.md), as the
 `scenet==` pin its workflow installs and the release it was last checked with: a test fails
 until both name the version in `pyproject.toml`.
 
-For a new minor version, set the supported row in
-[`SECURITY.md`](https://github.com/creatoan/scenet/blob/main/SECURITY.md) to it: `0.13.x` for
-0.13.0. Fixes go to the latest minor release, and a test fails until the policy names the
-one `pyproject.toml` does.
-
 Then write the changelog section. `CHANGELOG.md` follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); rename the `## [Unreleased]`
 heading to `## [0.2.0] - 2026-08-23` and start a fresh `Unreleased` above it.

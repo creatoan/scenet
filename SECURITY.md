@@ -4,15 +4,10 @@ What Scenet guarantees with input from someone you do not trust, and what you mu
 the [security model](https://creatoan.github.io/scenet/explanation/security_model.html): each
 guarantee there names the test that holds it.
 
-## Supported versions
+## Status
 
-This project is alpha, as its package says. A security fix goes into a patch release of the
-latest minor version: 0.11.1 was a security release of 0.11. `main` gets every fix first.
-
-| Version | Supported |
-|---|---|
-| 0.13.x | Yes |
-| Older | No: upgrade to the latest release |
+This project is alpha, as its package says, and is provided as is, with no warranty. No
+version is supported: none is maintained, and no security fix is promised for any of them.
 
 ## Reporting a vulnerability
 
@@ -22,8 +17,8 @@ on this repository, rather than opening a public issue. A document, a file or a 
 shows the fault is the most useful thing a report can hold.
 
 Scenet makes no commitment about security: not to answer a report, by any date or at all,
-and not to fix what one shows. A report is read when its maintainers can, and what comes of it
-is up to them.
+not to fix what one shows, and not to publish a release that does. A report is read when its
+maintainers can, and what comes of it is up to them.
 
 ## Scope
 
