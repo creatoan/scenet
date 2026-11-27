@@ -100,7 +100,7 @@ print(restored == core)
 ```
 
 ```text
-['$schema', 'actors', 'backdrop', 'balloons', 'camera', 'captions', 'description', 'format', 'format_version', 'height', 'units', 'width']
+['$schema', 'actors', 'balloons', 'camera', 'description', 'format', 'format_version', 'height', 'units', 'width']
 2.0 ['I know.']
 True
 ```
