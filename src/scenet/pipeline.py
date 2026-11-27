@@ -1467,7 +1467,7 @@ def compile_scene(
         >>> list(panels)
         ['wide', 'close']
         >>> panels["close"].core.camera.shot
-        <ShotType.CLOSE_UP: 'close_up'>
+        'close_up'
 
     See Also:
         :func:`compile_book <scenet.pipeline.compile_book>`, for the panels and their pages.

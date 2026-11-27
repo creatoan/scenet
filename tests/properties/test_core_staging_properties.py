@@ -23,7 +23,7 @@ BACKDROP_KEYS = ("place", "time")
 def _without_staging(core: PanelCore) -> str:
     payload: Any = json.loads(core.to_json())
     payload.pop("camera", None)
-    for actor in payload["actors"]:
+    for actor in payload.get("actors", []):
         for key in ACTOR_KEYS:
             actor.pop(key, None)
     if payload.get("backdrop") is not None:

@@ -89,7 +89,7 @@ def build_face(
         >>> core = compile_source(
         ...     "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: angry}}}"
         ... ).core
-        >>> any(mark.id == "mouth" for mark in core.actor("a").face_marks)
+        >>> any(mark.id == "mouth" for mark in core.actor("a").mannequin.face_marks)
         True
     """
     if puppet.face.r < MIN_FEATURE_RADIUS or not puppet.features:

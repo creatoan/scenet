@@ -240,7 +240,7 @@ print([puppet.name for puppet in list_puppets().puppets])
 
 ```text
 False [('scenet/unknown-actor', 2, 21)]
-['panel'] ['actors', 'backdrop', 'balloons', 'camera']
+['panel'] ['$schema', 'actors', 'camera', 'description']
 ['alice', 'bob']
 ```
 

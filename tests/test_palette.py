@@ -100,7 +100,7 @@ def without_colour(panel: PanelCore) -> str:
     air.pop("colour", None)
     air.pop("fall_colour", None)
     (air.get("veil") or {}).pop("colour", None)
-    for caption in payload["captions"]:
+    for caption in payload.get("captions", []):
         caption.pop("colour", None)
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 

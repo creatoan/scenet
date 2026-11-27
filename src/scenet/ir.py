@@ -428,7 +428,7 @@ class CameraAngle(StrEnum):
     Example:
         >>> from scenet import CameraAngle, compile_source
         >>> core = compile_source("camera: {angle: low}\ncast: {a: {reference: alice}}").core
-        >>> core.camera.angle is CameraAngle.LOW
+        >>> core.camera.angle == CameraAngle.LOW
         True
 
     See Also:

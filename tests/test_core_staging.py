@@ -148,7 +148,7 @@ class TestCamera:
                 f"{{camera: {{angle: {angle.value}}}, cast: {{a: {{reference: alice}}}}}}"
             ).core
             assert core.camera is not None
-            assert core.camera.angle is angle
+            assert core.camera.angle == angle
 
     def test_a_camera_that_retreated_says_how_far(self):
         result = compile_source(
@@ -157,7 +157,7 @@ class TestCamera:
         )
         assert result.core.camera is not None
         assert result.core.camera.pullback < 1.0
-        assert result.core.camera.shot is ShotType.CLOSE_UP
+        assert result.core.camera.shot == ShotType.CLOSE_UP
 
     def test_there_is_none_for_a_cast_a_picture_draws(self):
         result = _figures()
@@ -185,8 +185,8 @@ class TestTheBackdrop:
             "{cast: {a: {reference: alice}}, setting: {place: street, time: night}}"
         ).core.backdrop
         assert backdrop is not None
-        assert backdrop.place is Place.STREET
-        assert backdrop.time is TimeOfDay.NIGHT
+        assert backdrop.place == Place.STREET
+        assert backdrop.time == TimeOfDay.NIGHT
 
     def test_masses_written_out_as_a_place_are_that_place(self):
         """The same matcher the description names the place by: one answer, not two."""
@@ -195,7 +195,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert written is not None
         assert place_of(()) is None
-        assert written.place is Place.DOCKS
+        assert written.place == Place.DOCKS
 
     def test_masses_of_no_place_have_none(self):
         backdrop = compile_source(
@@ -203,7 +203,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert backdrop is not None
         assert backdrop.place is None
-        assert backdrop.time is TimeOfDay.DAY
+        assert backdrop.time == TimeOfDay.DAY
         assert (
             "place"
             not in json.loads(
@@ -220,7 +220,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert backdrop is not None
         assert backdrop.atmosphere is None
-        assert backdrop.time is TimeOfDay.DUSK
+        assert backdrop.time == TimeOfDay.DUSK
 
     def test_nothing_is_said_of_a_picture_s_place_or_hour(self):
         """They are in the picture, which the compiler has never seen."""

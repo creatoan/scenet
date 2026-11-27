@@ -52,7 +52,7 @@ from pathlib import Path
 from scenet import compile_file
 
 core = compile_file(Path("talk.panel.yaml")).core
-print(core.width, core.height, core.camera.shot.value, "scale", core.camera.scale)
+print(core.width, core.height, core.camera.shot, "scale", core.camera.scale)
 
 alice = core.actor("alice")
 print(alice.reference, alice.pose, "at", alice.transform.x, "depth", alice.depth)

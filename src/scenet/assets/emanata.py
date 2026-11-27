@@ -119,7 +119,7 @@ def build_emanata(puppet: ResolvedPuppet, marks: tuple[Mark, ...]) -> ResolvedEm
         >>> core = compile_source(
         ...     "{camera: {shot: medium_shot}, cast: {a: {reference: alice, marks: [plewds]}}}"
         ... ).core
-        >>> core.actor("a").emanata[0].id
+        >>> core.actor("a").mannequin.emanata[0].id
         'plewd_0'
     """
     radius = puppet.face.r

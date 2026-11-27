@@ -374,8 +374,8 @@ class TestToneSurvivesTheCoreFormat:
         core = compile_panel('  - caption: {text: "Midnight."}\n')
         payload = json.loads(core.to_json())
         for caption in payload["captions"]:
-            del caption["fill"]
-            del caption["ink"]
+            caption.pop("fill", None)
+            caption.pop("ink", None)
         restored = PanelCore.from_json(json.dumps(payload))
         assert restored.captions[0].fill == "#ffffff"
         assert restored.captions[0].ink == "#111111"

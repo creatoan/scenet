@@ -61,7 +61,7 @@ or [the Python API](../reference/api/index.md) describes in full.
 | An SVG for each panel | `scenet build` | 0.1 |
 | A strip of a document's panels | `scenet build --strip` | 0.1 |
 | Panel Core, the resolved layout, as JSON | `scenet build --core` | 0.1 |
-| A versioned Panel Core format, with a JSON Schema, that older readers read forwards | `scenet schema --core` | 0.14 |
+| A versioned Panel Core format, with a JSON Schema, that older readers read forwards | `scenet schema --core` | 0.14, not yet released |
 | The debug overlay | `scenet build --debug` | 0.1 |
 | Lettering as live text | `scenet build --live-text` | 0.1 |
 | Output a screen reader reads, with a description of each panel | `description`, `scenet build --no-aria` | 0.12 |

@@ -143,8 +143,8 @@ class CoreModel(BaseModel):
     #: header, and the tag that says which of several shapes an object is.
     always: ClassVar[frozenset[str]] = frozenset()
 
-    extras: dict[str, JsonValue] = Field(default_factory=dict)
-    extensions: dict[ExtensionName, JsonValue] = Field(default_factory=dict)
+    extras: dict[str, JsonValue] = Field(default_factory=dict, repr=False)
+    extensions: dict[ExtensionName, JsonValue] = Field(default_factory=dict, repr=False)
 
     @model_validator(mode="before")
     @classmethod
@@ -1085,6 +1085,12 @@ class PanelCore(CoreDocument):
         format: Always `scenet.panel`.
         format_version: The version of the format, `major.minor`.
         units: Always `0.1mm`: a unit is a tenth of a millimetre.
+        extensions_required: The extensions a reader must implement to draw this document as
+            it was meant, by reverse-DNS name. A reader that does not refuses it. Left out
+            when empty.
+        extras: Anything a tool wants to keep on the document, never interpreted. Left out
+            when empty.
+        extensions: Data for a renderer, under its reverse-DNS name. Left out when empty.
         width: Panel width in panel units.
         height: Panel height in panel units.
         actors: Resolved characters, back to front by `depth`, and at one depth left to
@@ -1487,6 +1493,12 @@ class PageCore(CoreDocument):
         format: Always `scenet.page`.
         format_version: The version of the format, `major.minor`.
         units: Always `0.1mm`.
+        extensions_required: The extensions a reader must implement to draw this document as
+            it was meant, by reverse-DNS name. A reader that does not refuses it. Left out
+            when empty.
+        extras: Anything a tool wants to keep on the document, never interpreted. Left out
+            when empty.
+        extensions: Data for a renderer, under its reverse-DNS name. Left out when empty.
         width: Page width, in page units.
         height: Page height.
         lettering_height: The height every panel on the page took its type size from, in
