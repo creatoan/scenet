@@ -605,7 +605,7 @@ close an import cycle.
 *Since 0.1.*
 
 ```
-scenet schema [-o OUTPUT] [--scene | --artwork | --puppet] [--strict]
+scenet schema [-o OUTPUT] [--scene | --artwork | --puppet | --core | --page-core] [--strict]
 ```
 
 Emits the JSON Schema for a panel document, derived from the same pydantic models the
@@ -638,11 +638,22 @@ the editor suggests cannot drift from what compiles — see
   names declared — `scenet check` does, in the puppet file, on a document that casts it.
   *Since 0.13.*
 
+`--core`
+: Emit the schema for a [Panel Core](panel_core.md), the `*.core.json` a build writes with
+  `--core`. It is the models' own schema, so it says what reading a Core back accepts, and
+  every Core the gallery compiles to validates against it.
+  *Since 0.14.*
+
+`--page-core`
+: Emit the schema for a Page Core, the `*.core.json` a page writes: where every panel's frame
+  is.
+  *Since 0.14.*
+
 `--strict`
 : Emit the strict schema, for a structured-output mode to decode against: `cast` and `panels` as
   lists, every key present and `null` where nothing is meant, mapping forms only, a scene's panels
   each written whole, and only the JSON Schema keywords OpenAI, Anthropic and Gemini all take. For
-  a panel or, with `--scene`, a scene; not with `--artwork` or `--puppet`. See
+  a panel or, with `--scene`, a scene; not with `--artwork`, `--puppet`, `--core` or `--page-core`. See
   [drive Scenet from a model](../howto/drive_from_a_model.md#an-api-with-structured-output).
   *Since 0.14.*
 
@@ -651,6 +662,8 @@ scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
 scenet schema --artwork -o artwork.schema.json
 scenet schema --puppet -o puppet.schema.json
+scenet schema --core -o core.schema.json
+scenet schema --page-core -o page-core.schema.json
 scenet schema --strict --scene -o scene.strict.json
 ```
 

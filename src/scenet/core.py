@@ -59,7 +59,7 @@ CORE_FORMAT_VERSION = 1
 #: What every colour a Core holds is: `#rrggbb`, the one form the emitter writes into a
 #: `fill`, a `stroke` or a `stop-color`. A Core is hand-edited and read back, so a value that
 #: is anything else is refused where it is, instead of being drawn: authored YAML cannot put
-#: a quotation mark in a colour, and a document read back must not be able to either (#365).
+#: a quotation mark in a colour, and a document read back must not be able to either.
 HEX_COLOUR = r"^#[0-9a-fA-F]{6}$"
 
 #: A colour, `#rrggbb`.
