@@ -364,6 +364,9 @@ def _legacy_kerning(font: TTFont) -> list[tuple[_PairTable, ...]]:
 FAMILY_NAME = 1
 STYLE_NAME = 2
 
+#: How much of a font's digest names it when its `name` table gives no family.
+ANONYMOUS_FAMILY_DIGITS = 12
+
 
 def _name(font: TTFont, name_id: int) -> str:
     """A `name` table entry, cut to what may be written into an SVG, or empty."""
@@ -390,7 +393,10 @@ class FontMetrics:
         path: The file it was read from, or the path a document wrote for bytes it was
             handed. Used to open it and nothing else: no path reaches any output.
         sha256: The digest of the file's bytes, which is what Panel Core names a face by.
-        family: The family name from the font's `name` table.
+        family: The family name from the font's `name` table. A font with none is called by
+            the first twelve characters of its digest, never by its file's name: a font is
+            its bytes, and the same bytes must be named alike whichever document, path or
+            earlier compile in the process they were read through.
         style: The style within the family: `Regular`, `Italic`, `Bold Italic`.
 
     Pairs come from the GPOS `kern` feature, or from a legacy `kern` table in a font that
@@ -420,8 +426,8 @@ class FontMetrics:
                 ordinary dependency of this package -- never a system font lookup,
                 because determinism requires the same metrics everywhere.
             data: The file's bytes, already read -- from beside a document, or sent with
-                one. `path` is then only the name it goes by: a family name falls back
-                to its stem, so one font names itself the same from a file or from memory.
+                one. `path` is then only the name it goes by, for a finding about the file: it
+                never names the font.
 
         Raises:
             FileReadError: The file cannot be read: a
@@ -454,7 +460,7 @@ class FontMetrics:
         self._kerning: list[tuple[_PairTable, ...]] | None = None
         self._pdf_paths: dict[str, str] = {}
         self._kerned: dict[tuple[str, str], int] = {}
-        self.family = _name(self._font, FAMILY_NAME) or Path(path).stem
+        self.family = _name(self._font, FAMILY_NAME) or self.sha256[:ANONYMOUS_FAMILY_DIGITS]
         self.style = _name(self._font, STYLE_NAME) or "Regular"
 
     def _open(self, data: bytes) -> None:
