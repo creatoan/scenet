@@ -339,9 +339,9 @@ class TestAPairWithACharacterTheFontLacks:
 
 
 class TestNames:
-    def test_a_font_with_no_name_table_is_named_by_its_file(self, tmp_path: Path):
+    def test_a_font_with_no_name_table_is_named_by_its_digest_never_its_file(self, tmp_path: Path):
         metrics = FontMetrics(_font(tmp_path / "plain.ttf"))
-        assert (metrics.family, metrics.style) == ("plain", "Regular")
+        assert (metrics.family, metrics.style) == (metrics.sha256[:12], "Regular")
 
     def test_a_name_table_without_a_style_is_regular(self, tmp_path: Path):
         path = _font(tmp_path / "named.ttf")

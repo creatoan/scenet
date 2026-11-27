@@ -2840,7 +2840,7 @@ every face, `font: fonts/Comic-Regular.ttf`, or a mapping with a file for each.
   mixing your face with the shipped one.
 
 Panel Core records each face by its family, style and a digest of its bytes, never by where the
-file was; see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html). Rendering needs the same files, and refuses a panel
+file was (a font with no family of its own is called by the first twelve characters of its digest); see [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html). Rendering needs the same files, and refuses a panel
 whose fonts it was not given rather than draw its lettering in a face it was not measured in.
 `scenet build` and the playground hand them over for you. `--live-text` names your font's family.
 
