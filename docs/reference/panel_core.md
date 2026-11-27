@@ -505,11 +505,11 @@ Panel Core types](api/public/core-types.md) page.
 
 | Key | Type | What it holds |
 |---|---|---|
-| `extras` | `dict[str, JsonValue]` |  |
-| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` |  |
+| `extras` | `dict[str, JsonValue]` | Anything a tool wants to keep on the document, never interpreted. Left out when empty. |
+| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` | Data for a renderer, under its reverse-DNS name. Left out when empty. |
 | `format_version` | `str` | The version of the format, `major.minor`. |
 | `units` | `Literal['0.1mm']` | Always `0.1mm`: a unit is a tenth of a millimetre. |
-| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` |  |
+| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` | The extensions a reader must implement to draw this document as it was meant, by reverse-DNS name. A reader that does not refuses it. Left out when empty. |
 | `schema_url` | `str` | `$schema` in the file: the versioned address of the schema it is written to. |
 | `format` | `Literal['panel']` | Always `scenet.panel`. |
 | `width` | `float` | Panel width in panel units. |
@@ -534,11 +534,11 @@ Panel Core types](api/public/core-types.md) page.
 
 | Key | Type | What it holds |
 |---|---|---|
-| `extras` | `dict[str, JsonValue]` |  |
-| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` |  |
+| `extras` | `dict[str, JsonValue]` | Anything a tool wants to keep on the document, never interpreted. Left out when empty. |
+| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` | Data for a renderer, under its reverse-DNS name. Left out when empty. |
 | `format_version` | `str` | The version of the format, `major.minor`. |
 | `units` | `Literal['0.1mm']` | Always `0.1mm`. |
-| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` |  |
+| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` | The extensions a reader must implement to draw this document as it was meant, by reverse-DNS name. A reader that does not refuses it. Left out when empty. |
 | `schema_url` | `str` | `$schema` in the file: the versioned address of the schema it is written to. |
 | `format` | `Literal['page']` | Always `scenet.page`. |
 | `width` | `float` | Page width, in page units. |
