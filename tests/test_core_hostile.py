@@ -17,6 +17,7 @@ import pytest
 
 from scenet.core import PanelCore
 from scenet.errors import CoreSyntaxError
+from tests.under_mutmut import reads_the_source
 
 ROOT = Path(__file__).resolve().parents[1]
 GOLDEN = ROOT / "tests" / "golden" / "core"
@@ -142,6 +143,7 @@ class TestEveryAttributeIsEscaped:
         for sample in ("fmt(x)", "STROKE", "_points(a)", "OPENPOSE_COLOURS[1]"):
             assert self.COMPUTED.match(sample), sample
 
+    @reads_the_source
     def test_a_name_is_quoted_by_the_helper(self):
         offenders: list[str] = []
         for path in sorted((ROOT / "src" / "scenet" / "emit").glob("*.py")):
