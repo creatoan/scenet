@@ -409,7 +409,7 @@ def _render_mass(mass: CoreMass, id_prefix: str) -> str:
     """
     return (
         f"    <polygon id={attr(id_prefix + 'mass-' + mass.id)} "
-        f'points="{_points(list(mass.polygon))}" fill="{mass.colour or mass.tone}" '
+        f'points="{_points(list(mass.polygon))}" fill={attr(mass.colour or mass.tone)} '
         'stroke="none"/>'
     )
 
@@ -470,7 +470,8 @@ def _render_veil(core: PanelCore, atmosphere: CoreAtmosphere, id_prefix: str) ->
         return ""
     return (
         f'  <rect x="0" y="0" width="{fmt(core.width)}" height="{fmt(core.height)}" '
-        f'fill="{veil.colour or veil.tone}" filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
+        f"fill={attr(veil.colour or veil.tone)} "
+        f'filter="url(#{_filter_id(atmosphere, id_prefix)})"/>'
     )
 
 
@@ -481,7 +482,7 @@ def _render_falling(atmosphere: CoreAtmosphere, id_prefix: str) -> str:
     fall = atmosphere.fall_colour or atmosphere.fall_tone
     marks = [
         f"  <g id={attr(id_prefix + 'weather')} "
-        f'fill="{fall}" stroke="{fall}" '
+        f"fill={attr(fall)} stroke={attr(fall)} "
         f'fill-opacity="{fmt(WEATHER_OPACITY)}" stroke-opacity="{fmt(WEATHER_OPACITY)}">'
     ]
     for streak in atmosphere.streaks:
@@ -584,7 +585,7 @@ def _render_mark(prefix: str, mark: FaceMark) -> str:
         stroke = "none" if mark.filled else STROKE
         return (
             f'      <circle id={attr(element_id)} cx="{fmt(cx)}" cy="{fmt(cy)}" '
-            f'r="{fmt(mark.radius)}" fill="{fill}" stroke="{stroke}" '
+            f'r="{fmt(mark.radius)}" fill={attr(fill)} stroke={attr(stroke)} '
             f'stroke-width="{fmt(mark.width)}"/>'
         )
     element = "polygon" if mark.closed else "polyline"
@@ -651,7 +652,7 @@ def _render_sfx(effect: CoreSfx, metrics: FontMetrics, id_prefix: str) -> str:
         x, y = glyph.origin
         turn = f" rotate({fmt(glyph.angle)})" if glyph.angle else ""
         lines.append(
-            f'      <path d="{path}" fill="{effect.fill}" stroke="{effect.stroke}" '
+            f'      <path d="{path}" fill={attr(effect.fill)} stroke={attr(effect.stroke)} '
             f'stroke-width="{stroke}" stroke-linejoin="round" paint-order="stroke" '
             f'transform="translate({fmt(x)} {fmt(y)}){turn} '
             f'scale({fmt(scale, GLYPH_SCALE_PLACES)} {fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
@@ -710,7 +711,7 @@ def _render_caption(
     lines = [f"    <g id={attr(id_prefix + 'caption-' + caption.id)}>"]
     lines.append(
         f'      <rect x="{fmt(box.x)}" y="{fmt(box.y)}" width="{fmt(box.width)}" '
-        f'height="{fmt(box.height)}" fill="{caption.colour or caption.fill}" stroke="{STROKE}" '
+        f'height="{fmt(box.height)}" fill={attr(caption.colour or caption.fill)} stroke="{STROKE}" '
         f'stroke-width="{fmt(CAPTION_STROKE_WIDTH)}"/>'
     )
 
@@ -821,7 +822,7 @@ def _outlined_text(
         for (path, _), origin in zip(outlines, placed.origins, strict=True):
             if path:
                 glyphs.append(
-                    f'      <path d="{path}" fill="{ink}" stroke="none" '
+                    f'      <path d="{path}" fill={attr(ink)} stroke="none" '
                     f'transform="translate({fmt(origin)} {fmt(baseline)}) '
                     f"scale({fmt(scale, GLYPH_SCALE_PLACES)} "
                     f'{fmt(-scale, GLYPH_SCALE_PLACES)})"/>'
@@ -859,7 +860,7 @@ def _live_text(
     )
     return (
         f'      <text x="{fmt(x)}" y="{fmt(baseline)}" font-size="{fmt(font_size)}" '
-        f'font-family={attr(named + ", sans-serif")}{style} fill="{ink}" '
+        f"font-family={attr(named + ', sans-serif')}{style} fill={attr(ink)} "
         f'stroke="none">{content}</text>'
     )
 

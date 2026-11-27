@@ -16,6 +16,12 @@ it is written, and says what to write instead.
 
 ### Added
 
+- **A schema for a Panel Core and a Page Core** (#365): `scenet schema --core` and
+  `scenet schema --page-core` write them, `core.schema.json` and `page-core.schema.json` ship
+  with the editor and are published on the site beside the others, and every Core the gallery
+  compiles to validates against them. Each published schema now names the address it is served
+  at as its `$id`, `/dev/` or `/vX.Y/`, so a tool that resolves one reaches the file it read.
+
 - **A security model page** (#381), "Security model" under About: what is worth protecting,
   who the attacker is on the command line, through the API, over MCP and in a shared playground
   link, what Scenet guarantees, each guarantee beside the test that holds it, and what the host
@@ -246,6 +252,11 @@ it is written, and says what to write instead.
   profile is; it was the key's first character.
 
 ### Fixed
+
+- **A hand-edited Core can no longer put markup in an attribute** (#365). Reading a Core back
+  refuses a colour that is not `#rrggbb` (`none` for a sound effect's fill and stroke) and an
+  id that is not an identifier, naming where, and the SVG emitter writes every attribute it
+  did not compute through its one escaping helper. The SVG a compile writes does not change.
 
 - **A damaged font is a `font-file` finding** (#378), found by fuzzing: a file that opened but
   failed inside fontTools when its kerning or a glyph was first read was an internal error half

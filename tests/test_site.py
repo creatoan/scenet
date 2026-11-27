@@ -354,6 +354,37 @@ class TestPublishedSchemas:
         assert sorted(build_site.PUBLISHED_SCHEMAS) == shipped
 
 
+class TestSchemaIds:
+    """Each published schema names the address it is served at, so a tool that resolves a
+    `$ref` or a `$schema` to it reaches the file it was read from (#365)."""
+
+    def test_a_release_names_its_own_minor_version(self, tmp_path: Path):
+        build_site = _load("build_site")
+        schemas = tmp_path / "schemas"
+        build_site.publish_schemas(tmp_path, "https://creatoan.github.io/scenet/v0.14")
+        for name in build_site.PUBLISHED_SCHEMAS:
+            document = json.loads((schemas / name).read_text(encoding="utf-8"))
+            assert document["$id"] == f"https://creatoan.github.io/scenet/v0.14/schemas/{name}"
+
+    def test_the_copy_is_the_shipped_schema_and_its_address(self, tmp_path: Path):
+        build_site = _load("build_site")
+        build_site.publish_schemas(tmp_path, "https://creatoan.github.io/scenet/dev")
+        for name in build_site.PUBLISHED_SCHEMAS:
+            shipped = json.loads((ROOT / "editor" / "schemas" / name).read_text(encoding="utf-8"))
+            copied = json.loads((tmp_path / "schemas" / name).read_text(encoding="utf-8"))
+            assert {key: value for key, value in copied.items() if key != "$id"} == shipped
+
+    def test_the_stamp_is_deterministic(self, tmp_path: Path):
+        build_site = _load("build_site")
+        build_site.publish_schemas(tmp_path / "a", "https://creatoan.github.io/scenet/dev")
+        build_site.publish_schemas(tmp_path / "b", "https://creatoan.github.io/scenet/dev")
+        assert _contents(tmp_path / "a") == _contents(tmp_path / "b")
+
+    def test_the_core_schemas_are_published(self):
+        build_site = _load("build_site")
+        assert {"core.schema.json", "page-core.schema.json"} <= set(build_site.PUBLISHED_SCHEMAS)
+
+
 class TestPublishedPictures:
     """The spec pack is the language reference with every relative link made absolute, so
     it names each picture by its path under `docs/`, on the site. Sphinx copies a page's

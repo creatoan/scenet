@@ -112,6 +112,8 @@ scenet schema -o panel.schema.json
 scenet schema --scene -o scene.schema.json
 scenet schema --artwork -o artwork.schema.json
 scenet schema --puppet -o puppet.schema.json
+scenet schema --core -o core.schema.json
+scenet schema --page-core -o page-core.schema.json
 ```
 
 Each goes to stdout without `-o`. This is the same command CI runs, and the same one that

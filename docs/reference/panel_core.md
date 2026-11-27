@@ -32,6 +32,27 @@ going straight to pixels. The same split pays for itself here, in four ways:
 - **Deterministic.** Floats are rounded to a fixed precision on emission, so identical input yields
   byte-identical Core output on any platform.
 
+## Validating a Core
+
+A Core is read back as hand-edited text, so it has a [JSON Schema](https://json-schema.org/)
+like the documents people write. `scenet schema --core` writes the Panel Core's and
+`scenet schema --page-core` the Page Core's; the site publishes both beside the others, as
+`core.schema.json` and `page-core.schema.json`, each naming its own address as its `$id`. They
+are generated from the models that read a Core back, so the two cannot disagree, and every
+Core the gallery compiles to is checked against them.
+
+Every string that reaches the SVG is checked when a Core is read, and a Core that fails is
+refused where it is, with the key's path:
+
+- a **colour** (`tone`, `colour`, `fill`, `stroke`, `ink`, `fall_tone`, `fall_colour`) is
+  `#rrggbb`; a sound effect's `fill` and `stroke` may also be `none`, and a colour the palette
+  did not add is `""`;
+- an **id** (an actor's, a balloon's, a caption's, a sound effect's, a mass's, a drawn mark's)
+  is an [identifier](language/identifiers.md).
+
+The emitter writes every attribute it did not compute from numbers through one escaping
+helper, so a value that is not a colour could not leave its attribute even if it were let in.
+
 ## Shape
 
 ```json

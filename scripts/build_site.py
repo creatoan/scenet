@@ -36,6 +36,7 @@ Downloading the releases uses the `gh` command line, signed in or given `GH_TOKE
 """
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -63,6 +64,8 @@ PUBLISHED_SCHEMAS = (
     "scene.schema.json",
     "artwork.schema.json",
     "puppet.schema.json",
+    "core.schema.json",
+    "page-core.schema.json",
 )
 #: The pictures the documentation shows. Sphinx copies a page's pictures into `_images/` and
 #: links them from there, which is all the pages need. The spec pack is the language
@@ -167,10 +170,7 @@ def compose(out: Path, *, dev: bool) -> None:
     shutil.copytree(DOCS_BUILD, out, ignore=shutil.ignore_patterns(".doctrees"))
     shutil.copytree(PLAYGROUND / "dist", out / "playground")
 
-    schemas = out / "schemas"
-    schemas.mkdir(parents=True, exist_ok=True)
-    for name in PUBLISHED_SCHEMAS:
-        shutil.copyfile(SCHEMAS / name, schemas / name)
+    publish_schemas(out, served_at(dev=dev))
     publish_pictures(out)
 
     # Generated fresh from the sources rather than copied from the committed spec pack,
@@ -181,6 +181,27 @@ def compose(out: Path, *, dev: bool) -> None:
     # needs it at the root or every directory beginning with an underscore is dropped.
     (out / ".nojekyll").touch()
     _report(out)
+
+
+def publish_schemas(out: Path, address: str) -> None:
+    """Write the JSON Schemas to `out/schemas/`, each naming where it is served as its `$id`.
+
+    A schema that does not say where it is cannot be found again by a tool that resolves a
+    `$ref` or a `$schema` to it. The address is the version's own, `/dev/` or `/vX.Y/`, so
+    a copy read from a version names that version's, whichever of its addresses it was
+    served at. The shipped files carry no `$id`: it is a fact about a release.
+
+    Args:
+        out: One version's site.
+        address: Where that version is served, without a trailing slash.
+    """
+    schemas = out / "schemas"
+    schemas.mkdir(parents=True, exist_ok=True)
+    for name in PUBLISHED_SCHEMAS:
+        document = json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
+        document["$id"] = f"{address}/schemas/{name}"
+        text = json.dumps(document, indent=2, sort_keys=True) + "\n"
+        (schemas / name).write_bytes(text.encode())
 
 
 def publish_pictures(out: Path) -> None:

@@ -45,6 +45,7 @@ from scenet.assets.contract import (
     default_library,
 )
 from scenet.compose import DIRECTION_KEY, ID_KEY, NOT_DEFAULTS, REMOVE_KEY
+from scenet.core import PageCore, PanelCore
 from scenet.identifiers import EXTENSION_PREFIX, GRAMMAR
 from scenet.ir import (
     IDENTIFIER_PATTERN,
@@ -58,7 +59,14 @@ from scenet.limits import LIMITS
 from scenet.namespace import DOCUMENT_KEYS, KIND_KEY, AssetHead, DocumentHead, Kind
 from scenet.places import Place
 
-__all__ = ["artwork_schema", "panel_schema", "puppet_schema", "scene_schema"]
+__all__ = [
+    "artwork_schema",
+    "core_schema",
+    "page_core_schema",
+    "panel_schema",
+    "puppet_schema",
+    "scene_schema",
+]
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -164,6 +172,49 @@ def panel_schema() -> dict[str, Any]:
     _for_authors(schema)
     schema["$schema"] = DIALECT
     schema["title"] = "Scenet panel"
+    return schema
+
+
+def core_schema() -> dict[str, Any]:
+    """The schema for a Panel Core, the `*.core.json` a compile writes.
+
+    A Core is read back as the models say, so this is the models' own schema, with the
+    identifier's pattern -- some twelve thousand characters -- written once. What a schema
+    cannot say, a balloon's runs spelling its lines, reading a Core back checks.
+
+    Returns:
+        A JSON Schema (draft 2020-12) for a Panel Core.
+
+    Example:
+        >>> from scenet.schema import core_schema
+        >>> core_schema()["title"]
+        'Scenet Panel Core'
+    """
+    return _core_schema(PanelCore, "Scenet Panel Core")
+
+
+def page_core_schema() -> dict[str, Any]:
+    """The schema for a Page Core: where every panel's frame is on a page.
+
+    Returns:
+        A JSON Schema (draft 2020-12) for a Page Core.
+
+    Example:
+        >>> from scenet.schema import page_core_schema
+        >>> page_core_schema()["title"]
+        'Scenet Page Core'
+    """
+    return _core_schema(PageCore, "Scenet Page Core")
+
+
+def _core_schema(model: type[PanelCore] | type[PageCore], title: str) -> dict[str, Any]:
+    """A Core model's schema, the way every published one is made."""
+    schema = model.model_json_schema()
+    _one_identifier(schema, schema.setdefault("$defs", {}))
+    _summaries(schema)
+    _for_authors(schema)
+    schema["$schema"] = DIALECT
+    schema["title"] = title
     return schema
 
 

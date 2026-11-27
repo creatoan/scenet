@@ -36,6 +36,8 @@ from scenet.safe_yaml import carrier, describe, is_json_file, load
 from scenet.safe_yaml import dump as dump_yaml
 from scenet.schema import (
     artwork_schema,
+    core_schema,
+    page_core_schema,
     panel_schema,
     puppet_schema,
     scene_schema,
@@ -278,6 +280,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--puppet",
         action="store_true",
         help="emit the schema for a puppet file, the *.puppet.yaml a cast member names",
+    )
+    which.add_argument(
+        "--core",
+        action="store_true",
+        help="emit the schema for a Panel Core, the *.core.json a build writes",
+    )
+    which.add_argument(
+        "--page-core",
+        action="store_true",
+        help="emit the schema for a Page Core, the *.core.json a page writes",
     )
     schema.add_argument(
         "--strict",
@@ -956,10 +968,21 @@ def run_schema(args: argparse.Namespace) -> int:
     """
     if _refuse_directory(args.output):
         return 2
-    which = next((kind for kind in ("scene", "artwork", "puppet") if getattr(args, kind)), "panel")
-    if args.strict and which in ("artwork", "puppet"):
-        # A model writes documents; a puppet file or a contract is written by an artist.
-        print(f"scenet: --strict is for a panel or a scene, not --{which}", file=sys.stderr)
+    which = next(
+        (
+            kind
+            for kind in ("scene", "artwork", "puppet", "core", "page_core")
+            if getattr(args, kind)
+        ),
+        "panel",
+    )
+    if args.strict and which not in ("panel", "scene"):
+        # A model writes documents; a puppet file or a contract is written by an artist, and
+        # a Core by a compile.
+        print(
+            f"scenet: --strict is for a panel or a scene, not --{which.replace('_', '-')}",
+            file=sys.stderr,
+        )
         return 2
     schema = (
         strict_schema(scene=which == "scene")
@@ -969,6 +992,8 @@ def run_schema(args: argparse.Namespace) -> int:
             "scene": scene_schema,
             "artwork": artwork_schema,
             "puppet": puppet_schema,
+            "core": core_schema,
+            "page_core": page_core_schema,
         }[which]()
     )
     document = json.dumps(schema, indent=2, sort_keys=True) + "\n"

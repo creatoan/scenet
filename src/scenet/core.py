@@ -17,8 +17,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    StringConstraints,
     Tag,
     ValidationError,
+    WithJsonSchema,
     model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
@@ -29,6 +31,7 @@ from scenet.frontends.common import summarise
 from scenet.geom import PRECISION, BBox, Circle, Point, Vector, rounded
 from scenet.images import MediaType
 from scenet.ir import (
+    IDENTIFIER_PATTERN,
     UNTAGGED,
     BalloonKind,
     CameraAngle,
@@ -36,6 +39,7 @@ from scenet.ir import (
     Direction,
     Face,
     Fit,
+    Identifier,
     Mark,
     MassKind,
     Palette,
@@ -51,6 +55,27 @@ from scenet.paths import check_relative
 from scenet.places import Place
 
 CORE_FORMAT_VERSION = 1
+
+#: What every colour a Core holds is: `#rrggbb`, the one form the emitter writes into a
+#: `fill`, a `stroke` or a `stop-color`. A Core is hand-edited and read back, so a value that
+#: is anything else is refused where it is, instead of being drawn: authored YAML cannot put
+#: a quotation mark in a colour, and a document read back must not be able to either (#365).
+HEX_COLOUR = r"^#[0-9a-fA-F]{6}$"
+
+#: A colour, `#rrggbb`.
+Tone = Annotated[str, StringConstraints(pattern=HEX_COLOUR)]
+
+#: A colour, or nothing: `""` is "none was chosen", left out of the JSON where the field is
+#: new, and what a tone without a twin in the palette says.
+OptionalTone = Annotated[str, StringConstraints(pattern=r"^(?:#[0-9a-fA-F]{6})?$")]
+
+#: What a shape is filled or stroked with: a colour, or `none`, which a hollow sound effect
+#: is filled with.
+Paint = Annotated[str, StringConstraints(pattern=r"^(?:#[0-9a-fA-F]{6}|none)$")]
+
+#: What a Core calls a thing it draws: an identifier, as the document it was compiled from
+#: wrote it, because the SVG it is drawn as writes it into an `id`.
+CoreId = Annotated[Identifier, WithJsonSchema({"type": "string", "pattern": IDENTIFIER_PATTERN})]
 
 
 class CoreModel(BaseModel):
@@ -203,7 +228,7 @@ class FaceStroke(CoreModel):
     """
 
     mark: Literal["stroke"] = "stroke"
-    id: str
+    id: CoreId
     points: tuple[tuple[float, float], ...]
     width: float
     closed: bool = False
@@ -222,7 +247,7 @@ class FaceDisc(CoreModel):
     """
 
     mark: Literal["disc"] = "disc"
-    id: str
+    id: CoreId
     centre: tuple[float, float]
     radius: float
     filled: bool = False
@@ -264,13 +289,13 @@ class CoreMass(CoreModel):
             there is one. Left out of the JSON in `mono`.
     """
 
-    id: str
+    id: CoreId
     kind: MassKind
     plane: Plane
     depth: int
-    tone: str
+    tone: Tone
     polygon: tuple[tuple[float, float], ...]
-    colour: str = ""
+    colour: OptionalTone = ""
 
 
 class CoreVeil(CoreModel):
@@ -292,12 +317,12 @@ class CoreVeil(CoreModel):
             one. Left out of the JSON in `mono`.
     """
 
-    tone: str
+    tone: Tone
     opacity: float
     frequency: float
     octaves: int
     seed: int
-    colour: str = ""
+    colour: OptionalTone = ""
 
 
 class CoreStreak(CoreModel):
@@ -339,14 +364,14 @@ class CoreAtmosphere(CoreModel):
 
     time: TimeOfDay
     weather: Weather
-    tone: str
+    tone: Tone
     veil: CoreVeil | None = None
     streaks: tuple[CoreStreak, ...] = ()
     flecks: tuple[Disc, ...] = ()
     streak_width: float = 0.0
-    fall_tone: str = ""
-    colour: str = ""
-    fall_colour: str = ""
+    fall_tone: OptionalTone = ""
+    colour: OptionalTone = ""
+    fall_colour: OptionalTone = ""
 
 
 def _relative(href: str) -> str:
@@ -496,7 +521,7 @@ class CoreActor(CoreModel):
     reads and writes as it did.
     """
 
-    id: str
+    id: CoreId
     reference: Annotated[str, AfterValidator(_puppet_reference)]
     pose: str
     transform: Transform
@@ -654,7 +679,7 @@ class CoreBalloon(CoreModel):
     text would overflow the shape drawn for it.
     """
 
-    id: str
+    id: CoreId
     speaker: str
     order: int
     kind: BalloonKind
@@ -734,7 +759,7 @@ class CoreCaption(CoreModel):
     still a valid one -- which is why adding them needed no `format_version` bump.
     """
 
-    id: str
+    id: CoreId
     order: int
     kind: CaptionKind
     box: Box
@@ -742,12 +767,12 @@ class CoreCaption(CoreModel):
     font_size: float
     line_height: float
     italic: bool
-    fill: str = "#ffffff"
-    ink: str = "#111111"
+    fill: Tone = "#ffffff"
+    ink: Tone = "#111111"
     speaker: str | None = None
     runs: tuple[tuple[CoreRun, ...], ...] = ()
     label: SvgText | None = None
-    colour: str = ""
+    colour: OptionalTone = ""
 
     @model_validator(mode="after")
     def check_runs(self) -> "CoreCaption":
@@ -800,14 +825,14 @@ class CoreSfx(CoreModel):
             JSON when unset.
     """
 
-    id: str
+    id: CoreId
     order: int
     text: str
     font_size: float
     glyphs: tuple[CoreGlyph, ...]
     zone: tuple[tuple[float, float], ...]
-    fill: str
-    stroke: str
+    fill: Paint
+    stroke: Paint
     stroke_width: float
     source: str | None = None
     hollow: bool = False

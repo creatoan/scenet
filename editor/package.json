@@ -108,7 +108,7 @@
     }
   },
   "scripts": {
-    "schemas": "cd .. && uv run scenet schema -o editor/schemas/panel.schema.json && uv run scenet schema --scene -o editor/schemas/scene.schema.json && uv run scenet schema --artwork -o editor/schemas/artwork.schema.json && uv run scenet schema --puppet -o editor/schemas/puppet.schema.json",
+    "schemas": "cd .. && uv run scenet schema -o editor/schemas/panel.schema.json && uv run scenet schema --scene -o editor/schemas/scene.schema.json && uv run scenet schema --artwork -o editor/schemas/artwork.schema.json && uv run scenet schema --puppet -o editor/schemas/puppet.schema.json && uv run scenet schema --core -o editor/schemas/core.schema.json && uv run scenet schema --page-core -o editor/schemas/page-core.schema.json",
     "build": "tsc",
     "grammar": "tsx syntaxes/write-grammar.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test && tsc --noEmit -p e2e",
