@@ -358,31 +358,62 @@ class TestSchemaIds:
     """Each published schema names the address it is served at, so a tool that resolves a
     `$ref` or a `$schema` to it reaches the file it was read from (#365)."""
 
-    def test_a_release_names_its_own_minor_version(self, tmp_path: Path):
+    LANGUAGE = ("panel", "scene", "artwork", "puppet")
+
+    def _published(self, tmp_path: Path, address: str) -> dict[str, Any]:
+        """Every schema a site serves, by the path under the site it is served at."""
         build_site = _load("build_site")
-        schemas = tmp_path / "schemas"
-        build_site.publish_schemas(tmp_path, "https://creatoan.github.io/scenet/v0.14")
-        for name in build_site.PUBLISHED_SCHEMAS:
-            document = json.loads((schemas / name).read_text(encoding="utf-8"))
-            assert document["$id"] == f"https://creatoan.github.io/scenet/v0.14/schemas/{name}"
+        build_site.publish_schemas(tmp_path, address)
+        return {
+            path.relative_to(tmp_path).as_posix(): json.loads(path.read_text(encoding="utf-8"))
+            for path in sorted((tmp_path / "schemas").rglob("*.json"))
+        }
+
+    def test_a_release_names_its_own_minor_version(self, tmp_path: Path):
+        published = self._published(tmp_path, "https://creatoan.github.io/scenet/v0.14")
+        for kind in self.LANGUAGE:
+            document = published[f"schemas/{kind}.schema.json"]
+            assert document["$id"] == (
+                f"https://creatoan.github.io/scenet/v0.14/schemas/{kind}.schema.json"
+            )
+
+    def test_every_id_is_where_the_file_is_served(self, tmp_path: Path):
+        """The `$id`, minus the site and the version folder, is the file's place in the site."""
+        published = self._published(tmp_path, "https://creatoan.github.io/scenet/dev")
+        for path, document in published.items():
+            assert document["$id"].endswith(f"/{path}"), (path, document["$id"])
 
     def test_the_copy_is_the_shipped_schema_and_its_address(self, tmp_path: Path):
         build_site = _load("build_site")
-        build_site.publish_schemas(tmp_path, "https://creatoan.github.io/scenet/dev")
+        published = self._published(tmp_path, "https://creatoan.github.io/scenet/dev")
+        assert len(published) == len(build_site.PUBLISHED_SCHEMAS)
         for name in build_site.PUBLISHED_SCHEMAS:
             shipped = json.loads((ROOT / "editor" / "schemas" / name).read_text(encoding="utf-8"))
-            copied = json.loads((tmp_path / "schemas" / name).read_text(encoding="utf-8"))
-            assert {key: value for key, value in copied.items() if key != "$id"} == shipped
+            (copied,) = (
+                document for document in published.values() if document["title"] == shipped["title"]
+            )
+            assert {key: value for key, value in copied.items() if key != "$id"} == {
+                key: value for key, value in shipped.items() if key != "$id"
+            }
+
+    def test_a_cores_schema_is_served_at_the_address_its_documents_name(self, tmp_path: Path):
+        """A Core says `$schema` once, for its format version, and every release serves it."""
+        for address in (
+            "https://creatoan.github.io/scenet/dev",
+            "https://creatoan.github.io/scenet/v0.14",
+        ):
+            published = self._published(tmp_path / address.rsplit("/", 1)[1], address)
+            assert "schemas/core/2.0/panel.schema.json" in published
+            assert "schemas/core/2.0/page.schema.json" in published
+            assert published["schemas/core/2.0/panel.schema.json"]["$id"] == (
+                "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json"
+            )
 
     def test_the_stamp_is_deterministic(self, tmp_path: Path):
         build_site = _load("build_site")
         build_site.publish_schemas(tmp_path / "a", "https://creatoan.github.io/scenet/dev")
         build_site.publish_schemas(tmp_path / "b", "https://creatoan.github.io/scenet/dev")
         assert _contents(tmp_path / "a") == _contents(tmp_path / "b")
-
-    def test_the_core_schemas_are_published(self):
-        build_site = _load("build_site")
-        assert {"core.schema.json", "page-core.schema.json"} <= set(build_site.PUBLISHED_SCHEMAS)
 
 
 class TestPublishedPictures:

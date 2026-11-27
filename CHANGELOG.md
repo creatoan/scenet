@@ -16,6 +16,13 @@ it is written, and says what to write instead.
 
 ### Added
 
+- **`extras` and `extensions` on every Core object** (#433): `extras` holds anything a tool
+  wants to keep, `extensions` holds data under a renderer's reverse-DNS name, and both are read
+  back and written as they were. A document may list `extensions_required`; a reader that does
+  not implement one refuses the document, naming it. `docs/reference/panel_core.md` now states the
+  format normatively: units (`0.1mm`), y down, origin top left, angles in degrees clockwise,
+  polygon winding and rounding.
+
 - **A schema for a Panel Core and a Page Core** (#365): `scenet schema --core` and
   `scenet schema --page-core` write them, `core.schema.json` and `page-core.schema.json` ship
   with the editor and are published on the site beside the others, and every Core the gallery
@@ -114,6 +121,33 @@ it is written, and says what to write instead.
   and keeps serving. The exit codes are listed in the command-line reference.
 
 ### Changed (breaking)
+
+- **Panel Core is format 2** (#433), the one deliberate shape 1.0 freezes. Every Core document
+  now starts with `$schema` (the versioned address of its JSON Schema), `format`
+  (`scenet.panel` or `scenet.page`), `format_version` (`"2.0"`, `major.minor`, a string where it
+  was the integer 1) and `units` (`0.1mm`). A reader refuses a major it does not know, naming both
+  versions, and reads a newer minor of format 2, leaving out what it does not know and saying
+  *written by a newer Scenet (2.3); this reads 2.0* instead of reporting a typo. A Core of format 1
+  still reads: `PanelCore.from_json` and `PageCore.from_json` upgrade it, and write it back as
+  format 2.
+- **An actor's drawing moved under `drawing`.** `capsules`, `blobs`, `face_marks` and `emanata`
+  are no longer keys of an actor but of `actor.drawing`, `{"kind": "mannequin", ...}`; the contract
+  (`transform`, `anchors`, `joints`, `features`, `hull`, `face_exclusion`, `gaze`) stays at the top,
+  so a puppet drawn some other way adds a kind and leaves it alone. In Python,
+  `actor.drawing.capsules`, or `actor.mannequin` for a mannequin or `None`. What is drawn does not
+  change: no SVG or PDF differs.
+- **A field at its default is left out of a Core, driven by the model.** The hand-kept list of
+  fields added later is gone: any field equal to its declared default is not written, so a Core is
+  shorter (a caption's `fill` and `ink`, a tail's `control: null` and `width`, an actor's
+  `expression: neutral` and `depth: 0`), and a reader reads an absent key as the default.
+- **A Core's informational fields are open strings**: `backdrop.place`, `backdrop.time`, a mass's
+  `kind`, `camera.shot`, `camera.angle`, the atmosphere's `time` and `actor.marks`. The language
+  checks them when it compiles; the Core reader does not, so a Core naming a place a newer Scenet
+  added still renders. The schema lists the names it knows as `examples`. In Python they are
+  `str`, which a `StrEnum` still equals.
+- **`CORE_FORMAT_VERSION` is `"2.0"`**, a string, with `CORE_FORMAT_MAJOR` and
+  `CORE_FORMAT_MINOR`. The Core JSON Schemas are published at `schemas/core/2.0/`, where a Core's
+  `$schema` points.
 
 - **`scenet mcp --host` beyond this machine needs `--allow-remote`** (#380). A `--host` that is
   not a loopback address, `0.0.0.0` say, is a usage error without it, since the server has no

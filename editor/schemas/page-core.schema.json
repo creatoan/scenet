@@ -4,6 +4,22 @@
       "additionalProperties": false,
       "description": "A rectangle, as stored in a Core document.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "height": {
           "title": "Height",
           "type": "number"
@@ -52,6 +68,22 @@
             }
           ],
           "default": null
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "height": {
           "title": "Height",
@@ -136,6 +168,7 @@
       "title": "Identifier",
       "type": "string"
     },
+    "JsonValue": {},
     "Side": {
       "description": "A side of the panel's frame: where an off-panel speaker is, or where it bleeds.",
       "enum": [
@@ -148,10 +181,16 @@
       "type": "string"
     }
   },
+  "$id": "https://creatoan.github.io/scenet/schemas/core/2.0/page.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "A fully resolved page: where every panel's frame is.",
   "properties": {
+    "$schema": {
+      "default": "https://creatoan.github.io/scenet/schemas/core/2.0/page.schema.json",
+      "title": "$Schema",
+      "type": "string"
+    },
     "bleed": {
       "default": 0.0,
       "title": "Bleed",
@@ -161,10 +200,41 @@
       "$ref": "#/$defs/Direction",
       "default": "ltr"
     },
+    "extensions": {
+      "patternProperties": {
+        "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "title": "Extensions",
+      "type": "object"
+    },
+    "extensions_required": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+        "type": "string"
+      },
+      "title": "Extensions Required",
+      "type": "array"
+    },
+    "extras": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Extras",
+      "type": "object"
+    },
+    "format": {
+      "const": "scenet.page",
+      "default": "scenet.page",
+      "title": "Format",
+      "type": "string"
+    },
     "format_version": {
-      "default": 1,
+      "default": "2.0",
       "title": "Format Version",
-      "type": "integer"
+      "type": "string"
     },
     "frames": {
       "default": [],
@@ -181,6 +251,12 @@
     "lettering_height": {
       "title": "Lettering Height",
       "type": "number"
+    },
+    "units": {
+      "const": "0.1mm",
+      "default": "0.1mm",
+      "title": "Units",
+      "type": "string"
     },
     "width": {
       "title": "Width",

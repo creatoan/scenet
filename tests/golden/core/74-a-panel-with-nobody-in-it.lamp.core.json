@@ -1,9 +1,8 @@
 {
-  "actors": [],
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "backdrop": {
     "atmosphere": {
       "fall_tone": "#4d4d4d",
-      "flecks": [],
       "streak_width": 3.01,
       "streaks": [
         {
@@ -1629,7 +1628,6 @@
       "order": 0,
       "speaker": "voice",
       "tail": {
-        "control": null,
         "end": [
           880.0,
           76.4
@@ -1637,14 +1635,14 @@
         "start": [
           862.4,
           76.4
-        ],
-        "width": 14.0
+        ]
       }
     }
   ],
-  "captions": [],
   "description": "Close-up. A street at night, in the rain.",
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 1370.0,
+  "units": "0.1mm",
   "width": 880.0
 }

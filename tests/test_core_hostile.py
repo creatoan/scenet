@@ -94,7 +94,7 @@ def _has(payload: dict[str, Any], path: str) -> bool:
 def test_a_colour_that_is_not_a_hex_triplet_is_refused_where_it_is(
     payload: dict[str, Any], path: str, hostile: str
 ):
-    assert _has(payload, path), f"the document has no {path}"
+    assert _has(payload, path.rpartition(".")[0]), f"the document has no {path}"
     message = _refused(_set(payload, path, hostile))
     assert message.startswith("invalid Panel Core:")
     assert path.replace(".", " -> ") in message or path.rsplit(".", maxsplit=1)[-1] in message

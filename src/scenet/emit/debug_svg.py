@@ -155,7 +155,7 @@ def debug_body(core: PanelCore, *, id_prefix: str = "") -> list[str]:
                     'stroke-width="3"/>'
                 )
 
-        for mark in actor.face_marks:
+        for mark in drawing.face_marks if (drawing := actor.mannequin) else ():
             centre = mark.centre if isinstance(mark, FaceDisc) else mark.points[0]
             parts.append(
                 f'    <circle cx="{fmt(centre[0])}" cy="{fmt(centre[1])}" r="3" fill="{FEATURE}"/>'
@@ -349,7 +349,7 @@ def _backdrop(core: PanelCore) -> str:
         lines.append(
             f'  <text x="{fmt(left + 6)}" y="{fmt(top + 18)}" font-size="15" '
             f'font-family="monospace" fill="{MASS}">'
-            f"{escape(mass.id)} {mass.kind.value} {mass.plane.value} depth={mass.depth}</text>"
+            f"{escape(mass.id)} {mass.kind} {mass.plane.value} depth={mass.depth}</text>"
         )
     return "\n".join(lines)
 

@@ -29,6 +29,22 @@
           "title": "Centre",
           "type": "array"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "radius": {
           "title": "Radius",
           "type": "number"
@@ -45,6 +61,22 @@
       "additionalProperties": false,
       "description": "A rectangle, as stored in a Core document.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "height": {
           "title": "Height",
           "type": "number"
@@ -71,16 +103,6 @@
       "title": "Box",
       "type": "object"
     },
-    "CameraAngle": {
-      "description": "The camera's height relative to the subject.",
-      "enum": [
-        "low",
-        "eye_level",
-        "high"
-      ],
-      "title": "CameraAngle",
-      "type": "string"
-    },
     "Capsule": {
       "additionalProperties": false,
       "description": "A limb segment, as a thick line with rounded ends.",
@@ -98,6 +120,22 @@
           ],
           "title": "End",
           "type": "array"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "start": {
           "maxItems": 2,
@@ -158,41 +196,29 @@
           "title": "Anchors",
           "type": "object"
         },
-        "blobs": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Blob"
-          },
-          "title": "Blobs",
-          "type": "array"
-        },
-        "capsules": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Capsule"
-          },
-          "title": "Capsules",
-          "type": "array"
-        },
         "depth": {
           "default": 0,
           "title": "Depth",
           "type": "integer"
         },
-        "emanata": {
-          "default": [],
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/$defs/FaceStroke"
-              },
-              {
-                "$ref": "#/$defs/FaceDisc"
-              }
-            ]
-          },
-          "title": "Emanata",
-          "type": "array"
+        "drawing": {
+          "anyOf": [
+            {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/CoreMannequin"
+                },
+                {
+                  "$ref": "#/$defs/CoreOtherDrawing"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Drawing"
         },
         "emanata_zones": {
           "default": [],
@@ -220,23 +246,24 @@
           "title": "Expression",
           "type": "string"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "face_exclusion": {
           "$ref": "#/$defs/Disc"
-        },
-        "face_marks": {
-          "default": [],
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/$defs/FaceStroke"
-              },
-              {
-                "$ref": "#/$defs/FaceDisc"
-              }
-            ]
-          },
-          "title": "Face Marks",
-          "type": "array"
         },
         "features": {
           "additionalProperties": {
@@ -349,7 +376,13 @@
         "marks": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/Mark"
+            "examples": [
+              "plewds",
+              "squeans",
+              "grawlixes",
+              "briffits"
+            ],
+            "type": "string"
           },
           "title": "Marks",
           "type": "array"
@@ -389,6 +422,22 @@
           "title": "Colour",
           "type": "string"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "fall_colour": {
           "default": "",
           "pattern": "^(?:#[0-9a-fA-F]{6})?$",
@@ -423,7 +472,14 @@
           "type": "array"
         },
         "time": {
-          "$ref": "#/$defs/TimeOfDay"
+          "examples": [
+            "dawn",
+            "day",
+            "dusk",
+            "night"
+          ],
+          "title": "Time",
+          "type": "string"
         },
         "tone": {
           "pattern": "^#[0-9a-fA-F]{6}$",
@@ -468,6 +524,22 @@
           ],
           "default": null
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "horizon": {
           "anyOf": [
             {
@@ -502,13 +574,26 @@
         "place": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Place"
+              "examples": [
+                "alley",
+                "desert",
+                "docks",
+                "field",
+                "forest",
+                "mountain",
+                "office",
+                "room",
+                "shore",
+                "street"
+              ],
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Place"
         },
         "seed": {
           "title": "Seed",
@@ -517,13 +602,20 @@
         "time": {
           "anyOf": [
             {
-              "$ref": "#/$defs/TimeOfDay"
+              "examples": [
+                "dawn",
+                "day",
+                "dusk",
+                "night"
+              ],
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Time"
         }
       },
       "required": [
@@ -538,6 +630,22 @@
       "properties": {
         "box": {
           "$ref": "#/$defs/Box"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "font_size": {
           "title": "Font Size",
@@ -631,7 +739,29 @@
       "description": "The camera's verdict for a panel, recorded.",
       "properties": {
         "angle": {
-          "$ref": "#/$defs/CameraAngle"
+          "examples": [
+            "low",
+            "eye_level",
+            "high"
+          ],
+          "title": "Angle",
+          "type": "string"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "footroom": {
           "title": "Footroom",
@@ -655,7 +785,19 @@
           "type": "number"
         },
         "shot": {
-          "$ref": "#/$defs/ShotType"
+          "examples": [
+            "long_shot",
+            "full_shot",
+            "medium_full_shot",
+            "cowboy_shot",
+            "medium_shot",
+            "medium_close_up",
+            "close_up",
+            "big_close_up",
+            "extreme_close_up"
+          ],
+          "title": "Shot",
+          "type": "string"
         }
       },
       "required": [
@@ -681,6 +823,22 @@
           "pattern": "^(?:#[0-9a-fA-F]{6})?$",
           "title": "Colour",
           "type": "string"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "fill": {
           "default": "#ffffff",
@@ -817,6 +975,22 @@
           "title": "Body",
           "type": "array"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "face_exclusion": {
           "$ref": "#/$defs/Disc"
         },
@@ -863,6 +1037,22 @@
       "additionalProperties": false,
       "description": "A font file the lettering was measured in, named by what is in it.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "family": {
           "title": "Family",
           "type": "string"
@@ -896,6 +1086,22 @@
           "title": "Char",
           "type": "string"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "origin": {
           "maxItems": 2,
           "minItems": 2,
@@ -925,6 +1131,22 @@
       "properties": {
         "box": {
           "$ref": "#/$defs/Box"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "fit": {
           "$ref": "#/$defs/Fit"
@@ -1001,6 +1223,82 @@
       "title": "CoreImage",
       "type": "object"
     },
+    "CoreMannequin": {
+      "additionalProperties": false,
+      "description": "How a mannequin is drawn: limbs, heads, a face and the marks around it.",
+      "properties": {
+        "blobs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Blob"
+          },
+          "title": "Blobs",
+          "type": "array"
+        },
+        "capsules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Capsule"
+          },
+          "title": "Capsules",
+          "type": "array"
+        },
+        "emanata": {
+          "default": [],
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FaceStroke"
+              },
+              {
+                "$ref": "#/$defs/FaceDisc"
+              }
+            ]
+          },
+          "title": "Emanata",
+          "type": "array"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
+        "face_marks": {
+          "default": [],
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FaceStroke"
+              },
+              {
+                "$ref": "#/$defs/FaceDisc"
+              }
+            ]
+          },
+          "title": "Face Marks",
+          "type": "array"
+        },
+        "kind": {
+          "const": "mannequin",
+          "default": "mannequin",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "title": "CoreMannequin",
+      "type": "object"
+    },
     "CoreMass": {
       "additionalProperties": false,
       "description": "One tonal mass of the backdrop, resolved to a numeric polygon.",
@@ -1015,12 +1313,43 @@
           "title": "Depth",
           "type": "integer"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "id": {
           "$ref": "#/$defs/Identifier",
           "title": "Id"
         },
         "kind": {
-          "$ref": "#/$defs/MassKind"
+          "examples": [
+            "building",
+            "ceiling",
+            "floor",
+            "furniture",
+            "ground",
+            "plant",
+            "sky",
+            "solid",
+            "structural",
+            "wall",
+            "water",
+            "window"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "plane": {
           "$ref": "#/$defs/Plane"
@@ -1059,10 +1388,60 @@
       "title": "CoreMass",
       "type": "object"
     },
+    "CoreOtherDrawing": {
+      "additionalProperties": true,
+      "description": "A drawing of a kind this reader does not know: its `kind`, and what it holds, kept.",
+      "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
+        "kind": {
+          "not": {
+            "const": "mannequin"
+          },
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "CoreOtherDrawing",
+      "type": "object"
+    },
     "CoreRun": {
       "additionalProperties": false,
       "description": "A stretch of one line set in one face.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "face": {
           "$ref": "#/$defs/Face"
         },
@@ -1082,6 +1461,22 @@
       "additionalProperties": false,
       "description": "One sound effect, placed, with every letter resolved.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "fill": {
           "pattern": "^(?:#[0-9a-fA-F]{6}|none)$",
           "title": "Fill",
@@ -1203,6 +1598,22 @@
           "title": "End",
           "type": "array"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "start": {
           "maxItems": 2,
           "minItems": 2,
@@ -1234,6 +1645,22 @@
           "pattern": "^(?:#[0-9a-fA-F]{6})?$",
           "title": "Colour",
           "type": "string"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "frequency": {
           "title": "Frequency",
@@ -1288,6 +1715,22 @@
           "title": "Cy",
           "type": "number"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "r": {
           "title": "R",
           "type": "number"
@@ -1330,6 +1773,22 @@
           "title": "Centre",
           "type": "array"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "filled": {
           "default": false,
           "title": "Filled",
@@ -1371,6 +1830,22 @@
           "default": false,
           "title": "Closed",
           "type": "boolean"
+        },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
         },
         "id": {
           "$ref": "#/$defs/Identifier",
@@ -1427,36 +1902,7 @@
       "title": "Identifier",
       "type": "string"
     },
-    "Mark": {
-      "description": "Something drawn around a character, rather than on them, to say how they are.",
-      "enum": [
-        "plewds",
-        "squeans",
-        "grawlixes",
-        "briffits"
-      ],
-      "title": "Mark",
-      "type": "string"
-    },
-    "MassKind": {
-      "description": "What a tonal mass in the backdrop is made of.",
-      "enum": [
-        "building",
-        "ceiling",
-        "floor",
-        "furniture",
-        "ground",
-        "plant",
-        "sky",
-        "solid",
-        "structural",
-        "wall",
-        "water",
-        "window"
-      ],
-      "title": "MassKind",
-      "type": "string"
-    },
+    "JsonValue": {},
     "Palette": {
       "description": "What a panel is drawn in: the value ladder in grey, or its twin in colour.",
       "enum": [
@@ -1464,23 +1910,6 @@
         "tinted"
       ],
       "title": "Palette",
-      "type": "string"
-    },
-    "Place": {
-      "description": "A named setting, expanded into masses by the frontend.",
-      "enum": [
-        "alley",
-        "desert",
-        "docks",
-        "field",
-        "forest",
-        "mountain",
-        "office",
-        "room",
-        "shore",
-        "street"
-      ],
-      "title": "Place",
       "type": "string"
     },
     "Plane": {
@@ -1492,22 +1921,6 @@
         "far"
       ],
       "title": "Plane",
-      "type": "string"
-    },
-    "ShotType": {
-      "description": "How tightly the camera frames the cast.",
-      "enum": [
-        "long_shot",
-        "full_shot",
-        "medium_full_shot",
-        "cowboy_shot",
-        "medium_shot",
-        "medium_close_up",
-        "close_up",
-        "big_close_up",
-        "extreme_close_up"
-      ],
-      "title": "ShotType",
       "type": "string"
     },
     "Side": {
@@ -1561,6 +1974,22 @@
           "title": "End",
           "type": "array"
         },
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "start": {
           "maxItems": 2,
           "minItems": 2,
@@ -1588,21 +2017,26 @@
       "title": "Tail",
       "type": "object"
     },
-    "TimeOfDay": {
-      "description": "When the panel happens, which shifts the whole value ladder.",
-      "enum": [
-        "dawn",
-        "day",
-        "dusk",
-        "night"
-      ],
-      "title": "TimeOfDay",
-      "type": "string"
-    },
     "Transform": {
       "additionalProperties": false,
       "description": "Where a puppet's root joint lands, and how it is scaled and mirrored.",
       "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
         "mirrored": {
           "title": "Mirrored",
           "type": "boolean"
@@ -1641,10 +2075,16 @@
       "type": "string"
     }
   },
+  "$id": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "A fully resolved panel: numeric, named, and ready to emit.",
   "properties": {
+    "$schema": {
+      "default": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
+      "title": "$Schema",
+      "type": "string"
+    },
     "actors": {
       "default": [],
       "items": {
@@ -1720,6 +2160,31 @@
       "title": "Exclusions",
       "type": "array"
     },
+    "extensions": {
+      "patternProperties": {
+        "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "title": "Extensions",
+      "type": "object"
+    },
+    "extensions_required": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+        "type": "string"
+      },
+      "title": "Extensions Required",
+      "type": "array"
+    },
+    "extras": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Extras",
+      "type": "object"
+    },
     "figures": {
       "default": [],
       "items": {
@@ -1738,10 +2203,16 @@
       "title": "Fonts",
       "type": "object"
     },
+    "format": {
+      "const": "scenet.panel",
+      "default": "scenet.panel",
+      "title": "Format",
+      "type": "string"
+    },
     "format_version": {
-      "default": 1,
+      "default": "2.0",
       "title": "Format Version",
-      "type": "integer"
+      "type": "string"
     },
     "height": {
       "title": "Height",
@@ -1802,6 +2273,12 @@
       },
       "title": "Sfx",
       "type": "array"
+    },
+    "units": {
+      "const": "0.1mm",
+      "default": "0.1mm",
+      "title": "Units",
+      "type": "string"
     },
     "width": {
       "title": "Width",

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "actors": [
     {
       "anchors": {
@@ -19,283 +20,274 @@
           125.75
         ]
       },
-      "blobs": [
-        {
-          "centre": [
-            191.11,
-            98.72
-          ],
-          "radius": 54.06
-        }
-      ],
-      "capsules": [
-        {
-          "end": [
-            191.11,
-            402.27
-          ],
-          "start": [
-            191.11,
-            188.12
-          ],
-          "width": 87.32
-        },
-        {
-          "end": [
-            190.94,
-            287.64
-          ],
-          "start": [
-            147.45,
-            194.36
-          ],
-          "width": 31.19
-        },
-        {
-          "end": [
-            285.13,
-            271.03
-          ],
-          "start": [
-            190.94,
-            287.64
-          ],
-          "width": 25.99
-        },
-        {
-          "end": [
-            191.28,
-            287.64
-          ],
-          "start": [
-            234.77,
-            194.36
-          ],
-          "width": 31.19
-        },
-        {
-          "end": [
-            97.09,
-            271.03
-          ],
-          "start": [
-            191.28,
-            287.64
-          ],
-          "width": 25.99
-        },
-        {
-          "end": [
-            157.84,
-            651.77
-          ],
-          "start": [
-            157.84,
-            412.67
-          ],
-          "width": 39.5
-        },
-        {
-          "end": [
-            157.84,
-            857.6
-          ],
-          "start": [
-            157.84,
-            651.77
-          ],
-          "width": 32.23
-        },
-        {
-          "end": [
-            224.38,
-            651.77
-          ],
-          "start": [
-            224.38,
-            412.67
-          ],
-          "width": 39.5
-        },
-        {
-          "end": [
-            224.38,
-            857.6
-          ],
-          "start": [
-            224.38,
-            651.77
-          ],
-          "width": 32.23
-        }
-      ],
-      "depth": 0,
-      "emanata": [],
-      "emanata_zones": [],
-      "expression": "neutral",
+      "drawing": {
+        "blobs": [
+          {
+            "centre": [
+              191.11,
+              98.72
+            ],
+            "radius": 54.06
+          }
+        ],
+        "capsules": [
+          {
+            "end": [
+              191.11,
+              402.27
+            ],
+            "start": [
+              191.11,
+              188.12
+            ],
+            "width": 87.32
+          },
+          {
+            "end": [
+              190.94,
+              287.64
+            ],
+            "start": [
+              147.45,
+              194.36
+            ],
+            "width": 31.19
+          },
+          {
+            "end": [
+              285.13,
+              271.03
+            ],
+            "start": [
+              190.94,
+              287.64
+            ],
+            "width": 25.99
+          },
+          {
+            "end": [
+              191.28,
+              287.64
+            ],
+            "start": [
+              234.77,
+              194.36
+            ],
+            "width": 31.19
+          },
+          {
+            "end": [
+              97.09,
+              271.03
+            ],
+            "start": [
+              191.28,
+              287.64
+            ],
+            "width": 25.99
+          },
+          {
+            "end": [
+              157.84,
+              651.77
+            ],
+            "start": [
+              157.84,
+              412.67
+            ],
+            "width": 39.5
+          },
+          {
+            "end": [
+              157.84,
+              857.6
+            ],
+            "start": [
+              157.84,
+              651.77
+            ],
+            "width": 32.23
+          },
+          {
+            "end": [
+              224.38,
+              651.77
+            ],
+            "start": [
+              224.38,
+              412.67
+            ],
+            "width": 39.5
+          },
+          {
+            "end": [
+              224.38,
+              857.6
+            ],
+            "start": [
+              224.38,
+              651.77
+            ],
+            "width": 32.23
+          }
+        ],
+        "face_marks": [
+          {
+            "id": "brow_l",
+            "mark": "stroke",
+            "points": [
+              [
+                182.79,
+                69.62
+              ],
+              [
+                169.28,
+                67.18
+              ],
+              [
+                155.77,
+                69.62
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "id": "brow_r",
+            "mark": "stroke",
+            "points": [
+              [
+                199.43,
+                69.62
+              ],
+              [
+                212.94,
+                67.18
+              ],
+              [
+                226.45,
+                69.62
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "centre": [
+              169.28,
+              86.25
+            ],
+            "id": "eye_l",
+            "mark": "disc",
+            "radius": 9.36,
+            "width": 3.72
+          },
+          {
+            "centre": [
+              169.28,
+              86.25
+            ],
+            "filled": true,
+            "id": "pupil_l",
+            "mark": "disc",
+            "radius": 3.18
+          },
+          {
+            "centre": [
+              212.94,
+              86.25
+            ],
+            "id": "eye_r",
+            "mark": "disc",
+            "radius": 9.36,
+            "width": 3.72
+          },
+          {
+            "centre": [
+              212.94,
+              86.25
+            ],
+            "filled": true,
+            "id": "pupil_r",
+            "mark": "disc",
+            "radius": 3.18
+          },
+          {
+            "id": "nose",
+            "mark": "stroke",
+            "points": [
+              [
+                191.11,
+                97.74
+              ],
+              [
+                191.11,
+                106.31
+              ],
+              [
+                194.54,
+                108.03
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "id": "mouth",
+            "mark": "stroke",
+            "points": [
+              [
+                182.27,
+                125.75
+              ],
+              [
+                184.04,
+                126.13
+              ],
+              [
+                185.81,
+                126.43
+              ],
+              [
+                187.58,
+                126.64
+              ],
+              [
+                189.34,
+                126.77
+              ],
+              [
+                191.11,
+                126.81
+              ],
+              [
+                192.88,
+                126.77
+              ],
+              [
+                194.64,
+                126.64
+              ],
+              [
+                196.41,
+                126.43
+              ],
+              [
+                198.18,
+                126.13
+              ],
+              [
+                199.95,
+                125.75
+              ]
+            ],
+            "width": 3.72
+          }
+        ],
+        "kind": "mannequin"
+      },
       "face_exclusion": {
         "cx": 191.11,
         "cy": 98.72,
         "r": 67.57
       },
-      "face_marks": [
-        {
-          "closed": false,
-          "id": "brow_l",
-          "mark": "stroke",
-          "points": [
-            [
-              182.79,
-              69.62
-            ],
-            [
-              169.28,
-              67.18
-            ],
-            [
-              155.77,
-              69.62
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "closed": false,
-          "id": "brow_r",
-          "mark": "stroke",
-          "points": [
-            [
-              199.43,
-              69.62
-            ],
-            [
-              212.94,
-              67.18
-            ],
-            [
-              226.45,
-              69.62
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "centre": [
-            169.28,
-            86.25
-          ],
-          "filled": false,
-          "id": "eye_l",
-          "mark": "disc",
-          "radius": 9.36,
-          "width": 3.72
-        },
-        {
-          "centre": [
-            169.28,
-            86.25
-          ],
-          "filled": true,
-          "id": "pupil_l",
-          "mark": "disc",
-          "radius": 3.18,
-          "width": 0.0
-        },
-        {
-          "centre": [
-            212.94,
-            86.25
-          ],
-          "filled": false,
-          "id": "eye_r",
-          "mark": "disc",
-          "radius": 9.36,
-          "width": 3.72
-        },
-        {
-          "centre": [
-            212.94,
-            86.25
-          ],
-          "filled": true,
-          "id": "pupil_r",
-          "mark": "disc",
-          "radius": 3.18,
-          "width": 0.0
-        },
-        {
-          "closed": false,
-          "id": "nose",
-          "mark": "stroke",
-          "points": [
-            [
-              191.11,
-              97.74
-            ],
-            [
-              191.11,
-              106.31
-            ],
-            [
-              194.54,
-              108.03
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "closed": false,
-          "id": "mouth",
-          "mark": "stroke",
-          "points": [
-            [
-              182.27,
-              125.75
-            ],
-            [
-              184.04,
-              126.13
-            ],
-            [
-              185.81,
-              126.43
-            ],
-            [
-              187.58,
-              126.64
-            ],
-            [
-              189.34,
-              126.77
-            ],
-            [
-              191.11,
-              126.81
-            ],
-            [
-              192.88,
-              126.77
-            ],
-            [
-              194.64,
-              126.64
-            ],
-            [
-              196.41,
-              126.43
-            ],
-            [
-              198.18,
-              126.13
-            ],
-            [
-              199.95,
-              125.75
-            ]
-          ],
-          "width": 3.72
-        }
-      ],
       "features": {
         "brow_l": [
           169.28,
@@ -326,7 +318,6 @@
         1.0,
         0.0
       ],
-      "gaze_aim": null,
       "hull": [
         [
           82.04,
@@ -440,7 +431,6 @@
           271.03
         ]
       },
-      "marks": [],
       "pose": "arms_crossed",
       "reference": "bob",
       "transform": {
@@ -452,7 +442,6 @@
     }
   ],
   "backdrop": {
-    "atmosphere": null,
     "horizon": 491.33,
     "masses": [
       {
@@ -635,12 +624,10 @@
     "seed": 4201876461,
     "time": "night"
   },
-  "balloons": [],
   "camera": {
     "angle": "eye_level",
     "footroom": 0.04,
     "headroom": 0.05,
-    "pullback": 1.0,
     "reference": "bob",
     "scale": 1.04,
     "shot": "full_shot"
@@ -653,10 +640,8 @@
         "x": 340.1,
         "y": 382.41
       },
-      "fill": "#ffffff",
       "font_size": 28.0,
       "id": "c0",
-      "ink": "#111111",
       "italic": true,
       "kind": "monologue",
       "label": "Caption, inner voice: Trente ans que cette lampe brille chaque nuit.",
@@ -666,12 +651,13 @@
         "cette lampe brille",
         "chaque nuit."
       ],
-      "order": 0,
-      "speaker": null
+      "order": 0
     }
   ],
   "description": "La salle de la lanterne, la nuit. Tom, en pied, devant la lampe éteinte.",
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 893.33,
+  "units": "0.1mm",
   "width": 573.33
 }

@@ -10,19 +10,29 @@ different path-rounding convention produces a huge diff that means nothing.
 """
 
 import json
-from typing import Annotated, Any, Literal, NamedTuple, Self
+import re
+import warnings
+from collections.abc import Iterable
+from typing import Annotated, Any, ClassVar, Literal, NamedTuple, Self
 
 from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
+    Discriminator,
     Field,
+    JsonValue,
+    SerializationInfo,
+    SerializerFunctionWrapHandler,
     StringConstraints,
     Tag,
     ValidationError,
+    ValidationInfo,
     WithJsonSchema,
+    model_serializer,
     model_validator,
 )
+from pydantic.fields import FieldInfo
 from pydantic.json_schema import SkipJsonSchema
 
 from scenet.assets.contract import PUPPET_RULE, is_puppet_file
@@ -54,7 +64,33 @@ from scenet.ir import (
 from scenet.paths import check_relative
 from scenet.places import Place
 
-CORE_FORMAT_VERSION = 1
+#: The format this reader reads and writes, as `major.minor`. A major changes what a reader
+#: must understand to read a document at all; a minor only adds what a reader that does not
+#: know it can ignore, so a reader of 2.0 reads every 2.x. See docs/reference/panel_core.md.
+CORE_FORMAT_MAJOR = 2
+CORE_FORMAT_MINOR = 0
+CORE_FORMAT_VERSION = f"{CORE_FORMAT_MAJOR}.{CORE_FORMAT_MINOR}"
+
+#: What one unit of every length, position and size in a Core is: a tenth of a millimetre,
+#: which is what a unit prints as.
+CORE_UNITS = "0.1mm"
+
+#: Where a Core's schemas are published, one folder per format version, so a document's
+#: `$schema` is the address of the schema of the version it names and stays so.
+CORE_SCHEMA_BASE = "https://creatoan.github.io/scenet/schemas/core"
+PANEL_CORE_SCHEMA = f"{CORE_SCHEMA_BASE}/{CORE_FORMAT_VERSION}/panel.schema.json"
+PAGE_CORE_SCHEMA = f"{CORE_SCHEMA_BASE}/{CORE_FORMAT_VERSION}/page.schema.json"
+
+#: The extensions a renderer built from this package implements, by name. None: an extension
+#: is a renderer's own, and Scenet's emitters do not draw any. A document that *requires* one
+#: is refused here, because drawing it without would draw something it said was not it.
+KNOWN_EXTENSIONS: frozenset[str] = frozenset()
+
+#: A reverse-DNS name, which an extension is known by: lower case, at least two labels.
+EXTENSION_NAME = r"^[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+$"
+ExtensionName = Annotated[str, StringConstraints(pattern=EXTENSION_NAME)]
+
+_VERSION = re.compile(r"^(\d+)\.(\d+)$")
 
 #: What every colour a Core holds is: `#rrggbb`, the one form the emitter writes into a
 #: `fill`, a `stroke` or a `stop-color`. A Core is hand-edited and read back, so a value that
@@ -85,9 +121,86 @@ class CoreModel(BaseModel):
     may hand-edit and feed back in, and a silently-ignored key would mean their edit
     had no effect with nothing to say so. `json.loads` reads `NaN` and `Infinity`, and
     neither is a coordinate, so a Core holding one is refused rather than drawn.
+
+    What Scenet does not interpret has a place of its own, on every object: `extras`, for
+    anything, and `extensions`, for data a renderer reads under its reverse-DNS name. Both
+    are read back and written as they were. A field at its declared default is left out of
+    the JSON, so what a document does not say is what the model says it is.
+
+    Attributes:
+        extras: Anything a tool wants to keep on this object. Never interpreted, never
+            checked, written back as it was read.
+        extensions: Data for a renderer, under its reverse-DNS name. Written back as it was
+            read; a renderer that does not know the name ignores it, unless the document
+            lists it in `extensions_required`.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, allow_inf_nan=False, populate_by_name=True
+    )
+
+    #: The fields written whatever their value, though they have a default: a document's
+    #: header, and the tag that says which of several shapes an object is.
+    always: ClassVar[frozenset[str]] = frozenset()
+
+    extras: dict[str, JsonValue] = Field(default_factory=dict)
+    extensions: dict[ExtensionName, JsonValue] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _set_aside_what_a_newer_minor_wrote(cls, data: object, info: ValidationInfo) -> object:
+        """Under a newer minor, take out what this reader does not know, and say where it was.
+
+        A document of a newer minor version of the format may carry a key this version has no
+        field for. That is not a typo, so it is not refused: it is left out of what is read,
+        and named for the report. Everywhere else an unknown key stays an error.
+        """
+        unknown = (info.context or {}).get("unknown")
+        if unknown is None or not isinstance(data, dict):
+            return data
+        known = {
+            alias
+            for name, field in cls.model_fields.items()
+            for alias in (name, field.validation_alias, field.alias)
+            if isinstance(alias, str)
+        }
+        extra = [key for key in data if key not in known]
+        if cls.model_config.get("extra") == "allow" or not extra:
+            return data
+        unknown.extend(f"{cls.__name__}.{key}" for key in extra)
+        return {key: value for key, value in data.items() if key in known}
+
+    @model_serializer(mode="wrap")
+    def _leave_out_what_is_default(
+        self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
+    ) -> dict[str, Any]:
+        """Leave a field out of the JSON when it is what the model says it is by default.
+
+        Driven by the model, so a field added with a default needs nothing else to keep a
+        document that does not use it as short as it was. Only the JSON is shortened: a model
+        dumped to Python keeps every field.
+        """
+        data: dict[str, Any] = handler(self)
+        if info.mode != "json":
+            return data
+        for name, field in type(self).model_fields.items():
+            key = (field.serialization_alias or field.alias or name) if info.by_alias else name
+            if key not in data or name in self.always or field.is_required():
+                continue
+            if getattr(self, name) == field.get_default(call_default_factory=True):
+                del data[key]
+        return data
+
+
+def _known(values: Iterable[str]) -> FieldInfo:
+    """A schema's note of the values the language has, for a field that takes any string.
+
+    A Core says which place, shot or hour a panel was made with and does not decide what
+    there is: the language does, and grows. The note is `examples`, which an editor offers
+    and a validator does not enforce, so a document naming a place a newer Scenet added
+    still validates -- and still draws, because nothing is drawn from the name.
+    """
+    return Field(json_schema_extra={"examples": [str(value) for value in values]})
 
 
 class Transform(CoreModel):
@@ -227,6 +340,8 @@ class FaceStroke(CoreModel):
             open mouth a shape rather than a stray arc.
     """
 
+    always: ClassVar[frozenset[str]] = frozenset({"mark"})
+
     mark: Literal["stroke"] = "stroke"
     id: CoreId
     points: tuple[tuple[float, float], ...]
@@ -245,6 +360,8 @@ class FaceDisc(CoreModel):
         filled: Filled marks are pupils; outlined ones are the eyes around them.
         width: Outline width in panel units, ignored when `filled`.
     """
+
+    always: ClassVar[frozenset[str]] = frozenset({"mark"})
 
     mark: Literal["disc"] = "disc"
     id: CoreId
@@ -290,7 +407,7 @@ class CoreMass(CoreModel):
     """
 
     id: CoreId
-    kind: MassKind
+    kind: Annotated[str, _known(MassKind)]
     plane: Plane
     depth: int
     tone: Tone
@@ -362,7 +479,7 @@ class CoreAtmosphere(CoreModel):
             JSON when there is none.
     """
 
-    time: TimeOfDay
+    time: Annotated[str, _known(TimeOfDay)]
     weather: Weather
     tone: Tone
     veil: CoreVeil | None = None
@@ -461,8 +578,69 @@ class CoreBackdrop(CoreModel):
     masses: tuple[CoreMass, ...] = ()
     atmosphere: CoreAtmosphere | None = None
     image: CoreImage | None = None
-    place: Place | None = None
-    time: TimeOfDay | None = None
+    place: Annotated[str, _known(Place)] | None = None
+    time: Annotated[str, _known(TimeOfDay)] | None = None
+
+
+class CoreMannequin(CoreModel):
+    """How a mannequin is drawn: limbs, heads, a face and the marks around it.
+
+    The shipped puppets are mannequins, and these are the primitives the SVG emitter draws
+    them from. They are one kind of `drawing` among the kinds a puppet may have, so a puppet
+    drawn some other way adds a kind and leaves the contract an actor carries -- where it
+    is, how big, where its face and joints are -- exactly as it was.
+
+    Attributes:
+        kind: Always `mannequin`: what says this is the shape a mannequin is drawn from.
+        capsules: Limb segments, as thick rounded lines.
+        blobs: Rounded masses such as the head.
+        face_marks: The drawn face -- brows, eyes, pupils, nose, mouth -- as resolved
+            numeric primitives. Empty when the puppet declares no features, or when the
+            figure is too small for features to read as anything but a smudge.
+        emanata: The marks drawn around the character, as the same strokes and discs a face
+            is made of. Empty when there are no marks, or when the figure is too small to
+            have a face. Ids are numbered per mark: `plewd_0`, `plewd_1`, ...
+    """
+
+    always: ClassVar[frozenset[str]] = frozenset({"kind"})
+
+    kind: Literal["mannequin"] = "mannequin"
+    capsules: tuple[Capsule, ...] = ()
+    blobs: tuple[Blob, ...] = ()
+    face_marks: tuple[FaceMark, ...] = ()
+    emanata: tuple[FaceMark, ...] = ()
+
+
+class CoreOtherDrawing(CoreModel):
+    """A drawing of a kind this reader does not know: its `kind`, and what it holds, kept.
+
+    A newer Scenet may draw a puppet some other way. This reader cannot draw that, but it
+    can read the document, keep what the drawing says as it was, and draw nothing for the
+    actor: the contract it carries -- where it is, its hull, its face -- is as it always is,
+    and what lettering was placed around it is still right.
+
+    Attributes:
+        kind: What kind of drawing it is, which is not `mannequin`.
+    """
+
+    model_config = ConfigDict(extra="allow", frozen=True, allow_inf_nan=False)
+    always: ClassVar[frozenset[str]] = frozenset({"kind"})
+
+    kind: Annotated[str, Field(json_schema_extra={"not": {"const": "mannequin"}})]
+
+
+def _kind_of_drawing(value: object) -> str:
+    """Which drawing a document means: a mannequin, or whatever else it names."""
+    kind = value.get("kind") if isinstance(value, dict) else getattr(value, "kind", None)
+    return "mannequin" if kind == "mannequin" else "other"
+
+
+#: How an actor is drawn, chosen by its `kind`: a mannequin, or a kind this reader does not
+#: know, which it keeps and draws nothing for.
+CoreDrawing = Annotated[
+    Annotated[CoreMannequin, Tag("mannequin")] | Annotated[CoreOtherDrawing, Tag("other")],
+    Discriminator(_kind_of_drawing),
+]
 
 
 class CoreActor(CoreModel):
@@ -491,20 +669,17 @@ class CoreActor(CoreModel):
             `gaze` because it is known only after every actor has been placed, and
             because balloon placement must go on reading the same vector it always
             has. This is what aims the pupils.
-        face_marks: The drawn face -- brows, eyes, pupils, nose, mouth -- as resolved
-            numeric primitives. Empty when the puppet declares no features, or when
-            the figure is too small for features to read as anything but a smudge.
-        marks: Which emanata were asked for -- `plewds`, `grawlixes`, and so on.
-        emanata: The marks drawn around the character, as the same strokes and discs
-            a face is made of. Empty when there are no marks, or when the figure is too
-            small to have a face. Ids are numbered per mark: `plewd_0`, `plewd_1`, ...
+        marks: Which emanata were asked for -- `plewds`, `grawlixes`, and so on. Any string:
+            the language checks them, the reader does not.
         emanata_zones: One polygon per mark, enclosing what it draws. Balloons and
             captions pay to cover these and are never forbidden to. Kept apart from
             `hull` on purpose: the hull is what staging spaces characters by, and a
             character who starts sweating must not move.
         hull: Convex silhouette, used for the soft occlusion cost.
-        capsules: Limb segments, as thick rounded lines.
-        blobs: Rounded masses such as the head.
+        drawing: How the figure is drawn, apart from where it is. For a puppet the shipped
+            library makes, a :class:`CoreMannequin <scenet.core.CoreMannequin>`. Nothing
+            above is read from it, so a renderer that draws some other way reads the same
+            contract. Left out of the JSON when None.
         depth: Painter's order. Lower is drawn first, so higher sits in front.
         joints: Where every joint of the skeleton landed, by the puppet's name for it, in
             panel coordinates. `_l` and `_r` are the sides of the screen in the
@@ -517,8 +692,7 @@ class CoreActor(CoreModel):
         looking_at: Whom this character looks at: an actor id, or the name of
             somebody heard from off panel. `gaze_aim` is the direction; this is who.
 
-    The last three are left out of the JSON when empty, so an actor written before them
-    reads and writes as it did.
+    The geometric contract is above; what is drawn is under `drawing`.
     """
 
     id: CoreId
@@ -531,17 +705,19 @@ class CoreActor(CoreModel):
     hull: tuple[tuple[float, float], ...]
     expression: str = "neutral"
     gaze_aim: tuple[float, float] | None = None
-    face_marks: tuple[FaceMark, ...] = ()
-    marks: tuple[Mark, ...] = ()
-    emanata: tuple[FaceMark, ...] = ()
+    marks: tuple[Annotated[str, _known(Mark)], ...] = ()
     emanata_zones: tuple[tuple[tuple[float, float], ...], ...] = ()
-    capsules: tuple[Capsule, ...] = ()
-    blobs: tuple[Blob, ...] = ()
+    drawing: CoreDrawing | None = None
     # Painter's order: lower values are drawn first, so higher values sit in front.
     depth: int = 0
     joints: dict[str, tuple[float, float]] = Field(default_factory=dict)
     features: dict[str, tuple[float, float]] = Field(default_factory=dict)
     looking_at: SvgText | None = None
+
+    @property
+    def mannequin(self) -> CoreMannequin | None:
+        """The mannequin this actor is drawn as, or None when it is drawn some other way."""
+        return self.drawing if isinstance(self.drawing, CoreMannequin) else None
 
     @property
     def bounds(self) -> BBox:
@@ -859,8 +1035,8 @@ class CoreCamera(CoreModel):
             the shot as asked, less when it was loosened.
     """
 
-    shot: ShotType
-    angle: CameraAngle
+    shot: Annotated[str, _known(ShotType)]
+    angle: Annotated[str, _known(CameraAngle)]
     reference: Annotated[str, AfterValidator(_puppet_reference)]
     scale: float
     headroom: float
@@ -868,7 +1044,31 @@ class CoreCamera(CoreModel):
     pullback: float = 1.0
 
 
-class PanelCore(CoreModel):
+class CoreDocument(CoreModel):
+    """What every Core document says first: what it is, which version, in which units.
+
+    Attributes:
+        schema_url: The versioned address of the JSON Schema it is written to, `$schema` in
+            the file.
+        format: Which document this is: `scenet.panel`, `scenet.page` or `scenet.book`.
+        format_version: `major.minor`. A reader refuses a major it does not know, and reads
+            a newer minor of one it does, ignoring what it cannot interpret and saying so.
+        units: What one unit of every length and position is: `0.1mm`, a tenth of a
+            millimetre.
+        extensions_required: The names, in `extensions`, a reader must implement to draw
+            this document as it was meant. A reader that does not refuses it.
+    """
+
+    always: ClassVar[frozenset[str]] = frozenset(
+        {"schema_url", "format", "format_version", "units"}
+    )
+
+    format_version: str = CORE_FORMAT_VERSION
+    units: Literal["0.1mm"] = CORE_UNITS
+    extensions_required: tuple[ExtensionName, ...] = ()
+
+
+class PanelCore(CoreDocument):
     """A fully resolved panel: numeric, named, and ready to emit.
 
     The middle tier, and the architectural idea of the project. Every position here is
@@ -880,7 +1080,11 @@ class PanelCore(CoreModel):
     lower-level one before emitting anything drawable.
 
     Attributes:
-        format_version: Bumped when the shape of this document changes incompatibly.
+        schema_url: `$schema` in the file: the versioned address of the schema it is
+            written to.
+        format: Always `scenet.panel`.
+        format_version: The version of the format, `major.minor`.
+        units: Always `0.1mm`: a unit is a tenth of a millimetre.
         width: Panel width in panel units.
         height: Panel height in panel units.
         actors: Resolved characters, back to front by `depth`, and at one depth left to
@@ -943,7 +1147,8 @@ class PanelCore(CoreModel):
         :func:`render <scenet.emit.svg.render>`, to draw it.
     """
 
-    format_version: int = CORE_FORMAT_VERSION
+    schema_url: str = Field(default=PANEL_CORE_SCHEMA, alias="$schema")
+    format: Literal["scenet.panel"] = "scenet.panel"
     width: float
     height: float
     actors: tuple[CoreActor, ...] = ()
@@ -1065,44 +1270,7 @@ class PanelCore(CoreModel):
         yields byte-identical output on any platform. A trailing newline keeps the
         file well-formed for line-oriented tools like git diff.
         """
-        payload: Any = self.model_dump(mode="json")
-        _drop_unused(
-            payload,
-            exclusions=(),
-            outline=None,
-            fonts={},
-            sfx=(),
-            description=None,
-            figures=(),
-            direction=Direction.LTR,
-            camera=None,
-            palette=Palette.MONO,
-            open=(),
-            lettering=None,
-        )
-        for actor in payload["actors"]:
-            _drop_unused(actor, joints={}, features={}, looking_at=None)
-        for figure in payload.get("figures", []):
-            _drop_unused(figure, actor=None, mouth=None, body=())
-        for lettered in (*payload["balloons"], *payload["captions"]):
-            _drop_unused(lettered, runs=(), label=None)
-        for caption in payload["captions"]:
-            _drop_unused(caption, colour="")
-        if payload.get("backdrop") is not None:
-            _drop_unused(payload["backdrop"], horizon=None, image=None, place=None, time=None)
-            for mass in payload["backdrop"]["masses"]:
-                _drop_unused(mass, colour="")
-            if (air := payload["backdrop"]["atmosphere"]) is not None:
-                _drop_unused(air, colour="", fall_colour="")
-                if air["veil"] is not None:
-                    _drop_unused(air["veil"], colour="")
-            if payload["backdrop"].get("image") is not None:
-                _drop_unused(payload["backdrop"]["image"], keep_out=())
-        for effect in payload.get("sfx", []):
-            _drop_unused(effect, label=None)
-        for balloon in payload["balloons"]:
-            _drop_unused(balloon, off_panel=None)
-        return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        return _written(self)
 
     @classmethod
     def from_json(cls, text: str) -> Self:
@@ -1125,31 +1293,151 @@ class PanelCore(CoreModel):
         return _read_back(cls, text, "Panel Core")
 
 
-def _read_back[M: CoreModel](model: type[M], text: str, what: str) -> M:
-    """A Core document read back as `model`, or the reason it cannot be, located."""
+def _written(document: CoreDocument) -> str:
+    """A document as JSON: keys sorted, two-space indented, with a trailing newline.
+
+    Rounded already, and each field at its default left out, so the same document is the
+    same bytes on any platform and a field added later with a default changes nothing for
+    a document that does not use it.
+    """
+    payload = document.model_dump(mode="json", by_alias=True)
+    return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def _refuse_version(what: str, version: object) -> CoreSyntaxError:
+    """The refusal of a document whose `format_version` this reader cannot read."""
+    shown = json.dumps(version)
+    return CoreSyntaxError(
+        f"this {what} is of format {shown}, which this Scenet cannot read: it reads format "
+        f"{CORE_FORMAT_MAJOR} (version {CORE_FORMAT_VERSION}) and upgrades format 1. "
+        "Write it with a Scenet that reads it, or read it with one that does."
+    )
+
+
+def _upgrade_from_one(payload: dict[str, Any], model: "type[CoreDocument]") -> dict[str, Any]:
+    """A Core of format 1, as the format 2 it is.
+
+    Format 1 named its version as the integer 1 and had no header; every actor carried its
+    drawing at the top. The upgrade is a pure rearrangement, so what is read draws exactly
+    as it did, and the same document upgraded twice is the same.
+    """
+    upgraded = {key: value for key, value in payload.items() if key != "format_version"}
+    header = model.model_fields
+    upgraded["$schema"] = header["schema_url"].default
+    upgraded["format"] = header["format"].default
+    upgraded["format_version"] = CORE_FORMAT_VERSION
+    upgraded["units"] = CORE_UNITS
+    actors = upgraded.get("actors")
+    if isinstance(actors, list):
+        upgraded["actors"] = [_drawn_as_a_mannequin(actor) for actor in actors]
+    return upgraded
+
+
+def _drawn_as_a_mannequin(actor: object) -> object:
+    """An actor of format 1, with its drawing primitives moved under `drawing`."""
+    if not isinstance(actor, dict):
+        return actor
+    moved = ("capsules", "blobs", "face_marks", "emanata")
+    drawing = {"kind": "mannequin", **{key: actor[key] for key in moved if key in actor}}
+    return {**{key: value for key, value in actor.items() if key not in moved}, "drawing": drawing}
+
+
+def _versioned(
+    payload: dict[str, Any], model: "type[CoreDocument]", what: str
+) -> tuple[dict[str, Any], str | None]:
+    """The document as format 2 and the version a newer minor wrote it as, or the refusal.
+
+    Returns:
+        The payload ready to validate, and the version it names when that is a newer minor
+        of the format this reads -- which is when keys it does not know are not typos.
+    """
+    if "format_version" not in payload:
+        if "format" in payload or "$schema" in payload:
+            raise CoreSyntaxError(
+                f"this {what} names its format but not its version: it needs a "
+                f'"format_version", `"{CORE_FORMAT_VERSION}"` for this one'
+            )
+        return _upgrade_from_one(payload, model), None
+    version = payload["format_version"]
+    if isinstance(version, int) and not isinstance(version, bool):
+        if version == 1:
+            return _upgrade_from_one(payload, model), None
+        raise _refuse_version(what, version)
+    found = _VERSION.fullmatch(version) if isinstance(version, str) else None
+    if found is None:
+        raise CoreSyntaxError(
+            f'invalid {what}: "format_version" is {json.dumps(version)}, and a version is '
+            f'"major.minor" in quotes, like "{CORE_FORMAT_VERSION}"'
+        )
+    major, minor = int(found[1]), int(found[2])
+    if major != CORE_FORMAT_MAJOR:
+        raise _refuse_version(what, version)
+    named = payload.get("format", model.model_fields["format"].default)
+    if named != model.model_fields["format"].default:
+        raise CoreSyntaxError(
+            f"this document is a {json.dumps(named)}, not a {what} "
+            f"({json.dumps(model.model_fields['format'].default)})"
+        )
+    if minor <= CORE_FORMAT_MINOR:
+        return payload, None
+    # Written by a newer minor: what it adds is not a typo, and what this writes back is
+    # this version's.
+    header = model.model_fields
+    return {
+        **payload,
+        "$schema": header["schema_url"].default,
+        "format_version": CORE_FORMAT_VERSION,
+    }, found.string
+
+
+def _read_back[M: CoreDocument](model: type[M], text: str, what: str) -> M:
+    """A Core document read back as `model`, or the reason it cannot be, located.
+
+    The policy, which `docs/reference/panel_core.md` states: a document of format 1 is
+    upgraded; an unknown major, a format that is not `model`'s and a version that is not
+    `major.minor` are refused; a newer minor of this major is read, and what it adds that
+    this does not know is left out and reported; and an extension the document requires and
+    this does not implement is refused.
+    """
     try:
-        return model.model_validate(json.loads(text))
+        payload = json.loads(text)
     except json.JSONDecodeError as exc:
         raise CoreSyntaxError(
             f"not JSON: {exc.msg} at line {exc.lineno}, column {exc.colno}"
         ) from exc
+    if not isinstance(payload, dict):
+        raise CoreSyntaxError(f"invalid {what}: a document is a JSON object, not {_a(payload)}")
+    payload, newer = _versioned(payload, model, what)
+    unknown: list[str] = []
+    try:
+        core = model.model_validate(payload, context={"unknown": unknown} if newer else None)
     except ValidationError as exc:
         raise CoreSyntaxError(summarise(exc, what=what)) from exc
+    for name in core.extensions_required:
+        if name not in KNOWN_EXTENSIONS:
+            raise CoreSyntaxError(
+                f"this {what} requires the extension {json.dumps(name)}, which this Scenet "
+                "does not implement, so it would not be drawn as it was meant"
+            )
+    if unknown and newer is not None:
+        warnings.warn(
+            f"this {what} was written by a newer Scenet ({newer}); this reads "
+            f"{CORE_FORMAT_VERSION}. It names {', '.join(sorted(set(unknown)))}, which this "
+            "does not know and has left out.",
+            stacklevel=3,
+        )
+    return core
 
 
-def _drop_unused(payload: dict[str, Any], **unused: object) -> None:
-    """Leave out of a document each field still at the value that means "not used".
-
-    For fields added after the format was published: a document that does not use one
-    is then byte-identical to what it was before the field existed, which is what golden
-    files and anyone diffing two builds rely on. Done here, not with pydantic's
-    `exclude_if`, which needs pydantic 2.12 while this package accepts 2.9.
-    """
-    for name, value in unused.items():
-        if name in payload and payload[name] == (
-            list(value) if isinstance(value, tuple) else value
-        ):
-            del payload[name]
+def _a(value: object) -> str:
+    """What a JSON value is, as a refusal names it."""
+    if isinstance(value, list):
+        return "an array"
+    if isinstance(value, str):
+        return "a string"
+    if isinstance(value, bool):
+        return "a boolean"
+    return "null" if value is None else "a number"
 
 
 class CoreFrame(CoreModel):
@@ -1185,7 +1473,7 @@ class CoreFrame(CoreModel):
     bleed: tuple[Side, ...] = ()
 
 
-class PageCore(CoreModel):
+class PageCore(CoreDocument):
     r"""A fully resolved page: where every panel's frame is.
 
     The page tier of the same idea as :class:`PanelCore <scenet.core.PanelCore>`. It holds
@@ -1194,7 +1482,11 @@ class PageCore(CoreModel):
     reads the same whether or not it is on a page.
 
     Attributes:
-        format_version: Bumped when the shape of this document changes incompatibly.
+        schema_url: `$schema` in the file: the versioned address of the schema it is
+            written to.
+        format: Always `scenet.page`.
+        format_version: The version of the format, `major.minor`.
+        units: Always `0.1mm`.
         width: Page width, in page units.
         height: Page height.
         lettering_height: The height every panel on the page took its type size from, in
@@ -1222,7 +1514,8 @@ class PageCore(CoreModel):
         :class:`PanelCore <scenet.core.PanelCore>`, what each frame holds.
     """
 
-    format_version: int = CORE_FORMAT_VERSION
+    schema_url: str = Field(default=PAGE_CORE_SCHEMA, alias="$schema")
+    format: Literal["scenet.page"] = "scenet.page"
     width: float
     height: float
     lettering_height: float
@@ -1232,11 +1525,7 @@ class PageCore(CoreModel):
 
     def to_json(self) -> str:
         """Serialise deterministically, exactly as a Panel Core is."""
-        payload: Any = self.model_dump(mode="json")
-        _drop_unused(payload, direction=Direction.LTR, bleed=0.0)
-        for frame in payload["frames"]:
-            _drop_unused(frame, inset_of=None, clearance=None, outline=None, bleed=())
-        return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        return _written(self)
 
     @classmethod
     def from_json(cls, text: str) -> Self:
@@ -1271,7 +1560,10 @@ def round_pairs(points: tuple[Point, ...]) -> tuple[tuple[float, float], ...]:
 
 
 __all__ = [
+    "CORE_FORMAT_MAJOR",
+    "CORE_FORMAT_MINOR",
     "CORE_FORMAT_VERSION",
+    "CORE_UNITS",
     "PRECISION",
     "Blob",
     "Box",
@@ -1282,13 +1574,17 @@ __all__ = [
     "CoreBalloon",
     "CoreCamera",
     "CoreCaption",
+    "CoreDocument",
+    "CoreDrawing",
     "CoreFigure",
     "CoreFont",
     "CoreFrame",
     "CoreGlyph",
     "CoreImage",
+    "CoreMannequin",
     "CoreMass",
     "CoreModel",
+    "CoreOtherDrawing",
     "CoreRun",
     "CoreSfx",
     "CoreStreak",

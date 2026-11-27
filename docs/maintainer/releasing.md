@@ -349,8 +349,10 @@ arrive without having read anything else.
 - **The language** — a construct that stops compiling is a major change. New optional keys
   are minor.
 
-`format_version` inside a Panel Core document is separate, and bumped only when the shape
-of that document changes incompatibly.
+`format_version` inside a Core document is separate, as `major.minor`: the minor is bumped when
+a release adds something an older reader can leave out, the major when the shape of the document
+changes incompatibly, and then the release ships the upgrade from the major before it. A Core's
+JSON Schemas are published once per format version, at the address its `$schema` names.
 
 While the version is below `1.0.0`, minor versions may break things. That is what being
 below 1.0 means, and the status is [alpha](../explanation/status.md) for a reason.

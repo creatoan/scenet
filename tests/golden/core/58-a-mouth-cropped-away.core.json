@@ -1,7 +1,6 @@
 {
-  "actors": [],
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "backdrop": {
-    "atmosphere": null,
     "image": {
       "box": {
         "height": 900.0,
@@ -39,7 +38,6 @@
       "preserve_aspect_ratio": "xMidYMid slice",
       "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
     },
-    "masses": [],
     "seed": 493335943
   },
   "balloons": [
@@ -62,7 +60,6 @@
       "order": 0,
       "speaker": "ana",
       "tail": {
-        "control": null,
         "end": [
           0.0,
           262.73
@@ -70,8 +67,7 @@
         "start": [
           87.29,
           164.19
-        ],
-        "width": 14.0
+        ]
       }
     },
     {
@@ -93,7 +89,6 @@
       "order": 1,
       "speaker": "ben",
       "tail": {
-        "control": null,
         "end": [
           189.45,
           429.2
@@ -101,12 +96,10 @@
         "start": [
           223.41,
           455.08
-        ],
-        "width": 14.0
+        ]
       }
     }
   ],
-  "captions": [],
   "description": "Ana, left; Ben, centre.",
   "figures": [
     {
@@ -202,7 +195,9 @@
       ]
     }
   ],
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 900.0,
+  "units": "0.1mm",
   "width": 400.0
 }

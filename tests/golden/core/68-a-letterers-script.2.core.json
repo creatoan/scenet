@@ -1,4 +1,5 @@
 {
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "actors": [
     {
       "anchors": {
@@ -19,283 +20,274 @@
           125.75
         ]
       },
-      "blobs": [
-        {
-          "centre": [
-            900.0,
-            98.72
-          ],
-          "radius": 54.06
-        }
-      ],
-      "capsules": [
-        {
-          "end": [
-            900.0,
-            402.27
-          ],
-          "start": [
-            900.0,
-            188.12
-          ],
-          "width": 87.32
-        },
-        {
-          "end": [
-            865.31,
-            296.89
-          ],
-          "start": [
-            856.34,
-            194.36
-          ],
-          "width": 31.19
-        },
-        {
-          "end": [
-            873.64,
-            392.16
-          ],
-          "start": [
-            865.31,
-            296.89
-          ],
-          "width": 25.99
-        },
-        {
-          "end": [
-            934.69,
-            296.89
-          ],
-          "start": [
-            943.66,
-            194.36
-          ],
-          "width": 31.19
-        },
-        {
-          "end": [
-            926.36,
-            392.16
-          ],
-          "start": [
-            934.69,
-            296.89
-          ],
-          "width": 25.99
-        },
-        {
-          "end": [
-            866.73,
-            651.77
-          ],
-          "start": [
-            866.73,
-            412.67
-          ],
-          "width": 39.5
-        },
-        {
-          "end": [
-            866.73,
-            857.6
-          ],
-          "start": [
-            866.73,
-            651.77
-          ],
-          "width": 32.23
-        },
-        {
-          "end": [
-            933.27,
-            651.77
-          ],
-          "start": [
-            933.27,
-            412.67
-          ],
-          "width": 39.5
-        },
-        {
-          "end": [
-            933.27,
-            857.6
-          ],
-          "start": [
-            933.27,
-            651.77
-          ],
-          "width": 32.23
-        }
-      ],
-      "depth": 0,
-      "emanata": [],
-      "emanata_zones": [],
-      "expression": "neutral",
+      "drawing": {
+        "blobs": [
+          {
+            "centre": [
+              900.0,
+              98.72
+            ],
+            "radius": 54.06
+          }
+        ],
+        "capsules": [
+          {
+            "end": [
+              900.0,
+              402.27
+            ],
+            "start": [
+              900.0,
+              188.12
+            ],
+            "width": 87.32
+          },
+          {
+            "end": [
+              865.31,
+              296.89
+            ],
+            "start": [
+              856.34,
+              194.36
+            ],
+            "width": 31.19
+          },
+          {
+            "end": [
+              873.64,
+              392.16
+            ],
+            "start": [
+              865.31,
+              296.89
+            ],
+            "width": 25.99
+          },
+          {
+            "end": [
+              934.69,
+              296.89
+            ],
+            "start": [
+              943.66,
+              194.36
+            ],
+            "width": 31.19
+          },
+          {
+            "end": [
+              926.36,
+              392.16
+            ],
+            "start": [
+              934.69,
+              296.89
+            ],
+            "width": 25.99
+          },
+          {
+            "end": [
+              866.73,
+              651.77
+            ],
+            "start": [
+              866.73,
+              412.67
+            ],
+            "width": 39.5
+          },
+          {
+            "end": [
+              866.73,
+              857.6
+            ],
+            "start": [
+              866.73,
+              651.77
+            ],
+            "width": 32.23
+          },
+          {
+            "end": [
+              933.27,
+              651.77
+            ],
+            "start": [
+              933.27,
+              412.67
+            ],
+            "width": 39.5
+          },
+          {
+            "end": [
+              933.27,
+              857.6
+            ],
+            "start": [
+              933.27,
+              651.77
+            ],
+            "width": 32.23
+          }
+        ],
+        "face_marks": [
+          {
+            "id": "brow_l",
+            "mark": "stroke",
+            "points": [
+              [
+                891.68,
+                69.62
+              ],
+              [
+                878.17,
+                67.18
+              ],
+              [
+                864.66,
+                69.62
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "id": "brow_r",
+            "mark": "stroke",
+            "points": [
+              [
+                908.32,
+                69.62
+              ],
+              [
+                921.83,
+                67.18
+              ],
+              [
+                935.34,
+                69.62
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "centre": [
+              878.17,
+              86.25
+            ],
+            "id": "eye_l",
+            "mark": "disc",
+            "radius": 9.36,
+            "width": 3.72
+          },
+          {
+            "centre": [
+              878.17,
+              86.25
+            ],
+            "filled": true,
+            "id": "pupil_l",
+            "mark": "disc",
+            "radius": 3.18
+          },
+          {
+            "centre": [
+              921.83,
+              86.25
+            ],
+            "id": "eye_r",
+            "mark": "disc",
+            "radius": 9.36,
+            "width": 3.72
+          },
+          {
+            "centre": [
+              921.83,
+              86.25
+            ],
+            "filled": true,
+            "id": "pupil_r",
+            "mark": "disc",
+            "radius": 3.18
+          },
+          {
+            "id": "nose",
+            "mark": "stroke",
+            "points": [
+              [
+                900.0,
+                97.74
+              ],
+              [
+                900.0,
+                106.31
+              ],
+              [
+                903.43,
+                108.03
+              ]
+            ],
+            "width": 3.72
+          },
+          {
+            "id": "mouth",
+            "mark": "stroke",
+            "points": [
+              [
+                891.16,
+                125.75
+              ],
+              [
+                892.93,
+                126.13
+              ],
+              [
+                894.7,
+                126.43
+              ],
+              [
+                896.47,
+                126.64
+              ],
+              [
+                898.23,
+                126.77
+              ],
+              [
+                900.0,
+                126.81
+              ],
+              [
+                901.77,
+                126.77
+              ],
+              [
+                903.53,
+                126.64
+              ],
+              [
+                905.3,
+                126.43
+              ],
+              [
+                907.07,
+                126.13
+              ],
+              [
+                908.84,
+                125.75
+              ]
+            ],
+            "width": 3.72
+          }
+        ],
+        "kind": "mannequin"
+      },
       "face_exclusion": {
         "cx": 900.0,
         "cy": 98.72,
         "r": 67.57
       },
-      "face_marks": [
-        {
-          "closed": false,
-          "id": "brow_l",
-          "mark": "stroke",
-          "points": [
-            [
-              891.68,
-              69.62
-            ],
-            [
-              878.17,
-              67.18
-            ],
-            [
-              864.66,
-              69.62
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "closed": false,
-          "id": "brow_r",
-          "mark": "stroke",
-          "points": [
-            [
-              908.32,
-              69.62
-            ],
-            [
-              921.83,
-              67.18
-            ],
-            [
-              935.34,
-              69.62
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "centre": [
-            878.17,
-            86.25
-          ],
-          "filled": false,
-          "id": "eye_l",
-          "mark": "disc",
-          "radius": 9.36,
-          "width": 3.72
-        },
-        {
-          "centre": [
-            878.17,
-            86.25
-          ],
-          "filled": true,
-          "id": "pupil_l",
-          "mark": "disc",
-          "radius": 3.18,
-          "width": 0.0
-        },
-        {
-          "centre": [
-            921.83,
-            86.25
-          ],
-          "filled": false,
-          "id": "eye_r",
-          "mark": "disc",
-          "radius": 9.36,
-          "width": 3.72
-        },
-        {
-          "centre": [
-            921.83,
-            86.25
-          ],
-          "filled": true,
-          "id": "pupil_r",
-          "mark": "disc",
-          "radius": 3.18,
-          "width": 0.0
-        },
-        {
-          "closed": false,
-          "id": "nose",
-          "mark": "stroke",
-          "points": [
-            [
-              900.0,
-              97.74
-            ],
-            [
-              900.0,
-              106.31
-            ],
-            [
-              903.43,
-              108.03
-            ]
-          ],
-          "width": 3.72
-        },
-        {
-          "closed": false,
-          "id": "mouth",
-          "mark": "stroke",
-          "points": [
-            [
-              891.16,
-              125.75
-            ],
-            [
-              892.93,
-              126.13
-            ],
-            [
-              894.7,
-              126.43
-            ],
-            [
-              896.47,
-              126.64
-            ],
-            [
-              898.23,
-              126.77
-            ],
-            [
-              900.0,
-              126.81
-            ],
-            [
-              901.77,
-              126.77
-            ],
-            [
-              903.53,
-              126.64
-            ],
-            [
-              905.3,
-              126.43
-            ],
-            [
-              907.07,
-              126.13
-            ],
-            [
-              908.84,
-              125.75
-            ]
-          ],
-          "width": 3.72
-        }
-      ],
       "features": {
         "brow_l": [
           878.17,
@@ -326,7 +318,6 @@
         1.0,
         0.0
       ],
-      "gaze_aim": null,
       "hull": [
         [
           839.45,
@@ -440,7 +431,6 @@
           392.16
         ]
       },
-      "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
       "transform": {
@@ -453,10 +443,6 @@
   ],
   "backdrop": {
     "atmosphere": {
-      "fall_tone": "",
-      "flecks": [],
-      "streak_width": 0.0,
-      "streaks": [],
       "time": "night",
       "tone": "#4d4d4d",
       "veil": {
@@ -903,7 +889,6 @@
       "order": 0,
       "speaker": "THEO",
       "tail": {
-        "control": null,
         "end": [
           844.74,
           137.61
@@ -911,8 +896,7 @@
         "start": [
           814.37,
           144.13
-        ],
-        "width": 14.0
+        ]
       }
     },
     {
@@ -936,7 +920,6 @@
       "order": 2,
       "speaker": "FERRYMAN",
       "tail": {
-        "control": null,
         "end": [
           130.78,
           893.33
@@ -944,8 +927,7 @@
         "start": [
           130.78,
           525.88
-        ],
-        "width": 14.0
+        ]
       }
     }
   ],
@@ -953,14 +935,13 @@
     "angle": "eye_level",
     "footroom": 0.04,
     "headroom": 0.05,
-    "pullback": 1.0,
     "reference": "bob",
     "scale": 1.04,
     "shot": "full_shot"
   },
-  "captions": [],
   "description": "Theo stops and looks up at the lighthouse.",
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 893.33,
   "sfx": [
     {
@@ -1016,11 +997,9 @@
           ]
         }
       ],
-      "hollow": false,
       "id": "s0",
       "label": "Sound effect: KREEEK.",
       "order": 1,
-      "source": null,
       "stroke": "#ffffff",
       "stroke_width": 6.79,
       "text": "KREEEK",
@@ -1044,5 +1023,6 @@
       ]
     }
   ],
+  "units": "0.1mm",
   "width": 1800.0
 }

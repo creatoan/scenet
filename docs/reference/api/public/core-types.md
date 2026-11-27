@@ -110,6 +110,18 @@ The types a compile returns, read off `result.core` and `book.pages`. They are n
 .. autoclass:: scenet.core.CoreCaption
 ```
 
+## `CoreDocument`
+
+| | |
+|---|---|
+| Import | `from scenet.core import CoreDocument` |
+| Defined in | {py:mod}`scenet.core` ([source](https://github.com/creatoan/scenet/blob/main/src/scenet/core.py)) |
+| Stability | Returned, not exported: its fields are the Panel Core format's, and change only as [the format](../../panel_core.md) says, under `CORE_FORMAT_VERSION`. |
+
+```{eval-rst}
+.. autoclass:: scenet.core.CoreDocument
+```
+
 ## `CoreFigure`
 
 | | |
@@ -170,6 +182,18 @@ The types a compile returns, read off `result.core` and `book.pages`. They are n
 .. autoclass:: scenet.core.CoreImage
 ```
 
+## `CoreMannequin`
+
+| | |
+|---|---|
+| Import | `from scenet.core import CoreMannequin` |
+| Defined in | {py:mod}`scenet.core` ([source](https://github.com/creatoan/scenet/blob/main/src/scenet/core.py)) |
+| Stability | Returned, not exported: its fields are the Panel Core format's, and change only as [the format](../../panel_core.md) says, under `CORE_FORMAT_VERSION`. |
+
+```{eval-rst}
+.. autoclass:: scenet.core.CoreMannequin
+```
+
 ## `CoreMass`
 
 | | |
@@ -180,6 +204,18 @@ The types a compile returns, read off `result.core` and `book.pages`. They are n
 
 ```{eval-rst}
 .. autoclass:: scenet.core.CoreMass
+```
+
+## `CoreOtherDrawing`
+
+| | |
+|---|---|
+| Import | `from scenet.core import CoreOtherDrawing` |
+| Defined in | {py:mod}`scenet.core` ([source](https://github.com/creatoan/scenet/blob/main/src/scenet/core.py)) |
+| Stability | Returned, not exported: its fields are the Panel Core format's, and change only as [the format](../../panel_core.md) says, under `CORE_FORMAT_VERSION`. |
+
+```{eval-rst}
+.. autoclass:: scenet.core.CoreOtherDrawing
 ```
 
 ## `CoreRun`

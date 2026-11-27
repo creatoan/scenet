@@ -18,8 +18,9 @@ Every name in `scenet.__all__` is public. Each one's entry gives the release it 
   [Internals](index.md#internals).
 - **The Panel Core types are returned, not exported.** `CoreActor`, `CoreBalloon`, `CoreFrame`
   and the rest are imported from `scenet.core`. Their fields are the Panel Core format's, which
-  changes only as [the format](../panel_core.md) says: a field an old document lacks reads as
-  it did, and anything else bumps `CORE_FORMAT_VERSION`.
+  changes only as [the format](../panel_core.md) says: a minor version adds fields a reader may
+  leave out, a field an old document lacks reads as its default, and anything else bumps the
+  major of `CORE_FORMAT_VERSION`.
 - **An error keeps its class, and its built-in base.** `except ScenetError` catches every
   error a public function raises for bad input, a bad file or a call it cannot honour, and
   `except ValueError` keeps catching what it caught. See {py:mod}`scenet.errors` for the

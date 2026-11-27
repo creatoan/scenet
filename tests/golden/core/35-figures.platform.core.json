@@ -1,7 +1,6 @@
 {
-  "actors": [],
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "backdrop": {
-    "atmosphere": null,
     "image": {
       "box": {
         "height": 800.0,
@@ -39,7 +38,6 @@
       "preserve_aspect_ratio": "xMidYMid slice",
       "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
     },
-    "masses": [],
     "seed": 2275449072
   },
   "balloons": [
@@ -62,7 +60,6 @@
       "order": 1,
       "speaker": "ana",
       "tail": {
-        "control": null,
         "end": [
           246.11,
           277.01
@@ -70,8 +67,7 @@
         "start": [
           211.89,
           284.36
-        ],
-        "width": 14.0
+        ]
       }
     },
     {
@@ -94,7 +90,6 @@
       "order": 2,
       "speaker": "ben",
       "tail": {
-        "control": null,
         "end": [
           610.22,
           263.26
@@ -102,8 +97,7 @@
         "start": [
           651.83,
           273.25
-        ],
-        "width": 14.0
+        ]
       }
     }
   ],
@@ -115,10 +109,8 @@
         "x": 12.0,
         "y": 12.0
       },
-      "fill": "#ffffff",
       "font_size": 18.0,
       "id": "c0",
-      "ink": "#111111",
       "italic": true,
       "kind": "locale",
       "label": "Caption: The last train. Again.",
@@ -127,8 +119,7 @@
         "The last",
         "train. Again."
       ],
-      "order": 0,
-      "speaker": null
+      "order": 0
     }
   ],
   "description": "Ana, left; Ben, centre.",
@@ -226,7 +217,9 @@
       ]
     }
   ],
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 600.0,
+  "units": "0.1mm",
   "width": 1200.0
 }

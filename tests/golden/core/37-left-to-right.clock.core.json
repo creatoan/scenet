@@ -1,4 +1,5 @@
 {
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "actors": [
     {
       "anchors": {
@@ -19,126 +20,125 @@
           113.17
         ]
       },
-      "blobs": [
-        {
-          "centre": [
-            192.0,
-            106.35
-          ],
-          "radius": 13.65
-        }
-      ],
-      "capsules": [
-        {
-          "end": [
-            192.0,
-            182.99
-          ],
-          "start": [
-            192.0,
-            128.92
-          ],
-          "width": 22.05
-        },
-        {
-          "end": [
-            183.24,
-            156.38
-          ],
-          "start": [
-            180.98,
-            130.49
-          ],
-          "width": 7.87
-        },
-        {
-          "end": [
-            185.35,
-            180.44
-          ],
-          "start": [
-            183.24,
-            156.38
-          ],
-          "width": 6.56
-        },
-        {
-          "end": [
-            200.76,
-            156.38
-          ],
-          "start": [
-            203.02,
-            130.49
-          ],
-          "width": 7.87
-        },
-        {
-          "end": [
-            198.65,
-            180.44
-          ],
-          "start": [
-            200.76,
-            156.38
-          ],
-          "width": 6.56
-        },
-        {
-          "end": [
-            183.6,
-            245.98
-          ],
-          "start": [
-            183.6,
-            185.61
-          ],
-          "width": 9.97
-        },
-        {
-          "end": [
-            183.6,
-            297.95
-          ],
-          "start": [
-            183.6,
-            245.98
-          ],
-          "width": 8.14
-        },
-        {
-          "end": [
-            200.4,
-            245.98
-          ],
-          "start": [
-            200.4,
-            185.61
-          ],
-          "width": 9.97
-        },
-        {
-          "end": [
-            200.4,
-            297.95
-          ],
-          "start": [
-            200.4,
-            245.98
-          ],
-          "width": 8.14
-        }
-      ],
-      "depth": 0,
-      "emanata": [],
-      "emanata_zones": [],
+      "drawing": {
+        "blobs": [
+          {
+            "centre": [
+              192.0,
+              106.35
+            ],
+            "radius": 13.65
+          }
+        ],
+        "capsules": [
+          {
+            "end": [
+              192.0,
+              182.99
+            ],
+            "start": [
+              192.0,
+              128.92
+            ],
+            "width": 22.05
+          },
+          {
+            "end": [
+              183.24,
+              156.38
+            ],
+            "start": [
+              180.98,
+              130.49
+            ],
+            "width": 7.87
+          },
+          {
+            "end": [
+              185.35,
+              180.44
+            ],
+            "start": [
+              183.24,
+              156.38
+            ],
+            "width": 6.56
+          },
+          {
+            "end": [
+              200.76,
+              156.38
+            ],
+            "start": [
+              203.02,
+              130.49
+            ],
+            "width": 7.87
+          },
+          {
+            "end": [
+              198.65,
+              180.44
+            ],
+            "start": [
+              200.76,
+              156.38
+            ],
+            "width": 6.56
+          },
+          {
+            "end": [
+              183.6,
+              245.98
+            ],
+            "start": [
+              183.6,
+              185.61
+            ],
+            "width": 9.97
+          },
+          {
+            "end": [
+              183.6,
+              297.95
+            ],
+            "start": [
+              183.6,
+              245.98
+            ],
+            "width": 8.14
+          },
+          {
+            "end": [
+              200.4,
+              245.98
+            ],
+            "start": [
+              200.4,
+              185.61
+            ],
+            "width": 9.97
+          },
+          {
+            "end": [
+              200.4,
+              297.95
+            ],
+            "start": [
+              200.4,
+              245.98
+            ],
+            "width": 8.14
+          }
+        ],
+        "kind": "mannequin"
+      },
       "expression": "sad",
       "face_exclusion": {
         "cx": 192.0,
         "cy": 106.35,
         "r": 17.06
       },
-      "face_marks": [],
       "features": {
         "brow_l": [
           186.49,
@@ -169,7 +169,6 @@
         1.0,
         0.0
       ],
-      "gaze_aim": null,
       "hull": [
         [
           176.71,
@@ -283,7 +282,6 @@
           180.44
         ]
       },
-      "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
       "transform": {
@@ -297,7 +295,6 @@
   "backdrop": {
     "atmosphere": {
       "fall_tone": "#4d4d4d",
-      "flecks": [],
       "streak_width": 1.0,
       "streaks": [
         {
@@ -692,12 +689,10 @@
     "seed": 913542614,
     "time": "night"
   },
-  "balloons": [],
   "camera": {
     "angle": "eye_level",
     "footroom": 0.1,
     "headroom": 0.28,
-    "pullback": 1.0,
     "reference": "bob",
     "scale": 0.26,
     "shot": "long_shot"
@@ -710,10 +705,8 @@
         "x": 5.76,
         "y": 5.76
       },
-      "fill": "#ffffff",
       "font_size": 21.0,
       "id": "c0",
-      "ink": "#111111",
       "italic": true,
       "kind": "locale",
       "label": "Caption: 00:10.",
@@ -721,12 +714,13 @@
       "lines": [
         "00:10"
       ],
-      "order": 0,
-      "speaker": null
+      "order": 0
     }
   ],
   "description": "Long shot. A street at night, in the rain. Ken, centre, sad.",
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 331.06,
+  "units": "0.1mm",
   "width": 288.0
 }

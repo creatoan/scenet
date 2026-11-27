@@ -83,7 +83,7 @@ class TestTheSetting:
         assert setting["image"] is None
         assert core.backdrop is not None
         assert setting["masses"] == [
-            {"depth": mass.depth, "id": mass.id, "kind": mass.kind.value, "plane": mass.plane.value}
+            {"depth": mass.depth, "id": mass.id, "kind": mass.kind, "plane": mass.plane.value}
             for mass in core.backdrop.masses
         ]
 

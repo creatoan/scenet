@@ -1,7 +1,6 @@
 {
-  "actors": [],
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "backdrop": {
-    "atmosphere": null,
     "image": {
       "box": {
         "height": 900.0,
@@ -39,7 +38,6 @@
       "preserve_aspect_ratio": "xMidYMid slice",
       "sha256": "72878ded74f6d9fd6a1b7d50da7e24c68017cb39b64035265169465ac86d85cd"
     },
-    "masses": [],
     "seed": 2624620346
   },
   "balloons": [
@@ -62,7 +60,6 @@
       "order": 1,
       "speaker": "ana",
       "tail": {
-        "control": null,
         "end": [
           277.02,
           421.08
@@ -70,8 +67,7 @@
         "start": [
           237.74,
           429.66
-        ],
-        "width": 14.0
+        ]
       }
     },
     {
@@ -94,7 +90,6 @@
       "order": 2,
       "speaker": "ben",
       "tail": {
-        "control": null,
         "end": [
           686.33,
           405.62
@@ -102,8 +97,7 @@
         "start": [
           734.14,
           417.27
-        ],
-        "width": 14.0
+        ]
       }
     }
   ],
@@ -115,10 +109,8 @@
         "x": 17.87,
         "y": 17.87
       },
-      "fill": "#ffffff",
       "font_size": 21.0,
       "id": "c0",
-      "ink": "#111111",
       "italic": true,
       "kind": "locale",
       "label": "Caption: Platform 4. Ten past nine.",
@@ -127,8 +119,7 @@
         "Platform 4.",
         "Ten past nine."
       ],
-      "order": 0,
-      "speaker": null
+      "order": 0
     }
   ],
   "description": "Ana, left; Ben, centre.",
@@ -226,7 +217,9 @@
       ]
     }
   ],
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 893.48,
+  "units": "0.1mm",
   "width": 1350.0
 }

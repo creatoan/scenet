@@ -1,4 +1,5 @@
 {
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
   "actors": [
     {
       "anchors": {
@@ -19,283 +20,274 @@
           271.63
         ]
       },
-      "blobs": [
-        {
-          "centre": [
-            900.0,
-            210.87
-          ],
-          "radius": 121.53
-        }
-      ],
-      "capsules": [
-        {
-          "end": [
-            900.0,
-            893.33
-          ],
-          "start": [
-            900.0,
-            411.87
-          ],
-          "width": 196.32
-        },
-        {
-          "end": [
-            822.0,
-            656.39
-          ],
-          "start": [
-            801.84,
-            425.89
-          ],
-          "width": 70.12
-        },
-        {
-          "end": [
-            840.74,
-            870.6
-          ],
-          "start": [
-            822.0,
-            656.39
-          ],
-          "width": 58.43
-        },
-        {
-          "end": [
-            978.0,
-            656.39
-          ],
-          "start": [
-            998.16,
-            425.89
-          ],
-          "width": 70.12
-        },
-        {
-          "end": [
-            959.26,
-            870.6
-          ],
-          "start": [
-            978.0,
-            656.39
-          ],
-          "width": 58.43
-        },
-        {
-          "end": [
-            825.21,
-            1454.26
-          ],
-          "start": [
-            825.21,
-            916.7
-          ],
-          "width": 88.81
-        },
-        {
-          "end": [
-            825.21,
-            1917.02
-          ],
-          "start": [
-            825.21,
-            1454.26
-          ],
-          "width": 72.45
-        },
-        {
-          "end": [
-            974.79,
-            1454.26
-          ],
-          "start": [
-            974.79,
-            916.7
-          ],
-          "width": 88.81
-        },
-        {
-          "end": [
-            974.79,
-            1917.02
-          ],
-          "start": [
-            974.79,
-            1454.26
-          ],
-          "width": 72.45
-        }
-      ],
-      "depth": 0,
-      "emanata": [],
-      "emanata_zones": [],
-      "expression": "neutral",
+      "drawing": {
+        "blobs": [
+          {
+            "centre": [
+              900.0,
+              210.87
+            ],
+            "radius": 121.53
+          }
+        ],
+        "capsules": [
+          {
+            "end": [
+              900.0,
+              893.33
+            ],
+            "start": [
+              900.0,
+              411.87
+            ],
+            "width": 196.32
+          },
+          {
+            "end": [
+              822.0,
+              656.39
+            ],
+            "start": [
+              801.84,
+              425.89
+            ],
+            "width": 70.12
+          },
+          {
+            "end": [
+              840.74,
+              870.6
+            ],
+            "start": [
+              822.0,
+              656.39
+            ],
+            "width": 58.43
+          },
+          {
+            "end": [
+              978.0,
+              656.39
+            ],
+            "start": [
+              998.16,
+              425.89
+            ],
+            "width": 70.12
+          },
+          {
+            "end": [
+              959.26,
+              870.6
+            ],
+            "start": [
+              978.0,
+              656.39
+            ],
+            "width": 58.43
+          },
+          {
+            "end": [
+              825.21,
+              1454.26
+            ],
+            "start": [
+              825.21,
+              916.7
+            ],
+            "width": 88.81
+          },
+          {
+            "end": [
+              825.21,
+              1917.02
+            ],
+            "start": [
+              825.21,
+              1454.26
+            ],
+            "width": 72.45
+          },
+          {
+            "end": [
+              974.79,
+              1454.26
+            ],
+            "start": [
+              974.79,
+              916.7
+            ],
+            "width": 88.81
+          },
+          {
+            "end": [
+              974.79,
+              1917.02
+            ],
+            "start": [
+              974.79,
+              1454.26
+            ],
+            "width": 72.45
+          }
+        ],
+        "face_marks": [
+          {
+            "id": "brow_l",
+            "mark": "stroke",
+            "points": [
+              [
+                881.3,
+                145.43
+              ],
+              [
+                850.92,
+                139.96
+              ],
+              [
+                820.54,
+                145.43
+              ]
+            ],
+            "width": 8.36
+          },
+          {
+            "id": "brow_r",
+            "mark": "stroke",
+            "points": [
+              [
+                918.7,
+                145.43
+              ],
+              [
+                949.08,
+                139.96
+              ],
+              [
+                979.46,
+                145.43
+              ]
+            ],
+            "width": 8.36
+          },
+          {
+            "centre": [
+              850.92,
+              182.82
+            ],
+            "id": "eye_l",
+            "mark": "disc",
+            "radius": 21.03,
+            "width": 8.36
+          },
+          {
+            "centre": [
+              850.92,
+              182.82
+            ],
+            "filled": true,
+            "id": "pupil_l",
+            "mark": "disc",
+            "radius": 7.15
+          },
+          {
+            "centre": [
+              949.08,
+              182.82
+            ],
+            "id": "eye_r",
+            "mark": "disc",
+            "radius": 21.03,
+            "width": 8.36
+          },
+          {
+            "centre": [
+              949.08,
+              182.82
+            ],
+            "filled": true,
+            "id": "pupil_r",
+            "mark": "disc",
+            "radius": 7.15
+          },
+          {
+            "id": "nose",
+            "mark": "stroke",
+            "points": [
+              [
+                900.0,
+                208.65
+              ],
+              [
+                900.0,
+                227.93
+              ],
+              [
+                907.71,
+                231.79
+              ]
+            ],
+            "width": 8.36
+          },
+          {
+            "id": "mouth",
+            "mark": "stroke",
+            "points": [
+              [
+                880.13,
+                271.63
+              ],
+              [
+                884.11,
+                272.49
+              ],
+              [
+                888.08,
+                273.16
+              ],
+              [
+                892.05,
+                273.64
+              ],
+              [
+                896.03,
+                273.92
+              ],
+              [
+                900.0,
+                274.02
+              ],
+              [
+                903.97,
+                273.92
+              ],
+              [
+                907.95,
+                273.64
+              ],
+              [
+                911.92,
+                273.16
+              ],
+              [
+                915.89,
+                272.49
+              ],
+              [
+                919.87,
+                271.63
+              ]
+            ],
+            "width": 8.36
+          }
+        ],
+        "kind": "mannequin"
+      },
       "face_exclusion": {
         "cx": 900.0,
         "cy": 210.87,
         "r": 151.92
       },
-      "face_marks": [
-        {
-          "closed": false,
-          "id": "brow_l",
-          "mark": "stroke",
-          "points": [
-            [
-              881.3,
-              145.43
-            ],
-            [
-              850.92,
-              139.96
-            ],
-            [
-              820.54,
-              145.43
-            ]
-          ],
-          "width": 8.36
-        },
-        {
-          "closed": false,
-          "id": "brow_r",
-          "mark": "stroke",
-          "points": [
-            [
-              918.7,
-              145.43
-            ],
-            [
-              949.08,
-              139.96
-            ],
-            [
-              979.46,
-              145.43
-            ]
-          ],
-          "width": 8.36
-        },
-        {
-          "centre": [
-            850.92,
-            182.82
-          ],
-          "filled": false,
-          "id": "eye_l",
-          "mark": "disc",
-          "radius": 21.03,
-          "width": 8.36
-        },
-        {
-          "centre": [
-            850.92,
-            182.82
-          ],
-          "filled": true,
-          "id": "pupil_l",
-          "mark": "disc",
-          "radius": 7.15,
-          "width": 0.0
-        },
-        {
-          "centre": [
-            949.08,
-            182.82
-          ],
-          "filled": false,
-          "id": "eye_r",
-          "mark": "disc",
-          "radius": 21.03,
-          "width": 8.36
-        },
-        {
-          "centre": [
-            949.08,
-            182.82
-          ],
-          "filled": true,
-          "id": "pupil_r",
-          "mark": "disc",
-          "radius": 7.15,
-          "width": 0.0
-        },
-        {
-          "closed": false,
-          "id": "nose",
-          "mark": "stroke",
-          "points": [
-            [
-              900.0,
-              208.65
-            ],
-            [
-              900.0,
-              227.93
-            ],
-            [
-              907.71,
-              231.79
-            ]
-          ],
-          "width": 8.36
-        },
-        {
-          "closed": false,
-          "id": "mouth",
-          "mark": "stroke",
-          "points": [
-            [
-              880.13,
-              271.63
-            ],
-            [
-              884.11,
-              272.49
-            ],
-            [
-              888.08,
-              273.16
-            ],
-            [
-              892.05,
-              273.64
-            ],
-            [
-              896.03,
-              273.92
-            ],
-            [
-              900.0,
-              274.02
-            ],
-            [
-              903.97,
-              273.92
-            ],
-            [
-              907.95,
-              273.64
-            ],
-            [
-              911.92,
-              273.16
-            ],
-            [
-              915.89,
-              272.49
-            ],
-            [
-              919.87,
-              271.63
-            ]
-          ],
-          "width": 8.36
-        }
-      ],
       "features": {
         "brow_l": [
           850.92,
@@ -326,7 +318,6 @@
         1.0,
         0.0
       ],
-      "gaze_aim": null,
       "hull": [
         [
           763.86,
@@ -440,7 +431,6 @@
           870.6
         ]
       },
-      "marks": [],
       "pose": "standing_neutral",
       "reference": "bob",
       "transform": {
@@ -453,10 +443,6 @@
   ],
   "backdrop": {
     "atmosphere": {
-      "fall_tone": "",
-      "flecks": [],
-      "streak_width": 0.0,
-      "streaks": [],
       "time": "night",
       "tone": "#4d4d4d",
       "veil": {
@@ -884,12 +870,10 @@
     "seed": 3256021777,
     "time": "night"
   },
-  "balloons": [],
   "camera": {
     "angle": "eye_level",
     "footroom": 0.0,
     "headroom": 0.1,
-    "pullback": 1.0,
     "reference": "bob",
     "scale": 2.34,
     "shot": "medium_shot"
@@ -902,10 +886,8 @@
         "x": 17.87,
         "y": 17.87
       },
-      "fill": "#ffffff",
       "font_size": 28.0,
       "id": "c0",
-      "ink": "#111111",
       "italic": true,
       "kind": "monologue",
       "label": "Caption, inner voice: Two hundred steps. I counted them once.",
@@ -915,8 +897,7 @@
         "steps. I counted",
         "them once."
       ],
-      "order": 0,
-      "speaker": null
+      "order": 0
     },
     {
       "box": {
@@ -925,10 +906,8 @@
         "x": 17.87,
         "y": 399.91
       },
-      "fill": "#ffffff",
       "font_size": 28.0,
       "id": "c1",
-      "ink": "#111111",
       "italic": false,
       "kind": "spoken",
       "label": "MAYA, off panel: Bring the oil.",
@@ -947,10 +926,8 @@
         "x": 1562.53,
         "y": 17.87
       },
-      "fill": "#ffffff",
       "font_size": 28.0,
       "id": "c2",
-      "ink": "#111111",
       "italic": true,
       "kind": "editorial",
       "label": "Editor's note: See The Lighthouse, issue 1.",
@@ -960,12 +937,12 @@
         "Lighthouse, issue",
         "1."
       ],
-      "order": 3,
-      "speaker": null
+      "order": 3
     }
   ],
   "description": "Theo at the foot of the lighthouse stairs.",
-  "format_version": 1,
+  "format": "scenet.panel",
+  "format_version": "2.0",
   "height": 893.33,
   "sfx": [
     {
@@ -1061,11 +1038,9 @@
           ]
         }
       ],
-      "hollow": false,
       "id": "s0",
       "label": "Sound effect: tik tik tik.",
       "order": 1,
-      "source": null,
       "stroke": "#ffffff",
       "stroke_width": 4.18,
       "text": "tik tik tik",
@@ -1089,5 +1064,6 @@
       ]
     }
   ],
+  "units": "0.1mm",
   "width": 1800.0
 }

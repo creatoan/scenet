@@ -346,7 +346,10 @@ def _item(item: CoreActor | CoreMass) -> list[Mark]:
 def _actor(actor: CoreActor) -> list[Mark]:
     owner = f"actor-{actor.id}"
     drawn: list[Mark] = []
-    for capsule in actor.capsules:
+    drawing = actor.mannequin
+    if drawing is None:
+        return drawn
+    for capsule in drawing.capsules:
         limb = Segment(capsule.start, capsule.end)
         drawn.append(Mark(owner, limb, stroke=INK, width=capsule.width, rounded=True))
         drawn.append(
@@ -358,7 +361,7 @@ def _actor(actor: CoreActor) -> list[Mark]:
                 rounded=True,
             )
         )
-    for blob in actor.blobs:
+    for blob in drawing.blobs:
         cx, cy = blob.centre
         drawn.append(
             Mark(
@@ -370,7 +373,7 @@ def _actor(actor: CoreActor) -> list[Mark]:
                 rounded=True,
             )
         )
-    drawn.extend(_face_mark(owner, mark) for mark in (*actor.face_marks, *actor.emanata))
+    drawn.extend(_face_mark(owner, mark) for mark in (*drawing.face_marks, *drawing.emanata))
     return drawn
 
 

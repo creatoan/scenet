@@ -89,7 +89,7 @@ def recedes(core: PanelCore, region: Region) -> tuple[float, float] | None:
     if region.kind in GROUND_KINDS:
         far = min(heights) if horizon is None else horizon
         return (far, core.height) if far < core.height else None
-    if region.kind is MassKind.CEILING:
+    if region.kind == MassKind.CEILING:
         far = max(heights) if horizon is None else horizon
         return (far, 0.0) if far > 0.0 else None
     return None

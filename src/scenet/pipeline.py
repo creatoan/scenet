@@ -33,6 +33,7 @@ from scenet.core import (
     CoreFrame,
     CoreGlyph,
     CoreImage,
+    CoreMannequin,
     CoreMass,
     CoreRun,
     CoreSfx,
@@ -245,7 +246,8 @@ class CompileResult:
         # crop them, so say so: a mark that silently vanished is the same complaint as
         # a camera that silently retreated.
         for actor in self.core.actors:
-            for mark in actor.marks:
+            for named in actor.marks:
+                mark = Mark(named)
                 if _cropped(self.core, actor, mark):
                     notes.append(
                         CompileNote(
@@ -317,7 +319,8 @@ def _named_faces(core: PanelCore) -> list[tuple[str, Disc]]:
 def _cropped(core: PanelCore, actor: CoreActor, mark: Mark) -> bool:
     """Whether any part of one of an actor's marks is drawn outside the panel."""
     prefix = f"{SINGULAR[mark]}_"
-    for drawn in actor.emanata:
+    drawing = actor.mannequin
+    for drawn in drawing.emanata if drawing is not None else ():
         if not drawn.id.startswith(prefix):
             continue
         if isinstance(drawn, FaceDisc):
@@ -853,24 +856,26 @@ def _compile_ir(
                 gaze_aim=(
                     vector_pair(aims[placement.actor_id]) if placement.actor_id in aims else None
                 ),
-                face_marks=tuple(_core_mark(mark) for mark in faces[placement.actor_id]),
                 marks=panel.cast[placement.actor_id].marks,
-                emanata=tuple(_core_mark(mark) for mark in emanata[placement.actor_id].marks),
                 emanata_zones=tuple(
                     round_pairs(zone) for zone in emanata[placement.actor_id].zones
                 ),
                 hull=round_pairs(posed[placement.actor_id].hull),
-                capsules=tuple(
-                    Capsule(
-                        start=point_pair(capsule.start),
-                        end=point_pair(capsule.end),
-                        width=rounded(capsule.width),
-                    )
-                    for capsule in posed[placement.actor_id].capsules
-                ),
-                blobs=tuple(
-                    Blob(centre=point_pair(blob.centre), radius=rounded(blob.radius))
-                    for blob in posed[placement.actor_id].blobs
+                drawing=CoreMannequin(
+                    capsules=tuple(
+                        Capsule(
+                            start=point_pair(capsule.start),
+                            end=point_pair(capsule.end),
+                            width=rounded(capsule.width),
+                        )
+                        for capsule in posed[placement.actor_id].capsules
+                    ),
+                    blobs=tuple(
+                        Blob(centre=point_pair(blob.centre), radius=rounded(blob.radius))
+                        for blob in posed[placement.actor_id].blobs
+                    ),
+                    face_marks=tuple(_core_mark(mark) for mark in faces[placement.actor_id]),
+                    emanata=tuple(_core_mark(mark) for mark in emanata[placement.actor_id].marks),
                 ),
                 depth=placement.depth,
                 joints={

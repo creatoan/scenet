@@ -61,9 +61,9 @@ class TestTheShape:
         assert "figures" not in payload
         assert "keep_out" not in payload["backdrop"]["image"]
 
-    def test_the_format_version_stays(self):
-        assert json.loads(_with_figures(_picture_core()).to_json())["format_version"] == 1
-        assert CORE_FORMAT_VERSION == 1
+    def test_the_format_version_is_format_two(self):
+        assert json.loads(_with_figures(_picture_core()).to_json())["format_version"] == "2.0"
+        assert CORE_FORMAT_VERSION == "2.0"
 
     def test_it_reads_back_byte_for_byte(self):
         core = _with_figures(_picture_core())

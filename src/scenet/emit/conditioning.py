@@ -131,13 +131,13 @@ class Region:
     polygon: tuple[tuple[float, float], ...]
     disc: Disc | None = None
     depth: int | None = None
-    kind: MassKind | None = None
+    kind: str | None = None
     who: str | None = None
 
     @property
     def sky(self) -> bool:
         """Whether it is sky, which is at infinity whatever plane it was filed under."""
-        return self.kind is MassKind.SKY
+        return self.kind == MassKind.SKY
 
 
 @dataclass(frozen=True, slots=True)

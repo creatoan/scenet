@@ -253,7 +253,7 @@ def panel_body(
         for item in in_painters_order(core)
     ]
 
-    parts.extend(body for depth, body in drawn if depth < 0)
+    parts.extend(body for depth, body in drawn if depth < 0 and body)
 
     # The veil sits over the backdrop and under the cast. Fog between the reader and the
     # figures would be the more literal reading and would bury them; comics put it behind.
@@ -261,7 +261,7 @@ def panel_body(
         parts.append(_render_veil(core, air, id_prefix))
 
     parts.append(f'  <g stroke="{STROKE}" stroke-linecap="round" stroke-linejoin="round">')
-    parts.extend(body for depth, body in drawn if depth >= 0)
+    parts.extend(body for depth, body in drawn if depth >= 0 and body)
 
     # Balloons and captions sit above the figures and share one reading order, so they
     # are emitted as one sequence rather than one layer stacked on the other.
@@ -531,6 +531,14 @@ def attr(value: str) -> str:
 
 
 def _render_actor(actor: CoreActor, id_prefix: str) -> str:
+    """The figure a mannequin is drawn as, or nothing for an actor drawn some other way.
+
+    An actor with no mannequin has a contract -- where it is, its face, its hull -- and
+    lettering was placed around it, but this emitter has nothing to draw for it.
+    """
+    drawing = actor.mannequin
+    if drawing is None:
+        return ""
     lines = [
         f'    <g id={attr(id_prefix + "actor-" + actor.id)} fill="{FILL_FIGURE}" '
         f'stroke-width="{fmt(FIGURE_STROKE_WIDTH)}">'
@@ -539,7 +547,7 @@ def _render_actor(actor: CoreActor, id_prefix: str) -> str:
     # Limbs are drawn as thick round-capped strokes rather than outlined capsules:
     # one path element each instead of a constructed outline, and the joins between
     # segments merge cleanly.
-    for capsule in actor.capsules:
+    for capsule in drawing.capsules:
         (x1, y1), (x2, y2) = capsule.start, capsule.end
         lines.append(
             f'      <path d="M{fmt(x1)} {fmt(y1)} L{fmt(x2)} {fmt(y2)}" '
@@ -551,7 +559,7 @@ def _render_actor(actor: CoreActor, id_prefix: str) -> str:
             f'stroke-width="{fmt(geometry.inner_width(capsule.width))}"/>'
         )
 
-    for blob in actor.blobs:
+    for blob in drawing.blobs:
         cx, cy = blob.centre
         lines.append(
             f'      <circle cx="{fmt(cx)}" cy="{fmt(cy)}" r="{fmt(blob.radius)}" '
@@ -561,11 +569,11 @@ def _render_actor(actor: CoreActor, id_prefix: str) -> str:
     # The face goes on last, over the head blob it sits inside. Every coordinate here
     # was decided during compilation, curves included -- there is nothing to draw but
     # the polylines and discs as given.
-    lines.extend(_render_mark(f"{id_prefix}face-{actor.id}", mark) for mark in actor.face_marks)
+    lines.extend(_render_mark(f"{id_prefix}face-{actor.id}", mark) for mark in drawing.face_marks)
 
     # Emanata last of all, inside the actor's group so that whoever stands in front of
     # this character stands in front of their sweat too.
-    lines.extend(_render_mark(f"{id_prefix}emanata-{actor.id}", mark) for mark in actor.emanata)
+    lines.extend(_render_mark(f"{id_prefix}emanata-{actor.id}", mark) for mark in drawing.emanata)
 
     lines.append("    </g>")
     return "\n".join(lines)

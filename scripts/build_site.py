@@ -184,24 +184,32 @@ def compose(out: Path, *, dev: bool) -> None:
 
 
 def publish_schemas(out: Path, address: str) -> None:
-    """Write the JSON Schemas to `out/schemas/`, each naming where it is served as its `$id`.
+    """Write the JSON Schemas under `out/schemas/`, each naming where it is served as its `$id`.
 
     A schema that does not say where it is cannot be found again by a tool that resolves a
-    `$ref` or a `$schema` to it. The address is the version's own, `/dev/` or `/vX.Y/`, so
-    a copy read from a version names that version's, whichever of its addresses it was
-    served at. The shipped files carry no `$id`: it is a fact about a release.
+    `$ref` or a `$schema` to it. The language's schemas change with the release, so each
+    names its version's address, `/dev/` or `/vX.Y/`, whichever of its addresses a copy was
+    served at; the shipped files carry no `$id`, because it is a fact about a release. A
+    Core's schemas are the exception: a Core names its schema in its own `$schema`, one folder
+    per format version, so they ship with that `$id` and are served at exactly it, from every
+    release, which all carry the same bytes for one format version.
 
     Args:
         out: One version's site.
         address: Where that version is served, without a trailing slash.
     """
-    schemas = out / "schemas"
-    schemas.mkdir(parents=True, exist_ok=True)
     for name in PUBLISHED_SCHEMAS:
         document = json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
-        document["$id"] = f"{address}/schemas/{name}"
+        if "$id" not in document:
+            document["$id"] = f"{address}/schemas/{name}"
+        # Served from the version's own folder, `vX.Y/schemas/...`, or from the site's root:
+        # the site being built is one of those, so the file's place in it is what follows
+        # `schemas/`.
+        relative = Path("schemas") / document["$id"].split("/schemas/", 1)[1]
         text = json.dumps(document, indent=2, sort_keys=True) + "\n"
-        (schemas / name).write_bytes(text.encode())
+        target = out / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(text.encode())
 
 
 def publish_pictures(out: Path) -> None:

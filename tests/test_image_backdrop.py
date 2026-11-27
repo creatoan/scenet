@@ -161,7 +161,7 @@ class TestPanelCore:
         written = json.loads(_compile("setting: {image: art/street.png}\n").to_json())
         assert "horizon" not in written["backdrop"]
         assert written["backdrop"]["image"]["href"] == "art/street.png"
-        assert written["format_version"] == 1
+        assert written["format_version"] == "2.0"
 
     def test_a_backdrop_of_masses_writes_no_image_key(self):
         written = json.loads(_compile("setting: {place: street}\n").to_json())

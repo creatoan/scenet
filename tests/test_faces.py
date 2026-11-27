@@ -32,6 +32,7 @@ from scenet.errors import CoreSyntaxError
 from scenet.geom import Point, Vector
 from scenet.ir import ShotType
 from scenet.pipeline import compile_source
+from tests.cores import drawn
 
 EXPRESSIONS = (
     "neutral",
@@ -177,16 +178,16 @@ class TestDrawnFaces:
     @pytest.mark.parametrize("expression", EXPRESSIONS)
     @pytest.mark.parametrize("reference", ["alice", "bob"])
     def test_every_expression_draws_something(self, reference: str, expression: str):
-        assert face_of(reference, expression).face_marks
+        assert drawn(face_of(reference, expression)).face_marks
 
     @pytest.mark.parametrize("expression", EXPRESSIONS)
     def test_marks_stay_inside_the_head(self, expression: str):
         """A face drawn outside the head it belongs to is the most obvious possible
         failure, and the easiest to introduce by getting one offset's sign wrong."""
         actor = face_of("alice", expression)
-        head = max(actor.blobs, key=lambda blob: blob.radius)
+        head = max(drawn(actor).blobs, key=lambda blob: blob.radius)
         cx, cy = head.centre
-        for mark in actor.face_marks:
+        for mark in drawn(actor).face_marks:
             points = [mark.centre] if isinstance(mark, FaceDisc) else list(mark.points)
             for x, y in points:
                 assert (x - cx) ** 2 + (y - cy) ** 2 <= head.radius**2
@@ -194,11 +195,11 @@ class TestDrawnFaces:
     def test_the_ten_faces_are_ten_different_faces(self):
         """The point of the whole ticket. If two expressions draw the same marks then
         one of them is decorative, and nobody would notice from the type checker."""
-        drawn = {
-            expression: face_of("alice", expression).model_dump_json(include={"face_marks"})
+        faces = {
+            expression: drawn(face_of("alice", expression)).model_dump_json(include={"face_marks"})
             for expression in EXPRESSIONS
         }
-        assert len(set(drawn.values())) == len(EXPRESSIONS)
+        assert len(set(faces.values())) == len(EXPRESSIONS)
 
     def test_a_puppet_without_features_draws_no_face(self, library: PuppetLibrary):
         spec = library.get("alice")
@@ -209,7 +210,7 @@ class TestDrawnFaces:
         assert build_face(posed, ExpressionSpec()) == ()
 
     def test_marks_are_emitted_in_a_fixed_order(self):
-        ids = [mark.id for mark in face_of("alice", "neutral").face_marks]
+        ids = [mark.id for mark in drawn(face_of("alice", "neutral")).face_marks]
         assert ids == ["brow_l", "brow_r", "eye_l", "pupil_l", "eye_r", "pupil_r", "nose", "mouth"]
 
 
@@ -235,14 +236,14 @@ class TestFacesAcrossTheShotLadder:
     @pytest.mark.parametrize("shot", [shot.value for shot in ShotType])
     @pytest.mark.parametrize("reference", ["alice", "bob"])
     def test_every_shot_draws_a_face(self, reference: str, shot: str):
-        assert face_of(reference, "angry", shot=shot).face_marks
+        assert drawn(face_of(reference, "angry", shot=shot)).face_marks
 
     @pytest.mark.parametrize("shot", [shot.value for shot in ShotType])
     @pytest.mark.parametrize("reference", ["alice", "bob"])
     def test_the_eyes_and_brows_stay_inside_the_panel(self, reference: str, shot: str):
         core = _compile(reference, "angry", shot=shot)
         actor = core.actor("a")
-        for mark in actor.face_marks:
+        for mark in drawn(actor).face_marks:
             if mark.id not in _UPPER_FACE_MARKS:
                 continue
             points = [mark.centre] if isinstance(mark, FaceDisc) else list(mark.points)
@@ -312,7 +313,7 @@ class TestPupils:
         assert eye.centre.distance_to(pupil.centre) + pupil.radius <= eye.radius + 1e-9
 
     def test_a_closed_eye_has_no_pupil(self):
-        ids = [mark.id for mark in face_of("alice", "laughing").face_marks]
+        ids = [mark.id for mark in drawn(face_of("alice", "laughing")).face_marks]
         assert "pupil_l" not in ids
 
 
@@ -364,7 +365,7 @@ class TestDeterminism:
             "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: surprise}}}"
         ).core
         assert PanelCore.from_json(whole.to_json()) == whole
-        assert core.face_marks
+        assert drawn(core).face_marks
 
     def test_a_bad_mark_in_a_core_document_is_one_error(self):
         """`mark` picks the shape, so a broken disc is not also reported as every
@@ -373,28 +374,37 @@ class TestDeterminism:
             "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: surprise}}}"
         ).core
         payload = json.loads(whole.to_json())
-        marks = payload["actors"][0]["face_marks"]
+        marks = payload["actors"][0]["drawing"]["face_marks"]
         index = next(i for i, mark in enumerate(marks) if mark["mark"] == "disc")
         marks[index]["radius"] = "wide"
         with pytest.raises(CoreSyntaxError) as caught:
             PanelCore.from_json(json.dumps(payload))
         assert isinstance(caught.value.__cause__, ValidationError)
         (error,) = caught.value.__cause__.errors()
-        assert error["loc"] == ("actors", 0, "face_marks", index, "disc", "radius")
+        assert error["loc"] == (
+            "actors",
+            0,
+            "drawing",
+            "mannequin",
+            "face_marks",
+            index,
+            "disc",
+            "radius",
+        )
 
     def test_a_core_mark_without_its_tag_still_resolves(self):
         whole = compile_source(
             "{camera: {shot: close_up}, cast: {a: {reference: alice, expression: surprise}}}"
         ).core
         payload = json.loads(whole.to_json())
-        for mark in payload["actors"][0]["face_marks"]:
+        for mark in payload["actors"][0]["drawing"]["face_marks"]:
             del mark["mark"]
         assert PanelCore.from_json(json.dumps(payload)) == whole
 
 
 def _mark(actor: CoreActor, mark_id: str) -> CoreFaceMark:
     """The one mark with this id, of either shape."""
-    return next(mark for mark in actor.face_marks if mark.id == mark_id)
+    return next(mark for mark in drawn(actor).face_marks if mark.id == mark_id)
 
 
 def _width_of(actor: CoreActor, mark_id: str) -> float:
@@ -404,7 +414,9 @@ def _width_of(actor: CoreActor, mark_id: str) -> float:
 def _core_disc(actor: CoreActor, mark_id: str) -> FaceDisc:
     """The one disc with this id, in a compiled panel."""
     return next(
-        mark for mark in actor.face_marks if mark.id == mark_id and isinstance(mark, FaceDisc)
+        mark
+        for mark in drawn(actor).face_marks
+        if mark.id == mark_id and isinstance(mark, FaceDisc)
     )
 
 

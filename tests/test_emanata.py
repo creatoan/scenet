@@ -45,6 +45,7 @@ from scenet.solve.balloons import (
     _emanata_cost,
     _emanata_shapes,
 )
+from tests.cores import drawn
 
 REPO = Path(__file__).parent.parent
 # Documents only: not the manifest, not a picture's artwork contract, which is YAML beside
@@ -133,8 +134,8 @@ class TestTheVocabulary:
         ).core.actor("a")
         assert actor.expression == "angry"
         assert actor.marks == (Mark.GRAWLIXES, Mark.PLEWDS)
-        assert actor.face_marks
-        assert actor.emanata
+        assert drawn(actor).face_marks
+        assert drawn(actor).emanata
 
     def test_the_script_frontend_accepts_them(self):
         source = (
@@ -153,8 +154,8 @@ class TestTheVocabulary:
             "  before: {}\n"
             "  after: {over: before, cast: {a: {marks: []}}}\n"
         )
-        assert results["before"].core.actor("a").emanata
-        assert results["after"].core.actor("a").emanata == ()
+        assert drawn(results["before"].core.actor("a")).emanata
+        assert drawn(results["after"].core.actor("a")).emanata == ()
 
 
 class TestWhereTheyAreDrawn:
@@ -267,8 +268,8 @@ class TestLevelOfDetail:
 
     def test_long_shot_draws_dots(self):
         actor = _actor("[plewds]", shot="long_shot")
-        assert actor.emanata
-        assert all(isinstance(mark, FaceDisc) and mark.filled for mark in actor.emanata)
+        assert drawn(actor).emanata
+        assert all(isinstance(mark, FaceDisc) and mark.filled for mark in drawn(actor).emanata)
 
     def test_stroke_width_follows_the_head(self):
         near = _actor("[grawlixes]", shot="medium_close_up")
@@ -309,7 +310,7 @@ class TestTheHullDecision:
             if any(member.marks for member in panel.cast.values()):
                 continue
             for actor in compile_ir(panel, base=path.parent).core.actors:
-                assert actor.emanata == ()
+                assert drawn(actor).emanata == ()
                 assert actor.emanata_zones == ()
 
 
@@ -450,7 +451,7 @@ def _covered(core: PanelCore, zone: BaseGeometry) -> float:
 
 
 def _widest(actor: CoreActor) -> float:
-    return max(mark.width for mark in actor.emanata)
+    return max(mark.width for mark in drawn(actor).emanata)
 
 
 def _ids_are_unique(svg: str) -> bool:

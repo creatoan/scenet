@@ -127,6 +127,9 @@ MARKS: dict[Mark, str] = {
     Mark.BRIFFITS: "dashing off",
 }
 
+#: The same, by the mark's name as a Panel Core writes it, which may be one this does not know.
+_MARK_WORDS: dict[str, str] = {mark.value: phrase for mark, phrase in MARKS.items()}
+
 #: Expressions whose name is not a word that can follow a name. Any other is read as
 #: written, an underscore a space: a puppet of one's own names its own.
 EXPRESSIONS: dict[str, str] = {"surprise": "surprised"}
@@ -274,7 +277,7 @@ def _where(x: float, width: float) -> str:
     return "centre"
 
 
-def traits(pose: str, expression: str, marks: Sequence[Mark]) -> list[str]:
+def traits(pose: str, expression: str, marks: Sequence[str]) -> list[str]:
     """How a figure stands, its face and its marks, as a description says them.
 
     What goes without saying -- standing, a neutral face -- is left out. The one phrasing
@@ -293,7 +296,7 @@ def traits(pose: str, expression: str, marks: Sequence[Mark]) -> list[str]:
         parts.append(pose.replace("_", " "))
     if expression != _NEUTRAL:
         parts.append(EXPRESSIONS.get(expression, expression.replace("_", " ")))
-    parts.extend(MARKS[mark] for mark in marks)
+    parts.extend(_MARK_WORDS.get(mark, mark) for mark in marks)
     return parts
 
 

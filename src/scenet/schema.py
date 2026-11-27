@@ -45,7 +45,7 @@ from scenet.assets.contract import (
     default_library,
 )
 from scenet.compose import DIRECTION_KEY, ID_KEY, NOT_DEFAULTS, REMOVE_KEY
-from scenet.core import PageCore, PanelCore
+from scenet.core import PAGE_CORE_SCHEMA, PANEL_CORE_SCHEMA, PageCore, PanelCore
 from scenet.identifiers import EXTENSION_PREFIX, GRAMMAR
 from scenet.ir import (
     IDENTIFIER_PATTERN,
@@ -190,7 +190,7 @@ def core_schema() -> dict[str, Any]:
         >>> core_schema()["title"]
         'Scenet Panel Core'
     """
-    return _core_schema(PanelCore, "Scenet Panel Core")
+    return _core_schema(PanelCore, "Scenet Panel Core", PANEL_CORE_SCHEMA)
 
 
 def page_core_schema() -> dict[str, Any]:
@@ -204,16 +204,24 @@ def page_core_schema() -> dict[str, Any]:
         >>> page_core_schema()["title"]
         'Scenet Page Core'
     """
-    return _core_schema(PageCore, "Scenet Page Core")
+    return _core_schema(PageCore, "Scenet Page Core", PAGE_CORE_SCHEMA)
 
 
-def _core_schema(model: type[PanelCore] | type[PageCore], title: str) -> dict[str, Any]:
-    """A Core model's schema, the way every published one is made."""
+def _core_schema(
+    model: type[PanelCore] | type[PageCore], title: str, address: str
+) -> dict[str, Any]:
+    """A Core model's schema, the way every published one is made.
+
+    It names itself by `address`, which is also what a Core of that format version says its
+    `$schema` is: one folder per format version, so the schema a document names is the one
+    it was written to, whichever release is serving it.
+    """
     schema = model.model_json_schema()
     _one_identifier(schema, schema.setdefault("$defs", {}))
     _summaries(schema)
     _for_authors(schema)
     schema["$schema"] = DIALECT
+    schema["$id"] = address
     schema["title"] = title
     return schema
 

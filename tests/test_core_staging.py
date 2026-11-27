@@ -3,8 +3,9 @@
 Each of these was solved before and thrown away: joints and feature points lived only on the
 posed puppets, the camera only on `CompileResult`, who looks at whom only in the IR, and the
 place and the hour only as tones. An emitter reads Core and nothing else, so each is recorded
--- and each is left out of the JSON when unused, so a Core written before them reads and writes
-back byte for byte, and `format_version` stays 1.
+-- and each is left out of the JSON when unused. A Core written before them is format 1, which a
+reader upgrades (`tests/test_core_format.py` reads the whole corpus); here it is checked to say
+what it said.
 """
 
 import json
@@ -17,6 +18,7 @@ from scenet.geom import rounded
 from scenet.ir import CameraAngle, ShotType, TimeOfDay
 from scenet.pipeline import compile_file, compile_source
 from scenet.places import Place, place_of
+from tests.cores import drawn
 from tests.images import contract, png
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,7 +95,7 @@ class TestFeatures:
             " cast: {a: {reference: alice}}}"
         ).core
         actor = core.actor("a")
-        assert actor.face_marks == ()
+        assert drawn(actor).face_marks == ()
         assert {"eye_l", "eye_r", "nose"} <= set(actor.features)
 
     def test_the_expression_does_not_move_them(self):
@@ -231,10 +233,9 @@ class TestTheBackdrop:
 
 class TestOldDocuments:
     @pytest.mark.parametrize("path", sorted(OLD.glob("*.core.json")), ids=lambda path: path.name)
-    def test_a_core_written_before_reads_and_writes_as_it_did(self, path: Path):
+    def test_a_core_written_before_still_says_what_it_said(self, path: Path):
         text = path.read_text(encoding="utf-8")
         core = PanelCore.from_json(text)
-        assert core.to_json() == text
         assert core.camera is None
         assert all(actor.joints == {} and actor.features == {} for actor in core.actors)
 
@@ -242,9 +243,9 @@ class TestOldDocuments:
         names = {path.name for path in OLD.glob("*.core.json")}
         assert len(names) >= 5
 
-    def test_the_format_version_is_still_one(self):
-        assert CORE_FORMAT_VERSION == 1
-        assert json.loads(_duel().to_json())["format_version"] == 1
+    def test_the_format_version_is_two_point_nought(self):
+        assert CORE_FORMAT_VERSION == "2.0"
+        assert json.loads(_duel().to_json())["format_version"] == "2.0"
 
 
 class TestTheGallery:

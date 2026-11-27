@@ -32,14 +32,118 @@ going straight to pixels. The same split pays for itself here, in four ways:
 - **Deterministic.** Floats are rounded to a fixed precision on emission, so identical input yields
   byte-identical Core output on any platform.
 
+## The format
+
+This page is normative: a Panel Core is what it says here, and a reader or a writer that differs
+is wrong. The key words MUST, MUST NOT and MAY are used as RFC 2119 uses them.
+
+### What every document says first
+
+Every Core document, of every kind, starts with four keys, which a writer MUST write:
+
+```json
+{
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
+  "format": "scenet.panel",
+  "format_version": "2.0",
+  "units": "0.1mm"
+}
+```
+
+- **`$schema`** is the address of the JSON Schema the document was written to, one folder per
+  format version, so it is the schema of the version `format_version` names and stays so. A Page
+  Core says `…/core/2.0/page.schema.json`.
+- **`format`** says which document this is: `scenet.panel`, `scenet.page` or `scenet.book`. This
+  Scenet reads the first two; the third is named so that its name is not taken.
+- **`format_version`** is `"major.minor"`, in quotes. This page documents **2.0**.
+- **`units`** is `0.1mm`: one unit of every length, position and size is a tenth of a millimetre,
+  which is what a unit prints as. A reader MUST refuse any other value.
+
+### The coordinates
+
+- **Units** are `units`, above. A `width` of `1800` is 180 mm.
+- **y is down and the origin is the top left** of the panel (of the page, in a Page Core): `x`
+  grows to the right and `y` grows down.
+- **Angles are in degrees, clockwise** as the reader sees them on the page: a glyph's `angle` of
+  `15` leans it to the right.
+- **Winding.** A silhouette -- an actor's `hull`, a mass's `polygon`, a panel's `outline` and a
+  figure's `body` -- runs **clockwise as displayed**, the order a rectangle `(0,0) (w,0) (w,h)
+  (0,h)` is written in. No other polygon has an orientation a reader may rely on.
+- **Rounding.** Every number a compile writes is rounded to two decimal places
+  (`scenet.geom.PRECISION`), half to even, and never written as negative zero, so a document is
+  byte-identical on any platform. A reader MUST NOT depend on a number having been rounded.
+
+### Reading: which versions, and what to do with what it does not know
+
+`format_version` is `major.minor`. The major changes what a reader must understand to read a
+document at all; the minor only adds what a reader that does not know it can leave out.
+
+| A document that is… | A reader of 2.0 |
+|---|---|
+| format 1 (`"format_version": 1`, or no version and no `format`) | Upgrades it: the key words below are added, and each actor's `capsules`, `blobs`, `face_marks` and `emanata` move under `drawing`. What it draws does not change. |
+| of a major it does not know (`3.0`, `99`) | Refuses it, naming the version the document says and the version this reads. |
+| of this major and this minor (`2.0`) | Reads it. An unknown key is a typo and is refused, where it is. |
+| of this major and a newer minor (`2.3`) | Reads it. A key it does not know is left out and reported once -- *written by a newer Scenet (2.3); this reads 2.0* -- not refused; every other mistake is refused as it is at 2.0. Written back, it is 2.0. |
+| not `major.minor`, or naming a `format` that is not the one asked for | Refuses it, saying which. |
+| requiring an extension it does not implement | Refuses it, naming the extension. |
+
+A minor release of Scenet reads every Core of its format's major, and a release that changes the
+major ships the upgrade from the one before it or refuses with a message that says so.
+
+### What Scenet does not interpret: `extras` and `extensions`
+
+Every object of a Core -- a document, an actor, a balloon, a box -- may carry two more keys, which
+are read and written back as they were and never drawn from:
+
+- **`extras`**: an object holding anything JSON can. For a tool that wants to keep a note on a
+  thing, as glTF's `extras` does.
+- **`extensions`**: an object of objects, each under the reverse-DNS name of whoever defines it
+  (`com.example.lighting`). For data a renderer reads. A reader that does not know an extension
+  ignores it.
+
+A *document* may also carry **`extensions_required`**, the names, in `extensions`, a reader must
+implement to draw the document as it was meant. A reader that implements none of them -- which is
+what every renderer built from this package is -- refuses a document that lists one.
+
+Both are left out when empty. Every other key of every object is still checked: an unknown one,
+at the document's own minor version, is refused, because a hand edit that did nothing should say
+so.
+
+### Names the language knows, and a Core does not check
+
+The language says which places, shots, angles, hours and marks there are, and it grows. A Core
+only says which one a panel was made with: `backdrop.place`, `backdrop.time`,
+`backdrop.atmosphere.time`, a mass's `kind`, `camera.shot`, `camera.angle` and an actor's `marks`
+are **any string**. The language checks them when it compiles; this reader does not, and nothing is
+drawn from them, so a Core naming a place a newer Scenet added still renders. The published schema
+lists the names it knows as `examples`.
+
+### A field at its default is left out
+
+Each field with a default is written only when it is not that default, and the default is the one
+the schema declares: a writer MUST leave out a field equal to it and a reader MUST read an absent
+one as it. That is the whole rule, and it is why a field added with a default changes no document
+that does not use it. A field with no default, and the four keys above, are always written.
+
+### The drawing of an actor
+
+An actor's **contract** -- `transform`, `anchors`, `joints`, `features`, `hull`,
+`face_exclusion`, `gaze`, `gaze_aim` and `emanata_zones` -- is the same whatever the actor is drawn
+as, and is what lettering was placed around. How it is drawn is its **`drawing`**, an object whose
+`kind` says what the rest means. The only kind this Scenet writes is `mannequin`, whose members are
+`capsules`, `blobs`, `face_marks` and `emanata`. A reader that does not know a `kind` keeps the
+object, draws nothing for the actor, and reads the contract as it always does; a puppet drawn some
+other way adds a kind and touches nothing else. An actor with no `drawing` is a contract alone.
+
 ## Validating a Core
 
 A Core is read back as hand-edited text, so it has a [JSON Schema](https://json-schema.org/)
 like the documents people write. `scenet schema --core` writes the Panel Core's and
-`scenet schema --page-core` the Page Core's; the site publishes both beside the others, as
-`core.schema.json` and `page-core.schema.json`, each naming its own address as its `$id`. They
-are generated from the models that read a Core back, so the two cannot disagree, and every
-Core the gallery compiles to is checked against them.
+`scenet schema --page-core` the Page Core's. The site serves both at the address a Core names in
+its `$schema`, `schemas/core/2.0/panel.schema.json` and `schemas/core/2.0/page.schema.json`, each
+with that address as its `$id`, from every release. They are generated from the models that read
+a Core back, so the two cannot disagree, and every Core the gallery compiles to is checked
+against them.
 
 Every string that reaches the SVG is checked when a Core is read, and a Core that fails is
 refused where it is, with the key's path:
@@ -57,7 +161,12 @@ helper, so a value that is not a colour could not leave its attribute even if it
 
 ```json
 {
-  "panel": { "width": 1000, "height": 1000 },
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/panel.schema.json",
+  "format": "scenet.panel",
+  "format_version": "2.0",
+  "units": "0.1mm",
+  "width": 1000.0,
+  "height": 1000.0,
   "actors": [
     {
       "id": "alice",
@@ -67,7 +176,13 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "anchors": { "mouth": [263.1, 268.4], "eyes": [259.0, 251.2], "feet": [270.0, 680.0] },
       "face_exclusion": { "cx": 259.0, "cy": 255.0, "r": 46.8 },
       "gaze": [1.0, 0.0],
-      "hull": [[180.2, 140.0], [340.5, 140.0], "..."]
+      "hull": [[180.2, 140.0], [340.5, 140.0], "..."],
+      "drawing": {
+        "kind": "mannequin",
+        "capsules": [{ "start": [282.88, 237.49], "end": [282.88, 497.71], "width": 94.63 }],
+        "blobs": [{ "centre": [282.88, 129.71], "radius": 65.71 }],
+        "face_marks": ["..."]
+      }
     }
   ],
   "balloons": [
@@ -80,7 +195,7 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "lines": ["You forgot your", "umbrella!"],
       "font_size": 28.0,
       "line_height": 35.0,
-      "tail": { "start": [225.0, 173.0], "end": [263.1, 268.4], "control": null, "width": 14.0 }
+      "tail": { "start": [225.0, 173.0], "end": [263.1, 268.4] }
     }
   ],
   "captions": [
@@ -90,9 +205,7 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "kind": "locale",
       "box": { "x": 19.0, "y": 19.0, "width": 147.0, "height": 96.0 },
       "lines": ["Midnight.", "The docks."],
-      "italic": true,
-      "fill": "#ffffff",
-      "ink": "#111111"
+      "italic": true
     }
   ],
   "backdrop": {
@@ -114,13 +227,15 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "tone": "#4d4d4d",
       "veil": { "tone": "#222222", "opacity": 0.3, "frequency": 0.0016, "octaves": 3, "seed": 52939 },
       "streaks": [{ "start": [88.4, 12.0], "end": [99.7, 55.4] }],
-      "flecks": [],
       "streak_width": 1.4,
       "fall_tone": "#4d4d4d"
     }
   }
 }
 ```
+
+A caption's `fill` and `ink` and a balloon's `tail.width` are not shown: each is at its default
+(`#ffffff`, `#111111`, `14.0`), so it is left out, as every field at its default is.
 
 `lines` is the *resolved* line breaking, not the source string. Wrapping is decided during
 compilation using real font metrics, so the emitter never re-measures and never disagrees with the
@@ -141,8 +256,7 @@ spell it exactly, and a Core whose runs do not is refused.
 ```
 
 `face` is `regular`, `italic` or `bold_italic`. A balloon or caption with no emphasis has no
-`runs` key at all, so every Core written before emphasis existed reads, and is written, byte for
-byte as before — which is why it needed no `format_version` bump.
+`runs` key at all: it is empty by default, so it is left out.
 
 A panel lettered in an [author's face](language/lettering.md#letteringfont) carries `fonts`: each face set in a
 font other than the shipped one, by its family and style as the font names them, and the SHA-256 of
@@ -159,28 +273,26 @@ have the same family in every document and every process.
 
 The renderer is handed fonts by digest and refuses a Core naming one it was not given, so a Core is
 never drawn in a face it was not measured in. A face not listed is the shipped one; a panel in the
-shipped family has no `fonts` key at all, so no `format_version` bump either.
+shipped family has no `fonts` key at all.
 
 `italic` is recorded rather than re-derived from `kind`, so the emitter cannot draw a box in a face
 the solver did not measure it in. `fill` and `ink` are there for the same reason: a caption's tone
 resolves to a value here, and the ink is chosen against it by contrast — so a dark box arrives at the
 emitter already lettered in paper, and the emitter is left with no decision about which mark reads.
-Both are defaulted to the white and near-black every caption had before tones existed, which is why
-adding them needed no `format_version` bump either.
+Both default to white and near-black, the colours every caption had before tones existed, so a
+caption in them has neither key.
 
 **`order` is one sequence across both lists.** Balloons and captions are placed in a single pass in
 script order, so a caption between two lines of dialogue takes the number between theirs and a
-balloon list can have gaps in it. A panel with no captions is unaffected, which is why this did not
-need a `format_version` bump.
+balloon list can have gaps in it.
 
 **A balloon spoken from [off panel](language/script.md#sayoff_panel) carries `off_panel`**, the side
 of the frame its speaker is on, as the solver settled it: `left`, `right`, `top` or `bottom`. When
 it is set, `speaker` names somebody who is not an actor, so it is not looked up among `actors`, and
 the tail's `end` lies on the frame on that side — on `outline`, when the panel has one. A balloon
-whose speaker is drawn has no `off_panel` key, so no existing Core changes.
+whose speaker is drawn has no `off_panel` key.
 
-`backdrop` is absent on a panel that says nothing about where it is, which is why adding it did not
-need a bump either. Its masses carry **fully resolved numeric polygons and tone values**, the same
+`backdrop` is absent on a panel that says nothing about where it is. Its masses carry **fully resolved numeric polygons and tone values**, the same
 discipline as `capsules`, `blobs` and `face_marks`: the emitter is left with no layout decision, and
 a backdrop can be read, diffed and hand-adjusted like everything else in this tier. `depth` is the
 same painter's order the actors use, so masses and figures sort into one sequence.
@@ -210,9 +322,7 @@ inside it under `contain`. Change `box` and the picture moves.
 where the file was that reaches any output, because a linked SVG needs it. `sha256` is what the
 picture is known by, as a font is — a renderer asked to embed it is handed bytes by digest and
 refuses a Core naming bytes it was not given. `preserve_aspect_ratio` is the fit in SVG's own
-words, recorded so the emitter copies it. A backdrop of masses has no `image` key, and every Core
-written before pictures existed reads and writes byte for byte as it did, so neither `image` nor a
-missing `horizon` needed a `format_version` bump.
+words, recorded so the emitter copies it. A backdrop of masses has no `image` key.
 
 A picture that draws its own people has an [artwork contract](asset_contract.md#artwork-contracts)
 beside it, and what the contract declares is recorded here in the panel's units, mapped from the
@@ -248,20 +358,21 @@ none. `keep_out` holds what balloons, captions and sound effects paid to cover a
 forbidden to. They are resolved numbers, like everything here: change `box` by hand and the picture
 moves, and the figures stay where they were resolved.
 
-A panel with no figures has no `figures` key, and a picture with no keep-out regions no `keep_out`,
-so every Core written before them reads and writes byte for byte as it did, and neither needed a
-`format_version` bump.
+A panel with no figures has no `figures` key, and a picture with no keep-out regions no `keep_out`.
 
-An actor with `marks` carries three more fields. `marks` names what was asked for; `emanata` is the
-drawing, in the same `stroke` and `disc` primitives as `face_marks`, with ids numbered per mark
-(`plewd_0`, `plewd_1`, ...); and `emanata_zones` holds one polygon per mark, which is what balloon and
-caption placement paid to avoid. The zones are recorded so a Core document says why a balloon is
-where it is. All three default to empty, so an actor without marks serialises with `[]` in each and
-nothing else changes — which is why they needed no `format_version` bump either.
+An actor with `marks` carries three more things. `marks` names what was asked for; `emanata`, in
+its `drawing`, is the drawing, in the same `stroke` and `disc` primitives as `face_marks`, with ids
+numbered per mark (`plewd_0`, `plewd_1`, ...); and `emanata_zones` holds one polygon per mark,
+which is what balloon and caption placement paid to avoid. The zones are recorded so a Core
+document says why a balloon is where it is. An actor without marks has none of them.
 
 ```json
 "marks": ["plewds"],
-"emanata": [{ "mark": "stroke", "id": "plewd_0", "points": [[171.2, 98.6], "..."], "width": 5.9, "closed": true }],
+"drawing": {
+  "kind": "mannequin",
+  "emanata": [{ "mark": "stroke", "id": "plewd_0", "points": [[171.2, 98.6], "..."], "width": 5.9, "closed": true }],
+  "...": "..."
+},
 "emanata_zones": [[[150.3, 61.0], [205.8, 70.4], "..."]]
 ```
 
@@ -281,15 +392,13 @@ footprint balloons and captions paid to avoid and no face was allowed inside; `f
 }]
 ```
 
-A panel with no effects has no `sfx` key, so no `format_version` bump.
+A panel with no effects has no `sfx` key.
 
 `seed` is kept so that a Core document explains itself: two panels with the same masses and
 different skylines differ here, and here is where to look.
 
 A panel read right to left carries `"direction": "rtl"`, the reason its lettering is where it
-is: see [`direction`](language/direction.md#direction). A panel read left to right has no `direction` key,
-so every Core written before it reads, and is written, byte for byte as before — no
-`format_version` bump.
+is: see [`direction`](language/direction.md#direction). A panel read left to right has no `direction` key.
 
 A panel drawn in [`palette: tinted`](language/palette.md#palette) carries `"palette": "tinted"`, and beside
 each value the palette tints, that value's colour: `colour` on each mass, on the atmosphere and on
@@ -308,8 +417,7 @@ decision was made on them: the colour has the grey's lightness and is only what 
 in this palette. So a renderer draws `colour` where there is one and `tone` or `fill` where there is
 not, `--mono` draws the greys and ignores the colours, and `PanelCore.as_mono()` takes the colours
 out — which gives exactly the Core the panel compiles to in `mono`. Snow has no colour: it is white
-by convention, not a rung of the ladder. A `mono` panel has none of these keys, so every Core
-written before palettes reads, and is written, byte for byte as before — no `format_version` bump.
+by convention, not a rung of the ladder. A `mono` panel has none of these keys.
 
 ### The staging
 
@@ -343,11 +451,10 @@ set in a street at night:
 - **`looking_at`** is whom the actor looks at — an actor id, or somebody heard from off panel —
   where `gaze_aim` is the direction.
 - **`place`** names the place the masses are, whether `place:` wrote them or an author wrote the
-  same list out; **`time`** is the hour the values were chosen for, which `atmosphere` records too
+  same list out, as any string; **`time`** is the hour the values were chosen for, which `atmosphere` records too
   but only when something is in the air. Over a picture neither is known, and both are left out.
 
-None is read to draw the panel. Each is left out of a document that does not use it, so a Core
-written before them reads and writes back byte for byte — no `format_version` bump.
+None is read to draw the panel. Each is left out of a document that does not use it.
 
 ### The words
 
@@ -375,8 +482,7 @@ like everything else, so the emitter copies them and decides nothing:
 
 Read in `order`, the labels are the panel's text in the order its reader takes it, sound effects
 included. Generated text is **templated English**; a French script's prose stays French, but the
-words round its dialogue do not. Both are left out of a document that has none, so a Core written
-before them is still valid and writes back byte for byte — no `format_version` bump — and neither
+words round its dialogue do not. Both are left out of a document that has none, and neither
 may hold a character an SVG cannot, since Core is hand-edited and both go into the SVG.
 
 ### Determinism is on this text, and on the SVG text — not on pixels
@@ -399,7 +505,13 @@ Panel Core types](api/public/core-types.md) page.
 
 | Key | Type | What it holds |
 |---|---|---|
-| `format_version` | `int` | Bumped when the shape of this document changes incompatibly. |
+| `extras` | `dict[str, JsonValue]` |  |
+| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` |  |
+| `format_version` | `str` | The version of the format, `major.minor`. |
+| `units` | `Literal['0.1mm']` | Always `0.1mm`: a unit is a tenth of a millimetre. |
+| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` |  |
+| `schema_url` | `str` | `$schema` in the file: the versioned address of the schema it is written to. |
+| `format` | `Literal['panel']` | Always `scenet.panel`. |
 | `width` | `float` | Panel width in panel units. |
 | `height` | `float` | Panel height in panel units. |
 | `actors` | `tuple[CoreActor, ...]` | Resolved characters, back to front by `depth`, and at one depth left to right as staged. The SVG draws them back to front too, but breaks a tie at one depth by id (:func:`in_painters_order <scenet.emit.svg.in_painters_order>`). |
@@ -422,7 +534,13 @@ Panel Core types](api/public/core-types.md) page.
 
 | Key | Type | What it holds |
 |---|---|---|
-| `format_version` | `int` | Bumped when the shape of this document changes incompatibly. |
+| `extras` | `dict[str, JsonValue]` |  |
+| `extensions` | `dict[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], JsonValue]` |  |
+| `format_version` | `str` | The version of the format, `major.minor`. |
+| `units` | `Literal['0.1mm']` | Always `0.1mm`. |
+| `extensions_required` | `tuple[Annotated[str, StringConstraints(strip_whitespace=None, to_upper=None, to_lower=None, strict=None, min_length=None, max_length=None, pattern='^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$', ascii_only=None)], ...]` |  |
+| `schema_url` | `str` | `$schema` in the file: the versioned address of the schema it is written to. |
+| `format` | `Literal['page']` | Always `scenet.page`. |
 | `width` | `float` | Page width, in page units. |
 | `height` | `float` | Page height. |
 | `lettering_height` | `float` | The height every panel on the page took its type size from, in place of its own -- so that a short panel and a tall one letter alike. |
@@ -439,7 +557,10 @@ where each panel's frame is, and nothing drawn:
 
 ```json
 {
-  "format_version": 1,
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/page.schema.json",
+  "format": "scenet.page",
+  "format_version": "2.0",
+  "units": "0.1mm",
   "width": 1500.0,
   "height": 2250.0,
   "lettering_height": 700.0,
@@ -460,8 +581,7 @@ a panel that is no inset.
 The parent's own Core then carries `exclusions`: each inset's clearance, moved into the parent's
 coordinates, which no balloon or caption was allowed to touch. Nothing else in the parent moved
 for it, so the art under an inset is exactly the art of the panel compiled alone. A panel with no
-inset has no `exclusions` key at all, so every Core written before insets existed reads, and is
-written, byte for byte as before.
+inset has no `exclusions` key at all.
 
 A panel in a slanted tier carries `outline`, its four corners clockwise from the top left, on its
 frame in page units and in its own Core in panel units; the frame is the outline's bounding box.
@@ -473,8 +593,7 @@ A page read right to left carries `"direction": "rtl"` as its panels do; one rea
 has no `direction` key.
 
 A page with a `bleed` carries it, in page units: how far the printed sheet runs past the trim on
-every side. A page with none has no `bleed` key, so every Page Core written before it reads,
-and is written, byte for byte as before — which is why it needed no `format_version` bump.
+every side. A page with none has no `bleed` key: it is left out when it is 0.
 
 A frame that bleeds carries `bleed` too, but as a list: the sides it runs past the trim on,
 to the bleed line. Its panel's Core carries `open`, the same sides, where no border is drawn, and

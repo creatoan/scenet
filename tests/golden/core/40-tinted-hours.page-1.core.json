@@ -1,5 +1,7 @@
 {
-  "format_version": 1,
+  "$schema": "https://creatoan.github.io/scenet/schemas/core/2.0/page.schema.json",
+  "format": "scenet.page",
+  "format_version": "2.0",
   "frames": [
     {
       "height": 1370.0,
@@ -32,5 +34,6 @@
   ],
   "height": 3000.0,
   "lettering_height": 933.33,
+  "units": "0.1mm",
   "width": 2000.0
 }

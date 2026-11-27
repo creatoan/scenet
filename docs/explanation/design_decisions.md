@@ -157,8 +157,7 @@ declares them, as a puppet's contract declares its skeleton. What the contract l
   inside the panel as it always does, the tail ends on the frame aimed at the mouth, and the build
   notes it.
 - **Core gets a figure of its own**, `figures` beside `actors`, not optional `CoreActor` fields that
-  would let a puppet Core with no transform validate. Empty, it is left out, so `format_version`
-  stays 1.
+  would let a puppet Core with no transform validate. Empty, it is left out.
 - **A fault in a contract is reported in it** when the document is checked as a file — the editor
   and SARIF already file a result by its uri — and at the line naming the picture when it is checked
   as text, where the author can only see the document.

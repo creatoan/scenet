@@ -20,6 +20,7 @@ from scenet.emit.page import PAGE_SPACING_FRACTION, render_page, render_pages
 from scenet.emit.strip import placed_panel, render_strip
 from scenet.emit.svg import FIGURE_STROKE_WIDTH, FILL_FIGURE, fmt, panel_body, render, typeface_of
 from scenet.pipeline import Book
+from tests.cores import drawn
 
 SPEECH = "cast: {a: {reference: alice}}\nscript:\n  - say: {by: a, text: Over here.}\n"
 
@@ -171,10 +172,10 @@ def edited() -> PanelCore:
         update={"start": (100.0, 140.0), "end": (200.0, 260.0), "control": (180.0, 120.0)}
     )
     actor = core.actors[0]
-    capsule = actor.capsules[0].model_copy(update={"width": 4.0})
-    actor = actor.model_copy(
-        update={"gaze": (0.6, 0.8), "capsules": (capsule, *actor.capsules[1:])}
-    )
+    mannequin = drawn(actor)
+    capsule = mannequin.capsules[0].model_copy(update={"width": 4.0})
+    mannequin = mannequin.model_copy(update={"capsules": (capsule, *mannequin.capsules[1:])})
+    actor = actor.model_copy(update={"gaze": (0.6, 0.8), "drawing": mannequin})
     return core.model_copy(
         update={
             "balloons": (balloon.model_copy(update={"tail": tail}), *core.balloons[1:]),
@@ -221,7 +222,7 @@ class TestThePanelDrawsWhatTheCoreSays:
     def test_a_limb_thinner_than_its_outline_keeps_a_unit_of_fill(self, edited: PanelCore):
         """Four units thick with a three-unit outline each side leaves nothing inside, so
         the fill is drawn one unit wide rather than vanishing."""
-        capsule = edited.actors[0].capsules[0]
+        capsule = drawn(edited.actors[0]).capsules[0]
         assert 4.0 - 2 * FIGURE_STROKE_WIDTH < 1.0
         (x1, y1), (x2, y2) = capsule.start, capsule.end
         fill = (
