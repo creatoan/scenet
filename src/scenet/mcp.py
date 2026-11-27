@@ -28,7 +28,7 @@ should not have to put Starlette through their own licence review.
 Transports are stdio and Streamable HTTP. Not SSE: the protocol has deprecated it, and
 Streamable HTTP replaced it.
 
-.. rubric:: Five tools, shaped after compilers that are already served this way
+.. rubric:: Five tools, and a sixth with `--output`, shaped after compilers already served this way
 
 `typst-mcp <https://github.com/johannesbrandenburger/typst-mcp>`__ serves its
 documentation one chapter at a time, checks a snippet, and renders one;
@@ -44,13 +44,24 @@ documentation one chapter at a time, checks a snippet, and renders one;
 
 Each takes the document as **text**, not a path. A remote client shares no file
 system with the server, and one calling convention for both transports is one less
-thing to get wrong. Every tool is read-only and closed-world, and says so in its
-annotations: nothing here writes a file or reaches the network.
+thing to get wrong. Each of the five is read-only and closed-world, and says so in its
+annotations: nothing here writes a file or reaches the network. The sixth, `build`, is the
+one tool that is not read-only, and is listed only when the server has a folder to write.
 
 A document that names a file -- a picture behind the cast, a lettering face, a puppet of
 its own -- is sent with it: `files` maps the path the document writes to the file's
-bytes, in base64. They stand in for the document's folder and are read in memory; the
-server never reads a folder of its own, and never writes one.
+bytes, in base64. They stand in for the document's folder and are read in memory; unless
+told otherwise, the server never reads a folder of its own, and never writes one.
+
+.. rubric:: Two folders, for a model that cannot write base64
+
+A chat model cannot write a 2 MB picture as base64, nor repeat a page of SVG to hand it
+over. A server started on stdio may be given two folders, once, on its command line:
+`--root DIR`, from which a document's files are read, under the containment of every other
+entry point, through a `folder` argument the tools then take; and `--output DIR`, which lists a
+sixth tool, `build`, that writes what `scenet build` writes and returns each file's path and
+size, never its contents. `build` never replaces a file with other contents. Neither is
+accepted over HTTP, and the server's instructions and tool schemas say which is active.
 
 .. rubric:: Bounded, and local unless told otherwise
 
@@ -83,14 +94,18 @@ against the installed command to make sure neither ever matters.
 import base64
 import binascii
 import functools
+import hashlib
 import inspect
 import json
 import logging
 import multiprocessing
+import posixpath
 import re
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Generator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from multiprocessing.connection import Connection
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import anyio
@@ -103,6 +118,7 @@ from mcp.types import (
     CallToolResult,
     EmbeddedResource,
     InputRequiredResult,
+    ResourceLink,
     TextContent,
     TextResourceContents,
     ToolAnnotations,
@@ -111,8 +127,10 @@ from pydantic import BaseModel, Field
 
 from scenet import __version__
 from scenet.assets.contract import PuppetSpec, default_library, is_puppet_file, load_puppet_file
+from scenet.build_files import build_outputs
 from scenet.cli import describe_failure
 from scenet.diagnostics import (
+    COMPILE_NOTES,
     RULE_NAMESPACE,
     RULES,
     Diagnostic,
@@ -122,19 +140,22 @@ from scenet.diagnostics import (
 )
 from scenet.emit.export import EXPORTS
 from scenet.emit.page import render_page
+from scenet.emit.pdf import print_notes, printed_panels, render_pdf
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.frontends.positions import DOCUMENT_START, locate
 from scenet.frontends.script_front import parse_script
 from scenet.frontends.yaml_front import parse_scene_document
+from scenet.ir import IDENTIFIERS
 from scenet.limits import LIMIT_RULE, LIMITS, Limits, exceeded
-from scenet.paths import check_relative
-from scenet.pipeline import Book, compile_book, compile_script
+from scenet.paths import Folder, check_relative, contained, within
+from scenet.pipeline import Book, CompileNoteRule, compile_book, compile_script
 from scenet.spec_pack import part
 
 __all__ = [
     "DEFAULT_TIMEOUT",
     "MAX_REQUEST_BYTES",
+    "BuildReport",
     "CompileReport",
     "CompiledPage",
     "CompiledPanel",
@@ -143,6 +164,8 @@ __all__ = [
     "PuppetCatalogue",
     "Server",
     "ValidationReport",
+    "WrittenFile",
+    "build",
     "build_server",
     "compile_panel",
     "get_spec",
@@ -186,9 +209,31 @@ files says what poses and expressions the puppet has. A cast of figure: members 
 drawn by its picture, whose artwork contract sits beside it, named after it \
 (art/p01.png, art/p01.art.yaml): pass that file too."""
 
+#: Added to the instructions when the server was started with `--root`.
+ROOT_INSTRUCTIONS = """\
+This server was started with a folder of files. A document may name a picture, a font or a \
+puppet under it by its path, as a document saved in `folder` would: pass `folder`, not the \
+bytes. Nothing outside the folder can be read, and nothing lists it: ask the user what the \
+file is called."""
+
+#: Added to the instructions when the server was started with `--output`.
+OUTPUT_INSTRUCTIONS = """\
+build writes the document's SVG files, and its print PDF when asked, into the output folder, \
+and returns each file's path and size, never its contents: tell the user where they are \
+rather than repeating them. It never replaces a file with other contents; choose a new name \
+for a new version."""
 #: Every tool here is a pure function of its arguments.
 READ_ONLY = ToolAnnotations(
     read_only_hint=True,
+    destructive_hint=False,
+    idempotent_hint=True,
+    open_world_hint=False,
+)
+
+#: `build` adds files and never replaces one with other contents, and a second call with
+#: the same arguments changes nothing: so it is not destructive, and is idempotent.
+WRITES = ToolAnnotations(
+    read_only_hint=False,
     destructive_hint=False,
     idempotent_hint=True,
     open_world_hint=False,
@@ -223,16 +268,38 @@ SourceArg = Annotated[
         )
     ),
 ]
-FilesArg = Annotated[
-    dict[str, str] | None,
+FILES_DESCRIPTION = (
+    "The files the document names -- a picture behind the cast, a font, a puppet "
+    "file a cast member's `reference` names -- by the path it writes, such as "
+    "`art/p01.png` or `puppets/pip.puppet.yaml`, each as base64, and the artwork "
+    "contract beside a picture whose figures the cast names, such as "
+    "`art/p01.art.yaml`. They stand in for the document's folder, which a server "
+    "never reads; left out, a document that names a file is refused"
+)
+#: The same, on a server started with `--root`: the files are one way to send them.
+FILES_DESCRIPTION_ROOT = (
+    "The files the document names, by the path it writes, each as base64 -- for a file "
+    "that is not in the server's folder. Sent, they are the whole of the document's folder "
+    "and the server's folder is not read, so `folder` cannot be given with them; left out, "
+    "the document's files are read from `folder` under the server's root"
+)
+FilesArg = Annotated[dict[str, str] | None, Field(description=FILES_DESCRIPTION)]
+FolderArg = Annotated[
+    str,
     Field(
         description=(
-            "The files the document names -- a picture behind the cast, a font, a puppet "
-            "file a cast member's `reference` names -- by the path it writes, such as "
-            "`art/p01.png` or `puppets/pip.puppet.yaml`, each as base64, and the artwork "
-            "contract beside a picture whose figures the cast names, such as "
-            "`art/p01.art.yaml`. They stand in for the document's folder, which a server "
-            "never reads; left out, a document that names a file is refused"
+            "The folder under the server's root the document is read from, as if it were saved "
+            "there: `art/p01.png` with folder `chapter-1` is `chapter-1/art/p01.png` under the "
+            "root. Relative, with / between folders"
+        )
+    ),
+]
+PathsArg = Annotated[
+    list[str] | None,
+    Field(
+        description=(
+            "Puppet files under the server's folder to list as well, by the path a cast "
+            "member's `reference` writes, such as `puppets/pip.puppet.yaml`"
         )
     ),
 ]
@@ -326,6 +393,30 @@ class PuppetCatalogue(BaseModel):
     puppets: list[Puppet] = Field(description="Every puppet the library holds, by name")
 
 
+class WrittenFile(BaseModel):
+    """One file `build` wrote into the output folder, or found there already as it would be."""
+
+    path: str = Field(description="In the output folder, named as `scenet build` names it")
+    uri: str = Field(description="The file's `file://` URI, which a host can open")
+    mime_type: str = Field(
+        description="`image/svg+xml`, `application/pdf`, `application/json`, ..."
+    )
+    size: int = Field(description="In bytes")
+    sha256: str = Field(description="Of the file's bytes, in lower-case hexadecimal")
+
+
+class BuildReport(BaseModel):
+    """What `build` wrote: each file, never its contents, and what the compiler noticed."""
+
+    files: list[WrittenFile] = Field(description="In the order written")
+    notes: list[Finding] = Field(
+        description=(
+            "What the compiler decided that the source did not ask for, as notes: each "
+            "names its panel in `where`, and is no reason to build again"
+        )
+    )
+
+
 def get_spec(
     section: Annotated[
         Section | None,
@@ -349,7 +440,9 @@ def get_spec(
     return part(section)
 
 
-def list_puppets(files: FilesArg = None) -> PuppetCatalogue:
+def list_puppets(
+    files: FilesArg = None, paths: PathsArg = None, folder: FolderArg = "."
+) -> PuppetCatalogue:
     """List the characters a panel can cast, with every pose and expression each declares.
 
     A cast member's `reference` names one of these; its `pose` and `expression` must be
@@ -364,7 +457,8 @@ def list_puppets(files: FilesArg = None) -> PuppetCatalogue:
     """
     library = default_library()
     puppets = [_puppet(name, library.get(name)) for name in library.names()]
-    sent = _files(files) or {}
+    reading = _reading(files, folder)
+    sent = reading.sent
     for name in sorted(sent):
         if not is_puppet_file(name):
             continue
@@ -372,6 +466,18 @@ def list_puppets(files: FilesArg = None) -> PuppetCatalogue:
             puppets.append(_puppet(name, load_puppet_file(name, sent)))
         except ScenetError as exc:
             raise ToolError(f"files: {name!r} is not a puppet: {exc}") from exc
+    if paths and reading.mode == "files":
+        raise ToolError(
+            "paths and files cannot both be given: `files` stands in for the server's folder, "
+            "so a puppet in it is listed by being sent; leave out one"
+        )
+    for name in sorted(set(paths or ())):
+        try:
+            check_relative(name, what="puppet", rule="puppet-file")
+            with _reading_from(reading):
+                puppets.append(_puppet(name, load_puppet_file(name, reading.base)))
+        except ScenetError as exc:
+            raise ToolError(f"paths: {name!r} is not a puppet: {exc}") from exc
     return PuppetCatalogue(puppets=puppets)
 
 
@@ -398,6 +504,7 @@ def validate(
         ),
     ] = False,
     files: FilesArg = None,
+    folder: FolderArg = ".",
 ) -> ValidationReport:
     """Check a document and report everything wrong with it, without compiling it.
 
@@ -409,15 +516,19 @@ def validate(
     Returns:
         Whether the document is valid, and every finding in source order.
     """
-    found = _diagnose(source, syntax, deep=deep, files=_files(files))
+    reading = _reading(files, folder)
+    found = _diagnose(source, syntax, deep=deep, reading=reading)
     return ValidationReport(
         valid=not any(item.level == "error" for item in found),
-        findings=[_finding(item) for item in found],
+        findings=[_finding(item, reading.mode) for item in found],
     )
 
 
 def compile_panel(
-    source: SourceArg, syntax: SyntaxArg = "yaml", files: FilesArg = None
+    source: SourceArg,
+    syntax: SyntaxArg = "yaml",
+    files: FilesArg = None,
+    folder: FolderArg = ".",
 ) -> CompileReport:
     """Compile a document and return where the compiler put everything.
 
@@ -437,7 +548,7 @@ def compile_panel(
         ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile. The
             message lists every finding.
     """
-    book = _compile(source, syntax, _files(files))
+    book = _compile(source, syntax, _reading(files, folder))
     return CompileReport(
         panels=[
             CompiledPanel(
@@ -476,6 +587,7 @@ def render_panel(
     ] = True,
     files: FilesArg = None,
     *,
+    folder: FolderArg = ".",
     mono: Annotated[
         bool,
         Field(
@@ -521,7 +633,7 @@ def render_panel(
         ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile. The
             message lists every finding.
     """
-    book = _compile(source, syntax, _files(files))
+    book = _compile(source, syntax, _reading(files, folder))
     results = book.panels
     count = f"{len(results)} panel{'' if len(results) == 1 else 's'}"
     pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
@@ -589,6 +701,320 @@ def render_panel(
     return blocks
 
 
+def build(
+    source: SourceArg,
+    name: Annotated[
+        str,
+        Field(
+            description=(
+                "What the files are called: `<name>.svg`, `<name>.<panel>.svg`, "
+                "`<name>.page-<n>.svg`, `<name>.pdf`. An identifier, and not a name Windows "
+                "keeps for a device, such as `con` or `nul`"
+            )
+        ),
+    ],
+    syntax: SyntaxArg = "yaml",
+    files: FilesArg = None,
+    folder: FolderArg = ".",
+    *,
+    pdf: Annotated[
+        bool,
+        Field(description="Also write the print PDF, `<name>.pdf`, as `scenet build --pdf` does"),
+    ] = False,
+    strip: Annotated[
+        bool, Field(description="Also write the panels side by side, `<name>.strip.svg`")
+    ] = False,
+    core: Annotated[
+        bool, Field(description="Also write each panel's and page's Core, as `.core.json`")
+    ] = False,
+    conditioning: Annotated[
+        bool, Field(description="Also write each panel's exports for image models")
+    ] = False,
+    live_text: Annotated[
+        bool,
+        Field(description="Emit selectable <text> rather than glyph outlines, as `render` does"),
+    ] = False,
+    mono: Annotated[
+        bool, Field(description="Draw every value as its grey, a black-and-white edition")
+    ] = False,
+    aria: Annotated[
+        bool, Field(description="Make each panel an image a screen reader can read")
+    ] = True,
+    embed_images: Annotated[
+        bool,
+        Field(
+            description=(
+                "Write a picture into each SVG, which then stands alone. Left out, the SVG "
+                "links the picture by the path the document writes, and a copy of it is "
+                "written beside the SVG"
+            )
+        ),
+    ] = False,
+) -> Annotated[CallToolResult, BuildReport]:
+    """Compile a document and write its files into the server's output folder.
+
+    Writes what `scenet build -o <output>/<name>.svg` writes: an SVG for each panel and
+    page, and with the options the print PDF, the panels' Core and the exports for image
+    models. It returns each file's path, size and checksum and a link to open it, never its
+    contents: tell the user where the files are rather than repeating them.
+
+    It never replaces a file whose contents differ: a name already used by another version
+    is an `output-exists` finding, and nothing at all is written; choose another `name`.
+    Building the same document under the same name again writes nothing and succeeds.
+
+    Returns:
+        A summary naming each file, a link to each, and the same as structured data.
+
+    Raises:
+        ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile, the name is
+            not one, or a file is already there with other contents.
+    """
+    output = _SERVED.output
+    if output is None:
+        raise ToolError("build needs a server started with --output, and this one has none")
+    _check_name(name)
+    reading = _reading(files, folder)
+    book = _compile(source, syntax, reading)
+    base = output / f"{name}.svg"
+    printed = printed_panels(
+        book.pages, {panel: result.core for panel, result in book.panels.items()}
+    )
+    document = None
+    if pdf:
+        try:
+            document = render_pdf(
+                book.pages,
+                printed,
+                fonts=book.fonts,
+                images=book.images,
+                live_text=live_text,
+                mono=mono,
+            )
+        except ValueError as exc:
+            raise ToolError(f"pdf: {exc}") from exc
+    planned = [
+        (path, _bytes(content()))
+        for path, content in build_outputs(
+            book,
+            base,
+            single=len(book.panels) == 1 and "panel" in book.panels,
+            pdf=document,
+            embed_images=embed_images,
+            live_text=live_text,
+            mono=mono,
+            aria=aria,
+            core=core,
+            conditioning=conditioning,
+            strip=strip,
+        )
+    ]
+    copy_notes: list[str] = []
+    if not embed_images:
+        copied, copy_notes = _copied_pictures(book, base)
+        planned += copied
+    _check_clashes(planned, output)
+    _refuse_other_contents(planned, output)
+    written = [_write_new(path, data, output) for path, data in planned]
+    notes = [*_notes(book, printed, pdf=pdf, live_text=live_text), *_copy_notes(copy_notes)]
+    report = BuildReport(files=written, notes=notes)
+    lines = [f"Built {len(written)} file{'' if len(written) == 1 else 's'} in the output folder:"]
+    lines.extend(f"{item.path} ({item.size} bytes)" for item in written)
+    lines.extend(f"note ({item.where or 'document'}): {item.message}" for item in notes)
+    return CallToolResult(
+        content=[
+            TextContent(type="text", text="\n".join(lines)),
+            *(
+                ResourceLink(
+                    type="resource_link",
+                    name=item.path,
+                    uri=item.uri,
+                    mime_type=item.mime_type,
+                    size=item.size,
+                )
+                for item in written
+            ),
+        ],
+        structured_content=report.model_dump(),
+    )
+
+
+#: A name Windows keeps for a device, which no file there may be called, with or without an
+#: extension: a build named `con` would work here and fail on a colleague's machine.
+_DEVICES = frozenset(
+    {"con", "prn", "aux", "nul", *(f"{kind}{n}" for kind in ("com", "lpt") for n in range(1, 10))}
+)
+
+
+def _check_name(name: str) -> None:
+    """Refuse a `name` that is no identifier, or that Windows keeps for a device."""
+    problem = IDENTIFIERS.problem(name)
+    if problem is None and name.casefold() in _DEVICES:
+        problem = f"{name!r} is a name Windows keeps for a device, and no file there can have it"
+    if problem is not None:
+        raise ToolError(f"name: {problem}")
+
+
+def _bytes(content: str | bytes) -> bytes:
+    """What a file holds: text as UTF-8 with LF line endings, as `scenet build` writes it."""
+    return content if isinstance(content, bytes) else content.encode("utf-8")
+
+
+def _copied_pictures(book: Book, base: Path) -> tuple[list[tuple[Path, bytes]], list[str]]:
+    """The pictures an SVG links, to write beside it so that each link finds its picture.
+
+    The same as `scenet build` does, for the same reason: a link is the path the document
+    wrote, which a viewer reads from beside the SVG. One reached with `..` would land outside
+    the folder, so it is not copied, and a note says so.
+    """
+    linked = sorted(
+        {
+            (result.core.backdrop.image.href, result.core.backdrop.image.sha256)
+            for result in book.panels.values()
+            if result.core.backdrop is not None and result.core.backdrop.image is not None
+        }
+    )
+    copies: list[tuple[Path, bytes]] = []
+    notes: list[str] = []
+    for href, digest in linked:
+        if posixpath.normpath(href).startswith(".."):
+            notes.append(
+                f"{href} is linked, and is outside the document's folder, so it was not copied "
+                "beside the SVG; build with embed_images"
+            )
+            continue
+        copies.append((base.parent / href, book.images[digest]))
+        notes.append(
+            f"{href} is linked, so it was copied beside the SVG; build with embed_images for "
+            "an SVG that stands alone"
+        )
+    return copies, notes
+
+
+def _check_clashes(planned: list[tuple[Path, bytes]], output: Path) -> None:
+    """Refuse two files with one name, ignoring case as Windows and macOS do."""
+    seen: dict[str, str] = {}
+    for path, _ in planned:
+        shown = path.relative_to(output).as_posix()
+        if shown.casefold() in seen:
+            raise ToolError(
+                f"two files would both be written to {shown}"
+                + (f" (and {seen[shown.casefold()]})" if seen[shown.casefold()] != shown else "")
+                + "; rename the panel that clashes"
+            )
+        seen[shown.casefold()] = shown
+
+
+def _refuse_other_contents(planned: list[tuple[Path, bytes]], output: Path) -> None:
+    """Refuse, before anything is written, a file that exists with other contents.
+
+    A file already there with the same bytes counts as written. One that is not a file, or
+    that a link carries out of the output folder, is refused too: nothing is replaced, and
+    nothing is written through a link.
+    """
+    found: list[Finding] = []
+    for path, data in planned:
+        shown = path.relative_to(output).as_posix()
+        if not (path.exists() or path.is_symlink()):
+            continue
+        if within(path, output) and path.is_file() and path.read_bytes() == data:
+            continue
+        found.append(
+            Finding(
+                rule=f"{RULE_NAMESPACE}/output-exists",
+                level="error",
+                message=f"{shown} is already in the output folder, with other contents",
+                fix=(
+                    "build never replaces a file: choose another `name` for this version, "
+                    "or build the same document again for the same files"
+                ),
+                help_uri=f"{WEBSITE}reference/mcp.html#output-exists",
+                where="name",
+                line=1,
+                column=1,
+                end_line=1,
+                end_column=1,
+            )
+        )
+    if found:
+        count = f"{len(found)} file{'' if len(found) == 1 else 's'}"
+        raise ToolError(
+            f"{count} already in the output folder with other contents, so nothing was written. "
+            "Choose another `name`.\n\n"
+            + "\n\n".join(f"{item.rule}\n  {item.message}\n  fix: {item.fix}" for item in found)
+        )
+
+
+def _write_new(path: Path, data: bytes, output: Path) -> WrittenFile:
+    """One file written if it is not there, and described either way."""
+    if not path.exists():
+        if not within(path.parent, output):
+            raise ToolError(f"{path.relative_to(output).as_posix()} would leave the output folder")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with path.open("xb") as handle:
+                handle.write(data)
+        except FileExistsError as exc:  # pragma: no cover -- a race with another process
+            raise ToolError(
+                f"{path.name} appeared in the output folder; choose another `name`"
+            ) from exc
+    return WrittenFile(
+        path=path.relative_to(output).as_posix(),
+        uri=path.as_uri(),
+        mime_type=_MEDIA_TYPES.get(path.suffix.lower(), "application/octet-stream"),
+        size=len(data),
+        sha256=hashlib.sha256(data).hexdigest(),
+    )
+
+
+_MEDIA_TYPES = {
+    ".svg": "image/svg+xml",
+    ".pdf": "application/pdf",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+}
+
+
+def _notes(book: Book, printed: dict[str, Any], *, pdf: bool, live_text: bool) -> list[Finding]:
+    """What reading and compiling noticed, and what print leaves out, each as a note."""
+    notes = [_note(message, "", None) for message in book.notes]
+    for panel, result in book.panels.items():
+        notes.extend(_note(note.message, panel, note.rule) for note in result.compile_notes)
+    if pdf:
+        notes.extend(
+            _note(message, "", None)
+            for message in print_notes(
+                printed, live_text=live_text, fonts=book.fonts, pages=book.pages
+            )
+        )
+    return notes
+
+
+def _copy_notes(messages: list[str]) -> list[Finding]:
+    return [_note(message, "", None) for message in messages]
+
+
+#: The rule of a note that is not one of the compiler's named decisions.
+BUILD_NOTE = "build-note"
+
+
+def _note(message: str, panel: str, rule: CompileNoteRule | None) -> Finding:
+    """A note as a finding of level `note`: it names its panel, and has no place in the text."""
+    return Finding(
+        rule=f"{RULE_NAMESPACE}/{rule or BUILD_NOTE}",
+        level="note",
+        message=message,
+        fix=COMPILE_NOTES[rule].help if rule else "",
+        help_uri=help_uri(rule) if rule else f"{WEBSITE}reference/mcp.html#notes",
+        where=panel,
+        line=1,
+        column=1,
+        end_line=1,
+        end_column=1,
+    )
+
+
 #: Tool name, title and function. `compile` is the name a client sees; the Python
 #: function is `compile_panel`, so as not to shadow the builtin.
 TOOLS: tuple[tuple[str, str, Callable[..., Any]], ...] = (
@@ -599,6 +1025,14 @@ TOOLS: tuple[tuple[str, str, Callable[..., Any]], ...] = (
     ("render", "Render a panel to SVG", render_panel),
 )
 
+
+#: The tool `--output` adds. Listed only then, for a client to see which mode is active.
+BUILD_TOOL: tuple[str, str, Callable[..., Any]] = ("build", "Build a panel into files", build)
+
+#: The tools whose input says where a document's files are read from, and the parameters
+#: that exist only on a server started with `--root`.
+_READING_TOOLS = ("validate", "compile", "render", "list_puppets", "build")
+_ROOT_ONLY = ("folder", "paths")
 
 _LOG = logging.getLogger(__name__)
 
@@ -651,7 +1085,13 @@ class Server(MCPServer[Any]):
             raise ToolError(describe_failure(crash)) from crash
 
 
-def build_server(*, timeout: float | None = None, limits: Limits = LIMITS) -> "Server":
+def build_server(
+    *,
+    timeout: float | None = None,
+    limits: Limits = LIMITS,
+    root: Path | None = None,
+    output: Path | None = None,
+) -> "Server":
     """Build the server with every tool registered, without starting it.
 
     Separate from :func:`serve <scenet.mcp.serve>` so that a test, or a host embedding
@@ -664,28 +1104,91 @@ def build_server(*, timeout: float | None = None, limits: Limits = LIMITS) -> "S
         limits: The limits every tool holds a document to: the language's, or tighter, for
             a server that compiles documents it does not trust. A document past one
             is a `limit` finding, and is not compiled.
+        root: A folder a document's files are read from, for a server on stdio: its tools
+            take a `folder` under it, and nothing outside it is read. `None`, the default,
+            reads no folder: every file arrives in `files`.
+        output: A folder `build` writes into, for a server on stdio, which lists the tool
+            only then. It never replaces a file with other contents.
 
     Returns:
         The server, ready to run on any transport. Its `close()` stops the worker
         processes it started; :func:`serve` calls it once the server has stopped.
     """
     _SERVED.limits = limits
+    _SERVED.root = None if root is None else root.resolve()
+    _SERVED.output = None if output is None else output.resolve()
     workers = None if timeout is None else _Workers(timeout)
+    instructions = "\n\n".join(
+        [
+            INSTRUCTIONS,
+            *([ROOT_INSTRUCTIONS] if root is not None else []),
+            *([OUTPUT_INSTRUCTIONS] if output is not None else []),
+        ]
+    )
     server = Server(
         workers=workers,
         name="scenet",
         title="Scenet",
         version=__version__,
-        instructions=INSTRUCTIONS,
+        instructions=instructions,
         website_url=WEBSITE,
     )
-    for name, title, function in TOOLS:
-        run = function if workers is None else _bounded(name, function, workers)
-        server.tool(name=name, title=title, description=_describe(function), annotations=READ_ONLY)(
-            run
-        )
+    for name, title, function in [*TOOLS, *([BUILD_TOOL] if output is not None else [])]:
+        shaped = function if root is not None else _without(function, _ROOT_ONLY)
+        run = shaped if workers is None else _bounded(name, shaped, workers)
+        annotations = WRITES if name == "build" else READ_ONLY
+        server.tool(
+            name=name,
+            title=title,
+            description=_describe(function) + _mode(name, root=root, output=output),
+            annotations=annotations,
+        )(run)
         _refuse_unknown_arguments(server, name)
+        if root is not None and name in _READING_TOOLS:
+            _describe_files_for_a_root(server, name)
     return server
+
+
+def _without(function: Callable[..., Any], names: tuple[str, ...]) -> Callable[..., Any]:
+    """The tool with some parameters left out of its signature, so its schema is without them.
+
+    A call never sends them, so each keeps the default the function gives it.
+    """
+    signature = inspect.signature(function)
+    if not any(name in signature.parameters for name in names):
+        return function
+
+    @functools.wraps(function)
+    def call(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401 -- whatever the tool takes and returns
+        return function(*args, **kwargs)
+
+    # `inspect.signature` reads it before anything else: it is what the SDK builds the schema from.
+    call.__dict__["__signature__"] = signature.replace(
+        parameters=[p for p in signature.parameters.values() if p.name not in names]
+    )
+    return call
+
+
+def _mode(name: str, *, root: Path | None, output: Path | None) -> str:
+    """A sentence on a tool's description that says which mode the server is in."""
+    if name == "render" and output is not None:
+        return "\n\nIt never writes a file: build does."
+    if root is not None and name in _READING_TOOLS:
+        return (
+            "\n\nThe server's folder is read for the files the document names, under `folder`, "
+            "unless they are sent in `files`."
+        )
+    return ""
+
+
+def _describe_files_for_a_root(server: MCPServer[Any], name: str) -> None:
+    """Say, in a tool's schema, that `files` is one way to send a file and not the only one."""
+    tool = server._tool_manager.get_tool(name)  # pyright: ignore[reportPrivateUsage] -- as above
+    if tool is None:  # pragma: no cover -- registered just above
+        return
+    files = tool.parameters.get("properties", {}).get("files")
+    if files is not None:
+        files["description"] = FILES_DESCRIPTION_ROOT
 
 
 def _refuse_unknown_arguments(server: MCPServer[Any], name: str) -> None:
@@ -715,6 +1218,8 @@ def serve(
     port: int = 8000,
     timeout: float = DEFAULT_TIMEOUT,
     origins: Sequence[str] = (),
+    root: Path | None = None,
+    output: Path | None = None,
 ) -> None:
     """Run the server until the client disconnects.
 
@@ -730,8 +1235,16 @@ def serve(
         port: Its port.
         timeout: The most seconds one tool call may take.
         origins: Origins a browser client may call from, beyond the server's own.
+        root: A folder a document's files are read from. Over stdio only.
+        output: A folder `build` writes new files into. Over stdio only.
+
+    Raises:
+        ScenetError: A folder was given with Streamable HTTP, whose clients share no disk with
+            the server and which authenticates none of them.
     """
-    server = build_server(timeout=timeout)
+    if transport != "stdio" and (root is not None or output is not None):
+        raise ScenetError("--root and --output are for a server on stdio")
+    server = build_server(timeout=timeout, root=root, output=output)
     try:
         if transport == "stdio":
             server.run("stdio")
@@ -785,7 +1298,9 @@ class _Worker:
         self._connection, theirs = context.Pipe()
         # A spawned process starts with the language's limits: it is sent the server's.
         self._process = context.Process(
-            target=_serve_calls, args=(theirs, _SERVED.limits), daemon=True
+            target=_serve_calls,
+            args=(theirs, _SERVED.limits, _SERVED.root, _SERVED.output),
+            daemon=True,
         )
         self._process.start()
         theirs.close()
@@ -855,14 +1370,21 @@ class _Workers:
 _WARM = "cast: {alice: {reference: alice}}\nscript: [{say: {by: alice, text: Hello.}}]\n"
 
 
-def _serve_calls(connection: Connection, limits: Limits = LIMITS) -> None:
+def _serve_calls(
+    connection: Connection,
+    limits: Limits = LIMITS,
+    root: Path | None = None,
+    output: Path | None = None,
+) -> None:
     """A worker's loop: run each call it is sent, and send back what came of it.
 
     A tool's own error comes back as its message; any other failure as the line the
     command line prints for one, since an exception need not survive the trip back.
     """
     _SERVED.limits = limits
-    functions = {name: function for name, _, function in TOOLS}
+    _SERVED.root = root
+    _SERVED.output = output
+    functions = {name: function for name, _, function in [*TOOLS, BUILD_TOOL]}
     # The first compile in a process reads the shipped fonts and puppets: done here, before
     # the worker says it is ready, so that no call's time is spent on it.
     compile_book(_WARM)
@@ -909,13 +1431,84 @@ def _files(sent: dict[str, str] | None) -> dict[str, bytes] | None:
     return decoded
 
 
+#: Where a document's files come from: sent beside it as text, sent in `files`, or read from
+#: the folder the server was started with.
+Mode = Literal["text", "files", "root"]
+
+
+@dataclass(frozen=True)
+class _Reading:
+    """Where one call's document reads the files it names."""
+
+    mode: Mode
+    #: The files sent, decoded; empty unless `mode` is `files`.
+    sent: dict[str, bytes]
+    #: What the document's files are read from: the files sent, or a folder under the root.
+    base: Folder | None = None
+    #: The root a file must be inside, with the server's folder.
+    root: Path | None = None
+
+
+def _reading(files: dict[str, str] | None, folder: str) -> _Reading:
+    """Where a call reads its files from, or a tool error saying what was asked wrong.
+
+    `files` and the disk are exclusive in one call: with `files` the mapping is the root, as
+    it was before the server could have one, and `folder` beside it is refused.
+    """
+    sent = _files(files)
+    if sent is not None:
+        if folder != ".":
+            raise ToolError(
+                f"files and folder cannot both be given: `files` is the whole of the "
+                f"document's folder, so a `folder` of {folder!r} has nothing to be read from; "
+                "leave out one of them"
+            )
+        return _Reading("files", sent, base=sent)
+    root = _SERVED.root
+    if root is None:
+        if folder != ".":
+            raise ToolError(
+                "folder needs a server started with --root; send the files in `files` instead"
+            )
+        return _Reading("text", {})
+    return _Reading("root", {}, base=_folder(folder, root), root=root)
+
+
+def _folder(folder: str, root: Path) -> Path:
+    """A folder under the server's root, held to a document's path rules and to the root."""
+    try:
+        check_relative(folder, what="folder", rule="image-file")
+    except ScenetError as exc:
+        raise ToolError(f"folder: {exc}") from exc
+    wanted = posixpath.normpath(folder)
+    path = root / wanted
+    # Lexical first: nothing outside the root is so much as looked at unless the path says
+    # it is inside; then links are followed, and one that leads out is no way in.
+    if wanted == ".." or wanted.startswith("../") or not within(path, root):
+        raise ToolError(f"folder: {folder!r} is outside the server's folder, the only one it reads")
+    if not path.is_dir():
+        raise ToolError(f"folder: {folder!r} is not a folder under the server's folder")
+    return path
+
+
+@contextmanager
+def _reading_from(reading: _Reading) -> Generator[None, None, None]:
+    """Hold every file read inside to the root, when the call has one."""
+    if reading.root is None:
+        yield
+        return
+    with contained(reading.root):
+        yield
+
+
 def _diagnose(
-    source: str, syntax: Syntax, *, deep: bool, files: dict[str, bytes] | None = None
+    source: str, syntax: Syntax, *, deep: bool, reading: _Reading | None = None
 ) -> list[Diagnostic]:
+    reading = reading or _Reading("text", {})
     found = (
-        diagnose_script(source, deep=deep, base=files)
+        diagnose_script(source, deep=deep, base=reading.base, root=reading.root)
         if syntax == "script"
-        else diagnose_source(source, deep=deep, base=files)
+        else diagnose_source(source, deep=deep, base=reading.base, root=reading.root)
     )
     if _SERVED.limits == LIMITS or any(item.level == "error" for item in found):
         return found
@@ -945,22 +1538,57 @@ def _past_the_servers_limits(source: str, syntax: Syntax) -> list[Diagnostic]:
 
 @dataclass
 class _Served:
-    """What the server was built with: the limits every tool holds a document to."""
+    """What the server was built with: its limits, and the two folders it was given."""
 
     limits: Limits = LIMITS
+    #: `--root`: where a document's files are read from, resolved; `None` reads none.
+    root: Path | None = None
+    #: `--output`: where `build` writes, resolved; `None` lists no `build`.
+    output: Path | None = None
 
 
 #: The server's own settings, which `build_server` sets. One server is served per process.
 _SERVED = _Served()
 
 
-def _finding(item: Diagnostic) -> Finding:
+#: What to do about a file that is not found, by where the call reads its files from. None
+#: names a command: over MCP there is none to run, and the model has these arguments.
+_WHERE_FILES: dict[Mode, str] = {
+    "text": "Send the file in `files`, by the path the document writes.",
+    "files": "The path the document writes must be one of the keys of `files`.",
+    "root": (
+        "Put the file at `<folder>/<path>` under the server's folder, or send it in `files`; "
+        "nothing lists the folder, so ask the user what the file is called."
+    ),
+}
+
+#: What else a rule that names a file asks of it, in words that name no command.
+_FILE_FIXES = {
+    "image-file": "The picture must be a PNG or JPEG with its pixels upright.",
+    "artwork-contract": (
+        "A picture whose figures the cast names has its artwork contract beside it, named "
+        "after it (`art/p01.png` has `art/p01.art.yaml`): its `size`, its `figures` and its "
+        "`keep_out` regions, in the picture's own pixels."
+    ),
+    "font-file": "The font must be a .ttf or .otf file with a Unicode character map.",
+    "puppet-file": "The file must be a puppet: its landmarks, joints, parts, anchors and face.",
+}
+
+
+def _fix(rule: str, mode: Mode) -> str:
+    """What to do about a finding: the rule's, and for a file, where this call reads it from."""
+    if rule not in _FILE_FIXES:
+        return RULES[rule].help
+    return f"{_WHERE_FILES[mode]} {_FILE_FIXES[rule]}"
+
+
+def _finding(item: Diagnostic, mode: Mode = "text") -> Finding:
     region = item.region or DOCUMENT_START
     return Finding(
         rule=f"{RULE_NAMESPACE}/{item.rule}",
         level=item.level,
         message=item.message,
-        fix=RULES[item.rule].help,
+        fix=_fix(item.rule, mode),
         help_uri=help_uri(item.rule),
         where=".".join(str(step) for step in item.path),
         line=region.start.line,
@@ -970,30 +1598,37 @@ def _finding(item: Diagnostic) -> Finding:
     )
 
 
-def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None) -> Book:
+def _compile(source: str, syntax: Syntax, reading: _Reading | None = None) -> Book:
     """Compile every panel and page, or raise a tool error that lists every finding.
 
     The success path compiles once. Only a failure pays for the deep check, which is
     what turns "the solver gave up" into a located finding with a rule and a fix.
     """
+    reading = reading or _Reading("text", {})
     if _SERVED.limits != LIMITS:
-        past = _diagnose(source, syntax, deep=False, files=files)
+        past = _diagnose(source, syntax, deep=False, reading=reading)
         if any(item.rule == LIMIT_RULE for item in past):
             raise ToolError(
-                json.dumps([_finding(item).model_dump() for item in past if item.level == "error"])
+                json.dumps(
+                    [
+                        _finding(item, reading.mode).model_dump()
+                        for item in past
+                        if item.level == "error"
+                    ]
+                )
             )
     try:
         library = default_library()
         if syntax != "script":
-            return compile_book(source, library=library, base=files)
-        return compile_script(source, library=library, base=files)
+            return compile_book(source, library=library, base=reading.base, root=reading.root)
+        return compile_script(source, library=library, base=reading.base, root=reading.root)
     except ScenetError as exc:
         # Only errors explain a failure: a note is a house limit the document can exceed.
         # The cheap check first, which costs no compile: only a document it finds clean
         # pays for the deep one. Either runs in the same worker, under the same clock, as
         # the compile that failed.
-        found = _errors(_diagnose(source, syntax, deep=False, files=files)) or _errors(
-            _diagnose(source, syntax, deep=True, files=files)
+        found = _errors(_diagnose(source, syntax, deep=False, reading=reading)) or _errors(
+            _diagnose(source, syntax, deep=True, reading=reading)
         )
         if not found:
             # A clean deep check means a successful build -- the diagnostics tests hold
@@ -1002,7 +1637,7 @@ def _compile(source: str, syntax: Syntax, files: dict[str, bytes] | None = None)
             raise ToolError(
                 f"the document did not compile, but no rule explains why: {exc}"
             ) from exc
-        raise ToolError(_report(found)) from exc
+        raise ToolError(_report(found, reading.mode)) from exc
 
 
 def _errors(found: list[Diagnostic]) -> list[Diagnostic]:
@@ -1010,12 +1645,12 @@ def _errors(found: list[Diagnostic]) -> list[Diagnostic]:
     return [item for item in found if item.level == "error"]
 
 
-def _report(found: list[Diagnostic]) -> str:
+def _report(found: list[Diagnostic], mode: Mode = "text") -> str:
     """Findings as text, for hosts that show a model only the text of an error."""
     count = f"{len(found)} problem{'' if len(found) == 1 else 's'}"
     entries = []
     for item in found:
-        finding = _finding(item)
+        finding = _finding(item, mode)
         where = f" at {finding.where}" if finding.where else ""
         entries.append(
             f"{finding.line}:{finding.column} {finding.rule}{where}\n"

@@ -730,7 +730,7 @@ scenet mcp [--transport {stdio,streamable-http}] [--host HOST] [--port PORT] [--
 ```
 
 Runs an [MCP](https://modelcontextprotocol.io/) server whose tools read the specification,
-list the characters, validate, compile and render — so a model can check the panel it
+list the characters, validate, compile and render, and write the files — so a model can check the panel it
 wrote, read what is wrong and fix it, with nobody copying error text between windows. The
 tools themselves are documented in [the MCP server reference](mcp.md).
 
@@ -787,11 +787,12 @@ without the extra.
   *Since 0.14.*
 
 `--root DIR`, `--output DIR`
-: A folder a server on stdio may read the files a document names from, contained as
-  `scenet build --root` is, and one its `build` tool writes new files in, never replacing one.
-  Each is refused over Streamable HTTP, exit 2: any client of an HTTP server could reach the
-  server's folders through it. Neither is in this version yet, and each is refused on stdio
-  too; without them the server reads and writes no folder of its own.
+: A folder a server on stdio reads the files a document names from, contained as
+  `scenet build --root` is, and one its `build` tool, which is listed only then, writes new files
+  in, never replacing one with other contents. Each names an existing folder, or the command exits
+  2, and is resolved once, at start-up. Each is refused over Streamable HTTP, also exit 2: any
+  client of an HTTP server could reach the server's folders through it. Without them the server
+  reads and writes no folder of its own. See [Folders](mcp.md#folders).
   *Since 0.14.*
 
 ### Exit status

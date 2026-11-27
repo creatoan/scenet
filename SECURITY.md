@@ -48,10 +48,12 @@ reaches the network. What it reads and what it serves:
 - **`scenet build --watch`** reads the same files again whenever they change, and nothing else.
 - **`scenet mcp`**, the MCP server, an optional extra. On stdio it talks only to the client
   that launched it. Its tools take a document as text, and the files it names as base64 in
-  `files`, read in memory. It opens no file but the package's own and writes none, which a
-  test holds with an audit hook over every call. `--root DIR` and `--output DIR`, folders a
-  stdio server will be able to read from and write new files in, are refused over HTTP, and
-  are not in this version yet. On either transport each tool call runs in a worker process, stopped when it
+  `files`, read in memory. Started with neither option it opens no file but the package's own
+  and writes none, which a test holds with an audit hook over every call. `--root DIR` and
+  `--output DIR`, which only the operator's command line can give, let a stdio server read the
+  files a document names from inside one folder, under the containment above, and let its
+  `build` tool add new files to another, never replacing one with other contents; both are
+  refused over HTTP. On either transport each tool call runs in a worker process, stopped when it
   runs past `--timeout` (60 seconds by default) or its client cancels it, so no call occupies
   the server for longer. Over HTTP, `scenet mcp --transport streamable-http` guarantees:
   - it listens on a loopback address, `127.0.0.1` by default; any other `--host` is refused

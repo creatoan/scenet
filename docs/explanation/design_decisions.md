@@ -584,6 +584,20 @@ it can make no layout decision and no model ever runs inside Scenet.
   declines for PNG; the playground's own rasteriser, and every SVG tool, turn the maps into
   pictures.
 
+## The MCP server
+
+### A server reads and writes only the folders it was started with
+
+`scenet mcp` takes a document as text and the files it names as bytes, which a script can send and a chat model cannot: a 2 MB picture is 2.7 million characters of base64 the model would have to write, and a rendered page is tens of thousands it would have to repeat to hand it over. So a server started over stdio may be given two folders on its command line. `--root DIR` is the root a document's files are read from, under the containment every other entry point follows; `--output DIR` lists a sixth tool, `build`, which writes there what `scenet build` writes and returns each file's path and size, not its contents. Whoever configures the client chooses both, once; nothing a document or a model says widens them.
+
+- **Server configuration, not roots.** MCP revision 2026-07-28 deprecates roots, which never controlled access, and names server configuration among the ways to migrate.
+- **Only adding.** `build` never replaces a file with other contents. Over MCP a model makes the call, and may be steered by a document it was handed; the page it would replace may exist nowhere else. A second identical call changes nothing, so the tool is marked idempotent and not destructive, and is both.
+- **Links for the host, paths for the model.** Each file comes back as a `resource_link` with its size, and as a path in plain text, because hosts differ in what they pass a model.
+- **Not over HTTP.** A remote client shares no disk with the server, and the HTTP transport has no authentication; either option is refused with it.
+- **The mode is visible.** `folder` is in the input schemas only with `--root`, and `build` is listed only with `--output`, so a model learns what it can do from the tools it is given, and the instructions say it in a sentence for each option.
+
+Refused: roots; absolute paths and `file://` URIs in arguments; URLs the server would fetch; serving rendered files back through `resources/read`, which sends the bytes through the client again and makes the server remember them; `render` writing when a folder is given, since an annotation is per tool, not per call; replacing a file of the same name, as the command line does; a `path` argument for the document itself, which would give the two transports two calling conventions; a temporary folder of the server's choosing, since a server writes only where it was told to. The `io.modelcontextprotocol/files` extension is the later path for the HTTP transport.
+
 ## Toolchain and documentation
 
 How the project is checked, and how its site is built.

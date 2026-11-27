@@ -12,18 +12,23 @@ page is the tools.
 
 ## Tools
 
-Five, deliberately. Each extra tool is more for a model to read before it can choose one.
+Five, deliberately, and a sixth, `build`, only when the server was started with `--output`. Each
+extra tool is more for a model to read before it can choose one.
 
 | Tool | Takes | Returns |
 |---|---|---|
 | `get_spec` | `section` (optional) | The spec pack, one part at a time, as Markdown |
-| `list_puppets` | `files` (optional) | Every shipped character, then every puppet file sent, with each pose and expression it declares |
-| `validate` | `source`, `syntax`, `deep`, `files` | `{valid, findings}`, every finding at once; `valid` when none is an error |
-| `compile` | `source`, `syntax`, `files` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
-| `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `mono`, `conditioning` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
+| `list_puppets` | `files`, and with `--root` `paths` and `folder` (all optional) | Every shipped character, then every puppet file sent, with each pose and expression it declares |
+| `validate` | `source`, `syntax`, `deep`, `files`, and with `--root` `folder` | `{valid, findings}`, every finding at once; `valid` when none is an error |
+| `compile` | `source`, `syntax`, `files`, and with `--root` `folder` | Each panel's notes and [Panel Core](panel_core.md), then each page's [Page Core](panel_core.md#page-core) |
+| `render` | `source`, `syntax`, `live_text`, `aria`, `files`, `mono`, `conditioning`, and with `--root` `folder` | A summary, then one SVG per panel, then one per page, then each panel's exports for image models when asked |
+| `build` | `source`, `name`, `syntax`, `files`, `pdf`, `strip`, `core`, `conditioning`, `live_text`, `mono`, `aria`, `embed_images`, and with `--root` `folder` | Each file written into the output folder: its path, `file://` URI, media type, size and SHA-256, never its contents; then the notes. Listed only with `--output` |
 
-Every tool is annotated **read-only, idempotent and closed-world**: none writes a file, reaches
+The five are annotated **read-only, idempotent and closed-world**: none writes a file, reaches
 the network, or answers differently on a second call. A client can run them without asking.
+`build` is annotated `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: true` and
+`openWorldHint: false`: it adds files and never replaces one with other contents, and a second
+identical call changes nothing. `render` never writes, with or without `--output`.
 
 ### Arguments
 
@@ -44,7 +49,17 @@ the network, or answers differently on a second call. A client can run them with
   `{"art/p01.png": "…", "art/p01.art.yaml": "…"}`; without it the finding is `artwork-contract`,
   at the line naming the picture. Given to `list_puppets`, each `*.puppet.yaml` among them is
   listed after the shipped puppets, by its path — what `reference` writes — and one that is not a
-  puppet is a tool error saying why.
+  puppet is a tool error saying why. On a server started with `--root`, `files` is one way to send
+  a file and the folder is the other, and the two are exclusive in one call: see
+  [Folders](#folders).
+
+`folder`, `paths`
+: Only on a server started with `--root`; the schemas of a server without it do not have them,
+  and a call that sends one is refused. See [Folders](#folders).
+
+`name`
+: Only on `build`: what the files are called, an [identifier](language/identifiers.md) that is not a
+  name Windows keeps for a device, such as `con` or `nul`. See [The build tool](#the-build-tool).
 
 `syntax`
 : `yaml` (default) for a `*.panel.yaml` or `*.scene.yaml` document — a top-level `panels:` key
@@ -157,11 +172,73 @@ It authenticates nobody and encrypts nothing. Expose it beyond the machine only 
 that does both: a reverse proxy on the same machine reaches it on `127.0.0.1` and needs no
 `--allow-remote`.
 
-A document sent to the server, and the files it names, are read in memory: a call opens no
-file but the package's own, and writes none, and a path in either that climbs out of the
-files sent is refused like any other path that leaves its root. `scenet mcp --root DIR` and
-`--output DIR`, a folder a server on stdio may read from and one its `build` tool writes new
-files in, are refused over Streamable HTTP, and are not in this version yet.
+Started with neither `--root` nor `--output`, a document sent to the server, and the files it
+names, are read in memory: a call opens no file but the package's own, and writes none, and a
+path in either that climbs out of the files sent is refused like any other path that leaves its
+root. `--root` and `--output`, which give a server on stdio a folder, are the only way that
+changes; both are refused over Streamable HTTP, exit 2.
+
+## Folders
+
+A chat model can write a document and cannot write a 2 MB picture as base64, and cannot repeat a
+page of SVG to hand it over. So a server started over stdio may be given two folders, once, on
+its command line; whoever configures the client chooses them, and nothing a document or a model
+says widens them:
+
+```bash
+scenet mcp --root ~/comics --output ~/comics/out
+```
+
+Each names an existing folder, or the command exits 2. It is resolved once, at start-up.
+
+`--root DIR`
+: The root of every document a call sends as text. Its files are read from `DIR/<folder>`, where
+  `folder` is a new argument (default `.`): `art/p01.png` with `folder` set to `chapter-1` is
+  `chapter-1/art/p01.png` under the root. `folder` is held to a document's path rules —
+  relative, `/` between folders — and to the root. `..`, an absolute path and a symbolic link
+  that leads out are refused, under the rule of the file named, before anything outside the root
+  is opened; only regular files are read, each up to the limits of
+  [every file a document names](language/limits.md). `files` and the disk are exclusive in one
+  call: with `files` the mapping is the root, as without `--root`, and `files` with `folder` is
+  refused, naming both. Nothing lists the folder: the model asks the user what a file is called.
+
+`--output DIR`
+: Lists the `build` tool, which writes there.
+
+A server's instructions and its tools' descriptions say which of the two is active, so a model
+knows whether it can name a file or write one. The `fix` of a finding about a picture, a font, a
+puppet file or an artwork contract says which of `files` or the root applies, and names no
+`scenet` command: with text alone, send the file in `files`; with `files` sent, the path must be
+one of its keys; with a root, put the file at `<folder>/<path>` under the server's folder, or send
+it in `files`.
+
+## The build tool
+
+`build` writes into the output folder what `scenet build -o OUTPUT/<name>.svg` writes, with the
+same flags, under the same names — `<name>.svg`, `<name>.<panel>.svg`, `<name>.page-<n>.svg`, and
+`<name>.pdf` with `pdf` — and byte for byte the same files. A picture the SVG links is copied
+beside it, unless `embed_images` writes it into the SVG.
+
+It returns no file's bytes. A short text block names each file by its path in the output folder
+with its size; `structuredContent` carries each file's `path`, `uri` (a `file://` URI),
+`mime_type`, `size` and `sha256`, then the `notes`; and every file is also a `resource_link`. The
+server answers no `resources/read`: the host shares the disk.
+
+### output-exists
+
+`build` never replaces a file whose bytes differ. Every file is checked before any is written, and
+one already there with other contents is a finding, `output-exists`, that names the file and says
+to choose another `name`: nothing is written. A file already there with the same bytes counts as
+written, so a second identical call succeeds and changes nothing. A model makes the call,
+possibly at the request of a document it was handed, and the page it replaces might exist
+nowhere else.
+
+### Notes
+
+What the compiler decided that the document did not ask for, and what print leaves out, come
+back as `notes`: findings of level `note`, each naming its panel in `where`. A decision the
+compiler names, such as `camera-retreated`, has that name as its rule; any other note's rule is
+`scenet/build-note`.
 
 ## Keeping stdout clean
 

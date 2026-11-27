@@ -444,20 +444,6 @@ class TestTheFoldersAreRefused:
         assert started == []
         assert "they are for a server on stdio" in capsys.readouterr().err
 
-    @pytest.mark.parametrize("option", ["--root", "--output"])
-    def test_on_stdio_until_they_come(
-        self,
-        option: str,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture[str],
-    ):
-        started: list[dict[str, Any]] = []
-        monkeypatch.setattr(scenet.mcp, "serve", _recording(started))
-        assert main(["mcp", option, str(tmp_path)]) == 2
-        assert started == []
-        assert "not in this version yet" in capsys.readouterr().err
-
 
 class TestNoFileIsRead:
     """A document sent to the server, and the files it names, are read in memory only: a
@@ -551,14 +537,14 @@ class TestWhatItIsGiven:
             (
                 "--root",
                 "DIR",
-                "a folder a stdio server's documents may name files in; refused over "
-                "streamable-http, and not in this version yet",
+                "a folder a stdio server's documents may name files in, which a document's "
+                "tools read and nothing else; refused over streamable-http",
             ),
             (
                 "--output",
                 "DIR",
-                "a folder a stdio server's build tool writes new files in; refused over "
-                "streamable-http, and not in this version yet",
+                "a folder a stdio server's build tool writes new files in, and never over "
+                "other contents; refused over streamable-http",
             ),
         ],
     )
@@ -584,7 +570,9 @@ class TestWhatItIsGiven:
             def close(self) -> None:
                 """Nothing to stop: it started no worker."""
 
-        def build(*, timeout: float | None = None) -> Recorder:
+        def build(
+            *, timeout: float | None = None, root: object = None, output: object = None
+        ) -> Recorder:
             built.append(timeout)
             return Recorder()
 
@@ -671,8 +659,9 @@ class TestAFailedCompileExplained:
         from tests.images import tiny_png  # noqa: PLC0415 -- this test's own picture
 
         source = "setting: {image: art/a.png}\n" + UNPLACEABLE
+        sent = {"art/a.png": tiny_png()}
         with pytest.raises(ToolError) as raised:
-            scenet.mcp._compile(source, "yaml", {"art/a.png": tiny_png()})
+            scenet.mcp._compile(source, "yaml", scenet.mcp._Reading("files", sent, base=sent))
         assert "scenet/balloon-placement" in str(raised.value)
         assert "image-file" not in str(raised.value)
 
