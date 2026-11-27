@@ -30,6 +30,7 @@ import scenet.mcp
 from scenet.cli import main
 from scenet.mcp import build_server
 from tests.images import tiny_png
+from tests.under_mutmut import needs_a_clean_child_process
 
 PICTURE = (
     "cast: {alice: {reference: alice}}\n"
@@ -677,6 +678,7 @@ class TestTheCommand:
         assert started == []
 
 
+@needs_a_clean_child_process
 class TestOverARealStdioSession:
     """The installed command, with both folders, spoken to as a client would."""
 

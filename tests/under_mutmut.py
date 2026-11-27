@@ -43,3 +43,13 @@ def keep_the_stats_in_this_process() -> None:
     """
     if os.environ.get("MUTANT_UNDER_TEST") == "stats":
         del os.environ["MUTANT_UNDER_TEST"]
+
+
+#: For a test that starts the installed `scenet` as a child process and speaks to it over
+#: pipes: in mutmut's tree the child inherits its stats and capture handles, and a session
+#: with folders closes them under it (`I/O operation on closed file`). The behaviour is held
+#: by the normal suite, and by in-process tests of the same tools.
+needs_a_clean_child_process = pytest.mark.skipif(
+    UNDER_MUTMUT,
+    reason="a child process speaking stdio does not survive mutmut's tree",
+)
