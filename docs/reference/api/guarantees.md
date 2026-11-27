@@ -41,7 +41,7 @@ assert render(first.core) == render(second.core)
 ```
 
 Several things are never read: the clock, unseeded randomness, the order of a set, the
-working directory, or a font installed on the machine. No absolute path reaches any output.
+working directory, or a font installed on the machine. No absolute path reaches any output. Nor does a file name: a font is named by its own `name` table, or, with none, by the first twelve characters of the digest of its bytes, so the same font has the same family whichever document or earlier compile it came through.
 
 Determinism does not cover:
 
@@ -60,7 +60,7 @@ every thread in the process:
 | Cache | What it holds | Bounded | Safe to share |
 |---|---|---|---|
 | `load_metrics`, an `lru_cache` in `scenet.solve.text` | The shipped fonts, parsed | 8 entries | Yes. Each entry is read only, apart from the cache inside it (below) |
-| `_BY_CONTENT` in `scenet.lettering` | The fonts documents declared lately, by the digest of their bytes | 32 entries, the one used longest ago let go first (`scenet.lettering.FONT_CACHE_ENTRIES`) | Yes. Two threads that miss together each parse the font, and one entry wins. Both are the same font |
+| `_BY_CONTENT` in `scenet.lettering` | The fonts documents declared lately, by the digest of their bytes | 32 entries, the one used longest ago let go first (`scenet.lettering.FONT_CACHE_ENTRIES`); a face let go and read again is the same font, named and measured alike | Yes. Two threads that miss together each parse the font, and one entry wins. Both are the same font |
 | Inside each `FontMetrics` | Kerning pairs and glyph outlines, read on first use | No; at most every pair and glyph of the font | Yes, under CPython's GIL: entries are only ever added, and two threads compute the same value |
 | The PDF writer's and the turbulence `lru_cache`s, in `scenet.emit` | Fonts subset for print, and noise fields | 32 to 64 entries | Yes |
 

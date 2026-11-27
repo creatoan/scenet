@@ -125,7 +125,9 @@ byte as before — which is why it needed no `format_version` bump.
 
 A panel lettered in an [author's face](language/lettering.md#letteringfont) carries `fonts`: each face set in a
 font other than the shipped one, by its family and style as the font names them, and the SHA-256 of
-the file. Never a path — where the file was is a fact about one machine.
+the file. Never a path — where the file was is a fact about one machine. A font whose `name`
+table gives no family is called by the first twelve characters of that digest, so the same bytes
+have the same family in every document and every process.
 
 ```json
 "fonts": {

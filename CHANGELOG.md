@@ -247,6 +247,14 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **A font's name no longer depends on a file name, or on which document was read first** (#439).
+  A font with no family in its `name` table was called by the stem of the file it was first read
+  from, and a server, `--watch` or the playground keeps a font by its bytes: a second document
+  declaring the same bytes under another name got the first document's file name in its Panel
+  Core, and a fresh process gave it its own. Such a font is now called by the first twelve
+  characters of its SHA-256 digest, the same in every process, and no file name reaches any
+  output. A font that names itself is unchanged, and so is every golden.
+
 - **A damaged font is a `font-file` finding** (#378), found by fuzzing: a file that opened but
   failed inside fontTools when its kerning or a glyph was first read was an internal error half
   way through a compile. An author's face is now read through when it is loaded, and anything
