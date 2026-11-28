@@ -163,6 +163,19 @@ LEGS: tuple[Leg, ...] = (
     Leg("compose", _in("", "compose.py"), 98, 99.0, 582, 6, 45503879757),
     Leg("limits", _in("", "limits.py"), 100, 100.0, 139, 0, 45907199603),
     Leg("safe_json", _in("", "safe_json.py"), 98, 98.1, 475, 9, 45525866827),
+    Leg("schema", _in("", "schema.py"), 90, 90.4, 2002, 193, 46090729513),
+    Leg("safe_yaml", _in("", "safe_yaml.py"), 89, 89.0, 628, 69, 46086795695),
+    Leg("images", _in("", "images.py"), 84, 84.0, 307, 49, 46086795695),
+    Leg("paths", _in("", "lettering.py", "paths.py"), 99, 99.7, 792, 2, 46090729513),
+    Leg(
+        "assets/contract",
+        _in("assets/", "artwork.py", "contract.py"),
+        88,
+        88.7,
+        326,
+        37,
+        46086795695,
+    ),
 )
 
 

@@ -414,20 +414,23 @@ Install every group: its clean run is the whole suite, and `tests/test_site.py` 
 
 ```bash
 uv sync --all-groups
-ulimit -v 2097152
+ulimit -v 3145728
 uv run mutmut run --max-children 4
 uv run mutmut results
 uv run mutmut show <mutant>
 ```
 
-The `ulimit` caps each process at 2 GiB. A few mutants allocate without bound -- `/` turned
+The `ulimit` caps each process at 3 GiB. A few mutants allocate without bound -- `/` turned
 into `*` in the rain or snow density asks for millions of streaks -- and, uncapped, one of
 them can fill a 16 GB machine before mutmut's timeout fires. Capped, it ends in a
-`MemoryError` and counts as killed. A test process needs under 1 GB.
+`MemoryError` and counts as killed. A test process needs under 1 GB, but mutmut's clean run
+is the whole suite in one process, which at 2 GiB ended in a `MemoryError` in whichever test
+came last.
 
 `[tool.mutmut]` in `pyproject.toml` limits it to `solve/`, `emit/`, `frontends/`, `core.py`,
-`ir.py`, `identifiers.py`, `namespace.py`, `diagnostics.py`, `compose.py`, `limits.py` and
-`safe_json.py`, mutates only lines the tests cover, and runs mutants without the
+`ir.py`, `identifiers.py`, `namespace.py`, `diagnostics.py`, `compose.py`, `limits.py`,
+`safe_json.py`, `schema.py`, `safe_yaml.py`, `images.py`, `paths.py`, `lettering.py` and
+`assets/contract.py` and `assets/artwork.py`, mutates only lines the tests cover, and runs mutants without the
 coverage floor, doctests or the documentation examples. To run one leg locally, narrow it
 first, as its job does, and restore the file after:
 
@@ -537,6 +540,11 @@ gallery are what guard them.
 | `compose` | `compose.py` | 582 | 6 | 99.0% | 98% | [`45503879757`](https://github.com/creatoan/scenet/actions/runs/45503879757) |
 | `limits` | `limits.py` | 139 | 0 | 100.0% | 100% | [`45907199603`](https://github.com/creatoan/scenet/actions/runs/45907199603) |
 | `safe_json` | `safe_json.py` | 475 | 9 | 98.1% | 98% | [`45525866827`](https://github.com/creatoan/scenet/actions/runs/45525866827) |
+| `schema` | `schema.py` | 2,002 | 193 | 90.4% | 90% | [`46090729513`](https://github.com/creatoan/scenet/actions/runs/46090729513) |
+| `safe_yaml` | `safe_yaml.py` | 628 | 69 | 89.0% | 89% | [`46086795695`](https://github.com/creatoan/scenet/actions/runs/46086795695) |
+| `images` | `images.py` | 307 | 49 | 84.0% | 84% | [`46086795695`](https://github.com/creatoan/scenet/actions/runs/46086795695) |
+| `paths` | `lettering.py`, `paths.py` | 792 | 2 | 99.7% | 99% | [`46090729513`](https://github.com/creatoan/scenet/actions/runs/46090729513) |
+| `assets/contract` | `assets/artwork.py`, `assets/contract.py` | 326 | 37 | 88.7% | 88% | [`46086795695`](https://github.com/creatoan/scenet/actions/runs/46086795695) |
 
 A leg's score is the share of its mutants the tests kill, a timeout counted as a kill; its
 threshold is that score in whole percent, rounded down, and the weekly run fails the leg below
@@ -1323,10 +1331,11 @@ What the runs found beyond a missing assertion:
   `_composed` refuses first, two branches of the JSON reader, a prefix no default's fault
   carries.
 
-`schema.py` has no leg: of its 193 survivors, the 128 in the batch's code were each applied by
-hand and leave both strict schemas byte for byte as they are -- branches for shapes the
-language does not have, a `oneOf` or an `enum` with no `type`, and defaults never read. The
-other modules with no leg are [#518](https://github.com/creatoan/scenet/issues/518)'s.
+`schema.py` has a leg since [#518](https://github.com/creatoan/scenet/issues/518): of its 193
+survivors, the 128 in the batch's code were each applied by hand and leave both strict
+schemas byte for byte as they are -- branches for shapes the language does not have, a `oneOf`
+or an `enum` with no `type`, and defaults never read. The survivors the new legs started with
+are [#520](https://github.com/creatoan/scenet/issues/520)'s.
 
 Accepted, by what makes them equivalent, numbered from the run that numbers their leg:
 
