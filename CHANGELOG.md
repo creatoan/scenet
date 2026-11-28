@@ -29,6 +29,16 @@ it is written, and says what to write instead.
   compiles to validates against them. Each published schema now names the address it is served
   at as its `$id`, `/dev/` or `/vX.Y/`, so a tool that resolves one reaches the file it read.
 
+- **A local MCP server can read pictures from a folder and write the comic to another, without
+  bytes through the model** (#444). `scenet mcp --root DIR` reads the files a document names
+  from a folder, through a new `folder` argument, under the containment of every other entry
+  point; `scenet mcp --output DIR` lists a sixth tool, `build`, that writes the SVG, the print PDF
+  and the exports there, byte for byte what `scenet build` writes, and returns each file's path,
+  `file://` URI, media type, size and SHA-256, never its contents. `build` never replaces a file
+  with other contents (`output-exists`), and a second identical call changes nothing. Both
+  options are for stdio: each needs an existing folder, and `--transport streamable-http`
+  refuses both. Without them the server is what it was.
+
 - **A security model page** (#381), "Security model" under About: what is worth protecting,
   who the attacker is on the command line, through the API, over MCP and in a shared playground
   link, what Scenet guarantees, each guarantee beside the test that holds it, and what the host

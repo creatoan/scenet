@@ -9,25 +9,22 @@ import os
 import posixpath
 import sys
 import traceback
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from scenet import __version__
 from scenet.assets.artwork import CONTRACT_SUFFIX, JSON_CONTRACT_SUFFIX
 from scenet.assets.contract import JSON_PUPPET_SUFFIX, PUPPET_SUFFIX
+from scenet.build_files import Output, build_outputs
 from scenet.compose import as_lists
 from scenet.core import PanelCore
 from scenet.diagnostics import Diagnostic, diagnose_file, to_sarif
-from scenet.emit.debug_svg import render_debug
-from scenet.emit.export import EXPORTS
-from scenet.emit.page import render_page
 from scenet.emit.pdf import print_notes, printed_panels, render_pdf
-from scenet.emit.strip import render_strip
-from scenet.emit.svg import render
 from scenet.errors import ScenetError
 from scenet.paths import read_document, within
 from scenet.pipeline import FRONTENDS, Book, compile_book_file
@@ -377,8 +374,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         metavar="DIR",
         help=(
-            "a folder a stdio server's documents may name files in; refused over "
-            "streamable-http, and not in this version yet"
+            "a folder a stdio server's documents may name files in, which a document's "
+            "tools read and nothing else; refused over streamable-http"
         ),
     )
     mcp.add_argument(
@@ -386,8 +383,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         metavar="DIR",
         help=(
-            "a folder a stdio server's build tool writes new files in; refused over "
-            "streamable-http, and not in this version yet"
+            "a folder a stdio server's build tool writes new files in, and never over "
+            "other contents; refused over streamable-http"
         ),
     )
     return parser
@@ -672,101 +669,27 @@ def _copies(book: Book, source: Path, base: Path) -> _Copies:
     return copies
 
 
-#: One file `build` will write, and how to produce what goes in it -- deferred, so that
-#: the whole set can be checked for clashes before any of it is rendered.
-_Output = tuple[Path, Callable[[], str | bytes]]
+_Output = Output
 
 
 def _outputs(
     book: Book, base: Path, args: argparse.Namespace, *, single: bool, pdf: bytes | None = None
 ) -> list[_Output]:
-    """Every file a build writes, in the order it writes them.
-
-    A single-panel document writes to the requested name; a sequence suffixes each panel
-    with its own name, so the mapping back to source is obvious. A strip needs more than
-    one panel to lay out. Each page goes to `stem.page-<n>.svg`, beside the panels. The
-    exports for image models are per panel only: a page adds no layout to a panel, and its
-    Page Core says where every frame is. The print PDF, already rendered, is one file for
-    the whole document, `stem.pdf`.
-    """
-    outputs: list[_Output] = []
-    embed = book.images if args.embed_images else None
-    for name, result in book.panels.items():
-        core = result.core
-        target = base if single else base.with_name(f"{base.stem}.{name}{base.suffix}")
-        outputs.append(
-            (
-                target,
-                partial(
-                    render,
-                    core,
-                    fonts=book.fonts,
-                    live_text=args.live_text,
-                    mono=args.mono,
-                    aria=args.aria,
-                    embed=embed,
-                ),
-            )
-        )
-        if args.core:
-            outputs.append((target.with_suffix(".core.json"), core.to_json))
-        if args.debug:
-            outputs.append(
-                (target.with_name(f"{target.stem}.debug.svg"), partial(render_debug, core))
-            )
-        if args.conditioning:
-            outputs.extend(
-                (target.with_name(f"{target.stem}{suffix}"), partial(export, core))
-                for suffix, export in EXPORTS
-            )
-
-    if args.strip and len(book.panels) > 1:
-        strip = [(name, result.core) for name, result in book.panels.items()]
-        outputs.append(
-            (
-                base.with_name(f"{base.stem}.strip.svg"),
-                partial(
-                    render_strip,
-                    strip,
-                    live_text=args.live_text,
-                    mono=args.mono,
-                    fonts=book.fonts,
-                    aria=args.aria,
-                    embed=embed,
-                ),
-            )
-        )
-
-    cores = {name: result.core for name, result in book.panels.items()}
-    for number, page in enumerate(book.pages, start=1):
-        target = base.with_name(f"{base.stem}.page-{number}{base.suffix}")
-        outputs.append(
-            (
-                target,
-                partial(
-                    render_page,
-                    page,
-                    cores,
-                    live_text=args.live_text,
-                    mono=args.mono,
-                    fonts=book.fonts,
-                    aria=args.aria,
-                    embed=embed,
-                ),
-            )
-        )
-        if args.core:
-            outputs.append((target.with_suffix(".core.json"), page.to_json))
-        if args.debug:
-            outputs.append(
-                (
-                    target.with_name(f"{target.stem}.debug.svg"),
-                    partial(render_page, page, cores, debug=True),
-                )
-            )
-    if pdf is not None:
-        outputs.append((base.with_suffix(".pdf"), partial(bytes, pdf)))
-    return outputs
+    """Every file a build writes, in the order it writes them: :func:`build_outputs`'s."""
+    return build_outputs(
+        book,
+        base,
+        single=single,
+        pdf=pdf,
+        embed_images=args.embed_images,
+        live_text=args.live_text,
+        mono=args.mono,
+        aria=args.aria,
+        core=args.core,
+        debug=args.debug,
+        conditioning=args.conditioning,
+        strip=args.strip,
+    )
 
 
 def _refuse_clashes(outputs: list[_Output]) -> bool:
@@ -1102,25 +1025,26 @@ def run_mcp(args: argparse.Namespace) -> int:
         )
         return 2
 
-    folders = [option for option in ("--root", "--output") if getattr(args, option[2:])]
-    if folders:
-        named = " and ".join(folders)
-        if args.transport == "streamable-http":
-            print(
-                f"scenet: {named} would let any client of an HTTP server read or write a folder "
-                "of the server's; they are for a server on stdio, which only its client talks to",
-                file=sys.stderr,
-            )
-        else:
-            print(
-                f"scenet: {named} for scenet mcp is not in this version yet; without it, the "
-                "server reads and writes no folder of its own",
-                file=sys.stderr,
-            )
+    folders = {option: getattr(args, option[2:]) for option in ("--root", "--output")}
+    named = [option for option, folder in folders.items() if folder is not None]
+    if named and args.transport == "streamable-http":
+        print(
+            f"scenet: {' and '.join(named)} would let any client of an HTTP server read or "
+            "write a folder of the server's; they are for a server on stdio, which only its "
+            "client talks to",
+            file=sys.stderr,
+        )
         return 2
+    options: dict[str, Any] = {}
+    for option in named:
+        folder: Path = folders[option]
+        if not folder.is_dir():
+            print(f"scenet: {option} {folder} is not a folder", file=sys.stderr)
+            return 2
+        options[option[2:]] = folder.resolve()
     timeout = server.DEFAULT_TIMEOUT if args.timeout is None else args.timeout
     if args.transport == "stdio":
-        server.serve("stdio", timeout=timeout)
+        server.serve("stdio", timeout=timeout, **options)
         return 0
     if not args.allow_remote and not _loopback(args.host):
         print(
