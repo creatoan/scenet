@@ -7,7 +7,7 @@ image model, a check in CI, and a build that follows every save.
 
 ## What you will make
 
-![Close-up. Alice, left; Bob, left, arms crossed; Carol, centre, hands on hips; Dave, right, pointing. Alice: Is everyone here? Dave: Looks like it.](../images/gallery/10-crowd-pullback.svg)
+![Close-up. Alice, far left; Bob, left of centre, arms crossed; Carol, centre, hands on hips; Dave, right, pointing. Alice: Is everyone here? Dave: Looks like it.](../images/gallery/10-crowd-pullback.svg)
 
 Four people asked for in a close-up, across a panel that cannot hold them side by side. The
 compiler steps the camera back until it can, and says so.

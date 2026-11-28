@@ -940,7 +940,7 @@
     "scale": 0.97,
     "shot": "full_shot"
   },
-  "description": "Full shot. Alice, centre; Bob, centre, arms crossed.",
+  "description": "Full shot. Alice, centre left; Bob, centre right, arms crossed.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 800.0,

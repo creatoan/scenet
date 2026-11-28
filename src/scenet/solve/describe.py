@@ -19,7 +19,7 @@ below, keyed by the enum it reads, so a value with no phrase is a test failure r
 than a gap a reader hears. Nothing depends on a locale, or on the order a set or a dict
 happens to iterate in: the cast is read in reading order -- left to right, or right to left
 for a comic read that way -- ties broken by id. Where each stands, "left" or "right", is
-said as it is on the panel either way.
+said as it is on the panel either way, in words that differ wherever the places do.
 
 This sees no artwork. Where a figure is comes in as one number, its face's x, the same
 rounded value Panel Core records.
@@ -275,13 +275,56 @@ def _setting(setting: SettingSpec) -> str:
     return f"{_place(setting)} {TIMES[setting.time]}{f', {weather}' if weather else ''}."
 
 
-def _where(x: float, width: float) -> str:
+#: Which third of the panel a figure stands in, and the words for the figures that share it,
+#: by how many places there are in it: from the panel's left edge to its right. A third with
+#: one place is just its name.
+_LADDERS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "left": (("left",), ("far left", "left of centre"), ("far left", "left", "left of centre")),
+    "centre": (
+        ("centre",),
+        ("centre left", "centre right"),
+        ("centre left", "centre", "centre right"),
+    ),
+    "right": (
+        ("right",),
+        ("right of centre", "far right"),
+        ("right of centre", "right", "far right"),
+    ),
+}
+
+
+def _third(x: float, width: float) -> str:
     """Left, centre or right, by thirds of the panel."""
     if x < width / 3:
         return "left"
     if x > 2 * width / 3:
         return "right"
     return "centre"
+
+
+def _places(faces: Mapping[str, float], width: float) -> dict[str, str]:
+    """Where each figure stands, in words that differ wherever the places do.
+
+    By thirds of the panel, so one figure is `left`, `centre` or `right`. Figures sharing a
+    third are told apart, left to right, by the ladder for that third (`far left`, `left of
+    centre`); more than three places in one third are numbered, `left (2 of 4)`. Figures at
+    the same x share a word. The words are the panel's, never mirrored: they are said as the
+    panel is drawn, whichever way it is read.
+    """
+    by_third: dict[str, set[float]] = {}
+    for x in faces.values():
+        by_third.setdefault(_third(x, width), set()).add(x)
+    said: dict[str, dict[float, str]] = {}
+    for third, xs in by_third.items():
+        ordered = sorted(xs)
+        ladder = _LADDERS[third]
+        said[third] = {
+            x: ladder[len(ordered) - 1][rank]
+            if len(ordered) <= len(ladder)
+            else f"{third} ({rank + 1} of {len(ordered)})"
+            for rank, x in enumerate(ordered)
+        }
+    return {actor: said[_third(x, width)][x] for actor, x in faces.items()}
 
 
 def traits(pose: str, expression: str, marks: Sequence[str]) -> list[str]:
@@ -307,10 +350,10 @@ def traits(pose: str, expression: str, marks: Sequence[str]) -> list[str]:
     return parts
 
 
-def _figure(panel: PanelIR, actor: str, x: float, width: float) -> str:
+def _figure(panel: PanelIR, actor: str, where: str) -> str:
     """One figure: where, how they stand, their face, their marks, and whom they face."""
     member = panel.cast[actor]
-    parts = [name(actor), _where(x, width), *traits(member.pose, member.expression, member.marks)]
+    parts = [name(actor), where, *traits(member.pose, member.expression, member.marks)]
     target = panel.gaze_targets().get(actor)
     if target is not None:
         heard = target not in panel.cast
@@ -361,7 +404,8 @@ def describe(panel: PanelIR, faces: Mapping[str, float], width: float) -> str:
         # A picture is not nothing, though nothing can be said of what it shows.
         empty = "A panel with no figures." if panel.setting.image else "An empty panel."
         return setting or empty
-    figures = "; ".join(_figure(panel, actor, faces[actor], width) for actor in cast)
+    places = _places({actor: faces[actor] for actor in cast}, width)
+    figures = "; ".join(_figure(panel, actor, places[actor]) for actor in cast)
     # The shot of a cast a picture draws is whatever the artist drew, which nobody told
     # the compiler: no shot is said rather than a default one.
     shot = "" if panel.drawn_by_its_picture else _shot(panel)

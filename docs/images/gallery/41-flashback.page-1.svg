@@ -3,7 +3,7 @@
   <title>A page of 3 panels.</title>
   <rect x="0" y="0" width="2000" height="3000" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-now" transform="translate(100 100)" role="img">
-  <title>Medium shot. A street at dusk. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Caption: The same street, years on. Alice: You haven't changed.</title>
+  <title>Medium shot. A street at dusk. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Caption: The same street, years on. Alice: You haven't changed.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1800" height="893.33"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="1800" height="893.33" fill="#ffffff"/>
@@ -123,7 +123,7 @@
   </g>
   </g>
   <g id="panel-then" transform="translate(100 1053.33)" role="img">
-  <title>Medium shot. A street by day. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Caption: Ten years earlier. Bob: Promise you'll come back.</title>
+  <title>Medium shot. A street by day. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Caption: Ten years earlier. Bob: Promise you'll come back.</title>
   <clipPath id="p2-frame"><rect x="0" y="0" width="1800" height="893.33"/></clipPath>
   <g clip-path="url(#p2-frame)">
   <rect x="0" y="0" width="1800" height="893.33" fill="#ffffff"/>
@@ -241,7 +241,7 @@
   </g>
   </g>
   <g id="panel-again" transform="translate(100 2006.67)" role="img">
-  <title>Medium shot. A street at dusk. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Bob: Neither have you.</title>
+  <title>Medium shot. A street at dusk. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Bob: Neither have you.</title>
   <clipPath id="p3-frame"><rect x="0" y="0" width="1800" height="893.33"/></clipPath>
   <g clip-path="url(#p3-frame)">
   <rect x="0" y="0" width="1800" height="893.33" fill="#ffffff"/>

@@ -244,7 +244,7 @@ panels:
       - say: {by: bob, text: "Very funny."}
 ```
 
-![A page of 5 panels. Long shot. A street at dusk. Alice, left, pointing, shouting; Bob, centre. Alice: Bob! Don't move! Close-up. A street at dusk. Bob, centre, scared. Bob: Why? What is it? Medium shot. A street at dusk. Alice, left, pointing, shouting. Alice, shouting: Right behind you! Full shot. A street at dusk. Bob, centre, hands on hips, surprised. Bob: ...A puddle? Full shot. A street at dusk. Alice, centre, laughing, looking at Bob; Bob, centre, angry. Alice: Your new shoes, Bob! Bob: Very funny.](../images/gallery/25-columns.page-1.svg)
+![A page of 5 panels. Long shot. A street at dusk. Alice, left, pointing, shouting; Bob, centre. Alice: Bob! Don't move! Close-up. A street at dusk. Bob, centre, scared. Bob: Why? What is it? Medium shot. A street at dusk. Alice, left, pointing, shouting. Alice, shouting: Right behind you! Full shot. A street at dusk. Bob, centre, hands on hips, surprised. Bob: ...A puddle? Full shot. A street at dusk. Alice, centre left, laughing, looking at Bob; Bob, centre right, angry. Alice: Your new shoes, Bob! Bob: Very funny.](../images/gallery/25-columns.page-1.svg)
 
 ## Insets
 
@@ -331,7 +331,7 @@ panels:
       - say: {by: bob, text: "Then we watch the next one."}
 ```
 
-![A page of 5 panels. Close-up. A street by day. Bob, centre, bored. Caption: 9:14. Long shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, looking at Alice. Caption: Outside the cinema. Bob: The film started at nine. Close-up. A street by day. Alice, centre, scared. Alice, whispering: Oops. Medium shot. A street by day. Alice, left, hands on hips; Bob, right, arms crossed, looking at Alice. Alice: I brought popcorn? Full shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, laughing, looking at Alice. Bob: Then we watch the next one.](../images/gallery/26-insets.page-1.svg)
+![A page of 5 panels. Close-up. A street by day. Bob, centre, bored. Caption: 9:14. Long shot. A street by day. Alice, centre left, hands on hips; Bob, centre right, arms crossed, looking at Alice. Caption: Outside the cinema. Bob: The film started at nine. Close-up. A street by day. Alice, centre, scared. Alice, whispering: Oops. Medium shot. A street by day. Alice, left, hands on hips; Bob, right, arms crossed, looking at Alice. Alice: I brought popcorn? Full shot. A street by day. Alice, centre left, hands on hips; Bob, centre right, arms crossed, laughing, looking at Alice. Bob: Then we watch the next one.](../images/gallery/26-insets.page-1.svg)
 
 ## Slanted tiers
 
@@ -405,7 +405,7 @@ panels:
       alice: {reference: alice, expression: angry, facing: left}
 ```
 
-![A page of 6 panels. Long shot. A street at night. Alice, centre, hands on hips, angry, looking at Bob; Bob, centre, arms crossed, coy. Bob: You wouldn't dare. Medium shot. A street at night. Alice, left, pointing, shouting. Alice, shouting: Watch me! Full shot. A street at night. Bob, centre, arms crossed, surprised. Medium shot. A street at night. Alice, centre, surprised. Full shot. A street at night. Bob, centre, hands on hips, laughing. Bob: Missed. Medium shot. A street at night. Alice, centre, angry.](../images/gallery/27-slant.page-1.svg)
+![A page of 6 panels. Long shot. A street at night. Alice, centre left, hands on hips, angry, looking at Bob; Bob, centre right, arms crossed, coy. Bob: You wouldn't dare. Medium shot. A street at night. Alice, left, pointing, shouting. Alice, shouting: Watch me! Full shot. A street at night. Bob, centre, arms crossed, surprised. Medium shot. A street at night. Alice, centre, surprised. Full shot. A street at night. Bob, centre, hands on hips, laughing. Bob: Missed. Medium shot. A street at night. Alice, centre, angry.](../images/gallery/27-slant.page-1.svg)
 
 ## Several pages
 
@@ -484,9 +484,9 @@ panels:
       - say: {by: bob, text: "Of the document, yes."}
 ```
 
-![A page of 3 panels. Long shot. A street by day. Alice, centre; Bob, centre. Caption: Page one. Alice: Where does this street go? Medium shot. A street by day. Alice, left; Bob, centre. Bob: On to the next page. Full shot. A street by day. Alice, centre; Bob, centre. Alice: Then turn it.](../images/gallery/48-two-pages.page-1.svg)
+![A page of 3 panels. Long shot. A street by day. Alice, centre left; Bob, centre right. Caption: Page one. Alice: Where does this street go? Medium shot. A street by day. Alice, left; Bob, centre. Bob: On to the next page. Full shot. A street by day. Alice, centre left; Bob, centre right. Alice: Then turn it.](../images/gallery/48-two-pages.page-1.svg)
 
-![A page of 3 panels. Long shot. A street at dusk. Bob, centre; Alice, centre. Caption: Page two. Much later. Bob: Still walking. Close-up. A street by day. Alice, centre. Alice, whispering: My feet. Full shot. A street at night. Alice, centre; Bob, centre. Alice: Is this the end? Bob: Of the document, yes.](../images/gallery/48-two-pages.page-2.svg)
+![A page of 3 panels. Long shot. A street at dusk. Bob, centre left; Alice, centre right. Caption: Page two. Much later. Bob: Still walking. Close-up. A street by day. Alice, centre. Alice, whispering: My feet. Full shot. A street at night. Alice, centre left; Bob, centre right. Alice: Is this the end? Bob: Of the document, yes.](../images/gallery/48-two-pages.page-2.svg)
 
 ## Bleed
 
@@ -635,7 +635,7 @@ panels:
       - say: {by: alice, text: "And the plates?"}
 ```
 
-![A page of 3 panels. Long shot. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed. Sound effect: HONK. Alice: Is that the press? Medium close-up. A street at dusk. Bob, centre, happy. Editor's note: Printed in black, every word. Bob: The last one tonight. Full shot. An alley at night. Alice, centre; Bob, centre, arms crossed. Sound effect: CLANG. Bob: Then it goes to the binders. Alice: And the plates?](../images/gallery/70-a-page-for-print.page-1.svg)
+![A page of 3 panels. Long shot. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed. Sound effect: HONK. Alice: Is that the press? Medium close-up. A street at dusk. Bob, centre, happy. Editor's note: Printed in black, every word. Bob: The last one tonight. Full shot. An alley at night. Alice, centre left; Bob, centre right, arms crossed. Sound effect: CLANG. Bob: Then it goes to the binders. Alice: And the plates?](../images/gallery/70-a-page-for-print.page-1.svg)
 
 ```bash
 scenet build for-print.scene.yaml --pdf

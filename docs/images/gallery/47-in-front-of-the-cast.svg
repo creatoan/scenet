@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" role="img">
-  <title>Full shot. Outdoors at dusk. Alice, centre; Bob, centre. Alice: Are you coming in? Bob: When the sun is down.</title>
+  <title>Full shot. Outdoors at dusk. Alice, centre left; Bob, centre right. Alice: Are you coming in? Bob: When the sun is down.</title>
   <rect x="0" y="0" width="1100" height="700" fill="#ffffff"/>
     <polygon id="mass-m0" points="0,0 1100,0 1100,385 0,385" fill="#868686" stroke="none"/>
     <polygon id="mass-m1" points="286,385 407.94,173.9 550,355.36 687.57,215.28 814,385" fill="#626262" stroke="none"/>

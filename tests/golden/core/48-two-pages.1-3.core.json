@@ -1172,7 +1172,7 @@
     "scale": 1.41,
     "shot": "full_shot"
   },
-  "description": "Full shot. A street by day. Alice, centre; Bob, centre.",
+  "description": "Full shot. A street by day. Alice, centre left; Bob, centre right.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 1161.52,

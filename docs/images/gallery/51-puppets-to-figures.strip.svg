@@ -3,7 +3,7 @@
   <title>A strip of 2 panels.</title>
   <rect x="0" y="0" width="2460" height="636" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-waiting" transform="translate(18 18)" role="img">
-  <title>Full shot. A street at night. Ana, centre; Ben, centre. Ana: Is it always this late? Ben: Only when it rains somewhere else.</title>
+  <title>Full shot. A street at night. Ana, centre left; Ben, centre right. Ana: Is it always this late? Ben: Only when it rains somewhere else.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1200" height="600"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="1200" height="600" fill="#ffffff"/>

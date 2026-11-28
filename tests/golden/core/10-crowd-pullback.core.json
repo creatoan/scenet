@@ -1807,7 +1807,7 @@
     "scale": 1.64,
     "shot": "close_up"
   },
-  "description": "Close-up. Alice, left; Bob, left, arms crossed; Carol, centre, hands on hips; Dave, right, pointing.",
+  "description": "Close-up. Alice, far left; Bob, left of centre, arms crossed; Carol, centre, hands on hips; Dave, right, pointing.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 700.0,

@@ -6,7 +6,7 @@ letters that are part of the picture, sound effects.
 
 ## What you will make
 
-![Full shot. Alice, centre; Bob, centre, arms crossed. Sound effect, from Bob: KRAK. Alice: What was that? Sound effect: tok tok tok. Sound effect, from Alice: WHOOSH. Bob: Nothing. Go back to sleep.](../images/gallery/30-sound-effects.svg)
+![Full shot. Alice, centre left; Bob, centre right, arms crossed. Sound effect, from Bob: KRAK. Alice: What was that? Sound effect: tok tok tok. Sound effect, from Alice: WHOOSH. Bob: Nothing. Go back to sleep.](../images/gallery/30-sound-effects.svg)
 
 A crack from Bob's side, a knocking at the top right, a whoosh as Alice turns, each
 lettered in the display face and none in a balloon. The balloons settle round them.
@@ -49,7 +49,7 @@ script:
   - say: {by: alice, text: "It has been raining since six this morning and you knew that."}
 ```
 
-![Medium shot. Alice, centre; Bob, centre. Alice: You forgot your umbrella! Bob: I know. Alice: It has been raining since six this morning and you knew that.](../images/gallery/14-lettering.svg)
+![Medium shot. Alice, centre left; Bob, centre right. Alice: You forgot your umbrella! Bob: I know. Alice: It has been raining since six this morning and you knew that.](../images/gallery/14-lettering.svg)
 
 ## A stressed word
 
@@ -88,7 +88,7 @@ script:
   - say: {by: bob,   text: "You said it _might_."}
 ```
 
-![Cowboy shot. Alice, centre, angry; Bob, centre. Caption: Later. The same corner. Alice: I told you it would rain. Bob: You said it might.](../images/gallery/28-emphasis.svg)
+![Cowboy shot. Alice, centre left, angry; Bob, centre right. Caption: Later. The same corner. Alice: I told you it would rain. Bob: You said it might.](../images/gallery/28-emphasis.svg)
 
 ## The size of the type
 
@@ -142,7 +142,7 @@ panels:
       - say: {by: alice, text: "Then let me in faster."}
 ```
 
-![A page of 2 panels. Long shot. Alice, centre; Bob, centre. Caption: The same evening. Alice: Can I come in? Medium shot. Alice, centre; Bob, centre. Bob: You're letting the rain in. Alice: Then let me in faster.](../images/gallery/29-type-size.page-1.svg)
+![A page of 2 panels. Long shot. Alice, centre left; Bob, centre right. Caption: The same evening. Alice: Can I come in? Medium shot. Alice, centre left; Bob, centre right. Bob: You're letting the rain in. Alice: Then let me in faster.](../images/gallery/29-type-size.page-1.svg)
 
 Written beside `panels:`, as here, every panel inherits the size. Written on one panel, it
 letters that panel alone. A single line can still be set smaller with `size: small`, as in

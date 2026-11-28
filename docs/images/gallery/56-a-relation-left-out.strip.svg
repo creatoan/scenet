@@ -3,7 +3,7 @@
   <title>A strip of 3 panels.</title>
   <rect x="0" y="0" width="2784" height="636" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-meeting" transform="translate(18 18)" role="img">
-  <title>Medium shot. An office by day. Alice, centre; Bob, centre. Bob: Back in a minute.</title>
+  <title>Medium shot. An office by day. Alice, centre left; Bob, centre right. Bob: Back in a minute.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="900" height="600"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="900" height="600" fill="#ffffff"/>
@@ -161,7 +161,7 @@
   </g>
   </g>
   <g id="panel-back" transform="translate(1866 18)" role="img">
-  <title>Medium shot. An office by day. Alice, centre; Bob, centre. Bob: Did I miss anything?</title>
+  <title>Medium shot. An office by day. Alice, centre left; Bob, centre right. Bob: Did I miss anything?</title>
   <clipPath id="p3-frame"><rect x="0" y="0" width="900" height="600"/></clipPath>
   <g clip-path="url(#p3-frame)">
   <rect x="0" y="0" width="900" height="600" fill="#ffffff"/>

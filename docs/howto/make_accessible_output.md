@@ -20,6 +20,12 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
   prose; otherwise generated from the shot, the place, the hour and the weather, and each figure
   in reading order — left to right, or from the right in a comic read right to left — with its
   pose, expression and marks and whom it looks at.
+  Each figure's place is its own: `left`, `centre` or `right` by thirds of the panel, and where
+  figures share a third, words that tell them apart — `far left` and `left of centre`, `centre
+  left` and `centre right`. The words describe the panel as drawn, in a comic read right to left
+  too; only the order they are read in mirrors. The description is also its own field,
+  `description`, in [Panel Core](../reference/panel_core.md#the-words), so nobody needs to read
+  it out of the `<title>`.
 - **Then everything said, in reading order**: every balloon, caption and sound effect, each
   saying who and how — `Bob, whispering: I know.` — in the one order
   [Panel Core](../reference/panel_core.md#the-words) keeps. A sound effect is in its place in that

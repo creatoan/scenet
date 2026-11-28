@@ -1119,7 +1119,7 @@
     "scale": 1.64,
     "shot": "medium_shot"
   },
-  "description": "Medium shot. An office by day. Alice, centre; Bob, centre.",
+  "description": "Medium shot. An office by day. Alice, centre left; Bob, centre right.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 600.0,

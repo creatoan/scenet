@@ -3,7 +3,7 @@
   <title>A page of 3 panels.</title>
   <rect x="0" y="0" width="1500" height="2250" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-2-1" transform="translate(75 75)" role="img">
-  <title>Long shot. A street at dusk. Bob, centre; Alice, centre. Caption: Page two. Much later. Bob: Still walking.</title>
+  <title>Long shot. A street at dusk. Bob, centre left; Alice, centre right. Caption: Page two. Much later. Bob: Still walking.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1350" height="1233"/></clipPath>
   <clipPath id="p1-hole-1"><path d="M0 0 H1350 V1233 H0 Z M817.5 0 H1350 V491.55 H817.5 Z" clip-rule="evenodd"/></clipPath>
   <g clip-path="url(#p1-frame)">
@@ -173,7 +173,7 @@
   </g>
   </g>
   <g id="panel-2-3" transform="translate(75 1353)" role="img">
-  <title>Full shot. A street at night. Alice, centre; Bob, centre. Alice: Is this the end? Bob: Of the document, yes.</title>
+  <title>Full shot. A street at night. Alice, centre left; Bob, centre right. Alice: Is this the end? Bob: Of the document, yes.</title>
   <clipPath id="p3-frame"><rect x="0" y="0" width="1350" height="822"/></clipPath>
   <g clip-path="url(#p3-frame)">
   <rect x="0" y="0" width="1350" height="822" fill="#ffffff"/>

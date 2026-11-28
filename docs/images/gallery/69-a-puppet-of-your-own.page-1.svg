@@ -3,7 +3,7 @@
   <title>A page of 5 panels.</title>
   <rect x="0" y="0" width="1500" height="2100" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-quay" transform="translate(60 60)" role="img">
-  <title>Full shot. The docks at dusk. Alice, centre; Pip, centre, looking at Alice. Pip: Is that our boat? Alice: Not yet.</title>
+  <title>Full shot. The docks at dusk. Alice, centre left; Pip, centre right, looking at Alice. Pip: Is that our boat? Alice: Not yet.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1380" height="593.75"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="1380" height="593.75" fill="#ffffff"/>
@@ -287,7 +287,7 @@
   </g>
   </g>
   <g id="panel-gone" transform="translate(60 1446.25)" role="img">
-  <title>Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.</title>
+  <title>Full shot. The docks at dusk. Alice, centre left, happy; Pip, centre right, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.</title>
   <clipPath id="p5-frame"><rect x="0" y="0" width="1380" height="593.75"/></clipPath>
   <g clip-path="url(#p5-frame)">
   <rect x="0" y="0" width="1380" height="593.75" fill="#ffffff"/>

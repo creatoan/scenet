@@ -1147,7 +1147,7 @@
     "scale": 0.85,
     "shot": "full_shot"
   },
-  "description": "Full shot. Outdoors at dusk. Alice, centre; Bob, centre.",
+  "description": "Full shot. Outdoors at dusk. Alice, centre left; Bob, centre right.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 700.0,

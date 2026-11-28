@@ -145,7 +145,7 @@ staging:
   - c ground_shared_with d
 ```
 
-![Full shot. A, left; B, centre, arms crossed; C, centre, pointing; D, right, hands on hips.](../images/gallery/11-poses.svg)
+![Full shot. A, left; B, centre left, arms crossed; C, centre right, pointing; D, right, hands on hips.](../images/gallery/11-poses.svg)
 
 ## Staging
 

@@ -940,7 +940,7 @@
     "scale": 3.74,
     "shot": "medium_shot"
   },
-  "description": "Medium shot. Alice, centre; Bob, centre.",
+  "description": "Medium shot. Alice, centre left; Bob, centre right.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 1370.0,

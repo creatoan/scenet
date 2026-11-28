@@ -1487,7 +1487,7 @@
     "scale": 0.72,
     "shot": "full_shot"
   },
-  "description": "Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice.",
+  "description": "Full shot. The docks at dusk. Alice, centre left, happy; Pip, centre right, sad, looking at Alice.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 593.75,

@@ -8,7 +8,7 @@ colour.
 
 ## What you will make
 
-![A strip of 4 panels. Long shot. The docks at night, in the rain. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Midnight. The docks. Alice: You said you would be here at ten. Bob, whispering: I was. Long shot. The docks at dawn, in fog. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Six hours later. Long shot. The docks by day. Alice, centre, arms crossed, looking at Bob; Bob, centre. Editor's note: It never rains at noon. Long shot. The docks at dusk, in the snow. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: December.](../images/gallery/21-atmosphere.strip.svg)
+![A strip of 4 panels. Long shot. The docks at night, in the rain. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: Midnight. The docks. Alice: You said you would be here at ten. Bob, whispering: I was. Long shot. The docks at dawn, in fog. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: Six hours later. Long shot. The docks by day. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Editor's note: It never rains at noon. Long shot. The docks at dusk, in the snow. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: December.](../images/gallery/21-atmosphere.strip.svg)
 
 One place, the docks, at four hours and in four kinds of weather: rain at midnight, fog at
 dawn, clear at noon, snow at dusk. Nothing else changes from panel to panel.
@@ -299,7 +299,7 @@ script:
   - say: {by: bob, text: "When the sun is down."}
 ```
 
-![Full shot. Outdoors at dusk. Alice, centre; Bob, centre. Alice: Are you coming in? Bob: When the sun is down.](../images/gallery/47-in-front-of-the-cast.svg)
+![Full shot. Outdoors at dusk. Alice, centre left; Bob, centre right. Alice: Are you coming in? Bob: When the sun is down.](../images/gallery/47-in-front-of-the-cast.svg)
 
 ## Colour
 
@@ -428,7 +428,7 @@ panels:
       - say: {by: bob, text: "Neither have you."}
 ```
 
-![A page of 3 panels. Medium shot. A street at dusk. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Caption: The same street, years on. Alice: You haven't changed. Medium shot. A street by day. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Caption: Ten years earlier. Bob: Promise you'll come back. Medium shot. A street at dusk. Alice, centre, looking at Bob; Bob, centre, looking at Alice. Bob: Neither have you.](../images/gallery/41-flashback.page-1.svg)
+![A page of 3 panels. Medium shot. A street at dusk. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Caption: The same street, years on. Alice: You haven't changed. Medium shot. A street by day. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Caption: Ten years earlier. Bob: Promise you'll come back. Medium shot. A street at dusk. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice. Bob: Neither have you.](../images/gallery/41-flashback.page-1.svg)
 
 ## What the compiler decided
 

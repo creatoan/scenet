@@ -1201,7 +1201,7 @@
     "scale": 1.0,
     "shot": "full_shot"
   },
-  "description": "Full shot. A street at night. Alice, centre; Bob, centre.",
+  "description": "Full shot. A street at night. Alice, centre left; Bob, centre right.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 822.0,

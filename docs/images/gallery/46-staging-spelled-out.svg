@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" role="img">
-  <title>Full shot. Alice, centre; Bob, centre, looking at Alice. Bob: Subject, predicate, object. Alice: Like a scene graph.</title>
+  <title>Full shot. Alice, centre left; Bob, centre right, looking at Alice. Bob: Subject, predicate, object. Alice: Like a scene graph.</title>
   <rect x="0" y="0" width="1100" height="700" fill="#ffffff"/>
   <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
     <g id="actor-alice" fill="#e8e6e1" stroke-width="3">
