@@ -277,7 +277,7 @@ def marks(core: PanelCore, family: Faces, *, live_text: bool = False) -> list[Ma
     Args:
         core: The compiled panel.
         family: The faces its lettering was measured in, from
-            :func:`typeface_of <scenet.emit.svg.typeface_of>`.
+            `scenet.lettering.typeface_of`.
         live_text: Each line of a balloon or a caption as one :class:`Text` mark, as the
             SVG's `--live-text` writes one `<text>`, rather than a mark for each letter's
             outline. Sound effects are outlines either way.

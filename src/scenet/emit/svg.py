@@ -208,7 +208,7 @@ def panel_body(
 
     Args:
         core: The compiled panel.
-        family: The faces its lettering was measured in, from :func:`typeface_of`.
+        family: The faces its lettering was measured in, from `typeface_of`.
         live_text: Emit lettering as `<text>` rather than glyph outlines.
         id_prefix: Put in front of every `id` the panel writes, and every reference to one.
         embed: The supplied pictures' bytes, by digest -- what
