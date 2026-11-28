@@ -141,7 +141,7 @@ panels:
       - say: {by: alice, text: "Finally.", kind: whisper}
 ```
 
-![A strip of 2 panels. Medium shot. An office by day. Alice, centre; Bob, centre. Bob: I'll leave you to it. Alice: Thanks, Bob. Medium shot. An office by day. Alice, centre. Alice, whispering: Finally.](../images/gallery/49-leaving-someone-out.strip.svg)
+![A strip of 2 panels. Medium shot. An office by day. Alice, centre left; Bob, centre right. Bob: I'll leave you to it. Alice: Thanks, Bob. Medium shot. An office by day. Alice, centre. Alice, whispering: Finally.](../images/gallery/49-leaving-someone-out.strip.svg)
 
 `null` works on any key: `camera: null` drops an inherited camera, `place: null` an
 inherited place. [Chapter 10](your_own_art.md) uses both.

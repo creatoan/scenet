@@ -3,7 +3,7 @@
   <title>A page of 6 panels.</title>
   <rect x="0" y="0" width="1500" height="2250" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-standoff" transform="translate(75 75)" role="img">
-  <title>Long shot. A street at night. Alice, centre, hands on hips, angry, looking at Bob; Bob, centre, arms crossed, coy. Bob: You wouldn't dare.</title>
+  <title>Long shot. A street at night. Alice, centre left, hands on hips, angry, looking at Bob; Bob, centre right, arms crossed, coy. Bob: You wouldn't dare.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1350" height="628.12"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="1350" height="628.12" fill="#ffffff"/>

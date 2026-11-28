@@ -1742,7 +1742,7 @@
     "scale": 0.85,
     "shot": "full_shot"
   },
-  "description": "Full shot. A, left; B, centre, arms crossed; C, centre, pointing; D, right, hands on hips.",
+  "description": "Full shot. A, left; B, centre left, arms crossed; C, centre right, pointing; D, right, hands on hips.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 700.0,

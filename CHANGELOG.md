@@ -287,6 +287,15 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **The description of a panel says where each person stands** (#447). Figures sharing a third
+  of the panel were all `left`, `centre` or `right`: three people read "Aiko, centre;
+  Grandmother, centre; Ryo, centre". Each figure now has a word of its own wherever it stands
+  in a place of its own, worked out from where it was resolved to stand: `far left` and `left
+  of centre`, `centre left` and `centre right`, and so on, set out in
+  [Panel Core](https://creatoan.github.io/scenet/reference/panel_core.html#the-words). People are
+  read left to right, right to left in a comic read that way. The description's words and the
+  places in the gallery's SVG titles change; no picture does.
+
 - **A hand-edited Core can no longer put markup in an attribute** (#365). Reading a Core back
   refuses a colour that is not `#rrggbb` (`none` for a sound effect's fill and stroke) and an
   id that is not an identifier, naming where, and the SVG emitter writes every attribute it

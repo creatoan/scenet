@@ -3,7 +3,7 @@
   <title>A strip of 4 panels.</title>
   <rect x="0" y="0" width="4511.6" height="657.2" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-midnight" transform="translate(18.6 18.6)" role="img">
-  <title>Long shot. The docks at night, in the rain. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Midnight. The docks. Alice: You said you would be here at ten. Bob, whispering: I was.</title>
+  <title>Long shot. The docks at night, in the rain. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: Midnight. The docks. Alice: You said you would be here at ten. Bob, whispering: I was.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1100" height="620"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <filter id="p1-scenet-veil-36907" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
@@ -219,7 +219,7 @@
   </g>
   </g>
   <g id="panel-morning" transform="translate(1143.4 18.6)" role="img">
-  <title>Long shot. The docks at dawn, in fog. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: Six hours later.</title>
+  <title>Long shot. The docks at dawn, in fog. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: Six hours later.</title>
   <clipPath id="p2-frame"><rect x="0" y="0" width="1100" height="620"/></clipPath>
   <g clip-path="url(#p2-frame)">
   <filter id="p2-scenet-veil-7914" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
@@ -314,7 +314,7 @@
   </g>
   </g>
   <g id="panel-noon" transform="translate(2268.2 18.6)" role="img">
-  <title>Long shot. The docks by day. Alice, centre, arms crossed, looking at Bob; Bob, centre. Editor's note: It never rains at noon.</title>
+  <title>Long shot. The docks by day. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Editor's note: It never rains at noon.</title>
   <clipPath id="p3-frame"><rect x="0" y="0" width="1100" height="620"/></clipPath>
   <g clip-path="url(#p3-frame)">
   <rect x="0" y="0" width="1100" height="620" fill="#ffffff"/>
@@ -409,7 +409,7 @@
   </g>
   </g>
   <g id="panel-winter" transform="translate(3393 18.6)" role="img">
-  <title>Long shot. The docks at dusk, in the snow. Alice, centre, arms crossed, looking at Bob; Bob, centre. Caption: December.</title>
+  <title>Long shot. The docks at dusk, in the snow. Alice, centre left, arms crossed, looking at Bob; Bob, centre right. Caption: December.</title>
   <clipPath id="p4-frame"><rect x="0" y="0" width="1100" height="620"/></clipPath>
   <g clip-path="url(#p4-frame)">
   <filter id="p4-scenet-veil-6199" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">

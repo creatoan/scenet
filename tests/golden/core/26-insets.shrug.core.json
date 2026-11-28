@@ -1245,7 +1245,7 @@
     "scale": 0.83,
     "shot": "full_shot"
   },
-  "description": "Full shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, laughing, looking at Alice.",
+  "description": "Full shot. A street by day. Alice, centre left, hands on hips; Bob, centre right, arms crossed, laughing, looking at Alice.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 685.0,

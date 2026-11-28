@@ -3,7 +3,7 @@
   <title>A page of 2 panels.</title>
   <rect x="0" y="0" width="1500" height="1000" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-street" transform="translate(75 75)" role="img">
-  <title>Medium shot. A street by day. Alice, centre, looking at Bob; Bob, centre, arms crossed. Alice: We'll miss the start.</title>
+  <title>Medium shot. A street by day. Alice, centre left, looking at Bob; Bob, centre right, arms crossed. Alice: We'll miss the start.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="1350" height="850"/></clipPath>
   <clipPath id="p1-hole-1"><path d="M0 0 H1350 V850 H0 Z M817.5 0 H1350 V357.5 H817.5 Z" clip-rule="evenodd"/></clipPath>
   <g clip-path="url(#p1-frame)">

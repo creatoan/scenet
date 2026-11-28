@@ -471,9 +471,16 @@ like everything else, so the emitter copies them and decides nothing:
 - **`description`** is the panel's [`description`](language/description.md#description) when it has one —
   written, or a comic script's prose — and otherwise generated from what it holds: the shot and
   angle, the place, the hour and the weather, then each figure in reading order (from the right in
-  a panel read right to left), by thirds of the panel
-  at the centre of its face, with its pose, expression and marks, whom it looks at, and whom it
-  stands in front of or behind. A panel with nothing in it is `An empty panel.`
+  a panel read right to left), each in the place its face stands, with its pose, expression and
+  marks, whom it looks at, and whom it stands in front of or behind. A figure's place is said as
+  the panel is drawn, whichever way it is read, and is worked out from where the figure was
+  resolved to stand, never from where the author put it: `left`, `centre` or `right` by thirds
+  of the panel, and wherever figures share a third, words that tell them apart, from the
+  panel's left to its right: two in the left third are `far left` and `left of centre`, three
+  are `far left`, `left` and `left of centre`; in the middle, `centre left` and `centre right`,
+  or those two around `centre`; in the right third, `right of centre` and `far right`, or
+  `right of centre`, `right` and `far right`. More than three places in one third are numbered,
+  `left (2 of 4)`. Figures at exactly the same x share a word and are read in order of id. A panel with nothing in it is `An empty panel.`
 - **`label`**, on every balloon, caption and sound effect, is who says it, how, and the words:
   `Bob, whispering, quietly: I know.`, `Caption, inner voice: …`, `Carol, off panel: …`, `Maya, caption: …`. The words
   are the author's with emphasis markers off — never `lines`, which are broken to fit and, on a

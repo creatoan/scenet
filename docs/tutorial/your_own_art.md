@@ -247,7 +247,7 @@ panels:
       - say: {by: ben, text: "No."}
 ```
 
-![A strip of 2 panels. Full shot. A street at night. Ana, centre; Ben, centre. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](../images/gallery/51-puppets-to-figures.strip.svg)
+![A strip of 2 panels. Full shot. A street at night. Ana, centre left; Ben, centre right. Ana: Is it always this late? Ben: Only when it rains somewhere else. Ana, left; Ben, centre. Ana: Is that ours? Ben: No.](../images/gallery/51-puppets-to-figures.strip.svg)
 
 ## A puppet of your own
 
@@ -532,7 +532,7 @@ panels:
       - say: {by: alice, text: "That one wasn't ours."}
 ```
 
-![A page of 5 panels. Full shot. The docks at dusk. Alice, centre; Pip, centre, looking at Alice. Pip: Is that our boat? Alice: Not yet. Cowboy shot. The docks at dusk. Pip, centre, waving, happy. Pip: Hello, boat! Cowboy shot. The docks at dusk. Pip, centre, arms up, surprised. Pip: It's enormous! Cowboy shot. The docks at dusk. Pip, centre, scared. Pip, whispering: And so loud. Full shot. The docks at dusk. Alice, centre, happy; Pip, centre, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.](../images/gallery/69-a-puppet-of-your-own.page-1.svg)
+![A page of 5 panels. Full shot. The docks at dusk. Alice, centre left; Pip, centre right, looking at Alice. Pip: Is that our boat? Alice: Not yet. Cowboy shot. The docks at dusk. Pip, centre, waving, happy. Pip: Hello, boat! Cowboy shot. The docks at dusk. Pip, centre, arms up, surprised. Pip: It's enormous! Cowboy shot. The docks at dusk. Pip, centre, scared. Pip, whispering: And so loud. Full shot. The docks at dusk. Alice, centre left, happy; Pip, centre right, sad, looking at Alice. Pip: It's going without us. Alice: That one wasn't ours.](../images/gallery/69-a-puppet-of-your-own.page-1.svg)
 
 ```bash
 scenet build docks.scene.yaml

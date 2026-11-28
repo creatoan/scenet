@@ -945,7 +945,7 @@
     "scale": 0.85,
     "shot": "full_shot"
   },
-  "description": "Full shot. Alice, centre; Bob, centre, looking at Alice.",
+  "description": "Full shot. Alice, centre left; Bob, centre right, looking at Alice.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 700.0,

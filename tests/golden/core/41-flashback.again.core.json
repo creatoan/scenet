@@ -1187,7 +1187,7 @@
     "scale": 2.44,
     "shot": "medium_shot"
   },
-  "description": "Medium shot. A street at dusk. Alice, centre, looking at Bob; Bob, centre, looking at Alice.",
+  "description": "Medium shot. A street at dusk. Alice, centre left, looking at Bob; Bob, centre right, looking at Alice.",
   "format": "scenet.panel",
   "format_version": "2.0",
   "height": 893.33,

@@ -56,7 +56,7 @@
   </g>
   </g>
   <g id="panel-street" transform="translate(75 75)" role="img">
-  <title>Long shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, looking at Alice. Caption: Outside the cinema. Bob: The film started at nine.</title>
+  <title>Long shot. A street by day. Alice, centre left, hands on hips; Bob, centre right, arms crossed, looking at Alice. Caption: Outside the cinema. Bob: The film started at nine.</title>
   <clipPath id="p2-frame"><rect x="0" y="0" width="1350" height="1370"/></clipPath>
   <clipPath id="p2-hole-1"><path d="M0 0 H1350 V1370 H0 Z M0 0 H357 V361.4 H0 Z" clip-rule="evenodd"/></clipPath>
   <clipPath id="p2-hole-2"><path d="M0 0 H1350 V1370 H0 Z M817.5 830.5 H1350 V1370 H817.5 Z" clip-rule="evenodd"/></clipPath>
@@ -327,7 +327,7 @@
   </g>
   </g>
   <g id="panel-shrug" transform="translate(633 1490)" role="img">
-  <title>Full shot. A street by day. Alice, centre, hands on hips; Bob, centre, arms crossed, laughing, looking at Alice. Bob: Then we watch the next one.</title>
+  <title>Full shot. A street by day. Alice, centre left, hands on hips; Bob, centre right, arms crossed, laughing, looking at Alice. Bob: Then we watch the next one.</title>
   <clipPath id="p5-frame"><rect x="0" y="0" width="792" height="685"/></clipPath>
   <g clip-path="url(#p5-frame)">
   <rect x="0" y="0" width="792" height="685" fill="#ffffff"/>
