@@ -15,6 +15,7 @@ Without them the server is what it was: five read-only tools, and no file is ope
 import base64
 import hashlib
 import json
+import multiprocessing
 import os
 import shutil
 import sys
@@ -68,11 +69,18 @@ def call(
 ) -> CallToolResult:
     """One tool call through a real MCP client session, in process, on a server so started."""
 
+    server = build_server(root=root, output=output, timeout=timeout)
+
     async def go() -> CallToolResult:
-        async with Client(build_server(root=root, output=output, timeout=timeout)) as client:
+        async with Client(server) as client:
             return await client.call_tool(tool, arguments)
 
-    return anyio.run(go)
+    # A server with a timeout runs its calls in worker processes, each a whole interpreter
+    # with the compiler loaded: left open, one outlives the test and starves the shard.
+    try:
+        return anyio.run(go)
+    finally:
+        server.close()
 
 
 def listed(*, root: Path | None = None, output: Path | None = None) -> tuple[str, Any]:
@@ -87,6 +95,17 @@ def report(result: CallToolResult) -> dict[str, Any]:
     assert not result.is_error, text_of(result)
     assert result.structured_content is not None
     return result.structured_content
+
+
+@pytest.fixture(autouse=True)
+def _served(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Put back the folders a test's server was built with, which are the module's own.
+
+    `build_server` sets them for the process, as it sets the limits: left behind, the next
+    test that calls a tool as a function would read the last test's temporary folder.
+    """
+    for name in ("limits", "root", "output"):
+        monkeypatch.setattr(scenet.mcp._SERVED, name, getattr(scenet.mcp._SERVED, name))
 
 
 @pytest.fixture
@@ -592,6 +611,7 @@ class TestBuild:
 
     def test_build_runs_in_a_worker_too(self, folders: tuple[Path, Path]):
         root, output = folders
+        before = set(multiprocessing.active_children())
         found = report(
             call(
                 "build",
@@ -603,6 +623,8 @@ class TestBuild:
         )
         assert found["files"][0]["path"] == "w.svg"
         assert (output / "w.svg").is_file()
+        # The server was closed, and stopped the worker it started.
+        assert set(multiprocessing.active_children()) <= before
 
 
 class TestTheCommand:
