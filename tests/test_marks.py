@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scenet.core import Box, CoreBalloon, CoreRun, PanelCore, Tail
+from scenet.core import Box, CoreBalloon, CoreLine, PanelCore, Tail
 from scenet.emit import geometry
 from scenet.emit.marks import (
     Circle,
@@ -37,6 +37,7 @@ from scenet.emit.marks import (
 from scenet.emit.svg import fmt, render, typeface_of
 from scenet.ir import BalloonKind, Face
 from scenet.pipeline import Book, compile_book_file
+from scenet.solve.lines import set_lines
 from scenet.solve.text import Typeface, load_metrics
 
 ROOT = Path(__file__).parent.parent
@@ -67,6 +68,7 @@ def _balloon(kind: BalloonKind, *, control: tuple[float, float] | None = None) -
         font_size=30.0,
         line_height=36.0,
         tail=Tail(start=(220.0, 140.0), end=(260.0, 300.0), control=control),
+        setting=(CoreLine(origin=(0.0, 0.0), width=0.0, offsets=((0.0,) * 5,)),),
     )
 
 
@@ -201,22 +203,42 @@ class TestGeometry:
         assert [r for _, _, r in bubbles] == pytest.approx([30.0 * 0.34, 30.0 * 0.25, 30.0 * 0.16])
 
     def test_lines_are_centred_in_their_box(self):
-        padding, baselines = geometry.baselines(
-            Box(x=0.0, y=10.0, width=100.0, height=100.0), 2, 30.0, 20.0
+        box = Box(x=0.0, y=10.0, width=100.0, height=100.0)
+        placed = set_lines(
+            box,
+            ("a", "b"),
+            (),
+            font_size=20.0,
+            line_height=30.0,
+            base=Face.REGULAR,
+            centred=True,
+            family=Typeface(),
         )
-        assert padding == 20.0
-        assert baselines == [10.0 + 20.0 + 20.0 * 0.74, 10.0 + 20.0 + 30.0 + 20.0 * 0.74]
+        assert [line.origin[1] for line in placed] == [
+            10.0 + 20.0 + 20.0 * 0.74,
+            10.0 + 20.0 + 30.0 + 20.0 * 0.74,
+        ]
+        for line in placed:
+            assert line.origin[0] == pytest.approx((100.0 - line.width) / 2, abs=0.006)
 
     def test_glyphs_advance_by_what_was_measured(self):
-        family = Typeface()
-        runs = (CoreRun(text="AVA", face=Face.REGULAR),)
-        (placed,) = geometry.glyph_walk(runs, 5.0, 40.0, family)
+        (line,) = set_lines(
+            Box(x=5.0, y=0.0, width=500.0, height=60.0),
+            ("AVA",),
+            (),
+            font_size=40.0,
+            line_height=60.0,
+            base=Face.REGULAR,
+            centred=False,
+            family=Typeface(),
+        )
         metrics = load_metrics()
         steps = [metrics.step("A", "V"), metrics.step("V", "A"), metrics.step("A", None)]
-        assert placed.origins[0] == 5.0
-        assert placed.origins[1] == pytest.approx(5.0 + steps[0] * 40.0)
-        assert placed.origins[2] == pytest.approx(5.0 + (steps[0] + steps[1]) * 40.0)
-        assert placed.scale == 40.0 / metrics.units_per_em
+        (offsets,) = line.offsets
+        assert offsets[0] == 0.0
+        assert offsets[1] == pytest.approx(steps[0] * 40.0, abs=0.011)
+        assert offsets[2] == pytest.approx((steps[0] + steps[1]) * 40.0, abs=0.011)
+        assert line.width == pytest.approx(sum(steps) * 40.0, abs=0.006)
 
 
 class TestRoles:

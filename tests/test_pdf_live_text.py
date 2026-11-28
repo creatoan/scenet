@@ -307,4 +307,9 @@ def test_a_kern_in_a_face_of_another_size_is_written_to_the_millionth(tmp_path: 
     shown = [
         line for line in panel_content(core, book.fonts, live_text=True) if line.endswith("TJ")
     ]
-    assert shown == ["[<0001> 18.066406 <0002>] TJ"]
+    # Panel Core gives positions to the hundredth, so the adjustment is the kern to within
+    # that rounding -- 18.0664 exactly before it -- and still not a whole thousandth.
+    (line,) = shown
+    adjustment = float(line.split()[1])
+    assert adjustment == pytest.approx(18.066406, abs=0.1)
+    assert adjustment != round(adjustment)

@@ -654,22 +654,34 @@ class FontMetrics:
         cost is that the text is no longer selectable, which is why `--live-text`
         exists -- in the print PDF with the face embedded, so exactly.
         """
-        outlines: list[tuple[str, float]] = []
         last = len(text) - 1
-        for index, character in enumerate(text):
-            step = self.step(character, text[index + 1] if index < last else None)
-            try:
-                glyph_set = self._font.getGlyphSet()
-                name = self._cmap.get(ord(character))
-                if name is None or name not in glyph_set:
-                    outlines.append(("", step))
-                    continue
-                pen = SVGPathPen(glyph_set)
-                glyph_set[name].draw(pen)
-            except Exception as exc:
-                raise self._unreadable("outlines") from exc
-            outlines.append((pen.getCommands(), step))
-        return outlines
+        return [
+            (
+                self.outline(character),
+                self.step(character, text[index + 1] if index < last else None),
+            )
+            for index, character in enumerate(text)
+        ]
+
+    def outline(self, character: str) -> str:
+        """A character's outline as SVG path data, in font units, y up: a look-up, nothing more.
+
+        What a renderer draws from once Panel Core has said where each letter goes. It
+        reads no advance and no kerning, so it cannot move a letter.
+
+        Returns:
+            Path data, or `""` for a character the face has no outline for.
+        """
+        try:
+            glyph_set = self._font.getGlyphSet()
+            name = self._cmap.get(ord(character))
+            if name is None or name not in glyph_set:
+                return ""
+            pen = SVGPathPen(glyph_set)
+            glyph_set[name].draw(pen)
+        except Exception as exc:
+            raise self._unreadable("outlines") from exc
+        return pen.getCommands()
 
     def glyph_id(self, character: str) -> int | None:
         """The id of the glyph a character is drawn with, or `None` for one the face lacks.

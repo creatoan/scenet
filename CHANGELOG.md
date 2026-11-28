@@ -130,6 +130,20 @@ it is written, and says what to write instead.
   *written by a newer Scenet (2.3); this reads 2.0* instead of reporting a typo. A Core of format 1
   still reads: `PanelCore.from_json` and `PageCore.from_json` upgrade it, and write it back as
   format 2.
+- **Lettering is placed in Panel Core** (#434), and an emitter only looks glyphs up. Every
+  balloon and caption has a `setting`, one entry for each of its `lines`: the line's `origin`
+  (its left edge and its baseline), its `width`, and `offsets`, the distance from the origin to
+  each character of each run, kerning included. A renderer needs no kerning table, no advance
+  widths, no baseline rule and no centring rule: it takes each character's outline from its face
+  and puts it where the Core says. The SVG, the print PDF and the debug overlay no longer read a
+  font's kerning, so the fontTools build present when a Core is drawn cannot move a letter, and
+  the playground and the command line draw the same bytes from the same Core. It is still format
+  `2.0`: format 2 has not been published in a release. `glyph_ids` is reserved, and left out,
+  for text that is shaped. Every SVG and every outlined PDF is byte for byte what it was; a
+  print PDF with `--live-text` differs in the small kerning adjustments between its letters,
+  which now follow the rounded offsets in the Core. A format 1 Core reads as before: its
+  `setting` is worked out when it is read, unless it was lettered in a font of its own, which it
+  cannot be and is refused with the reason.
 - **An actor's drawing moved under `drawing`.** `capsules`, `blobs`, `face_marks` and `emanata`
   are no longer keys of an actor but of `actor.drawing`, `{"kind": "mannequin", ...}`; the contract
   (`transform`, `anchors`, `joints`, `features`, `hull`, `face_exclusion`, `gaze`) stays at the top,

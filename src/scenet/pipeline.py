@@ -85,6 +85,7 @@ from scenet.solve.balloons import place_script
 from scenet.solve.camera import CameraSolution
 from scenet.solve.describe import describe, labels
 from scenet.solve.figures import PlacedPicture, place_figures
+from scenet.solve.lines import set_lines
 from scenet.solve.page import Frame, lettering_height, resolve_frames
 from scenet.solve.sfx import PlacedEffect
 from scenet.solve.speakers import speaker_of
@@ -900,6 +901,16 @@ def _compile_ir(
                 lines=balloon.block.lines,
                 font_size=rounded(balloon.block.font_size),
                 line_height=rounded(balloon.block.line_height),
+                setting=set_lines(
+                    Box.of(balloon.box),
+                    balloon.block.lines,
+                    _core_runs(balloon.block, Face.REGULAR),
+                    font_size=rounded(balloon.block.font_size),
+                    line_height=rounded(balloon.block.line_height),
+                    base=Face.REGULAR,
+                    centred=True,
+                    family=family,
+                ),
                 tail=Tail(
                     start=point_pair(balloon.tail.start),
                     end=point_pair(balloon.tail.end),
@@ -921,6 +932,18 @@ def _compile_ir(
                 font_size=rounded(caption.block.font_size),
                 line_height=rounded(caption.block.line_height),
                 italic=caption.kind.is_italic,
+                setting=set_lines(
+                    Box.of(caption.box),
+                    caption.block.lines,
+                    _core_runs(
+                        caption.block, Face.ITALIC if caption.kind.is_italic else Face.REGULAR
+                    ),
+                    font_size=rounded(caption.block.font_size),
+                    line_height=rounded(caption.block.line_height),
+                    base=Face.ITALIC if caption.kind.is_italic else Face.REGULAR,
+                    centred=False,
+                    family=family,
+                ),
                 fill=caption.fill,
                 ink=caption.ink,
                 speaker=caption.speaker,

@@ -30,9 +30,10 @@ from collections.abc import Mapping, Sequence
 
 from scenet.core import Box, PanelCore
 from scenet.emit.debug_svg import debug_body
-from scenet.emit.svg import accessible_name, attr, fmt, panel_body, typeface_of
+from scenet.emit.svg import accessible_name, attr, fmt, panel_body
 from scenet.errors import RenderError
 from scenet.ir import Direction
+from scenet.lettering import typeface_of
 from scenet.solve.text import FontMetrics
 
 #: A document of panels, for a screen reader: a group, each panel in it an image. `group`

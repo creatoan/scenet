@@ -1,8 +1,9 @@
 """The numbers every emitter draws from, where Panel Core names a shape but not its points.
 
 Panel Core says a balloon is a shout in this box with its tail from here to there; it does
-not list a burst's spikes, the two corners where a tail leaves its balloon, or where each
-letter of a line lands. Those follow from the Core by arithmetic alone, and two emitters
+not list a burst's spikes or the two corners where a tail leaves its balloon. Those follow
+from the Core by arithmetic alone. Where each letter of a line lands is not here: Panel Core
+says it, and an emitter only looks the outline up. Two emitters
 -- the SVG and the print PDF -- must draw exactly the same ones. So they are worked
 out here, once, and each emitter only writes them down in its own format.
 
@@ -12,12 +13,10 @@ so the floats -- and the SVG written from them -- are what they always were.
 """
 
 import math
-from collections.abc import Sequence
 from dataclasses import dataclass
 
-from scenet.core import Box, CoreBalloon, CoreRun, CoreSfx, PanelCore
+from scenet.core import Box, CoreBalloon, PanelCore
 from scenet.ir import Side
-from scenet.solve.text import FontMetrics, Styled, Typeface
 
 #: Ink: every line drawn and every letter lettered, unless Core says otherwise.
 STROKE = "#111111"
@@ -53,9 +52,6 @@ WEATHER_OPACITY = 0.85
 #: Where a thought balloon's three bubbles sit along its tail, from balloon to mouth.
 THOUGHT_BUBBLES = (0.35, 0.62, 0.85)
 
-#: How far below the top of a line its baseline sits, as a fraction of the type size.
-ASCENT = 0.74
-
 
 @dataclass(frozen=True, slots=True)
 class Pointer:
@@ -72,24 +68,6 @@ class Pointer:
     tip: tuple[float, float]
     right: tuple[float, float]
     control: tuple[float, float] | None
-
-
-@dataclass(frozen=True, slots=True)
-class PlacedRun:
-    """Where each letter of one run lands along its line.
-
-    Attributes:
-        run: The run.
-        metrics: The face it is lettered in.
-        scale: Font units to panel units: the type size over the face's units per em.
-        origins: The left edge of each character of `run.text`, in panel units, whether
-            or not the character has an outline to draw.
-    """
-
-    run: CoreRun
-    metrics: FontMetrics
-    scale: float
-    origins: tuple[float, ...]
 
 
 def burst(box: Box) -> list[tuple[float, float]]:
@@ -151,56 +129,6 @@ def inner_width(width: float) -> float:
     return max(width - 2 * FIGURE_STROKE_WIDTH, 1.0)
 
 
-def baselines(
-    box: Box, count: int, line_height: float, font_size: float
-) -> tuple[float, list[float]]:
-    """Where a box's lines of lettering sit: its padding, and each line's baseline.
-
-    Text is laid out from the top of the box: padding, then one line height per line,
-    landing each baseline where the solver's measurement assumed it. The padding is derived
-    from the box rather than restated as a constant, so it cannot drift from the solver's.
-    """
-    padding = (box.height - count * line_height) / 2
-    ascent = font_size * ASCENT
-    return padding, [box.y + padding + index * line_height + ascent for index in range(count)]
-
-
-def line_width(runs: Sequence[CoreRun], font_size: float, family: Typeface) -> float:
-    """A line's width, measured exactly as the solver measured it."""
-    line = Styled("", ())
-    for run in runs:
-        line += Styled.of(run.text, run.face)
-    return family.measure(line, font_size)
-
-
-def centred(box: Box, width: float) -> float:
-    """Where a line of this width starts, centred in a balloon's box."""
-    return box.x + (box.width - width) / 2
-
-
-def glyph_walk(
-    runs: Sequence[CoreRun], x: float, font_size: float, family: Typeface
-) -> list[PlacedRun]:
-    """Where every letter of a line lands, from its left edge.
-
-    Each run is drawn from its own face, and the cursor advances by each character's step
-    -- its advance plus the kerning to the next -- which is exactly what was measured.
-    """
-    cursor = x
-    placed: list[PlacedRun] = []
-    for run in runs:
-        metrics = family.face(run.face)
-        scale = font_size / metrics.units_per_em
-        origins: list[float] = []
-        last = len(run.text) - 1
-        for index, character in enumerate(run.text):
-            origins.append(cursor)
-            step = metrics.step(character, run.text[index + 1] if index < last else None)
-            cursor += step * font_size
-        placed.append(PlacedRun(run=run, metrics=metrics, scale=scale, origins=tuple(origins)))
-    return placed
-
-
 def border(core: PanelCore) -> list[tuple[tuple[float, float], ...]] | None:
     """The border of a panel that bleeds: the sides that keep one, as open lines.
 
@@ -238,8 +166,3 @@ def border(core: PanelCore) -> list[tuple[tuple[float, float], ...]] | None:
     if current:
         runs.append(tuple(current))
     return runs
-
-
-def sfx_scale(effect: CoreSfx, metrics: FontMetrics) -> float:
-    """Font units to panel units for a sound effect's letters."""
-    return effect.font_size / metrics.units_per_em

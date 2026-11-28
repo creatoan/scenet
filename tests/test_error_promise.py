@@ -281,6 +281,7 @@ NEVER_REACHES_A_CALLER: dict[tuple[str, str], str] = {
     ("ir.py", "_check_marks"): "the body of a validator",
     ("ir.py", "_check_off_panel"): "the body of a validator",
     ("core.py", "_check_runs"): "called by validators only",
+    ("core.py", "_check_setting"): "called by validators only",
     # Invariants of the compiler itself: a failure is a bug in Scenet, not bad input.
     ("solve/camera.py", "solve_camera"): "every shot's headroom and footroom leave room",
     ("solve/backdrop.py", "_luminance"): "only greys are measured",

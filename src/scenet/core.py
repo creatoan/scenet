@@ -825,6 +825,57 @@ class CoreFont(CoreModel):
     sha256: str
 
 
+class CoreLine(CoreModel):
+    """Where one line of lettering is set: its baseline, and every letter along it.
+
+    Panel Core says where the letters are, so that no renderer has to measure a font to
+    draw a balloon: it looks each letter's outline up by its character and its face, and
+    puts it where this says. The numbers are the solver's measurement, rounded; they are
+    what the balloon was sized for.
+
+    Attributes:
+        origin: Where the line starts: the left edge of its first letter, on its baseline,
+            in panel units. A balloon centres its lines, a caption sets them flush left, and
+            both are already in this number.
+        width: How far the line runs from `origin`, to the end of its last letter's advance.
+            The balloon's margin on either side of a line is read from this and `origin`
+            with the box.
+        offsets: For each run of the line -- or the whole line as one, when it has no
+            emphasis -- the distance from `origin` along the baseline to the origin of each
+            of its characters, in panel units, whether or not the character has an outline.
+            Kerning is in these numbers.
+        glyph_ids: Empty today, and left out of the JSON. Reserved for text that has been
+            shaped, where what is drawn is not one glyph per character: a renderer that
+            reads it draws these glyph ids, one at each of `offsets`, by the face's own
+            glyph numbering. Where it is given it has one id for each offset.
+    """
+
+    origin: tuple[float, float]
+    width: float
+    offsets: tuple[tuple[float, ...], ...]
+    glyph_ids: tuple[tuple[int, ...], ...] = ()
+
+
+def _check_setting(
+    lines: tuple[str, ...],
+    runs: tuple[tuple[CoreRun, ...], ...],
+    setting: tuple[CoreLine, ...],
+) -> None:
+    """Refuse a setting that does not give every line its letters, which would draw none."""
+    if len(setting) != len(lines):
+        raise ValueError(
+            f"setting must be given for every line: {len(lines)} lines, {len(setting)} set"
+        )
+    for index, (line, placed) in enumerate(zip(lines, setting, strict=True)):
+        shape = [len(run.text) for run in runs[index]] if runs else [len(line)]
+        if [len(offsets) for offsets in placed.offsets] != shape:
+            raise ValueError(
+                f"the offsets of line {index} must give one for each character of each run: {shape}"
+            )
+        if placed.glyph_ids and [len(ids) for ids in placed.glyph_ids] != shape:
+            raise ValueError(f"the glyph_ids of line {index} must pair with its offsets")
+
+
 class CoreBalloon(CoreModel):
     """One balloon, placed and with its lettering already broken into lines.
 
@@ -843,6 +894,8 @@ class CoreBalloon(CoreModel):
             run is drawn in the face it was measured in. Empty when no line has any --
             and then left out of the JSON, so a balloon without emphasis reads and writes
             exactly as it did before emphasis existed. `lines` stays the plain text.
+        setting: Where each line is set, one for each of `lines`: its baseline, and where
+            every letter of it sits. A renderer looks the outlines up and places them here.
         label: Who says it, how, and the words -- `Bob, whispering: I know.` -- as
             accessible output reads it. Left out of the JSON when unset.
         off_panel: The side of the frame an off-panel speaker is on, which the tail ends on;
@@ -867,6 +920,7 @@ class CoreBalloon(CoreModel):
     font_size: float
     line_height: float
     tail: Tail
+    setting: tuple[CoreLine, ...]
     runs: tuple[tuple[CoreRun, ...], ...] = ()
     # Set when the speaker is off panel: the side of the frame they are on, which the
     # tail ends on. Then `speaker` names somebody who is not an actor. Left out of the
@@ -888,6 +942,7 @@ class CoreBalloon(CoreModel):
             ValueError: A line has no runs, or its runs spell something else.
         """
         _check_runs(self.lines, self.runs)
+        _check_setting(self.lines, self.runs, self.setting)
         return self
 
 
@@ -917,6 +972,9 @@ class CoreCaption(CoreModel):
             mark reads is a fact about the panel.
         speaker: Who is talking, for a `spoken` caption. **Not an actor id**: the
             speaker is off panel, so this resolves to nobody in `actors`.
+        setting: Where each line is set, exactly as on
+            :class:`CoreBalloon <scenet.core.CoreBalloon>`: flush left inside the box's
+            padding, not centred.
         runs: For a line with emphasis, the line cut wherever its face changes, exactly
             as on :class:`CoreBalloon <scenet.core.CoreBalloon>`. Left out of the JSON
             when empty.
@@ -943,6 +1001,7 @@ class CoreCaption(CoreModel):
     font_size: float
     line_height: float
     italic: bool
+    setting: tuple[CoreLine, ...]
     fill: Tone = "#ffffff"
     ink: Tone = "#111111"
     speaker: str | None = None
@@ -961,6 +1020,7 @@ class CoreCaption(CoreModel):
             ValueError: A line has no runs, or its runs spell something else.
         """
         _check_runs(self.lines, self.runs)
+        _check_setting(self.lines, self.runs, self.setting)
         return self
 
 
@@ -1336,7 +1396,55 @@ def _upgrade_from_one(payload: dict[str, Any], model: "type[CoreDocument]") -> d
     actors = upgraded.get("actors")
     if isinstance(actors, list):
         upgraded["actors"] = [_drawn_as_a_mannequin(actor) for actor in actors]
+    for key in ("balloons", "captions"):
+        lettered = upgraded.get(key)
+        if isinstance(lettered, list):
+            upgraded[key] = [_set_as_it_was(item, upgraded.get("fonts")) for item in lettered]
     return upgraded
+
+
+def _set_as_it_was(item: object, fonts: object) -> object:
+    """A balloon or caption of format 1, with the setting its emitters used to work out.
+
+    Format 1 left every letter's place to the emitter, which walked each line in the shipped
+    faces, so the same walk written down is what the document drew. A document lettered in
+    a font of its own cannot be set here, for the font is not in it: it is refused, and
+    compiling the source again writes it in format 2. A damaged item is left as it is, for
+    validation to say where.
+    """
+    if not isinstance(item, dict) or "setting" in item:
+        return item
+    if fonts:
+        raise CoreSyntaxError(
+            "this Panel Core is format 1 and was lettered in a font of its own, whose letters "
+            "format 2 places where it was compiled; compile the source again to write it"
+        )
+    # Imported here: what a balloon says of its letters is the solver's, and only an old
+    # document, which has none, is set after it is read.
+    from scenet.solve.lines import set_lines  # noqa: PLC0415
+    from scenet.solve.text import Typeface  # noqa: PLC0415
+
+    try:
+        box = Box.model_validate(item["box"])
+        lines = tuple(str(line) for line in item["lines"])
+        runs = tuple(
+            tuple(CoreRun.model_validate(run) for run in line) for line in item.get("runs", [])
+        )
+        italic = bool(item.get("italic", False))
+        base = Face.ITALIC if italic else Face.REGULAR
+        setting = set_lines(
+            box,
+            lines,
+            runs,
+            font_size=float(item["font_size"]),
+            line_height=float(item["line_height"]),
+            base=base,
+            centred="tail" in item,
+            family=Typeface(),
+        )
+    except (KeyError, TypeError, ValueError):
+        return item
+    return {**item, "setting": [json.loads(line.model_dump_json()) for line in setting]}
 
 
 def _drawn_as_a_mannequin(actor: object) -> object:
@@ -1593,6 +1701,7 @@ __all__ = [
     "CoreFrame",
     "CoreGlyph",
     "CoreImage",
+    "CoreLine",
     "CoreMannequin",
     "CoreMass",
     "CoreModel",

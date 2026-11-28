@@ -80,7 +80,7 @@ document at all; the minor only adds what a reader that does not know it can lea
 
 | A document that is… | A reader of 2.0 |
 |---|---|
-| format 1 (`"format_version": 1`, or no version and no `format`) | Upgrades it: the key words below are added, and each actor's `capsules`, `blobs`, `face_marks` and `emanata` move under `drawing`. What it draws does not change. |
+| format 1 (`"format_version": 1`, or no version and no `format`) | Upgrades it: the key words below are added, and each actor's `capsules`, `blobs`, `face_marks` and `emanata` move under `drawing`, and each balloon and caption gets the `setting` its emitters used to work out, in the shipped faces. What it draws does not change. A format 1 Core lettered in a font of its own is refused, since the font is not in it: compile the source again. |
 | of a major it does not know (`3.0`, `99`) | Refuses it, naming the version the document says and the version this reads. |
 | of this major and this minor (`2.0`) | Reads it. An unknown key is a typo and is refused, where it is. |
 | of this major and a newer minor (`2.3`) | Reads it. A key it does not know is left out and reported once -- *written by a newer Scenet (2.3); this reads 2.0* -- not refused; every other mistake is refused as it is at 2.0. Written back, it is 2.0. |
@@ -195,6 +195,10 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "lines": ["You forgot your", "umbrella!"],
       "font_size": 28.0,
       "line_height": 35.0,
+      "setting": [
+        { "origin": [136.37, 99.72], "width": 177.27, "offsets": [[0.0, 12.18, 27.35, 42.58, "..."]] },
+        { "origin": [168.13, 134.72], "width": 113.74, "offsets": [[0.0, 15.23, 38.45, 53.93, "..."]] }
+      ],
       "tail": { "start": [225.0, 173.0], "end": [263.1, 268.4] }
     }
   ],
@@ -205,7 +209,11 @@ helper, so a value that is not a colour could not leave its attribute even if it
       "kind": "locale",
       "box": { "x": 19.0, "y": 19.0, "width": 147.0, "height": 96.0 },
       "lines": ["Midnight.", "The docks."],
-      "italic": true
+      "italic": true,
+      "setting": [
+        { "origin": [39.5, 55.78], "width": 85.12, "offsets": [[0.0, 15.51, 20.72, 32.49, "..."]] },
+        { "origin": [39.5, 83.28], "width": 94.75, "offsets": [[0.0, 11.22, 22.64, 33.22, "..."]] }
+      ]
     }
   ],
   "backdrop": {
@@ -238,13 +246,13 @@ A caption's `fill` and `ink` and a balloon's `tail.width` are not shown: each is
 (`#ffffff`, `#111111`, `14.0`), so it is left out, as every field at its default is.
 
 `lines` is the *resolved* line breaking, not the source string. Wrapping is decided during
-compilation using real font metrics, so the emitter never re-measures and never disagrees with the
+compilation using real font metrics, so no renderer re-measures and none disagrees with the
 solver about how wide a balloon needs to be. For a `spoken` caption the quotation marks are part of
 those lines for the same reason: marks added afterwards would not fit the box drawn for them.
 
 A line with [emphasis](language/script.md#saytext) in it is still plain text in `lines`, the text as it
 reads. Beside `lines`, the balloon or caption then carries `runs`: every line cut wherever its face
-changes, so the emitter draws each run in the face it was measured in. The runs of a line must
+changes, so a renderer draws each run in the face it was measured in. The runs of a line must
 spell it exactly, and a Core whose runs do not is refused.
 
 ```json
@@ -257,6 +265,35 @@ spell it exactly, and a Core whose runs do not is refused.
 
 `face` is `regular`, `italic` or `bold_italic`. A balloon or caption with no emphasis has no
 `runs` key at all: it is empty by default, so it is left out.
+
+### Where the letters are
+
+Every balloon and caption carries `setting`, one entry for each of its `lines`, in the same
+order. It is what a renderer draws lettering from. **A renderer makes no layout decision about
+text:** it needs no kerning table, no advance widths, no ascent and no centring rule. For each
+character it looks up that character's outline in the face the Core names, and puts it where the
+Core says. A renderer that reimplements Scenet's text layout, or reads a font build's kerning
+differently, draws the same letters in the same places, because it never lays anything out.
+
+Each entry of `setting` is a line:
+
+| Key | Meaning |
+|---|---|
+| `origin` | `[x, y]`: the left edge of the line's first character, and its baseline, in panel units. Centring (a balloon's lines) and flush-left setting inside the box's padding (a caption's) are already in `x`; the distance from the top of the box to the first baseline is already in `y`. |
+| `width` | How far the line runs from `origin.x`, to the end of its last character's advance. A line's room inside its box is `origin.x - box.x` on the left and `box.x + box.width - (origin.x + width)` on the right: a check on the margin needs the Core and nothing else. |
+| `offsets` | One list for each run of the line -- one in all, when the line has no `runs` -- holding one number for each character of the run: the distance from `origin.x` along the baseline to that character's own origin. Every character has one, whether or not it has an outline to draw. Kerning is in these numbers. A run starts where the one before it ends, and kerns with nothing across the join. |
+| `glyph_ids` | Left out today. Reserved for shaped text, where what is drawn is not one glyph for each character: a reader that finds it draws these glyph ids of the face, one at each offset, in place of looking the characters up, and it has exactly one id for each offset. |
+
+The origin of a character is `origin.x + offset`, and its glyph is drawn there with its baseline at
+`origin.y`, scaled by `font_size` over the face's units per em and flipped, since fonts are y-up.
+The distance a text renderer steps from one character to the next is the difference of their
+offsets, and from the last character of the line, `width` less its offset.
+
+Every number is rounded to the hundredth, as every coordinate is. A character's position is rounded
+once, as a position, and its offset is that position less the line's `origin.x`: so adding the
+two back gives the same hundredth the solver measured, and the offsets do not drift as a line grows.
+A Core whose `setting` has not one entry for each line, or not one offset for each character of
+each run, is refused.
 
 A panel lettered in an [author's face](language/lettering.md#letteringfont) carries `fonts`: each face set in a
 font other than the shipped one, by its family and style as the font names them, and the SHA-256 of

@@ -1321,6 +1321,28 @@
         "You came."
       ],
       "order": 1,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              13.7,
+              30.77,
+              47.91,
+              54.21,
+              68.26,
+              84.13,
+              110.25,
+              125.87
+            ]
+          ],
+          "origin": [
+            186.8,
+            353.59
+          ],
+          "width": 133.72
+        }
+      ],
       "speaker": "alice",
       "tail": {
         "end": [
@@ -1349,6 +1371,30 @@
         "You called."
       ],
       "order": 2,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              13.71,
+              30.78,
+              47.92,
+              54.22,
+              68.26,
+              84.14,
+              92.17,
+              100.21,
+              115.83,
+              133.31
+            ]
+          ],
+          "origin": [
+            710.04,
+            357.56
+          ],
+          "width": 141.15
+        }
+      ],
       "speaker": "bob",
       "tail": {
         "end": [
@@ -1390,7 +1436,50 @@
         "Midnight.",
         "The docks."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              19.04,
+              25.43,
+              39.88,
+              54.05,
+              60.45,
+              74.79,
+              88.8,
+              97.93
+            ]
+          ],
+          "origin": [
+            29.34,
+            49.32
+          ],
+          "width": 104.46
+        },
+        {
+          "offsets": [
+            [
+              0.0,
+              13.77,
+              27.78,
+              40.77,
+              45.95,
+              60.4,
+              74.3,
+              86.05,
+              98.9,
+              109.76
+            ]
+          ],
+          "origin": [
+            29.34,
+            83.07
+          ],
+          "width": 116.29
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks at night. Alice, left, pointing, looking at Bob; Bob, centre, arms crossed, looking at Alice.",

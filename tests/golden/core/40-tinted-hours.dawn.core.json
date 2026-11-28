@@ -1346,7 +1346,25 @@
       "lines": [
         "Dawn."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              16.58,
+              31.61,
+              51.41,
+              66.11
+            ]
+          ],
+          "origin": [
+            29.36,
+            50.08
+          ],
+          "width": 72.88
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks at dawn, in fog. Alice, left, arms crossed, looking at Bob; Bob, right.",

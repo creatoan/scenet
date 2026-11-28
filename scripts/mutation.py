@@ -87,7 +87,7 @@ LEGS: tuple[Leg, ...] = (
     ),
     Leg(
         "solve/page",
-        _in("solve/", "describe.py", "page.py", "sfx.py"),
+        _in("solve/", "describe.py", "lines.py", "page.py", "sfx.py"),
         96,
         96.7,
         1414,
@@ -104,7 +104,9 @@ LEGS: tuple[Leg, ...] = (
         47,
         43410981157,
     ),
-    Leg("emit/svg", _in("emit/", "marks.py", "svg.py"), 98, 98.8, 1370, 16, 43410981157),
+    Leg(
+        "emit/svg", _in("emit/", "faces.py", "marks.py", "svg.py"), 98, 98.8, 1370, 16, 43410981157
+    ),
     Leg(
         "emit/drawing",
         _in("emit/", "debug_svg.py", "geometry.py", "page.py", "strip.py"),

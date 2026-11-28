@@ -1328,7 +1328,53 @@
         "It never rains",
         "at noon."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              4.69,
+              10.73,
+              14.3,
+              24.07,
+              32.75,
+              41.01,
+              49.96,
+              56.32,
+              59.89,
+              66.07,
+              76.06,
+              80.46,
+              90.23
+            ]
+          ],
+          "origin": [
+            982.08,
+            33.97
+          ],
+          "width": 97.71
+        },
+        {
+          "offsets": [
+            [
+              0.0,
+              9.99,
+              16.03,
+              19.6,
+              29.37,
+              38.95,
+              48.53,
+              58.29
+            ]
+          ],
+          "origin": [
+            982.08,
+            57.22
+          ],
+          "width": 62.79
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks by day. Alice, centre, arms crossed, looking at Bob; Bob, centre.",

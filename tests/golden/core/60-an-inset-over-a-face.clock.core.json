@@ -816,7 +816,25 @@
       "lines": [
         "9:14."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              4.08,
+              6.14,
+              10.22,
+              14.3
+            ]
+          ],
+          "origin": [
+            9.52,
+            15.81
+          ],
+          "width": 16.35
+        }
+      ]
     }
   ],
   "description": "Close-up. A street by day. Bob, centre, bored.",

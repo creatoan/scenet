@@ -182,6 +182,18 @@ The types a compile returns, read off `result.core` and `book.pages`. They are n
 .. autoclass:: scenet.core.CoreImage
 ```
 
+## `CoreLine`
+
+| | |
+|---|---|
+| Import | `from scenet.core import CoreLine` |
+| Defined in | {py:mod}`scenet.core` ([source](https://github.com/creatoan/scenet/blob/main/src/scenet/core.py)) |
+| Stability | Returned, not exported: its fields are the Panel Core format's, and change only as [the format](../../panel_core.md) says, under `CORE_FORMAT_VERSION`. |
+
+```{eval-rst}
+.. autoclass:: scenet.core.CoreLine
+```
+
 ## `CoreMannequin`
 
 | | |

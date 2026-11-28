@@ -520,10 +520,10 @@ gallery are what guard them.
 | `solve/backdrop` | `solve/backdrop.py` | 1,060 | 8 | 99.2% | 99% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `solve/text` | `solve/text.py` | 839 | 86 | 89.7% | 89% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
 | `solve/staging` | `solve/__init__.py`, `solve/camera.py`, `solve/figures.py`, `solve/speakers.py`, `solve/staging.py` | 448 | 11 | 97.5% | 97% | [`44108642164`](https://github.com/creatoan/scenet/actions/runs/44108642164) |
-| `solve/page` | `solve/describe.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `solve/page` | `solve/describe.py`, `solve/lines.py`, `solve/page.py`, `solve/sfx.py` | 1,414 | 46 | 96.7% | 96% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf` | `emit/pdf.py` | 1,388 | 32 | 97.7% | 97% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/pdf parts` | `emit/pdf_fonts.py`, `emit/pdf_images.py` | 979 | 47 | 95.2% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
-| `emit/svg` | `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
+| `emit/svg` | `emit/faces.py`, `emit/marks.py`, `emit/svg.py` | 1,370 | 16 | 98.8% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/drawing` | `emit/debug_svg.py`, `emit/geometry.py`, `emit/page.py`, `emit/strip.py` | 1,093 | 12 | 98.9% | 98% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `emit/other` | `emit/__init__.py`, `emit/boxes.py`, `emit/cmyk.py`, `emit/conditioning.py`, `emit/depth.py`, `emit/export.py`, `emit/mask.py`, `emit/pose.py`, `emit/preview.py`, `emit/semantics.py`, `emit/turbulence.py` | 1,006 | 43 | 95.7% | 95% | [`43410981157`](https://github.com/creatoan/scenet/actions/runs/43410981157) |
 | `frontends/script` | `frontends/script_front.py` | 2,551 | 62 | 97.6% | 97% | [`45531607316`](https://github.com/creatoan/scenet/actions/runs/45531607316) |
@@ -740,7 +740,7 @@ mutants as before, one renumbered, one new.
 | `emit/svg.py` `fmt` 7, 8 | `rstrip("0")` to `rstrip("XX0XX")`, `rstrip(".")` to `rstrip("XX.XX")` | `rstrip` takes a set of characters, and no number has an `X` in it. |
 | `emit/svg.py` `fmt` 13 | `""` to `"XXXX"` in the set of zeros | A number formatted to fixed places always keeps the digit before its point, so stripping never leaves `""` -- only `"0"` or `"-0"`. |
 | `emit/svg.py` `_filter_id` 2, 4 | the id for a missing veil changed | Both callers return before asking when there is no veil. |
-| `emit/svg.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
+| `lettering.py` `typeface_of` 2 | `Typeface(regular=metrics)` to `Typeface(regular=None)` | A Core compiled with those `metrics` names their font in `fonts`, and the loop below puts it back as the regular face; shipped metrics are the shipped face either way. |
 | `emit/svg.py` `_tail_shape` 47 (now `emit/geometry.py` `pointer`) | `or 1.0` to `or 2.0` | Used only for a zero-length chord, whose normal is `(0, 0)` whatever it is divided by. |
 
 Supplied pictures ([#70](https://github.com/creatoan/scenet/issues/70)) changed `solve/backdrop.py`, `solve/describe.py` and every emitter.

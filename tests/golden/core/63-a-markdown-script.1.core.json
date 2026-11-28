@@ -2380,7 +2380,43 @@
         "The",
         "Umbrella."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              18.36,
+              37.04
+            ]
+          ],
+          "origin": [
+            33.12,
+            59.76
+          ],
+          "width": 54.36
+        },
+        {
+          "offsets": [
+            [
+              0.0,
+              22.18,
+              50.94,
+              70.24,
+              82.19,
+              99.5,
+              108.43,
+              117.36,
+              136.69
+            ]
+          ],
+          "origin": [
+            33.12,
+            104.76
+          ],
+          "width": 145.4
+        }
+      ]
     }
   ],
   "description": "The cover: a street at dusk in the rain, Alice and Bob small on its corner.",
