@@ -10,7 +10,6 @@ byte-identical across platforms, whose float repr differs in the last digit.
 
 import base64
 from collections.abc import Mapping, Sequence
-from dataclasses import replace
 from urllib.parse import quote
 from xml.sax.saxutils import escape, quoteattr
 
@@ -28,6 +27,7 @@ from scenet.core import (
     PanelCore,
 )
 from scenet.emit import geometry
+from scenet.emit.faces import Faces, PlacedRun, place_line, sfx_scale
 from scenet.emit.geometry import (
     BALLOON_STROKE_WIDTH,
     CAPTION_STROKE_WIDTH,
@@ -40,7 +40,8 @@ from scenet.emit.geometry import (
 )
 from scenet.errors import RenderError
 from scenet.ir import BalloonKind, Face
-from scenet.solve.text import FontMetrics, Typeface
+from scenet.lettering import typeface_of
+from scenet.solve.text import FontMetrics
 
 #: The namespace `xlink:href` is in. SVG 2 deprecates it for plain `href`, and every
 #: renderer still reads it; Inkscape does not yet load a resource named by plain `href`
@@ -197,7 +198,7 @@ def accessible_name(core: PanelCore) -> tuple[str, list[str]]:
 
 def panel_body(
     core: PanelCore,
-    family: Typeface,
+    family: Faces,
     *,
     live_text: bool = False,
     id_prefix: str = "",
@@ -604,41 +605,6 @@ def _render_mark(prefix: str, mark: FaceMark) -> str:
     )
 
 
-def typeface_of(
-    core: PanelCore,
-    *,
-    metrics: FontMetrics | None = None,
-    fonts: Mapping[str, FontMetrics] | None = None,
-) -> Typeface:
-    """The family a Core's lettering was measured in, from the fonts handed over.
-
-    Args:
-        core: The compiled panel.
-        metrics: A regular face given by hand, as it was given to the compile.
-        fonts: Declared fonts by digest.
-
-    Returns:
-        The shipped family, with each face the Core names in its declared font.
-
-    Raises:
-        RenderError: A face the Core names is in none of the fonts given.
-    """
-    family = Typeface(regular=metrics)
-    available = dict(fonts or {})
-    if metrics is not None:
-        available.setdefault(metrics.sha256, metrics)
-    for face, font in core.fonts.items():
-        found = available.get(font.sha256)
-        if found is None:
-            raise RenderError(
-                f"this panel was lettered in {font.family} {font.style} (sha256 "
-                f"{font.sha256[:12]}), and that font was not given to the renderer; pass "
-                "the fonts its compile returned as `fonts=`"
-            )
-        family = replace(family, **{face.value: found})
-    return family
-
-
 def _render_sfx(effect: CoreSfx, metrics: FontMetrics, id_prefix: str) -> str:
     """A sound effect: each letter's outline, where the solver put it and turned it.
 
@@ -647,13 +613,13 @@ def _render_sfx(effect: CoreSfx, metrics: FontMetrics, id_prefix: str) -> str:
     stroke is in the glyph's own font units, since the path is scaled down to the type
     size. Nothing is decided here: the origin, the angle and both colours are the Core's.
     """
-    scale = geometry.sfx_scale(effect, metrics)
+    scale = sfx_scale(effect, metrics)
     stroke = fmt(effect.stroke_width / scale)
     outlines: dict[str, str] = {}
     lines = [f"    <g id={attr(id_prefix + 'sfx-' + effect.id)}>"]
     for glyph in effect.glyphs:
         if glyph.char not in outlines:
-            outlines[glyph.char] = metrics.glyph_outlines(glyph.char)[0][0]
+            outlines[glyph.char] = metrics.outline(glyph.char)
         path = outlines[glyph.char]
         if not path:
             continue
@@ -676,35 +642,26 @@ def _runs_of(
     return runs[index] if runs else (CoreRun(text=lines[index], face=base),)
 
 
-def _render_balloon(
-    balloon: CoreBalloon, family: Typeface, *, live_text: bool, id_prefix: str
-) -> str:
-    box = balloon.box
+def _render_balloon(balloon: CoreBalloon, family: Faces, *, live_text: bool, id_prefix: str) -> str:
     lines = [f"    <g id={attr(id_prefix + 'balloon-' + balloon.id)}>"]
 
     lines.append(_tail_shape(balloon))
     lines.append(_balloon_outline(balloon))
 
-    _, baselines = geometry.baselines(
-        box, len(balloon.lines), balloon.line_height, balloon.font_size
-    )
-    for index, baseline in enumerate(baselines):
+    for index, line in enumerate(balloon.setting):
         runs = _runs_of(balloon.lines, balloon.runs, index, Face.REGULAR)
-        width = geometry.line_width(runs, balloon.font_size, family)
-        start_x = geometry.centred(box, width)
+        x, baseline = line.origin
         lines.append(
-            _live_text(runs, start_x, baseline, balloon.font_size, family, base=Face.REGULAR)
+            _live_text(runs, x, baseline, balloon.font_size, family, base=Face.REGULAR)
             if live_text
-            else _outlined_text(runs, start_x, baseline, balloon.font_size, family)
+            else _outlined_text(place_line(line, runs, balloon.font_size, family), baseline)
         )
 
     lines.append("    </g>")
     return "\n".join(lines)
 
 
-def _render_caption(
-    caption: CoreCaption, family: Typeface, *, live_text: bool, id_prefix: str
-) -> str:
+def _render_caption(caption: CoreCaption, family: Faces, *, live_text: bool, id_prefix: str) -> str:
     """A caption box: a plain rectangle with its text set flush left.
 
     Square corners, because a caption is a box and not a balloon -- rounding it would
@@ -723,27 +680,15 @@ def _render_caption(
         f'stroke-width="{fmt(CAPTION_STROKE_WIDTH)}"/>'
     )
 
-    # The box was padded equally on both axes, so the vertical inset gives the horizontal
-    # one too.
-    padding, baselines = geometry.baselines(
-        box, len(caption.lines), caption.line_height, caption.font_size
-    )
     base = Face.ITALIC if caption.italic else Face.REGULAR
-    for index, baseline in enumerate(baselines):
+    for index, line in enumerate(caption.setting):
         runs = _runs_of(caption.lines, caption.runs, index, base)
+        x, baseline = line.origin
         lines.append(
-            _live_text(
-                runs,
-                box.x + padding,
-                baseline,
-                caption.font_size,
-                family,
-                base=base,
-                ink=caption.ink,
-            )
+            _live_text(runs, x, baseline, caption.font_size, family, base=base, ink=caption.ink)
             if live_text
             else _outlined_text(
-                runs, box.x + padding, baseline, caption.font_size, family, ink=caption.ink
+                place_line(line, runs, caption.font_size, family), baseline, ink=caption.ink
             )
         )
 
@@ -805,29 +750,22 @@ def _tail_shape(balloon: CoreBalloon) -> str:
     )
 
 
-def _outlined_text(
-    runs: Sequence[CoreRun],
-    x: float,
-    baseline: float,
-    font_size: float,
-    family: Typeface,
-    *,
-    ink: str = STROKE,
-) -> str:
+def _outlined_text(placed: Sequence[PlacedRun], baseline: float, *, ink: str = STROKE) -> str:
     """One line of lettering as glyph outlines, each run drawn from its own face.
 
     Glyph coordinates are y-up in font units, so each is scaled by size/unitsPerEm and
-    flipped. The result depends on no font being installed anywhere.
+    flipped. The result depends on no font being installed anywhere. Where each letter goes
+    is Panel Core's; this looks its outline up and puts it there.
 
     `ink` defaults to the stroke colour, which is what every balloon uses. A caption
     passes the value its tone resolved to, so a dark box gets reversed type -- and the
     choice was still the solver's, not this function's.
     """
     glyphs: list[str] = []
-    for placed in geometry.glyph_walk(runs, x, font_size, family):
-        scale = placed.scale
-        outlines = placed.metrics.glyph_outlines(placed.run.text)
-        for (path, _), origin in zip(outlines, placed.origins, strict=True):
+    for run in placed:
+        scale = run.scale
+        for character, origin in zip(run.run.text, run.origins, strict=True):
+            path = run.metrics.outline(character)
             if path:
                 glyphs.append(
                     f'      <path d="{path}" fill={attr(ink)} stroke="none" '
@@ -843,7 +781,7 @@ def _live_text(
     x: float,
     baseline: float,
     font_size: float,
-    family: Typeface,
+    family: Faces,
     *,
     base: Face,
     ink: str = STROKE,
@@ -873,7 +811,7 @@ def _live_text(
     )
 
 
-def _run_attributes(face: Face, named: str, family: Typeface) -> str:
+def _run_attributes(face: Face, named: str, family: Faces) -> str:
     """What a `<tspan>` says about its face: style and weight, and a family when it differs."""
     attributes = FACE_ATTRIBUTES[face]
     own = family.face(face).family

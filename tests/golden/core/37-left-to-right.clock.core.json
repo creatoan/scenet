@@ -714,7 +714,25 @@
       "lines": [
         "00:10"
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              10.08,
+              20.16,
+              25.24,
+              35.32
+            ]
+          ],
+          "origin": [
+            14.58,
+            30.12
+          ],
+          "width": 45.4
+        }
+      ]
     }
   ],
   "description": "Long shot. A street at night, in the rain. Ken, centre, sad.",

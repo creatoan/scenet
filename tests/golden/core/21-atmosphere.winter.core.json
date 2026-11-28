@@ -1602,7 +1602,29 @@
       "lines": [
         "December."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              11.01,
+              19.96,
+              27.77,
+              36.72,
+              51.58,
+              61.55,
+              70.49,
+              75.91
+            ]
+          ],
+          "origin": [
+            20.21,
+            33.97
+          ],
+          "width": 80.41
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks at dusk, in the snow. Alice, centre, arms crossed, looking at Bob; Bob, centre.",

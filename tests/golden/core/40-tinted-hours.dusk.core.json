@@ -1332,7 +1332,25 @@
       "lines": [
         "Dusk."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              16.58,
+              31.36,
+              42.62,
+              56.31
+            ]
+          ],
+          "origin": [
+            29.36,
+            50.08
+          ],
+          "width": 63.08
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks at dusk. Alice, left, arms crossed, looking at Bob; Bob, right.",

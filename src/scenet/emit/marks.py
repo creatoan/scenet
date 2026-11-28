@@ -22,6 +22,7 @@ from scenet.core import (
     CoreBalloon,
     CoreCaption,
     CoreImage,
+    CoreLine,
     CoreMass,
     CoreRun,
     CoreSfx,
@@ -31,6 +32,7 @@ from scenet.core import (
     PanelCore,
 )
 from scenet.emit import geometry
+from scenet.emit.faces import Faces, PlacedRun, place_line, sfx_scale
 from scenet.emit.geometry import (
     BALLOON_STROKE_WIDTH,
     CAPTION_STROKE_WIDTH,
@@ -43,7 +45,7 @@ from scenet.emit.geometry import (
 )
 from scenet.emit.svg import in_painters_order
 from scenet.ir import BalloonKind, Face
-from scenet.solve.text import FontMetrics, Typeface
+from scenet.solve.text import FontMetrics
 
 #: The paper, which every white in Scenet is: nothing is ever printed in white ink.
 PAPER = "#ffffff"
@@ -180,8 +182,8 @@ class Text:
     """One line of lettering set as text, with `--live-text`.
 
     The SVG writes it as one `<text>`; print sets each run in its embedded face. Its glyphs
-    land where their outlines would, each run's origins worked out by
-    :func:`geometry.glyph_walk <scenet.emit.geometry.glyph_walk>`.
+    land where their outlines would, each run's origins as Panel Core gives them, in
+    :class:`PlacedRun <scenet.emit.faces.PlacedRun>`.
 
     Attributes:
         runs: The line's runs, each in its face, with every character's origin.
@@ -190,7 +192,7 @@ class Text:
     """
 
     tag: ClassVar[str] = "text"
-    runs: tuple[geometry.PlacedRun, ...]
+    runs: tuple[PlacedRun, ...]
     baseline: float
     font_size: float
 
@@ -269,7 +271,7 @@ def _valued(value: str) -> Paint | None:
     return Paint(value, Role.TONE, value)
 
 
-def marks(core: PanelCore, family: Typeface, *, live_text: bool = False) -> list[Mark]:
+def marks(core: PanelCore, family: Faces, *, live_text: bool = False) -> list[Mark]:
     """Everything a panel paints, in the order it is painted.
 
     Args:
@@ -395,13 +397,13 @@ def _face_mark(owner: str, mark: FaceMark) -> Mark:
 
 def _sfx(effect: CoreSfx, metrics: FontMetrics) -> list[Mark]:
     owner = f"sfx-{effect.id}"
-    scale = geometry.sfx_scale(effect, metrics)
+    scale = sfx_scale(effect, metrics)
     fill, stroke = _valued(effect.fill), _valued(effect.stroke)
     drawn: list[Mark] = []
     outlined: dict[str, bool] = {}
     for glyph in effect.glyphs:
         if glyph.char not in outlined:
-            outlined[glyph.char] = bool(metrics.glyph_outlines(glyph.char)[0][0])
+            outlined[glyph.char] = bool(metrics.outline(glyph.char))
         if not outlined[glyph.char]:
             continue
         x, y = glyph.origin
@@ -421,26 +423,23 @@ def _sfx(effect: CoreSfx, metrics: FontMetrics) -> list[Mark]:
 
 def _lettering(
     owner: str,
+    line: CoreLine,
     runs: Sequence[CoreRun],
-    x: float,
-    baseline: float,
     *,
     font_size: float,
-    family: Typeface,
+    family: Faces,
     ink: Paint | None,
     live_text: bool,
 ) -> list[Mark]:
+    baseline = line.origin[1]
+    placed = place_line(line, runs, font_size, family)
     if live_text:
-        placed_runs = tuple(geometry.glyph_walk(runs, x, font_size, family))
-        return [Mark(owner, Text(placed_runs, baseline, font_size), fill=ink)]
+        return [Mark(owner, Text(tuple(placed), baseline, font_size), fill=ink)]
     drawn: list[Mark] = []
-    for placed in geometry.glyph_walk(runs, x, font_size, family):
-        outlines = placed.metrics.glyph_outlines(placed.run.text)
-        for (path, _), character, origin in zip(
-            outlines, placed.run.text, placed.origins, strict=True
-        ):
-            if path:
-                glyph = Glyph(placed.metrics, character, origin, baseline, placed.scale)
+    for run in placed:
+        for character, origin in zip(run.run.text, run.origins, strict=True):
+            if run.metrics.outline(character):
+                glyph = Glyph(run.metrics, character, origin, baseline, run.scale)
                 drawn.append(Mark(owner, glyph, fill=ink))
     return drawn
 
@@ -451,7 +450,7 @@ def _runs(
     return runs[index] if runs else (CoreRun(text=lines[index], face=base),)
 
 
-def _balloon(balloon: CoreBalloon, family: Typeface, *, live_text: bool) -> list[Mark]:
+def _balloon(balloon: CoreBalloon, family: Faces, *, live_text: bool) -> list[Mark]:
     owner = f"balloon-{balloon.id}"
     box = balloon.box
     drawn: list[Mark] = []
@@ -472,18 +471,13 @@ def _balloon(balloon: CoreBalloon, family: Typeface, *, live_text: bool) -> list
     dash = WHISPER_DASH if balloon.kind is BalloonKind.WHISPER else ()
     drawn.append(_outlined(owner, outline, dash=dash))
 
-    _, baselines = geometry.baselines(
-        box, len(balloon.lines), balloon.line_height, balloon.font_size
-    )
-    for index, baseline in enumerate(baselines):
+    for index, line in enumerate(balloon.setting):
         runs = _runs(balloon.lines, balloon.runs, index, Face.REGULAR)
-        start = geometry.centred(box, geometry.line_width(runs, balloon.font_size, family))
         drawn.extend(
             _lettering(
                 owner,
+                line,
                 runs,
-                start,
-                baseline,
                 font_size=balloon.font_size,
                 family=family,
                 ink=INK,
@@ -506,7 +500,7 @@ def _outlined(owner: str, shape: Shape, *, dash: tuple[float, ...] = ()) -> Mark
     )
 
 
-def _caption(caption: CoreCaption, family: Typeface, *, live_text: bool) -> list[Mark]:
+def _caption(caption: CoreCaption, family: Faces, *, live_text: bool) -> list[Mark]:
     owner = f"caption-{caption.id}"
     box = caption.box
     role = (
@@ -523,19 +517,15 @@ def _caption(caption: CoreCaption, family: Typeface, *, live_text: bool) -> list
             rounded=True,
         )
     ]
-    padding, baselines = geometry.baselines(
-        box, len(caption.lines), caption.line_height, caption.font_size
-    )
     base = Face.ITALIC if caption.italic else Face.REGULAR
     ink = _valued(caption.ink)
-    for index, baseline in enumerate(baselines):
+    for index, line in enumerate(caption.setting):
         runs = _runs(caption.lines, caption.runs, index, base)
         drawn.extend(
             _lettering(
                 owner,
+                line,
                 runs,
-                box.x + padding,
-                baseline,
                 font_size=caption.font_size,
                 family=family,
                 ink=ink,

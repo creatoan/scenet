@@ -23,11 +23,13 @@ missing, a file that is not a font -- is rule `font-file`, located at the face i
 """
 
 from collections import OrderedDict
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from scenet import limits
-from scenet.errors import PanelSyntaxError
+from scenet.core import PanelCore
+from scenet.errors import PanelSyntaxError, RenderError
 from scenet.ir import Face, LetteringSpec
 from scenet.paths import Folder, read_relative
 from scenet.solve.text import FontMetrics, Typeface
@@ -162,3 +164,38 @@ def typeface_for(spec: LetteringSpec, base: Folder | None) -> Lettering:
         ),
         frozenset(declared),
     )
+
+
+def typeface_of(
+    core: PanelCore,
+    *,
+    metrics: FontMetrics | None = None,
+    fonts: Mapping[str, FontMetrics] | None = None,
+) -> Typeface:
+    """The family a Core's lettering was measured in, from the fonts handed over.
+
+    Args:
+        core: The compiled panel.
+        metrics: A regular face given by hand, as it was given to the compile.
+        fonts: Declared fonts by digest.
+
+    Returns:
+        The shipped family, with each face the Core names in its declared font.
+
+    Raises:
+        RenderError: A face the Core names is in none of the fonts given.
+    """
+    family = Typeface(regular=metrics)
+    available = dict(fonts or {})
+    if metrics is not None:
+        available.setdefault(metrics.sha256, metrics)
+    for face, font in core.fonts.items():
+        found = available.get(font.sha256)
+        if found is None:
+            raise RenderError(
+                f"this panel was lettered in {font.family} {font.style} (sha256 "
+                f"{font.sha256[:12]}), and that font was not given to the renderer; pass "
+                "the fonts its compile returned as `fonts=`"
+            )
+        family = replace(family, **{face.value: found})
+    return family

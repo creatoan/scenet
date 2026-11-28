@@ -34,7 +34,7 @@ from importlib.resources import files
 
 from scenet.core import Box, CoreImage, PageCore, PanelCore
 from scenet.emit.cmyk import BLACK_POINT, BLACK_RAMP, CMYK, CONDITION
-from scenet.emit.geometry import PlacedRun
+from scenet.emit.faces import PlacedRun
 from scenet.emit.geometry import Pointer as PointerGeometry
 from scenet.emit.marks import (
     Circle,
@@ -57,10 +57,11 @@ from scenet.emit.marks import (
 from scenet.emit.pdf_fonts import WIDTH_PLACES, Part, pdf_font, refusal
 from scenet.emit.pdf_fonts import width as advance_width
 from scenet.emit.pdf_images import Embedded, embed
-from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt, typeface_of
+from scenet.emit.svg import GLYPH_SCALE_PLACES, fmt
 from scenet.emit.turbulence import VEIL_STEP, veil_alpha
 from scenet.errors import RenderError
 from scenet.ir import Direction
+from scenet.lettering import typeface_of
 from scenet.solve.text import FontMetrics
 
 #: A page unit, printed: a tenth of a millimetre, in PDF points (72 to the inch).
@@ -596,7 +597,7 @@ def _text(mark: Mark, line: Text, faces: Faces) -> list[str]:
             f"/{name} 1 Tf",
             f"{size} 0 0 -{size} {fmt(placed.origins[0], TEXT_PLACES)} "
             f"{fmt(line.baseline, TEXT_PLACES)} Tm",
-            f"[{_shown(placed, lettered)}] TJ",
+            f"[{_shown(placed, lettered, line.font_size)}] TJ",
         ]
     lines = ["q", *_state(mark.fill, None)]
     if set_as_text:
@@ -604,15 +605,18 @@ def _text(mark: Mark, line: Text, faces: Faces) -> list[str]:
     return [*lines, *outlined, "Q"]
 
 
-def _shown(placed: PlacedRun, lettered: set[str]) -> str:
-    """A run as a `TJ` array: its glyphs by code, and between them what steps them."""
+def _shown(placed: PlacedRun, lettered: set[str], font_size: float) -> str:
+    """A run as a `TJ` array: its glyphs by code, and between them what steps them.
+
+    A step is the distance Panel Core puts between one character's origin and the next's,
+    in thousandths of an em.
+    """
     metrics, text = placed.metrics, placed.run.text
     parts: list[str] = []
     codes: list[str] = []
     adjustment = 0.0
-    last = len(text) - 1
     for index, character in enumerate(text):
-        step = metrics.step(character, text[index + 1] if index < last else None) * 1000
+        step = placed.steps[index] / font_size * 1000
         code = metrics.glyph_id(character)
         if code is None:
             adjustment -= step

@@ -275,6 +275,7 @@ class TestPanelCore:
                 font_size=35.0,
                 line_height=43.75,
                 tail=Tail(start=(0, 0), end=(1, 1)),
+                setting=(),
                 runs=((CoreRun(text="I said", face=Face.REGULAR),),),
             )
 
@@ -290,6 +291,7 @@ class TestPanelCore:
                 font_size=35.0,
                 line_height=43.75,
                 tail=Tail(start=(0, 0), end=(1, 1)),
+                setting=(),
                 runs=((CoreRun(text="I told", face=Face.REGULAR),),),
             )
 

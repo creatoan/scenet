@@ -1332,7 +1332,25 @@
       "lines": [
         "Noon."
       ],
-      "order": 0
+      "order": 0,
+      "setting": [
+        {
+          "offsets": [
+            [
+              0.0,
+              17.33,
+              31.75,
+              46.17,
+              60.87
+            ]
+          ],
+          "origin": [
+            29.36,
+            50.08
+          ],
+          "width": 67.65
+        }
+      ]
     }
   ],
   "description": "Long shot. The docks by day. Alice, left, arms crossed, looking at Bob; Bob, right.",

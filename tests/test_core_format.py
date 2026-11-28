@@ -493,6 +493,20 @@ class TestVersionOne:
             PanelCore.from_json(PanelCore.from_json(text).to_json())
         )
 
+    @pytest.mark.parametrize("path", OLD, ids=lambda path: path.name)
+    def test_its_lettering_is_set_where_the_emitters_used_to_set_it(self, path: Path):
+        core = PanelCore.from_json(path.read_text(encoding="utf-8"))
+        for lettered in (*core.balloons, *core.captions):
+            assert len(lettered.setting) == len(lettered.lines)
+
+    def test_a_format_one_document_in_a_font_of_its_own_is_refused_and_says_why(self):
+        old = json.loads(OLD[0].read_text(encoding="utf-8"))
+        old["fonts"] = {"regular": {"family": "X", "style": "Regular", "sha256": "0" * 64}}
+        if not old.get("balloons"):
+            pytest.skip("no balloon to set")
+        with pytest.raises(CoreSyntaxError, match="font of its own"):
+            PanelCore.from_json(json.dumps(old))
+
     def test_a_page_of_format_one_upgrades_too(self):
         book = compile_book(
             "cast: {a: {reference: alice}}\npages: [{tiers: [{panels: [one]}]}]\npanels: {one: {}}"

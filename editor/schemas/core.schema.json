@@ -712,6 +712,13 @@
           "title": "Runs",
           "type": "array"
         },
+        "setting": {
+          "items": {
+            "$ref": "#/$defs/CoreLine"
+          },
+          "title": "Setting",
+          "type": "array"
+        },
         "speaker": {
           "title": "Speaker",
           "type": "string"
@@ -729,7 +736,8 @@
         "lines",
         "font_size",
         "line_height",
-        "tail"
+        "tail",
+        "setting"
       ],
       "title": "CoreBalloon",
       "type": "object"
@@ -910,6 +918,13 @@
           "title": "Runs",
           "type": "array"
         },
+        "setting": {
+          "items": {
+            "$ref": "#/$defs/CoreLine"
+          },
+          "title": "Setting",
+          "type": "array"
+        },
         "speaker": {
           "anyOf": [
             {
@@ -931,7 +946,8 @@
         "lines",
         "font_size",
         "line_height",
-        "italic"
+        "italic",
+        "setting"
       ],
       "title": "CoreCaption",
       "type": "object"
@@ -1221,6 +1237,74 @@
         "box"
       ],
       "title": "CoreImage",
+      "type": "object"
+    },
+    "CoreLine": {
+      "additionalProperties": false,
+      "description": "Where one line of lettering is set: its baseline, and every letter along it.",
+      "properties": {
+        "extensions": {
+          "patternProperties": {
+            "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "title": "Extensions",
+          "type": "object"
+        },
+        "extras": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Extras",
+          "type": "object"
+        },
+        "glyph_ids": {
+          "default": [],
+          "items": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "title": "Glyph Ids",
+          "type": "array"
+        },
+        "offsets": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Offsets",
+          "type": "array"
+        },
+        "origin": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Origin",
+          "type": "array"
+        },
+        "width": {
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "origin",
+        "width",
+        "offsets"
+      ],
+      "title": "CoreLine",
       "type": "object"
     },
     "CoreMannequin": {
