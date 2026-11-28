@@ -107,6 +107,25 @@ class TestTheLegs:
             for name in ("__init__", "camera", "figures", "speakers", "staging")
         }
 
+    @pytest.mark.parametrize(
+        "module",
+        [
+            "schema.py",
+            "safe_yaml.py",
+            "images.py",
+            "paths.py",
+            "lettering.py",
+            "assets/contract.py",
+            "assets/artwork.py",
+        ],
+    )
+    @reads_the_source  # a leg's job narrows `only_mutate` to the leg before it runs
+    def test_no_module_is_left_without_a_leg(self, mutation: ModuleType, module: str):
+        """The modules that were mutated by no leg (#518), each now in one."""
+        path = f"src/scenet/{module}"
+        assert path in _matching(_only_mutate())
+        assert [leg.name for leg in mutation.LEGS if path in _matching(leg.paths)]
+
     def test_names_and_artifact_keys_are_unique(self, mutation: ModuleType):
         names = [leg.name for leg in mutation.LEGS]
         keys = [leg.key for leg in mutation.LEGS]
