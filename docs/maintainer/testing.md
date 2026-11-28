@@ -1233,6 +1233,8 @@ of them is the batch's own, in its table.
 | `_diagnose_script_figures` 49, 51, 56, 58 | a fault of the panel's own found at no line | A fault the panel wrote itself is under the `@setting:` or `@cast:` it wrote, so the heading is never the default read. |
 | `_written_through` 5 | one more step down the `@over:` chain | A loop of `@over:` is refused before this is asked. |
 | `_diagnose_source` 1, `_diagnose_script` 1 | `deep` defaults to true | Their one caller each, the public function, passes it. |
+| `diagnose_file` 3 | the file read in the default encoding | That is UTF-8 where mutmut runs; on Windows, where it is not, the findings golden of the gallery's French scripts fails in the Windows job. |
+| `diagnose_file` 5 | `"utf-8"` to `"UTF-8"` | Python's codec names are not case-sensitive. |
 
 #### `frontends/`
 
